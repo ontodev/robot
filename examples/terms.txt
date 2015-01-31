@@ -1,0 +1,2 @@
+http://purl.obolibrary.org/obo/BFO_0000002 # continuant
+http://purl.obolibrary.org/obo/BFO_0000050 # part of

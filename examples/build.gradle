@@ -1,0 +1,71 @@
+// TOOD: add plugin dependency
+
+Reasoner elk = new Reasoner(name: 'ELK')
+Ontology ontology
+Ontology reasoned
+
+task update << {
+  ontology = loadOntology('foo.owl')
+  println 'Adding class metadata'
+  println 'Adding ontology metadata'
+}
+
+task reason (dependsOn: update) << {
+  reasoned = reasonOntology(ontology, elk)
+  saveOntology(reasoned, 'reasoned.owl')
+}
+
+task core (dependsOn: reason) << {
+  Set<String> terms = loadTerms('core.txt')
+  Ontology core = extractOntology(reasoned, terms)
+  saveOntology(core, 'core.owl')
+}
+
+task reports (dependsOn: reason) << {
+  println 'Generating reports on ' + reasoned
+}
+
+task subsets (dependsOn: core)
+
+task release (dependsOn: [subsets, reports])
+
+
+
+// Implementation
+// This is just a sketch.
+// The plan is to move this stuff into a plugin.
+import groovy.transform.ToString
+
+@ToString
+class Reasoner {
+  String name
+}
+
+@ToString
+class Ontology {
+  String ontologyIRI
+}
+
+Ontology loadOntology(String path) {
+  println 'Loading ontology from ' + path
+  return new Ontology(ontologyIRI: path)
+}
+
+def saveOntology(Ontology ontology, String path) {
+  println 'Saving ontology ' + ontology + ' to ' + path
+}
+
+Set<String> loadTerms(String path) {
+  println 'Loading term set from ' + path
+  return ['term1', 'term2'] as Set
+}
+
+Ontology reasonOntology(Ontology ontology, Reasoner reasoner) {
+  println 'Reasoning over ' + ontology + ' with ' + reasoner
+  return new Ontology(ontologyIRI: 'reasoned')
+}
+
+Ontology extractOntology(Ontology ontology, Set<String> termset) {
+  println 'Extracting ' + termset + ' from ' + ontology
+  return new Ontology(ontologyIRI: 'extracted')
+}
