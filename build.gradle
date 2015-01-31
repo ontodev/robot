@@ -1,0 +1,31 @@
+group = 'owltools2'
+version = '0.0.1-SNAPSHOT'
+
+apply plugin: 'java'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'commons-cli:commons-cli:1.2'
+  compile 'net.sourceforge.owlapi:owlapi-api:3.5.1'
+  compile 'net.sourceforge.owlapi:owlapi-apibinding:3.5.1'
+}
+
+allprojects {
+  gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+      options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+  }
+}
+
+task uberjar(type: Jar, dependsOn: build) {
+  from files(sourceSets.main.output.classesDir)
+  from configurations.runtime.asFileTree.files.collect { zipTree(it) }
+
+  manifest {
+    attributes 'Main-Class': 'owltools2.CommandLineInterface'
+  }
+}

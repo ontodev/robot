@@ -1,0 +1,5 @@
+.DS_Store
+.gradle
+build
+examples/catalog-v100.xml
+examples/out.owl
