@@ -122,11 +122,11 @@ Alternatively:
 
 # Build
 
-We use [Gradle](http://gradle.org) as our build tool. Make sure it's [installed](https://gradle.org/docs/current/userguide/installation.html), then run:
+We use [Maven](http://maven.apache.org) as our build tool. Make sure it's [installed](http://maven.apache.org/download.cgi), then run:
 
-    gradle uberjar
+    mvn package
 
-This will create a self-contained Jar file in `build/libs/`.
+This will create a self-contained Jar file in `bin/owltools2.jar`.
 
 
 # Design

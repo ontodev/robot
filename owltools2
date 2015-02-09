@@ -1,5 +1,0 @@
-#!/bin/sh
-
-# If we use a shell script, it will have to be smarter than this.
-
-exec java -jar build/libs/owltools2-experimental-0.0.1-SNAPSHOT.jar "$@"

@@ -1,5 +1,8 @@
 .DS_Store
-.gradle
-build
+.classpath
+.project
+.settings
+bin/owltools2.jar
 examples/catalog-v001.xml
 examples/out.owl
+target/
