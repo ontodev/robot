@@ -99,22 +99,22 @@ public class CommandLineHelper {
   }
 
   /**
-   * Covers common cases using --from and --from-iri flags,
+   * Covers common cases using --input and --input-iri flags,
    * with or without catalog files.
    *
-   * NOTE: currenly only handles --from files with automatic catalog detection
+   * NOTE: currenly only handles --input files with automatic catalog detection
    * TODO: handle catalogs, IRIs
    */
-  public static OWLOntology getFromOntology(IOHelper ioHelper, CommandLine line)
-      throws IllegalArgumentException, IOException {
-    OWLOntology fromOntology = null;
-    String fromOntologyPath = getOptionalValue(line, "from", 1);
-    if(fromOntologyPath != null) {
-      fromOntology = ioHelper.loadOntology(fromOntologyPath);
+  public static OWLOntology getInputOntology(IOHelper ioHelper,
+      CommandLine line) throws IllegalArgumentException, IOException {
+    OWLOntology inputOntology = null;
+    String inputOntologyPath = getOptionalValue(line, "input", 1);
+    if(inputOntologyPath != null) {
+      inputOntology = ioHelper.loadOntology(inputOntologyPath);
     } else {
-      throw new IllegalArgumentException("fromOntology must be specified");
+      throw new IllegalArgumentException("inputOntology must be specified");
     }
-    return fromOntology;
+    return inputOntology;
   }
 
   public static File getOutputFile(CommandLine line) {

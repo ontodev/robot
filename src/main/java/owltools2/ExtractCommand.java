@@ -16,14 +16,14 @@ import owltools2.ExtractOperation;
 public class ExtractCommand implements Command {
   public static String name = "extract";
   public static String description = "extract terms from an ontology";
-  public static String usage = "owltools2 extract --from-file <file> --term-file <file> --output <file>";
+  public static String usage = "owltools2 extract --input-file <file> --term-file <file> --output <file>";
 
   protected Options options;
 
   public ExtractCommand() {
     options = CommandLineHelper.getCommonOptions();
-    options.addOption("f", "from",       true,  "load ontology from a file");
-    options.addOption("F", "from-iri",   true,  "load ontology from an IRI");
+    options.addOption("i", "input",      true,  "load ontology from a file");
+    options.addOption("I", "input-iri",  true,  "load ontology from an IRI");
     options.addOption("o", "output",     true,  "save ontology to a file");
     options.addOption("O", "output-iri", true,  "set OntologyIRI for output");
     options.addOption("t", "terms",      true,  "space-separated terms to extract");
@@ -41,7 +41,7 @@ public class ExtractCommand implements Command {
       IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
       ioHelper.saveOntology(
         ExtractOperation.extract(
-          CommandLineHelper.getFromOntology(ioHelper, line),
+          CommandLineHelper.getInputOntology(ioHelper, line),
           CommandLineHelper.getTerms(ioHelper, line),
           CommandLineHelper.getOutputIRI(line)
         ),

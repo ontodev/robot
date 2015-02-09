@@ -92,7 +92,7 @@ public class IOHelper {
 
   //public OWLOntology loadOntology(IRI ontologyIRI) {
   //  OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-  //  return manager.loadOntologyFromOntologyDocument(ontologyIRI);
+  //  return manager.loadOntologyInputOntologyDocument(ontologyIRI);
   //}
   //public OWLOntology loadOntology(IRI ontologyIRI, Bool use-catalog)
   //public OWLOntology loadOntology(IRI ontologyIRI, IRI catalogIRI)

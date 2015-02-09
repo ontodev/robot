@@ -26,17 +26,17 @@ public class ExtractOperation {
    *
    * @return a new ontology (with a new manager)
    */
-  public static OWLOntology extract(OWLOntology fromOntology,
+  public static OWLOntology extract(OWLOntology inputOntology,
       Set<IRI> terms, IRI outputIRI)
       throws OWLOntologyCreationException {
     System.out.println("Extracting");
     Set<OWLEntity> entities = new HashSet<OWLEntity>();
     for(IRI term: terms) {
-      entities.addAll(fromOntology.getEntitiesInSignature(term, true));
+      entities.addAll(inputOntology.getEntitiesInSignature(term, true));
     }
     SyntacticLocalityModuleExtractor extractor =
       new SyntacticLocalityModuleExtractor(
-        fromOntology.getOWLOntologyManager(), fromOntology, ModuleType.STAR);
+        inputOntology.getOWLOntologyManager(), inputOntology, ModuleType.STAR);
     return OWLManager.createOWLOntologyManager().createOntology(
         extractor.extract(entities),
         outputIRI);

@@ -21,35 +21,36 @@ This code can be used as:
 The command-line tool is packaged a Jar file and can be run via the `owltools2` shell script. Currently implemented commands:
 
     owltools2 help
-    owltools2 extract --from examples/test.owl --term-file examples/terms.txt --output examples/out.owl --output-iri "http://example.com"
+    owltools2 extract --input examples/test.owl --term-file examples/terms.txt --output examples/out.owl --output-iri "http://example.com"
 
 Other ideas for commands:
 
-    owltools2 merge example-edit.owl --output example-merged.owl
-    owltools2 reason merged.owl --reasoner elk --output example.owl
+    owltools2 merge --input edit.owl --output merged.owl
+    owltools2 merge -i first.owl -i second.owl --output merged.owl
+    owltools2 reason merged.owl --reasoner elk --output reasoned.owl
     export BASEIRI="https://github.org/ontodev/owltools2-experiment/examples/"
-    owltools2 extract --term-file core.txt --from example.owl \\
-      --output example-core.owl --output-iri "$BASEIRI/core.owl"
-    owltools2 convert example.owl --output example.obo
-    owltools2 convert exmaple-core.owl --output example-core.obo
-    owltools2 diff ontology1.owl ontology2.owl --output report.txt
-    owltools2 check-consistent edit.owl
-    owltools2 check-satisfiable edit.owl
-    owltools2 check-style release.owl
-    owltools2 remove-redundant
+    owltools2 extract --input edit.owl --term-file core.txt \\
+      --output core.owl --output-iri "$BASEIRI/core.owl"
+    owltools2 convert --input example.owl --output example.obo
+    owltools2 diff --left ontology1.owl --right ontology2.owl \\
+      --output report.txt
+    owltools2 check-consistent -i edit.owl
+    owltools2 check-satisfiable -i edit.owl
+    owltools2 check-style -i release.owl
+    owltools2 remove-redundant -i edit.owl
     owltools2 report --reportdir reports/
-    owltools2 convert --from uberon.owl --to uberon.obo
-    owltools2 add-ontology-metadata --template --from before.owl --to after.owl
+    owltools2 add-ontology-metadata --template template.yaml \\
+      --input before.owl --output after.owl
     owltools2 add-class-metadata
-    owltools2 update uberon.owl --sparql update.rq
-    owltools2 convert --from uberon.owl --to uberon.obo --format obo-basic
-    owltools2 strip-axioms --from uberon.owl --to uberon.small.owl --properties
-      "subset" ?
-    owltools2 deploy
-    owltools2 remove --terms terms.txt --from test.owl --overwrite
-    owltools2 qtt
-    owltools2 mireot
-    owltools2 relabel --terms terms.csv
+    owltools2 update --input uberon.owl --sparql update.rq --overwrite
+    owltools2 convert --input uberon.owl --output uberon.obo --format obo-basic
+    owltools2 strip-axioms --input uberon.owl --output uberon.small.owl \\
+      --properties-file props.txt
+    owltools2 deploy ???
+    owltools2 remove --terms terms.txt --input test.owl --overwrite
+    owltools2 qtt ???
+    owltools2 mireot ???
+    owltools2 relabel --input edit.owl --terms terms.csv --overwrite
 
 
 ## 2. Gradle Plugin
