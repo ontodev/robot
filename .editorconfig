@@ -1,0 +1,11 @@
+# EditorConfig is awesome: http://EditorConfig.org
+# An editor-agnostic file format for defining coding styles.
+# Eclipse is not yet supported, but many other editors are.
+
+# Unix-style newlines, indent with four spaces
+[*]
+charset = utf-8
+end_of_line = lf
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
