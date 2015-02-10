@@ -130,7 +130,7 @@ This will create a self-contained Jar file in `bin/owltools2.jar`.
 
 Other build options:
 
-- `mvn site` generates reports (including Checkstyle) in `target/site`
+- `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site`
 
 
 # Design
