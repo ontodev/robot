@@ -1,10 +1,13 @@
 package owltools2;
 
+import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * Handles inputs and outputs for the {@link ExtractOperation}.
@@ -81,19 +84,47 @@ public class ExtractCommand implements Command {
      */
     public void main(String[] args) {
         try {
-            CommandLine line = CommandLineHelper.getCommandLine(
-                    getUsage(), getOptions(), args);
-            IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-            ioHelper.saveOntology(
-                    ExtractOperation.extract(
-                        CommandLineHelper.getInputOntology(ioHelper, line),
-                        CommandLineHelper.getTerms(ioHelper, line),
-                        CommandLineHelper.getOutputIRI(line),
-                        null
-                        ),
-                    CommandLineHelper.getOutputFile(line));
+            execute(null, args);
         } catch (Exception e) {
             CommandLineHelper.handleException(getUsage(), getOptions(), e);
         }
+    }
+
+    /**
+     * Given an input ontology (or null) and command line arguments,
+     * extract a new ontology.
+     *
+     * @param inputOntology the ontology from the previous command, or null
+     * @param args the command-line arguments
+     * @return the extracted ontology
+     * @throws Exception on any problem
+     */
+    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+            throws Exception {
+        OWLOntology outputOntology = null;
+
+        CommandLine line = CommandLineHelper
+            .getCommandLine(getUsage(), getOptions(), args);
+        if (line == null) {
+            return null;
+        }
+
+        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+
+        if (inputOntology == null) {
+            inputOntology = CommandLineHelper.getInputOntology(ioHelper, line);
+        }
+
+        outputOntology = ExtractOperation.extract(
+                inputOntology,
+                CommandLineHelper.getTerms(ioHelper, line),
+                CommandLineHelper.getOutputIRI(line));
+
+        File outputFile = CommandLineHelper.getOutputFile(line);
+        if (outputFile != null) {
+            ioHelper.saveOntology(outputOntology, outputFile);
+        }
+
+        return outputOntology;
     }
 }

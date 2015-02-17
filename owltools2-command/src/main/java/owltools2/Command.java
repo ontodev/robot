@@ -1,6 +1,7 @@
 package owltools2;
 
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * A simple interface for all OWLTools2 commands.
@@ -43,4 +44,16 @@ public interface Command {
      * @param args strings to use as arguments
      */
     void main(String[] args);
+
+    /**
+     * All commands offer an execute method that can be chained from
+     * previous commands.
+     *
+     * @param inputOntology the ontology from the previous command, or null
+     * @param args the command-line arguments
+     * @return the updated ontology, or a new ontology, or null
+     * @throws Exception on any problem
+     */
+    OWLOntology execute(OWLOntology inputOntology, String[] args)
+            throws Exception;
 }
