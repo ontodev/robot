@@ -52,6 +52,19 @@ Other ideas for commands:
     owltools2 mireot ???
     owltools2 relabel --input edit.owl --terms terms.csv --overwrite
 
+Commands can be "chained", with the ouput of the previous command (if any) used as the input for the next command. For example:
+
+    owltools2 reason --input-file test.owl \
+      check-consistent \
+      add-metadata --input data.yml --output release.owl
+
+Commands can also be run in "parallel", with multiple commands using the **same** input ontology:
+
+    owltools2 parallel --input release.owl \
+      report --reports-dir reports/ \
+      extract --term-file core.txt --output core.owl \
+      extract --term-file classes.txt --output classes.owl
+
 
 ## 2. Gradle Plugin
 
@@ -130,6 +143,7 @@ This will create a self-contained Jar file in `bin/owltools2.jar`.
 
 Other build options:
 
+- `mvn test` runs JUnit tests with reports in `[module]/target/surefire-reports`
 - `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site`
 
 
