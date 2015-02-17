@@ -54,7 +54,7 @@ Other ideas for commands:
 
 Commands can be "chained", with the ouput of the previous command (if any) used as the input for the next command. For example:
 
-    owltools2 reason --input-file test.owl \
+    owltools2 reason --input test.owl \
       check-consistent \
       add-metadata --input data.yml --output release.owl
 
@@ -151,7 +151,7 @@ Other build options:
 
 The library provides a set of Operations and a set of Commands. Commands handle the command-line interface and IO tasks, while Operations focus on manipulating ontologies. Sometimes you will have the pair of an Operation and a Command, but there's no necessity for a one-to-one correspondence between them.
 
-Commands implements the Command interface, which requires a `main(String[] args)` method. Each command can be called via `main`, but the CommandLineInterface class provides a single entry point for selecting between all the available commands. While each Command can run independently, there are shared conventions for command-line options such as `--from`, `--terms`, `--output`, etc. These shared conventions are implemented in the CommandLineHelper utility class. There is also an IOHelper class providing convenient methods for loading and saving ontologies and lists of terms. A simple Command will consist of a few CommandLineHelper calls to determine arguments, a few IOHelper calls to load or save files, and one call to the appropriate Operation.
+Commands implements the Command interface, which requires a `main(String[] args)` method. Each command can be called via `main`, but the CommandLineInterface class provides a single entry point for selecting between all the available commands. While each Command can run independently, there are shared conventions for command-line options such as `--input`, `--terms`, `--output`, etc. These shared conventions are implemented in the CommandLineHelper utility class. There is also an IOHelper class providing convenient methods for loading and saving ontologies and lists of terms. A simple Command will consist of a few CommandLineHelper calls to determine arguments, a few IOHelper calls to load or save files, and one call to the appropriate Operation.
 
 Operations are currently implemented with static methods and no shared interface. They should not contain IO or CLI code.
 
