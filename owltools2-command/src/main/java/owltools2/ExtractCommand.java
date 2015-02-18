@@ -118,7 +118,8 @@ public class ExtractCommand implements Command {
         outputOntology = ExtractOperation.extract(
                 inputOntology,
                 CommandLineHelper.getTerms(ioHelper, line),
-                CommandLineHelper.getOutputIRI(line));
+                CommandLineHelper.getOutputIRI(line),
+                null);
 
         File outputFile = CommandLineHelper.getOutputFile(line);
         if (outputFile != null) {
