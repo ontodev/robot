@@ -1,5 +1,7 @@
 # OWLTools2 Prototype
 
+[![Build Status](https://travis-ci.org/ontodev/owltools2-experimental.svg?branch=master)](https://travis-ci.org/ontodev/owltools2-experimental)
+
 This repository contains a number of experiments, with the goal of developing a new suite of tools and techniques for Open Biomedical Ontology development.
 
 NOTE: "owltools2" is just a placeholder name.
