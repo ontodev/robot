@@ -13,5 +13,6 @@
   <suppress checks="DesignForExtension" files="."/>
   <suppress checks="FinalParameters" files="."/>
   <suppress checks="HiddenField" files="."/>
-  <suppress checks="MagicNumber" files="."/>
+  <suppress checks="MagicNumber" files="test"/>
+  <suppress checks="VisibilityModifier" files="test"/>
 </suppressions>

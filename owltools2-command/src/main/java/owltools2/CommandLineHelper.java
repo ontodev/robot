@@ -3,8 +3,11 @@ package owltools2;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +30,92 @@ public class CommandLineHelper {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(CommandLineHelper.class);
+
+    /**
+     * Given a single string, return a list of strings split at whitespace
+     * but allowing for quoted values, as a command-line parser does.
+     *
+     * @param toProcess the string to parse
+     * @return a string list, split at whitespace, with quotation marks removed
+     * @throws Exception on parsing problems
+     */
+    public static List<String> parseArgList(String toProcess) throws Exception {
+        return new ArrayList<String>(Arrays.asList(parseArgs(toProcess)));
+    }
+
+    /**
+     * Given a single string, return an array of strings split at whitespace
+     * but allowing for quoted values, as a command-line parser does.
+     * Adapted from org.apache.tools.ant.types.Commandline
+     *
+     * @param toProcess the string to parse
+     * @return a string array, split at whitespace, with quotation marks removed
+     * @throws Exception on parsing problems
+     */
+    public static String[] parseArgs(String toProcess) throws Exception {
+        if (toProcess == null || toProcess.length() == 0) {
+            return new String[0];
+        }
+
+        // parse with a simple finite state machine
+        final int normal = 0;
+        final int inQuote = 1;
+        final int inDoubleQuote = 2;
+        int state = normal;
+        StringTokenizer tok = new StringTokenizer(toProcess, "\"\' ", true);
+        Vector v = new Vector();
+        StringBuffer current = new StringBuffer();
+        boolean lastTokenHasBeenQuoted = false;
+
+        while (tok.hasMoreTokens()) {
+            String nextTok = tok.nextToken();
+            switch (state) {
+                case inQuote:
+                    if ("\'".equals(nextTok)) {
+                        lastTokenHasBeenQuoted = true;
+                        state = normal;
+                    } else {
+                        current.append(nextTok);
+                    }
+                    break;
+                case inDoubleQuote:
+                    if ("\"".equals(nextTok)) {
+                        lastTokenHasBeenQuoted = true;
+                        state = normal;
+                    } else {
+                        current.append(nextTok);
+                    }
+                    break;
+                default:
+                    if ("\'".equals(nextTok)) {
+                        state = inQuote;
+                    } else if ("\"".equals(nextTok)) {
+                        state = inDoubleQuote;
+                    } else if (" ".equals(nextTok)) {
+                        if (lastTokenHasBeenQuoted || current.length() != 0) {
+                            v.addElement(current.toString());
+                            current = new StringBuffer();
+                        }
+                    } else {
+                        current.append(nextTok);
+                    }
+                    lastTokenHasBeenQuoted = false;
+                    break;
+            }
+        }
+
+        if (lastTokenHasBeenQuoted || current.length() != 0) {
+            v.addElement(current.toString());
+        }
+
+        if (state == inQuote || state == inDoubleQuote) {
+            throw new Exception("unbalanced quotes in " + toProcess);
+        }
+
+        String[] args = new String[v.size()];
+        v.copyInto(args);
+        return args;
+    }
 
     /**
      * Given a command line and an index, return the argument at that index.

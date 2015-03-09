@@ -1,7 +1,5 @@
 package owltools2;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -38,14 +36,14 @@ public class CommandManagerTest {
     }
 
     /**
-     * Convenience method for splitting an argument string;
-     * just splits at whitespace, does not handle quoted strings, etc.
+     * Convenience method for splitting an argument string.
      *
      * @param arg the argument string
      * @return an array of arguments
+     * @throws Exception on parse problems
      */
-    private String[] splitArgs(String arg) {
-        return arg.split("\\s+");
+    private String[] split(String arg) throws Exception {
+        return CommandLineHelper.parseArgs(arg);
     }
 
     /**
@@ -58,8 +56,7 @@ public class CommandManagerTest {
      */
     private void countOptions(String message, int count, String arg)
             throws Exception {
-        List<String> args =
-            new ArrayList<String>(Arrays.asList(splitArgs(arg)));
+        List<String> args = CommandLineHelper.parseArgList(arg);
         List<String> used = manager.getOptionArgs(options, args);
         assertEquals(message, count, used.size());
     }
@@ -102,8 +99,8 @@ public class CommandManagerTest {
     @Test
     public void testExecute() throws Exception {
         reset();
-        manager.execute(null, splitArgs("--help mock1"));
-        manager.execute(null, splitArgs("--help mock1 mock2"));
-        //manager.execute(null, splitArgs("--help mock1 --local foo"));
+        manager.execute(null, split("--help mock1"));
+        manager.execute(null, split("--help mock1 mock2"));
+        //manager.execute(null, split("--help mock1 --local foo"));
     }
 }
