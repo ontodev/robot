@@ -10,23 +10,40 @@ import org.slf4j.LoggerFactory;
  */
 public class CommandLineInterface {
     /**
+     * A CommandManager loaded with the default set of commands.
+     */
+    private static CommandManager manager = new CommandManager();
+
+    /**
      * Logger.
      */
     private static final Logger logger =
         LoggerFactory.getLogger(CommandLineInterface.class);
 
     /**
-     * Given command-line arguments, construct a new CommandManager
-     * and execute it.
+     * Construct a CommandManager with a set of default commands.
+     */
+    public CommandLineInterface() {
+        // Add more commands as needed
+        manager.addCommand("extract", new ExtractCommand());
+    }
+
+    /**
+     * Execute the given command-line arguments, catching any exceptions.
      *
      * @param args the command-line arguments
      */
     public static void main(String[] args) {
-        CommandManager manager = new CommandManager();
-
-        // Add more commands as needed
-        manager.addCommand("extract", new ExtractCommand());
-
         manager.main(args);
+    }
+
+    /**
+     * Execute the given command-line arguments, throwing any exceptions.
+     *
+     * @param args the command-line arguments
+     * @throws Exception on any problem
+     */
+    public static void execute(String[] args) throws Exception {
+        manager.execute(null, args);
     }
 }
