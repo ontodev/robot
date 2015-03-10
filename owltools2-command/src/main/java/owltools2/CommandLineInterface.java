@@ -23,6 +23,7 @@ public class CommandLineInterface {
         // Add more commands as needed
         CommandManager m = new CommandManager();
         m.addCommand("extract", new ExtractCommand());
+        m.addCommand("diff",    new DiffCommand());
         return m;
     }
 
