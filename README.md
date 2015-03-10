@@ -20,10 +20,12 @@ This code can be used as:
 
 ## 1. Command Line Tool
 
-The command-line tool is packaged a Jar file and can be run via the `owltools2` shell script. Currently implemented commands:
+The command-line tool is packaged a Jar file and can be run via the `owltools2` shell script. See [examples/README.md](https://github.com/ontodev/owltools2-experimental/tree/master/examples/README.md) for a tutorial with many example commands. Currently implemented commands:
 
     owltools2 help
     owltools2 extract --input examples/test.owl --term-file examples/terms.txt --output examples/out.owl --output-iri "http://example.com"
+
+TODO: Install instructions.
 
 Other ideas for commands:
 

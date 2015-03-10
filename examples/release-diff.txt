@@ -1,0 +1,17 @@
+0 axioms in Ontology 1 but not in Ontology 2:
+
+14 axioms in Ontology 2 but not in Ontology 1:
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasOBONamespace>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasDbXref>))
++ Declaration(AnnotationProperty(<http://xmlns.com/foaf/0.1/depicted_by>))
++ Declaration(Class(<https://github.com/ontodev/owltools2-experimental/examples/release.owl#junk>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#inSubset>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#id>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#is_metadata_tag>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasAlternativeId>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#shorthand>))
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym>))
++ AnnotationAssertion(rdfs:label <https://github.com/ontodev/owltools2-experimental/examples/release.owl#junk> "Junk")
++ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym>))
