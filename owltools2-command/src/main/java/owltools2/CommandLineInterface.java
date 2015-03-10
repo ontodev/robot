@@ -12,21 +12,25 @@ public class CommandLineInterface {
     /**
      * A CommandManager loaded with the default set of commands.
      */
-    private static CommandManager manager = new CommandManager();
+    private static CommandManager manager = initManager();
+
+    /**
+     * Initialize a new CommandManager.
+     *
+     * @return the new manager
+     */
+    private static CommandManager initManager() {
+        // Add more commands as needed
+        CommandManager m = new CommandManager();
+        m.addCommand("extract", new ExtractCommand());
+        return m;
+    }
 
     /**
      * Logger.
      */
     private static final Logger logger =
         LoggerFactory.getLogger(CommandLineInterface.class);
-
-    /**
-     * Construct a CommandManager with a set of default commands.
-     */
-    public CommandLineInterface() {
-        // Add more commands as needed
-        manager.addCommand("extract", new ExtractCommand());
-    }
 
     /**
      * Execute the given command-line arguments, catching any exceptions.
