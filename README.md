@@ -141,14 +141,15 @@ Alternatively:
 
 We use [Maven](http://maven.apache.org) as our build tool. Make sure it's [installed](http://maven.apache.org/download.cgi), then run:
 
-    mvn package
+    mvn clean package
 
 This will create a self-contained Jar file in `bin/owltools2.jar`.
 
 Other build options:
 
 - `mvn test` runs JUnit tests with reports in `[module]/target/surefire-reports`
-- `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site`
+- `mvn verify` rebuilds the package and runs integration tests against it, with reports in `[module]/target/failsafe-reports`
+- `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site` and `[module]/target/site`
 
 
 # Design
