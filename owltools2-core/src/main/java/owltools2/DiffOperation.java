@@ -5,6 +5,7 @@ import java.io.Writer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,6 +72,7 @@ public class DiffOperation {
 
         Set<String> strings1 = getAxiomStrings(ontology1);
         Set<String> strings2 = getAxiomStrings(ontology2);
+        Set<String> sorted;
 
         Set<String> strings1minus2 = new HashSet<String>(strings1);
         strings1minus2.removeAll(strings2);
@@ -90,16 +92,24 @@ public class DiffOperation {
 
         writer.write(strings1minus2.size()
                 + " axioms in Ontology 1 but not in Ontology 2:\n");
+        sorted = new TreeSet<String>();
         for (String axiom: strings1minus2) {
-            writer.write("- " + addLabels(labels, axiom) + "\n");
+            sorted.add("- " + addLabels(labels, axiom) + "\n");
+        }
+        for (String axiom: sorted) {
+            writer.write(axiom);
         }
 
         writer.write("\n");
 
         writer.write(strings2minus1.size()
                 + " axioms in Ontology 2 but not in Ontology 1:\n");
+        sorted = new TreeSet<String>();
         for (String axiom: strings2minus1) {
-            writer.write("+ " + addLabels(labels, axiom) + "\n");
+            sorted.add("+ " + addLabels(labels, axiom) + "\n");
+        }
+        for (String axiom: sorted) {
+            writer.write(axiom);
         }
 
         return false;
