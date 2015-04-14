@@ -40,27 +40,28 @@ See `release-diff.txt` for an example.
 
 OWL ontologies are often divided into several `.owl` files, with `owl:imports` statements to bring them together. Sometimes you want to take all those imports and merge them into a single ontology with a single `.owl` file.
 
-    TODO owltools2 merge --input edit.owl --output merged.owl
+    TODO owltools2 merge --input edit.owl --output results/merged.owl
 
 You don't need `owl:import` statements: you can merge any number of ontologies by using multiple `--input` arguments. You can also specify the `OntologyIRI` for the output ontology.
 
     TODO owltools2 merge --input edit.owl --input foo.owl \
-      --output merged.owl --output-iri "http://example.com"
+      --output results/merged.owl --output-iri "http://example.com"
 
 
 ## Extracting
 
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing.
 
-    TODO owltools2 extract --input uberon.owl --term-file uberon_module.txt \
-      --output uberon_module.owl --output-iri "http://foo"
+    TODO owltools2 extract --input filtered.owl --term-file uberon_module.txt \
+      --output results/uberon_module.owl
 
 
 ## Reasoning
 
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using [ELK](https://code.google.com/p/elk-reasoner/), a very fast reasoner that supports the EL subset of OWL 2.
 
-    TODO owltools2 reason --reasoner ELK --input edit.owl --output reasoned.owl
+    TODO owltools2 reason --reasoner ELK --input edit.owl \
+      --output results/reasoned.owl
 
 
 ## Annotating
@@ -69,14 +70,14 @@ It's important to add metadata to an ontology before releasing it. We use YAML f
 
     TODO owltools2 annotate --input reasoned.owl \
       --annotations annotations.yml \
-      --output example.owl
+      --output results/example.owl
 
 
 ## Converting
 
 Ontologies are shared in different formats. The default format used by OWLTools2 is RDF/XML, but there are other OWL formats, RDF formats, and also the OBO file format.
 
-    TODO owltools2 convert --input example.owl --output example.obo
+    TODO owltools2 convert --input example.owl --output results/example.obo
 
 
 ## Chaining
@@ -88,8 +89,8 @@ OWLTools2 allows several commands to be chained by using the output ontology as 
     TODO owltools2 \
       merge --input edit.owl \
       reason --reasoner ELK \
-      annotate --annotations annotations.yml --output example.owl \
-      convert --output example.obo
+      annotate --annotations annotations.yml --output results/example.owl \
+      convert --output results/example.obo
 
 Each command has been put on its own line, for clarity. Only the first command has an explicit `--input` argument. The following commands use the output of the previous command as their input. Also notice that the first two commands do not specify an `--output` file. Their output is not saved to the filesystem, only sent to the next command. But the last two commands both specify `--output` files, and their results are saved to different files.
 
