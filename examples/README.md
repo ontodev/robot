@@ -60,7 +60,7 @@ Some ontologies contain more axioms than you want to use. You can use the `filte
 
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a module for the term 'adrenal cortex' and its supporting terms:
 
-    TODO owltools2 extract --input filtered.owl --term-file uberon_module.txt \
+    owltools2 extract --input filtered.owl --term-file uberon_module.txt \
       --output results/uberon_module.owl
 
 
