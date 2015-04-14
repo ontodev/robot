@@ -14,6 +14,23 @@
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://github.com/ontodev/owltools2-experimental/owltools2-core/src/test/resources/simple.owl#part_of -->
+
+    <owl:ObjectProperty rdf:about="https://github.com/ontodev/owltools2-experimental/owltools2-core/src/test/resources/simple.owl#part_of"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
     // Classes
     //
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -35,6 +52,12 @@
 
     <owl:Class rdf:about="https://github.com/ontodev/owltools2-experimental/owltools2-core/src/test/resources/simple.owl#test2">
         <rdfs:subClassOf rdf:resource="https://github.com/ontodev/owltools2-experimental/owltools2-core/src/test/resources/simple.owl#test1"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://github.com/ontodev/owltools2-experimental/owltools2-core/src/test/resources/simple.owl#part_of"/>
+                <owl:someValuesFrom rdf:resource="https://github.com/ontodev/owltools2-experimental/owltools2-core/src/test/resources/simple.owl#test1"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
 </rdf:RDF>
 
