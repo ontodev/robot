@@ -48,9 +48,17 @@ You don't need `owl:import` statements: you can merge any number of ontologies b
       --output results/merged.owl --output-iri "http://example.com"
 
 
+## Filtering
+
+Some ontologies contain more axioms than you want to use. You can use the `filter` command to keep only those axioms with ObjectProperties that you specify. For example, Uberon contains rich logical axioms, but sometimes you only want to keep the 'part of' and 'has part' relations. Here we start with a fragment of Uberon and filter for parthood relations:
+
+    owltools2 filter --input uberon_fragment.owl --term-file parts.txt \
+      --output results/filtered.owl
+
+
 ## Extracting
 
-The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing.
+The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a module for the term 'adrenal cortex' and its supporting terms:
 
     TODO owltools2 extract --input filtered.owl --term-file uberon_module.txt \
       --output results/uberon_module.owl

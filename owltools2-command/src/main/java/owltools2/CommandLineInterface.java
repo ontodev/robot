@@ -24,6 +24,7 @@ public class CommandLineInterface {
         CommandManager m = new CommandManager();
         m.addCommand("extract", new ExtractCommand());
         m.addCommand("diff",    new DiffCommand());
+        m.addCommand("filter",  new FilterCommand());
         return m;
     }
 
