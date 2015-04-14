@@ -73,6 +73,22 @@ ObjectProperty: <http://purl.obolibrary.org/obo/RO_0001015>
         <http://www.geneontology.org/formats/oboInOwl#id> "location_of"^^xsd:string
     
     
+ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002202>
+
+    Annotations: 
+        rdfs:label "develops_from"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "RO:0002202"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#shorthand> "develops_from"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#id> "develops_from"^^xsd:string
+    
+    SubPropertyOf: 
+        <http://purl.obolibrary.org/obo/robot/test/weaken#has_material_contribution_from>,
+        <http://purl.obolibrary.org/obo/RO_0002254>
+    
+    Characteristics: 
+        Transitive
+    
+    
 ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002219>
 
     Annotations: 
@@ -92,22 +108,6 @@ ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002254>
     
     SubPropertyOf: 
         <http://purl.obolibrary.org/obo/robot/test/weaken#has_material_contribution_from>
-    
-    Characteristics: 
-        Transitive
-    
-    
-ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002202>
-
-    Annotations: 
-        rdfs:label "develops_from"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "RO:0002202"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#shorthand> "develops_from"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#id> "develops_from"^^xsd:string
-    
-    SubPropertyOf: 
-        <http://purl.obolibrary.org/obo/robot/test/weaken#has_material_contribution_from>,
-        <http://purl.obolibrary.org/obo/RO_0002254>
     
     Characteristics: 
         Transitive
@@ -215,18 +215,6 @@ ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002496>
         <http://www.geneontology.org/formats/oboInOwl#id> "existence_starts_during_or_after"^^xsd:string
     
     
-ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002495>
-
-    Annotations: 
-        rdfs:label "immediate transformation of"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "RO:0002495"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#shorthand> "immediate_transformation_of"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#id> "immediate_transformation_of"^^xsd:string
-    
-    SubPropertyOf: 
-        <http://purl.obolibrary.org/obo/robot/test/weaken#transformation_of>
-    
-    
 ObjectProperty: <http://purl.obolibrary.org/obo/BSPO_0000121>
 
     Annotations: 
@@ -237,6 +225,18 @@ ObjectProperty: <http://purl.obolibrary.org/obo/BSPO_0000121>
     
     SubPropertyOf: 
         <http://purl.obolibrary.org/obo/BSPO_0000126>
+    
+    
+ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002495>
+
+    Annotations: 
+        rdfs:label "immediate transformation of"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "RO:0002495"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#shorthand> "immediate_transformation_of"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#id> "immediate_transformation_of"^^xsd:string
+    
+    SubPropertyOf: 
+        <http://purl.obolibrary.org/obo/robot/test/weaken#transformation_of>
     
     
 ObjectProperty: <http://purl.obolibrary.org/obo/RO_0002433>
@@ -669,6 +669,9 @@ Class: <http://purl.obolibrary.org/obo/UBERON_0013701>
         <http://purl.obolibrary.org/obo/UBERON_0000475>
     
     
+Class: <http://purl.obolibrary.org/obo/UBERON_0001981>
+
+    
 Class: <http://purl.obolibrary.org/obo/UBERON_0013702>
 
     Annotations: 
@@ -683,9 +686,6 @@ Class: <http://purl.obolibrary.org/obo/UBERON_0013702>
         <http://purl.obolibrary.org/obo/UBERON_0000475>,
         <http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/UBERON_0013701>
     
-    
-Class: <http://purl.obolibrary.org/obo/UBERON_0001981>
-
     
 Class: <http://purl.obolibrary.org/obo/UBERON_0005178>
 
@@ -875,27 +875,14 @@ Class: <http://purl.obolibrary.org/obo/UBERON_0002082>
 Class: <http://purl.obolibrary.org/obo/UBERON_0006984>
 
     
-Class: <http://purl.obolibrary.org/obo/UBERON_0016509>
-
-    Annotations: 
-        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "FMA:9291"^^xsd:string,
-        rdfs:label "cavity of right ventricle"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#id> "UBERON:0016509"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "EMAPA:26047"^^xsd:string
-    
-    EquivalentTo: 
-        <http://purl.obolibrary.org/obo/UBERON_0002553>
-         and (<http://purl.obolibrary.org/obo/RO_0002572> some <http://purl.obolibrary.org/obo/UBERON_0002080>)
-    
-    
 Class: <http://purl.obolibrary.org/obo/UBERON_0002080>
 
     Annotations: 
         <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "EHDAA2:0000196"^^xsd:string,
         <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "MA:0000093"^^xsd:string,
         <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "VHOG:0000717"^^xsd:string,
-        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "FMA:7098"^^xsd:string,
         <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "OpenCyc:Mx4rRMlc0KgNEdudWQACs5b6Bw"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "FMA:7098"^^xsd:string,
         <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "UMLS:C0225883"^^xsd:string,
         <http://www.geneontology.org/formats/oboInOwl#id> "UBERON:0002080"^^xsd:string,
         <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "EMAPA:17340"^^xsd:string,
@@ -919,6 +906,22 @@ Class: <http://purl.obolibrary.org/obo/UBERON_0002080>
         <http://purl.obolibrary.org/obo/BSPO_0000121> some <http://purl.obolibrary.org/obo/UBERON_0000948>,
         <http://purl.obolibrary.org/obo/RO_0002202> some <http://purl.obolibrary.org/obo/UBERON_0009889>,
         <http://purl.obolibrary.org/obo/UBERON_0002082>
+    
+    
+Class: <http://purl.obolibrary.org/obo/UBERON_0016509>
+
+    Annotations: 
+        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "FMA:9291"^^xsd:string,
+        rdfs:label "cavity of right ventricle"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#id> "UBERON:0016509"^^xsd:string,
+        <http://www.geneontology.org/formats/oboInOwl#hasDbXref> "EMAPA:26047"^^xsd:string
+    
+    EquivalentTo: 
+        <http://purl.obolibrary.org/obo/UBERON_0002553>
+         and (<http://purl.obolibrary.org/obo/RO_0002572> some <http://purl.obolibrary.org/obo/UBERON_0002080>)
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/RO_0002572> some <http://purl.obolibrary.org/obo/UBERON_0002080>
     
     
 Class: <http://purl.obolibrary.org/obo/UBERON_0004706>
