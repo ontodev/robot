@@ -20,7 +20,7 @@ public class ExtractCommand implements Command {
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(CatalogXmlIRIMapper.class);
+        LoggerFactory.getLogger(ExtractCommand.class);
 
     /**
      * Store the command-line options for the command.
