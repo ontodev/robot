@@ -253,14 +253,17 @@ public class CommandLineHelper {
      * for saving data.
      *
      * @param line the command line to use
-     * @return the File for output; may not exist!
+     * @return the File for output; may be null; may not exist!
      * @throws IllegalArgumentException if required options are not found
      */
     public static File getOutputFile(CommandLine line)
             throws IllegalArgumentException {
-        String outputPath = getRequiredValue(
-                line, "output", "The output file must be specified.");
-        return new File(outputPath);
+        String outputPath = getOptionalValue(line, "output");
+        File outputFile = null;
+        if(outputPath != null) {
+            outputFile = new File(outputPath);
+        }
+        return outputFile;
     }
 
     /**
