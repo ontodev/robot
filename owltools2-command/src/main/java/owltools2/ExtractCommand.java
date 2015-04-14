@@ -117,7 +117,7 @@ public class ExtractCommand implements Command {
         }
 
         IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-        if(outputIRI == null) {
+        if (outputIRI == null) {
             outputIRI = inputOntology.getOntologyID().getOntologyIRI();
         }
 

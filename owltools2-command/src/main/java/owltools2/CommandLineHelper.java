@@ -260,7 +260,7 @@ public class CommandLineHelper {
             throws IllegalArgumentException {
         String outputPath = getOptionalValue(line, "output");
         File outputFile = null;
-        if(outputPath != null) {
+        if (outputPath != null) {
             outputFile = new File(outputPath);
         }
         return outputFile;
