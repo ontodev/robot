@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
@@ -115,10 +116,15 @@ public class ExtractCommand implements Command {
             inputOntology = CommandLineHelper.getInputOntology(ioHelper, line);
         }
 
+        IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+        if(outputIRI == null) {
+            outputIRI = inputOntology.getOntologyID().getOntologyIRI();
+        }
+
         outputOntology = ExtractOperation.extract(
                 inputOntology,
                 CommandLineHelper.getTerms(ioHelper, line),
-                CommandLineHelper.getOutputIRI(line),
+                outputIRI,
                 null);
 
         File outputFile = CommandLineHelper.getOutputFile(line);
