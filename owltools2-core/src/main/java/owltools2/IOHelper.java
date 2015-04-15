@@ -3,20 +3,27 @@ package owltools2;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonObject;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /**
  * Provides convenience methods for working with ontology and term files.
@@ -265,6 +272,105 @@ public class IOHelper {
     public Set<IRI> loadTerms(File file) throws IOException {
         String content = new Scanner(file).useDelimiter("\\Z").next();
         return parseTerms(content);
+    }
+
+    /**
+     * Load a map of prefixes from "@context" of the default JSON-LD file.
+     *
+     * @return a map from prefix name strings to prefix IRI strings
+     * @throws IOException on any problem
+     */
+    public Map<String, String> loadContext() throws IOException {
+        String path = "/obo_context.jsonld";
+        return loadContext(this.getClass().getResource(path).getFile());
+    }
+
+    /**
+     * Load a map of prefixes from the "@context" of a JSON-LD file
+     * at the given path.
+     *
+     * @param path the path to the JSON-LD file
+     * @return a map from prefix name strings to prefix IRI strings
+     * @throws IOException on any problem
+     */
+    public Map<String, String> loadContext(String path) throws IOException {
+        return loadContext(new File(path));
+    }
+
+    /**
+     * Load a map of prefixes from the "@context" of a JSON-LD file.
+     *
+     * @param file the JSON-LD file
+     * @return a map from prefix name strings to prefix IRI strings
+     * @throws IOException on any problem
+     */
+    public Map<String, String> loadContext(File file) throws IOException {
+        String content = new Scanner(file).useDelimiter("\\Z").next();
+        return parseContext(content);
+    }
+
+    /**
+     * Load a map of prefixes from the "@context" of a JSON-LD string.
+     *
+     * @param json the JSON-LD string
+     * @return a map from prefix name strings to prefix IRI strings
+     */
+    public Map<String, String> parseContext(String json) {
+        JsonObject root = new JsonParser().parse(json).getAsJsonObject();
+        JsonObject context = root.get("@context").getAsJsonObject();
+
+        Map<String, String> prefixes = new HashMap<String, String>();
+        for (Map.Entry<String, JsonElement> entry: context.entrySet()) {
+            prefixes.put(entry.getKey(), entry.getValue().getAsString());
+        }
+
+        return prefixes;
+    }
+
+    /**
+     * Make an OWLAPI PrefixManager from a map of prefixes.
+     *
+     * @param prefixes a map from prefix name strings to prefix IRI strings
+     * @return a PrefixManager
+     */
+    public PrefixManager makePrefixManager(Map<String, String> prefixes) {
+        DefaultPrefixManager pm = new DefaultPrefixManager();
+        for (Map.Entry<String, String> entry: prefixes.entrySet()) {
+            pm.setPrefix(entry.getKey() + ":", entry.getValue());
+        }
+        return pm;
+    }
+
+    /**
+     * Load an OWLAPI PrefixManager from the default JSON-LD file.
+     *
+     * @return a PrefixManager
+     * @throws IOException on any problem
+     */
+    public PrefixManager loadPrefixManager() throws IOException {
+        return makePrefixManager(loadContext());
+    }
+
+    /**
+     * Load an OWLAPI PrefixManager from the given JSON-LD file path.
+     *
+     * @param path to the JSON-LD file
+     * @return a PrefixManager
+     * @throws IOException on any problem
+     */
+    public PrefixManager loadPrefixManager(String path) throws IOException {
+        return makePrefixManager(loadContext(path));
+    }
+
+    /**
+     * Load an OWLAPI PrefixManager from the given JSON-LD file.
+     *
+     * @param file the JSON-LD file
+     * @return a PrefixManager
+     * @throws IOException on any problem
+     */
+    public PrefixManager loadPrefixManager(File file) throws IOException {
+        return makePrefixManager(loadContext(file));
     }
 
 }

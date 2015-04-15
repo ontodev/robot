@@ -10,4 +10,12 @@
     <artifactId>owltools2-core</artifactId>
     <name>owltools2-core</name>
     <description>Core library for experimental new version of OWLTools</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+    </dependencies>
 </project>
