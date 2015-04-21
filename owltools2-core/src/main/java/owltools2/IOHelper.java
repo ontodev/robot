@@ -13,9 +13,9 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonObject;
+import com.github.jsonldjava.core.Context;
+import com.github.jsonldjava.core.JsonLdError;
+import com.github.jsonldjava.utils.JsonUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -314,16 +314,20 @@ public class IOHelper {
      *
      * @param json the JSON-LD string
      * @return a map from prefix name strings to prefix IRI strings
+     * @throws IOException on any problem
      */
-    public Map<String, String> parseContext(String json) {
-        JsonObject root = new JsonParser().parse(json).getAsJsonObject();
-        JsonObject context = root.get("@context").getAsJsonObject();
-
+    public Map<String, String> parseContext(String json) throws IOException {
         Map<String, String> prefixes = new HashMap<String, String>();
-        for (Map.Entry<String, JsonElement> entry: context.entrySet()) {
-            prefixes.put(entry.getKey(), entry.getValue().getAsString());
+        try {
+            Object context = JsonUtils.fromString(json);
+            if (context instanceof Map
+                && ((Map<String, Object>) context).containsKey("@context")) {
+                context = ((Map<String, Object>) context).get("@context");
+            }
+            prefixes = new Context().parse(context).getPrefixes(false);
+        } catch (Exception e) {
+            throw new IOException(e);
         }
-
         return prefixes;
     }
 
