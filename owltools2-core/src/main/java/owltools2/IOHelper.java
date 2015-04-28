@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.core.Context;
-import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.utils.JsonUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -36,6 +35,74 @@ public class IOHelper {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(IOHelper.class);
+
+    /**
+     * Store the currently loaded prefixes.
+     */
+    private Map<String, String> prefixes = new HashMap<String, String>();
+
+    /**
+     * Create a new IOHelper with the default prefixes.
+     */
+    public IOHelper() {
+        try {
+            setPrefixes(loadContext());
+        } catch (IOException e) {
+            logger.warn("Could not load default prefixes.");
+        }
+    }
+
+    /**
+     * Create a new IOHelper with or without the default prefixes.
+     *
+     * @param defaults false if defaults should not be used
+     */
+    public IOHelper(boolean defaults) {
+        try {
+            if (defaults) {
+                setPrefixes(loadContext());
+            } else {
+                setPrefixes(null);
+            }
+        } catch (IOException e) {
+            logger.warn("Could not load default prefixes.");
+        }
+    }
+
+    /**
+     * Create a new IOHelper with the specified prefixes.
+     *
+     * @param map the prefixes to use
+     */
+    public IOHelper(Map<String, String> map) {
+        setPrefixes(map);
+    }
+
+    /**
+     * Create a new IOHelper with prefixes from a file path.
+     *
+     * @param path to a JSON-LD file with a @context
+     */
+    public IOHelper(String path) {
+        try {
+            setPrefixes(loadContext(path));
+        } catch (IOException e) {
+            logger.warn("Could not load default prefixes from " + path);
+        }
+    }
+
+    /**
+     * Create a new IOHelper with prefixes from a file.
+     *
+     * @param file a JSON-LD file with a @context
+     */
+    public IOHelper(File file) {
+        try {
+            setPrefixes(loadContext(file));
+        } catch (IOException e) {
+            logger.warn("Could not load prefixes from " + file);
+        }
+    }
 
     /**
      * Try to guess the location of the catalog.xml file.
@@ -216,6 +283,9 @@ public class IOHelper {
         List<String> lines = Arrays.asList(
                 input.replaceAll("\\r", "").split("\\n"));
         for (String line: lines) {
+            if (line.trim().startsWith("#")) {
+                continue;
+            }
             String result = line.replaceFirst("($|\\s)#.*$", "").trim();
             if (!result.isEmpty()) {
                 results.add(result);
@@ -234,8 +304,13 @@ public class IOHelper {
     public Set<IRI> createIRIs(Set<String> terms)
             throws IllegalArgumentException {
         Set<IRI> iris = new HashSet<IRI>();
+        PrefixManager prefixManager = getPrefixManager();
         for (String term: terms) {
-            iris.add(IRI.create(term));
+            try {
+                iris.add(prefixManager.getIRI(term));
+            } catch (Exception e) {
+                iris.add(IRI.create(term));
+            }
         }
         return iris;
     }
@@ -280,9 +355,9 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public Map<String, String> loadContext() throws IOException {
+    public static Map<String, String> loadContext() throws IOException {
         String path = "/obo_context.jsonld";
-        return loadContext(this.getClass().getResource(path).getFile());
+        return loadContext(IOHelper.class.getResource(path).getFile());
     }
 
     /**
@@ -293,7 +368,8 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public Map<String, String> loadContext(String path) throws IOException {
+    public static Map<String, String> loadContext(String path)
+            throws IOException {
         return loadContext(new File(path));
     }
 
@@ -304,7 +380,8 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public Map<String, String> loadContext(File file) throws IOException {
+    public static Map<String, String> loadContext(File file)
+            throws IOException {
         String content = new Scanner(file).useDelimiter("\\Z").next();
         return parseContext(content);
     }
@@ -316,7 +393,8 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public Map<String, String> parseContext(String json) throws IOException {
+    public static Map<String, String> parseContext(String json)
+            throws IOException {
         Map<String, String> prefixes = new HashMap<String, String>();
         try {
             Object context = JsonUtils.fromString(json);
@@ -337,7 +415,8 @@ public class IOHelper {
      * @param prefixes a map from prefix name strings to prefix IRI strings
      * @return a PrefixManager
      */
-    public PrefixManager makePrefixManager(Map<String, String> prefixes) {
+    public static PrefixManager makePrefixManager(
+            Map<String, String> prefixes) {
         DefaultPrefixManager pm = new DefaultPrefixManager();
         for (Map.Entry<String, String> entry: prefixes.entrySet()) {
             pm.setPrefix(entry.getKey() + ":", entry.getValue());
@@ -351,7 +430,7 @@ public class IOHelper {
      * @return a PrefixManager
      * @throws IOException on any problem
      */
-    public PrefixManager loadPrefixManager() throws IOException {
+    public static PrefixManager loadPrefixManager() throws IOException {
         return makePrefixManager(loadContext());
     }
 
@@ -362,7 +441,8 @@ public class IOHelper {
      * @return a PrefixManager
      * @throws IOException on any problem
      */
-    public PrefixManager loadPrefixManager(String path) throws IOException {
+    public static PrefixManager loadPrefixManager(String path)
+            throws IOException {
         return makePrefixManager(loadContext(path));
     }
 
@@ -373,8 +453,65 @@ public class IOHelper {
      * @return a PrefixManager
      * @throws IOException on any problem
      */
-    public PrefixManager loadPrefixManager(File file) throws IOException {
+    public static PrefixManager loadPrefixManager(File file)
+            throws IOException {
         return makePrefixManager(loadContext(file));
+    }
+
+    /**
+     * Get a prefix manager with the current prefixes.
+     *
+     * @return a new PrefixManager
+     */
+    public PrefixManager getPrefixManager() {
+        return makePrefixManager(prefixes);
+    }
+
+    /**
+     * Add a prefix mapping as a single string "foo: http://example.com#".
+     *
+     * @param combined both prefix and target
+     * @throws IllegalArgumentException on malformed input
+     */
+    public void addPrefix(String combined) throws IllegalArgumentException {
+        String[] results = combined.split(":", 2);
+        if (results.length < 2) {
+            throw new IllegalArgumentException(
+                    "Invalid prefix string: " + combined);
+        }
+        addPrefix(results[0], results[1]);
+    }
+
+    /**
+     * Add a prefix mapping as a prefix string and target string.
+     *
+     * @param prefix the short prefix to add; should not include ":"
+     * @param target the IRI string that is the target of the prefix
+     */
+    public void addPrefix(String prefix, String target) {
+        prefixes.put(prefix.trim(), target.trim());
+    }
+
+    /**
+     * Get a copy of the current prefix map.
+     *
+     * @return a copy of the current prefix map
+     */
+    public Map<String, String> getPrefixes() {
+        return new HashMap<String, String>(prefixes);
+    }
+
+    /**
+     * Set the current prefix map.
+     *
+     * @param map the new map of prefixes to use
+     */
+    public void setPrefixes(Map<String, String> map) {
+        if (map != null) {
+            prefixes = new HashMap<String, String>(map);
+        } else {
+            prefixes = new HashMap<String, String>();
+        }
     }
 
 }
