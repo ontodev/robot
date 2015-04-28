@@ -46,6 +46,13 @@ public class IOHelperTest {
         expected.put("foo", "http://example.com#");
         assertEquals("Check no prefixes", expected, ioh.getPrefixes());
 
+        String json = "{\n"
+                    + "  \"@context\" : {\n"
+                    + "    \"foo\" : \"http://example.com#\"\n"
+                    + "  }\n"
+                    + "}";
+        assertEquals("Check JSON-LD", json, ioh.getJSONLDContextString());
+
         ioh.addPrefix("bar: http://example.com#");
         expected.put("bar", "http://example.com#");
         assertEquals("Check no prefixes", expected, ioh.getPrefixes());

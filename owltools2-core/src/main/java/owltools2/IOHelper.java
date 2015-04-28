@@ -1,6 +1,9 @@
 package owltools2;
 
+import java.io.InputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.core.Context;
+import com.github.jsonldjava.core.JsonLdOptions;
+import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -35,6 +40,11 @@ public class IOHelper {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(IOHelper.class);
+
+    /**
+     * Path to default context as a resource.
+     */
+    private static String defaultContextPath = "/obo_context.jsonld";
 
     /**
      * Store the currently loaded prefixes.
@@ -356,8 +366,8 @@ public class IOHelper {
      * @throws IOException on any problem
      */
     public static Map<String, String> loadContext() throws IOException {
-        String path = "/obo_context.jsonld";
-        return loadContext(IOHelper.class.getResource(path).getFile());
+        return loadContext(
+                IOHelper.class.getResourceAsStream(defaultContextPath));
     }
 
     /**
@@ -382,7 +392,19 @@ public class IOHelper {
      */
     public static Map<String, String> loadContext(File file)
             throws IOException {
-        String content = new Scanner(file).useDelimiter("\\Z").next();
+        return loadContext(new FileInputStream(file));
+    }
+
+    /**
+     * Load a map of prefixes from the "@context" of a JSON-LD InputStream.
+     *
+     * @param stream the JSON-LD content as an InputStream
+     * @return a map from prefix name strings to prefix IRI strings
+     * @throws IOException on any problem
+     */
+    public static Map<String, String> loadContext(InputStream stream)
+            throws IOException {
+        String content = new Scanner(stream).useDelimiter("\\Z").next();
         return parseContext(content);
     }
 
@@ -512,6 +534,55 @@ public class IOHelper {
         } else {
             prefixes = new HashMap<String, String>();
         }
+    }
+
+    /**
+     * Return the current prefixes as a JSON-LD Context.
+     *
+     * @return the current JSON-LD Context
+     */
+    public Context getJSONLDContext() {
+        return new Context(new HashMap<String, Object>(getPrefixes()));
+    }
+
+    /**
+     * Return the current prefixes as a JSON-LD string.
+     *
+     * @return the current prefixes as a JSON-LD string
+     * @throws IOException on any error
+     */
+    public String getJSONLDContextString() throws IOException {
+        try {
+            Object compact = JsonLdProcessor.compact(
+                    JsonUtils.fromString("{}"),
+                    new HashMap<String, Object>(getPrefixes()),
+                    new JsonLdOptions());
+            return JsonUtils.toPrettyString(compact);
+        } catch (Exception e) {
+            throw new IOException("JSON-LD could not be generated", e);
+        }
+    }
+
+    /**
+     * Write the current prefixes as a JSON-LD file.
+     *
+     * @param path the path to write the context
+     * @throws IOException on any error
+     */
+    public void saveJSONLDContext(String path) throws IOException {
+        saveJSONLDContext(new File(path));
+    }
+
+    /**
+     * Write the current prefixes as a JSON-LD file.
+     *
+     * @param file the file to write the context
+     * @throws IOException on any error
+     */
+    public void saveJSONLDContext(File file) throws IOException {
+        FileWriter writer = new FileWriter(file);
+        writer.write(getJSONLDContextString());
+        writer.close();
     }
 
 }
