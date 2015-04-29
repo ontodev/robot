@@ -241,7 +241,7 @@ public class CommandManager implements Command {
      * @param description a brief description of the command
      */
     public void printHelpEntry(String name, String description) {
-        System.out.println(String.format(" %-10s %s", name, description));
+        System.out.println(String.format(" %-15s %s", name, description));
     }
 
 }

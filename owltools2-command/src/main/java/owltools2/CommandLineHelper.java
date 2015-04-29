@@ -176,6 +176,23 @@ public class CommandLineHelper {
     }
 
     /**
+     * Get the value of the command-line options with the given name.
+     *
+     * @param line the command line to use
+     * @param name the name of the option to find
+     * @return the option value as a list of strings, maybe empty
+     */
+    public static List<String> getOptionalValues(CommandLine line,
+            String name) {
+        if (line.hasOption(name)) {
+            return new ArrayList<String>(
+                    Arrays.asList(line.getOptionValues(name)));
+        } else {
+            return new ArrayList<String>();
+        }
+    }
+
+    /**
      * Get the value of the command-line option with the given name,
      * or return a default value if the option is not found.
      *
@@ -216,12 +233,25 @@ public class CommandLineHelper {
 
     /**
      * Given a command line, return an initialized IOHelper.
+     * The --prefix, --prefixes, and --noprefixes options are handled.
      *
      * @param line the command line to use
      * @return an initialized IOHelper
      */
     public static IOHelper getIOHelper(CommandLine line) {
-        return new IOHelper();
+        IOHelper ioHelper;
+        String prefixes = getOptionalValue(line, "prefixes");
+        if (prefixes != null) {
+            ioHelper = new IOHelper(prefixes);
+        } else {
+            ioHelper = new IOHelper(!line.hasOption("noprefixes"));
+        }
+
+        for (String prefix: getOptionalValues(line, "prefix")) {
+            ioHelper.addPrefix(prefix);
+        }
+
+        return ioHelper;
     }
 
     /**
@@ -332,10 +362,13 @@ public class CommandLineHelper {
      * @return a new Options object with some options added
      */
     public static Options getCommonOptions() {
-        Options options = new Options();
-        options.addOption("h", "help",    false, "print usage information");
-        options.addOption("v", "version", false, "print version information");
-        return options;
+        Options o = new Options();
+        o.addOption("h", "help",    false, "print usage information");
+        o.addOption("v", "version", false, "print version information");
+        o.addOption("p", "prefix",  true,  "add a prefix 'foo: http://bar'");
+        o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
+        o.addOption("noprefixes", false, "do not use default prefixes");
+        return o;
     }
 
     /**

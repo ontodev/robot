@@ -20,11 +20,11 @@ public class CommandLineInterface {
      * @return the new manager
      */
     private static CommandManager initManager() {
-        // Add more commands as needed
         CommandManager m = new CommandManager();
-        m.addCommand("extract", new ExtractCommand());
-        m.addCommand("diff",    new DiffCommand());
-        m.addCommand("filter",  new FilterCommand());
+        m.addCommand("diff",            new DiffCommand());
+        m.addCommand("export-prefixes", new ExportPrefixesCommand());
+        m.addCommand("extract",         new ExtractCommand());
+        m.addCommand("filter",          new FilterCommand());
         return m;
     }
 
