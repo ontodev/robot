@@ -1,117 +1,28 @@
-# ROBOT Prototype
+# ROBOT is an OBO Tool
 
 [![Build Status](https://travis-ci.org/ontodev/robot-experimental.svg?branch=master)](https://travis-ci.org/ontodev/robot)
 
-This repository contains a number of experiments, with the goal of developing a new suite of tools and techniques for Open Biomedical Ontology development.
-
-NOTE: "robot" is just a placeholder name.
-
-One part of this experiment is "Documentation-Driven Development": imagine a future where the perfect tool exists, write documentation describing it, then write code to make that future vision a reality. WARNING: Even though this documentation is written in the present tense, many of the features described here are not yet implemented!
+ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org). It's still in development!
 
 
 # Usage
 
 This code can be used as:
 
-1. a command-line tool -- for single tasks
-2. a Gradle plugin -- for multiple tasks
-3. a library for any JVM language -- for embedding your own applications
+1. a command-line tool
+2. a library for any JVM language
 
 
 ## 1. Command Line Tool
 
-The command-line tool is packaged a Jar file and can be run via the `robot` shell script. See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands. Currently implemented commands:
+The command-line tool is packaged a Jar file and can be run via the `robot` shell script. We will soon have packaged releases, but for now please follow the "Build" instruction below.
 
-    robot help
-    robot extract --input examples/test.owl --term-file examples/terms.txt --output examples/out.owl --output-iri "http://example.com"
-
-TODO: Install instructions.
-
-Other ideas for commands:
-
-    robot merge --input edit.owl --output merged.owl
-    robot merge -i first.owl -i second.owl --output merged.owl
-    robot reason merged.owl --reasoner elk --output reasoned.owl
-    export BASEIRI="https://github.org/ontodev/robot-experiment/examples/"
-    robot extract --input edit.owl --term-file core.txt \\
-      --output core.owl --output-iri "$BASEIRI/core.owl"
-    robot convert --input example.owl --output example.obo
-    robot diff --left ontology1.owl --right ontology2.owl \\
-      --output report.txt
-    robot check-consistent -i edit.owl
-    robot check-satisfiable -i edit.owl
-    robot check-style -i release.owl
-    robot remove-redundant -i edit.owl
-    robot report --reportdir reports/
-    robot add-ontology-metadata --template template.yaml \\
-      --input before.owl --output after.owl
-    robot add-class-metadata
-    robot update --input uberon.owl --sparql update.rq --overwrite
-    robot convert --input uberon.owl --output uberon.obo --format obo-basic
-    robot strip-axioms --input uberon.owl --output uberon.small.owl \\
-      --properties-file props.txt
-    robot deploy ???
-    robot remove --terms terms.txt --input test.owl --overwrite
-    robot qtt ???
-    robot mireot ???
-    robot relabel --input edit.owl --terms terms.csv --overwrite
-
-Commands can be "chained", with the ouput of the previous command (if any) used as the input for the next command. For example:
-
-    robot reason --input test.owl \
-      check-consistent \
-      add-metadata --input data.yml --output release.owl
-
-Commands can also be run in "parallel", with multiple commands using the **same** input ontology:
-
-    robot parallel --input release.owl \
-      report --reports-dir reports/ \
-      extract --term-file core.txt --output core.owl \
-      extract --term-file classes.txt --output classes.owl
+See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands.
 
 
-## 2. Gradle Plugin
+## 2. Library
 
-[Gradle](http://gradle.org) is a build tool that takes the best features from [Ant](https://ant.apache.org) and [Maven](http://maven.apache.org), and strives for greater usability and power.
-
-Make sure that Gradle is [installed](https://gradle.org/docs/current/userguide/installation.html). (On Mac OS X, [homebrew](http://brew.sh) is convenient: `brew install gradle`.)
-
-Then define a `build.gradle` file like this one:
-
-TODO: I don't think this example is idiomatic Gradle. Suggestions are welcome! The Gradle Java plugin uses a lot of more convention, but I think that ontology projects are too
-
-    plugins {
-      id "robot" version "0.0.1"
-    }
-
-    Reasoner elk = new Reasoner(name: 'ELK')
-    Ontology ontology
-    Ontology reasoned
-
-    task reason (dependsOn: update) << {
-      ontology = loadOntology('foo.owl')
-      reasoned = reasonOntology(ontology, elk)
-      saveOntology(reasoned, 'reasoned.owl')
-    }
-
-    task core (dependsOn: reason) << {
-      Set<String> terms = loadTerms('core.txt')
-      Ontology core = extractOntology(reasoned, terms)
-      saveOntology(core, 'core.owl')
-    }
-
-    task subsets (dependsOn: core)
-
-    task release (dependsOn: [subsets, reports])
-
-Finally, run `gradle build` to execute these commands.
-
-
-## 3. Library
-
-The core operations are written in plain Java code, and can be called from any language that uses the Java Virtual Machine. The command-line tool and Gradle plugin are both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
-
-TODO: Examples of using operations and implementing new operations, in multiple languages: Java, Clojure, Groovy, Scala.
+The core ROBOT operations are written in plain Java code, and can be used from any language that uses the Java Virtual Machine. The command-line tool is both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
 
 
 ### Java
@@ -147,8 +58,8 @@ This will create a self-contained Jar file in `bin/robot.jar`.
 
 Other build options:
 
-- `mvn test` runs JUnit tests with reports in `[module]/target/surefire-reports`
-- `mvn verify` rebuilds the package and runs integration tests against it, with reports in `[module]/target/failsafe-reports`
+- `mvn clean test` runs JUnit tests with reports in `[module]/target/surefire-reports`
+- `mvn clean verify` rebuilds the package and runs integration tests against it, with reports in `[module]/target/failsafe-reports`
 - `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site` and `[module]/target/site`
 
 
@@ -156,7 +67,7 @@ Other build options:
 
 The library provides a set of Operations and a set of Commands. Commands handle the command-line interface and IO tasks, while Operations focus on manipulating ontologies. Sometimes you will have the pair of an Operation and a Command, but there's no necessity for a one-to-one correspondence between them.
 
-Commands implements the Command interface, which requires a `main(String[] args)` method. Each command can be called via `main`, but the CommandLineInterface class provides a single entry point for selecting between all the available commands. While each Command can run independently, there are shared conventions for command-line options such as `--input`, `--terms`, `--output`, etc. These shared conventions are implemented in the CommandLineHelper utility class. There is also an IOHelper class providing convenient methods for loading and saving ontologies and lists of terms. A simple Command will consist of a few CommandLineHelper calls to determine arguments, a few IOHelper calls to load or save files, and one call to the appropriate Operation.
+Commands implement the Command interface, which requires a `main(String[] args)` method. Each command can be called via `main`, but the CommandLineInterface class provides a single entry point for selecting between all the available commands. While each Command can run independently, there are shared conventions for command-line options such as `--input`, `--prefix`, `--output`, etc. These shared conventions are implemented in the CommandLineHelper utility class. There is also an IOHelper class providing convenient methods for loading and saving ontologies and lists of terms. A simple Command will consist of a few CommandLineHelper calls to determine arguments, a few IOHelper calls to load or save files, and one call to the appropriate Operation.
 
 Operations are currently implemented with static methods and no shared interface. They should not contain IO or CLI code.
 
@@ -165,6 +76,5 @@ The current implementation is modular but not pluggable. In particular, the Comm
 
 ## Term Lists
 
-Many Operations require lists of terms. The IOHelper class defines methods for collecting lists of terms from strings and files, and returning a `Set<IRI>`. Our convention is that a term list is a space-separated list of IRIs or CURIEs (not yet implemented!) with optional comments. The "#" character and everything to the end of the line is ignored. Note that a "#" must start the line or be preceded by whitespace -- a "#" inside an IRI does not start a comment.
-
+Many Operations require lists of terms. The IOHelper class defines methods for collecting lists of terms from strings and files, and returning a `Set<IRI>`. Our convention is that a term list is a space-separated list of IRIs or CURIEs with optional comments. The "#" character and everything to the end of the line is ignored. Note that a "#" must start the line or be preceded by whitespace -- a "#" inside an IRI does not start a comment.
 
