@@ -1,6 +1,0 @@
-#!/bin/sh
-
-# If we use a shell script, it will have to be smarter than this.
-
-DIR="$( cd "$( dirname "$0" )" && pwd )"
-exec java -jar "$DIR/owltools2.jar" "$@"

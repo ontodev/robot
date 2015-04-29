@@ -3,19 +3,19 @@
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.bbop</groupId>
-    <artifactId>owltools2</artifactId>
+    <artifactId>robot</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>owltools2</name>
-    <description>Experimental new version of OWLTools</description>
-    <url>https://github.com/ontodev/owltools2-experimental</url>
+    <name>robot</name>
+    <description>ROBOT is an OBO Tool</description>
+    <url>https://github.com/ontodev/robot</url>
 	<inceptionYear>2010</inceptionYear>
 	<scm>
-		<url>https://github.com/ontodev/owltools2-experimental</url>
+		<url>https://github.com/ontodev/robot</url>
 	</scm>
 	<issueManagement>
-        <url>https://github.com/ontodev/owltools2-experimental/issues</url>
+        <url>https://github.com/ontodev/robot/issues</url>
 	</issueManagement>
 
     <properties>
@@ -25,8 +25,8 @@
     </properties>
 
     <modules>
-        <module>owltools2-core</module>
-        <module>owltools2-command</module>
+        <module>robot-core</module>
+        <module>robot-command</module>
     </modules>
 
   <build>

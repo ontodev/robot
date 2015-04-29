@@ -1,2 +1,2 @@
-http://purl.obolibrary.org/obo/BFO_0000050
-http://purl.obolibrary.org/obo/BFO_0000051
+http://purl.obolibrary.org/obo/BFO_0000050 # part of
+http://purl.obolibrary.org/obo/BFO_0000051 # has part

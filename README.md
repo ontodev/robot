@@ -1,10 +1,10 @@
-# OWLTools2 Prototype
+# ROBOT Prototype
 
-[![Build Status](https://travis-ci.org/ontodev/owltools2-experimental.svg?branch=master)](https://travis-ci.org/ontodev/owltools2-experimental)
+[![Build Status](https://travis-ci.org/ontodev/robot-experimental.svg?branch=master)](https://travis-ci.org/ontodev/robot)
 
 This repository contains a number of experiments, with the goal of developing a new suite of tools and techniques for Open Biomedical Ontology development.
 
-NOTE: "owltools2" is just a placeholder name.
+NOTE: "robot" is just a placeholder name.
 
 One part of this experiment is "Documentation-Driven Development": imagine a future where the perfect tool exists, write documentation describing it, then write code to make that future vision a reality. WARNING: Even though this documentation is written in the present tense, many of the features described here are not yet implemented!
 
@@ -20,51 +20,51 @@ This code can be used as:
 
 ## 1. Command Line Tool
 
-The command-line tool is packaged a Jar file and can be run via the `owltools2` shell script. See [examples/README.md](https://github.com/ontodev/owltools2-experimental/tree/master/examples/README.md) for a tutorial with many example commands. Currently implemented commands:
+The command-line tool is packaged a Jar file and can be run via the `robot` shell script. See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands. Currently implemented commands:
 
-    owltools2 help
-    owltools2 extract --input examples/test.owl --term-file examples/terms.txt --output examples/out.owl --output-iri "http://example.com"
+    robot help
+    robot extract --input examples/test.owl --term-file examples/terms.txt --output examples/out.owl --output-iri "http://example.com"
 
 TODO: Install instructions.
 
 Other ideas for commands:
 
-    owltools2 merge --input edit.owl --output merged.owl
-    owltools2 merge -i first.owl -i second.owl --output merged.owl
-    owltools2 reason merged.owl --reasoner elk --output reasoned.owl
-    export BASEIRI="https://github.org/ontodev/owltools2-experiment/examples/"
-    owltools2 extract --input edit.owl --term-file core.txt \\
+    robot merge --input edit.owl --output merged.owl
+    robot merge -i first.owl -i second.owl --output merged.owl
+    robot reason merged.owl --reasoner elk --output reasoned.owl
+    export BASEIRI="https://github.org/ontodev/robot-experiment/examples/"
+    robot extract --input edit.owl --term-file core.txt \\
       --output core.owl --output-iri "$BASEIRI/core.owl"
-    owltools2 convert --input example.owl --output example.obo
-    owltools2 diff --left ontology1.owl --right ontology2.owl \\
+    robot convert --input example.owl --output example.obo
+    robot diff --left ontology1.owl --right ontology2.owl \\
       --output report.txt
-    owltools2 check-consistent -i edit.owl
-    owltools2 check-satisfiable -i edit.owl
-    owltools2 check-style -i release.owl
-    owltools2 remove-redundant -i edit.owl
-    owltools2 report --reportdir reports/
-    owltools2 add-ontology-metadata --template template.yaml \\
+    robot check-consistent -i edit.owl
+    robot check-satisfiable -i edit.owl
+    robot check-style -i release.owl
+    robot remove-redundant -i edit.owl
+    robot report --reportdir reports/
+    robot add-ontology-metadata --template template.yaml \\
       --input before.owl --output after.owl
-    owltools2 add-class-metadata
-    owltools2 update --input uberon.owl --sparql update.rq --overwrite
-    owltools2 convert --input uberon.owl --output uberon.obo --format obo-basic
-    owltools2 strip-axioms --input uberon.owl --output uberon.small.owl \\
+    robot add-class-metadata
+    robot update --input uberon.owl --sparql update.rq --overwrite
+    robot convert --input uberon.owl --output uberon.obo --format obo-basic
+    robot strip-axioms --input uberon.owl --output uberon.small.owl \\
       --properties-file props.txt
-    owltools2 deploy ???
-    owltools2 remove --terms terms.txt --input test.owl --overwrite
-    owltools2 qtt ???
-    owltools2 mireot ???
-    owltools2 relabel --input edit.owl --terms terms.csv --overwrite
+    robot deploy ???
+    robot remove --terms terms.txt --input test.owl --overwrite
+    robot qtt ???
+    robot mireot ???
+    robot relabel --input edit.owl --terms terms.csv --overwrite
 
 Commands can be "chained", with the ouput of the previous command (if any) used as the input for the next command. For example:
 
-    owltools2 reason --input test.owl \
+    robot reason --input test.owl \
       check-consistent \
       add-metadata --input data.yml --output release.owl
 
 Commands can also be run in "parallel", with multiple commands using the **same** input ontology:
 
-    owltools2 parallel --input release.owl \
+    robot parallel --input release.owl \
       report --reports-dir reports/ \
       extract --term-file core.txt --output core.owl \
       extract --term-file classes.txt --output classes.owl
@@ -81,7 +81,7 @@ Then define a `build.gradle` file like this one:
 TODO: I don't think this example is idiomatic Gradle. Suggestions are welcome! The Gradle Java plugin uses a lot of more convention, but I think that ontology projects are too
 
     plugins {
-      id "owltools2" version "0.0.1"
+      id "robot" version "0.0.1"
     }
 
     Reasoner elk = new Reasoner(name: 'ELK')
@@ -143,7 +143,7 @@ We use [Maven](http://maven.apache.org) as our build tool. Make sure it's [insta
 
     mvn clean package
 
-This will create a self-contained Jar file in `bin/owltools2.jar`.
+This will create a self-contained Jar file in `bin/robot.jar`.
 
 Other build options:
 

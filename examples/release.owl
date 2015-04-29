@@ -8,7 +8,7 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
-    <owl:Ontology rdf:about="https://github.com/ontodev/owltools2-experimental/examples/release.owl"/>
+    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/release.owl"/>
     
 
 
@@ -1123,9 +1123,9 @@ boundary_of: http://purl.obolibrary.org/obo/RO_0002000</obo:IAO_0000115>
     
 
 
-    <!-- https://github.com/ontodev/owltools2-experimental/examples/release.owl#junk -->
+    <!-- https://github.com/ontodev/robot/examples/release.owl#junk -->
 
-    <owl:Class rdf:about="https://github.com/ontodev/owltools2-experimental/examples/release.owl#junk">
+    <owl:Class rdf:about="https://github.com/ontodev/robot/examples/release.owl#junk">
         <rdfs:label>Junk</rdfs:label>
     </owl:Class>
 </rdf:RDF>

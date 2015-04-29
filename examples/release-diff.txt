@@ -1,7 +1,7 @@
 0 axioms in Ontology 1 but not in Ontology 2:
 
 14 axioms in Ontology 2 but not in Ontology 1:
-+ AnnotationAssertion(rdfs:label <https://github.com/ontodev/owltools2-experimental/examples/release.owl#junk> "Junk")
++ AnnotationAssertion(rdfs:label <https://github.com/ontodev/robot/examples/release.owl#junk> "Junk")
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasAlternativeId>))
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym>))
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasDbXref>))
@@ -14,4 +14,4 @@
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#is_metadata_tag>))
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#shorthand>))
 + Declaration(AnnotationProperty(<http://xmlns.com/foaf/0.1/depicted_by>))
-+ Declaration(Class(<https://github.com/ontodev/owltools2-experimental/examples/release.owl#junk>))
++ Declaration(Class(<https://github.com/ontodev/robot/examples/release.owl#junk>))
