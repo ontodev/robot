@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.bbop</groupId>
     <artifactId>robot</artifactId>
@@ -10,13 +10,13 @@
     <name>robot</name>
     <description>ROBOT is an OBO Tool</description>
     <url>https://github.com/ontodev/robot</url>
-	<inceptionYear>2010</inceptionYear>
-	<scm>
-		<url>https://github.com/ontodev/robot</url>
-	</scm>
-	<issueManagement>
+    <inceptionYear>2015</inceptionYear>
+    <scm>
+        <url>https://github.com/ontodev/robot</url>
+    </scm>
+    <issueManagement>
         <url>https://github.com/ontodev/robot/issues</url>
-	</issueManagement>
+    </issueManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,17 +29,17 @@
         <module>robot-command</module>
     </modules>
 
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>${maven-deploy-plugin-version}</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven-deploy-plugin-version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
     <dependencies>
         <dependency>
@@ -54,13 +54,8 @@
         </dependency>
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-api</artifactId>
-            <version>3.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-apibinding</artifactId>
-            <version>3.5.1</version>
+            <artifactId>owlapi-distribution</artifactId>
+            <version>3.5.2</version>
         </dependency>
     </dependencies>
 

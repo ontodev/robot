@@ -23,10 +23,15 @@ public class FilterOperationTest {
     /**
      * Base IRI string for resources files.
      */
-    private String base = "https://github.com/"
-                        + "ontodev/robot/"
-                        + "robot-core/"
-                        + "src/test/resources/";
+    private static String base = "https://github.com/"
+                               + "ontodev/robot/"
+                               + "robot-core/"
+                               + "src/test/resources/";
+
+    /**
+     * IRI of simple ontology.
+     */
+    private static IRI simpleIRI = IRI.create(base + "simple.owl");
 
     /**
      * Very simple ontology for testing.
@@ -64,8 +69,8 @@ public class FilterOperationTest {
     public void testFilterNothing()
             throws IOException, OWLOntologyCreationException {
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
-        OWLOntology filtered = FilterOperation.filter(simple, properties,
-                simple.getOntologyID().getOntologyIRI());
+        OWLOntology filtered = FilterOperation.filter(
+                simple, properties, simpleIRI);
 
         StringWriter writer = new StringWriter();
         boolean actual = DiffOperation.compare(simple, filtered, writer);
@@ -86,8 +91,8 @@ public class FilterOperationTest {
     public void testRemoveParts()
             throws IOException, OWLOntologyCreationException {
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
-        OWLOntology filtered = FilterOperation.filter(simpleParts, properties,
-                simple.getOntologyID().getOntologyIRI());
+        OWLOntology filtered = FilterOperation.filter(
+                simpleParts, properties, simpleIRI);
 
         StringWriter writer = new StringWriter();
         boolean actual = DiffOperation.compare(simple, filtered, writer);
@@ -113,8 +118,8 @@ public class FilterOperationTest {
         properties.add(
             df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of")));
 
-        OWLOntology filtered = FilterOperation.filter(simpleParts, properties,
-                simple.getOntologyID().getOntologyIRI());
+        OWLOntology filtered = FilterOperation.filter(
+                simpleParts, properties, simpleIRI);
 
         StringWriter writer = new StringWriter();
         boolean actual = DiffOperation.compare(simpleParts, filtered, writer);

@@ -11,8 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 
@@ -55,17 +53,13 @@ public class OntologyHelperTest {
         IRI iri = IRI.create(base + "simple.owl#test1");
         OWLDataFactory df =
             simple.getOWLOntologyManager().getOWLDataFactory();
-        OWLClass test1 = df.getOWLClass(iri);
-        Set<OWLAnnotation> annotations =
-            test1.getAnnotations(simple, df.getRDFSLabel());
+        Set<String> actual = OntologyHelper.getAnnotationStrings(
+                simple, df.getRDFSLabel(), iri);
 
         Set<String> expected = new HashSet<String>();
         expected.add("Test 1");
         expected.add("test one");
-        Set<String> actual = OntologyHelper.getValues(annotations);
         assertEquals(expected, actual);
-
-        assertEquals("Test 1", OntologyHelper.getValue(annotations));
     }
 
     /**
