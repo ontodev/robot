@@ -68,7 +68,7 @@ The reuse of ontology terms creates links between data, making the ontology and 
 
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using [ELK](https://code.google.com/p/elk-reasoner/), a very fast reasoner that supports the EL subset of OWL 2.
 
-    TODO robot reason --reasoner ELK --input edit.owl \
+    robot reason --reasoner ELK --input edit.owl \
       --output results/reasoned.owl
 
 
