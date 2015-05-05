@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import org.junit.Before;
 import org.junit.Test;
 
 import org.semanticweb.owlapi.model.IRI;
