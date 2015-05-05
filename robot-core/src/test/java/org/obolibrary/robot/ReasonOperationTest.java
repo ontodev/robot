@@ -1,6 +1,8 @@
 package org.obolibrary.robot;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -59,6 +61,30 @@ public class ReasonOperationTest extends CoreTest {
         OWLOntology actual = ReasonOperation.reason(
                 simple, reasonerFactory, simpleIRI);
         assertIdentical("/simple_hermit.owl", actual);
+    }
+
+    /**
+     * Test removing redundant subclass axioms.
+     *
+     * @throws IOException on file problem
+     * @throws OWLOntologyCreationException on ontology problem
+     */
+    @Test
+    public void testRemoveRedundantSubClassAxioms()
+            throws IOException, OWLOntologyCreationException {
+        OWLOntology input = loadOntology("/redundant_subclasses.owl");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .elk.owlapi.ElkReasonerFactory();
+        OWLOntology redundant = ReasonOperation.reason(
+                input, reasonerFactory, simpleIRI, null);
+        assertIdentical("/redundant_subclasses.owl", redundant);
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("remove-redundant-subclass-axioms", "true");
+
+        OWLOntology withoutRedundant = ReasonOperation.reason(
+                input, reasonerFactory, simpleIRI, options);
+        assertIdentical("/without_redundant_subclasses.owl", withoutRedundant);
     }
 
 }

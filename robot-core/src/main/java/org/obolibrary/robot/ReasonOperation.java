@@ -1,7 +1,11 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +18,7 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -35,8 +40,79 @@ public class ReasonOperation {
         LoggerFactory.getLogger(ReasonOperation.class);
 
     /**
-     * Given an ontology and the name of a reasoner,
-     * return a new ontology with all asserted and inferred axioms.
+     * Given a map of options and a key name,
+     * return the value, or null if it is not specified.
+     *
+     * @param options a map of options
+     * @param key the name of the option to get
+     * @return the value, if set, otherwise null
+     */
+    private static String getOption(Map<String, String> options,
+            String key) {
+        return getOption(options, key, null);
+    }
+
+    /**
+     * Given a map of options, a key name, and a default value,
+     * if the map contains the key, return its value,
+     * otherwise return the default value.
+     *
+     * @param options a map of options
+     * @param key the name of the option to get
+     * @param defaultValue the value to return if the key is not set
+     * @return the value, if set, otherwise the default value
+     */
+    private static String getOption(Map<String, String> options,
+            String key, String defaultValue) {
+        if (options == null) {
+            return defaultValue;
+        }
+        if (!options.containsKey(key)) {
+            return defaultValue;
+        }
+        return options.get(key);
+    }
+
+    /**
+     * Given a map of options and a key name,
+     * return true if the value is "true" or "yes",
+     * otherwise return false.
+     *
+     * @param options a map of options
+     * @param key the name of the option to get
+     * @return true if the value is "true" or "yes", false otherwise
+     */
+    private static boolean optionIsTrue(Map<String, String> options,
+            String key) {
+        String value = getOption(options, key);
+        if (value == null) {
+            return false;
+        }
+
+        value = value.trim().toLowerCase();
+        if (value.equals("true") || value.equals("yes")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Return a map from option name to default option value,
+     * for all the available reasoner options.
+     *
+     * @return a map with default values for all available options
+     */
+    public static Map<String, String> getDefaultOptions() {
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("remove-redundant-subclass-axioms", "true");
+        return options;
+    }
+
+    /**
+     * Given an ontology, the name of a reasoner, and an output IRI,
+     * return a new ontology with all asserted and inferred axioms,
+     * using the default reasoner options.
      * The input ontology is copied, not modified.
      *
      * @param inputOntology the ontology to reason over
@@ -46,11 +122,33 @@ public class ReasonOperation {
      * @throws OWLOntologyCreationException on any OWLAPI problem
      */
     public static OWLOntology reason(OWLOntology inputOntology,
-            OWLReasonerFactory reasonerFactory, IRI outputIRI)
+            OWLReasonerFactory reasonerFactory,
+            IRI outputIRI)
             throws OWLOntologyCreationException {
-        logger.info("Input ontology has "
-                    + inputOntology.getAxioms().size()
-                    + " axioms.");
+        return reason(inputOntology, reasonerFactory, outputIRI,
+                getDefaultOptions());
+    }
+
+    /**
+     * Given an ontology, the name of a reasoner, an output IRI,
+     * and an optional map of reasoner options,
+     * return a new ontology with all asserted and inferred axioms.
+     * The input ontology is copied, not modified.
+     *
+     * @param inputOntology the ontology to reason over
+     * @param reasonerFactory the factory to create a reasoner instance from
+     * @param outputIRI the IRI of the merged ontology
+     * @param options a map of option strings, or null
+     * @return the new ontology
+     * @throws OWLOntologyCreationException on any OWLAPI problem
+     */
+    public static OWLOntology reason(OWLOntology inputOntology,
+            OWLReasonerFactory reasonerFactory,
+            IRI outputIRI,
+            Map<String, String> options)
+            throws OWLOntologyCreationException {
+        logger.info("Input ontology has {} axioms.",
+                    inputOntology.getAxioms().size());
         logger.info("Starting reasoning...");
 
         int seconds;
@@ -74,9 +172,8 @@ public class ReasonOperation {
         Node<OWLClass> unsatisfiableClasses =
             reasoner.getUnsatisfiableClasses();
         if (unsatisfiableClasses.getSize() > 1) {
-            logger.info("There are "
-                    + unsatisfiableClasses.getSize()
-                    + " unsatisfiable classes in the ontology: ");
+            logger.info("There are {} unsatisfiable classes in the ontology.",
+                        unsatisfiableClasses.getSize());
             for (OWLClass cls : unsatisfiableClasses) {
                 if (!cls.isOWLNothing()) {
                     logger.info("    unsatisfiable: " + cls.getIRI());
@@ -97,19 +194,82 @@ public class ReasonOperation {
 
         elapsedTime = System.currentTimeMillis() - startTime;
         seconds = (int) Math.ceil(elapsedTime / 1000);
-        logger.info("Reasoning took " + seconds + " seconds.");
+        logger.info("Reasoning took {} seconds.", seconds);
 
         startTime = System.currentTimeMillis();
         generator.fillOntology(manager, reasoned);
 
-        logger.info("Reasoned ontology has "
-                    + reasoned.getAxioms().size()
-                    + " axioms.");
+        logger.info("Reasoned ontology has {} axioms.",
+                    reasoned.getAxioms().size());
+
+        if (optionIsTrue(options, "remove-redundant-subclass-axioms")) {
+            removeRedundantSubClassAxioms(reasoner);
+        }
 
         elapsedTime = System.currentTimeMillis() - startTime;
         seconds = (int) Math.ceil(elapsedTime / 1000);
-        logger.info("Filling took " + seconds + " seconds.");
+        logger.info("Filling took {} seconds.", seconds);
         return reasoned;
+    }
+
+    /**
+     * Remove subClassAxioms where there is a more direct axiom,
+     * and the subClassAxiom does not have any annotations.
+     *
+     * Example: genotyping assay
+     * - asserted in dev: assay
+     * - inferred by reasoner: analyte assay
+     * - asserted after fill: assay, analyte assay
+     * - asserted after removeRedundantSubClassAxioms: analyte assay
+     *
+     * @param reasoner an OWL reasoner, initialized with a root ontology;
+     *   the ontology will be modified
+     */
+    public static void removeRedundantSubClassAxioms(OWLReasoner reasoner) {
+        logger.info("Removing redundant subclass axioms...");
+        OWLOntology ontology = reasoner.getRootOntology();
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+        for (OWLClass thisClass: ontology.getClassesInSignature()) {
+            if (thisClass.isOWLNothing() || thisClass.isOWLThing()) {
+                continue;
+            }
+
+            // Use the reasoner to get all
+            // the direct superclasses of this class.
+            Set<OWLClass> inferredSuperClasses = new HashSet<OWLClass>();
+            for (Node<OWLClass> node
+                    : reasoner.getSuperClasses(thisClass, true)) {
+                for (OWLClass inferredSuperClass: node) {
+                    inferredSuperClasses.add(inferredSuperClass);
+                }
+            }
+
+            // For each subClassAxiom,
+            // if the subclass axiom does not have any annotations,
+            // and the superclass is named (not anonymous),
+            // and the superclass is not in the set of inferred super classes,
+            // then remove that axiom.
+            for (OWLSubClassOfAxiom subClassAxiom
+                    : ontology.getSubClassAxiomsForSubClass(thisClass)) {
+                if (subClassAxiom.getAnnotations().size() > 0) {
+                    continue;
+                }
+                if (subClassAxiom.getSuperClass().isAnonymous()) {
+                    continue;
+                }
+                OWLClass assertedSuperClass =
+                    subClassAxiom.getSuperClass().asOWLClass();
+                if (inferredSuperClasses.contains(assertedSuperClass)) {
+                    continue;
+                }
+                manager.removeAxiom(ontology,
+                        dataFactory.getOWLSubClassOfAxiom(
+                            thisClass, assertedSuperClass));
+            }
+        }
+        logger.info("Ontology now has {} axioms.", ontology.getAxioms().size());
     }
 
 }

@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,8 @@ public class ReasonCommand implements Command {
     public ReasonCommand() {
         Options o = CommandLineHelper.getCommonOptions();
         o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT)");
+        o.addOption("s", "remove-redundant-subclass-axioms",
+                true, "remove redundant subclass axioms");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");
@@ -65,8 +68,8 @@ public class ReasonCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot filter --input <file> --input <file>"
-             + "--output <file> --output-iri <iri>";
+        return "robot reason --input <file> --reasoner <name>"
+             + "[options] --output <file> --output-iri <iri>";
     }
 
     /**
@@ -136,8 +139,17 @@ public class ReasonCommand implements Command {
             outputIRI = inputOntology.getOntologyID().getOntologyIRI();
         }
 
+        // Override default reasoner options with command-line options
+        Map<String, String> reasonerOptions =
+            ReasonOperation.getDefaultOptions();
+        for (String option: reasonerOptions.keySet()) {
+            if (line.hasOption(option)) {
+                reasonerOptions.put(option, line.getOptionValue(option));
+            }
+        }
+
         outputOntology = ReasonOperation.reason(
-                inputOntology, reasonerFactory, outputIRI);
+                inputOntology, reasonerFactory, outputIRI, reasonerOptions);
 
         File outputFile = CommandLineHelper.getOutputFile(line);
         if (outputFile != null) {
