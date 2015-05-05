@@ -68,8 +68,7 @@ public class FilterCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot filter --input-file <file> "
-             + "--term-file <file> --output <file>";
+        return "robot filter --input <file> --term-file <file> --output <file>";
     }
 
     /**

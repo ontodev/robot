@@ -65,7 +65,7 @@ public class ExtractCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot extract --input-file <file> "
+        return "robot extract --input <file> "
              + "--term-file <file> --output <file>";
     }
 
