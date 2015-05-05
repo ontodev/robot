@@ -18,32 +18,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 /**
  * Tests for {@link DiffOperation}.
  */
-public class DiffOperationTest {
-    /**
-     * Base IRI string for resources files.
-     */
-    private String base = "https://github.com/"
-                        + "ontodev/robot/"
-                        + "robot-core/"
-                        + "src/test/resources/";
-
-    /**
-     * Very simple ontology for testing.
-     */
-    private OWLOntology simple;
-
-    /**
-     * Load ontologies for testing.
-     *
-     * @throws IOException on file problems
-     */
-    @Before
-    public void loadOntologies() throws IOException {
-        IOHelper ioh = new IOHelper();
-        simple = ioh.loadOntology(
-                this.getClass().getResource("/simple.owl").getFile());
-    }
-
+public class DiffOperationTest extends CoreTest {
     /**
      * Compare one ontology to itself.
      *
@@ -51,11 +26,8 @@ public class DiffOperationTest {
      */
     @Test
     public void testCompareIdentical() throws IOException {
-        StringWriter writer = new StringWriter();
-        boolean actual = DiffOperation.compare(simple, simple, writer);
-        System.out.println(writer.toString());
-        assertEquals(true, actual);
-        assertEquals("Ontologies are identical\n", writer.toString());
+        OWLOntology simple = loadOntology("/simple.owl");
+        assertIdentical(simple, simple);
     }
 
     /**
@@ -67,6 +39,7 @@ public class DiffOperationTest {
     @Test
     public void testCompareModified()
             throws IOException, OWLOntologyCreationException {
+        OWLOntology simple = loadOntology("/simple.owl");
         Set<OWLOntology> onts = new HashSet<OWLOntology>();
         onts.add(simple);
         OWLOntologyManager manager = simple.getOWLOntologyManager();
