@@ -231,6 +231,25 @@ public class IOHelper {
     }
 
     /**
+     * Load an ontology from an InputStream, without a catalog file.
+     *
+     * @param ontologyStream the ontology stream to load
+     * @return a new ontology object, with a new OWLManager
+     * @throws IOException on any problem
+     */
+    public OWLOntology loadOntology(InputStream ontologyStream)
+            throws IOException {
+        OWLOntology ontology = null;
+        try {
+            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
+        } catch (OWLOntologyCreationException e) {
+            throw new IOException(e);
+        }
+        return ontology;
+    }
+
+    /**
      * Save an ontology to a String path.
      *
      * @param ontology the ontology to save
