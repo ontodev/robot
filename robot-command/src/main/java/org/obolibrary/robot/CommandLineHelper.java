@@ -279,6 +279,27 @@ public class CommandLineHelper {
     }
 
     /**
+     * Given an IOHelper and a command line, check for required options
+     * and return a list of loaded input ontologies.
+     * Currently handles --input options.
+     *
+     * @param ioHelper the IOHelper to load the ontology with
+     * @param line the command line to use
+     * @return the list of input ontologies
+     * @throws IllegalArgumentException if requires options are missing
+     * @throws IOException if the ontology cannot be loaded
+     */
+    public static List<OWLOntology> getInputOntologies(IOHelper ioHelper,
+            CommandLine line) throws IllegalArgumentException, IOException {
+        List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+        List<String> inputOntologyPaths = getOptionalValues(line, "input");
+        for (String inputOntologyPath: inputOntologyPaths) {
+            inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+        }
+        return inputOntologies;
+    }
+
+    /**
      * Given a command line, check for the required options and return a File
      * for saving data.
      *

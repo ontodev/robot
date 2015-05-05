@@ -40,12 +40,12 @@ See `release-diff.txt` for an example.
 
 OWL ontologies are often divided into several `.owl` files, with `owl:imports` statements to bring them together. Sometimes you want to take all those imports and merge them into a single ontology with a single `.owl` file.
 
-    TODO robot merge --input edit.owl --output results/merged.owl
+    robot merge --input edit.owl --output results/merged.owl
 
 You don't need `owl:import` statements: you can merge any number of ontologies by using multiple `--input` arguments. You can also specify the `OntologyIRI` for the output ontology.
 
-    TODO robot merge --input edit.owl --input foo.owl \
-      --output results/merged.owl --output-iri "http://example.com"
+    robot merge --input edit.owl --input foo.owl \
+      --output results/merged2.owl --output-iri "http://example.com"
 
 
 ## Filtering

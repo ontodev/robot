@@ -25,6 +25,7 @@ public class CommandLineInterface {
         m.addCommand("export-prefixes", new ExportPrefixesCommand());
         m.addCommand("extract",         new ExtractCommand());
         m.addCommand("filter",          new FilterCommand());
+        m.addCommand("merge",           new MergeCommand());
         return m;
     }
 
