@@ -11,12 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.InferenceType;
@@ -111,44 +109,30 @@ public class ReasonOperation {
 
     /**
      * Given an ontology, the name of a reasoner, and an output IRI,
-     * return a new ontology with all asserted and inferred axioms,
+     * return the ontology with inferred axioms added,
      * using the default reasoner options.
-     * The input ontology is copied, not modified.
      *
-     * @param inputOntology the ontology to reason over
+     * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
-     * @param outputIRI the IRI of the merged ontology
-     * @return the new ontology
-     * @throws OWLOntologyCreationException on any OWLAPI problem
      */
-    public static OWLOntology reason(OWLOntology inputOntology,
-            OWLReasonerFactory reasonerFactory,
-            IRI outputIRI)
-            throws OWLOntologyCreationException {
-        return reason(inputOntology, reasonerFactory, outputIRI,
-                getDefaultOptions());
+    public static void reason(OWLOntology ontology,
+            OWLReasonerFactory reasonerFactory) {
+        reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
     /**
      * Given an ontology, the name of a reasoner, an output IRI,
      * and an optional map of reasoner options,
-     * return a new ontology with all asserted and inferred axioms.
-     * The input ontology is copied, not modified.
+     * return the ontology with inferred axioms added.
      *
-     * @param inputOntology the ontology to reason over
+     * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
-     * @param outputIRI the IRI of the merged ontology
      * @param options a map of option strings, or null
-     * @return the new ontology
-     * @throws OWLOntologyCreationException on any OWLAPI problem
      */
-    public static OWLOntology reason(OWLOntology inputOntology,
+    public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            IRI outputIRI,
-            Map<String, String> options)
-            throws OWLOntologyCreationException {
-        logger.info("Input ontology has {} axioms.",
-                    inputOntology.getAxioms().size());
+            Map<String, String> options) {
+        logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
         logger.info("Starting reasoning...");
 
         int seconds;
@@ -157,15 +141,11 @@ public class ReasonOperation {
 
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
-        OWLOntology reasoned = manager.createOntology(outputIRI);
 
-        // Copy the input ontology.
-        manager.addAxioms(reasoned, inputOntology.getAxioms());
-
-        OWLReasoner reasoner = reasonerFactory.createReasoner(reasoned);
+        OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
         if (!reasoner.isConsistent()) {
             logger.info("Ontology is not consistent!");
-            return null;
+            return;
         }
 
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
@@ -197,10 +177,10 @@ public class ReasonOperation {
         logger.info("Reasoning took {} seconds.", seconds);
 
         startTime = System.currentTimeMillis();
-        generator.fillOntology(manager, reasoned);
+        generator.fillOntology(manager, ontology);
 
-        logger.info("Reasoned ontology has {} axioms.",
-                    reasoned.getAxioms().size());
+        logger.info("Ontology has {} axioms after reasoning.",
+                    ontology.getAxioms().size());
 
         if (optionIsTrue(options, "remove-redundant-subclass-axioms")) {
             removeRedundantSubClassAxioms(reasoner);
@@ -209,7 +189,6 @@ public class ReasonOperation {
         elapsedTime = System.currentTimeMillis() - startTime;
         seconds = (int) Math.ceil(elapsedTime / 1000);
         logger.info("Filling took {} seconds.", seconds);
-        return reasoned;
     }
 
     /**

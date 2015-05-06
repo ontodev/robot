@@ -38,7 +38,6 @@ public class FilterCommand implements Command {
         o.addOption("i", "input",     true, "load ontology from a file");
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
         o.addOption("o", "output",    true, "save ontology to a file");
-        o.addOption("O", "output-iri", true, "set OntologyIRI for output");
         o.addOption("t", "terms",     true, "space-separated terms to filter");
         o.addOption("T", "term-file", true, "load terms from a file");
         options = o;
@@ -95,17 +94,15 @@ public class FilterCommand implements Command {
 
     /**
      * Given an input ontology (or null) and command line arguments,
-     * filter axioms to create a new ontology.
+     * filter axioms from an ontology, changing it.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param ontology the ontology from the previous command, or null
      * @param args the command-line arguments
      * @return the new filtered ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public OWLOntology execute(OWLOntology ontology, String[] args)
             throws Exception {
-        OWLOntology outputOntology = null;
-
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
         if (line == null) {
@@ -114,33 +111,25 @@ public class FilterCommand implements Command {
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
-        if (inputOntology == null) {
-            inputOntology = CommandLineHelper.getInputOntology(ioHelper, line);
+        if (ontology == null) {
+            ontology = CommandLineHelper.getInputOntology(ioHelper, line);
         }
 
         Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line);
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
         for (IRI term: terms) {
-            properties.add(inputOntology.getOWLOntologyManager()
+            properties.add(ontology.getOWLOntologyManager()
                     .getOWLDataFactory()
                     .getOWLObjectProperty(term));
         }
 
-        IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-        if (outputIRI == null) {
-            outputIRI = inputOntology.getOntologyID().getOntologyIRI();
-        }
-
-        outputOntology = FilterOperation.filter(
-                inputOntology,
-                properties,
-                outputIRI);
+        FilterOperation.filter(ontology, properties);
 
         File outputFile = CommandLineHelper.getOutputFile(line);
         if (outputFile != null) {
-            ioHelper.saveOntology(outputOntology, outputFile);
+            ioHelper.saveOntology(ontology, outputFile);
         }
 
-        return outputOntology;
+        return ontology;
     }
 }

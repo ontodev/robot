@@ -57,6 +57,7 @@ public class DiffOperation {
     /**
      * Given two ontologies and a Writer, get the differences between
      * axiom strings and write then to the writer.
+     * The ontologies are not changed.
      *
      * @param ontology1 the first ontology
      * @param ontology2 the second ontology

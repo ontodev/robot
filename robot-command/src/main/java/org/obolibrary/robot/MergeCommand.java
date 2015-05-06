@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
@@ -37,7 +36,6 @@ public class MergeCommand implements Command {
         o.addOption("i", "input",     true, "merge ontology from a file");
         o.addOption("I", "input-iri", true, "merge ontology from an IRI");
         o.addOption("o", "output",    true, "save merged ontology to a file");
-        o.addOption("O", "output-iri", true, "set OntologyIRI for output");
         options = o;
     }
 
@@ -65,8 +63,7 @@ public class MergeCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot filter --input <file> --input <file>"
-             + "--output <file> --output-iri <iri>";
+        return "robot filter --input <file> --input <file> --output <file>";
     }
 
     /**
@@ -93,11 +90,11 @@ public class MergeCommand implements Command {
 
     /**
      * Given an input ontology (or null) and command line arguments,
-     * filter axioms to create a new ontology.
+     * merge all ontology axioms to create a new ontology.
      *
      * @param inputOntology the ontology from the previous command, or null
      * @param args the command-line arguments
-     * @return the new filtered ontology
+     * @return the new merged ontology
      * @throws Exception on any problem
      */
     public OWLOntology execute(OWLOntology inputOntology, String[] args)
@@ -124,14 +121,7 @@ public class MergeCommand implements Command {
                     "at least one inputOntology must be specified");
         }
 
-        // If not outputIRI is provided, use the IRI of the first ontology.
-        // This will be the inputOntology, if any.
-        IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-        if (outputIRI == null) {
-            outputIRI = inputOntologies.get(0).getOntologyID().getOntologyIRI();
-        }
-
-        outputOntology = MergeOperation.merge(inputOntologies, outputIRI);
+        outputOntology = MergeOperation.merge(inputOntologies);
 
         File outputFile = CommandLineHelper.getOutputFile(line);
         if (outputFile != null) {

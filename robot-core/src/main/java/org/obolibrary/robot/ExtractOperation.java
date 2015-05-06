@@ -30,6 +30,7 @@ public class ExtractOperation {
     /**
      * Extract a set of terms from an ontology
      * using the OWLAPI's SyntacticLocalityModuleExtractor (SLME).
+     * The input ontology is not changed.
      *
      * @param inputOntology the ontology to extract from
      * @param terms a set of IRIs for terms to extract

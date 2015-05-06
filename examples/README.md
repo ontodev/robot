@@ -42,10 +42,9 @@ OWL ontologies are often divided into several `.owl` files, with `owl:imports` s
 
     robot merge --input edit.owl --output results/merged.owl
 
-You don't need `owl:import` statements: you can merge any number of ontologies by using multiple `--input` arguments. You can also specify the `OntologyIRI` for the output ontology.
+You don't need `owl:import` statements: you can merge any number of ontologies by using multiple `--input` arguments. All the ontologies and their imports are merged into the first ontology.
 
-    robot merge --input edit.owl --input foo.owl \
-      --output results/merged2.owl --output-iri "http://example.com"
+    robot merge --input edit.owl --input foo.owl --output results/merged2.owl
 
 
 ## Filtering
@@ -147,14 +146,9 @@ TODO
 
 Here are some other commands we should provide examples for:
 
-- merge
 - import, update imports
-- reason
 - add metadata
 - package for release
-- extract module
-- diff
 - get term hierarchy
 - convert formats
-
 

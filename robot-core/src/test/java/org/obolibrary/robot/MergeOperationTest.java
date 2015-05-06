@@ -23,8 +23,8 @@ public class MergeOperationTest extends CoreTest {
     public void testMergeOne()
             throws IOException, OWLOntologyCreationException {
         OWLOntology simple = loadOntology("/simple.owl");
-        OWLOntology merged = MergeOperation.merge(simple, simpleIRI);
-        assertIdentical(simple, merged);
+        OWLOntology merged = MergeOperation.merge(simple);
+        assertIdentical("/simple.owl", merged);
     }
 
     /**
@@ -42,8 +42,8 @@ public class MergeOperationTest extends CoreTest {
         List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
         ontologies.add(simple);
         ontologies.add(simpleParts);
-        OWLOntology merged = MergeOperation.merge(ontologies, simpleIRI);
-        assertIdentical(simpleParts, merged);
+        OWLOntology merged = MergeOperation.merge(ontologies);
+        assertIdentical("/simple_parts.owl", merged);
     }
 
 }

@@ -65,8 +65,8 @@ public class ExtractCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot extract --input <file> "
-             + "--term-file <file> --output <file>";
+        return "robot extract --input <file> --term-file <file>"
+            + " --output <file> --output-iri <iri>";
     }
 
     /**
@@ -94,6 +94,7 @@ public class ExtractCommand implements Command {
     /**
      * Given an input ontology (or null) and command line arguments,
      * extract a new ontology.
+     * The input ontology is not changed.
      *
      * @param inputOntology the ontology from the previous command, or null
      * @param args the command-line arguments

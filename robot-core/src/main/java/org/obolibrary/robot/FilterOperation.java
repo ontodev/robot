@@ -1,18 +1,14 @@
 package org.obolibrary.robot;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 /**
  * Filter the axioms of an ontology by given criteria.
@@ -27,38 +23,35 @@ public class FilterOperation {
         LoggerFactory.getLogger(FilterOperation.class);
 
     /**
-     * Create a new ontology with a filtered set of axioms
-     * from the input ontology.
+     * Remove axioms from the input ontology.
      * This version expects a set of OWLObjectProperties.
      *
-     * @param inputOntology the ontology to extract from
+     * @param ontology the ontology to filter
      * @param properties a set of OWLObjectProperties to retain
-     * @param outputIRI the OntologyIRI of the new ontology
-     * @return the new ontology
-     * @throws OWLOntologyCreationException on any OWLAPI problem
      */
-    public static OWLOntology filter(OWLOntology inputOntology,
-            Set<OWLObjectProperty> properties, IRI outputIRI)
-            throws OWLOntologyCreationException {
+    public static void filter(OWLOntology ontology,
+            Set<OWLObjectProperty> properties) {
         System.out.println(properties);
         logger.debug("Filtering ontology for axioms with ObjectProperties "
                 + properties);
 
-        Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        Set<OWLAxiom> axioms = ontology.getAxioms();
+        logger.debug("Ontology has {} axioms before filtering", axioms);
 
         // For each axiom, get all its object properties,
         // then remove the properties that we're looking for.
         // If there are no object properties left, then we keep this axiom.
         // All annotation axioms, declarations, and subClass relations remains.
-        for (OWLAxiom axiom: inputOntology.getAxioms()) {
+        for (OWLAxiom axiom: axioms) {
             Set<OWLObjectProperty> ps = axiom.getObjectPropertiesInSignature();
             ps.removeAll(properties);
-            if (ps.size() == 0) {
-                axioms.add(axiom);
+            if (ps.size() > 0) {
+                manager.removeAxiom(ontology, axiom);
             }
         }
 
-        return OWLManager.createOWLOntologyManager().createOntology(
-                axioms, outputIRI);
+        logger.debug("Ontology has {} axioms after filtering",
+                ontology.getAxioms().size());
     }
 }

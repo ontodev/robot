@@ -10,7 +10,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 /**
@@ -23,15 +22,12 @@ public class FilterOperationTest extends CoreTest {
      * Result is identical.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
      */
     @Test
-    public void testFilterNothing()
-            throws IOException, OWLOntologyCreationException {
+    public void testFilterNothing() throws IOException {
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
-        OWLOntology simple = loadOntology("/simple.owl");
-        OWLOntology filtered = FilterOperation.filter(
-                simple, properties, simpleIRI);
+        OWLOntology filtered = loadOntology("/simple.owl");
+        FilterOperation.filter(filtered, properties);
         assertIdentical("/simple.owl", filtered);
     }
 
@@ -41,15 +37,12 @@ public class FilterOperationTest extends CoreTest {
      * Result matches the simple.owl ontology.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
      */
     @Test
-    public void testRemoveParts()
-            throws IOException, OWLOntologyCreationException {
+    public void testRemoveParts() throws IOException {
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
-        OWLOntology simpleParts = loadOntology("/simple_parts.owl");
-        OWLOntology filtered = FilterOperation.filter(
-                simpleParts, properties, simpleIRI);
+        OWLOntology filtered = loadOntology("/simple_parts.owl");
+        FilterOperation.filter(filtered, properties);
         assertIdentical("/simple.owl", filtered);
     }
 
@@ -59,11 +52,9 @@ public class FilterOperationTest extends CoreTest {
      * Result is identical.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
      */
     @Test
-    public void testKeepParts()
-            throws IOException, OWLOntologyCreationException {
+    public void testKeepParts() throws IOException {
         OWLOntology simpleParts = loadOntology("/simple_parts.owl");
 
         OWLOntologyManager manager = simpleParts.getOWLOntologyManager();
@@ -72,8 +63,8 @@ public class FilterOperationTest extends CoreTest {
         properties.add(
             df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of")));
 
-        OWLOntology filtered = FilterOperation.filter(
-                simpleParts, properties, simpleIRI);
+        OWLOntology filtered = loadOntology("/simple_parts.owl");
+        FilterOperation.filter(filtered, properties);
 
         assertIdentical("/simple_parts.owl", filtered);
     }

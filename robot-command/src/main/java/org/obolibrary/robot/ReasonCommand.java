@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
@@ -40,7 +39,6 @@ public class ReasonCommand implements Command {
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");
-        o.addOption("O", "output-iri", true, "set OntologyIRI for output");
         options = o;
     }
 
@@ -69,7 +67,7 @@ public class ReasonCommand implements Command {
      */
     public String getUsage() {
         return "robot reason --input <file> --reasoner <name>"
-             + "[options] --output <file> --output-iri <iri>";
+             + "[options] --output <file>";
     }
 
     /**
@@ -96,17 +94,15 @@ public class ReasonCommand implements Command {
 
     /**
      * Given an input ontology (or null) and command line arguments,
-     * filter axioms to create a new ontology.
+     * run a reasoner, and add axioms to the ontology.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param ontology the ontology from the previous command, or null
      * @param args the command-line arguments
-     * @return the new filtered ontology
+     * @return the ontology with inferred axioms added
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public OWLOntology execute(OWLOntology ontology, String[] args)
             throws Exception {
-        OWLOntology outputOntology = null;
-
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
         if (line == null) {
@@ -115,8 +111,8 @@ public class ReasonCommand implements Command {
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
-        if (inputOntology == null) {
-            inputOntology = CommandLineHelper.getInputOntology(ioHelper, line);
+        if (ontology == null) {
+            ontology = CommandLineHelper.getInputOntology(ioHelper, line);
         }
 
         // ELK is the default reasoner
@@ -134,11 +130,6 @@ public class ReasonCommand implements Command {
                 .elk.owlapi.ElkReasonerFactory();
         }
 
-        IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-        if (outputIRI == null) {
-            outputIRI = inputOntology.getOntologyID().getOntologyIRI();
-        }
-
         // Override default reasoner options with command-line options
         Map<String, String> reasonerOptions =
             ReasonOperation.getDefaultOptions();
@@ -148,14 +139,13 @@ public class ReasonCommand implements Command {
             }
         }
 
-        outputOntology = ReasonOperation.reason(
-                inputOntology, reasonerFactory, outputIRI, reasonerOptions);
+        ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 
         File outputFile = CommandLineHelper.getOutputFile(line);
         if (outputFile != null) {
-            ioHelper.saveOntology(outputOntology, outputFile);
+            ioHelper.saveOntology(ontology, outputFile);
         }
 
-        return outputOntology;
+        return ontology;
     }
 }

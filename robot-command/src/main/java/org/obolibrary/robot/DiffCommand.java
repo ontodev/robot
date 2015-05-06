@@ -93,7 +93,8 @@ public class DiffCommand implements Command {
 
     /**
      * Given an input ontology (or null) and command line arguments,
-     * extract a new ontology.
+     * report on the differences, if any,
+     * and return the input ontology unchanged.
      *
      * @param inputOntology the ontology from the previous command, or null
      * @param args the command-line arguments
