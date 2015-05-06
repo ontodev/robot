@@ -24,6 +24,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.PrefixManager;
@@ -291,6 +292,44 @@ public class IOHelper {
         try {
             ontology.getOWLOntologyManager().saveOntology(
                     ontology, ontologyIRI);
+        } catch (OWLOntologyStorageException e) {
+            throw new IOException(e);
+        }
+        return ontology;
+    }
+
+    /**
+     * Save an ontology in the given format to a file.
+     *
+     * @param ontology the ontology to save
+     * @param format the ontology format to use
+     * @param ontologyFile the file to save the ontology to
+     * @return the saved ontology
+     * @throws IOException on any problem
+     */
+    public OWLOntology saveOntology(final OWLOntology ontology,
+            OWLOntologyFormat format, File ontologyFile)
+            throws IOException {
+        return saveOntology(ontology, format, IRI.create(ontologyFile));
+    }
+
+    /**
+     * Save an ontology in the given format to an IRI.
+     *
+     * @param ontology the ontology to save
+     * @param format the ontology format to use
+     * @param ontologyIRI the IRI to save the ontology to
+     * @return the saved ontology
+     * @throws IOException on any problem
+     */
+    public OWLOntology saveOntology(final OWLOntology ontology,
+            OWLOntologyFormat format, IRI ontologyIRI)
+            throws IOException {
+        logger.debug("Saving ontology {} as {} with to IRI {}",
+                ontology, format, ontologyIRI);
+        try {
+            ontology.getOWLOntologyManager().saveOntology(
+                    ontology, format, ontologyIRI);
         } catch (OWLOntologyStorageException e) {
             throw new IOException(e);
         }

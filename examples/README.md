@@ -84,7 +84,7 @@ It's important to add metadata to an ontology before releasing it. We use YAML f
 
 Ontologies are shared in different formats. The default format used by ROBOT is RDF/XML, but there are other OWL formats, RDF formats, and also the OBO file format.
 
-    TODO robot convert --input example.owl --output results/example.obo
+    robot convert --input example.owl --output results/example.obo
 
 
 ## Chaining
