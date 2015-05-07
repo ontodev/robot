@@ -121,16 +121,18 @@ public class ConvertCommand implements Command {
             ontology = CommandLineHelper.getInputOntology(ioHelper, line);
         }
 
-        File outputFile = CommandLineHelper.getOutputFile(line);
-        if (outputFile == null) {
-            throw new Exception("Output file is required.");
+        String[] outputs = line.getOptionValues("output");
+        if (outputs.length == 0) {
+            throw new Exception("An output file is required.");
+        } else if (outputs.length > 1) {
+            throw new Exception("Only one output file is allowed.");
         }
+        File outputFile = CommandLineHelper.getOutputFile(line);
 
         String formatName = CommandLineHelper.getOptionalValue(line, "format");
         if (formatName == null) {
             formatName = FilenameUtils.getExtension(outputFile.getName());
         }
-        formatName = formatName.trim().toLowerCase();
 
         ioHelper.saveOntology(ontology,
                 ioHelper.getFormat(formatName),

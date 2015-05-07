@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -125,10 +124,7 @@ public class FilterCommand implements Command {
 
         FilterOperation.filter(ontology, properties);
 
-        File outputFile = CommandLineHelper.getOutputFile(line);
-        if (outputFile != null) {
-            ioHelper.saveOntology(ontology, outputFile);
-        }
+        CommandLineHelper.maybeSaveOutput(line, ontology);
 
         return ontology;
     }

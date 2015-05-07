@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.io.File;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -141,10 +140,7 @@ public class ReasonCommand implements Command {
 
         ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 
-        File outputFile = CommandLineHelper.getOutputFile(line);
-        if (outputFile != null) {
-            ioHelper.saveOntology(ontology, outputFile);
-        }
+        CommandLineHelper.maybeSaveOutput(line, ontology);
 
         return ontology;
     }

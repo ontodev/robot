@@ -334,6 +334,23 @@ public class CommandLineHelper {
     }
 
     /**
+     * Given a command line and an ontology,
+     * for each `--output` option (if any),
+     * save a copy of the ontology to the specified path.
+     *
+     * @param line the command lien to use
+     * @param ontology the ontology to save
+     * @throws IOException on any problem
+     */
+    public static void maybeSaveOutput(CommandLine line, OWLOntology ontology)
+            throws IOException {
+        IOHelper ioHelper = getIOHelper(line);
+        for (String path: line.getOptionValues("output")) {
+            ioHelper.saveOntology(ontology, path);
+        }
+    }
+
+    /**
      * Given an IOHelper and a command line, check for the required options
      * and return a set of IRIs for terms.
      * Handles --terms string and --term-file file options.

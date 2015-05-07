@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -123,10 +122,7 @@ public class MergeCommand implements Command {
 
         outputOntology = MergeOperation.merge(inputOntologies);
 
-        File outputFile = CommandLineHelper.getOutputFile(line);
-        if (outputFile != null) {
-            ioHelper.saveOntology(outputOntology, outputFile);
-        }
+        CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
         return outputOntology;
     }

@@ -1,7 +1,5 @@
 package org.obolibrary.robot;
 
-import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,10 +126,7 @@ public class ExtractCommand implements Command {
                 outputIRI,
                 null);
 
-        File outputFile = CommandLineHelper.getOutputFile(line);
-        if (outputFile != null) {
-            ioHelper.saveOntology(outputOntology, outputFile);
-        }
+        CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
         return outputOntology;
     }
