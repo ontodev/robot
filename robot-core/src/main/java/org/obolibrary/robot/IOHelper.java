@@ -20,6 +20,7 @@ import com.github.jsonldjava.core.Context;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -29,6 +30,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 
 /**
  * Provides convenience methods for working with ontology and term files.
@@ -254,6 +256,46 @@ public class IOHelper {
         return ontology;
     }
 
+
+    /**
+     * Given the name of a file format, return an instance of it.
+     *
+     * Suported formats:
+     *
+     * <li>OBO as 'obo'
+     * <li>RDFXML as 'owl'
+     * <li>Turtle as 'ttl'
+     * <li>OWLXML as 'owx'
+     * <li>Manchester as 'omn'
+     * <li>OWL Functional as 'ofn'
+     *
+     * @param formatName the name of the format
+     * @return an instance of the format
+     * @throws IllegalArgumentException if format name is not recognized
+     */
+    public static OWLOntologyFormat getFormat(String formatName)
+          throws IllegalArgumentException {
+        formatName = formatName.trim().toLowerCase();
+        if (formatName.equals("obo")) {
+            return new org.coode.owlapi.obo.parser.OBOOntologyFormat();
+        } else if (formatName.equals("owl")) {
+            return new org.semanticweb.owlapi.io.RDFXMLOntologyFormat();
+        } else if (formatName.equals("ttl")) {
+            return new org.coode.owlapi.turtle.TurtleOntologyFormat();
+        } else if (formatName.equals("owx")) {
+            return new org.semanticweb.owlapi.io.OWLXMLOntologyFormat();
+        } else if (formatName.equals("omn")) {
+            return new org.coode.owlapi.manchesterowlsyntax
+                .ManchesterOWLSyntaxOntologyFormat();
+        } else if (formatName.equals("ofn")) {
+            return new org.semanticweb.owlapi.io
+                .OWLFunctionalSyntaxOntologyFormat();
+        } else {
+            throw new IllegalArgumentException(
+                    "Unknown ontology format: " + formatName);
+        }
+    }
+
     /**
      * Save an ontology to a String path.
      *
@@ -281,7 +323,8 @@ public class IOHelper {
     }
 
     /**
-     * Save an ontology to an IRI.
+     * Save an ontology to an IRI,
+     * using the file extension to determine the format.
      *
      * @param ontology the ontology to save
      * @param ontologyIRI the IRI to save the ontology to
@@ -290,16 +333,14 @@ public class IOHelper {
      */
     public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI)
             throws IOException {
-        logger.debug("Saving ontology {} with to IRI {}",
-                ontology, ontologyIRI);
-
         try {
-            ontology.getOWLOntologyManager().saveOntology(
-                    ontology, ontologyIRI);
-        } catch (OWLOntologyStorageException e) {
+            String formatName = FilenameUtils.getExtension(
+                    ontologyIRI.toString());
+            OWLOntologyFormat format = getFormat(formatName);
+            return saveOntology(ontology, format, ontologyIRI);
+        } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }
-        return ontology;
     }
 
     /**
@@ -331,6 +372,12 @@ public class IOHelper {
             throws IOException {
         logger.debug("Saving ontology {} as {} with to IRI {}",
                 ontology, format, ontologyIRI);
+
+        if (format instanceof PrefixOWLOntologyFormat) {
+            ((PrefixOWLOntologyFormat) format)
+                .copyPrefixesFrom(getPrefixManager());
+        }
+
         try {
             ontology.getOWLOntologyManager().saveOntology(
                     ontology, format, ontologyIRI);

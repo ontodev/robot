@@ -9,8 +9,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
-import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 
 /**
  * Save ontology to a different format.
@@ -134,31 +132,9 @@ public class ConvertCommand implements Command {
         }
         formatName = formatName.trim().toLowerCase();
 
-        OWLOntologyFormat format;
-        if (formatName.equals("obo")) {
-            format = new org.coode.owlapi.obo.parser.OBOOntologyFormat();
-        } else if (formatName.equals("owl")) {
-            format = new org.semanticweb.owlapi.io.RDFXMLOntologyFormat();
-        } else if (formatName.equals("ttl")) {
-            format = new org.coode.owlapi.turtle.TurtleOntologyFormat();
-        } else if (formatName.equals("owx")) {
-            format = new org.semanticweb.owlapi.io.OWLXMLOntologyFormat();
-        } else if (formatName.equals("omn")) {
-            format = new org.coode.owlapi.manchesterowlsyntax
-                .ManchesterOWLSyntaxOntologyFormat();
-        } else if (formatName.equals("ofn")) {
-            format = new org.semanticweb.owlapi.io
-                .OWLFunctionalSyntaxOntologyFormat();
-        } else {
-            throw new Exception("Unknown ontology format: " + formatName);
-        }
-
-        if (format instanceof PrefixOWLOntologyFormat) {
-            ((PrefixOWLOntologyFormat) format)
-                .copyPrefixesFrom(ioHelper.getPrefixManager());
-        }
-
-        ioHelper.saveOntology(ontology, format, outputFile);
+        ioHelper.saveOntology(ontology,
+                ioHelper.getFormat(formatName),
+                outputFile);
 
         return ontology;
     }
