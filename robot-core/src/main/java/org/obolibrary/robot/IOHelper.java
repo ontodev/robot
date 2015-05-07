@@ -60,6 +60,7 @@ public class IOHelper {
             setPrefixes(loadContext());
         } catch (IOException e) {
             logger.warn("Could not load default prefixes.");
+            logger.warn(e.getMessage());
         }
     }
 
@@ -77,6 +78,7 @@ public class IOHelper {
             }
         } catch (IOException e) {
             logger.warn("Could not load default prefixes.");
+            logger.warn(e.getMessage());
         }
     }
 
@@ -98,7 +100,8 @@ public class IOHelper {
         try {
             setPrefixes(loadContext(path));
         } catch (IOException e) {
-            logger.warn("Could not load default prefixes from " + path);
+            logger.warn("Could not load prefixes from " + path);
+            logger.warn(e.getMessage());
         }
     }
 
@@ -112,6 +115,7 @@ public class IOHelper {
             setPrefixes(loadContext(file));
         } catch (IOException e) {
             logger.warn("Could not load prefixes from " + file);
+            logger.warn(e.getMessage());
         }
     }
 

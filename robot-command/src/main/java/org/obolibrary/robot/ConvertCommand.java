@@ -10,6 +10,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 
 /**
  * Save ontology to a different format.
@@ -150,6 +151,11 @@ public class ConvertCommand implements Command {
                 .OWLFunctionalSyntaxOntologyFormat();
         } else {
             throw new Exception("Unknown ontology format: " + formatName);
+        }
+
+        if (format instanceof PrefixOWLOntologyFormat) {
+            ((PrefixOWLOntologyFormat) format)
+                .copyPrefixesFrom(ioHelper.getPrefixManager());
         }
 
         ioHelper.saveOntology(ontology, format, outputFile);
