@@ -106,9 +106,9 @@ public class ExportPrefixesCommand implements Command {
 
         File outputFile = CommandLineHelper.getOutputFile(line);
         if (outputFile != null) {
-            ioHelper.saveJSONLDContext(outputFile);
+            ioHelper.saveContext(outputFile);
         } else {
-            System.out.println(ioHelper.getJSONLDContextString());
+            System.out.println(ioHelper.getContextString());
         }
 
         return inputOntology;

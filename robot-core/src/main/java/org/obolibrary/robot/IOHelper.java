@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.core.Context;
+import com.github.jsonldjava.core.JsonLdApi;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
@@ -59,16 +60,16 @@ public class IOHelper {
     private static String defaultContextPath = "/obo_context.jsonld";
 
     /**
-     * Store the currently loaded prefixes.
+     * Store the current JSON-LD context.
      */
-    private Map<String, String> prefixes = new HashMap<String, String>();
+    private Context context = new Context();
 
     /**
      * Create a new IOHelper with the default prefixes.
      */
     public IOHelper() {
         try {
-            setPrefixes(loadContext());
+            setContext(loadContext());
         } catch (IOException e) {
             logger.warn("Could not load default prefixes.");
             logger.warn(e.getMessage());
@@ -83,9 +84,9 @@ public class IOHelper {
     public IOHelper(boolean defaults) {
         try {
             if (defaults) {
-                setPrefixes(loadContext());
+                setContext(loadContext());
             } else {
-                setPrefixes(null);
+                setContext();
             }
         } catch (IOException e) {
             logger.warn("Could not load default prefixes.");
@@ -98,8 +99,8 @@ public class IOHelper {
      *
      * @param map the prefixes to use
      */
-    public IOHelper(Map<String, String> map) {
-        setPrefixes(map);
+    public IOHelper(Map<String, Object> map) {
+        setContext(map);
     }
 
     /**
@@ -109,7 +110,7 @@ public class IOHelper {
      */
     public IOHelper(String path) {
         try {
-            setPrefixes(loadContext(path));
+            setContext(loadContext(path));
         } catch (IOException e) {
             logger.warn("Could not load prefixes from " + path);
             logger.warn(e.getMessage());
@@ -123,7 +124,7 @@ public class IOHelper {
      */
     public IOHelper(File file) {
         try {
-            setPrefixes(loadContext(file));
+            setContext(loadContext(file));
         } catch (IOException e) {
             logger.warn("Could not load prefixes from " + file);
             logger.warn(e.getMessage());
@@ -264,7 +265,6 @@ public class IOHelper {
         }
         return ontology;
     }
-
 
     /**
      * Given the name of a file format, return an instance of it.
@@ -432,11 +432,27 @@ public class IOHelper {
         if (term == null) {
             return null;
         }
+
         try {
-            return getPrefixManager().getIRI(term);
+            // This is stupid, because better methods aren't public.
+            // We create a new JSON map and add one entry
+            // with the term as the key and some string as the value.
+            // Then we run the JsonLdApi to expand the JSON map
+            // in the current context, and just grab the first key.
+            // If everything worked, that key will be our expanded iri.
+            Map<String, Object> jsonMap = new HashMap<String, Object>();
+            jsonMap.put(term, "ignore this string");
+            Object expanded = new JsonLdApi().expand(context, jsonMap);
+            String result = ((Map<String, Object>) expanded)
+                .keySet().iterator().next();
+            if (result != null) {
+                return IRI.create(result);
+            }
         } catch (Exception e) {
-            return IRI.create(term);
+            logger.warn("Could not create IRI for {}", term);
+            logger.warn(e.getMessage());
         }
+        return null;
     }
 
     /**
@@ -589,7 +605,7 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public static Map<String, String> loadContext() throws IOException {
+    public static Context loadContext() throws IOException {
         return loadContext(
                 IOHelper.class.getResourceAsStream(defaultContextPath));
     }
@@ -602,8 +618,7 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public static Map<String, String> loadContext(String path)
-            throws IOException {
+    public static Context loadContext(String path) throws IOException {
         return loadContext(new File(path));
     }
 
@@ -614,8 +629,7 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public static Map<String, String> loadContext(File file)
-            throws IOException {
+    public static Context loadContext(File file) throws IOException {
         return loadContext(new FileInputStream(file));
     }
 
@@ -626,8 +640,7 @@ public class IOHelper {
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public static Map<String, String> loadContext(InputStream stream)
-            throws IOException {
+    public static Context loadContext(InputStream stream) throws IOException {
         String content = new Scanner(stream).useDelimiter("\\Z").next();
         return parseContext(content);
     }
@@ -635,24 +648,68 @@ public class IOHelper {
     /**
      * Load a map of prefixes from the "@context" of a JSON-LD string.
      *
-     * @param json the JSON-LD string
+     * @param jsonString the JSON-LD string
      * @return a map from prefix name strings to prefix IRI strings
      * @throws IOException on any problem
      */
-    public static Map<String, String> parseContext(String json)
-            throws IOException {
-        Map<String, String> prefixes = new HashMap<String, String>();
+    public static Context parseContext(String jsonString) throws IOException {
         try {
-            Object context = JsonUtils.fromString(json);
-            if (context instanceof Map
-                && ((Map<String, Object>) context).containsKey("@context")) {
-                context = ((Map<String, Object>) context).get("@context");
+            Object jsonObject = JsonUtils.fromString(jsonString);
+            if (!(jsonObject instanceof Map)) {
+                return null;
             }
-            prefixes = new Context().parse(context).getPrefixes(false);
+            Map<String, Object> jsonMap = (Map<String, Object>) jsonObject;
+            if (!jsonMap.containsKey("@context")) {
+                return null;
+            }
+            Object jsonContext = jsonMap.get("@context");
+            return new Context().parse(jsonContext);
         } catch (Exception e) {
             throw new IOException(e);
         }
-        return prefixes;
+    }
+
+    /**
+     * Get a copy of the current context.
+     *
+     * @return a copy of the current context
+     */
+    public Context getContext() {
+        return this.context.clone();
+    }
+
+    /**
+     * Set an empty context.
+     */
+    public void setContext() {
+        this.context = new Context();
+    }
+
+    /**
+     * Set the current JSON-LD context to the given context.
+     *
+     * @param context the new JSON-LD context
+     */
+    public void setContext(Context context) {
+        if (context == null) {
+            setContext();
+        } else {
+            this.context = context;
+        }
+    }
+
+    /**
+     * Set the current JSON-LD context to the given map.
+     *
+     * @param map a map of strings for the new JSON-LD context
+     */
+    public void setContext(Map<String, Object> map) {
+        try {
+            this.context = new Context().parse(map);
+        } catch (Exception e) {
+            logger.warn("Could not set context {}", map);
+            logger.warn(e.getMessage());
+        }
     }
 
     /**
@@ -677,7 +734,7 @@ public class IOHelper {
      * @throws IOException on any problem
      */
     public static PrefixManager loadPrefixManager() throws IOException {
-        return makePrefixManager(loadContext());
+        return makePrefixManager(loadContext().getPrefixes(false));
     }
 
     /**
@@ -689,7 +746,7 @@ public class IOHelper {
      */
     public static PrefixManager loadPrefixManager(String path)
             throws IOException {
-        return makePrefixManager(loadContext(path));
+        return makePrefixManager(loadContext(path).getPrefixes(false));
     }
 
     /**
@@ -701,7 +758,7 @@ public class IOHelper {
      */
     public static PrefixManager loadPrefixManager(File file)
             throws IOException {
-        return makePrefixManager(loadContext(file));
+        return makePrefixManager(loadContext(file).getPrefixes(false));
     }
 
     /**
@@ -710,7 +767,7 @@ public class IOHelper {
      * @return a new PrefixManager
      */
     public PrefixManager getPrefixManager() {
-        return makePrefixManager(prefixes);
+        return makePrefixManager(context.getPrefixes(false));
     }
 
     /**
@@ -729,13 +786,23 @@ public class IOHelper {
     }
 
     /**
-     * Add a prefix mapping as a prefix string and target string.
+     * Add a prefix mapping to the current JSON-LD context,
+     * as a prefix string and target string.
+     * Rebuilds the context.
      *
      * @param prefix the short prefix to add; should not include ":"
      * @param target the IRI string that is the target of the prefix
      */
     public void addPrefix(String prefix, String target) {
-        prefixes.put(prefix.trim(), target.trim());
+        try {
+            context.put(prefix.trim(), target.trim());
+            context.remove("@base");
+            setContext((Map<String, Object>) context);
+        } catch (Exception e) {
+            logger.warn("Could not load add prefix \"{}\" \"{}\"",
+                    prefix, target);
+            logger.warn(e.getMessage());
+        }
     }
 
     /**
@@ -744,7 +811,7 @@ public class IOHelper {
      * @return a copy of the current prefix map
      */
     public Map<String, String> getPrefixes() {
-        return new HashMap<String, String>(prefixes);
+        return this.context.getPrefixes(false);
     }
 
     /**
@@ -752,21 +819,8 @@ public class IOHelper {
      *
      * @param map the new map of prefixes to use
      */
-    public void setPrefixes(Map<String, String> map) {
-        if (map != null) {
-            prefixes = new HashMap<String, String>(map);
-        } else {
-            prefixes = new HashMap<String, String>();
-        }
-    }
-
-    /**
-     * Return the current prefixes as a JSON-LD Context.
-     *
-     * @return the current JSON-LD Context
-     */
-    public Context getJSONLDContext() {
-        return new Context(new HashMap<String, Object>(getPrefixes()));
+    public void setPrefixes(Map<String, Object> map) {
+        setContext(map);
     }
 
     /**
@@ -775,11 +829,11 @@ public class IOHelper {
      * @return the current prefixes as a JSON-LD string
      * @throws IOException on any error
      */
-    public String getJSONLDContextString() throws IOException {
+    public String getContextString() throws IOException {
         try {
             Object compact = JsonLdProcessor.compact(
                     JsonUtils.fromString("{}"),
-                    new HashMap<String, Object>(getPrefixes()),
+                    context.getPrefixes(false),
                     new JsonLdOptions());
             return JsonUtils.toPrettyString(compact);
         } catch (Exception e) {
@@ -788,24 +842,24 @@ public class IOHelper {
     }
 
     /**
-     * Write the current prefixes as a JSON-LD file.
+     * Write the current context as a JSON-LD file.
      *
      * @param path the path to write the context
      * @throws IOException on any error
      */
-    public void saveJSONLDContext(String path) throws IOException {
-        saveJSONLDContext(new File(path));
+    public void saveContext(String path) throws IOException {
+        saveContext(new File(path));
     }
 
     /**
-     * Write the current prefixes as a JSON-LD file.
+     * Write the current context as a JSON-LD file.
      *
      * @param file the file to write the context
      * @throws IOException on any error
      */
-    public void saveJSONLDContext(File file) throws IOException {
+    public void saveContext(File file) throws IOException {
         FileWriter writer = new FileWriter(file);
-        writer.write(getJSONLDContextString());
+        writer.write(getContextString());
         writer.close();
     }
 
