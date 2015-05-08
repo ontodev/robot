@@ -24,7 +24,6 @@ import com.github.jsonldjava.utils.JsonUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -475,94 +474,54 @@ public class IOHelper {
     }
 
     /**
-     * Given a string that could be an IRI or a literal,
-     * return an OWLAnnotationValue.
-     * Examples:
+     * Create an OWLLiteral.
      *
-     * <li>IRI: <http://example.com>
-     * <li>IRI (CURIE): <rdfs:label>
-     * <li>plain literal: foo
-     * <li>typed literal: "100"^xsd:integer
-     *
-     * @param value a string that could be an IRI or a literal
-     * @return an IRI or OWLLiteral
+     * @param value the lexical value
+     * @return a literal
      */
-    public OWLAnnotationValue createValue(String value) {
-        if (value.trim().startsWith("<")
-            && value.trim().endsWith(">")) {
-            return createIRI(value.substring(1, value.length() - 1));
-        }
-
-        return createLiteral(value);
-    }
-
-    /**
-     * Given a value string that might include type information,
-     * return an OWLLiteral.
-     * If the input is: "content"^^xsd:type
-     *
-     * @param value the string to parse
-     * @return the string for the lexical value
-     */
-    public OWLLiteral createLiteral(String value) {
+    public static OWLLiteral createLiteral(String value) {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory df = manager.getOWLDataFactory();
-
-        String lexicalValue = getLexicalValue(value);
-        String valueType = getValueType(value);
-
-        IRI datatypeIRI = createIRI(valueType);
-
-        OWLDatatype datatype = null;
-        if (datatypeIRI != null) {
-            datatype = df.getOWLDatatype(datatypeIRI);
-        }
-
-        if (datatype == null) {
-            return df.getOWLLiteral(lexicalValue);
-        } else {
-            return df.getOWLLiteral(lexicalValue, datatype);
-        }
+        return df.getOWLLiteral(value);
     }
 
     /**
-     * Given a value string that might include type information,
-     * return the lexical value.
-     * If the input is: "content"^^xsd:type
-     * then the result is: content
+     * Create an OWLLiteral with a language tag.
      *
-     * @param value the string to parse
-     * @return the string for the lexical value
+     * @param value the lexical value
+     * @param lang the language tag
+     * @return a literal
      */
-    public static String getLexicalValue(String value) {
-        if (!value.startsWith("\"")) {
-            return value;
-        }
-        if (value.indexOf(seperator) == -1) {
-            return value;
-        }
-        return value.substring(1, value.lastIndexOf(seperator));
+    public static OWLLiteral createTaggedLiteral(String value, String lang) {
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        OWLDataFactory df = manager.getOWLDataFactory();
+        return df.getOWLLiteral(value, lang);
     }
 
     /**
-     * Given a value string that might include type information,
-     * return the type IRI/CURIE string, or null.
-     * If the format is: "content"^^xsd:type
-     * then the result is: xsd:type
+     * Create a typed OWLLiteral.
      *
-     * @param value the value to get the type of
-     * @return the string for the type
+     * @param value the lexical value
+     * @param type the type IRI string
+     * @return a literal
      */
-    public static String getValueType(String value) {
-        value = value.trim();
-        if (!value.startsWith("\"")) {
-            return null;
-        }
-        if (value.indexOf(seperator) == -1) {
-            return null;
-        }
-        return value.substring(value.lastIndexOf(seperator)
-                    + seperator.length());
+    public OWLLiteral createTypedLiteral(String value, String type) {
+        IRI iri = createIRI(type);
+        return createTypedLiteral(value, iri);
+    }
+
+    /**
+     * Create a typed OWLLiteral.
+     *
+     * @param value the lexical value
+     * @param type the type IRI
+     * @return a literal
+     */
+    public OWLLiteral createTypedLiteral(String value, IRI type) {
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        OWLDataFactory df = manager.getOWLDataFactory();
+        OWLDatatype datatype = df.getOWLDatatype(type);
+        return df.getOWLLiteral(value, datatype);
     }
 
     /**

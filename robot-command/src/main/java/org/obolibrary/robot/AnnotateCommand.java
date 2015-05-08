@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -42,10 +43,30 @@ public class AnnotateCommand implements Command {
         o.addOption("o", "output",    true, "save ontology to a file");
         options = o;
 
-        // This option takes two arguments
-        Option a = new Option("a", "annotate ontology with PROP VALUE");
+        Option a;
+
+        // Annotate with a property and plain literal
+        a = new Option("a", "annotate ontology with PROP VALUE");
         a.setLongOpt("annotation");
         a.setArgs(2);
+        options.addOption(a);
+
+        // Annotate with a property and plain literal
+        a = new Option("k", "annotate ontology with PROP IRI");
+        a.setLongOpt("link-annotation");
+        a.setArgs(2);
+        options.addOption(a);
+
+        // Annotate with a property and a plain literal with a language tag
+        a = new Option("l", "annotate ontology with PROP VALUE LANG");
+        a.setLongOpt("language-annotation");
+        a.setArgs(3);
+        options.addOption(a);
+
+        // Annotate with a property and a typed literal with a language tag
+        a = new Option("t", "annotate ontology with PROP VALUE LANG");
+        a.setLongOpt("typed-annotation");
+        a.setArgs(3);
         options.addOption(a);
     }
 
@@ -129,14 +150,66 @@ public class AnnotateCommand implements Command {
         }
 
         // Add annotations
-        List<String> pairs = Arrays.asList(line.getOptionValues("annotation"));
-        for (int i = 0; i < pairs.size(); i += 2) {
-            String property = pairs.get(i);
-            String value = pairs.get(i + 1);
-            OntologyHelper.addOntologyAnnotation(
-                    ontology,
-                    ioHelper.createIRI(property),
-                    ioHelper.createValue(value));
+        String[] values;
+        List<String> items;
+
+        // Add annotations with PROP VALUE
+        values = line.getOptionValues("annotation");
+        if (values != null) {
+            items = new ArrayList<String>(Arrays.asList(values));
+            System.out.println("Plain: " + items);
+            while (items.size() > 0) {
+                String property = items.remove(0);
+                String value    = items.remove(0);
+                OntologyHelper.addOntologyAnnotation(
+                        ontology,
+                        ioHelper.createIRI(property),
+                        ioHelper.createLiteral(value));
+            }
+        }
+
+        // Add link-annotations with PROP LINK
+        values = line.getOptionValues("link-annotation");
+        if (values != null) {
+            items = new ArrayList<String>(Arrays.asList(values));
+            while (items.size() > 0) {
+                String property = items.remove(0);
+                String value    = items.remove(0);
+                OntologyHelper.addOntologyAnnotation(
+                        ontology,
+                        ioHelper.createIRI(property),
+                        ioHelper.createIRI(value));
+            }
+        }
+
+        // Add language-annotations with PROP VALUE LANG
+        values = line.getOptionValues("language-annotation");
+        if (values != null) {
+            items = new ArrayList<String>(Arrays.asList(values));
+            while (items.size() > 0) {
+                String property = items.remove(0);
+                String value    = items.remove(0);
+                String lang     = items.remove(0);
+                OntologyHelper.addOntologyAnnotation(
+                        ontology,
+                        ioHelper.createIRI(property),
+                        ioHelper.createTaggedLiteral(value, lang));
+            }
+        }
+
+        // Add typed-annotations with PROP VALUE TYPE
+        values = line.getOptionValues("typed-annotation");
+        if (values != null) {
+            items = new ArrayList<String>(Arrays.asList(values));
+            while (items.size() > 0) {
+                String property = items.remove(0);
+                String value    = items.remove(0);
+                String type     = items.remove(0);
+                OntologyHelper.addOntologyAnnotation(
+                        ontology,
+                        ioHelper.createIRI(property),
+                        ioHelper.createTypedLiteral(value, type));
+            }
         }
 
         // Set ontology and version IRI

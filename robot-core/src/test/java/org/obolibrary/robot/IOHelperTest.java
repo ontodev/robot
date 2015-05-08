@@ -150,7 +150,6 @@ public class IOHelperTest extends CoreTest {
     @Test
     public void testOntologyAnnotations() throws IOException {
         IOHelper ioh = new IOHelper();
-        String value;
         OWLLiteral literal;
 
         assertEquals(IRI.create(base), ioh.createIRI(base));
@@ -158,19 +157,14 @@ public class IOHelperTest extends CoreTest {
         literal = ioh.createLiteral("FOO");
         assertEquals("FOO", OntologyHelper.getValue(literal));
 
-        value = "\"100\"^^xsd:integer";
-        assertEquals("100", ioh.getLexicalValue(value));
-        assertEquals("xsd:integer", ioh.getValueType(value));
-
-        literal = ioh.createLiteral(value);
+        literal = ioh.createTypedLiteral("100", "xsd:integer");
         assertEquals("100", literal.getLiteral());
         assertEquals(ioh.createIRI("xsd:integer"),
                 literal.getDatatype().getIRI());
 
-        assertEquals(ioh.createIRI("xsd:integer"),
-                ioh.createValue("<http://www.w3.org/2001/XMLSchema#integer>"));
-        assertEquals(ioh.createIRI("xsd:integer"),
-                ioh.createValue("<xsd:integer>"));
+        literal = ioh.createTaggedLiteral("100", "en");
+        assertEquals("100", literal.getLiteral());
+        assertEquals("en", literal.getLang());
     }
 
 }
