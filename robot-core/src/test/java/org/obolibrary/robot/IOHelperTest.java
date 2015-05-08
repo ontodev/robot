@@ -11,11 +11,12 @@ import org.junit.Test;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.model.OWLLiteral;
 
 /**
  * Tests for {@link IOHelper}.
  */
-public class IOHelperTest {
+public class IOHelperTest extends CoreTest {
     /**
      * Test getting the default context.
      *
@@ -109,4 +110,34 @@ public class IOHelperTest {
         assertEquals("Check converted IRIs", iris, actualIRIs);
     }
 
+    /**
+     * Test creating IRIs and Literals.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testOntologyAnnotations() throws IOException {
+        IOHelper ioh = new IOHelper();
+        String value;
+        OWLLiteral literal;
+
+        assertEquals(IRI.create(base), ioh.createIRI(base));
+
+        literal = ioh.createLiteral("FOO");
+        assertEquals("FOO", OntologyHelper.getValue(literal));
+
+        value = "\"100\"^^xsd:integer";
+        assertEquals("100", ioh.getLexicalValue(value));
+        assertEquals("xsd:integer", ioh.getValueType(value));
+
+        literal = ioh.createLiteral(value);
+        assertEquals("100", literal.getLiteral());
+        assertEquals(ioh.createIRI("xsd:integer"),
+                literal.getDatatype().getIRI());
+
+        assertEquals(ioh.createIRI("xsd:integer"),
+                ioh.createValue("<http://www.w3.org/2001/XMLSchema#integer>"));
+        assertEquals(ioh.createIRI("xsd:integer"),
+                ioh.createValue("<xsd:integer>"));
+    }
 }

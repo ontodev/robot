@@ -73,11 +73,14 @@ One of the main benefits of working with OWL is the availability of powerful aut
 
 ## Annotating
 
-It's important to add metadata to an ontology before releasing it. We use YAML files to describe the ontology, and merge them into the OWL as annotations.
+It's important to add metadata to an ontology before releasing it, and to update the ontology version IRI.
 
-    TODO robot annotate --input reasoned.owl \
-      --annotations annotations.yml \
-      --output results/example.owl
+    robot annotate --input reasoned.owl \
+      --ontology-iri "https://github.com/ontodev/robot/examples/annotated.owl" \
+      --version-iri "https://github.com/ontodev/robot/examples/annotated-1.owl" \
+      --annotation rdfs:comment "Comment" \
+      --annotation rdfs:label "Label" \
+      --output results/annotated.owl
 
 
 ## Converting

@@ -7,40 +7,33 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import org.junit.Before;
 import org.junit.Test;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * Tests for {@link OntologyHelper}.
  */
-public class OntologyHelperTest {
+public class OntologyHelperTest extends CoreTest {
     /**
-     * Base IRI string for resources files.
-     */
-    private String base = "https://github.com/"
-                        + "ontodev/robot/"
-                        + "robot-core/"
-                        + "src/test/resources/";
-
-    /**
-     * Very simple ontology for testing.
-     */
-    private OWLOntology simple;
-
-    /**
-     * Load ontologies for testing.
+     * Test changing an ontology IRI.
      *
-     * @throws IOException on file problems
+     * @throws IOException on file problem
      */
-    @Before
-    public void loadOntologies() throws IOException {
-        IOHelper ioh = new IOHelper();
-        simple = ioh.loadOntology(
-                this.getClass().getResource("/simple.owl").getFile());
+    @Test
+    public void testSetOntologyIRI() throws IOException {
+        OWLOntology simple = loadOntology("/simple.owl");
+        OntologyHelper.setOntologyIRI(simple,
+                "http://ontology.iri",
+                "http://version.iri");
+
+        assertEquals("http://ontology.iri",
+                simple.getOntologyID().getOntologyIRI().toString());
+        assertEquals("http://version.iri",
+                simple.getOntologyID().getVersionIRI().toString());
     }
 
     /**
@@ -51,6 +44,7 @@ public class OntologyHelperTest {
     @Test
     public void testGetValues() throws IOException {
         IRI iri = IRI.create(base + "simple.owl#test1");
+        OWLOntology simple = loadOntology("/simple.owl");
         OWLDataFactory df =
             simple.getOWLOntologyManager().getOWLDataFactory();
         Set<String> actual = OntologyHelper.getAnnotationStrings(
@@ -69,9 +63,37 @@ public class OntologyHelperTest {
      */
     @Test
     public void testGetLabels() throws IOException {
+        OWLOntology simple = loadOntology("/simple.owl");
         Map<IRI, String> expected = new HashMap<IRI, String>();
         expected.put(IRI.create(base + "simple.owl#test1"), "Test 1");
         Map<IRI, String> actual = OntologyHelper.getLabels(simple);
         assertEquals(expected, actual);
+    }
+
+    /**
+     * Test adding and removing annotations from and ontology.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testOntologyAnnotations() throws IOException {
+        IOHelper ioHelper = new IOHelper();
+
+        OWLOntology simple = loadOntology("/simple.owl");
+        assertEquals(0, simple.getAnnotations().size());
+
+        // Add plain literal
+        OntologyHelper.addOntologyAnnotation(simple,
+                ioHelper.createIRI(base + "foo"),
+                ioHelper.createLiteral("FOO"));
+        assertEquals(1, simple.getAnnotations().size());
+
+        OWLAnnotation annotation = simple.getAnnotations().iterator().next();
+        assertEquals(base + "foo",
+                annotation.getProperty().getIRI().toString());
+        assertEquals("FOO", OntologyHelper.getValue(annotation.getValue()));
+
+        OntologyHelper.removeOntologyAnnotations(simple);
+        assertEquals(0, simple.getAnnotations().size());
     }
 }

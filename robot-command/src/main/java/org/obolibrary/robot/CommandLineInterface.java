@@ -21,6 +21,7 @@ public class CommandLineInterface {
      */
     private static CommandManager initManager() {
         CommandManager m = new CommandManager();
+        m.addCommand("annotate",        new AnnotateCommand());
         m.addCommand("convert",         new ConvertCommand());
         m.addCommand("diff",            new DiffCommand());
         m.addCommand("export-prefixes", new ExportPrefixesCommand());

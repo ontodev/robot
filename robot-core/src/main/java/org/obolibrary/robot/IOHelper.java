@@ -23,6 +23,10 @@ import com.github.jsonldjava.utils.JsonUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyFormat;
@@ -43,6 +47,11 @@ public class IOHelper {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(IOHelper.class);
+
+    /**
+     * RDF literal separator.
+     */
+    private static String seperator = "\"^^";
 
     /**
      * Path to default context as a resource.
@@ -414,6 +423,23 @@ public class IOHelper {
     }
 
     /**
+     * Given a term string, use the current prefixes to create an IRI.
+     *
+     * @param term the term to convert to an IRI
+     * @return the new IRI
+     */
+    public IRI createIRI(String term) {
+        if (term == null) {
+            return null;
+        }
+        try {
+            return getPrefixManager().getIRI(term);
+        } catch (Exception e) {
+            return IRI.create(term);
+        }
+    }
+
+    /**
      * Given a set of term identifier strings, return a set of IRIs.
      *
      * @param terms the set of term identifier strings
@@ -423,15 +449,104 @@ public class IOHelper {
     public Set<IRI> createIRIs(Set<String> terms)
             throws IllegalArgumentException {
         Set<IRI> iris = new HashSet<IRI>();
-        PrefixManager prefixManager = getPrefixManager();
         for (String term: terms) {
-            try {
-                iris.add(prefixManager.getIRI(term));
-            } catch (Exception e) {
-                iris.add(IRI.create(term));
+            IRI iri = createIRI(term);
+            if (iri != null) {
+                iris.add(iri);
             }
         }
         return iris;
+    }
+
+    /**
+     * Given a string that could be an IRI or a literal,
+     * return an OWLAnnotationValue.
+     * Examples:
+     *
+     * <li>IRI: <http://example.com>
+     * <li>IRI (CURIE): <rdfs:label>
+     * <li>plain literal: foo
+     * <li>typed literal: "100"^xsd:integer
+     *
+     * @param value a string that could be an IRI or a literal
+     * @return an IRI or OWLLiteral
+     */
+    public OWLAnnotationValue createValue(String value) {
+        if (value.trim().startsWith("<")
+            && value.trim().endsWith(">")) {
+            return createIRI(value.substring(1, value.length() - 1));
+        }
+
+        return createLiteral(value);
+    }
+
+    /**
+     * Given a value string that might include type information,
+     * return an OWLLiteral.
+     * If the input is: "content"^^xsd:type
+     *
+     * @param value the string to parse
+     * @return the string for the lexical value
+     */
+    public OWLLiteral createLiteral(String value) {
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        OWLDataFactory df = manager.getOWLDataFactory();
+
+        String lexicalValue = getLexicalValue(value);
+        String valueType = getValueType(value);
+
+        IRI datatypeIRI = createIRI(valueType);
+
+        OWLDatatype datatype = null;
+        if (datatypeIRI != null) {
+            datatype = df.getOWLDatatype(datatypeIRI);
+        }
+
+        if (datatype == null) {
+            return df.getOWLLiteral(lexicalValue);
+        } else {
+            return df.getOWLLiteral(lexicalValue, datatype);
+        }
+    }
+
+    /**
+     * Given a value string that might include type information,
+     * return the lexical value.
+     * If the input is: "content"^^xsd:type
+     * then the result is: content
+     *
+     * @param value the string to parse
+     * @return the string for the lexical value
+     */
+    public static String getLexicalValue(String value) {
+        if (!value.startsWith("\"")) {
+            return value;
+        }
+        if (value.indexOf(seperator) == -1) {
+            return value;
+        }
+        return value.substring(1, value.lastIndexOf(seperator));
+    }
+
+    /**
+     * Given a value string that might include type information,
+     * return the type IRI/CURIE string, or null.
+     * If the format is: "content"^^xsd:type
+     * then the result is: xsd:type
+     *
+     * @param value the value to get the type of
+     * @return the string for the type
+     */
+    public static String getValueType(String value) {
+        value = value.trim();
+        if (!value.startsWith("\"")) {
+            return null;
+        }
+        if (value.indexOf(seperator) == -1) {
+            return null;
+        }
+        return value.substring(value.lastIndexOf(seperator)
+                    + seperator.length());
     }
 
     /**

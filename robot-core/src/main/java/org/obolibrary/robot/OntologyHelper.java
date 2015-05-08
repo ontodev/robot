@@ -12,15 +12,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationSubject;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
+import org.semanticweb.owlapi.model.SetOntologyID;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 
 /**
@@ -34,6 +41,59 @@ public class OntologyHelper {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(OntologyHelper.class);
+
+    /**
+     * Set the ontology IRI and version IRI using strings.
+     *
+     * @param ontology the ontology to change
+     * @param ontologyIRIString the ontology IRI string, or null for no change
+     * @param versionIRIString the version IRI string, or null for no change
+     */
+    public static void setOntologyIRI(OWLOntology ontology,
+            String ontologyIRIString, String versionIRIString) {
+        IRI ontologyIRI = null;
+        if (ontologyIRIString != null) {
+            ontologyIRI = IRI.create(ontologyIRIString);
+        }
+
+        IRI versionIRI = null;
+        if (versionIRIString != null) {
+            versionIRI = IRI.create(versionIRIString);
+        }
+
+        setOntologyIRI(ontology, ontologyIRI, versionIRI);
+    }
+
+    /**
+     * Set the ontology IRI and version IRI.
+     *
+     * @param ontology the ontology to change
+     * @param ontologyIRI the new ontology IRI, or null for no change
+     * @param versionIRI the new version IRI, or null for no change
+     */
+    public static void setOntologyIRI(OWLOntology ontology, IRI ontologyIRI,
+            IRI versionIRI) {
+        OWLOntologyID currentID = ontology.getOntologyID();
+
+        if (ontologyIRI == null && versionIRI == null) {
+            // don't change anything
+            return;
+        } else if (ontologyIRI == null) {
+            ontologyIRI = currentID.getOntologyIRI();
+        } else if (versionIRI == null) {
+            versionIRI = currentID.getVersionIRI();
+        }
+
+        OWLOntologyID newID;
+        if (versionIRI == null) {
+            newID = new OWLOntologyID(ontologyIRI);
+        } else {
+            newID = new OWLOntologyID(ontologyIRI, versionIRI);
+        }
+
+        SetOntologyID setID = new SetOntologyID(ontology, newID);
+        ontology.getOWLOntologyManager().applyChange(setID);
+    }
 
     /**
      * Given an OWLAnnotationValue, return its value as a string.
@@ -92,6 +152,34 @@ public class OntologyHelper {
             }
         }
         return results;
+    }
+
+    /**
+     * Given an annotation value, return its datatype, or null.
+     *
+     * @param value the value to check
+     * @return the datatype, or null if the value has none
+     */
+    public static OWLDatatype getType(OWLAnnotationValue value) {
+        if (value instanceof OWLLiteral) {
+            return ((OWLLiteral) value).getDatatype();
+        }
+        return null;
+    }
+
+    /**
+     * Given an annotation value, return the IRI of its datatype, or null.
+     *
+     * @param value the value to check
+     * @return the IRI of the datatype, or null if the value has none
+     */
+    public static IRI getTypeIRI(OWLAnnotationValue value) {
+        OWLDatatype datatype = getType(value);
+        if (datatype == null) {
+            return null;
+        } else {
+            return datatype.getIRI();
+        }
     }
 
     /**
@@ -305,8 +393,9 @@ public class OntologyHelper {
      */
     public static Map<IRI, String> getLabels(OWLOntology ontology) {
         Map<IRI, String> results = new HashMap<IRI, String>();
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
         OWLAnnotationProperty rdfsLabel =
-            ontology.getOWLOntologyManager().getOWLDataFactory().getRDFSLabel();
+            manager.getOWLDataFactory().getRDFSLabel();
         Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
         ontologies.add(ontology);
         ReferencedEntitySetProvider resp =
@@ -320,5 +409,44 @@ public class OntologyHelper {
         }
         return results;
     }
+
+    /**
+     * Remove all annotations on this ontology.
+     * Just annotations on the ontology itself,
+     * not annotations on its classes, etc.
+     *
+     * @param ontology the ontology to modify
+     */
+    public static void removeOntologyAnnotations(OWLOntology ontology) {
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        for (OWLAnnotation annotation: ontology.getAnnotations()) {
+            RemoveOntologyAnnotation remove =
+                new RemoveOntologyAnnotation(ontology, annotation);
+            manager.applyChange(remove);
+        }
+    }
+
+    /**
+     * Given an ontology, a property IRI, and a value string,
+     * add an annotation to this ontology with that property and value.
+     *
+     * @param ontology the ontology to modify
+     * @param propertyIRI the IRI of the property to add
+     * @param value the IRI or literal value to add
+     */
+    public static void addOntologyAnnotation(OWLOntology ontology,
+            IRI propertyIRI, OWLAnnotationValue value) {
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        OWLDataFactory df = manager.getOWLDataFactory();
+
+        OWLAnnotationProperty property =
+            df.getOWLAnnotationProperty(propertyIRI);
+        OWLAnnotation annotation = df.getOWLAnnotation(property, value);
+
+        AddOntologyAnnotation addition =
+            new AddOntologyAnnotation(ontology, annotation);
+        manager.applyChange(addition);
+    }
+
 
 }
