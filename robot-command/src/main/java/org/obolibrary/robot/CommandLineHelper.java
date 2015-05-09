@@ -118,6 +118,23 @@ public class CommandLineHelper {
     }
 
     /**
+     * Given a command line, return the values for an option as a list.
+     * This is just a convenience function for turning an array into a list.
+     *
+     * @param line the command line to use
+     * @param name the name of the option to find
+     * @return the option values as a list of strings, maybe empty
+     */
+    public static List<String> getOptionValues(CommandLine line, String name) {
+        List<String> valueList = new ArrayList<String>();
+        String[] valueArray = line.getOptionValues(name);
+        if (valueArray != null) {
+            valueList = new ArrayList<String>(Arrays.asList(valueArray));
+        }
+        return valueList;
+    }
+
+    /**
      * Given a command line and an index, return the argument at that index.
      *
      * @param line the command line to use
