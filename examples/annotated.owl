@@ -11,6 +11,7 @@
     <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/annotated.owl">
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Label</rdfs:label>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Comment</rdfs:comment>
+        <rdfs:comment>Comment from annotations.ttl file.</rdfs:comment>
         <owl:versionIRI rdf:resource="https://github.com/ontodev/robot/examples/annotated-1.owl"/>
     </owl:Ontology>
 

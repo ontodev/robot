@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -34,6 +35,8 @@ public class AnnotateCommand implements Command {
         Options o = CommandLineHelper.getCommonOptions();
         o.addOption("R", "remove-annotations",
                 false, "remove all annotations on the ontology");
+        o.addOption("A", "annotation-file",
+                true, "add annotation from a file");
         o.addOption("O", "ontology-iri", true, "set the ontology IRI");
         o.addOption("V", "version-iri",  true, "set the ontology version IRI");
         o.addOption("i", "input",     true, "convert ontology from a file");
@@ -194,6 +197,17 @@ public class AnnotateCommand implements Command {
                     ontology,
                     ioHelper.createIRI(property),
                     ioHelper.createTypedLiteral(value, type));
+        }
+
+        // Load any annotation files as ontologies and merge them in
+        List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+        List<String> paths =
+            CommandLineHelper.getOptionValues(line, "annotation-file");
+        for (String path: paths) {
+            ontologies.add(ioHelper.loadOntology(path));
+        }
+        if (ontologies.size() > 0) {
+            MergeOperation.mergeInto(ontologies, ontology, true);
         }
 
         // Set ontology and version IRI

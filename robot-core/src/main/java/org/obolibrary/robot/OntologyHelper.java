@@ -442,11 +442,20 @@ public class OntologyHelper {
         OWLAnnotationProperty property =
             df.getOWLAnnotationProperty(propertyIRI);
         OWLAnnotation annotation = df.getOWLAnnotation(property, value);
-
+        addOntologyAnnotation(ontology, annotation);
+    }
+    /**
+     * Annotate the ontology with the annotation.
+     *
+     * @param ontology the ontology to modify
+     * @param annotation the annotation to add
+     */
+    public static void addOntologyAnnotation(OWLOntology ontology,
+            OWLAnnotation annotation) {
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
         AddOntologyAnnotation addition =
             new AddOntologyAnnotation(ontology, annotation);
         manager.applyChange(addition);
     }
-
 
 }

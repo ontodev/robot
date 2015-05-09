@@ -80,6 +80,7 @@ It's important to add metadata to an ontology before releasing it, and to update
       --version-iri "https://github.com/ontodev/robot/examples/annotated-1.owl" \
       --annotation rdfs:comment "Comment" \
       --annotation rdfs:label "Label" \
+      --annotation-file annotations.ttl \
       --output results/annotated.owl
 
 
