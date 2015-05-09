@@ -8,6 +8,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
+import org.apache.commons.io.IOUtils;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -56,11 +57,8 @@ public class DiffOperationTest extends CoreTest {
         boolean actual = DiffOperation.compare(simple, simple1, writer);
         System.out.println(writer.toString());
         assertEquals(false, actual);
-        String expected = "0 axioms in Ontology 1 but not in Ontology 2:\n\n"
-                        + "1 axioms in Ontology 2 but not in Ontology 1:\n"
-                        + "+ AnnotationAssertion("
-                        + "rdfs:label <" + test1.toString() + "> "
-                        + "\"TEST #1\"^^xsd:string)\n";
+        String expected = IOUtils.toString(
+                this.getClass().getResourceAsStream("/simple1.diff"));
         assertEquals(expected, writer.toString());
     }
 }

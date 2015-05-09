@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
@@ -152,10 +153,13 @@ public class DiffOperation {
      * @return a set of strings, one for each axiom in the ontology
      */
     public static Set<String> getAxiomStrings(OWLOntology ontology) {
-        Set<OWLAxiom> axioms = ontology.getAxioms();
         Set<String> strings = new HashSet<String>();
-        for (OWLAxiom axiom: axioms) {
+        strings.add(ontology.getOntologyID().toString());
+        for (OWLAxiom axiom: ontology.getAxioms()) {
             strings.add(axiom.toString().replaceAll("\\n", "\\n"));
+        }
+        for (OWLAnnotation annotation: ontology.getAnnotations()) {
+            strings.add(annotation.toString().replaceAll("\\n", "\\n"));
         }
         return strings;
     }
