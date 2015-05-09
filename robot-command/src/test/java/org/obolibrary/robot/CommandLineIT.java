@@ -1,12 +1,11 @@
 package org.obolibrary.robot;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 import org.junit.Test;
 
@@ -60,11 +59,10 @@ public class CommandLineIT {
      * "robot"
      *
      * @return a list of example commands
-     * @throws FileNotFoundException if the README cannot be found
+     * @throws IOException if the README cannot be read
      */
-    private List<String> extractCommands() throws FileNotFoundException {
-        File file = new File(readmePath);
-        String content = new Scanner(file).useDelimiter("\\Z").next();
+    private List<String> extractCommands() throws IOException {
+        String content = FileUtils.readFileToString(new File(readmePath));
         List<String> lines = Arrays.asList(
                 content.replaceAll("\\r", "").split("\\n"));
         List<String> commands = new ArrayList<String>();

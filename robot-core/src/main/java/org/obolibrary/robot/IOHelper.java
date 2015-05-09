@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -22,6 +21,8 @@ import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -68,7 +69,7 @@ public class IOHelper {
      */
     public IOHelper() {
         try {
-            setContext(loadContext());
+            setContext(getDefaultContext());
         } catch (IOException e) {
             logger.warn("Could not load default prefixes.");
             logger.warn(e.getMessage());
@@ -83,7 +84,7 @@ public class IOHelper {
     public IOHelper(boolean defaults) {
         try {
             if (defaults) {
-                setContext(loadContext());
+                setContext(getDefaultContext());
             } else {
                 setContext();
             }
@@ -109,7 +110,8 @@ public class IOHelper {
      */
     public IOHelper(String path) {
         try {
-            setContext(loadContext(path));
+            String jsonString = FileUtils.readFileToString(new File(path));
+            setContext(jsonString);
         } catch (IOException e) {
             logger.warn("Could not load prefixes from " + path);
             logger.warn(e.getMessage());
@@ -123,7 +125,8 @@ public class IOHelper {
      */
     public IOHelper(File file) {
         try {
-            setContext(loadContext(file));
+            String jsonString = FileUtils.readFileToString(file);
+            setContext(jsonString);
         } catch (IOException e) {
             logger.warn("Could not load prefixes from " + file);
             logger.warn(e.getMessage());
@@ -536,29 +539,6 @@ public class IOHelper {
     }
 
     /**
-     * Load a set of IRIs from a file.
-     *
-     * @param path the path to the file containing the terms
-     * @return the set of IRIs
-     * @throws IOException on any problem
-     */
-    public Set<IRI> loadTerms(String path) throws IOException {
-        return loadTerms(new File(path));
-    }
-
-    /**
-     * Load a set of IRIs from a file.
-     *
-     * @param file the File containing the terms
-     * @return the set of IRIs
-     * @throws IOException on any problem
-     */
-    public Set<IRI> loadTerms(File file) throws IOException {
-        String content = new Scanner(file).useDelimiter("\\Z").next();
-        return parseTerms(content);
-    }
-
-    /**
      * Load a map of prefixes from "@context" of the default JSON-LD file.
      *
      * @return a map from prefix name strings to prefix IRI strings
@@ -600,8 +580,7 @@ public class IOHelper {
      * @throws IOException on any problem
      */
     public static Context loadContext(InputStream stream) throws IOException {
-        String content = new Scanner(stream).useDelimiter("\\Z").next();
-        return parseContext(content);
+        return parseContext(IOUtils.toString(stream));
     }
 
     /**
@@ -626,6 +605,19 @@ public class IOHelper {
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    /**
+     * Get a copy of the default context.
+     *
+     * @return a copy of the current context
+     * @throws IOException if default context file cannot be read
+     */
+    public Context getDefaultContext() throws IOException {
+        InputStream stream =
+            IOHelper.class.getResourceAsStream(defaultContextPath);
+        String jsonString = IOUtils.toString(stream);
+        return parseContext(jsonString);
     }
 
     /**
@@ -654,6 +646,20 @@ public class IOHelper {
             setContext();
         } else {
             this.context = context;
+        }
+    }
+
+    /**
+     * Set the current JSON-LD context to the given context.
+     *
+     * @param jsonString the new JSON-LD context as a JSON string
+     */
+    public void setContext(String jsonString) {
+        try {
+            this.context = parseContext(jsonString);
+        } catch (Exception e) {
+            logger.warn("Could not set context from JSON");
+            logger.warn(e.getMessage());
         }
     }
 

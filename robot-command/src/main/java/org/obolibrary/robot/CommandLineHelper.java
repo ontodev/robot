@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -18,6 +19,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
@@ -370,7 +372,7 @@ public class CommandLineHelper {
     /**
      * Given an IOHelper and a command line, check for the required options
      * and return a set of IRIs for terms.
-     * Handles --terms string and --term-file file options.
+     * Handles --terms and --term-file options.
      *
      * @param ioHelper the IOHelper to use for loading the terms
      * @param line the command line to use
@@ -379,16 +381,21 @@ public class CommandLineHelper {
      * @throws IOException if the term file cannot be loaded
      */
     public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line)
-        throws IllegalArgumentException, IOException {
-        Set<IRI> terms = null;
-        if (line.hasOption("terms")) {
-            terms = ioHelper.parseTerms(line.getOptionValue("terms"));
-        } else if (line.hasOption("term-file")) {
-            terms = ioHelper.loadTerms(line.getOptionValue("term-file"));
+            throws IllegalArgumentException, IOException {
+        Set<String> termStrings = new HashSet<String>();
+        termStrings.addAll(getOptionValues(line, "terms"));
+        for (String path: getOptionValues(line, "term-file")) {
+            termStrings.add(FileUtils.readFileToString(new File(path)));
         }
-        if (terms == null) {
+
+        Set<IRI> terms = new HashSet<IRI>();
+        for (String termString: termStrings) {
+            terms.addAll(ioHelper.parseTerms(termString));
+        }
+
+        if (terms.size() == 0) {
             throw new IllegalArgumentException(
-                    "The terms to extract must be specified.");
+                    "Must specify terms to extract.");
         }
         return terms;
     }
