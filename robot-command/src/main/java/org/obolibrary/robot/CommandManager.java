@@ -2,7 +2,7 @@ package org.obolibrary.robot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +36,8 @@ public class CommandManager implements Command {
     /**
      * Store a map from command names to Command objects.
      */
-    private Map<String, Command> commands = new HashMap<String, Command>();
+    private Map<String, Command> commands =
+        new LinkedHashMap<String, Command>();
 
     /**
      * Initialze the command.
@@ -150,6 +151,17 @@ public class CommandManager implements Command {
      */
     public OWLOntology execute(OWLOntology inputOntology, String[] args)
             throws Exception {
+        CommandLineParser parser = new PosixParser();
+        CommandLine line = parser.parse(getOptions(), args, true);
+        if (line.hasOption("help")) {
+            printHelp();
+            return null;
+        }
+        if (line.hasOption("version")) {
+            CommandLineHelper.printVersion();
+            return null;
+        }
+
         List<String> arguments = new ArrayList<String>(Arrays.asList(args));
         if (arguments.size() == 0) {
             throw new IllegalArgumentException("No command provided");
@@ -188,6 +200,20 @@ public class CommandManager implements Command {
         }
         if (commandName == null) {
             throw new IllegalArgumentException("No command provided");
+        }
+
+        commandName = commandName.trim().toLowerCase();
+        if (commandName.equals("help")) {
+            if (arguments.size() == 0) {
+                printHelp();
+            } else {
+                globalOptionArgs.add("--help");
+            }
+            return inputOntology;
+        }
+        if (commandName.equals("version")) {
+            CommandLineHelper.printVersion();
+            return inputOntology;
         }
         if (!commands.containsKey(commandName)) {
             throw new IllegalArgumentException(
