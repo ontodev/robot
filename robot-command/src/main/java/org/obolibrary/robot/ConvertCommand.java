@@ -63,7 +63,8 @@ public class ConvertCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot convert --input <file> --format <format>"
+        return "robot convert --input <file> "
+             + "--format <format> "
              + "--output <file>";
     }
 
@@ -90,10 +91,11 @@ public class ConvertCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
-     * save it to a new format and return the ontology unchanged.
+     * Given an input state and command line arguments,
+     * save the ontology to a new format
+     * and return the state unchanged.
      *
-     * Suported formats:
+     * Supported formats:
      *
      * <li>OBO .obo
      * <li>RDFXML .owl
@@ -102,12 +104,12 @@ public class ConvertCommand implements Command {
      * <li>Manchester .omn
      * <li>OWL Functional .ofn
      *
-     * @param ontology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the ontology with inferred axioms added
+     * @return the input state unchanged, or a new state with the ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology ontology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -115,11 +117,13 @@ public class ConvertCommand implements Command {
             return null;
         }
 
-        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-
-        if (ontology == null) {
-            ontology = CommandLineHelper.getInputOntology(ioHelper, line);
+        if (state == null) {
+            state = new CommandState();
         }
+
+        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology ontology = state.getOntology();
 
         String[] outputs = line.getOptionValues("output");
         if (outputs.length == 0) {
@@ -138,6 +142,6 @@ public class ConvertCommand implements Command {
                 ioHelper.getFormat(formatName),
                 outputFile);
 
-        return ontology;
+        return state;
     }
 }

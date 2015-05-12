@@ -63,8 +63,10 @@ public class ExtractCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot extract --input <file> --term-file <file>"
-            + " --output <file> --output-iri <iri>";
+        return "robot extract --input <file> "
+             + "--term-file <file> "
+             + "--output <file> "
+             + "--output-iri <iri>";
     }
 
     /**
@@ -90,16 +92,16 @@ public class ExtractCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
-     * extract a new ontology.
+     * Given an input state and command line arguments,
+     * extract a new ontology and return an new state.
      * The input ontology is not changed.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the extracted ontology
+     * @return a new state with the extracted ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         OWLOntology outputOntology = null;
 
@@ -110,10 +112,8 @@ public class ExtractCommand implements Command {
         }
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-
-        if (inputOntology == null) {
-            inputOntology = CommandLineHelper.getInputOntology(ioHelper, line);
-        }
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology inputOntology = state.getOntology();
 
         IRI outputIRI = CommandLineHelper.getOutputIRI(line);
         if (outputIRI == null) {
@@ -128,6 +128,7 @@ public class ExtractCommand implements Command {
 
         CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
-        return outputOntology;
+        state.setOntology(outputOntology);
+        return state;
     }
 }

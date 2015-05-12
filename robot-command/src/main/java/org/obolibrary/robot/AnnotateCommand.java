@@ -95,8 +95,9 @@ public class AnnotateCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot annotate --input <file> -a rdfs:comment 'Comment'"
-             + " --output <file>";
+        return "robot annotate --input <file> "
+             + "--annotate <property> <value> "
+             + "--output <file>";
     }
 
     /**
@@ -122,16 +123,16 @@ public class AnnotateCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
+     * Given an input state and command line arguments,
      * add or remove ontology annotations
-     * and return the modified ontology.
+     * and return the modified state.
      *
-     * @param ontology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the ontology with inferred axioms added
+     * @return the state with the updated ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology ontology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -140,10 +141,8 @@ public class AnnotateCommand implements Command {
         }
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-
-        if (ontology == null) {
-            ontology = CommandLineHelper.getInputOntology(ioHelper, line);
-        }
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology ontology = state.getOntology();
 
         // Remove all annotation on the ontology
         if (line.hasOption("remove-annotations")) {
@@ -221,6 +220,6 @@ public class AnnotateCommand implements Command {
 
         CommandLineHelper.maybeSaveOutput(line, ontology);
 
-        return ontology;
+        return state;
     }
 }

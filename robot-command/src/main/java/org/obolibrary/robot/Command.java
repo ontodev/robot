@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * A simple interface for all ROBOT commands.
@@ -49,11 +48,11 @@ public interface Command {
      * All commands offer an execute method that can be chained from
      * previous commands.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param inputState the input from the previous command, or null
      * @param args the command-line arguments
-     * @return the updated ontology, or a new ontology, or null
+     * @return the updated state, or a new state, or null
      * @throws Exception on any problem
      */
-    OWLOntology execute(OWLOntology inputOntology, String[] args)
+    CommandState execute(CommandState inputState, String[] args)
             throws Exception;
 }
