@@ -26,7 +26,7 @@ public class IOHelperTest extends CoreTest {
     @Test
     public void testContext() throws IOException {
         IOHelper ioh = new IOHelper();
-        Context context = ioh.loadContext();
+        Context context = ioh.getContext();
 
         assertEquals("Check GO prefix",
                 "http://purl.obolibrary.org/obo/GO_",
@@ -95,7 +95,7 @@ public class IOHelperTest extends CoreTest {
     @Test
     public void testPrefixManager() throws IOException {
         IOHelper ioh = new IOHelper();
-        PrefixManager pm = ioh.loadPrefixManager();
+        PrefixManager pm = ioh.getPrefixManager();
 
         assertEquals("Check GO CURIE",
                 "http://purl.obolibrary.org/obo/GO_12345",
