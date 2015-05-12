@@ -2,9 +2,10 @@ package org.obolibrary.robot;
 
 import java.io.InputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,11 +18,14 @@ import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.core.Context;
 import com.github.jsonldjava.core.JsonLdApi;
+import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
-import org.apache.commons.io.FilenameUtils;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
@@ -36,6 +40,7 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Provides convenience methods for working with ontology and term files.
@@ -236,17 +241,49 @@ public class IOHelper {
         logger.debug("Loading ontology {} with catalog file {}",
                 ontologyFile, catalogFile);
 
-        OWLOntology ontology = null;
+        Object jsonObject = null;
+
         try {
-            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            String extension =
+                FilenameUtils.getExtension(ontologyFile.getName());
+            extension = extension.trim().toLowerCase();
+            if (extension.equals("yml") || extension.equals("yaml")) {
+                logger.debug("Converting from YAML to JSON");
+                String yamlString = FileUtils.readFileToString(ontologyFile);
+                jsonObject = new Yaml().load(yamlString);
+            } else if (extension.equals("js")
+                       || extension.equals("json")
+                       || extension.equals("jsonld")) {
+                String jsonString = FileUtils.readFileToString(ontologyFile);
+                jsonObject = JsonUtils.fromString(jsonString);
+            }
+
+            // Use Jena to convert a JSON-LD string to RDFXML, then load it
+            if (jsonObject != null) {
+                logger.debug("Converting from JSON to RDF");
+                jsonObject = new JsonLdApi().expand(getContext(), jsonObject);
+                String jsonString = JsonUtils.toString(jsonObject);
+                Model model = ModelFactory.createDefaultModel();
+                model.read(IOUtils.toInputStream(jsonString), null, "JSON-LD");
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                //model.write(System.out);
+                model.write(output);
+                byte[] data = output.toByteArray();
+                ByteArrayInputStream input = new ByteArrayInputStream(data);
+                return loadOntology(input);
+            }
+
+            OWLOntologyManager manager =
+                OWLManager.createOWLOntologyManager();
             if (catalogFile != null && catalogFile.isFile()) {
                 manager.addIRIMapper(new CatalogXmlIRIMapper(catalogFile));
             }
-            ontology = manager.loadOntologyFromOntologyDocument(ontologyFile);
+            return manager.loadOntologyFromOntologyDocument(ontologyFile);
+        } catch (JsonLdError e) {
+            throw new IOException(e);
         } catch (OWLOntologyCreationException e) {
             throw new IOException(e);
         }
-        return ontology;
     }
 
     /**

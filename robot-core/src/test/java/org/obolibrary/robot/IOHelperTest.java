@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,32 @@ import org.semanticweb.owlapi.model.PrefixManager;
  * Tests for {@link IOHelper}.
  */
 public class IOHelperTest extends CoreTest {
+    /**
+     * Test loading JSON files.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testJSON() throws IOException {
+        IOHelper ioh = new IOHelper();
+        String jsonPath = this.getClass().getResource("/simple.json").getFile();
+        File jsonFile = new File(jsonPath);
+        assertIdentical("/simple.owl", ioh.loadOntology(jsonFile));
+    }
+
+    /**
+     * Test loading YAML files.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testYAML() throws IOException {
+        IOHelper ioh = new IOHelper();
+        String yamlPath = this.getClass().getResource("/simple.yaml").getFile();
+        File yamlFile = new File(yamlPath);
+        assertIdentical("/simple.owl", ioh.loadOntology(yamlFile));
+    }
+
     /**
      * Test getting the default context.
      *
