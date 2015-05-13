@@ -24,7 +24,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 3. Copy both files to somewhere on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) -- both files must be in the same directory
 4. Now you should be able to run ROBOT from a command line:
 
-    robot help
+        robot help
 
 See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands.
 
