@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.obolibrary</groupId>
     <artifactId>robot</artifactId>
-    <version>${robot.version}</version>
+    <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>robot</name>
@@ -19,7 +19,6 @@
     </issueManagement>
 
     <properties>
-        <robot.version>0.0.1-SNAPSHOT</robot.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven-deploy-plugin-version>2.8.2</maven-deploy-plugin-version>
