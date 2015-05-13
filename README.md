@@ -15,7 +15,16 @@ This code can be used as:
 
 ## 1. Command Line Tool
 
-The command-line tool is packaged a Jar file and can be run via the `robot` shell script. We will soon have packaged releases, but for now please follow the "Build" instruction below.
+The command-line tool is packaged a Java JAR file and can be run via the `robot` shell script.
+
+1. Make sure you have [Java installed](https://www.java.com) -- version 7 or later
+2. [Download](http://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/) the latest `robot.jar` file and the right script for your platform:
+    - `robot` shell script for Unix, Linux, Mac OS X
+    - `robot.bat` batch script for Windows
+3. Copy both files to somewhere on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) -- both files must be in the same directory
+4. Now you should be able to run ROBOT from a command line:
+
+    robot help
 
 See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands.
 
@@ -24,10 +33,12 @@ See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/R
 
 The core ROBOT operations are written in plain Java code, and can be used from any language that uses the Java Virtual Machine. The command-line tool is both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
 
+You can [download](http://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/) the latest `robot.jar` file to include in your projects.
+
 
 ### Java
 
-The library provides a number of Operation classes for manipulating ontologies. The `IOHelper` class contains convenient static methods for loading and saving ontologies, and for loading sets of term IRIs. Here's an example of extracting a "core" subset from an ontology:
+The library provides a number of Operation classes for manipulating ontologies. The `IOHelper` class contains convenient methods for loading and saving ontologies, and for loading sets of term IRIs. Here's an example of extracting a "core" subset from an ontology:
 
     IOHelper ioHelper = new IOHelper();
     OWLOntology full = ioHelper.loadOntology("ontology.owl");
