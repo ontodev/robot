@@ -88,7 +88,7 @@ It's important to add metadata to an ontology before releasing it, and to update
 
 Ontologies are shared in different formats. The default format used by ROBOT is RDF/XML, but there are other OWL formats, RDF formats, and also the OBO file format.
 
-    robot convert --input example.owl --output results/example.obo
+    robot convert --input annotated.owl --output results/annotated.obo
 
 
 ## Chaining
@@ -97,10 +97,10 @@ On Unix platforms it's common to "chain" a series of commands, creating "pipelin
 
 ROBOT allows several commands to be chained by using the output ontology as the input to the next step. Here's an example of a full release pipeline using chained commands:
 
-    TODO robot \
+    robot \
       merge --input edit.owl \
       reason --reasoner ELK \
-      annotate --annotations annotations.yml --output results/example.owl \
+      annotate --annotation-file annotations.ttl --output results/example.owl \
       convert --output results/example.obo
 
 Each command has been put on its own line, for clarity. Only the first command has an explicit `--input` argument. The following commands use the output of the previous command as their input. Also notice that the first two commands do not specify an `--output` file. Their output is not saved to the filesystem, only sent to the next command. But the last two commands both specify `--output` files, and their results are saved to different files.

@@ -1,7 +1,10 @@
 format-version: 1.2
+data-version: https://github.com/ontodev/robot/examples/annotated-1.owl
+remark: Comment
 remark: Comment from annotations.ttl file.
-ontology: https://github.com/ontodev/robot/examples/edit.owl
+ontology: https://github.com/ontodev/robot/examples/annotated.owl
 owl-axioms: Prefix(owl:=<http://www.w3.org/2002/07/owl#>)\nPrefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)\nPrefix(xml:=<http://www.w3.org/XML/1998/namespace>)\nPrefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)\nPrefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)\n\n\nOntology(\nSubClassOf(<http://purl.obolibrary.org/obo/UBERON_0001062> owl:Thing)\n)
+name: Label
 
 [Term]
 id: UBERON:0000061
