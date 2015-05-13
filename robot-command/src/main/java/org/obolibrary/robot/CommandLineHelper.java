@@ -457,7 +457,9 @@ public class CommandLineHelper {
      * Print the ROBOT version.
      */
     public static void printVersion() {
-        System.out.println("TODO: command version 0.0.1");
+        String version = CommandLineHelper.class
+            .getPackage().getImplementationVersion();
+        System.out.println("ROBOT version " + version);
     }
 
     /**
