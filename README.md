@@ -17,11 +17,15 @@ This code can be used as:
 
 The command-line tool is packaged a Java JAR file and can be run via the `robot` shell script.
 
-1. Make sure you have [Java installed](https://www.java.com) -- version 7 or later
-2. [Download](http://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/) the latest `robot.jar` file and the right script for your platform:
-    - `robot` shell script for Unix, Linux, Mac OS X
-    - `robot.bat` batch script for Windows
-3. Copy both files to somewhere on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) -- both files must be in the same directory
+1. Make sure that you have [Java 7 or later installed](https://www.java.com/en/download/installed.jsp)
+2. Download **two** files: the [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) and the right script for your platform:
+    - [`robot`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot) shell script for Unix, Linux, and Mac OS X
+    - [`robot.bat`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.bar) batch script for Windows
+3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)):
+    - on Unix, Linux, and Mac OS X this could be `/usr/local/bin/`
+    - on Windows this could be `C:\Windows\`
+    - or update your PATH to include your chosen directory
+    - NOTE: both files must be in the same directory
 4. Now you should be able to run ROBOT from a command line:
 
         robot help
@@ -33,7 +37,7 @@ See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/R
 
 The core ROBOT operations are written in plain Java code, and can be used from any language that uses the Java Virtual Machine. The command-line tool is both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
 
-You can [download](http://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/) the latest `robot.jar` file to include in your projects.
+You can download the latest [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) to include in your projects.
 
 
 ### Java
