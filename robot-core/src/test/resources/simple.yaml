@@ -1,0 +1,23 @@
+---
+"@context":
+    resources: https://github.com/ontodev/robot/robot-core/src/test/resources/
+    simple: resources:simple.owl#
+    label: rdfs:label
+    parent:
+        "@id": rdfs:subClassOf
+        "@type": "@id"
+    id: "@id"
+    type: "@type"
+    value: "@value"
+
+"@graph":
+    - id: resources:simple.owl
+      type: owl:Ontology
+    - id: simple:test1
+      type: owl:Class
+      label:
+          - value: test one
+          - value: Test 1
+    - id: simple:test2
+      type: owl:Class
+      parent: simple:test1

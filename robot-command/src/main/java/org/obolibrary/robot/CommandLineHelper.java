@@ -298,6 +298,48 @@ public class CommandLineHelper {
     }
 
     /**
+     * Given an IOHelper, a state object, and a command line,
+     * update the state with the ontology.
+     * If the state contains an ontology, use it.
+     * If the state is null or does not contain an ontology,
+     * use the `--input` option.
+     * If the state has an ontology and there's an `--input`
+     * throw an exception warning the use to use two commands
+     * instead of a chain of commands.
+     *
+     * @param ioHelper the IOHelper to load the ontology with
+     * @param state the input state, maybe null
+     * @param line the command line to use
+     * @return the updated state
+     * @throws IllegalArgumentException if requires options are missing
+     * @throws IOException if the ontology cannot be loaded
+     */
+    public static CommandState updateInputOntology(IOHelper ioHelper,
+            CommandState state, CommandLine line)
+            throws IllegalArgumentException, IOException {
+        if (state != null && state.getOntology() != null) {
+            if (line.hasOption("input") || line.hasOption("input-IRI")) {
+                throw new IllegalArgumentException(
+                    "Do not use an --input option for chained commands");
+            } else {
+                return state;
+            }
+        }
+
+        OWLOntology ontology = getInputOntology(ioHelper, line);
+        if (ontology == null) {
+            throw new IllegalArgumentException(
+                    "An input ontology must be specified");
+        }
+
+        if (state == null) {
+            state = new CommandState();
+        }
+        state.setOntology(ontology);
+        return state;
+    }
+
+    /**
      * Given an IOHelper and a command line, check for required options
      * and return a list of loaded input ontologies.
      * Currently handles --input options.
@@ -364,7 +406,7 @@ public class CommandLineHelper {
     public static void maybeSaveOutput(CommandLine line, OWLOntology ontology)
             throws IOException {
         IOHelper ioHelper = getIOHelper(line);
-        for (String path: line.getOptionValues("output")) {
+        for (String path: getOptionValues(line, "output")) {
             ioHelper.saveOntology(ontology, path);
         }
     }
@@ -415,7 +457,9 @@ public class CommandLineHelper {
      * Print the ROBOT version.
      */
     public static void printVersion() {
-        System.out.println("TODO: command version 0.0.1");
+        String version = CommandLineHelper.class
+            .getPackage().getImplementationVersion();
+        System.out.println("ROBOT version " + version);
     }
 
     /**

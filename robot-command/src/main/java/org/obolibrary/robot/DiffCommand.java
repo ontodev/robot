@@ -65,8 +65,9 @@ public class DiffCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot diff --left <file> --right <file> "
-            + "--output <file>";
+        return "robot diff --left <file> "
+             + "--right <file> "
+             + "--output <file>";
     }
 
     /**
@@ -92,16 +93,16 @@ public class DiffCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
-     * report on the differences, if any,
-     * and return the input ontology unchanged.
+     * Given an input state and command line arguments,
+     * report on the differences between ontologies, if any,
+     * and return the state unchanged.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the input ontology, unchanged
+     * @return the input state, unchanged
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         CommandLine line = CommandLineHelper.getCommandLine(
                 getUsage(), getOptions(), args);
@@ -110,8 +111,14 @@ public class DiffCommand implements Command {
         }
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        if (state == null) {
+            state = new CommandState();
+        }
 
-        OWLOntology leftOntology = inputOntology;
+        OWLOntology leftOntology = null;
+        if (state != null && state.getOntology() != null) {
+            leftOntology = state.getOntology();
+        }
         if (leftOntology == null) {
             String leftOntologyPath =
                 CommandLineHelper.getOptionalValue(line, "left");
@@ -151,7 +158,7 @@ public class DiffCommand implements Command {
         writer.flush();
         writer.close();
 
-        return inputOntology;
+        return state;
     }
 
 }

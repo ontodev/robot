@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 /**
  * Merge multiple ontologies into a single ontology.

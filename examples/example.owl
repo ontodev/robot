@@ -8,7 +8,9 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
-    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/edit.owl"/>
+    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/edit.owl">
+        <rdfs:comment>Comment from annotations.ttl file.</rdfs:comment>
+    </owl:Ontology>
     
 
 

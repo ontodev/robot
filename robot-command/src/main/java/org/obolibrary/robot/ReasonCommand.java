@@ -65,8 +65,10 @@ public class ReasonCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot reason --input <file> --reasoner <name>"
-             + "[options] --output <file>";
+        return "robot reason --input <file> "
+             + "--reasoner <name> "
+             + "[options] "
+             + "--output <file>";
     }
 
     /**
@@ -92,15 +94,16 @@ public class ReasonCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
-     * run a reasoner, and add axioms to the ontology.
+     * Given an input state and command line arguments,
+     * run a reasoner, and add axioms to the input ontology,
+     * returning a state with the updated ontology.
      *
-     * @param ontology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the ontology with inferred axioms added
+     * @return the state with inferred axioms added to the ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology ontology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -108,11 +111,13 @@ public class ReasonCommand implements Command {
             return null;
         }
 
-        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-
-        if (ontology == null) {
-            ontology = CommandLineHelper.getInputOntology(ioHelper, line);
+        if (state == null) {
+            state = new CommandState();
         }
+
+        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology ontology = state.getOntology();
 
         // ELK is the default reasoner
         String reasonerName = CommandLineHelper.getDefaultValue(
@@ -142,6 +147,6 @@ public class ReasonCommand implements Command {
 
         CommandLineHelper.maybeSaveOutput(line, ontology);
 
-        return ontology;
+        return state;
     }
 }

@@ -2,7 +2,7 @@ package org.obolibrary.robot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,10 +14,9 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
- *
+ * Execute collections of commands.
  *
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
@@ -26,7 +25,7 @@ public class CommandManager implements Command {
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(CatalogXmlIRIMapper.class);
+        LoggerFactory.getLogger(CommandManager.class);
 
     /**
      * Store the command-line options for the command.
@@ -36,7 +35,8 @@ public class CommandManager implements Command {
     /**
      * Store a map from command names to Command objects.
      */
-    private Map<String, Command> commands = new HashMap<String, Command>();
+    private Map<String, Command> commands =
+        new LinkedHashMap<String, Command>();
 
     /**
      * Initialze the command.
@@ -141,15 +141,31 @@ public class CommandManager implements Command {
     }
 
     /**
-     * Given command-line arguments, execute one or more commands.
+     * Given an input state and command-line arguments,
+     * execute one or more commands.
      *
-     * @param inputOntology an ontology to work with, or null
+     * @param state an state to work with, or null
      * @param args the command-line arguments
-     * @return the result of the last subcommand
+     * @return the result state of the last subcommand
      * @throws Exception on any problems
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
+        CommandLineParser parser = new PosixParser();
+        CommandLine line = parser.parse(getOptions(), args, true);
+        if (line.hasOption("help")) {
+            printHelp();
+            return null;
+        }
+        if (line.hasOption("version")) {
+            CommandLineHelper.printVersion();
+            return null;
+        }
+
+        if (state == null) {
+            state = new CommandState();
+        }
+
         List<String> arguments = new ArrayList<String>(Arrays.asList(args));
         if (arguments.size() == 0) {
             throw new IllegalArgumentException("No command provided");
@@ -158,28 +174,27 @@ public class CommandManager implements Command {
         List<String> globalOptionArgs = getOptionArgs(globalOptions, arguments);
 
         while (arguments.size() > 0) {
-            inputOntology = executeCommand(
-                    inputOntology, globalOptionArgs, arguments);
+            state = executeCommand(state, globalOptionArgs, arguments);
         }
 
-        return inputOntology;
+        return state;
     }
 
     /**
-     * Given an ontology, global option strings, and remaining
+     * Given an input state, global option strings, and remaining
      * command-line argument strings,
      * use as many arguments as needed to execute a single command.
      * The arguments used by the command are removed from the arguments list,
      * which can then be used to execute further commands.
      *
-     * @param inputOntology an ontology to work with, or null
+     * @param state the state from the previous command, or null
      * @param globalOptionArgs a list of global option strings
      * @param arguments the list of remaining command-line arguments;
      *     any arguments that are used will be removed from this list
-     * @return the ontology that results form this command
+     * @return the state that results from this command
      * @throws Exception on any problems
      */
-    public OWLOntology executeCommand(OWLOntology inputOntology,
+    public CommandState executeCommand(CommandState state,
             List<String> globalOptionArgs, List<String> arguments)
             throws Exception {
         String commandName = null;
@@ -188,6 +203,20 @@ public class CommandManager implements Command {
         }
         if (commandName == null) {
             throw new IllegalArgumentException("No command provided");
+        }
+
+        commandName = commandName.trim().toLowerCase();
+        if (commandName.equals("help")) {
+            if (arguments.size() == 0) {
+                printHelp();
+            } else {
+                globalOptionArgs.add("--help");
+            }
+            return state;
+        }
+        if (commandName.equals("version")) {
+            CommandLineHelper.printVersion();
+            return state;
         }
         if (!commands.containsKey(commandName)) {
             throw new IllegalArgumentException(
@@ -210,7 +239,7 @@ public class CommandManager implements Command {
         optionArgs.addAll(globalOptionArgs);
         optionArgs.addAll(localOptionArgs);
 
-        return command.execute(inputOntology, asArgs(optionArgs));
+        return command.execute(state, asArgs(optionArgs));
     }
 
     /**

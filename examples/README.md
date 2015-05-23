@@ -2,6 +2,8 @@
 
 This document will walk you through some examples of things you can do with ROBOT. These examples are based on the [OBO tutorial](https://github.com/jamesaoverton/obo-tutorial).
 
+**NOTE**: In the following examples the `\` (backslash) character at the end of a line indicates that the command is continued on the next line. You can always delete the `\` characters and enter the command as a single line. On Windows you should use `^` (caret) character instead of `\` to indicate that the command continues on the next line.
+
 
 ## Editing
 
@@ -30,8 +32,7 @@ Although OWL ontology files are text, it's possible to have two identical ontolo
 
 If an `output` is provided then a report will be written with any differences between the two ontologies:
 
-    robot diff --left edit.owl --right release.owl \
-      --output results/release-diff.txt
+    robot diff --left edit.owl --right release.owl --output results/release-diff.txt
 
 See `release-diff.txt` for an example.
 
@@ -51,24 +52,21 @@ You don't need `owl:import` statements: you can merge any number of ontologies b
 
 Some ontologies contain more axioms than you want to use. You can use the `filter` command to keep only those axioms with ObjectProperties that you specify. For example, Uberon contains rich logical axioms, but sometimes you only want to keep the 'part of' and 'has part' relations. Here we start with a fragment of Uberon and filter for parthood relations:
 
-    robot filter --input uberon_fragment.owl --term-file parts.txt \
-      --output results/filtered.owl
+    robot filter --input uberon_fragment.owl --term-file parts.txt --output results/filtered.owl
 
 
 ## Extracting
 
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a module for the term 'adrenal cortex' and its supporting terms:
 
-    robot extract --input filtered.owl --term-file uberon_module.txt \
-      --output results/uberon_module.owl
+    robot extract --input filtered.owl --term-file uberon_module.txt --output results/uberon_module.owl
 
 
 ## Reasoning
 
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using [ELK](https://code.google.com/p/elk-reasoner/), a very fast reasoner that supports the EL subset of OWL 2.
 
-    robot reason --reasoner ELK --input edit.owl \
-      --output results/reasoned.owl
+    robot reason --reasoner ELK --input edit.owl --output results/reasoned.owl
 
 
 ## Annotating
@@ -88,7 +86,7 @@ It's important to add metadata to an ontology before releasing it, and to update
 
 Ontologies are shared in different formats. The default format used by ROBOT is RDF/XML, but there are other OWL formats, RDF formats, and also the OBO file format.
 
-    robot convert --input example.owl --output results/example.obo
+    robot convert --input annotated.owl --output results/annotated.obo
 
 
 ## Chaining
@@ -97,10 +95,10 @@ On Unix platforms it's common to "chain" a series of commands, creating "pipelin
 
 ROBOT allows several commands to be chained by using the output ontology as the input to the next step. Here's an example of a full release pipeline using chained commands:
 
-    TODO robot \
+    robot \
       merge --input edit.owl \
       reason --reasoner ELK \
-      annotate --annotations annotations.yml --output results/example.owl \
+      annotate --annotation-file annotations.ttl --output results/example.owl \
       convert --output results/example.obo
 
 Each command has been put on its own line, for clarity. Only the first command has an explicit `--input` argument. The following commands use the output of the previous command as their input. Also notice that the first two commands do not specify an `--output` file. Their output is not saved to the filesystem, only sent to the next command. But the last two commands both specify `--output` files, and their results are saved to different files.

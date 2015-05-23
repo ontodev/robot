@@ -62,7 +62,9 @@ public class MergeCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot filter --input <file> --input <file> --output <file>";
+        return "robot filter --input <file> "
+             + "--input <file> "
+             + "--output <file>";
     }
 
     /**
@@ -88,17 +90,17 @@ public class MergeCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
-     * merge all ontology axioms to create a new ontology.
+     * Given an input state and command line arguments,
+     * merge all ontology axioms into the first ontology
+     * and return a state with the merged ontology.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the new merged ontology
+     * @return the state with the merged ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
-        OWLOntology outputOntology = null;
 
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -108,9 +110,13 @@ public class MergeCommand implements Command {
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
+        if (state == null) {
+            state = new CommandState();
+        }
+
         List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
-        if (inputOntology != null) {
-            inputOntologies.add(inputOntology);
+        if (state != null && state.getOntology() != null) {
+            inputOntologies.add(state.getOntology());
         }
         inputOntologies.addAll(
             CommandLineHelper.getInputOntologies(ioHelper, line));
@@ -120,10 +126,11 @@ public class MergeCommand implements Command {
                     "at least one inputOntology must be specified");
         }
 
-        outputOntology = MergeOperation.merge(inputOntologies);
+        OWLOntology outputOntology = MergeOperation.merge(inputOntologies);
 
         CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
-        return outputOntology;
+        state.setOntology(outputOntology);
+        return state;
     }
 }

@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * Simple mock command for testing.
@@ -87,16 +86,16 @@ public class MockCommand implements Command {
     /**
      * Execute mock command, storing the arguments.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the input ontology
+     * @return the input state
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         lastArgs = args;
 
-        return inputOntology;
+        return state;
     }
 
     /**

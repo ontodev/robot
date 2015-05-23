@@ -66,7 +66,9 @@ public class FilterCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot filter --input <file> --term-file <file> --output <file>";
+        return "robot filter --input <file> "
+             + "--term-file <file> "
+             + "--output <file>";
     }
 
     /**
@@ -92,15 +94,16 @@ public class FilterCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
-     * filter axioms from an ontology, changing it.
+     * Given an input state and command line arguments,
+     * filter axioms from its ontology, modifying it,
+     * and return a state with the modified ontology.
      *
-     * @param ontology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the new filtered ontology
+     * @return the state with the filtered ontology
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology ontology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -108,11 +111,13 @@ public class FilterCommand implements Command {
             return null;
         }
 
-        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-
-        if (ontology == null) {
-            ontology = CommandLineHelper.getInputOntology(ioHelper, line);
+        if (state == null) {
+            state = new CommandState();
         }
+
+        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology ontology = state.getOntology();
 
         Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line);
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
@@ -126,6 +131,6 @@ public class FilterCommand implements Command {
 
         CommandLineHelper.maybeSaveOutput(line, ontology);
 
-        return ontology;
+        return state;
     }
 }

@@ -15,7 +15,20 @@ This code can be used as:
 
 ## 1. Command Line Tool
 
-The command-line tool is packaged a Jar file and can be run via the `robot` shell script. We will soon have packaged releases, but for now please follow the "Build" instruction below.
+The command-line tool is packaged a Java JAR file and can be run via the `robot` shell script.
+
+1. Make sure that you have [Java 7 or later installed](https://www.java.com/en/download/installed.jsp)
+2. Download **two** files: the [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) and the right script for your platform:
+    - [`robot`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot) shell script for Unix, Linux, and Mac OS X
+    - [`robot.bat`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.bar) batch script for Windows
+3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)):
+    - on Unix, Linux, and Mac OS X this could be `/usr/local/bin/`
+    - on Windows this could be `C:\Windows\`
+    - or update your PATH to include your chosen directory
+    - NOTE: both files must be in the same directory
+4. Now you should be able to run ROBOT from a command line:
+
+        robot help
 
 See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands.
 
@@ -24,10 +37,12 @@ See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/R
 
 The core ROBOT operations are written in plain Java code, and can be used from any language that uses the Java Virtual Machine. The command-line tool is both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
 
+You can download the latest [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) to include in your projects.
+
 
 ### Java
 
-The library provides a number of Operation classes for manipulating ontologies. The `IOHelper` class contains convenient static methods for loading and saving ontologies, and for loading sets of term IRIs. Here's an example of extracting a "core" subset from an ontology:
+The library provides a number of Operation classes for manipulating ontologies. The `IOHelper` class contains convenient methods for loading and saving ontologies, and for loading sets of term IRIs. Here's an example of extracting a "core" subset from an ontology:
 
     IOHelper ioHelper = new IOHelper();
     OWLOntology full = ioHelper.loadOntology("ontology.owl");

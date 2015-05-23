@@ -7,10 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
- * Works with prefixes for an IOHelper.
+ * Export prefixes to a file.
  *
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
@@ -85,16 +84,16 @@ public class ExportPrefixesCommand implements Command {
     }
 
     /**
-     * Given an input ontology (or null) and command line arguments,
+     * Given an input state and command line arguments,
      * export the current prefixes
-     * and return the input ontology unchanged.
+     * and return the state unchanged.
      *
-     * @param inputOntology the ontology from the previous command, or null
+     * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the input ontology, unchanged
+     * @return the input state, unchanged
      * @throws Exception on any problem
      */
-    public OWLOntology execute(OWLOntology inputOntology, String[] args)
+    public CommandState execute(CommandState state, String[] args)
             throws Exception {
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -111,7 +110,7 @@ public class ExportPrefixesCommand implements Command {
             System.out.println(ioHelper.getContextString());
         }
 
-        return inputOntology;
+        return state;
     }
 }
 

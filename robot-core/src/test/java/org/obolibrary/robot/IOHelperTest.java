@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +20,32 @@ import org.semanticweb.owlapi.model.PrefixManager;
  */
 public class IOHelperTest extends CoreTest {
     /**
+     * Test loading JSON files.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testJSON() throws IOException {
+        IOHelper ioh = new IOHelper();
+        String jsonPath = this.getClass().getResource("/simple.json").getFile();
+        File jsonFile = new File(jsonPath);
+        assertIdentical("/simple.owl", ioh.loadOntology(jsonFile));
+    }
+
+    /**
+     * Test loading YAML files.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testYAML() throws IOException {
+        IOHelper ioh = new IOHelper();
+        String yamlPath = this.getClass().getResource("/simple.yaml").getFile();
+        File yamlFile = new File(yamlPath);
+        assertIdentical("/simple.owl", ioh.loadOntology(yamlFile));
+    }
+
+    /**
      * Test getting the default context.
      *
      * @throws IOException on file problem
@@ -26,7 +53,7 @@ public class IOHelperTest extends CoreTest {
     @Test
     public void testContext() throws IOException {
         IOHelper ioh = new IOHelper();
-        Context context = ioh.loadContext();
+        Context context = ioh.getContext();
 
         assertEquals("Check GO prefix",
                 "http://purl.obolibrary.org/obo/GO_",
@@ -95,7 +122,7 @@ public class IOHelperTest extends CoreTest {
     @Test
     public void testPrefixManager() throws IOException {
         IOHelper ioh = new IOHelper();
-        PrefixManager pm = ioh.loadPrefixManager();
+        PrefixManager pm = ioh.getPrefixManager();
 
         assertEquals("Check GO CURIE",
                 "http://purl.obolibrary.org/obo/GO_12345",
