@@ -6,7 +6,9 @@ import java.io.StringWriter;
 import static org.junit.Assert.assertEquals;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
  * Helper methods for core tests.
@@ -24,6 +26,11 @@ public class CoreTest {
      * IRI of simple ontology.
      */
     protected static IRI simpleIRI = IRI.create(base + "simple.owl");
+
+    /**
+     * Shared data factory.
+     */
+    protected static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
     /**
      * Load an ontology from a resource path.

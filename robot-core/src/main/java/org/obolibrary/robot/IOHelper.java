@@ -1,11 +1,15 @@
 package org.obolibrary.robot;
 
-import java.io.InputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +28,7 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.opencsv.CSVReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -37,7 +42,6 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 import org.yaml.snakeyaml.Yaml;
@@ -670,12 +674,12 @@ public class IOHelper {
     }
 
     /**
-     * Make an OWLAPI PrefixManager from a map of prefixes.
+     * Make an OWLAPI DefaultPrefixManager from a map of prefixes.
      *
      * @param prefixes a map from prefix name strings to prefix IRI strings
-     * @return a PrefixManager
+     * @return a new DefaultPrefixManager
      */
-    public static PrefixManager makePrefixManager(
+    public static DefaultPrefixManager makePrefixManager(
             Map<String, String> prefixes) {
         DefaultPrefixManager pm = new DefaultPrefixManager();
         for (Map.Entry<String, String> entry: prefixes.entrySet()) {
@@ -687,9 +691,9 @@ public class IOHelper {
     /**
      * Get a prefix manager with the current prefixes.
      *
-     * @return a new PrefixManager
+     * @return a new DefaultPrefixManager
      */
-    public PrefixManager getPrefixManager() {
+    public DefaultPrefixManager getPrefixManager() {
         return makePrefixManager(context.getPrefixes(false));
     }
 
@@ -784,6 +788,107 @@ public class IOHelper {
         FileWriter writer = new FileWriter(file);
         writer.write(getContextString());
         writer.close();
+    }
+
+    /**
+     * Read comma-separated values from a path to a list of lists of strings.
+     *
+     * @param path file path to the CSV file
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readCSV(String path) throws IOException {
+        return readCSV(new FileReader(path));
+    }
+
+    /**
+     * Read comma-separated values from a stream to a list of lists of strings.
+     *
+     * @param stream the stream to read from
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readCSV(InputStream stream)
+            throws IOException {
+        return readCSV(new InputStreamReader(stream));
+    }
+
+    /**
+     * Read comma-separated values from a reader to a list of lists of strings.
+     *
+     * @param reader a reader to read data from
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readCSV(Reader reader) throws IOException {
+        CSVReader csv = new CSVReader(reader);
+        List<List<String>> rows = new ArrayList<List<String>>();
+        String[] nextLine;
+        while ((nextLine = csv.readNext()) != null) {
+            rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
+        }
+        return rows;
+    }
+
+
+    /**
+     * Read tab-separated values from a path to a list of lists of strings.
+     *
+     * @param path file path to the CSV file
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readTSV(String path) throws IOException {
+        return readTSV(new FileReader(path));
+    }
+
+    /**
+     * Read tab-separated values from a stream to a list of lists of strings.
+     *
+     * @param stream the stream to read from
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readTSV(InputStream stream)
+            throws IOException {
+        return readTSV(new InputStreamReader(stream));
+    }
+
+    /**
+     * Read tab-separated values from a reader to a list of lists of strings.
+     *
+     * @param reader a reader to read data from
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readTSV(Reader reader) throws IOException {
+        CSVReader csv = new CSVReader(reader, '\t');
+        List<List<String>> rows = new ArrayList<List<String>>();
+        String[] nextLine;
+        while ((nextLine = csv.readNext()) != null) {
+            rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
+        }
+        return rows;
+    }
+
+    /**
+     * Read a table from a path to a list of lists of strings.
+     *
+     * @param path file path to the CSV file
+     * @return a list of lists of strings
+     * @throws IOException on file or reading problems
+     */
+    public static List<List<String>> readTable(String path) throws IOException {
+        File file = new File(path);
+        String extension = FilenameUtils.getExtension(file.getName());
+        extension = extension.trim().toLowerCase();
+        if (extension.equals("csv")) {
+            return readCSV(new FileReader(path));
+        } else if (extension.equals("tsv") || extension.equals("tab")) {
+            return readTSV(new FileReader(path));
+        } else {
+            throw new IOException("Unrecognized file type for: " + path);
+        }
     }
 
 }

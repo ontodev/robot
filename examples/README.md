@@ -89,6 +89,15 @@ Ontologies are shared in different formats. The default format used by ROBOT is 
     robot convert --input annotated.owl --output results/annotated.obo
 
 
+## Templating
+
+ROBOT can also create ontology files from templates. See [template.md](../docs/template.md) for details. Here's a quick example:
+
+    robot template --template-file template.csv \
+      --prefix "ex: http://example.com/" \
+      --output template.owl
+
+
 ## Chaining
 
 On Unix platforms it's common to "chain" a series of commands, creating "pipeline" that combines several simple commands to accomplish a complex task. This works because most Unix tools communicate with streams of text. Unfortunately this doesn't work as well for OWL ontologies, because they cannot be streamed between commands, but we can achieve a similar result within ROBOT.

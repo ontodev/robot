@@ -300,12 +300,6 @@ public class CommandLineHelper {
     /**
      * Given an IOHelper, a state object, and a command line,
      * update the state with the ontology.
-     * If the state contains an ontology, use it.
-     * If the state is null or does not contain an ontology,
-     * use the `--input` option.
-     * If the state has an ontology and there's an `--input`
-     * throw an exception warning the use to use two commands
-     * instead of a chain of commands.
      *
      * @param ioHelper the IOHelper to load the ontology with
      * @param state the input state, maybe null
@@ -317,6 +311,30 @@ public class CommandLineHelper {
     public static CommandState updateInputOntology(IOHelper ioHelper,
             CommandState state, CommandLine line)
             throws IllegalArgumentException, IOException {
+        return updateInputOntology(ioHelper, state, line, true);
+    }
+
+    /**
+     * Given an IOHelper, a state object, a command line, and a "required" flag,
+     * update the state with the ontology.
+     * If the state contains an ontology, use it.
+     * If the state is null or does not contain an ontology,
+     * use the `--input` option.
+     * If the state has an ontology and there's an `--input`
+     * throw an exception warning the use to use two commands
+     * instead of a chain of commands.
+     *
+     * @param ioHelper the IOHelper to load the ontology with
+     * @param state the input state, maybe null
+     * @param line the command line to use
+     * @param required when true, throw an exception if ontology is not found
+     * @return the updated state
+     * @throws IllegalArgumentException if requires options are missing
+     * @throws IOException if the ontology cannot be loaded
+     */
+    public static CommandState updateInputOntology(IOHelper ioHelper,
+            CommandState state, CommandLine line, boolean required)
+            throws IllegalArgumentException, IOException {
         if (state != null && state.getOntology() != null) {
             if (line.hasOption("input") || line.hasOption("input-IRI")) {
                 throw new IllegalArgumentException(
@@ -326,10 +344,14 @@ public class CommandLineHelper {
             }
         }
 
-        OWLOntology ontology = getInputOntology(ioHelper, line);
-        if (ontology == null) {
-            throw new IllegalArgumentException(
+        OWLOntology ontology = null;
+        try {
+            ontology = getInputOntology(ioHelper, line);
+        } catch (Exception e) {
+            if (required) {
+                throw new IllegalArgumentException(
                     "An input ontology must be specified");
+            }
         }
 
         if (state == null) {

@@ -1,0 +1,5 @@
+Label,ID,Type,Parent,Parts
+A rdfs:label,ID,CLASS_TYPE,C %,C part_of some %
+skip this row
+test 3,GO:1234,subclass,test2,test one
+test 4,GO:1235,equivalent,test one,(test2 and 'test 3')
