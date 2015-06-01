@@ -272,7 +272,6 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * @return the IRI of the entity, or null if none is found
      */
     private IRI getIRI(Map<String, IRI> map, String name) {
-        System.out.println("NAME: " + name);
         if (map.containsKey(name)) {
             return map.get(name);
         }
@@ -308,13 +307,11 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      */
     public OWLAnnotationProperty getOWLAnnotationProperty(String name,
             boolean create) {
-        System.out.println("AP: " + name);
         IRI iri = getIRI(annotationProperties, name);
         if (iri != null) {
             return dataFactory.getOWLAnnotationProperty(iri);
         }
         if (ioHelper != null) {
-            System.out.println("CREATE: " + name);
             iri = ioHelper.createIRI(name);
             return dataFactory.getOWLAnnotationProperty(iri);
         }
@@ -329,13 +326,11 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * @return a class, or null
      */
     public OWLClass getOWLClass(String name) {
-        System.out.println("CLASS: " + name);
         IRI iri = getIRI(classes, name);
         if (iri != null) {
             return dataFactory.getOWLClass(iri);
         }
         if (ioHelper != null) {
-            System.out.println("CREATE: " + name);
             iri = ioHelper.createIRI(name);
             return dataFactory.getOWLClass(iri);
         }
@@ -350,7 +345,6 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * @return a data property, or null
      */
     public OWLDataProperty getOWLDataProperty(String name) {
-        System.out.println("DP: " + name);
         IRI iri = getIRI(dataProperties, name);
         if (iri != null) {
             return dataFactory.getOWLDataProperty(iri);
@@ -378,13 +372,11 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * @return a datatype, or null
      */
     public OWLDatatype getOWLDatatype(String name, boolean create) {
-        System.out.println("DT: " + name);
         IRI iri = getIRI(datatypes, name);
         if (iri != null) {
             return dataFactory.getOWLDatatype(iri);
         }
         if (create && ioHelper != null) {
-            System.out.println("CREATE: " + name);
             iri = ioHelper.createIRI(name);
             return dataFactory.getOWLDatatype(iri);
         }
@@ -399,7 +391,6 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * @return a named individual, or null
      */
     public OWLNamedIndividual getOWLIndividual(String name) {
-        System.out.println("NI: " + name);
         IRI iri = getIRI(namedIndividuals, name);
         if (iri != null) {
             return dataFactory.getOWLNamedIndividual(iri);
@@ -415,7 +406,6 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * @return an object property, or null
      */
     public OWLObjectProperty getOWLObjectProperty(String name) {
-        System.out.println("OP: " + name);
         IRI iri = getIRI(objectProperties, name);
         if (iri != null) {
             return dataFactory.getOWLObjectProperty(iri);
