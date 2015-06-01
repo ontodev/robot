@@ -13,7 +13,7 @@ import org.junit.Test;
 import com.github.jsonldjava.core.Context;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /**
  * Tests for {@link IOHelper}.
@@ -122,7 +122,7 @@ public class IOHelperTest extends CoreTest {
     @Test
     public void testPrefixManager() throws IOException {
         IOHelper ioh = new IOHelper();
-        PrefixManager pm = ioh.getPrefixManager();
+        DefaultPrefixManager pm = ioh.getPrefixManager();
 
         assertEquals("Check GO CURIE",
                 "http://purl.obolibrary.org/obo/GO_12345",
