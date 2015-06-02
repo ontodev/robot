@@ -599,4 +599,52 @@ public class TemplateOperation {
                 String.format(unknownTypeError, row + 1, id));
         }
     }
+
+    /**
+     * Get a list of the IRIs defined in a template table.
+     *
+     * @param rows the table of data
+     * @param ioHelper used to find entities by name
+     * @return a list of IRIs
+     * @throws Exception when names or templates cannot be handled
+     */
+    public static List<IRI> getIRIs(List<List<String>> rows,
+            IOHelper ioHelper) throws Exception {
+        // Find the ID column.
+        List<String> templates = rows.get(1);
+        int idColumn = -1;
+        for (int column = 0; column < templates.size(); column++) {
+            String template = templates.get(column);
+            if (template == null) {
+                continue;
+            }
+            template = template.trim();
+            if (template.equals("ID")) {
+                idColumn = column;
+            }
+        }
+        if (idColumn == -1) {
+            throw new Exception("Template row must include an \"ID\" column");
+        }
+
+        List<IRI> iris = new ArrayList<IRI>();
+        for (int row = 2; row < rows.size(); row++) {
+            String id = null;
+            try {
+                id = rows.get(row).get(idColumn);
+            } catch (IndexOutOfBoundsException e) {
+                continue;
+            }
+            if (id == null || id.trim().isEmpty()) {
+                continue;
+            }
+            IRI iri = ioHelper.createIRI(id);
+            if (iri == null) {
+                continue;
+            }
+            iris.add(iri);
+        }
+
+        return iris;
+    }
 }

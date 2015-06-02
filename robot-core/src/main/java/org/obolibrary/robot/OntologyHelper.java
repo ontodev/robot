@@ -410,6 +410,36 @@ public class OntologyHelper {
         return results;
     }
 
+
+    /**
+     * Given an ontology, return a set of all the entities in its signature.
+     *
+     * @param ontology the ontology to search
+     * @return a set of all entities in the ontology
+     */
+    public static Set<OWLEntity> getEntities(OWLOntology ontology) {
+        Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+        ontologies.add(ontology);
+        ReferencedEntitySetProvider resp =
+            new ReferencedEntitySetProvider(ontologies);
+        return resp.getEntities();
+    }
+
+    /**
+     * Given an ontology, return a set of IRIs for all the entities
+     * in its signature.
+     *
+     * @param ontology the ontology to search
+     * @return a set of IRIs for all entities in the ontology
+     */
+    public static Set<IRI> getIRIs(OWLOntology ontology) {
+        Set<IRI> iris = new HashSet<IRI>();
+        for (OWLEntity entity: getEntities(ontology)) {
+            iris.add(entity.getIRI());
+        }
+        return iris;
+    }
+
     /**
      * Remove all annotations on this ontology.
      * Just annotations on the ontology itself,

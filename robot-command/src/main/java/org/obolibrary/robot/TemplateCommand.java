@@ -2,12 +2,14 @@ package org.obolibrary.robot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
@@ -38,6 +40,7 @@ public class TemplateCommand implements Command {
         o.addOption("O", "output-iri",    true, "set the output ontology IRI");
         o.addOption("V", "version-iri",   true, "set the output version IRI");
         o.addOption("t", "template-file", true, "read template from a file");
+        o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
         o.addOption("m", "merge-before",
             false, "merge into input ontology before any output");
         o.addOption("M", "merge-after",
@@ -131,8 +134,24 @@ public class TemplateCommand implements Command {
         OWLOntology outputOntology =
             TemplateOperation.template(rows, inputOntology, null, ioHelper);
 
+        // if the --ancestors option is used,
+        // MIREOT in all the ancestors of the outputOntology terms
+        // from the inputOntology, with just their labels.
+        // Do not MIREOT the terms defined in the template,
+        // just their dependencies!
+        List<OWLOntology> ontologies;
+        if (line.hasOption("ancestors") && inputOntology != null) {
+            Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
+            iris.removeAll(TemplateOperation.getIRIs(rows, ioHelper));
+            OWLOntology ancestors = MireotOperation.getAncestors(
+                inputOntology, iris);
+            ontologies = new ArrayList<OWLOntology>();
+            ontologies.add(ancestors);
+            MergeOperation.mergeInto(ontologies, outputOntology);
+        }
+
         // Either merge-then-save, save-then-merge, or don't merge
-        List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+        ontologies = new ArrayList<OWLOntology>();
         ontologies.add(outputOntology);
         if (line.hasOption("merge-before")) {
             MergeOperation.mergeInto(ontologies, inputOntology);
