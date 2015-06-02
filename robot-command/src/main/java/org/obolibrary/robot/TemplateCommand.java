@@ -39,7 +39,7 @@ public class TemplateCommand implements Command {
         o.addOption("o", "output",        true, "save ontology to a file");
         o.addOption("O", "output-iri",    true, "set the output ontology IRI");
         o.addOption("V", "version-iri",   true, "set the output version IRI");
-        o.addOption("t", "template-file", true, "read template from a file");
+        o.addOption("t", "template",      true, "read template from a file");
         o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
         o.addOption("m", "merge-before",
             false, "merge into input ontology before any output");
@@ -73,7 +73,7 @@ public class TemplateCommand implements Command {
      */
     public String getUsage() {
         return "robot template --input <file> "
-             + "--template-file <file> "
+             + "--template <file> "
              + "--output <file>";
     }
 
@@ -128,7 +128,7 @@ public class TemplateCommand implements Command {
 
         // Read the whole CSV into a nested list of strings.
         String templatePath = CommandLineHelper.getRequiredValue(
-            line, "template-file", "a template-file is required");
+            line, "template", "a template is required");
         List<List<String>> rows = ioHelper.readTable(templatePath);
 
         OWLOntology outputOntology =

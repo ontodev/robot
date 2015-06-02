@@ -6,7 +6,7 @@ ROBOT can convert tables to OWL format using templates. The approach extends the
 2. Templates: ROBOT expects the second row to contain template strings for each column that will be used in the OWL conversion. See below for details on template strings.
 3. Data: ROBOT expects each of the remaining rows to correspond to an OWLClass. (In the future we may add support for other sorts of OWL entities). Rows with a blank "ID" column will be skipped.
 
-The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template-file` or `-t` option specified the CSV or TSV template file. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See below for the three different merge options, and details on how they control the output of the command.
+The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template` or `-t` option specified the CSV or TSV template file. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See below for the three different merge options, and details on how they control the output of the command.
 
 
 ## Template Strings

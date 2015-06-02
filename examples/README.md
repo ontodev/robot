@@ -93,7 +93,7 @@ Ontologies are shared in different formats. The default format used by ROBOT is 
 
 ROBOT can also create ontology files from templates. See [template.md](../docs/template.md) for details. Here's a quick example:
 
-    robot template --template-file template.csv \
+    robot template --template template.csv \
       --prefix "ex: http://example.com/" \
       --output template.owl
 
