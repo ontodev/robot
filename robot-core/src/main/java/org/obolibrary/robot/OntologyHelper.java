@@ -410,6 +410,26 @@ public class OntologyHelper {
         return results;
     }
 
+    /**
+     * Given an ontology and a set of term IRIs,
+     * return a set of entities for those IRIs.
+     * The input ontology is not changed.
+     *
+     * @param ontology the ontology to search
+     * @param iris the IRIs of the entities to find
+     * @return a set of OWLEntities with the given IRIs
+     */
+    public static Set<OWLEntity> getEntities(OWLOntology ontology,
+            Set<IRI> iris) {
+        Set<OWLEntity> entities = new HashSet<OWLEntity>();
+        if (iris == null) {
+            return null;
+        }
+        for (IRI iri: iris) {
+            entities.addAll(ontology.getEntitiesInSignature(iri, true));
+        }
+        return entities;
+    }
 
     /**
      * Given an ontology, return a set of all the entities in its signature.
