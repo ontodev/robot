@@ -313,7 +313,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
         }
         if (ioHelper != null) {
             iri = ioHelper.createIRI(name);
-            return dataFactory.getOWLAnnotationProperty(iri);
+            if (iri != null) {
+                return dataFactory.getOWLAnnotationProperty(iri);
+            }
         }
         return null;
     }
@@ -332,7 +334,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
         }
         if (ioHelper != null) {
             iri = ioHelper.createIRI(name);
-            return dataFactory.getOWLClass(iri);
+            if (iri != null) {
+                return dataFactory.getOWLClass(iri);
+            }
         }
         return null;
     }
@@ -378,7 +382,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
         }
         if (create && ioHelper != null) {
             iri = ioHelper.createIRI(name);
-            return dataFactory.getOWLDatatype(iri);
+            if (iri != null) {
+                return dataFactory.getOWLDatatype(iri);
+            }
         }
         return null;
     }
