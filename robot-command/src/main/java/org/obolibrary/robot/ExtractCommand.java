@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +9,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
 /**
  * Handles inputs and outputs for the {@link ExtractOperation}.
@@ -34,8 +37,13 @@ public class ExtractCommand implements Command {
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
         o.addOption("o", "output",    true, "save ontology to a file");
         o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+        o.addOption("m", "method",    true, "extract method to use");
         o.addOption("t", "terms",     true, "space-separated terms to extract");
         o.addOption("T", "term-file", true, "load terms from a file");
+        o.addOption("u", "upper-term",  true, "upper level term to extract");
+        o.addOption("U", "upper-terms", true, "upper level terms to extract");
+        o.addOption("l", "lower-term",  true, "lower level term to extract");
+        o.addOption("L", "lower-terms", true, "lower level terms to extract");
         options = o;
     }
 
@@ -120,11 +128,37 @@ public class ExtractCommand implements Command {
             outputIRI = inputOntology.getOntologyID().getOntologyIRI();
         }
 
-        outputOntology = ExtractOperation.extract(
-                inputOntology,
-                CommandLineHelper.getTerms(ioHelper, line),
-                outputIRI,
-                null);
+        String method = CommandLineHelper
+            .getDefaultValue(line, "method", "mireot")
+            .trim().toLowerCase();
+        ModuleType moduleType = null;
+        if (method.equals("star")) {
+            moduleType = ModuleType.STAR;
+        } else if (method.equals("top")) {
+            moduleType = ModuleType.TOP;
+        } else if (method.equals("bot")) {
+            moduleType = ModuleType.BOT;
+        }
+
+        if (method.equals("mireot")) {
+            Set<IRI> upperIRIs = CommandLineHelper.getTerms(
+                    ioHelper, line, "upper-term", "upper-terms");
+            if (upperIRIs != null && upperIRIs.size() == 0) {
+                upperIRIs = null;
+            }
+            Set<IRI> lowerIRIs = CommandLineHelper.getTerms(
+                    ioHelper, line, "lower-term", "lower-terms");
+            outputOntology = MireotOperation.getAncestors(inputOntology,
+                    upperIRIs, lowerIRIs, null);
+        } else if (moduleType != null) {
+            outputOntology = ExtractOperation.extract(
+                    inputOntology,
+                    CommandLineHelper.getTerms(ioHelper, line),
+                    outputIRI,
+                    moduleType);
+        } else {
+            throw new Exception("Method must be: MIREOT, STAR, TOP, BOT");
+        }
 
         CommandLineHelper.maybeSaveOutput(line, outputOntology);
 

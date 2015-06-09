@@ -144,7 +144,8 @@ public class TemplateCommand implements Command {
             Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
             iris.removeAll(TemplateOperation.getIRIs(rows, ioHelper));
             OWLOntology ancestors = MireotOperation.getAncestors(
-                inputOntology, iris);
+                inputOntology, null, iris,
+                MireotOperation.getDefaultAnnotationProperties());
             ontologies = new ArrayList<OWLOntology>();
             ontologies.add(ancestors);
             MergeOperation.mergeInto(ontologies, outputOntology);

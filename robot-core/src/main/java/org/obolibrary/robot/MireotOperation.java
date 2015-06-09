@@ -12,13 +12,17 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
  * Implements several variations on MIREOT, as first described in
@@ -35,41 +39,39 @@ public class MireotOperation {
         LoggerFactory.getLogger(MireotOperation.class);
 
     /**
-     * Given an ontology and a set of term IRIs,
-     * return a new ontology with just the named ancestors of those
-     * terms, their subclass relations, and their labels.
-     * The input ontology is not changed.
-     *
-     * @param inputOntology the ontology to extract from
-     * @param terms the starting terms to extract
-     * @return a new ontology with the target terms and their named ancestors
-     * @throws OWLOntologyCreationException on problems creating new ontology
+     * Shared data factory.
      */
-    public static OWLOntology getAncestors(OWLOntology inputOntology,
-            Set<IRI> terms)
-            throws OWLOntologyCreationException {
-        Set<OWLEntity> entities = new HashSet<OWLEntity>();
-        for (IRI term: terms) {
-            entities.addAll(inputOntology.getEntitiesInSignature(term, true));
-        }
+    private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
-        return getAncestors(inputOntology, entities, null);
+    /**
+     * Get a set of default annotation properties.
+     * Currenly includes only RDFS label.
+     * @return a set of annotation properties
+     */
+    public static Set<OWLAnnotationProperty> getDefaultAnnotationProperties() {
+        Set<OWLAnnotationProperty> annotationProperties =
+            new HashSet<OWLAnnotationProperty>();
+        annotationProperties.add(dataFactory.getRDFSLabel());
+        return annotationProperties;
     }
 
     /**
-     * Given an ontology, a set of entities, and a set of annotation
-     * properties, return a new ontology with just the named ancestors of those
-     * terms, their subclass relations, and the selected annotations.
+     * Given an ontology, a set of upper-level IRIs, a set of lower-level IRIs,
+     * and a set of annotation properties,
+     * return a new ontology with just the named ancestors of those terms,
+     * their subclass relations, and the selected annotations.
      * The input ontology is not changed.
      *
      * @param inputOntology the ontology to extract from
-     * @param entities the starting entities to extract
-     * @param annotationProperties the annotation properties to copy
+     * @param upperIRIs ancestors will be copied up to and including these terms
+     * @param lowerIRIs copy these terms and their superclasses
+     * @param annotationProperties the annotation properties to copy;
+     *   if null, all will be copied
      * @return a new ontology with the target terms and their named ancestors
      * @throws OWLOntologyCreationException on problems creating new ontology
      */
     public static OWLOntology getAncestors(OWLOntology inputOntology,
-            Set<OWLEntity> entities,
+            Set<IRI> upperIRIs, Set<IRI> lowerIRIs,
             Set<OWLAnnotationProperty> annotationProperties)
             throws OWLOntologyCreationException {
         logger.debug("Extract with MIREOT ...");
@@ -79,21 +81,20 @@ public class MireotOperation {
 
         OWLOntologyManager outputManager =
             OWLManager.createOWLOntologyManager();
-        OWLDataFactory dataFactory = outputManager.getOWLDataFactory();
         OWLOntology outputOntology = outputManager.createOntology();
 
-        if (annotationProperties == null) {
-            annotationProperties = new HashSet<OWLAnnotationProperty>();
-            annotationProperties.add(
-                outputManager.getOWLDataFactory().getRDFSLabel());
+        Set<OWLEntity> upperEntities =
+            OntologyHelper.getEntities(inputOntology, upperIRIs);
+        for (OWLEntity entity: upperEntities) {
+            copy(inputOntology, outputOntology, entity, annotationProperties);
         }
 
-        for (OWLEntity entity: entities) {
+        Set<OWLEntity> lowerEntities =
+            OntologyHelper.getEntities(inputOntology, lowerIRIs);
+        for (OWLEntity entity: lowerEntities) {
             copy(inputOntology, outputOntology, entity, annotationProperties);
-            if (entity.isOWLClass()) {
-                copyAncestors(reasoner, inputOntology, outputOntology, entity,
-                    annotationProperties);
-            }
+            copyAncestors(reasoner, inputOntology, outputOntology,
+                upperEntities, entity, annotationProperties);
         }
 
         return outputOntology;
@@ -110,26 +111,81 @@ public class MireotOperation {
      * @param reasoner use to find superclasses
      * @param inputOntology the ontology to copy from
      * @param outputOntology the ontology to copy to
+     * @param upperEntities the top level of entities, or null
      * @param entity the target entity that will have its ancestors copied
-     * @param annotationProperties the annotations to copy
+     * @param annotationProperties the annotations to copy, or null for all
      */
     private static void copyAncestors(OWLReasoner reasoner,
             OWLOntology inputOntology, OWLOntology outputOntology,
-            OWLEntity entity, Set<OWLAnnotationProperty> annotationProperties) {
+            Set<OWLEntity> upperEntities, OWLEntity entity,
+            Set<OWLAnnotationProperty> annotationProperties) {
         OWLOntologyManager outputManager =
             outputOntology.getOWLOntologyManager();
-        OWLDataFactory dataFactory = outputManager.getOWLDataFactory();
 
-        Set<OWLClass> superclasses =
-            reasoner.getSuperClasses(entity.asOWLClass(), true).getFlattened();
-        for (OWLClass superclass: superclasses) {
-            copy(inputOntology, outputOntology, superclass,
+        // If this is an upperEntity, copy it and return.
+        if (upperEntities != null && upperEntities.contains(entity)) {
+            copy(inputOntology, outputOntology, entity, annotationProperties);
+            return;
+        }
+
+        // Otherwise copy ancestors recursively.
+        if (entity.isOWLClass()) {
+            Set<OWLClass> superclasses =
+                reasoner.getSuperClasses(entity.asOWLClass(), true)
+                    .getFlattened();
+            for (OWLClass superclass: superclasses) {
+                copy(inputOntology, outputOntology, superclass,
                     annotationProperties);
-            outputManager.addAxiom(outputOntology,
-                dataFactory.getOWLSubClassOfAxiom(
-                    entity.asOWLClass(), superclass));
-            copyAncestors(reasoner, inputOntology, outputOntology, superclass,
-                annotationProperties);
+                outputManager.addAxiom(outputOntology,
+                    dataFactory.getOWLSubClassOfAxiom(
+                        entity.asOWLClass(), superclass));
+                copyAncestors(reasoner, inputOntology, outputOntology,
+                    upperEntities, superclass, annotationProperties);
+            }
+        } else if (entity.isOWLAnnotationProperty()) {
+            Set<OWLAnnotationProperty> superproperies =
+                entity.asOWLAnnotationProperty()
+                    .getSuperProperties(inputOntology, true);
+            for (OWLAnnotationProperty superproperty: superproperies) {
+                copy(inputOntology, outputOntology, superproperty,
+                    annotationProperties);
+                outputManager.addAxiom(outputOntology,
+                    dataFactory.getOWLSubAnnotationPropertyOfAxiom(
+                        entity.asOWLAnnotationProperty(), superproperty));
+                copyAncestors(reasoner, inputOntology, outputOntology,
+                    upperEntities, superproperty, annotationProperties);
+            }
+        } else if (entity.isOWLObjectProperty()) {
+            Set<OWLObjectPropertyExpression> superproperies =
+                reasoner.getSuperObjectProperties(
+                    entity.asOWLObjectProperty(), true).getFlattened();
+            for (OWLObjectPropertyExpression superexpression: superproperies) {
+                if (superexpression.isAnonymous()) {
+                    continue;
+                }
+                OWLObjectProperty superproperty =
+                    superexpression.asOWLObjectProperty();
+                copy(inputOntology, outputOntology, superproperty,
+                    annotationProperties);
+                outputManager.addAxiom(outputOntology,
+                    dataFactory.getOWLSubObjectPropertyOfAxiom(
+                        entity.asOWLObjectProperty(), superproperty));
+                copyAncestors(reasoner, inputOntology, outputOntology,
+                    upperEntities, superproperty, annotationProperties);
+            }
+        } else if (entity.isOWLDataProperty()) {
+            Set<OWLDataProperty> superproperies =
+                reasoner.getSuperDataProperties(
+                    entity.asOWLDataProperty(), true).getFlattened();
+            for (OWLDataProperty superproperty: superproperies) {
+                copy(inputOntology, outputOntology, superproperty,
+                    annotationProperties);
+                outputManager.addAxiom(outputOntology,
+                    dataFactory.getOWLSubDataPropertyOfAxiom(
+                        entity.asOWLDataProperty(), superproperty));
+                copyAncestors(reasoner, inputOntology, outputOntology,
+                    upperEntities, superproperty, annotationProperties);
+            }
         }
     }
 
@@ -150,14 +206,17 @@ public class MireotOperation {
     private static void copy(OWLOntology inputOntology,
             OWLOntology outputOntology, OWLEntity entity,
             Set<OWLAnnotationProperty> annotationProperties) {
+        // Don't copy OWLThing
+        if (entity == dataFactory.getOWLThing()) {
+            return;
+        }
+        // Don't copy existing terms
         if (outputOntology.containsEntityInSignature(entity)) {
             return;
         }
 
         OWLOntologyManager outputManager =
             outputOntology.getOWLOntologyManager();
-        OWLDataFactory dataFactory = outputManager.getOWLDataFactory();
-
         if (entity.isOWLAnnotationProperty()) {
             outputManager.addAxiom(outputOntology,
                 dataFactory.getOWLDeclarationAxiom(
@@ -187,7 +246,11 @@ public class MireotOperation {
         Set<OWLAnnotationAssertionAxiom> axioms =
             inputOntology.getAnnotationAssertionAxioms(entity.getIRI());
         for (OWLAnnotationAssertionAxiom axiom: axioms) {
-            if (annotationProperties.contains(axiom.getProperty())) {
+            if (annotationProperties == null
+                || annotationProperties.contains(axiom.getProperty())) {
+                // Copy the annotation property and then the axiom.
+                copy(inputOntology, outputOntology,
+                    (OWLEntity) axiom.getProperty(), annotationProperties);
                 outputManager.addAxiom(outputOntology, axiom);
             }
         }
