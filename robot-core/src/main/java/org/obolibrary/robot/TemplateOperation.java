@@ -345,6 +345,9 @@ public class TemplateOperation {
                 continue;
             }
             template = template.trim();
+            if (template.isEmpty()) {
+                continue;
+            }
             if (!validateTemplateString(template)) {
                 throw new Exception(
                     String.format(unknownTemplateError,
