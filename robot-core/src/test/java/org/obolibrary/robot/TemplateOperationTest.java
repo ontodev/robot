@@ -1,6 +1,8 @@
 package org.obolibrary.robot;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -103,10 +105,13 @@ public class TemplateOperationTest extends CoreTest {
      */
     @Test
     public void testTemplateCSV() throws Exception {
-        List<List<String>> rows = IOHelper.readCSV(
-            this.getClass().getResourceAsStream("/template.csv"));
+        Map<String, List<List<String>>> tables =
+            new HashMap<String, List<List<String>>>();
+        String path = "/template.csv";
+        tables.put(path,
+                IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
         OWLOntology simpleParts = loadOntology("/simple_parts.owl");
-        OWLOntology template = TemplateOperation.template(rows, simpleParts);
+        OWLOntology template = TemplateOperation.template(tables, simpleParts);
         assertEquals("Count classes", 4,
             template.getClassesInSignature().size());
         assertEquals("Count logical axioms", 3,

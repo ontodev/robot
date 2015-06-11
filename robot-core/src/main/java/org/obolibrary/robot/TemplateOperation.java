@@ -1,8 +1,10 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,67 +50,81 @@ public class TemplateOperation {
     /**
      * Error message when the number of header columns does not
      * match the number of template columns.
-     * Expects: header count, template count.
+     * Expects: table name, header count, template count.
      */
     private static String columnMismatchError =
-        "The number of header columns (%1$d) must match "
-      + "the number of template columns (%2$d).";
+        "The number of header columns (%2$d) must match "
+      + "the number of template columns (%3$d) "
+      + "in table \"%1$s\".";
 
     /**
      * Error message when a required column is missing from a row.
-     * Expects: row number, row id, columns number, column name.
+     * Expects: table name, row number, row id, columns number, column name.
      */
     private static String columnError =
-        "Missing column %3$d (\"%4$s\") from row %1$d (\"%2$s\").";
+        "Missing column %4$d (\"%5$s\") "
+      + "from row %2$d (\"%3$s\") "
+      + "in table \"%1$s\".";
 
     /**
      * Error message when a required cell is null.
-     * Expects: row number, row id, columns number, column name,
+     * Expects: table name, row number, row id, columns number, column name,
      * template.
      */
     private static String nullCellError =
-        "Null value at row %1$d (\"%2$s\"), column %3$d (\"%4$s\") "
-      + "for template \"%5$s\".";
+        "Null value at row %2$d (\"%3$s\"), "
+      + "column %4$d (\"%5$s\") "
+      + "for template \"%6$s\" "
+      + "in table \"%1$s\".";
 
     /**
      * Error message when a template cannot be understood.
-     * Expects: column number, column name, template.
+     * Expects: table name, column number, column name, template.
      */
     private static String unknownTemplateError =
-        "Could not interpret template string \"%3$s\" "
-      + "for column %1$d (\"%2$s\").";
+        "Could not interpret template string \"%4$s\" "
+      + "for column %2$d (\"%3$s\")."
+      + "in table \"%1$s\".";
 
     /**
      * Error message when content cannot be parsed.
-     * Expects: row number, row id, columns number, column name,
+     * Expects: table name, row number, row id, columns number, column name,
      * content, message.
      */
     private static String parseError =
-        "Error while parsing \"%5$s\" at row %1$d (\"%2$s\"), "
-      + "column %3$d (\"%4$s\"): \"%6$s\".";
+        "Error while parsing \"%6$s\" "
+      + "at row %2$d (\"%3$s\"), "
+      + "column %4$d (\"%5$s\") "
+      + "in table \"%1$s\": "
+      + "%7$s";
 
     /**
      * Error message when we cannot create an IRI for a row ID.
-     * Expects: row number, row id.
+     * Expects: table name, row number, row id.
      */
     private static String nullIDError =
-        "Could not create IRI for row %1$d with ID \"%2$s\".";
+        "Could not create IRI for ID \"%3$s\"."
+      + "at row %2$d "
+      + "in table \"%1$s\".";
 
     /**
      * Error message when a row for a class does not have a type.
      * Should be "subclass" or "equivalent".
-     * Expects: row number, row id.
+     * Expects: table name, row number, row id.
      */
     private static String missingTypeError =
-        "No class type found for row %1$d (\"%2$s\").";
+        "No class type found for row %2$d (\"%3$s\") "
+      + "in table \"%1$s\".";
 
     /**
      * Error message when a class type is not recognized.
      * Should be "subclass" or "equivalent".
-     * Expects: row number, row id, value.
+     * Expects: table name, row number, row id, value.
      */
     private static String unknownTypeError =
-        "Unknown class type \"%3$s\" for row %1$d (\"%2$s\").";
+        "Unknown class type \"%4$s\" "
+      + "for row %2$d (\"%3$s\") "
+      + "in table \"%1$s\".";
 
     /**
      * Find an annotation property with the given name or create one.
@@ -254,62 +270,63 @@ public class TemplateOperation {
      * Use a table to generate an ontology.
      * With this signature we use all defaults.
      *
-     * @param rows the table of data
+     * @param tables a map from names to tables of data
      * @return a new ontology generated from the table
      * @throws Exception when names or templates cannot be handled
      */
-    public static OWLOntology template(List<List<String>> rows)
+    public static OWLOntology template(Map<String, List<List<String>>> tables)
             throws Exception {
-        return template(rows, null, null, null);
+        return template(tables, null, null, null);
     }
 
     /**
-     * Use a table to generate an ontology.
+     * Use tables to generate an ontology.
      *
-     * @param rows the table of data
+     * @param tables a map from names to tables of data
      * @param inputOntology the ontology to use to resolve names
      * @return a new ontology generated from the table
      * @throws Exception when names or templates cannot be handled
      */
-    public static OWLOntology template(List<List<String>> rows,
+    public static OWLOntology template(Map<String, List<List<String>>> tables,
             OWLOntology inputOntology) throws Exception {
-        return template(rows, inputOntology, null, null);
+        return template(tables, inputOntology, null, null);
     }
 
     /**
-     * Use a table to generate an ontology.
+     * Use tables to generate an ontology.
      *
-     * @param rows the table of data
+     * @param tables a map from names to tables of data
      * @param inputOntology the ontology to use to resolve names
      * @param checker used to find entities by name
      * @return a new ontology generated from the table
      * @throws Exception when names or templates cannot be handled
      */
-    public static OWLOntology template(List<List<String>> rows,
+    public static OWLOntology template(Map<String, List<List<String>>> tables,
             OWLOntology inputOntology, QuotedEntityChecker checker)
             throws Exception {
-        return template(rows, inputOntology, checker, null);
+        return template(tables, inputOntology, checker, null);
     }
 
     /**
-     * Use a table to generate an ontology.
+     * Use tables to generate an ontology.
      *
-     * @param rows the table of data
+     * @param tables a map from names to tables of data
      * @param inputOntology the ontology to use to resolve names
      * @param ioHelper used to find entities by name
      * @return a new ontology generated from the table
      * @throws Exception when names or templates cannot be handled
      */
-    public static OWLOntology template(List<List<String>> rows,
+    public static OWLOntology template(Map<String, List<List<String>>> tables,
             OWLOntology inputOntology, IOHelper ioHelper)
             throws Exception {
-        return template(rows, inputOntology, null, ioHelper);
+        return template(tables, inputOntology, null, ioHelper);
     }
 
     /**
-     * Use a table to generate an ontology.
-     * The first row of the table must be header names.
-     * The second row of the table must be template strings,
+     * Use tables to generate an ontology.
+     * Input is a map from table names to tables.
+     * The first row of each table must be header names.
+     * The second row of each table must be template strings,
      * including ID and CLASS_TYPE columns.
      * The new ontology is created in two passes:
      * first terms are declared and annotations added,
@@ -317,48 +334,58 @@ public class TemplateOperation {
      * This allows annotations from the first pass to be used as names
      * in the logical axioms.
      *
-     * @param rows the table of data
+     * @param tables a map from names to tables of data
      * @param inputOntology the ontology to use to resolve names
      * @param checker used to find entities by name
      * @param ioHelper used to find entities by name
      * @return a new ontology generated from the table
      * @throws Exception when names or templates cannot be handled
      */
-    public static OWLOntology template(List<List<String>> rows,
+    public static OWLOntology template(Map<String, List<List<String>>> tables,
             OWLOntology inputOntology, QuotedEntityChecker checker,
             IOHelper ioHelper) throws Exception {
         logger.debug("Templating...");
 
-        List<String> headers = rows.get(0);
-        List<String> templates = rows.get(1);
-        if (headers.size() != templates.size()) {
-            throw new Exception(
-                String.format(columnMismatchError,
-                    headers.size(), templates.size()));
-        }
 
         // Check templates and find the ID column.
-        int idColumn = -1;
-        for (int column = 0; column < templates.size(); column++) {
-            String template = templates.get(column);
-            if (template == null) {
-                continue;
-            }
-            template = template.trim();
-            if (template.isEmpty()) {
-                continue;
-            }
-            if (!validateTemplateString(template)) {
+        Map<String, Integer> idColumns = new HashMap<String, Integer>();
+        for (Map.Entry<String, List<List<String>>> table: tables.entrySet()) {
+            String tableName = table.getKey();
+            List<List<String>> rows = table.getValue();
+
+            List<String> headers = rows.get(0);
+            List<String> templates = rows.get(1);
+            if (headers.size() != templates.size()) {
                 throw new Exception(
-                    String.format(unknownTemplateError,
-                        column + 1, headers.get(column), template));
+                    String.format(columnMismatchError, tableName,
+                        headers.size(), templates.size()));
             }
-            if (template.equals("ID")) {
-                idColumn = column;
+
+            Integer idColumn = -1;
+            for (int column = 0; column < templates.size(); column++) {
+                String template = templates.get(column);
+                if (template == null) {
+                    continue;
+                }
+                template = template.trim();
+                if (template.isEmpty()) {
+                    continue;
+                }
+                if (!validateTemplateString(template)) {
+                    throw new Exception(
+                        String.format(unknownTemplateError, tableName,
+                            column + 1, headers.get(column), template));
+                }
+                if (template.equals("ID")) {
+                    idColumn = column;
+                }
             }
-        }
-        if (idColumn == -1) {
-            throw new Exception("Template row must include an \"ID\" column");
+            if (idColumn == -1) {
+                throw new Exception("Template row must include "
+                                  + "an \"ID\" column in table: "
+                                  + tableName);
+            }
+            idColumns.put(tableName, idColumn);
         }
 
         OWLOntologyManager outputManager =
@@ -382,9 +409,14 @@ public class TemplateOperation {
         // The first pass adds declarations and annotations to the ontology,
         // then adds the term to the EntityChecker so it can be used
         // by the parser for logical definitions.
-        for (int row = 2; row < rows.size(); row++) {
-            addAnnotations(outputOntology, rows, row, idColumn, checker,
-                ioHelper);
+        for (Map.Entry<String, Integer> entry: idColumns.entrySet()) {
+            String tableName = entry.getKey();
+            int idColumn = entry.getValue();
+            List<List<String>> rows = tables.get(tableName);
+            for (int row = 2; row < rows.size(); row++) {
+                addAnnotations(outputOntology, tableName, rows, row, idColumn,
+                        checker, ioHelper);
+            }
         }
 
         // Add the entity to the QuotedEntityChecker.
@@ -393,8 +425,14 @@ public class TemplateOperation {
         // Second pass: add logic to existing entities.
         ManchesterOWLSyntaxClassExpressionParser parser =
             new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
-        for (int row = 2; row < rows.size(); row++) {
-            addLogic(outputOntology, rows, row, idColumn, parser, ioHelper);
+        for (Map.Entry<String, Integer> entry: idColumns.entrySet()) {
+            String tableName = entry.getKey();
+            Integer idColumn = entry.getValue();
+            List<List<String>> rows = tables.get(tableName);
+            for (int row = 2; row < rows.size(); row++) {
+                addLogic(outputOntology, tableName, rows, row, idColumn,
+                        parser, ioHelper);
+            }
         }
 
         return outputOntology;
@@ -404,6 +442,7 @@ public class TemplateOperation {
      * Use templates to add entities and their annotations to an ontology.
      *
      * @param ontology the ontology to add axioms to
+     * @param tableName the name of the current table
      * @param rows the table to use
      * @param row the current row to use
      * @param idColumn the column that holds the ID for the entity
@@ -412,8 +451,8 @@ public class TemplateOperation {
      * @throws Exception when names or templates cannot be handled
      */
     private static void addAnnotations(OWLOntology ontology,
-            List<List<String>> rows, int row, int idColumn,
-            QuotedEntityChecker checker, IOHelper ioHelper)
+            String tableName, List<List<String>> rows, int row,
+            Integer idColumn, QuotedEntityChecker checker, IOHelper ioHelper)
             throws Exception {
         List<String> headers = rows.get(0);
         List<String> templates = rows.get(1);
@@ -447,13 +486,13 @@ public class TemplateOperation {
                 cell = rows.get(row).get(column);
             } catch (IndexOutOfBoundsException e) {
                 throw new Exception(
-                    String.format(columnError, row + 1, id,
+                    String.format(columnError, tableName, row + 1, id,
                         column + 1, header));
             }
 
             if (cell == null) {
                 throw new Exception(
-                    String.format(nullCellError, row + 1, id,
+                    String.format(nullCellError, tableName, row + 1, id,
                         column + 1, header, template));
             }
             if (cell.trim().isEmpty()) {
@@ -478,7 +517,8 @@ public class TemplateOperation {
         // Now validate and build the class.
         IRI iri = ioHelper.createIRI(id);
         if (iri == null) {
-            throw new Exception(String.format(nullIDError, row + 1, id));
+            throw new Exception(String.format(nullIDError, tableName,
+                        row + 1, id));
         }
         OWLClass cls = dataFactory.getOWLClass(iri);
         OWLOntologyManager manager = ontology.getOWLOntologyManager();
@@ -496,6 +536,7 @@ public class TemplateOperation {
      * Use templates to add logical axioms to an ontology.
      *
      * @param ontology the ontology to add axioms to
+     * @param tableName the name of the current table
      * @param rows the table to use
      * @param row the current row to use
      * @param idColumn the column that holds the ID for the entity
@@ -504,8 +545,8 @@ public class TemplateOperation {
      * @throws Exception when names or templates cannot be handled
      */
     private static void addLogic(OWLOntology ontology,
-            List<List<String>> rows, int row, int idColumn,
-            ManchesterOWLSyntaxClassExpressionParser parser,
+            String tableName, List<List<String>> rows, int row,
+            Integer idColumn, ManchesterOWLSyntaxClassExpressionParser parser,
             IOHelper ioHelper)
             throws Exception {
         List<String> headers = rows.get(0);
@@ -521,7 +562,7 @@ public class TemplateOperation {
             return;
         }
 
-        String classType = null;
+        String classType = "subclass";
         List<OWLClassExpression> classExpressions =
             new ArrayList<OWLClassExpression>();
 
@@ -542,13 +583,13 @@ public class TemplateOperation {
                 cell = rows.get(row).get(column);
             } catch (IndexOutOfBoundsException e) {
                 throw new Exception(
-                    String.format(columnError, row + 1, id,
+                    String.format(columnError, tableName, row + 1, id,
                         column + 1, header));
             }
 
             if (cell == null) {
                 throw new Exception(
-                    String.format(nullCellError, row + 1, id,
+                    String.format(nullCellError, tableName, row + 1, id,
                         column + 1, header, template));
             }
             if (cell.trim().isEmpty()) {
@@ -566,7 +607,7 @@ public class TemplateOperation {
                     classExpressions.add(parser.parse(sub));
                 } catch (ParserException e) {
                     throw new Exception(
-                        String.format(parseError, row + 1, id,
+                        String.format(parseError, tableName, row + 1, id,
                             column + 1, header, sub, e.getMessage()));
                 }
             } else if (template.startsWith("CI")) {
@@ -580,7 +621,8 @@ public class TemplateOperation {
         OWLClass cls = dataFactory.getOWLClass(iri);
 
         if (classType == null) {
-            throw new Exception(String.format(missingTypeError, row + 1, id));
+            throw new Exception(String.format(missingTypeError, tableName,
+                        row + 1, id));
         }
         classType = classType.trim().toLowerCase();
 
@@ -599,19 +641,39 @@ public class TemplateOperation {
                     cls, intersection));
         } else {
             throw new Exception(
-                String.format(unknownTypeError, row + 1, id));
+                String.format(unknownTypeError, tableName, row + 1, id));
         }
+    }
+
+    /**
+     * Get a list of the IRIs defined in a set of template tables.
+     *
+     * @param tables a map from table names to tables
+     * @param ioHelper used to find entities by name
+     * @return a list of IRIs
+     * @throws Exception when names or templates cannot be handled
+     */
+    public static List<IRI> getIRIs(Map<String, List<List<String>>> tables,
+            IOHelper ioHelper) throws Exception {
+        List<IRI> iris = new ArrayList<IRI>();
+        for (Map.Entry<String, List<List<String>>> table: tables.entrySet()) {
+            String tableName = table.getKey();
+            List<List<String>> rows = table.getValue();
+            iris.addAll(getIRIs(tableName, rows, ioHelper));
+        }
+        return iris;
     }
 
     /**
      * Get a list of the IRIs defined in a template table.
      *
+     * @param tableName the name of the table
      * @param rows the table of data
      * @param ioHelper used to find entities by name
      * @return a list of IRIs
      * @throws Exception when names or templates cannot be handled
      */
-    public static List<IRI> getIRIs(List<List<String>> rows,
+    public static List<IRI> getIRIs(String tableName, List<List<String>> rows,
             IOHelper ioHelper) throws Exception {
         // Find the ID column.
         List<String> templates = rows.get(1);
@@ -627,7 +689,8 @@ public class TemplateOperation {
             }
         }
         if (idColumn == -1) {
-            throw new Exception("Template row must include an \"ID\" column");
+            throw new Exception("Template row must include an \"ID\" column "
+                    + "in table " + tableName);
         }
 
         List<IRI> iris = new ArrayList<IRI>();

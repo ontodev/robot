@@ -1,7 +1,9 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -127,12 +129,19 @@ public class TemplateCommand implements Command {
         OWLOntology inputOntology = state.getOntology();
 
         // Read the whole CSV into a nested list of strings.
-        String templatePath = CommandLineHelper.getRequiredValue(
-            line, "template", "a template is required");
-        List<List<String>> rows = ioHelper.readTable(templatePath);
+        List<String> templatePaths =
+            CommandLineHelper.getOptionalValues(line, "template");
+        if (templatePaths.size() == 0) {
+            throw new Exception("At least one template is required");
+        }
+        Map<String, List<List<String>>> tables =
+            new HashMap<String, List<List<String>>>();
+        for (String templatePath: templatePaths) {
+            tables.put(templatePath, ioHelper.readTable(templatePath));
+        }
 
         OWLOntology outputOntology =
-            TemplateOperation.template(rows, inputOntology, null, ioHelper);
+            TemplateOperation.template(tables, inputOntology, null, ioHelper);
 
         // if the --ancestors option is used,
         // MIREOT in all the ancestors of the outputOntology terms
@@ -142,7 +151,7 @@ public class TemplateCommand implements Command {
         List<OWLOntology> ontologies;
         if (line.hasOption("ancestors") && inputOntology != null) {
             Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
-            iris.removeAll(TemplateOperation.getIRIs(rows, ioHelper));
+            iris.removeAll(TemplateOperation.getIRIs(tables, ioHelper));
             OWLOntology ancestors = MireotOperation.getAncestors(
                 inputOntology, null, iris,
                 MireotOperation.getDefaultAnnotationProperties());
