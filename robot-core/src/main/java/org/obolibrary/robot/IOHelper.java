@@ -425,10 +425,10 @@ public class IOHelper {
         logger.debug("Saving ontology {} as {} with to IRI {}",
                 ontology, format, ontologyIRI);
 
-        if (format instanceof PrefixOWLOntologyFormat) {
-            ((PrefixOWLOntologyFormat) format)
-                .copyPrefixesFrom(getPrefixManager());
-        }
+        //if (format instanceof PrefixOWLOntologyFormat) {
+        //    ((PrefixOWLOntologyFormat) format)
+        //        .copyPrefixesFrom(getPrefixManager());
+        //}
 
         try {
             ontology.getOWLOntologyManager().saveOntology(
