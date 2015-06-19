@@ -116,7 +116,7 @@ public class TemplateOperationTest extends CoreTest {
             template.getClassesInSignature().size());
         assertEquals("Count logical axioms", 3,
             template.getLogicalAxiomCount());
-        assertEquals("Count all axioms", 7,
+        assertEquals("Count all axioms", 9,
             template.getAxiomCount());
     }
 

@@ -1,10 +1,13 @@
 package org.obolibrary.robot;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -469,7 +472,7 @@ public class TemplateOperation {
 
         List<OWLAnnotation> annotations = new ArrayList<OWLAnnotation>();
 
-        // For each column, collect information.
+        // For each column, apply templates for annotations.
         for (int column = 0; column < headers.size(); column++) {
             String template = templates.get(column);
             if (template == null) {
@@ -500,17 +503,38 @@ public class TemplateOperation {
             }
             String content = QuotedEntityChecker.wrap(cell);
 
-            if (template.startsWith("A ")) {
-                annotations.add(getStringAnnotation(checker, template, cell));
-            } else if (template.startsWith("AT ")
-                    && template.indexOf("^^") > -1) {
-                annotations.add(getTypedAnnotation(checker, template, cell));
-            } else if (template.startsWith("AL ")
-                    && template.indexOf("@") > -1) {
-                annotations.add(getLanguageAnnotation(checker, template, cell));
-            } else if (template.startsWith("AI ")) {
-                IRI value = ioHelper.createIRI(cell);
-                annotations.add(getIRIAnnotation(checker, template, value));
+            // If the template contains SPLIT=X,
+            // then split the cell value
+            // and remove that string from the template.
+            List<String> values = new ArrayList<String>();
+            Pattern splitter = Pattern.compile("SPLIT=(\\S+)");
+            Matcher matcher = splitter.matcher(template);
+            if (matcher.find()) {
+                Pattern split =
+                    Pattern.compile(Pattern.quote(matcher.group(1)));
+                values = new ArrayList<String>(
+                            Arrays.asList(split.split(cell)));
+                template = matcher.replaceAll("").trim();
+            } else {
+                values.add(cell);
+            }
+
+            for (String value: values) {
+                if (template.startsWith("A ")) {
+                    annotations.add(
+                        getStringAnnotation(checker, template, value));
+                } else if (template.startsWith("AT ")
+                        && template.indexOf("^^") > -1) {
+                    annotations.add(
+                        getTypedAnnotation(checker, template, value));
+                } else if (template.startsWith("AL ")
+                        && template.indexOf("@") > -1) {
+                    annotations.add(
+                        getLanguageAnnotation(checker, template, value));
+                } else if (template.startsWith("AI ")) {
+                    IRI iri = ioHelper.createIRI(value);
+                    annotations.add(getIRIAnnotation(checker, template, iri));
+                }
             }
         }
 
@@ -523,6 +547,7 @@ public class TemplateOperation {
         OWLClass cls = dataFactory.getOWLClass(iri);
         OWLOntologyManager manager = ontology.getOWLOntologyManager();
         manager.addAxiom(ontology, dataFactory.getOWLDeclarationAxiom(cls));
+
 
         for (OWLAnnotation annotation: annotations) {
             manager.addAxiom(ontology,
@@ -566,7 +591,7 @@ public class TemplateOperation {
         List<OWLClassExpression> classExpressions =
             new ArrayList<OWLClassExpression>();
 
-        // For each column, collect information.
+        // For each column, add logical axioms.
         for (int column = 0; column < headers.size(); column++) {
             String template = templates.get(column);
             if (template == null) {

@@ -1,4 +1,4 @@
 ID,Label,Definition,Definition Source,See Also,Editor,Class Type,Parent IRI
-ID,A rdfs:label,A IAO:0000115,A IAO:0000119,AI rdfs:seeAlso,A IAO:0000117,CLASS_TYPE,C %
+ID,A rdfs:label,A IAO:0000115,A IAO:0000119,AI rdfs:seeAlso,A IAO:0000117,CLASS_TYPE,CI
 ex:F344N,F 344/N,An inbred strain of rat used in many scientific investigations.,James A. Overton,http://www.informatics.jax.org/external/festing/rat/docs/F344.shtml,James A. Overton,subclass,NCBITaxon:10116
 ex:B6C3F1,B6C3F1,An inbred strain of mouse used in many scientific investigations.,James A. Overton,http://jaxmice.jax.org/strain/100010.html,James A. Overton,subclass,NCBITaxon:10090
