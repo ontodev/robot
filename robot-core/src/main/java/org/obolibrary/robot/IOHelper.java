@@ -43,7 +43,6 @@ import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -314,12 +313,14 @@ public class IOHelper {
      *
      * Suported formats:
      *
+     * <ul>
      * <li>OBO as 'obo'
      * <li>RDFXML as 'owl'
      * <li>Turtle as 'ttl'
      * <li>OWLXML as 'owx'
      * <li>Manchester as 'omn'
      * <li>OWL Functional as 'ofn'
+     * </ul>
      *
      * @param formatName the name of the format
      * @return an instance of the format

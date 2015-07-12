@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.apache.commons.cli.Options;
 
 /**
- * Tests for {@link CommandManager}.
+ * Tests for CommandManager.
  */
 public class CommandManagerTest {
     /**

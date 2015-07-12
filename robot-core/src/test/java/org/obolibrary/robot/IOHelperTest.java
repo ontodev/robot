@@ -16,7 +16,7 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /**
- * Tests for {@link IOHelper}.
+ * Tests for IOHelper.
  */
 public class IOHelperTest extends CoreTest {
     /**

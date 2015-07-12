@@ -15,7 +15,7 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
- * Tests for {@link OntologyHelper}.
+ * Tests for OntologyHelper.
  */
 public class OntologyHelperTest extends CoreTest {
     /**

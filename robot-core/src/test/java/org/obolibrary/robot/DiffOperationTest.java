@@ -16,7 +16,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 /**
- * Tests for {@link DiffOperation}.
+ * Tests for DiffOperation.
  */
 public class DiffOperationTest extends CoreTest {
     /**

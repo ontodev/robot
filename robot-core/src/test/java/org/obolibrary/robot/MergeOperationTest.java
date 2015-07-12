@@ -10,7 +10,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 /**
- * Tests for {@link MergeOperation}.
+ * Tests for MergeOperation.
  */
 public class MergeOperationTest extends CoreTest {
     /**

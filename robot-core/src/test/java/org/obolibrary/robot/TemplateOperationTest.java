@@ -15,7 +15,7 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
- * Tests for {@link TemplateOperation}.
+ * Tests for TemplateOperation.
  */
 public class TemplateOperationTest extends CoreTest {
     /**

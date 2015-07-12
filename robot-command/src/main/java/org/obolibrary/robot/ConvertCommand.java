@@ -97,12 +97,14 @@ public class ConvertCommand implements Command {
      *
      * Supported formats:
      *
+     * <ul>
      * <li>OBO .obo
      * <li>RDFXML .owl
      * <li>Turtle .ttl
      * <li>OWLXML .owx
      * <li>Manchester .omn
      * <li>OWL Functional .ofn
+     * </ul>
      *
      * @param state the state from the previous command, or null
      * @param args the command-line arguments

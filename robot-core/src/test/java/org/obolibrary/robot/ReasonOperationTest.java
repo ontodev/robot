@@ -10,7 +10,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
- * Tests for {@link ReasonOperation}.
+ * Tests for ReasonOperation.
  */
 public class ReasonOperationTest extends CoreTest {
     /**

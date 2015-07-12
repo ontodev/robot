@@ -13,7 +13,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 /**
- * Tests for {@link FilterOperation}.
+ * Tests for FilterOperation.
  */
 public class FilterOperationTest extends CoreTest {
     /**

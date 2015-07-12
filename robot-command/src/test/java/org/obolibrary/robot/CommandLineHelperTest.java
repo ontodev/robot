@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 /**
- * Tests for {@link CommandLineHelper}.
+ * Tests for CommandLineHelper.
  */
 public class CommandLineHelperTest {
     /**
