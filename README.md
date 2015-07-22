@@ -20,7 +20,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 1. Make sure that you have [Java 7 or later installed](https://www.java.com/en/download/installed.jsp)
 2. Download **two** files: the [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) and the right script for your platform:
     - [`robot`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot) shell script for Unix, Linux, and Mac OS X
-    - [`robot.bat`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.bar) batch script for Windows
+    - [`robot.bat`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.bat) batch script for Windows
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)):
     - on Unix, Linux, and Mac OS X this could be `/usr/local/bin/`
     - on Windows this could be `C:\Windows\`
