@@ -423,7 +423,7 @@ public class OntologyHelper {
             Set<IRI> iris) {
         Set<OWLEntity> entities = new HashSet<OWLEntity>();
         if (iris == null) {
-            return null;
+            return entities;
         }
         for (IRI iri: iris) {
             entities.addAll(ontology.getEntitiesInSignature(iri, true));
