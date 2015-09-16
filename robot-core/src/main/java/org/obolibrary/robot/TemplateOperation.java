@@ -476,7 +476,7 @@ public class TemplateOperation {
         for (int column = 0; column < headers.size(); column++) {
             String template = templates.get(column);
             if (template == null) {
-                return;
+                continue;
             }
             template = template.trim();
             if (template.isEmpty()) {
@@ -488,15 +488,11 @@ public class TemplateOperation {
             try {
                 cell = rows.get(row).get(column);
             } catch (IndexOutOfBoundsException e) {
-                throw new Exception(
-                    String.format(columnError, tableName, row + 1, id,
-                        column + 1, header));
+                continue;
             }
 
             if (cell == null) {
-                throw new Exception(
-                    String.format(nullCellError, tableName, row + 1, id,
-                        column + 1, header, template));
+                continue;
             }
             if (cell.trim().isEmpty()) {
                 continue;
@@ -607,15 +603,11 @@ public class TemplateOperation {
             try {
                 cell = rows.get(row).get(column);
             } catch (IndexOutOfBoundsException e) {
-                throw new Exception(
-                    String.format(columnError, tableName, row + 1, id,
-                        column + 1, header));
+                continue;
             }
 
             if (cell == null) {
-                throw new Exception(
-                    String.format(nullCellError, tableName, row + 1, id,
-                        column + 1, header, template));
+                continue;
             }
             if (cell.trim().isEmpty()) {
                 continue;
