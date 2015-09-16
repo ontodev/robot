@@ -58,7 +58,7 @@ public class CatalogElementHandler extends DefaultHandler {
     @Override
     public void startElement(String uri, String localName,
             String qName, Attributes attributes) throws SAXException {
-        if ("uri".equals(qName)) {
+        if (!"uri".equals(qName)) {
             return;
         }
 
