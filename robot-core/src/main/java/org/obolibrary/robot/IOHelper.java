@@ -150,7 +150,10 @@ public class IOHelper {
      */
     public File guessCatalogFile(File ontologyFile) {
         String path = ontologyFile.getParent();
-        String catalogPath = path + "/catalog-v001.xml";
+        String catalogPath = "catalog-v001.xml";
+        if (path != null) {
+            catalogPath = path + "/catalog-v001.xml";
+        }
         return new File(catalogPath);
     }
 
