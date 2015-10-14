@@ -21,6 +21,7 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -174,7 +175,8 @@ public class TemplateOperation {
      * @return a new annotation with property and string literal value
      * @throws Exception if the annotation property cannot be found
      */
-    public static OWLAnnotation getStringAnnotation(QuotedEntityChecker checker,
+    public static OWLAnnotation getStringAnnotation(
+            QuotedEntityChecker checker,
             String template, String value) throws Exception {
         String name = template.substring(1).trim();
         OWLAnnotationProperty property = getAnnotationProperty(checker, name);
@@ -193,8 +195,9 @@ public class TemplateOperation {
      * @return a new annotation with property and typed literal value
      * @throws Exception if the annotation property cannot be found
      */
-    public static OWLAnnotation getTypedAnnotation(QuotedEntityChecker checker,
-            String template, String value) throws Exception {
+    public static OWLAnnotation getTypedAnnotation(
+            QuotedEntityChecker checker, String template, String value)
+           throws Exception {
         template = template.substring(2).trim();
         String name = template.substring(0, template.indexOf("^^")).trim();
         String typeName = template.substring(template.indexOf("^^") + 2,
@@ -213,7 +216,7 @@ public class TemplateOperation {
      * @param checker used to resolve the annotation property
      * @param template the template string
      * @param value the value for the annotation
-     * @return a new annotation with property and language tagged literal value
+     * @return a new annotation with property and language tagged literal
      * @throws Exception if the annotation property cannot be found
      */
     public static OWLAnnotation getLanguageAnnotation(
@@ -255,6 +258,9 @@ public class TemplateOperation {
     public static boolean validateTemplateString(String template) {
         template = template.trim();
         if (template.equals("ID")) {
+            return true;
+        }
+        if (template.equals("TYPE")) {
             return true;
         }
         if (template.equals("CLASS_TYPE")) {
@@ -349,7 +355,6 @@ public class TemplateOperation {
             IOHelper ioHelper) throws Exception {
         logger.debug("Templating...");
 
-
         // Check templates and find the ID column.
         Map<String, Integer> idColumns = new HashMap<String, Integer>();
         for (Map.Entry<String, List<List<String>>> table: tables.entrySet()) {
@@ -427,7 +432,8 @@ public class TemplateOperation {
 
         // Second pass: add logic to existing entities.
         ManchesterOWLSyntaxClassExpressionParser parser =
-            new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
+            new ManchesterOWLSyntaxClassExpressionParser(
+                    dataFactory, checker);
         for (Map.Entry<String, Integer> entry: idColumns.entrySet()) {
             String tableName = entry.getKey();
             Integer idColumn = entry.getValue();
@@ -469,6 +475,9 @@ public class TemplateOperation {
         if (id == null || id.trim().isEmpty()) {
             return;
         }
+
+        String owl = "http://www.w3.org/2002/07/owl#";
+        IRI type = IRI.create(owl + "Class");
 
         List<OWLAnnotation> annotations = new ArrayList<OWLAnnotation>();
 
@@ -516,7 +525,13 @@ public class TemplateOperation {
             }
 
             for (String value: values) {
-                if (template.startsWith("A ")) {
+                if (template.equals("TYPE")) {
+                    type = ioHelper.createIRI(value);
+                    OWLAnnotationProperty rdfType =
+                        getAnnotationProperty(checker, "rdf:type");
+                    annotations.add(
+                        dataFactory.getOWLAnnotation(rdfType, type));
+                } else if (template.startsWith("A ")) {
                     annotations.add(
                         getStringAnnotation(checker, template, value));
                 } else if (template.startsWith("AT ")
@@ -540,10 +555,26 @@ public class TemplateOperation {
             throw new Exception(String.format(nullIDError, tableName,
                         row + 1, id));
         }
-        OWLClass cls = dataFactory.getOWLClass(iri);
-        OWLOntologyManager manager = ontology.getOWLOntologyManager();
-        manager.addAxiom(ontology, dataFactory.getOWLDeclarationAxiom(cls));
 
+        OWLEntity entity = null;
+        String t = type.toString();
+        if (t.equals(owl + "Class")) {
+            entity = dataFactory.getOWLClass(iri);
+        } else if (t.equals(owl + "AnnotationProperty")) {
+            entity = dataFactory.getOWLAnnotationProperty(iri);
+        } else if (t.equals(owl + "ObjectProperty")) {
+            entity = dataFactory.getOWLObjectProperty(iri);
+        } else if (t.equals(owl + "DatatypeProperty")) {
+            entity = dataFactory.getOWLDataProperty(iri);
+        } else if (t.equals(owl + "Datatype")) {
+            entity = dataFactory.getOWLDatatype(iri);
+        } else {
+            entity = dataFactory.getOWLNamedIndividual(iri);
+        }
+
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        manager.addAxiom(ontology,
+            dataFactory.getOWLDeclarationAxiom(entity));
 
         for (OWLAnnotation annotation: annotations) {
             manager.addAxiom(ontology,

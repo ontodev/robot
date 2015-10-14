@@ -110,7 +110,8 @@ ROBOT can also create ontology files from templates. See [template.md](../docs/t
 
     robot template --template template.csv \
       --prefix "ex: http://example.com/" \
-      --output template.owl
+      --ontology-iri "https://github.com/ontodev/robot/examples/template.owl" \
+      --output results/template.owl
 
 
 ## Chaining

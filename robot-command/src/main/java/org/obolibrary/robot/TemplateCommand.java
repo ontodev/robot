@@ -39,7 +39,7 @@ public class TemplateCommand implements Command {
         o.addOption("i", "input",         true, "load ontology from a file");
         o.addOption("I", "input-iri",     true, "load ontology from an IRI");
         o.addOption("o", "output",        true, "save ontology to a file");
-        o.addOption("O", "output-iri",    true, "set the output ontology IRI");
+        o.addOption("O", "ontology-iri",  true, "set the output ontology IRI");
         o.addOption("V", "version-iri",   true, "set the output version IRI");
         o.addOption("t", "template",      true, "read template from a file");
         o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
