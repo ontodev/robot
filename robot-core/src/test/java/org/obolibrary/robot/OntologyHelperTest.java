@@ -71,6 +71,21 @@ public class OntologyHelperTest extends CoreTest {
     }
 
     /**
+     * Test getting a map from labels to IRIs.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testGetLabelIRIs() throws IOException {
+        OWLOntology simple = loadOntology("/simple.owl");
+        Map<String, IRI> expected = new HashMap<String, IRI>();
+        expected.put("Test 1", IRI.create(base + "simple.owl#test1"));
+        expected.put("test one", IRI.create(base + "simple.owl#test1"));
+        Map<String, IRI> actual = OntologyHelper.getLabelIRIs(simple);
+        assertEquals(expected, actual);
+    }
+
+    /**
      * Test adding and removing annotations from and ontology.
      *
      * @throws IOException on file problem

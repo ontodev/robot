@@ -22,6 +22,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -45,6 +46,17 @@ public class TemplateOperation {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(TemplateOperation.class);
+
+    /**
+     * OWL Namespace.
+     */
+    private static String owl = "http://www.w3.org/2002/07/owl#";
+
+    /**
+     * Shared OWLOntologyManager.
+     */
+    private static OWLOntologyManager outputManager =
+        OWLManager.createOWLOntologyManager();
 
     /**
      * Shared DataFactory.
@@ -107,7 +119,8 @@ public class TemplateOperation {
      * Expects: table name, row number, row id.
      */
     private static String nullIDError =
-        "Could not create IRI for ID \"%3$s\"."
+        "Could not create IRI for ID \"%3$s\" "
+      + "with label \"%4$s\" "
       + "at row %2$d "
       + "in table \"%1$s\".";
 
@@ -250,7 +263,7 @@ public class TemplateOperation {
     }
 
     /**
-     * Return true if the tempalte string is valid, false otherwise.
+     * Return true if the template string is valid, false otherwise.
      *
      * @param template the template string to check
      * @return true if valid, false otherwise
@@ -258,6 +271,9 @@ public class TemplateOperation {
     public static boolean validateTemplateString(String template) {
         template = template.trim();
         if (template.equals("ID")) {
+            return true;
+        }
+        if (template.equals("LABEL")) {
             return true;
         }
         if (template.equals("TYPE")) {
@@ -355,8 +371,9 @@ public class TemplateOperation {
             IOHelper ioHelper) throws Exception {
         logger.debug("Templating...");
 
-        // Check templates and find the ID column.
+        // Check templates and find the ID and LABEL columns.
         Map<String, Integer> idColumns = new HashMap<String, Integer>();
+        Map<String, Integer> labelColumns = new HashMap<String, Integer>();
         for (Map.Entry<String, List<List<String>>> table: tables.entrySet()) {
             String tableName = table.getKey();
             List<List<String>> rows = table.getValue();
@@ -370,6 +387,7 @@ public class TemplateOperation {
             }
 
             Integer idColumn = -1;
+            Integer labelColumn = -1;
             for (int column = 0; column < templates.size(); column++) {
                 String template = templates.get(column);
                 if (template == null) {
@@ -387,17 +405,20 @@ public class TemplateOperation {
                 if (template.equals("ID")) {
                     idColumn = column;
                 }
+                if (template.equals("LABEL")) {
+                    labelColumn = column;
+                }
             }
-            if (idColumn == -1) {
+
+            if (idColumn == -1 && labelColumn == -1) {
                 throw new Exception("Template row must include "
-                                  + "an \"ID\" column in table: "
-                                  + tableName);
+                                  + "an \"ID\" or \"LABEL\" column "
+                                  + "in table: " + tableName);
             }
             idColumns.put(tableName, idColumn);
+            labelColumns.put(tableName, labelColumn);
         }
 
-        OWLOntologyManager outputManager =
-            OWLManager.createOWLOntologyManager();
         OWLOntology outputOntology = outputManager.createOntology();
 
         if (ioHelper == null) {
@@ -405,7 +426,7 @@ public class TemplateOperation {
         }
         if (checker == null) {
             checker = new QuotedEntityChecker();
-            checker.useIOHelper(ioHelper);
+            checker.setIOHelper(ioHelper);
             checker.addProvider(new SimpleShortFormProvider());
             checker.addProperty(dataFactory.getRDFSLabel());
         }
@@ -417,68 +438,133 @@ public class TemplateOperation {
         // The first pass adds declarations and annotations to the ontology,
         // then adds the term to the EntityChecker so it can be used
         // by the parser for logical definitions.
-        for (Map.Entry<String, Integer> entry: idColumns.entrySet()) {
-            String tableName = entry.getKey();
-            int idColumn = entry.getValue();
+        for (String tableName: tables.keySet()) {
+            int idColumn = idColumns.get(tableName);
+            int labelColumn = labelColumns.get(tableName);
             List<List<String>> rows = tables.get(tableName);
             for (int row = 2; row < rows.size(); row++) {
-                addAnnotations(outputOntology, tableName, rows, row, idColumn,
-                        checker, ioHelper);
+                addAnnotations(outputOntology, tableName, rows, row,
+                        idColumn, labelColumn, checker);
             }
         }
-
-        // Add the entity to the QuotedEntityChecker.
-        checker.addAll(outputOntology);
 
         // Second pass: add logic to existing entities.
         ManchesterOWLSyntaxClassExpressionParser parser =
             new ManchesterOWLSyntaxClassExpressionParser(
                     dataFactory, checker);
-        for (Map.Entry<String, Integer> entry: idColumns.entrySet()) {
-            String tableName = entry.getKey();
-            Integer idColumn = entry.getValue();
+        for (String tableName: tables.keySet()) {
+            int idColumn = idColumns.get(tableName);
+            int labelColumn = labelColumns.get(tableName);
             List<List<String>> rows = tables.get(tableName);
             for (int row = 2; row < rows.size(); row++) {
-                addLogic(outputOntology, tableName, rows, row, idColumn,
-                        parser, ioHelper);
+                addLogic(outputOntology, tableName, rows, row,
+                        idColumn, labelColumn, checker, parser);
             }
         }
 
         return outputOntology;
     }
 
+
+    /**
+     * Use type, id, and label information to get an entity
+     * from the data in a row.
+     * Requires either: an id (default type is owl:Class);
+     * an id and type; or a label.
+     *
+     * @param checker for looking up labels
+     * @param type the IRI of the type for this entity, or null
+     * @param id the ID for this entity, or null
+     * @param label the label for this entity, or null
+     * @return the entity
+     * @throws Exception if the entity cannot be created
+     */
+    public static OWLEntity getEntity(QuotedEntityChecker checker,
+            IRI type, String id, String label)
+        throws Exception {
+
+        IOHelper ioHelper = checker.getIOHelper();
+
+        if (id != null && ioHelper != null) {
+            IRI iri = ioHelper.createIRI(id);
+            if (type == null) {
+                type = IRI.create(owl + "Class");
+            }
+            String t = type.toString();
+            if (t.equals(owl + "Class")) {
+                return dataFactory.getOWLClass(iri);
+            } else if (t.equals(owl + "AnnotationProperty")) {
+                return dataFactory.getOWLAnnotationProperty(iri);
+            } else if (t.equals(owl + "ObjectProperty")) {
+                return dataFactory.getOWLObjectProperty(iri);
+            } else if (t.equals(owl + "DatatypeProperty")) {
+                return dataFactory.getOWLDataProperty(iri);
+            } else if (t.equals(owl + "Datatype")) {
+                return dataFactory.getOWLDatatype(iri);
+            } else {
+                return dataFactory.getOWLNamedIndividual(iri);
+            }
+        }
+
+        if (label != null && type != null) {
+            String t = type.toString();
+            if (t.equals(owl + "Class")) {
+                return checker.getOWLClass(label);
+            } else if (t.equals(owl + "AnnotationProperty")) {
+                return checker.getOWLAnnotationProperty(label);
+            } else if (t.equals(owl + "ObjectProperty")) {
+                return checker.getOWLObjectProperty(label);
+            } else if (t.equals(owl + "DatatypeProperty")) {
+                return checker.getOWLDataProperty(label);
+            } else if (t.equals(owl + "Datatype")) {
+                return checker.getOWLDatatype(label);
+            } else {
+                return checker.getOWLIndividual(label);
+            }
+        }
+
+        if (label != null) {
+            return checker.getOWLEntity(label);
+        }
+
+        return null;
+    }
+
     /**
      * Use templates to add entities and their annotations to an ontology.
      *
-     * @param ontology the ontology to add axioms to
+     * @param outputOntology the ontology to add axioms to
      * @param tableName the name of the current table
      * @param rows the table to use
      * @param row the current row to use
      * @param idColumn the column that holds the ID for the entity
+     * @param labelColumn the column that holds the LABEL for the entity
      * @param checker used to find annotation properties by name
-     * @param ioHelper used to generate IRIs
      * @throws Exception when names or templates cannot be handled
      */
-    private static void addAnnotations(OWLOntology ontology,
+    private static void addAnnotations(OWLOntology outputOntology,
             String tableName, List<List<String>> rows, int row,
-            Integer idColumn, QuotedEntityChecker checker, IOHelper ioHelper)
+            Integer idColumn, Integer labelColumn,
+            QuotedEntityChecker checker)
             throws Exception {
         List<String> headers = rows.get(0);
         List<String> templates = rows.get(1);
 
+        String label = null;
         String id = null;
-        try {
-            id = rows.get(row).get(idColumn);
-        } catch (IndexOutOfBoundsException e) {
-            return;
-        }
-        if (id == null || id.trim().isEmpty()) {
-            return;
+        if (idColumn != null && idColumn != -1) {
+            try {
+                id = rows.get(row).get(idColumn);
+            } catch (IndexOutOfBoundsException e) {
+                return;
+            }
+            if (id == null || id.trim().isEmpty()) {
+                return;
+            }
         }
 
-        String owl = "http://www.w3.org/2002/07/owl#";
-        IRI type = IRI.create(owl + "Class");
-
+        IOHelper ioHelper = checker.getIOHelper();
+        IRI type = null;
         List<OWLAnnotation> annotations = new ArrayList<OWLAnnotation>();
 
         // For each column, apply templates for annotations.
@@ -525,7 +611,11 @@ public class TemplateOperation {
             }
 
             for (String value: values) {
-                if (template.equals("TYPE")) {
+                if (template.equals("LABEL")) {
+                    label = value;
+                    annotations.add(
+                        getStringAnnotation(checker, "A rdfs:label", value));
+                } else if (template.equals("TYPE")) {
                     type = ioHelper.createIRI(value);
                     OWLAnnotationProperty rdfType =
                         getAnnotationProperty(checker, "rdf:type");
@@ -549,39 +639,25 @@ public class TemplateOperation {
             }
         }
 
-        // Now validate and build the class.
-        IRI iri = ioHelper.createIRI(id);
-        if (iri == null) {
+        // Add annotations to an entity
+        OWLEntity entity = getEntity(checker, type, id, label);
+        if (entity == null) {
             throw new Exception(String.format(nullIDError, tableName,
-                        row + 1, id));
+                        row + 1, id, label));
         }
 
-        OWLEntity entity = null;
-        String t = type.toString();
-        if (t.equals(owl + "Class")) {
-            entity = dataFactory.getOWLClass(iri);
-        } else if (t.equals(owl + "AnnotationProperty")) {
-            entity = dataFactory.getOWLAnnotationProperty(iri);
-        } else if (t.equals(owl + "ObjectProperty")) {
-            entity = dataFactory.getOWLObjectProperty(iri);
-        } else if (t.equals(owl + "DatatypeProperty")) {
-            entity = dataFactory.getOWLDataProperty(iri);
-        } else if (t.equals(owl + "Datatype")) {
-            entity = dataFactory.getOWLDatatype(iri);
-        } else {
-            entity = dataFactory.getOWLNamedIndividual(iri);
-        }
-
-        OWLOntologyManager manager = ontology.getOWLOntologyManager();
-        manager.addAxiom(ontology,
+        OWLOntology ontology = outputManager.createOntology();
+        outputManager.addAxiom(ontology,
             dataFactory.getOWLDeclarationAxiom(entity));
 
         for (OWLAnnotation annotation: annotations) {
-            manager.addAxiom(ontology,
+            outputManager.addAxiom(ontology,
                 dataFactory.getOWLAnnotationAssertionAxiom(
-                    iri, annotation));
+                    ((OWLNamedObject) entity).getIRI(), annotation));
         }
 
+        checker.addAll(ontology);
+        MergeOperation.mergeInto(ontology, outputOntology);
     }
 
     /**
@@ -592,26 +668,44 @@ public class TemplateOperation {
      * @param rows the table to use
      * @param row the current row to use
      * @param idColumn the column that holds the ID for the entity
+     * @param labelColumn the column that holds the LABEL for the entity
+     * @param checker used to find annotation properties by name
      * @param parser used parse expressions
-     * @param ioHelper used to generate IRIs
      * @throws Exception when names or templates cannot be handled
      */
     private static void addLogic(OWLOntology ontology,
             String tableName, List<List<String>> rows, int row,
-            Integer idColumn, ManchesterOWLSyntaxClassExpressionParser parser,
-            IOHelper ioHelper)
+            Integer idColumn, Integer labelColumn,
+            QuotedEntityChecker checker,
+            ManchesterOWLSyntaxClassExpressionParser parser)
             throws Exception {
         List<String> headers = rows.get(0);
         List<String> templates = rows.get(1);
 
+        IOHelper ioHelper = checker.getIOHelper();
+
         String id = null;
-        try {
-            id = rows.get(row).get(idColumn);
-        } catch (IndexOutOfBoundsException e) {
-            return;
+        if (idColumn != null && idColumn != -1) {
+            try {
+                id = rows.get(row).get(idColumn);
+            } catch (IndexOutOfBoundsException e) {
+                return;
+            }
+            if (id == null || id.trim().isEmpty()) {
+                return;
+            }
         }
-        if (id == null || id.trim().isEmpty()) {
-            return;
+
+        String label = null;
+        if (labelColumn != null && labelColumn != -1) {
+            try {
+                label = rows.get(row).get(labelColumn);
+            } catch (IndexOutOfBoundsException e) {
+                return;
+            }
+            if (label == null || label.trim().isEmpty()) {
+                return;
+            }
         }
 
         String classType = "subclass";
@@ -664,15 +758,28 @@ public class TemplateOperation {
             }
         }
 
-        // Now validate and build the class.
-        IRI iri = ioHelper.createIRI(id);
-        OWLClass cls = dataFactory.getOWLClass(iri);
+        if (classExpressions.size() == 0) {
+            return;
+        }
 
         if (classType == null) {
             throw new Exception(String.format(missingTypeError, tableName,
                         row + 1, id));
         }
         classType = classType.trim().toLowerCase();
+
+        // Now validate and build the class.
+        OWLClass cls = null;
+        if (id != null) {
+            IRI iri = ioHelper.createIRI(id);
+            cls = dataFactory.getOWLClass(iri);
+        } else if (label != null) {
+            cls = checker.getOWLClass(label);
+        }
+        if (cls == null) {
+            throw new Exception(String.format(nullIDError, tableName,
+                        row + 1, id, label));
+        }
 
         OWLOntologyManager manager = ontology.getOWLOntologyManager();
         if (classType.equals("subclass")) {

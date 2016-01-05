@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +38,7 @@ public class TemplateOperationTest extends CoreTest {
     public void testTemplateStrings() throws Exception {
         OWLAnnotation ann;
         QuotedEntityChecker checker = new QuotedEntityChecker();
-        checker.useIOHelper(new IOHelper());
+        checker.setIOHelper(new IOHelper());
 
         ann = TemplateOperation.getStringAnnotation(checker,
                 "A rdfs:label", "bar");
@@ -80,7 +80,7 @@ public class TemplateOperationTest extends CoreTest {
         IOHelper ioHelper = new IOHelper();
         iri = ioHelper.createIRI("GO:XXXX");
         cls = dataFactory.getOWLClass(iri);
-        checker.useIOHelper(ioHelper);
+        checker.setIOHelper(ioHelper);
         assertEquals(cls, checker.getOWLClass("GO:XXXX"));
 
         System.out.println("PARSER");
@@ -106,8 +106,33 @@ public class TemplateOperationTest extends CoreTest {
     @Test
     public void testTemplateCSV() throws Exception {
         Map<String, List<List<String>>> tables =
-            new HashMap<String, List<List<String>>>();
+            new LinkedHashMap<String, List<List<String>>>();
         String path = "/template.csv";
+        tables.put(path,
+                IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
+        OWLOntology simpleParts = loadOntology("/simple_parts.owl");
+        OWLOntology template = TemplateOperation.template(tables, simpleParts);
+        assertEquals("Count classes", 4,
+            template.getClassesInSignature().size());
+        assertEquals("Count logical axioms", 3,
+            template.getLogicalAxiomCount());
+        assertEquals("Count all axioms", 9,
+            template.getAxiomCount());
+    }
+
+    /**
+     * Test multiple templates.
+     *
+     * @throws Exception if entities cannot be found
+     */
+    @Test
+    public void testTemplates() throws Exception {
+        Map<String, List<List<String>>> tables =
+            new LinkedHashMap<String, List<List<String>>>();
+        String path = "/template-ids.csv";
+        tables.put(path,
+                IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
+        path = "/template-labels.csv";
         tables.put(path,
                 IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
         OWLOntology simpleParts = loadOntology("/simple_parts.owl");

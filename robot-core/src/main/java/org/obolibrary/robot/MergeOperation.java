@@ -53,6 +53,23 @@ public class MergeOperation {
     }
 
     /**
+     * Given a source ontology and a target ontology,
+     * add all the axioms from the source ontology and its import closure
+     * into the target ontology.
+     * The target ontology is not itself merged,
+     * so any of its imports remain distinct.
+     *
+     * @param ontology the source ontology to merge
+     * @param targetOntology the ontology to merge axioms into
+     */
+    public static void mergeInto(OWLOntology ontology,
+            OWLOntology targetOntology) {
+        List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+        ontologies.add(ontology);
+        mergeInto(ontologies, targetOntology, false);
+    }
+
+    /**
      * Given a list of ontologies and a target ontology,
      * add all the axioms from the listed ontologies and their import closure
      * into the target ontology.
@@ -65,6 +82,25 @@ public class MergeOperation {
     public static void mergeInto(List<OWLOntology> ontologies,
             OWLOntology targetOntology) {
         mergeInto(ontologies, targetOntology, false);
+    }
+
+    /**
+     * Given a source ontology and a target ontology,
+     * add all the axioms from the source ontology and its import closure
+     * into the target ontology.
+     * The target ontology is not itself merged,
+     * so any of its imports remain distinct.
+     *
+     * @param ontology the source ontology to merge
+     * @param targetOntology the ontology to merge axioms into
+     * @param includeAnnotations true if ontology annotations should be merged;
+     *   annotations on imports are not merged
+     */
+    public static void mergeInto(OWLOntology ontology,
+            OWLOntology targetOntology, boolean includeAnnotations) {
+        List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+        ontologies.add(ontology);
+        mergeInto(ontologies, targetOntology, includeAnnotations);
     }
 
     /**

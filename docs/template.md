@@ -6,12 +6,13 @@ ROBOT can convert tables to OWL format using templates. The approach extends the
 2. Templates: ROBOT expects the second row to contain template strings for each column that will be used in the OWL conversion. See below for details on template strings.
 3. Data: ROBOT expects each of the remaining rows to correspond to an OWLClass or OWLIndividual. (In the future we may add support for other sorts of OWL entities). Rows with a blank "ID" column will be skipped.
 
-The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template` or `-t` option specified the CSV or TSV template file. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See below for the three different merge options, and details on how they control the output of the command.
+The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template` or `-t` option specified the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See below for the three different merge options, and details on how they control the output of the command.
 
 
 ## Template Strings
 
-- `ID`: Every row that specifies a class must have an ID that ROBOT can convert to an IRI. Usually this will be a prefixed ID like `GO:12345`. See the `--prefix` options for details. Rows with an empty ID cell will be skipped.
+- `ID`: Every term must have an IRI to identify it. This can be specified with an `ID` column. Usually this will be a prefixed ID like `GO:12345`. See the `--prefix` options for details. Rows with an empty ID cell will be skipped.
+- `LABEL`: If a term exists in an ontology, or its ID has been defined elsewhere (perhaps in a previous template), then the `LABEL` column can specify an `rdfs:label` that uniquely identifies the target term. This can be easier the numeric IDs for human readers.
 - `TYPE`: this is the `rdf:type` for the row. Because ROBOT is focused on ontology development, the default value is `owl:Class` and this column is optional. When creating an OWLIndividual, specify the class to which it belongs in this column.
 - `CLASS_TYPE`: ROBOT creates a class for each row of data. You must specify a CLASS_TYPE, which can be either:
     - `subclass`: the created class will be asserted to be a subclass of each templated class expression

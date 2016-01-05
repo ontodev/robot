@@ -15,4 +15,5 @@
   <suppress checks="HiddenField" files="."/>
   <suppress checks="MagicNumber" files="."/>
   <suppress checks="VisibilityModifier" files="test"/>
+  <suppress checks="ParameterNumber" files="."/>
 </suppressions>

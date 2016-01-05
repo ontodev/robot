@@ -120,6 +120,16 @@ public class OntologyHelper {
     }
 
     /**
+     * Given an OWLAnnotationAssertionAxiom, return its value as a string.
+     *
+     * @param axiom the OWLAnnotationAssertionAxiom to get the string value of
+     * @return the string value
+     */
+    public static String getValue(OWLAnnotationAssertionAxiom axiom) {
+        return getValue(axiom.getValue());
+    }
+
+    /**
      * Given a set of OWLAnnotations, return the first string value
      * as determined by natural string sorting.
      *
@@ -183,6 +193,24 @@ public class OntologyHelper {
     }
 
     /**
+     * Given an ontology, and an optional set of annotation properties,
+     * return a set of annotation assertion axioms for those properties,
+     * for all subjects.
+     *
+     * @param ontology the ontology to search (including imports closure)
+     * @param property an annotation property
+     * @return a filtered set of annotation assertion axioms
+     */
+    public static Set<OWLAnnotationAssertionAxiom> getAnnotationAxioms(
+            OWLOntology ontology, OWLAnnotationProperty property) {
+        Set<OWLAnnotationProperty> properties =
+            new HashSet<OWLAnnotationProperty>();
+        properties.add(property);
+        Set<IRI> subjects = null;
+        return getAnnotationAxioms(ontology, properties, subjects);
+    }
+
+    /**
      * Given an ontology, an optional set of annotation properties,
      * and an optional set of subject,
      * return a set of annotation assertion axioms for those
@@ -199,8 +227,11 @@ public class OntologyHelper {
         Set<OWLAnnotationProperty> properties =
             new HashSet<OWLAnnotationProperty>();
         properties.add(property);
-        Set<IRI> subjects = new HashSet<IRI>();
-        subjects.add(subject);
+        Set<IRI> subjects = null;
+        if (subject != null) {
+            subjects = new HashSet<IRI>();
+            subjects.add(subject);
+        }
         return getAnnotationAxioms(ontology, properties, subjects);
     }
 
@@ -406,6 +437,41 @@ public class OntologyHelper {
             if (value != null) {
                 results.put(entity.getIRI(), value);
             }
+        }
+        return results;
+    }
+
+    /**
+     * Given an ontology, return a map from rdfs:label to IRIs.
+     * Includes labels asserted in for all imported ontologies.
+     * Duplicates overwrite existing with a warning.
+     *
+     * @param ontology the ontology to use
+     * @return a map from label strings to IRIs
+     */
+    public static Map<String, IRI> getLabelIRIs(OWLOntology ontology) {
+        Map<String, IRI> results = new HashMap<String, IRI>();
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        OWLAnnotationProperty rdfsLabel =
+            manager.getOWLDataFactory().getRDFSLabel();
+        Set<OWLAnnotationAssertionAxiom> axioms =
+            getAnnotationAxioms(ontology, rdfsLabel);
+        for (OWLAnnotationAssertionAxiom axiom: axioms) {
+            String value = getValue(axiom);
+            if (value == null) {
+                continue;
+            }
+            OWLAnnotationSubject subject = axiom.getSubject();
+            if (subject == null || !(subject instanceof IRI)) {
+                continue;
+            }
+            if (results.containsKey(value)) {
+                logger.warn("Duplicate rdfs:label \""
+                           + value
+                           + "\" for subject "
+                           + subject);
+            }
+            results.put(value, (IRI) subject);
         }
         return results;
     }

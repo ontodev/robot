@@ -96,9 +96,19 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      *
      * @param ioHelper the IOHelper to use
      */
-    public void useIOHelper(IOHelper ioHelper) {
+    public void setIOHelper(IOHelper ioHelper) {
         this.ioHelper = ioHelper;
     }
+
+    /**
+     * Get the configured IOHelper.
+     *
+     * @return the IOHelper, or null if none has been set
+     */
+    public IOHelper getIOHelper() {
+        return this.ioHelper;
+    }
+
 
     /**
      * Add a short form providers for finding names.
@@ -415,6 +425,30 @@ public class QuotedEntityChecker implements OWLEntityChecker {
         IRI iri = getIRI(objectProperties, name);
         if (iri != null) {
             return dataFactory.getOWLObjectProperty(iri);
+        }
+        return null;
+    }
+
+    /**
+     * Find any entity with the given name.
+     * Quotation marks will be removed if necessary.
+     *
+     * @param name the name of the entity to find
+     * @return an entity, or null
+     */
+    public OWLEntity getOWLEntity(String name) {
+        if (annotationProperties.containsKey(name)) {
+            return (OWLEntity) getOWLAnnotationProperty(name);
+        } else if (objectProperties.containsKey(name)) {
+            return (OWLEntity) getOWLObjectProperty(name);
+        } else if (dataProperties.containsKey(name)) {
+            return (OWLEntity) getOWLDataProperty(name);
+        } else if (datatypes.containsKey(name)) {
+            return (OWLEntity) getOWLDatatype(name);
+        } else if (namedIndividuals.containsKey(name)) {
+            return (OWLEntity) getOWLIndividual(name);
+        } else if (classes.containsKey(name)) {
+            return (OWLEntity) getOWLClass(name);
         }
         return null;
     }

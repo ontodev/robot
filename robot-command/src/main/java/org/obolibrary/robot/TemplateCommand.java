@@ -1,7 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,7 +135,7 @@ public class TemplateCommand implements Command {
             throw new Exception("At least one template is required");
         }
         Map<String, List<List<String>>> tables =
-            new HashMap<String, List<List<String>>>();
+            new LinkedHashMap<String, List<List<String>>>();
         for (String templatePath: templatePaths) {
             tables.put(templatePath, ioHelper.readTable(templatePath));
         }
