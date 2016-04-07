@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -44,6 +46,10 @@ public class ExtractCommand implements Command {
         o.addOption("U", "upper-terms", true, "upper level terms to extract");
         o.addOption("l", "lower-term",  true, "lower level term to extract");
         o.addOption("L", "lower-terms", true, "lower level terms to extract");
+        o.addOption("b", "branch-from-term",  true,
+                "root term of branch to extract");
+        o.addOption("B", "branch-from-terms", true,
+                "root terms of branches to extract");
         options = o;
     }
 
@@ -141,6 +147,8 @@ public class ExtractCommand implements Command {
         }
 
         if (method.equals("mireot")) {
+            List<OWLOntology> outputOntologies = new ArrayList<OWLOntology>();
+
             Set<IRI> upperIRIs = CommandLineHelper.getTerms(
                     ioHelper, line, "upper-term", "upper-terms");
             if (upperIRIs != null && upperIRIs.size() == 0) {
@@ -148,8 +156,21 @@ public class ExtractCommand implements Command {
             }
             Set<IRI> lowerIRIs = CommandLineHelper.getTerms(
                     ioHelper, line, "lower-term", "lower-terms");
-            outputOntology = MireotOperation.getAncestors(inputOntology,
-                    upperIRIs, lowerIRIs, null);
+            if (lowerIRIs != null && lowerIRIs.size() != 0) {
+                outputOntologies.add(
+                    MireotOperation.getAncestors(inputOntology,
+                        upperIRIs, lowerIRIs, null));
+            }
+
+            Set<IRI> branchIRIs = CommandLineHelper.getTerms(
+                    ioHelper, line, "branch-from-term", "branch-from-terms");
+            if (branchIRIs != null && branchIRIs.size() != 0) {
+                outputOntologies.add(
+                    MireotOperation.getDescendants(inputOntology,
+                        branchIRIs, null));
+            }
+
+            outputOntology = MergeOperation.merge(outputOntologies);
         } else if (moduleType != null) {
             outputOntology = ExtractOperation.extract(
                     inputOntology,
