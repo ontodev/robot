@@ -29,6 +29,8 @@ public class CommandLineInterface {
         m.addCommand("filter",          new FilterCommand());
         m.addCommand("merge",           new MergeCommand());
         m.addCommand("reason",          new ReasonCommand());
+        m.addCommand("reduce",          new ReduceCommand());
+        m.addCommand("relax",           new RelaxCommand());
         m.addCommand("template",        new TemplateCommand());
         return m;
     }
@@ -37,7 +39,7 @@ public class CommandLineInterface {
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(CommandLineInterface.class);
+            LoggerFactory.getLogger(CommandLineInterface.class);
 
     /**
      * Execute the given command-line arguments, catching any exceptions.
