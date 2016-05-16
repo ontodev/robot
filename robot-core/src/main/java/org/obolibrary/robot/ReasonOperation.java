@@ -214,7 +214,7 @@ public class ReasonOperation {
             if (thisClass.isOWLNothing() || thisClass.isOWLThing()) {
                 continue;
             }
-
+            
             // Use the reasoner to get all
             // the direct superclasses of this class.
             Set<OWLClass> inferredSuperClasses = new HashSet<OWLClass>();
