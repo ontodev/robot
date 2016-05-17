@@ -83,9 +83,11 @@ One of the main benefits of working with OWL is the availability of powerful aut
 
     robot reason --reasoner ELK --input edit.owl --output results/reasoned.owl
 
-Robot can be used to 'reduce' (i.e. remove redundant subClassOf axioms, independent of this previous step)
+## Reducing Graph
 
-    robot reduce --reasoner ELK --input edit.owl --output results/reduced.owl
+Robot can be used to 'reduce' (i.e. remove redundant subClassOf axioms), independent of this previous step.
+
+    robot reduce --reasoner ELK --input nucleus.owl --output results/reduced.owl
     
 ## Annotating
 
