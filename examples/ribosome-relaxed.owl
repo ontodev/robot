@@ -9,17 +9,13 @@ Prefix: rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 Ontology: <http://purl.obolibrary.org/obo/go.owl>
 
 
-AnnotationProperty: rdfs:label
-
-    
-Datatype: xsd:string
 
     
 ObjectProperty: <http://purl.obolibrary.org/obo/BFO_0000050>
 
     Annotations: 
         rdfs:label "part of"^^xsd:string
-    
+
     Characteristics: 
         Transitive
     
@@ -33,8 +29,6 @@ Class: <http://purl.obolibrary.org/obo/GO_0044464>
         <http://purl.obolibrary.org/obo/GO_0005575>
          and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005623>)
     
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0005575>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0005840>
@@ -46,6 +40,16 @@ Class: <http://purl.obolibrary.org/obo/GO_0005840>
         <http://purl.obolibrary.org/obo/GO_0044444>,
         <http://purl.obolibrary.org/obo/GO_0043232>,
         <http://purl.obolibrary.org/obo/GO_0030529>
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0030529>
+
+    Annotations: 
+        rdfs:label "intracellular ribonucleoprotein complex"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_1990904>,
+        <http://purl.obolibrary.org/obo/GO_0044424>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0005737>
@@ -85,8 +89,6 @@ Class: <http://purl.obolibrary.org/obo/GO_0044444>
         <http://purl.obolibrary.org/obo/GO_0005575>
          and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005737>)
     
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0044424>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0043226>
@@ -116,17 +118,20 @@ Class: <http://purl.obolibrary.org/obo/GO_0005622>
         <http://purl.obolibrary.org/obo/GO_0044464>
     
     
+Class: <http://purl.obolibrary.org/obo/GO_1990904>
+
+    Annotations: 
+        rdfs:label "ribonucleoprotein complex"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_0032991>
+    
+    
 Class: <http://purl.obolibrary.org/obo/GO_0005575>
 
     Annotations: 
         rdfs:label "cellular_component"^^xsd:string
     
-    SubClassOf: 
-        owl:Thing
-    
-    
-Class: owl:Thing
-
     
 Class: <http://purl.obolibrary.org/obo/GO_0044424>
 
@@ -137,8 +142,6 @@ Class: <http://purl.obolibrary.org/obo/GO_0044424>
         <http://purl.obolibrary.org/obo/GO_0005575>
          and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005622>)
     
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0044464>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0044422>
@@ -150,8 +153,6 @@ Class: <http://purl.obolibrary.org/obo/GO_0044422>
         <http://purl.obolibrary.org/obo/GO_0005575>
          and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0043226>)
     
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0005575>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0000313>
@@ -163,18 +164,6 @@ Class: <http://purl.obolibrary.org/obo/GO_0000313>
         <http://purl.obolibrary.org/obo/GO_0005840>
          and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0043226>)
     
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0005840>,
-        <http://purl.obolibrary.org/obo/GO_0044422>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_1990904>
-
-    Annotations: 
-        rdfs:label "ribonucleoprotein complex"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0032991>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0043232>
@@ -185,16 +174,6 @@ Class: <http://purl.obolibrary.org/obo/GO_0043232>
     SubClassOf: 
         <http://purl.obolibrary.org/obo/GO_0043229>,
         <http://purl.obolibrary.org/obo/GO_0043228>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0030529>
-
-    Annotations: 
-        rdfs:label "intracellular ribonucleoprotein complex"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_1990904>,
-        <http://purl.obolibrary.org/obo/GO_0044424>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0032991>

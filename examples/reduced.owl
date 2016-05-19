@@ -17,8 +17,39 @@ Datatype: xsd:string
     
 ObjectProperty: <http://purl.obolibrary.org/obo/BFO_0000050>
 
+    Annotations: 
+        rdfs:label "part of"^^xsd:string
+    
     Characteristics: 
         Transitive
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0000313>
+
+    Annotations: 
+        rdfs:label "organellar ribosome"^^xsd:string
+    
+    EquivalentTo: 
+        <http://purl.obolibrary.org/obo/GO_0005840>
+         and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0043226>)
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0005622>
+
+    Annotations: 
+        rdfs:label "intracellular"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_0044464>
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0043228>
+
+    Annotations: 
+        rdfs:label "non-membrane-bounded organelle"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_0043226>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0044464>
@@ -26,38 +57,27 @@ Class: <http://purl.obolibrary.org/obo/GO_0044464>
     Annotations: 
         rdfs:label "cell part"^^xsd:string
     
+    EquivalentTo: 
+        <http://purl.obolibrary.org/obo/GO_0005575>
+         and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005623>)
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0043226>
+
+    Annotations: 
+        rdfs:label "organelle"^^xsd:string
+    
     SubClassOf: 
-        <http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005623>,
         <http://purl.obolibrary.org/obo/GO_0005575>
     
     
-Class: <http://purl.obolibrary.org/obo/GO_0031974>
+Class: <http://purl.obolibrary.org/obo/GO_1990904>
 
     Annotations: 
-        rdfs:label "membrane-enclosed lumen"^^xsd:string
+        rdfs:label "ribonucleoprotein complex"^^xsd:string
     
     SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0005575>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0031981>
-
-    Annotations: 
-        rdfs:label "nuclear lumen"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0044428>,
-        <http://purl.obolibrary.org/obo/GO_0070013>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0044428>
-
-    Annotations: 
-        rdfs:label "nuclear part"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0044446>,
-        <http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005634>
+        <http://purl.obolibrary.org/obo/GO_0032991>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0043229>
@@ -70,43 +90,24 @@ Class: <http://purl.obolibrary.org/obo/GO_0043229>
         <http://purl.obolibrary.org/obo/GO_0044424>
     
     
-Class: <http://purl.obolibrary.org/obo/GO_0043227>
+Class: <http://purl.obolibrary.org/obo/GO_0043232>
 
     Annotations: 
-        rdfs:label "membrane-bounded organelle"^^xsd:string
+        rdfs:label "intracellular non-membrane-bounded organelle"^^xsd:string
     
     SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0043226>
+        <http://purl.obolibrary.org/obo/GO_0043229>,
+        <http://purl.obolibrary.org/obo/GO_0043228>
     
     
-Class: <http://purl.obolibrary.org/obo/GO_0043226>
+Class: <http://purl.obolibrary.org/obo/GO_0044424>
 
     Annotations: 
-        rdfs:label "organelle"^^xsd:string
+        rdfs:label "intracellular part"^^xsd:string
     
-    SubClassOf: 
+    EquivalentTo: 
         <http://purl.obolibrary.org/obo/GO_0005575>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0070013>
-
-    Annotations: 
-        rdfs:label "intracellular organelle lumen"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0043233>,
-        <http://purl.obolibrary.org/obo/GO_0044446>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0044446>
-
-    Annotations: 
-        rdfs:label "intracellular organelle part"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0043229>,
-        <http://purl.obolibrary.org/obo/GO_0044422>,
-        <http://purl.obolibrary.org/obo/GO_0044424>
+         and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005622>)
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0005623>
@@ -118,67 +119,68 @@ Class: <http://purl.obolibrary.org/obo/GO_0005623>
         <http://purl.obolibrary.org/obo/GO_0005575>
     
     
-Class: <http://purl.obolibrary.org/obo/GO_0005622>
+Class: <http://purl.obolibrary.org/obo/GO_0044422>
 
     Annotations: 
-        rdfs:label "intracellular"^^xsd:string
+        rdfs:label "organelle part"^^xsd:string
+    
+    EquivalentTo: 
+        <http://purl.obolibrary.org/obo/GO_0005575>
+         and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0043226>)
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0030529>
+
+    Annotations: 
+        rdfs:label "intracellular ribonucleoprotein complex"^^xsd:string
     
     SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0044464>
+        <http://purl.obolibrary.org/obo/GO_1990904>,
+        <http://purl.obolibrary.org/obo/GO_0044424>
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0005737>
+
+    Annotations: 
+        rdfs:label "cytoplasm"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_0044424>
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0044444>
+
+    Annotations: 
+        rdfs:label "cytoplasmic part"^^xsd:string
+    
+    EquivalentTo: 
+        <http://purl.obolibrary.org/obo/GO_0005575>
+         and (<http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005737>)
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0032991>
+
+    Annotations: 
+        rdfs:label "macromolecular complex"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_0005575>
+    
+    
+Class: <http://purl.obolibrary.org/obo/GO_0005840>
+
+    Annotations: 
+        rdfs:label "ribosome"^^xsd:string
+    
+    SubClassOf: 
+        <http://purl.obolibrary.org/obo/GO_0044444>,
+        <http://purl.obolibrary.org/obo/GO_0043232>,
+        <http://purl.obolibrary.org/obo/GO_0030529>
     
     
 Class: <http://purl.obolibrary.org/obo/GO_0005575>
 
     Annotations: 
         rdfs:label "cellular_component"^^xsd:string
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0044424>
-
-    Annotations: 
-        rdfs:label "intracellular part"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0005622>,
-        <http://purl.obolibrary.org/obo/GO_0044464>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0044422>
-
-    Annotations: 
-        rdfs:label "organelle part"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/BFO_0000050> some <http://purl.obolibrary.org/obo/GO_0043226>,
-        <http://purl.obolibrary.org/obo/GO_0005575>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0043233>
-
-    Annotations: 
-        rdfs:label "organelle lumen"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0044422>,
-        <http://purl.obolibrary.org/obo/GO_0031974>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0005634>
-
-    Annotations: 
-        rdfs:label "nucleus"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0043231>
-    
-    
-Class: <http://purl.obolibrary.org/obo/GO_0043231>
-
-    Annotations: 
-        rdfs:label "intracellular membrane-bounded organelle"^^xsd:string
-    
-    SubClassOf: 
-        <http://purl.obolibrary.org/obo/GO_0043227>,
-        <http://purl.obolibrary.org/obo/GO_0043229>
     
     

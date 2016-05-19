@@ -81,19 +81,25 @@ For more details see:
 
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using [ELK](https://code.google.com/p/elk-reasoner/), a very fast reasoner that supports the EL subset of OWL 2.
 
-    robot reason --reasoner ELK --input edit.owl --output results/reasoned.owl
+    robot reason --reasoner ELK --input ribosome.owl --output results/reasoned.owl
+
+## Relaxing equivalence axioms
+
+Robot can be used to relax Equivalence Axioms to weaker SubClassOf axioms. The resulting axioms will be redundant with the stronger equivalence axioms, but may be useful for applications that only consume SubClassOf axioms
+
+    robot relax  --input ribosome.owl --output results/ribosome-relaxed.owl
 
 ## Reducing Graph
 
 Robot can be used to 'reduce' (i.e. remove redundant subClassOf axioms), independent of this previous step.
 
-    robot reduce --reasoner ELK --input nucleus.owl --output results/reduced.owl
+    robot reduce --reasoner ELK --input ribosome.owl --output results/reduced.owl
     
 ## Annotating
 
 It's important to add metadata to an ontology before releasing it, and to update the ontology version IRI.
 
-    robot annotate --input reasoned.owl \
+    robot annotate --input edit.owl \
       --ontology-iri "https://github.com/ontodev/robot/examples/annotated.owl" \
       --version-iri "https://github.com/ontodev/robot/examples/annotated-1.owl" \
       --annotation rdfs:comment "Comment" \
