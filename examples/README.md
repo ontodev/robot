@@ -87,14 +87,14 @@ One of the main benefits of working with OWL is the availability of powerful aut
 
 Robot can be used to relax Equivalence Axioms to weaker SubClassOf axioms. The resulting axioms will be redundant with the stronger equivalence axioms, but may be useful for applications that only consume SubClassOf axioms
 
-    robot relax  --input ribosome.owl --output results/ribosome-relaxed.owl
+    robot relax  --input ribosome.owl --output results/relaxed.owl
 
 ## Reducing Graph
 
 Robot can be used to 'reduce' (i.e. remove redundant subClassOf axioms), independent of this previous step.
 
     robot reduce --reasoner ELK --input ribosome.owl --output results/reduced.owl
-    
+
 ## Annotating
 
 It's important to add metadata to an ontology before releasing it, and to update the ontology version IRI.
