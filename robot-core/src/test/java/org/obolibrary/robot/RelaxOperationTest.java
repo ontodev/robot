@@ -7,16 +7,11 @@ import java.util.Map;
 import org.junit.Test;
 
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
  * Tests for ReasonOperation.
  */
 public class RelaxOperationTest extends CoreTest {
-  
-
-   
-  
 
     /**
      * Test removing redundant subclass axioms.
@@ -26,7 +21,7 @@ public class RelaxOperationTest extends CoreTest {
     @Test
     public void testRelax() throws IOException {
         OWLOntology ont = loadOntology("/relax_equivalence_axioms_test.obo");
- 
+
         Map<String, String> options = new HashMap<String, String>();
         options.put("remove-redundant-subclass-axioms", "true");
 
@@ -34,5 +29,4 @@ public class RelaxOperationTest extends CoreTest {
         assertIdentical("/relax_equivalence_axioms_relaxed.obo", ont);
     }
 
- 
 }

@@ -5,12 +5,11 @@ import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles inputs and outputs for the {@link relaxOperation}.
+ * Handles inputs and outputs for the {@link RelaxOperation}.
  *
  * @author <a href="mailto:cjmungall@lbl.gov">Chris Mungall</a>
  */
@@ -115,7 +114,7 @@ public class RelaxCommand implements Command {
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         OWLOntology ontology = state.getOntology();
 
- 
+
         // Override default reasoner options with command-line options
         Map<String, String> relaxOptions =
             RelaxOperation.getDefaultOptions();
