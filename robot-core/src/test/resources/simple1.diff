@@ -1,6 +1,6 @@
 1 axioms in Ontology 1 but not in Ontology 2:
-- OntologyID(OntologyIRI(<https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl>))
+- OntologyID(OntologyIRI(<https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl>) VersionIRI(<null>))
 
 2 axioms in Ontology 2 but not in Ontology 1:
 + AnnotationAssertion(rdfs:label <https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1> "TEST #1"^^xsd:string)
-+ OntologyID(OntologyIRI(<https://github.com/ontodev/robot/robot-core/src/test/resources/simple1.owl>))
++ OntologyID(OntologyIRI(<https://github.com/ontodev/robot/robot-core/src/test/resources/simple1.owl>) VersionIRI(<null>))
