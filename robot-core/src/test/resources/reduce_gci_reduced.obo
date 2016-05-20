@@ -1,0 +1,14 @@
+ontology: redundant_expr
+
+[Term]
+id: NCBITaxon:1
+name: example taxon
+
+[Term]
+id: X:1
+relationship: part_of X:2 !!! redundant
+
+[Typedef]
+id: part_of
+xref: BFO:0000050
+is_transitive: true
