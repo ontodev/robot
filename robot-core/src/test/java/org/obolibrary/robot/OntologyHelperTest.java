@@ -31,9 +31,9 @@ public class OntologyHelperTest extends CoreTest {
                 "http://version.iri");
 
         assertEquals("http://ontology.iri",
-                simple.getOntologyID().getOntologyIRI().toString());
+                simple.getOntologyID().getOntologyIRI().orNull().toString());
         assertEquals("http://version.iri",
-                simple.getOntologyID().getVersionIRI().toString());
+                simple.getOntologyID().getVersionIRI().orNull().toString());
     }
 
     /**
