@@ -3,6 +3,7 @@
      xml:base="http://purl.obolibrary.org/obo/go.owl"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/go.owl"/>
@@ -43,7 +44,6 @@
     <!-- http://purl.obolibrary.org/obo/GO_0000313 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0000313">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organellar ribosome</rdfs:label>
         <owl:equivalentClass>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -57,6 +57,7 @@
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0005840"/>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044422"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organellar ribosome</rdfs:label>
     </owl:Class>
     
 
@@ -64,8 +65,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0005575 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0005575">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cellular_component</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cellular_component</rdfs:label>
     </owl:Class>
     
 
@@ -73,8 +74,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0005622 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0005622">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044464"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular</rdfs:label>
     </owl:Class>
     
 
@@ -82,8 +83,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0005623 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0005623">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cell</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0005575"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cell</rdfs:label>
     </owl:Class>
     
 
@@ -91,8 +92,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0005737 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0005737">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cytoplasm</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044424"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cytoplasm</rdfs:label>
     </owl:Class>
     
 
@@ -100,10 +101,10 @@
     <!-- http://purl.obolibrary.org/obo/GO_0005840 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0005840">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ribosome</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0030529"/>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0043232"/>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044444"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ribosome</rdfs:label>
     </owl:Class>
     
 
@@ -111,9 +112,9 @@
     <!-- http://purl.obolibrary.org/obo/GO_0030529 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0030529">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular ribonucleoprotein complex</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044424"/>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_1990904"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular ribonucleoprotein complex</rdfs:label>
     </owl:Class>
     
 
@@ -121,8 +122,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0032991 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0032991">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">macromolecular complex</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0005575"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">macromolecular complex</rdfs:label>
     </owl:Class>
     
 
@@ -130,8 +131,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0043226 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0043226">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organelle</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0005575"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organelle</rdfs:label>
     </owl:Class>
     
 
@@ -139,8 +140,8 @@
     <!-- http://purl.obolibrary.org/obo/GO_0043228 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0043228">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">non-membrane-bounded organelle</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0043226"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">non-membrane-bounded organelle</rdfs:label>
     </owl:Class>
     
 
@@ -148,9 +149,9 @@
     <!-- http://purl.obolibrary.org/obo/GO_0043229 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0043229">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular organelle</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0043226"/>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044424"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular organelle</rdfs:label>
     </owl:Class>
     
 
@@ -158,9 +159,9 @@
     <!-- http://purl.obolibrary.org/obo/GO_0043232 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0043232">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular non-membrane-bounded organelle</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0043228"/>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0043229"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular non-membrane-bounded organelle</rdfs:label>
     </owl:Class>
     
 
@@ -168,7 +169,6 @@
     <!-- http://purl.obolibrary.org/obo/GO_0044422 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0044422">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organelle part</rdfs:label>
         <owl:equivalentClass>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -181,6 +181,7 @@
             </owl:Class>
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0005575"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organelle part</rdfs:label>
     </owl:Class>
     
 
@@ -188,7 +189,6 @@
     <!-- http://purl.obolibrary.org/obo/GO_0044424 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0044424">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular part</rdfs:label>
         <owl:equivalentClass>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -201,6 +201,7 @@
             </owl:Class>
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044464"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">intracellular part</rdfs:label>
     </owl:Class>
     
 
@@ -208,7 +209,6 @@
     <!-- http://purl.obolibrary.org/obo/GO_0044444 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0044444">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cytoplasmic part</rdfs:label>
         <owl:equivalentClass>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -221,6 +221,7 @@
             </owl:Class>
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0044424"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cytoplasmic part</rdfs:label>
     </owl:Class>
     
 
@@ -228,7 +229,6 @@
     <!-- http://purl.obolibrary.org/obo/GO_0044464 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_0044464">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cell part</rdfs:label>
         <owl:equivalentClass>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -241,6 +241,7 @@
             </owl:Class>
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0005575"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cell part</rdfs:label>
     </owl:Class>
     
 
@@ -248,12 +249,12 @@
     <!-- http://purl.obolibrary.org/obo/GO_1990904 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_1990904">
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ribonucleoprotein complex</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0032991"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ribonucleoprotein complex</rdfs:label>
     </owl:Class>
 </rdf:RDF>
 
 
 
-<!-- Generated by the OWL API (version 0.0.1-SNAPSHOT) http://owlapi.sourceforge.net -->
+<!-- Generated by the OWL API (version 0.0.1-SNAPSHOT) https://github.com/owlcs/owlapi -->
 
