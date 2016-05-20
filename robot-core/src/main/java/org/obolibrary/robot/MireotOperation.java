@@ -1,11 +1,11 @@
 package org.obolibrary.robot;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -22,6 +22,8 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
+import org.semanticweb.owlapi.search.EntitySearcher;
+
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
@@ -265,9 +267,9 @@ public class MireotOperation {
                     subclass, annotationProperties);
             }
         } else if (entity.isOWLAnnotationProperty()) {
-            Set<OWLAnnotationProperty> subproperies =
-                entity.asOWLAnnotationProperty()
-                    .getSubProperties(inputOntology, true);
+        	Collection<OWLAnnotationProperty> subproperies =
+        	EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(),
+        			inputOntology, true);
             for (OWLAnnotationProperty subproperty: subproperies) {
                 if (subproperty == dataFactory.getOWLNothing()) {
                     continue;
