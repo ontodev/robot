@@ -78,6 +78,13 @@ Other build options:
 - `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site` and `[module]/target/site`
 
 
+## Development
+
+We use [Checkstyle](http://checkstyle.sourceforge.net) to enforce the default [Sun Guidelines](http://www.oracle.com/technetwork/java/javase/documentation/codeconvtoc-136057.html), with some exceptions in [checkstyle-suppressions.xml](checkstyle-suppressions.xml). Run `mvn clean site` to generate the Checkstyle reports in `target/site/checkstyle-aggregate.html`. Some of the rules are admittedly arbitrary, but consistency should help newcomers read the code. See also the [.editorconfig](.editorconfig) file, which can provide some [hints to your text editor](http://editorconfig.org).
+
+Basics: indent with four spaces; maximum line length is 80 characters; use spaces after commas, before and after operators such as `+`; no trailing whitespace; UTF-8 encoding; Unix newlines; remove unused imports; always include JavaDocs.
+
+
 # Design
 
 The library provides a set of Operations and a set of Commands. Commands handle the command-line interface and IO tasks, while Operations focus on manipulating ontologies. Sometimes you will have the pair of an Operation and a Command, but there's no necessity for a one-to-one correspondence between them.
