@@ -16,6 +16,14 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
+/**
+ * Tests MIREOT extraction
+ * 
+ * TODO: this is a very minimal test with a dumb example
+ * 
+ * @author cjm
+ *
+ */
 public class MireotOperationTest extends CoreTest {
 
 	@Test
