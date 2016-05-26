@@ -147,8 +147,8 @@ public class MireotOperation {
             }
         } else if (entity.isOWLAnnotationProperty()) {
             Collection<OWLAnnotationProperty> superproperies =
-            		EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(), 
-            				inputOntology, true);
+                EntitySearcher.getSubProperties(
+                    entity.asOWLAnnotationProperty(), inputOntology, true);
             for (OWLAnnotationProperty superproperty: superproperies) {
                 copy(inputOntology, outputOntology, superproperty,
                     annotationProperties);
@@ -267,9 +267,9 @@ public class MireotOperation {
                     subclass, annotationProperties);
             }
         } else if (entity.isOWLAnnotationProperty()) {
-        	Collection<OWLAnnotationProperty> subproperies =
-        	EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(),
-        			inputOntology, true);
+            Collection<OWLAnnotationProperty> subproperies =
+            EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(),
+                    inputOntology, true);
             for (OWLAnnotationProperty subproperty: subproperies) {
                 if (subproperty == dataFactory.getOWLNothing()) {
                     continue;

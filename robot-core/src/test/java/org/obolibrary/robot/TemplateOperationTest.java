@@ -7,7 +7,8 @@ import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
+import org.semanticweb.owlapi.manchestersyntax.parser.
+           ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLClass;

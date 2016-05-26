@@ -78,20 +78,19 @@ public class CoreTest {
         assertEquals(true, actual);
         assertEquals("Ontologies are identical\n", writer.toString());
     }
-    
+
     /**
-     * Removes all declaration axioms
-     * 
+     * Removes all declaration axioms.
+     *
      * Sometimes required for tests that compare an output ontology
-     * with a previously generated ontology (saving an ontology can unintentionally
-     * introduce declaration axioms)
-     * 
-     * @param ont
+     * with a previously generated ontology
+     * (saving an ontology can unintentionally introduce declaration axioms)
+     *
+     * @param ont The target ontology
      */
     protected void removeDeclarations(OWLOntology ont) {
-		Set<OWLDeclarationAxiom> decls = ont.getAxioms(AxiomType.DECLARATION);
-		ont.getOWLOntologyManager().removeAxioms(ont, decls);
-
-	}
+        Set<OWLDeclarationAxiom> decls = ont.getAxioms(AxiomType.DECLARATION);
+        ont.getOWLOntologyManager().removeAxioms(ont, decls);
+    }
 
 }
