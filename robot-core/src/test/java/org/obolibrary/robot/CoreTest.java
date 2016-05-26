@@ -2,12 +2,16 @@ package org.obolibrary.robot;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
+
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
@@ -73,6 +77,20 @@ public class CoreTest {
         System.out.println(writer.toString());
         assertEquals(true, actual);
         assertEquals("Ontologies are identical\n", writer.toString());
+    }
+
+    /**
+     * Removes all declaration axioms.
+     *
+     * Sometimes required for tests that compare an output ontology
+     * with a previously generated ontology
+     * (saving an ontology can unintentionally introduce declaration axioms)
+     *
+     * @param ont The target ontology
+     */
+    protected void removeDeclarations(OWLOntology ont) {
+        Set<OWLDeclarationAxiom> decls = ont.getAxioms(AxiomType.DECLARATION);
+        ont.getOWLOntologyManager().removeAxioms(ont, decls);
     }
 
 }

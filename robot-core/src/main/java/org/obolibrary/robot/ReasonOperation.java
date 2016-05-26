@@ -177,7 +177,7 @@ public class ReasonOperation {
         logger.info("Reasoning took {} seconds.", seconds);
 
         startTime = System.currentTimeMillis();
-        generator.fillOntology(manager, ontology);
+        generator.fillOntology(dataFactory, ontology);
 
         logger.info("Ontology has {} axioms after reasoning.",
                     ontology.getAxioms().size());

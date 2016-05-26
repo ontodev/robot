@@ -29,6 +29,7 @@ import com.github.jsonldjava.utils.JsonUtils;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.opencsv.CSVReader;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -36,12 +37,18 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.formats.OBODocumentFormat;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
+import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.yaml.snakeyaml.Yaml;
 
@@ -329,23 +336,21 @@ public class IOHelper {
      * @return an instance of the format
      * @throws IllegalArgumentException if format name is not recognized
      */
-    public static OWLOntologyFormat getFormat(String formatName)
+    public static OWLDocumentFormat getFormat(String formatName)
           throws IllegalArgumentException {
         formatName = formatName.trim().toLowerCase();
         if (formatName.equals("obo")) {
-            return new org.coode.owlapi.obo.parser.OBOOntologyFormat();
+            return new OBODocumentFormat();
         } else if (formatName.equals("owl")) {
-            return new org.semanticweb.owlapi.io.RDFXMLOntologyFormat();
+            return new RDFXMLDocumentFormat();
         } else if (formatName.equals("ttl")) {
-            return new org.coode.owlapi.turtle.TurtleOntologyFormat();
+            return new TurtleDocumentFormat();
         } else if (formatName.equals("owx")) {
-            return new org.semanticweb.owlapi.io.OWLXMLOntologyFormat();
+            return new OWLXMLDocumentFormat();
         } else if (formatName.equals("omn")) {
-            return new org.coode.owlapi.manchesterowlsyntax
-                .ManchesterOWLSyntaxOntologyFormat();
+            return new ManchesterSyntaxDocumentFormat();
         } else if (formatName.equals("ofn")) {
-            return new org.semanticweb.owlapi.io
-                .OWLFunctionalSyntaxOntologyFormat();
+            return new FunctionalSyntaxDocumentFormat();
         } else {
             throw new IllegalArgumentException(
                     "Unknown ontology format: " + formatName);
@@ -392,7 +397,7 @@ public class IOHelper {
         try {
             String formatName = FilenameUtils.getExtension(
                     ontologyIRI.toString());
-            OWLOntologyFormat format = getFormat(formatName);
+            OWLDocumentFormat format = getFormat(formatName);
             return saveOntology(ontology, format, ontologyIRI);
         } catch (IllegalArgumentException e) {
             throw new IOException(e);
@@ -409,7 +414,7 @@ public class IOHelper {
      * @throws IOException on any problem
      */
     public OWLOntology saveOntology(final OWLOntology ontology,
-            OWLOntologyFormat format, File ontologyFile)
+            OWLDocumentFormat format, File ontologyFile)
             throws IOException {
         return saveOntology(ontology, format, IRI.create(ontologyFile));
     }
@@ -424,13 +429,13 @@ public class IOHelper {
      * @throws IOException on any problem
      */
     public OWLOntology saveOntology(final OWLOntology ontology,
-            OWLOntologyFormat format, IRI ontologyIRI)
+            OWLDocumentFormat format, IRI ontologyIRI)
             throws IOException {
         logger.debug("Saving ontology {} as {} with to IRI {}",
                 ontology, format, ontologyIRI);
 
-        //if (format instanceof PrefixOWLOntologyFormat) {
-        //    ((PrefixOWLOntologyFormat) format)
+        //if (format instanceof PrefixOWLDocumentFormat) {
+        //    ((PrefixOWLDocumentFormat) format)
         //        .copyPrefixesFrom(getPrefixManager());
         //}
 

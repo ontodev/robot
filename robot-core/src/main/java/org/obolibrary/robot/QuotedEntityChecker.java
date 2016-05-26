@@ -9,10 +9,9 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.semanticweb.owlapi.expression.OWLEntityChecker;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -24,6 +23,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
+
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
@@ -37,7 +37,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(QuotedEntityChecker.class);
+            LoggerFactory.getLogger(QuotedEntityChecker.class);
 
     /**
      * Shared DataFactory.
@@ -53,13 +53,13 @@ public class QuotedEntityChecker implements OWLEntityChecker {
      * Optional short form providers for additional names.
      */
     private List<ShortFormProvider> providers =
-        new ArrayList<ShortFormProvider>();
+            new ArrayList<ShortFormProvider>();
 
     /**
      * List of annotation properties to use for finding entities.
      */
     private List<OWLAnnotationProperty> properties =
-        new ArrayList<OWLAnnotationProperty>();
+            new ArrayList<OWLAnnotationProperty>();
 
     /**
      * Map from names to IRIs of annotation properties.
@@ -155,8 +155,8 @@ public class QuotedEntityChecker implements OWLEntityChecker {
             return null;
         }
         if (content.trim().startsWith("'")
-            || content.trim().startsWith("\"")
-            || content.trim().startsWith("(")) {
+                || content.trim().startsWith("\"")
+                || content.trim().startsWith("(")) {
             return content;
         }
         if (content.trim().matches(".*\\s.*")) {
@@ -175,7 +175,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
         Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
         ontologies.add(ontology);
         ReferencedEntitySetProvider resp =
-            new ReferencedEntitySetProvider(ontologies);
+                new ReferencedEntitySetProvider(ontologies);
         for (OWLEntity entity: resp.getEntities()) {
             add(ontology, entity);
         }
@@ -241,12 +241,14 @@ public class QuotedEntityChecker implements OWLEntityChecker {
 
         if (parentOntology != null && properties != null) {
             for (OWLAnnotationProperty property: properties) {
-                Set<OWLAnnotation> annotations =
-                    entity.getAnnotations(parentOntology, property);
-                for (OWLAnnotation annotation: annotations) {
-                    String value = OntologyHelper.getValue(annotation);
-                    if (value != null) {
-                        map.put(value, entity.getIRI());
+                for (OWLAnnotationAssertionAxiom ax
+                      : parentOntology.getAnnotationAssertionAxioms(
+                          entity.getIRI())) {
+                    if (ax.getProperty().equals(property)) {
+                        String value = OntologyHelper.getValue(ax.getValue());
+                        if (value != null) {
+                            map.put(value, entity.getIRI());
+                        }
                     }
                 }
             }

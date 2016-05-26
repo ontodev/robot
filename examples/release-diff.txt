@@ -1,5 +1,5 @@
 1 axioms in Ontology 1 but not in Ontology 2:
-- OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/edit.owl>))
+- OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/edit.owl>) VersionIRI(<null>))
 
 15 axioms in Ontology 2 but not in Ontology 1:
 + AnnotationAssertion(rdfs:label <https://github.com/ontodev/robot/examples/release.owl#junk> "Junk")
@@ -16,4 +16,4 @@
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#shorthand>))
 + Declaration(AnnotationProperty(<http://xmlns.com/foaf/0.1/depicted_by>))
 + Declaration(Class(<https://github.com/ontodev/robot/examples/release.owl#junk>))
-+ OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/release.owl>))
++ OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/release.owl>) VersionIRI(<null>))

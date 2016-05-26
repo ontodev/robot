@@ -62,12 +62,12 @@
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-distribution</artifactId>
-            <version>3.5.1</version>
+            <version>4.2.4</version>
         </dependency>
         <dependency>
             <groupId>org.semanticweb.elk</groupId>
             <artifactId>elk-owlapi</artifactId>
-            <version>0.4.2</version>
+            <version>0.4.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>net.sourceforge.owlapi</groupId>
@@ -84,10 +84,10 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.hermit-reasoner</groupId>
+            <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>org.semanticweb.hermit</artifactId>
-            <version>1.3.8.4</version>
-        </dependency>
+            <version>1.3.8.413</version>
+       </dependency>
     </dependencies>
 
     <reporting>

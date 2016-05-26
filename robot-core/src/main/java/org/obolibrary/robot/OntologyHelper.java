@@ -79,9 +79,9 @@ public class OntologyHelper {
             // don't change anything
             return;
         } else if (ontologyIRI == null) {
-            ontologyIRI = currentID.getOntologyIRI();
+            ontologyIRI = currentID.getOntologyIRI().orNull();
         } else if (versionIRI == null) {
-            versionIRI = currentID.getVersionIRI();
+            versionIRI = currentID.getVersionIRI().orNull();
         }
 
         OWLOntologyID newID;
