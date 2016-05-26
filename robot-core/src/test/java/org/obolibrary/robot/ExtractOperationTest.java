@@ -80,10 +80,6 @@ public class ExtractOperationTest extends CoreTest {
         OWLOntology module =
                 ExtractOperation.extract(simple, terms, outputIRI, moduleType);
 
-        for (OWLAxiom ax : module.getAxioms()) {
-            System.out.println(ax);
-        }
-
         OWLOntology expected = loadOntology(expectedPath);
         removeDeclarations(expected);
         removeDeclarations(module);

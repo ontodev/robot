@@ -68,10 +68,6 @@ public class MireotOperationTest extends CoreTest {
 
         OntologyHelper.setOntologyIRI(outputOntology, outputIRI, null);
 
-        for (OWLAxiom ax : outputOntology.getAxioms()) {
-            System.out.println(ax);
-        }
-
         OWLOntology expected = loadOntology(expectedPath);
         removeDeclarations(expected);
         removeDeclarations(outputOntology);
