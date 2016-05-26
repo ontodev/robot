@@ -147,7 +147,7 @@ public class MireotOperation {
             }
         } else if (entity.isOWLAnnotationProperty()) {
             Collection<OWLAnnotationProperty> superproperies =
-                EntitySearcher.getSubProperties(
+                EntitySearcher.getSuperProperties(
                     entity.asOWLAnnotationProperty(), inputOntology, true);
             for (OWLAnnotationProperty superproperty: superproperies) {
                 copy(inputOntology, outputOntology, superproperty,
