@@ -35,6 +35,10 @@ public class ReasonCommand implements Command {
         o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
+        o.addOption("n", "create-new-ontology",     false,
+        		"create a new ontology for inferences (this is what will be saved)");
+        o.addOption("a", "annotate-inferred-axioms",     false,
+        		"annotate all inferred axioms (only when -n is passed)");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");
