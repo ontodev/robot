@@ -1,4 +1,16 @@
 #!/bin/sh
 
+## Check for Cygwin, use grep for a case-insensitive search
+IS_CYGWIN="FALSE"
+if uname | grep -iq cygwin; then
+    IS_CYGWIN="TRUE"
+fi
+
 DIR="$( cd "$( dirname "$0" )" && pwd )"
-exec java -jar "$DIR/robot.jar" "$@"
+
+if [ $IS_CYGWIN = "TRUE" ]
+then
+    exec java -jar "$(cygpath -w $DIR/robot.jar)" "$@"
+else
+    exec java -jar "$DIR/robot.jar" "$@"
+fi
