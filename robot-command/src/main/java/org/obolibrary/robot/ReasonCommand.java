@@ -36,9 +36,9 @@ public class ReasonCommand implements Command {
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology",     true,
-        		"create a new ontology for inferences (this is what will be saved)");
+                "create a new ontology for inferences (this is what will be saved)");
         o.addOption("a", "annotate-inferred-axioms",     true,
-        		"annotate all inferred axioms (only when -n is passed)");
+                "annotate all inferred axioms (only when -n is passed)");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");

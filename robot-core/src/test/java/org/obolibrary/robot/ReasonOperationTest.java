@@ -71,7 +71,7 @@ public class ReasonOperationTest extends CoreTest {
             .HermiT.Reasoner.ReasonerFactory();
         Map<String, String> opts = new HashMap<>();
         opts.put("create-new-ontology", "true");  // see https://github.com/ontodev/robot/issues/80
-		ReasonOperation.reason(reasoned, reasonerFactory, opts);
+        ReasonOperation.reason(reasoned, reasonerFactory, opts);
         //assertIdentical("/simple_hermit.owl", reasoned);
     }
 
