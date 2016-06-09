@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
@@ -17,9 +17,10 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with StructuralReasoner.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void testStructural() throws IOException {
+    public void testStructural() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .owlapi.reasoner.structural.StructuralReasonerFactory();
@@ -31,9 +32,10 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with ELK.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void testELK() throws IOException {
+    public void testELK() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -45,9 +47,10 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with HermiT.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void testHermit() throws IOException {
+    public void testHermit() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .HermiT.Reasoner.ReasonerFactory();
@@ -56,12 +59,30 @@ public class ReasonOperationTest extends CoreTest {
     }
 
     /**
+     * Test inferring into new ontology
+     *
+     * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void testInferIntoNewOntology() throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/simple.owl");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .HermiT.Reasoner.ReasonerFactory();
+        Map<String, String> opts = new HashMap<>();
+        opts.put("create-new-ontology", "true");  // see https://github.com/ontodev/robot/issues/80
+		ReasonOperation.reason(reasoned, reasonerFactory, opts);
+        //assertIdentical("/simple_hermit.owl", reasoned);
+    }
+
+    /**
      * Test removing redundant subclass axioms.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void testRemoveRedundantSubClassAxioms() throws IOException {
+    public void testRemoveRedundantSubClassAxioms() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();

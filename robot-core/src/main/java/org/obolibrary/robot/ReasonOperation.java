@@ -9,12 +9,12 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.InferenceType;
@@ -114,9 +114,10 @@ public class ReasonOperation {
      *
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
+     * @throws OWLOntologyCreationException 
      */
     public static void reason(OWLOntology ontology,
-            OWLReasonerFactory reasonerFactory) {
+            OWLReasonerFactory reasonerFactory) throws OWLOntologyCreationException {
         reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -128,10 +129,11 @@ public class ReasonOperation {
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
      * @param options a map of option strings, or null
+     * @throws OWLOntologyCreationException 
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Map<String, String> options) {
+            Map<String, String> options) throws OWLOntologyCreationException {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
         logger.info("Starting reasoning...");
 
@@ -176,12 +178,24 @@ public class ReasonOperation {
         seconds = (int) Math.ceil(elapsedTime / 1000);
         logger.info("Reasoning took {} seconds.", seconds);
 
+        if (optionIsTrue(options, "create-new-ontology")) {
+            ontology = manager.createOntology();
+        }
+
         startTime = System.currentTimeMillis();
         generator.fillOntology(dataFactory, ontology);
 
         logger.info("Ontology has {} axioms after reasoning.",
                     ontology.getAxioms().size());
 
+        if (optionIsTrue(options, "annotate-inferred-axioms")) {
+            for (OWLAxiom a : ontology.getAxioms()) {
+            	// TODO
+            	logger.warn("annotate not implemented!");
+            }
+        }
+
+        
         if (optionIsTrue(options, "remove-redundant-subclass-axioms")) {
             removeRedundantSubClassAxioms(reasoner);
         }
