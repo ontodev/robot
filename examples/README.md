@@ -83,6 +83,10 @@ One of the main benefits of working with OWL is the availability of powerful aut
 
     robot reason --reasoner ELK --input ribosome.owl --output results/reasoned.owl
 
+It's also possible to place the new inferences in their own ontology:
+
+    robot reason --reasoner ELK --create-new-ontology true --input ribosome.owl --output results/new_axioms.owl
+
 ## Relaxing equivalence axioms
 
 Robot can be used to relax Equivalence Axioms to weaker SubClassOf axioms. The resulting axioms will be redundant with the stronger equivalence axioms, but may be useful for applications that only consume SubClassOf axioms

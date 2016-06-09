@@ -10,6 +10,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -199,13 +201,24 @@ public class ReasonOperation {
             // todo: set ontology id
             manager.removeAxioms(ontology, ontology.getAxioms() );
         }
-        for (OWLAxiom a : newAxiomOntology.getAxioms()) {
-            if (optionIsTrue(options, "annotate-inferred-axioms")) {
-                logger.warn("annotate not implemented!");
-            }
-            manager.addAxiom(ontology, a);
+
+
+        IRI propertyIRI = null;
+        OWLAnnotationValue value = null;
+        if (optionIsTrue(options, "annotate-inferred-axioms")) {
+            // the default is the convention used by OWLTools and GO, which is
+            // the property is_inferred with a literal (note: not xsd) "true"
+            propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
+            value = dataFactory.getOWLLiteral("true");
         }
-        
+        for (OWLAxiom a : newAxiomOntology.getAxioms()) {
+            manager.addAxiom(ontology, a);
+            logger.warn("annotate not implemented!");
+            if (propertyIRI != null) {
+                OntologyHelper.addAxiomAnnotation(ontology, a, propertyIRI, value);
+            }
+        }
+
         if (optionIsTrue(options, "remove-redundant-subclass-axioms")) {
             removeRedundantSubClassAxioms(reasoner);
         }

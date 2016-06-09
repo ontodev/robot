@@ -69,6 +69,12 @@ public class AnnotateCommand implements Command {
         a.setLongOpt("typed-annotation");
         a.setArgs(3);
         options.addOption(a);
+
+        // Annotate with a property and a typed literal with a language tag
+        a = new Option("x", "annotate all axioms in the ontology with PROP VALUE");
+        a.setLongOpt("axiom-annotation");
+        a.setArgs(3);
+        options.addOption(a);
     }
 
     /**
@@ -197,6 +203,18 @@ public class AnnotateCommand implements Command {
                     ioHelper.createIRI(property),
                     ioHelper.createTypedLiteral(value, type));
         }
+        
+        // Add annotations with PROP VALUE
+        items = CommandLineHelper.getOptionValues(line, "axiom-annotation");
+        while (items.size() > 0) {
+            String property = items.remove(0);
+            String value    = items.remove(0);
+            OntologyHelper.addAxiomAnnotations(
+                    ontology,
+                    ioHelper.createIRI(property),
+                    ioHelper.createLiteral(value));
+        }
+
 
         // Load any annotation files as ontologies and merge them in
         List<OWLOntology> ontologies = new ArrayList<OWLOntology>();

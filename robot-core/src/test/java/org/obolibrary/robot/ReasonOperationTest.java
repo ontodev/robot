@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,6 +57,7 @@ public class ReasonOperationTest extends CoreTest {
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .HermiT.Reasoner.ReasonerFactory();
         ReasonOperation.reason(reasoned, reasonerFactory);
+        assertEquals(6, reasoned.getAxiomCount());
         assertIdentical("/simple_hermit.owl", reasoned);
     }
 
@@ -71,7 +74,9 @@ public class ReasonOperationTest extends CoreTest {
             .HermiT.Reasoner.ReasonerFactory();
         Map<String, String> opts = new HashMap<>();
         opts.put("create-new-ontology", "true");  // see https://github.com/ontodev/robot/issues/80
+        opts.put("annotate-inferred-axioms", "true");  // see https://github.com/ontodev/robot/issues/80
         ReasonOperation.reason(reasoned, reasonerFactory, opts);
+        assertEquals(2, reasoned.getAxiomCount());
         //assertIdentical("/simple_hermit.owl", reasoned);
     }
 
