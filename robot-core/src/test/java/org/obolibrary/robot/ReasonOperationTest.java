@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -77,6 +78,19 @@ public class ReasonOperationTest extends CoreTest {
         opts.put("annotate-inferred-axioms", "true");  // see https://github.com/ontodev/robot/issues/80
         ReasonOperation.reason(reasoned, reasonerFactory, opts);
         assertEquals(2, reasoned.getAxiomCount());
+        //assertIdentical("/simple_hermit.owl", reasoned);
+    }
+    
+    @Test
+    public void testInferIntoNewOntologyNonTrivial() throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .HermiT.Reasoner.ReasonerFactory();
+        Map<String, String> opts = new HashMap<>();
+        opts.put("create-new-ontology", "true");  // see https://github.com/ontodev/robot/issues/80
+        opts.put("annotate-inferred-axioms", "true");  // see https://github.com/ontodev/robot/issues/80
+        ReasonOperation.reason(reasoned, reasonerFactory, opts);
+        assertEquals(3, reasoned.getAxiomCount());
         //assertIdentical("/simple_hermit.owl", reasoned);
     }
 

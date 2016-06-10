@@ -610,7 +610,7 @@ public class OntologyHelper {
         if (axiom instanceof OWLSubClassOfAxiom) {
             OWLSubClassOfAxiom x = ((OWLSubClassOfAxiom)axiom);
             newAxiom = factory.getOWLSubClassOfAxiom(x.getSubClass(), x.getSuperClass(), annotations);
-            logger.info("ANNOTATED: "+newAxiom);
+            logger.debug("ANNOTATED: "+newAxiom);
         }
         else {
 

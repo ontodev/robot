@@ -107,7 +107,7 @@ public class ReasonOperation {
         Map<String, String> options = new HashMap<String, String>();
         options.put("remove-redundant-subclass-axioms", "true");
         options.put("create-new-ontology", "false");
-        options.put("annotated-inferred-axioms", "false");
+        options.put("annotate-inferred-axioms", "false");
         return options;
     }
 
@@ -213,7 +213,6 @@ public class ReasonOperation {
         }
         for (OWLAxiom a : newAxiomOntology.getAxioms()) {
             manager.addAxiom(ontology, a);
-            logger.warn("annotate not implemented!");
             if (propertyIRI != null) {
                 OntologyHelper.addAxiomAnnotation(ontology, a, propertyIRI, value);
             }
