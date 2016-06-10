@@ -94,6 +94,20 @@ public class ReasonOperationTest extends CoreTest {
         //assertIdentical("/simple_hermit.owl", reasoned);
     }
 
+    @Test
+    public void testInferIntoNewOntologyNoDupes() throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .HermiT.Reasoner.ReasonerFactory();
+        Map<String, String> opts = new HashMap<>();
+        opts.put("create-new-ontology", "true"); 
+        opts.put("annotate-inferred-axioms", "true");
+        opts.put("exclude-duplicate-axioms", "true");
+        ReasonOperation.reason(reasoned, reasonerFactory, opts);
+        assertEquals(1, reasoned.getAxiomCount());
+        //assertIdentical("/simple_hermit.owl", reasoned);
+    }
+
     /**
      * Test removing redundant subclass axioms.
      *

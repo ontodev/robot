@@ -39,6 +39,8 @@ public class ReasonCommand implements Command {
                 "create a new ontology for inferences (this is what will be saved)");
         o.addOption("a", "annotate-inferred-axioms",     true,
                 "annotate all inferred axioms (only when -n is passed)");
+        o.addOption("x", "exclude-duplicate-axioms",     true,
+                "do not add an axiom if it exists in import chain");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");

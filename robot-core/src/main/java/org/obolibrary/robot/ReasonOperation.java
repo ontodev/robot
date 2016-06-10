@@ -19,6 +19,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -108,6 +109,8 @@ public class ReasonOperation {
         options.put("remove-redundant-subclass-axioms", "true");
         options.put("create-new-ontology", "false");
         options.put("annotate-inferred-axioms", "false");
+        options.put("exclude-duplicate-axioms", "false");
+        
         return options;
     }
 
@@ -211,7 +214,19 @@ public class ReasonOperation {
             propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
             value = dataFactory.getOWLLiteral("true");
         }
+        Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
         for (OWLAxiom a : newAxiomOntology.getAxioms()) {
+            if (optionIsTrue(options, "exclude-duplicate-axioms")) {
+                // TODO: to a check that ignores annotations
+                if (existingAxioms.contains(a)) {
+                    logger.debug("Already have: "+a);
+                    continue;
+                }
+                if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
+                    logger.debug("Ignoring trivial axioms with OWLThing in signature: "+a);
+                    continue;
+                }
+            }
             manager.addAxiom(ontology, a);
             if (propertyIRI != null) {
                 OntologyHelper.addAxiomAnnotation(ontology, a, propertyIRI, value);
