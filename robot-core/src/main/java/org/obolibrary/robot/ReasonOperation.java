@@ -15,10 +15,12 @@ import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
@@ -203,6 +205,12 @@ public class ReasonOperation {
             logger.info("Placing inferred axioms into a new ontology");
             // todo: set ontology id
             manager.removeAxioms(ontology, ontology.getAxioms() );
+            
+            Set<OWLImportsDeclaration> oids = ontology.getImportsDeclarations();
+            for (OWLImportsDeclaration oid : oids) {
+                RemoveImport ri = new RemoveImport(ontology, oid);
+                manager.applyChange(ri);
+            }
         }
 
 
