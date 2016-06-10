@@ -9,14 +9,19 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveImport;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -35,7 +40,7 @@ public class ReasonOperation {
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(ReasonOperation.class);
+            LoggerFactory.getLogger(ReasonOperation.class);
 
     /**
      * Given a map of options and a key name,
@@ -104,6 +109,10 @@ public class ReasonOperation {
     public static Map<String, String> getDefaultOptions() {
         Map<String, String> options = new HashMap<String, String>();
         options.put("remove-redundant-subclass-axioms", "true");
+        options.put("create-new-ontology", "false");
+        options.put("annotate-inferred-axioms", "false");
+        options.put("exclude-duplicate-axioms", "false");
+
         return options;
     }
 
@@ -114,9 +123,11 @@ public class ReasonOperation {
      *
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
+     * @throws OWLOntologyCreationException on ontology problem
      */
     public static void reason(OWLOntology ontology,
-            OWLReasonerFactory reasonerFactory) {
+            OWLReasonerFactory reasonerFactory)
+        throws OWLOntologyCreationException {
         reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -128,10 +139,11 @@ public class ReasonOperation {
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
      * @param options a map of option strings, or null
+     * @throws OWLOntologyCreationException on ontology problem
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Map<String, String> options) {
+            Map<String, String> options) throws OWLOntologyCreationException {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
         logger.info("Starting reasoning...");
 
@@ -150,10 +162,10 @@ public class ReasonOperation {
 
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
         Node<OWLClass> unsatisfiableClasses =
-            reasoner.getUnsatisfiableClasses();
+                reasoner.getUnsatisfiableClasses();
         if (unsatisfiableClasses.getSize() > 1) {
             logger.info("There are {} unsatisfiable classes in the ontology.",
-                        unsatisfiableClasses.getSize());
+                    unsatisfiableClasses.getSize());
             for (OWLClass cls : unsatisfiableClasses) {
                 if (!cls.isOWLNothing()) {
                     logger.info("    unsatisfiable: " + cls.getIRI());
@@ -163,10 +175,10 @@ public class ReasonOperation {
 
         // Make sure to add the axiom generators in this way!!!
         List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
-            new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
+                new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
         gens.add(new InferredSubClassAxiomGenerator());
         InferredOntologyGenerator generator =
-            new InferredOntologyGenerator(reasoner, gens);
+                new InferredOntologyGenerator(reasoner, gens);
         logger.info("Using these axiom generators:");
         for (InferredAxiomGenerator inf: generator.getAxiomGenerators()) {
             logger.info("    " + inf);
@@ -176,15 +188,71 @@ public class ReasonOperation {
         seconds = (int) Math.ceil(elapsedTime / 1000);
         logger.info("Reasoning took {} seconds.", seconds);
 
-        startTime = System.currentTimeMillis();
-        generator.fillOntology(dataFactory, ontology);
+        // we first place all inferred axioms into a new ontology;
+        // these will be later transferred into the main ontology,
+        // unless the create new ontology option is passed
+        OWLOntology newAxiomOntology;
+        newAxiomOntology = manager.createOntology();
 
-        logger.info("Ontology has {} axioms after reasoning.",
-                    ontology.getAxioms().size());
+        startTime = System.currentTimeMillis();
+        generator.fillOntology(dataFactory, newAxiomOntology);
+
+        logger.info("Reasoning created {} new axioms.",
+                newAxiomOntology.getAxioms().size());
+
+
+        if (optionIsTrue(options, "create-new-ontology")) {
+            // because the ontology is passed by reference,
+            // we manipulate it in place
+            logger.info("Placing inferred axioms into a new ontology");
+            // todo: set ontology id
+            manager.removeAxioms(ontology, ontology.getAxioms());
+
+            Set<OWLImportsDeclaration> oids =
+                ontology.getImportsDeclarations();
+            for (OWLImportsDeclaration oid : oids) {
+                RemoveImport ri = new RemoveImport(ontology, oid);
+                manager.applyChange(ri);
+            }
+        }
+
+
+        IRI propertyIRI = null;
+        OWLAnnotationValue value = null;
+        if (optionIsTrue(options, "annotate-inferred-axioms")) {
+            // the default is the convention used by OWLTools and GO, which is
+            // the property is_inferred with a literal (note: not xsd) "true"
+            propertyIRI = IRI.create(
+                "http://www.geneontology.org/formats/oboInOwl#is_inferred");
+            value = dataFactory.getOWLLiteral("true");
+        }
+        Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
+        for (OWLAxiom a : newAxiomOntology.getAxioms()) {
+            if (optionIsTrue(options, "exclude-duplicate-axioms")) {
+                // TODO to a check that ignores annotations
+                if (existingAxioms.contains(a)) {
+                    logger.debug("Already have: " + a);
+                    continue;
+                }
+                if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
+                    logger.debug("Ignoring trivial axioms with "
+                               + "OWLThing in signature: "
+                               + a);
+                    continue;
+                }
+            }
+            manager.addAxiom(ontology, a);
+            if (propertyIRI != null) {
+                OntologyHelper.addAxiomAnnotation(
+                    ontology, a, propertyIRI, value);
+            }
+        }
 
         if (optionIsTrue(options, "remove-redundant-subclass-axioms")) {
             removeRedundantSubClassAxioms(reasoner);
         }
+        logger.info("Ontology has {} axioms after all reasoning steps.",
+                ontology.getAxioms().size());
 
         elapsedTime = System.currentTimeMillis() - startTime;
         seconds = (int) Math.ceil(elapsedTime / 1000);
@@ -239,13 +307,13 @@ public class ReasonOperation {
                     continue;
                 }
                 OWLClass assertedSuperClass =
-                    subClassAxiom.getSuperClass().asOWLClass();
+                        subClassAxiom.getSuperClass().asOWLClass();
                 if (inferredSuperClasses.contains(assertedSuperClass)) {
                     continue;
                 }
                 manager.removeAxiom(ontology,
                         dataFactory.getOWLSubClassOfAxiom(
-                            thisClass, assertedSuperClass));
+                                thisClass, assertedSuperClass));
             }
         }
         logger.info("Ontology now has {} axioms.", ontology.getAxioms().size());

@@ -26,6 +26,7 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 import org.semanticweb.owlapi.model.SetOntologyID;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
@@ -572,6 +573,74 @@ public class OntologyHelper {
         AddOntologyAnnotation addition =
             new AddOntologyAnnotation(ontology, annotation);
         manager.applyChange(addition);
+    }
+
+    /**
+     * Given an ontology, an axiom, a property IRI, and a value string,
+     * add an annotation to this ontology with that property and value.
+     *
+     * Note that as axioms are immutable,
+     * the axiom is removed and replaced with a new one.
+     *
+     * @param ontology the ontology to modify
+     * @param axiom the axiom to annotate
+     * @param propertyIRI the IRI of the property to add
+     * @param value the IRI or literal value to add
+     */
+    public static void addAxiomAnnotation(OWLOntology ontology, OWLAxiom axiom,
+            IRI propertyIRI, OWLAnnotationValue value) {
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        OWLDataFactory df = manager.getOWLDataFactory();
+
+        OWLAnnotationProperty property =
+                df.getOWLAnnotationProperty(propertyIRI);
+        OWLAnnotation annotation = df.getOWLAnnotation(property, value);
+        addAxiomAnnotation(ontology,  axiom, Collections.singleton(annotation));
+    }
+
+    /**
+     * Given an ontology, an axiom, and a set of annotations,
+     * annotate the axiom with the annotations in the ontology.
+     *
+     * Note that as axioms are immutable,
+     * the axiom is removed and replaced with a new one.
+     *
+     * @param ontology the ontology to modify
+     * @param axiom the axiom to annotate
+     * @param annotations the set of annotation to add to the axiom
+     */
+    public static void addAxiomAnnotation(OWLOntology ontology, OWLAxiom axiom,
+            Set<OWLAnnotation> annotations) {
+        OWLOntologyManager manager = ontology.getOWLOntologyManager();
+        OWLDataFactory factory = manager.getOWLDataFactory();
+        OWLAxiom newAxiom;
+        if (axiom instanceof OWLSubClassOfAxiom) {
+            OWLSubClassOfAxiom x = ((OWLSubClassOfAxiom) axiom);
+            newAxiom = factory.getOWLSubClassOfAxiom(x.getSubClass(),
+                    x.getSuperClass(), annotations);
+            logger.debug("ANNOTATED: " + newAxiom);
+        } else {
+            // TODO - See https://github.com/ontodev/robot/issues/67
+            throw new UnsupportedOperationException(
+                    "Cannot annotate axioms of type: " + axiom.getClass());
+        }
+        manager.removeAxiom(ontology, axiom);
+        manager.addAxiom(ontology, newAxiom);
+    }
+
+    /**
+     * Given an ontology, an annotation property IRI, and an annotation value,
+     * annotate all axioms in the ontology with that property and value.
+     *
+     * @param ontology the ontology to modify
+     * @param propertyIRI the IRI of the property to add
+     * @param value the IRI or literal value to add
+     */
+    public static void addAxiomAnnotations(OWLOntology ontology,
+            IRI propertyIRI, OWLAnnotationValue value) {
+        for (OWLAxiom a : ontology.getAxioms()) {
+            addAxiomAnnotation(ontology, a, propertyIRI, value);
+        }
     }
 
 }
