@@ -112,7 +112,7 @@ public class ReasonOperation {
         options.put("create-new-ontology", "false");
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
-        
+
         return options;
     }
 
@@ -123,10 +123,11 @@ public class ReasonOperation {
      *
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException on ontology problem
      */
     public static void reason(OWLOntology ontology,
-            OWLReasonerFactory reasonerFactory) throws OWLOntologyCreationException {
+            OWLReasonerFactory reasonerFactory)
+        throws OWLOntologyCreationException {
         reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -138,7 +139,7 @@ public class ReasonOperation {
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
      * @param options a map of option strings, or null
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException on ontology problem
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
@@ -201,12 +202,14 @@ public class ReasonOperation {
 
 
         if (optionIsTrue(options, "create-new-ontology")) {
-            // because the ontology is passed by reference, we manipulate it in place
+            // because the ontology is passed by reference,
+            // we manipulate it in place
             logger.info("Placing inferred axioms into a new ontology");
             // todo: set ontology id
-            manager.removeAxioms(ontology, ontology.getAxioms() );
-            
-            Set<OWLImportsDeclaration> oids = ontology.getImportsDeclarations();
+            manager.removeAxioms(ontology, ontology.getAxioms());
+
+            Set<OWLImportsDeclaration> oids =
+                ontology.getImportsDeclarations();
             for (OWLImportsDeclaration oid : oids) {
                 RemoveImport ri = new RemoveImport(ontology, oid);
                 manager.applyChange(ri);
@@ -219,25 +222,29 @@ public class ReasonOperation {
         if (optionIsTrue(options, "annotate-inferred-axioms")) {
             // the default is the convention used by OWLTools and GO, which is
             // the property is_inferred with a literal (note: not xsd) "true"
-            propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
+            propertyIRI = IRI.create(
+                "http://www.geneontology.org/formats/oboInOwl#is_inferred");
             value = dataFactory.getOWLLiteral("true");
         }
         Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
         for (OWLAxiom a : newAxiomOntology.getAxioms()) {
             if (optionIsTrue(options, "exclude-duplicate-axioms")) {
-                // TODO: to a check that ignores annotations
+                // TODO to a check that ignores annotations
                 if (existingAxioms.contains(a)) {
-                    logger.debug("Already have: "+a);
+                    logger.debug("Already have: " + a);
                     continue;
                 }
                 if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
-                    logger.debug("Ignoring trivial axioms with OWLThing in signature: "+a);
+                    logger.debug("Ignoring trivial axioms with "
+                               + "OWLThing in signature: "
+                               + a);
                     continue;
                 }
             }
             manager.addAxiom(ontology, a);
             if (propertyIRI != null) {
-                OntologyHelper.addAxiomAnnotation(ontology, a, propertyIRI, value);
+                OntologyHelper.addAxiomAnnotation(
+                    ontology, a, propertyIRI, value);
             }
         }
 

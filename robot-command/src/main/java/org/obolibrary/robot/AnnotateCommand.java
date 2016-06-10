@@ -71,7 +71,8 @@ public class AnnotateCommand implements Command {
         options.addOption(a);
 
         // Annotate with a property and a typed literal with a language tag
-        a = new Option("x", "annotate all axioms in the ontology with PROP VALUE");
+        a = new Option("x", "annotate all axioms in the ontology "
+                          + "with PROP VALUE");
         a.setLongOpt("axiom-annotation");
         a.setArgs(3);
         options.addOption(a);
@@ -203,7 +204,7 @@ public class AnnotateCommand implements Command {
                     ioHelper.createIRI(property),
                     ioHelper.createTypedLiteral(value, type));
         }
-        
+
         // Add annotations with PROP VALUE
         items = CommandLineHelper.getOptionValues(line, "axiom-annotation");
         while (items.size() > 0) {

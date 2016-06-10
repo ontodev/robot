@@ -35,8 +35,8 @@ public class ReasonCommand implements Command {
         o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
-        o.addOption("n", "create-new-ontology",     true,
-                "create a new ontology for inferences (this is what will be saved)");
+        o.addOption("n", "create-new-ontology", true,
+                "switch to a new ontology containing only the inferences");
         o.addOption("a", "annotate-inferred-axioms",     true,
                 "annotate all inferred axioms (only when -n is passed)");
         o.addOption("x", "exclude-duplicate-axioms",     true,
