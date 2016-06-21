@@ -173,6 +173,12 @@ public class ReasonOperation {
             }
         }
 
+        // cache the complete set of asserted axioms at the initial state.
+        // we will later use this if the -x option is passed, to avoid
+        // asserting inferred axioms that are duplicates of existing axioms
+        Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
+
+
         // Make sure to add the axiom generators in this way!!!
         List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
                 new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
@@ -226,9 +232,14 @@ public class ReasonOperation {
                 "http://www.geneontology.org/formats/oboInOwl#is_inferred");
             value = dataFactory.getOWLLiteral("true");
         }
-        Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
         for (OWLAxiom a : newAxiomOntology.getAxioms()) {
             if (optionIsTrue(options, "exclude-duplicate-axioms")) {
+                // if this option is passed, do not add any axioms that are duplicates
+                // of existing axioms present at initial state.
+                // It may seem this is redundant with the remove-redundant-axioms step,
+                // but this is not always the case, particularly when the -n option
+                // is used. See: https://github.com/ontodev/robot/issues/85
+                
                 // TODO to a check that ignores annotations
                 if (existingAxioms.contains(a)) {
                     logger.debug("Already have: " + a);
