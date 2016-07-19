@@ -37,7 +37,7 @@ public class FilterCommand implements Command {
         o.addOption("i", "input",     true, "load ontology from a file");
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
         o.addOption("o", "output",    true, "save ontology to a file");
-        o.addOption("t", "terms",     true, "space-separated terms to filter");
+        o.addOption("t", "term",      true, "a term to filter");
         o.addOption("T", "term-file", true, "load terms from a file");
         options = o;
     }

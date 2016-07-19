@@ -40,7 +40,7 @@ public class ExtractCommand implements Command {
         o.addOption("o", "output",    true, "save ontology to a file");
         o.addOption("O", "output-iri", true, "set OntologyIRI for output");
         o.addOption("m", "method",    true, "extract method to use");
-        o.addOption("t", "terms",     true, "space-separated terms to extract");
+        o.addOption("t", "term",      true, "term to extract");
         o.addOption("T", "term-file", true, "load terms from a file");
         o.addOption("u", "upper-term",  true, "upper level term to extract");
         o.addOption("U", "upper-terms", true, "upper level terms to extract");
