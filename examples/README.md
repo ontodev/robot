@@ -59,8 +59,9 @@ Some ontologies contain more axioms than you want to use. You can use the `filte
 
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
 
-    robot extract --input filtered.owl \
-        --method STAR --term-file uberon_module.txt \
+    robot extract --method STAR
+        --input filtered.owl \
+        --term-file uberon_module.txt \
         --output results/uberon_module.owl
 
 The `--method` options fall into two groups: Minimal Information for Reuse of External Ontology Term (MIREOT) and Syntactic Locality Module Extractor (SLME).
@@ -69,6 +70,15 @@ The `--method` options fall into two groups: Minimal Information for Reuse of Ex
 - STAR: use the SLME to extract a fixpoint-nested module
 - TOP: use the SLME to extract a top module
 - BOT: use the SLME to extract a bottom module
+
+For MIREOT, both "upper" (ancestor) and "lower" (descendant) limits must be specified, like this:
+
+    robot extract --method MIREOT
+        --input uberon_fragment.owl \
+        --upper-term "obo:UBERON_0000465" \
+        --lower-term "obo:UBERON_0001017" \
+        --lower-term "obo:UBERON_0002369" \
+        --output results/uberon_mireot.owl
 
 For more details see:
 

@@ -83,7 +83,10 @@ public class MireotOperation {
 
         OWLOntologyManager outputManager =
             OWLManager.createOWLOntologyManager();
-        OWLOntology outputOntology = outputManager.createOntology();
+        // The other OWLAPI extract methods use the source ontology IRI
+        // so we'll use it here too.
+        OWLOntology outputOntology = outputManager.createOntology(
+            inputOntology.getOntologyID());
 
         Set<OWLEntity> upperEntities =
             OntologyHelper.getEntities(inputOntology, upperIRIs);
