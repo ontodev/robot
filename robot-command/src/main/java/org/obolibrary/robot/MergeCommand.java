@@ -2,10 +2,10 @@ package org.obolibrary.robot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -35,6 +35,9 @@ public class MergeCommand implements Command {
         o.addOption("i", "input",     true, "merge ontology from a file");
         o.addOption("I", "input-iri", true, "merge ontology from an IRI");
         o.addOption("o", "output",    true, "save merged ontology to a file");
+        o.addOption("c", "collapse-import-closure", true,
+                "if value=true, then the imports closure will be merged");
+
         options = o;
     }
 
@@ -62,7 +65,7 @@ public class MergeCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot filter --input <file> "
+        return "robot merge --input <file> "
              + "--input <file> "
              + "--output <file>";
     }
@@ -126,7 +129,10 @@ public class MergeCommand implements Command {
                     "at least one inputOntology must be specified");
         }
 
-        OWLOntology outputOntology = MergeOperation.merge(inputOntologies);
+        Map<String, String> mergeOptions =
+                MergeOperation.getDefaultOptions();
+
+        OWLOntology outputOntology = MergeOperation.merge(inputOntologies, mergeOptions);
 
         CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
