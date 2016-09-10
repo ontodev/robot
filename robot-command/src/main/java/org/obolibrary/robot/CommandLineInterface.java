@@ -28,6 +28,7 @@ public class CommandLineInterface {
         m.addCommand("extract",         new ExtractCommand());
         m.addCommand("filter",          new FilterCommand());
         m.addCommand("merge",           new MergeCommand());
+        m.addCommand("query",           new QueryCommand());
         m.addCommand("reason",          new ReasonCommand());
         m.addCommand("reduce",          new ReduceCommand());
         m.addCommand("relax",           new RelaxCommand());
