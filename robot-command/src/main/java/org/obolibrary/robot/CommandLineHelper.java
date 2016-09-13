@@ -348,9 +348,10 @@ public class CommandLineHelper {
         try {
             ontology = getInputOntology(ioHelper, line);
         } catch (Exception e) {
+            e.printStackTrace(System.err);
             if (required) {
                 throw new IllegalArgumentException(
-                    "An input ontology must be specified");
+                    "A valid input ontology must be specified");
             }
         }
 
