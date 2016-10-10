@@ -63,6 +63,7 @@
                                     <version>${project.version}</version>
                                     <type>${project.packaging}</type>
                                     <classifier>onejar</classifier>
+                                    <destFileName>robot.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.parent.basedir}/bin</outputDirectory>
