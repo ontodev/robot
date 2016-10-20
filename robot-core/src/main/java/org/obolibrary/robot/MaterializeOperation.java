@@ -86,24 +86,30 @@ public class MaterializeOperation {
 
         Set<OWLAxiom> newAxioms = new HashSet<>();
 
+        logger.info("Materializing...");
         if (properties == null || properties.size() == 0)
             emr.materializeExpressions();
         else
             emr.materializeExpressions(properties);
+        
+        logger.info("Materialization complete");
+
         for (OWLClass c : ontology.getClassesInSignature()) {
             Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, true);
             for (OWLClassExpression sce : sces) {
                 if (!sce.getSignature().contains(dataFactory.getOWLThing())) {
                     OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
                     newAxioms.add(ax);
-
                 }
             }
         }
 
         manager.addAxioms(ontology, newAxioms);
 
-
+        elapsedTime = System.currentTimeMillis() - startTime;
+        seconds = (int) Math.ceil(elapsedTime / 1000);
+        logger.info("Asserting materialized superclasses took {} seconds.", seconds);
+ 
 
     }
 

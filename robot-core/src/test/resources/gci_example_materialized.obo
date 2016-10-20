@@ -1,0 +1,58 @@
+ontology: gci_example
+
+[Term]
+id: FOO:1
+name: mammalian external node
+is_a: UBERON:0007827 ! external nose
+intersection_of: UBERON:0007827 ! external nose
+intersection_of: part_of NCBITaxon:40674 ! Mammalia
+relationship: part_of NCBITaxon:40674 ! Mammalia
+relationship: part_of UBERON:0001004 ! respiratory system
+
+[Term]
+id: NCBITaxon:32523
+name: Tetrapoda
+
+[Term]
+id: NCBITaxon:40674
+name: Mammalia
+is_a: NCBITaxon:32523 ! Tetrapoda
+
+[Term]
+id: UBERON:0001004
+name: respiratory system
+
+[Term]
+id: UBERON:0007827
+name: external nose
+relationship: part_of UBERON:0001004 {gci_relation="part_of", gci_filler="NCBITaxon:32523"} ! respiratory system
+
+[Typedef]
+id: bounding_layer_of
+name: bounding layer of
+xref: RO:0002007
+is_a: part_of ! part of
+
+[Typedef]
+id: has_part
+name: has_part
+xref: BFO:0000051
+is_transitive: true
+is_a: overlaps ! overlaps
+
+[Typedef]
+id: overlaps
+name: overlaps
+xref: RO:0002131
+holds_over_chain: has_part overlaps
+holds_over_chain: has_part part_of
+holds_over_chain: part_of part_of
+
+[Typedef]
+id: part_of
+name: part of
+xref: BFO:0000050
+is_transitive: true
+is_a: overlaps ! overlaps
+inverse_of: has_part ! has_part
+
