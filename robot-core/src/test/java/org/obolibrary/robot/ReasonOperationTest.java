@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -152,5 +154,44 @@ public class ReasonOperationTest extends CoreTest {
         ReasonOperation.reason(reasoned, reasonerFactory, options);
         assertIdentical("/without_redundant_subclasses.owl", reasoned);
     }
+    
+    /**
+     * Test reasoning with Expression Materializing Reasoner.
+     *
+     * This test should return the same results as running any other reasoner
+     *
+     * @throws IOException on file problem
+     * @throws OWLOntologyCreationException on ontology problem
+     */
+    @Test
+    public void testEMRBasic()
+            throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/simple.owl");
+        OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
+        OWLReasonerFactory reasonerFactory = new ExpressionMaterializingReasonerFactory(coreReasonerFactory);
+        ReasonOperation.reason(reasoned, reasonerFactory);
+        assertIdentical("/simple_elk.owl", reasoned);
+    }
+
+    /**
+     * Test reasoning with Expression Materializing Reasoner.
+     *
+     * This test effectively relaxes an equivalence axiom
+     *
+     * @throws IOException on file problem
+     * @throws OWLOntologyCreationException on ontology problem
+     */
+    @Test
+    public void testEMRRelax()
+            throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
+        OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
+        OWLReasonerFactory reasonerFactory = new ExpressionMaterializingReasonerFactory(coreReasonerFactory);
+        Map<String, String> opts = ReasonOperation.getDefaultOptions();
+        opts.put("exclude-owl-thing", "true");
+        ReasonOperation.reason(reasoned, reasonerFactory, opts);
+        assertIdentical("/relax_equivalence_axioms_expressions_materialized.obo", reasoned);
+    }
+    
 
 }
