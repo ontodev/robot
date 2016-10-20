@@ -86,13 +86,13 @@ public class MaterializeOperation {
 
         Set<OWLAxiom> newAxioms = new HashSet<>();
 
-        logger.info("Materializing...");
+        logger.info("Materializing..."+properties);
         if (properties == null || properties.size() == 0)
             emr.materializeExpressions();
         else
             emr.materializeExpressions(properties);
         
-        logger.info("Materialization complete");
+        logger.info("Materialization complete; iterating over classes");
 
         for (OWLClass c : ontology.getClassesInSignature()) {
             Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, true);
