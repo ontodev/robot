@@ -100,6 +100,9 @@ public class MaterializeOperation {
             if (i % 100 == 1) {
                 logger.info(" Materializing parents of class "+i+"/"+ontology.getClassesInSignature().size());
             }
+            if (c.equals(dataFactory.getOWLNothing())) {
+                continue;
+            }
             Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, true);
             if (!emr.isSatisfiable(c)) {
                 // TODO: see https://github.com/ontodev/robot/issues/40
