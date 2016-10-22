@@ -78,7 +78,7 @@ public class MaterializeOperation {
         ExpressionMaterializingReasoner emr = 
                 merf.createReasoner(ontology);
         if (!emr.isConsistent()) {
-            logger.info("Ontology is not consistent!");
+            logger.error("Ontology is not consistent!");
             return;
         }
 
@@ -94,8 +94,18 @@ public class MaterializeOperation {
         
         logger.info("Materialization complete; iterating over classes");
 
+        int i=0;
         for (OWLClass c : ontology.getClassesInSignature()) {
+            i++;
+            if (i % 100 == 1) {
+                logger.info(" Materializing parents of class "+i+"/"+ontology.getClassesInSignature().size());
+            }
             Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, true);
+            if (!emr.isSatisfiable(c)) {
+                // TODO: see https://github.com/ontodev/robot/issues/40
+                logger.error("Ontology is not conherent! Unsatisfiable: "+c);
+                return;
+            }
             for (OWLClassExpression sce : sces) {
                 if (!sce.getSignature().contains(dataFactory.getOWLThing())) {
                     OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
@@ -104,7 +114,9 @@ public class MaterializeOperation {
             }
         }
 
+        logger.info("Adding "+newAxioms.size()+" materialized parents");
         manager.addAxioms(ontology, newAxioms);
+        emr.dispose();
 
         elapsedTime = System.currentTimeMillis() - startTime;
         seconds = (int) Math.ceil(elapsedTime / 1000);
