@@ -60,6 +60,8 @@ public class MaterializeOperation {
      * Replace EquivalentClass axioms with weaker SubClassOf axioms.
      *
      * @param ontology The OWLOntology to relax
+     * @param reasonerFactory reasoner factory for the reasoner that is to be wrapped
+     * @param properties object properties whose existentials are to be materialized (null materializes all)
      * @param options A map of options for the operation
      */
     public static void materialize(OWLOntology ontology,

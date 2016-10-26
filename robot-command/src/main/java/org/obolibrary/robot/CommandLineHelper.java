@@ -453,7 +453,7 @@ public class CommandLineHelper {
      *
      * @param ioHelper the IOHelper to use for loading the terms
      * @param line the command line to use
-     * @param true if empty lists of properties are allowed
+     * @param allowEmpty true if empty lists of properties are allowed
      * @return a set of term IRIs
      * @throws IllegalArgumentException if the required options are not found
      * @throws IOException if the term file cannot be loaded
