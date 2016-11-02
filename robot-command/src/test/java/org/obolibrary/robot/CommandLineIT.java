@@ -199,7 +199,12 @@ public class CommandLineIT {
         for (String command: commands) {
             runCommand(command);
         }
+        // Regression test for dropped axiom:
+        //https://github.com/ontodev/robot/issues/98
+        runCommand("robot convert -i dropped_axiom.owl -o results/dropped_axiom.owl");
+
         compareResults();
     }
+
 }
 
