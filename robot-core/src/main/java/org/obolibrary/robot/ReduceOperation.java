@@ -250,7 +250,7 @@ public class ReduceOperation {
                 UUID uuid = UUID.randomUUID();
                 OWLClass c = dataFactory.getOWLClass(
                         IRI.create("urn:uuid" + uuid.toString()));
-                logger.info(c + " ==> " + x);
+                logger.debug(c + " ==> " + x);
                 rxmap.put(x, c);
             } else {
                 rxmap.put(x, (OWLClass) x);

@@ -1,0 +1,47 @@
+format-version: 1.2
+ontology: emr_test
+
+[Term]
+id: GO:0001669
+name: acrosomal vesicle
+namespace: cellular_component
+def: "A structure in the head of a spermatozoon that contains acid hydrolases, and is concerned with the breakdown of the outer membrane of the ovum during fertilization. It lies just beneath the plasma membrane and is derived from the lysosome." [ISBN:0124325653, ISBN:0198506732]
+synonym: "acrosomal granule" EXACT [GOC:sart]
+synonym: "acrosome" EXACT [GOC:dph]
+xref: Wikipedia:Acrosome
+is_a: GO:0030141 ! secretory granule
+is_a: GO:0097223
+
+[Term]
+id: GO:0002080
+name: acrosomal membrane
+namespace: cellular_component
+def: "The membrane that surrounds the acrosomal lumen. The acrosome is a special type of lysosome in the head of a spermatozoon that contains acid hydrolases and is concerned with the breakdown of the outer membrane of the ovum during fertilization." [GOC:dph]
+is_a: GO:0030667 ! secretory granule membrane
+relationship: part_of GO:0001669 ! acrosomal vesicle
+
+[Term]
+id: GO:0030141
+name: secretory granule
+namespace: cellular_component
+def: "A small subcellular vesicle, surrounded by a membrane, that is formed from the Golgi apparatus and contains a highly concentrated protein destined for secretion. Secretory granules move towards the periphery of the cell and upon stimulation, their membranes fuse with the cell membrane, and their protein load is exteriorized. Processing of the contained protein may take place in secretory granules." [GOC:mah, ISBN:0198596732]
+comment: Note that the term 'secretory vesicle' is sometimes used in this sense, but can also mean 'transport vesicle ; GO:0030133'.
+synonym: "secretory vesicle" BROAD []
+is_a: GO:0031410
+relationship: part_of GO:0012505
+
+[Term]
+id: GO:0030667
+name: secretory granule membrane
+namespace: cellular_component
+def: "The lipid bilayer surrounding a secretory granule." [GOC:mah]
+synonym: "secretory vesicle membrane" BROAD []
+is_a: GO:0098805
+relationship: part_of GO:0030141 ! secretory granule
+
+[Typedef]
+id: part_of
+name: part of
+xref: BFO:0000050
+is_transitive: true
+

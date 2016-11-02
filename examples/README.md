@@ -109,6 +109,18 @@ Robot can be used to 'reduce' (i.e. remove redundant subClassOf axioms), indepen
 
     robot reduce --reasoner ELK --input ribosome.owl --output results/reduced.owl
 
+## Materialization
+
+Robot can materialize all parent superclass and superclass expressions using the expression materializing reasoner, which wraps an existing OWL Reasoner
+
+    robot materialize --reasoner ELK --input emr_example.obo --term obo:BFO_0000050  --output results/emr_output.obo
+
+This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--property`
+
+This can be combined with filter and reduce to create an ontology subset that is complete
+
+    robot materialize --reasoner ELK --input emr_example.obo --term BFO:0000050 filter -t BFO:0000050 reduce --output results/emr_reduced.obo
+
 ## Annotating
 
 It's important to add metadata to an ontology before releasing it, and to update the ontology version IRI.

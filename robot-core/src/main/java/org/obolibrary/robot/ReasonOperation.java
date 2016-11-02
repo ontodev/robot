@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -14,6 +15,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -127,7 +129,7 @@ public class ReasonOperation {
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory)
-        throws OWLOntologyCreationException {
+                    throws OWLOntologyCreationException {
         reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -203,6 +205,21 @@ public class ReasonOperation {
         startTime = System.currentTimeMillis();
         generator.fillOntology(dataFactory, newAxiomOntology);
 
+        if (reasoner instanceof ExpressionMaterializingReasoner) {
+            ExpressionMaterializingReasoner emr = (ExpressionMaterializingReasoner)reasoner;
+            emr.materializeExpressions();
+            for (OWLClass c : ontology.getClassesInSignature()) {
+                Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, true);
+                for (OWLClassExpression sce : sces) {
+                    if (!sce.getSignature().contains(dataFactory.getOWLThing())) {
+                        OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
+                        logger.info("NEW:"+ax);
+                        manager.addAxiom(newAxiomOntology, ax);
+                    }
+                }
+            }
+        }
+
         logger.info("Reasoning created {} new axioms.",
                 newAxiomOntology.getAxioms().size());
 
@@ -215,7 +232,7 @@ public class ReasonOperation {
             manager.removeAxioms(ontology, ontology.getAxioms());
 
             Set<OWLImportsDeclaration> oids =
-                ontology.getImportsDeclarations();
+                    ontology.getImportsDeclarations();
             for (OWLImportsDeclaration oid : oids) {
                 RemoveImport ri = new RemoveImport(ontology, oid);
                 manager.applyChange(ri);
@@ -229,7 +246,7 @@ public class ReasonOperation {
             // the default is the convention used by OWLTools and GO, which is
             // the property is_inferred with a literal (note: not xsd) "true"
             propertyIRI = IRI.create(
-                "http://www.geneontology.org/formats/oboInOwl#is_inferred");
+                    "http://www.geneontology.org/formats/oboInOwl#is_inferred");
             value = dataFactory.getOWLLiteral("true");
         }
         for (OWLAxiom a : newAxiomOntology.getAxioms()) {
@@ -239,23 +256,26 @@ public class ReasonOperation {
                 // It may seem this is redundant with the remove-redundant-axioms step,
                 // but this is not always the case, particularly when the -n option
                 // is used. See: https://github.com/ontodev/robot/issues/85
-                
+
                 // TODO to a check that ignores annotations
                 if (existingAxioms.contains(a)) {
                     logger.debug("Already have: " + a);
                     continue;
                 }
+            }
+            if (optionIsTrue(options, "exclude-duplicate-axioms") ||
+                    optionIsTrue(options, "exclude-owl-thing")) {
                 if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
                     logger.debug("Ignoring trivial axioms with "
-                               + "OWLThing in signature: "
-                               + a);
+                            + "OWLThing in signature: "
+                            + a);
                     continue;
                 }
             }
             manager.addAxiom(ontology, a);
             if (propertyIRI != null) {
                 OntologyHelper.addAxiomAnnotation(
-                    ontology, a, propertyIRI, value);
+                        ontology, a, propertyIRI, value);
             }
         }
 

@@ -12,7 +12,6 @@ import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -445,11 +444,25 @@ public class CommandLineHelper {
      * @throws IllegalArgumentException if the required options are not found
      * @throws IOException if the term file cannot be loaded
      */
-    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line)
+    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line) throws IllegalArgumentException, IOException {
+        return getTerms(ioHelper, line, false);
+    }
+
+    /**
+     * As getTerms, but allow the list to be empty
+     *
+     * @param ioHelper the IOHelper to use for loading the terms
+     * @param line the command line to use
+     * @param allowEmpty true if empty lists of properties are allowed
+     * @return a set of term IRIs
+     * @throws IllegalArgumentException if the required options are not found
+     * @throws IOException if the term file cannot be loaded
+     */
+    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line, boolean allowEmpty)
             throws IllegalArgumentException, IOException {
         Set<IRI> terms = getTerms(ioHelper, line, "term", "term-file");
 
-        if (terms.size() == 0) {
+        if (terms.size() == 0 && !allowEmpty) {
             throw new IllegalArgumentException(
                     "Must specify terms to extract.");
         }

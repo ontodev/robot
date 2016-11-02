@@ -1,6 +1,8 @@
 package org.obolibrary.robot;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,20 +10,22 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
- * Handles inputs and outputs for the {@link ReasonOperation}.
+ * Handles inputs and outputs for the {@link MaterializeOperation}.
  *
- * @author <a href="mailto:james@overton.ca">James A. Overton</a>
+ * @author <a href="mailto:cjmungall@lbl.gov">Chris Mungall</a>
  */
-public class ReasonCommand implements Command {
+public class MaterializeCommand implements Command {
     /**
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(ReasonCommand.class);
+        LoggerFactory.getLogger(MaterializeCommand.class);
 
     /**
      * Store the command-line options for the command.
@@ -31,20 +35,20 @@ public class ReasonCommand implements Command {
     /**
      * Initialize the command.
      */
-    public ReasonCommand() {
+    public MaterializeCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT)");
+        o.addOption("r", "reasoner",  true, "core reasoner to use: (ELK, HermiT)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
                 "switch to a new ontology containing only the inferences");
         o.addOption("a", "annotate-inferred-axioms",     true,
                 "annotate all inferred axioms (only when -n is passed)");
-        o.addOption("x", "exclude-duplicate-axioms",     true,
-                "do not add an axiom if it exists in import chain");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");
+        o.addOption("t", "term",      true, "a property to materialize");
+        o.addOption("T", "term-file", true, "load properties from a file");
         options = o;
     }
 
@@ -54,7 +58,7 @@ public class ReasonCommand implements Command {
      * @return name
      */
     public String getName() {
-        return "reason";
+        return "materialize";
     }
 
     /**
@@ -63,7 +67,7 @@ public class ReasonCommand implements Command {
      * @return description
      */
     public String getDescription() {
-        return "reason ontology";
+        return "materialize ontology";
     }
 
     /**
@@ -72,7 +76,7 @@ public class ReasonCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot reason --input <file> "
+        return "robot materialize --input <file> "
              + "--reasoner <name> "
              + "[options] "
              + "--output <file>";
@@ -138,11 +142,6 @@ public class ReasonCommand implements Command {
             reasonerFactory = new org.semanticweb
                 .HermiT.Reasoner.ReasonerFactory();
         }
-        else if (reasonerName.equals("emr")) {
-            ElkReasonerFactory innerReasonerFactory = new org.semanticweb
-                    .elk.owlapi.ElkReasonerFactory();
-            reasonerFactory = new ExpressionMaterializingReasonerFactory(innerReasonerFactory);
-        }
         else {
             reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
@@ -156,8 +155,17 @@ public class ReasonCommand implements Command {
                 reasonerOptions.put(option, line.getOptionValue(option));
             }
         }
+        
+        Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, true);
+        Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+        for (IRI term: terms) {
+            properties.add(ontology.getOWLOntologyManager()
+                    .getOWLDataFactory()
+                    .getOWLObjectProperty(term));
+        }
 
-        ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
+
+        MaterializeOperation.materialize(ontology, reasonerFactory, properties, reasonerOptions);
 
         CommandLineHelper.maybeSaveOutput(line, ontology);
 
