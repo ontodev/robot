@@ -35,7 +35,7 @@ public class ReasonCommand implements Command {
      */
     public ReasonCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT)");
+        o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT, JFact)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
