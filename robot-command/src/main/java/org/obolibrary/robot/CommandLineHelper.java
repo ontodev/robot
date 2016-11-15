@@ -531,7 +531,10 @@ public class CommandLineHelper {
     public static Options getCommonOptions() {
         Options o = new Options();
         o.addOption("h", "help",    false, "print usage information");
-        o.addOption("v", "version", false, "print version information");
+        o.addOption("V", "version", false, "print version information");
+        o.addOption("v",   "verbose", false, "increased logging");
+        o.addOption("vv",  "very-verbose", false, "high logging");
+        o.addOption("vvv", "very-very-verbose", false, "maximum logging");
         o.addOption("p", "prefix",  true,  "add a prefix 'foo: http://bar'");
         o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
         o.addOption("noprefixes", false, "do not use default prefixes");
@@ -552,6 +555,19 @@ public class CommandLineHelper {
             String[] args) throws ParseException {
         CommandLineParser parser = new PosixParser();
         CommandLine line = parser.parse(options, args);
+
+        String level;
+        if (line.hasOption("very-very-verbose")) {
+            level = "DEBUG";
+        } else if (line.hasOption("very-verbose")) {
+            level = "INFO";
+        } else if (line.hasOption("verbose")) {
+            level = "WARN";
+        } else {
+            level = "ERROR";
+        }
+        org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+        root.setLevel(org.apache.log4j.Level.toLevel(level));
 
         if (hasFlagOrCommand(line, "help")) {
             printHelp(usage, options);
