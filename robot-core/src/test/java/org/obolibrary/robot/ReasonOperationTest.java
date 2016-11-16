@@ -13,6 +13,8 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
+import uk.ac.manchester.cs.jfact.JFactFactory;
+
 /**
  * Tests for ReasonOperation.
  */
@@ -62,6 +64,21 @@ public class ReasonOperationTest extends CoreTest {
         ReasonOperation.reason(reasoned, reasonerFactory);
         assertEquals(6, reasoned.getAxiomCount());
         assertIdentical("/simple_hermit.owl", reasoned);
+    }
+    
+    /**
+     * Test reasoning with JFact.
+     *
+     * @throws IOException on file problem
+     * @throws OWLOntologyCreationException on ontology problem
+     */
+    @Test
+    public void testJFact() throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/simple.owl");
+        OWLReasonerFactory reasonerFactory = new JFactFactory();
+        ReasonOperation.reason(reasoned, reasonerFactory);
+        assertEquals(6, reasoned.getAxiomCount());
+        assertIdentical("/simple_jfact.owl", reasoned);
     }
 
     /**
