@@ -17,8 +17,8 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
  * Tests for ReasonOperation.
  */
 public class MaterializeOperationTest extends CoreTest {
-    
- 
+
+
     /**
      * Test reasoning with Expression Materializing Reasoner.
      *
@@ -37,16 +37,17 @@ public class MaterializeOperationTest extends CoreTest {
         MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
         assertIdentical("/relax_equivalence_axioms_expressions_materialized.obo", reasoned);
     }
-    
+
     /**
      * Test reasoning with Expression Materializing Reasoner.
      *
-     * This test effectively relaxes an equivalence axiom
+     * This test ensures that o trivial "C SubClassOf R some C" axioms are materialized
+     * for case where R is reflexive
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
      */
-   @Test
+    @Test
     public void testMaterializeWithReflexivity()
             throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/mat_reflexivity_test.obo");
@@ -56,8 +57,8 @@ public class MaterializeOperationTest extends CoreTest {
         MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
         assertIdentical("/mat_reflexivity_test_materialized.obo", reasoned);
     }
- 
-    
+
+
     /**
      * Test reasoning with Expression Materializing Reasoner.
      *
@@ -76,6 +77,6 @@ public class MaterializeOperationTest extends CoreTest {
         MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
         assertIdentical("/gci_example_materialized.obo", reasoned);
     }
-    
+
 
 }
