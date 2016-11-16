@@ -46,6 +46,26 @@ public class MaterializeOperationTest extends CoreTest {
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
      */
+   @Test
+    public void testMaterializeWithReflexivity()
+            throws IOException, OWLOntologyCreationException {
+        OWLOntology reasoned = loadOntology("/mat_reflexivity_test.obo");
+        OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
+        Map<String, String> opts = ReasonOperation.getDefaultOptions();
+        //opts.put("exclude-owl-thing", "true");
+        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
+        assertIdentical("/mat_reflexivity_test_materialized.obo", reasoned);
+    }
+ 
+    
+    /**
+     * Test reasoning with Expression Materializing Reasoner.
+     *
+     * This test effectively relaxes an equivalence axiom
+     *
+     * @throws IOException on file problem
+     * @throws OWLOntologyCreationException on ontology problem
+     */
     @Test
     public void testMaterializeGCIs()
             throws IOException, OWLOntologyCreationException {

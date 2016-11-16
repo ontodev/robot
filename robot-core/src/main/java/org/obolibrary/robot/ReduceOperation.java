@@ -236,7 +236,8 @@ public class ReduceOperation {
     }
 
     /**
-     * Map a class expression to a class.
+     * Map a class expression to an equivalent named class; creates temp class plus
+     * axiom if not already present
      *
      * @param dataFactory A datafactory for creating the mapped class expression
      * @param rxmap A map from class expressions to classes
