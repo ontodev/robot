@@ -34,6 +34,7 @@ public class CommandLineInterface {
         m.addCommand("reduce",          new ReduceCommand());
         m.addCommand("relax",           new RelaxCommand());
         m.addCommand("template",        new TemplateCommand());
+        m.addCommand("unmerge",         new UnmergeCommand());
         return m;
     }
 
