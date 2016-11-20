@@ -51,6 +51,27 @@ public class ReduceOperationTest extends CoreTest {
         ReduceOperation.reduce(reasoned, reasonerFactory, options);
         assertIdentical("/redundant_expr_reduced.obo", reasoned);
     }
+    
+    /**
+     * If P is reflexive, and we have
+     *  "A SubClassOf B" and "A SubClassOf P some B",
+     * then the second becomes redundant
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testReduceWithReflexivity()
+            throws IOException {
+        OWLOntology reasoned = loadOntology("/reduce_reflexivity_test.obo");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .elk.owlapi.ElkReasonerFactory();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("remove-redundant-subclass-axioms", "true");
+
+        ReduceOperation.reduce(reasoned, reasonerFactory, options);
+        assertIdentical("/reduce_reflexivity_test_reduced.obo", reasoned);
+    }
 
     /**
      * Test removing GCIs.
