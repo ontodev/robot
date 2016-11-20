@@ -112,9 +112,19 @@ public class MaterializeOperation {
                 return;
             }
             for (OWLClassExpression sce : sces) {
+                
+                // do not make assertions involving Thing;
+                // while valid, these are trivial
                 if (!sce.getSignature().contains(dataFactory.getOWLThing())) {
-                    OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
-                    newAxioms.add(ax);
+                    
+                    // avoid materializing parents with child in signature;
+                    // this can happen if a property P is reflexive
+                    // -- every class C is a subclass of P some C
+                    // while valid, this is trivial, so we avoid asserting
+                    if (!sce.getSignature().contains(c)) {
+                        OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
+                        newAxioms.add(ax);
+                    }
                 }
             }
         }

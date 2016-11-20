@@ -2,14 +2,16 @@ package org.obolibrary.robot;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /**
  * Handles inputs and outputs for the {@link ReasonOperation}.
@@ -33,7 +35,7 @@ public class ReasonCommand implements Command {
      */
     public ReasonCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT)");
+        o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT, JFact)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
@@ -137,6 +139,9 @@ public class ReasonCommand implements Command {
         else if (reasonerName.equals("hermit")) {
             reasonerFactory = new org.semanticweb
                 .HermiT.Reasoner.ReasonerFactory();
+        }
+        else if (reasonerName.equals("jfact")) {
+        	reasonerFactory = new JFactFactory();
         }
         else if (reasonerName.equals("emr")) {
             ElkReasonerFactory innerReasonerFactory = new org.semanticweb
