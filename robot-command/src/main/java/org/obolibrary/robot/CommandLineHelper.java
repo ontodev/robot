@@ -251,7 +251,7 @@ public class CommandLineHelper {
 
     /**
      * Given a command line, return an initialized IOHelper.
-     * The --prefix, --prefixes, and --noprefixes options are handled.
+     * The --prefix, --prefixes, --noprefixes and --entities options are handled.
      *
      * @param line the command line to use
      * @return an initialized IOHelper
@@ -268,6 +268,8 @@ public class CommandLineHelper {
         for (String prefix: getOptionalValues(line, "prefix")) {
             ioHelper.addPrefix(prefix);
         }
+
+        ioHelper.setEntityFlag(line.hasOption("entities"));
 
         return ioHelper;
     }
@@ -538,6 +540,7 @@ public class CommandLineHelper {
         o.addOption("p", "prefix",  true,  "add a prefix 'foo: http://bar'");
         o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
         o.addOption("noprefixes", false, "do not use default prefixes");
+        o.addOption("e", "entities", false, "use entity substitution when saving XML ontology");
         return o;
     }
 
