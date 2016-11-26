@@ -445,7 +445,7 @@ public class IOHelper {
         //        .copyPrefixesFrom(getPrefixManager());
         //}
         try {
-            XMLWriterPreferences.getInstance().setUseNamespaceEntities( getEntityFlag() );
+            XMLWriterPreferences.getInstance().setUseNamespaceEntities( getXMLEntityFlag() );
             ontology.getOWLOntologyManager().saveOntology(
                     ontology, format, ontologyIRI);
         } catch (OWLOntologyStorageException e) {
@@ -693,7 +693,7 @@ public class IOHelper {
      *
      * @param map a map of strings for the new JSON-LD context
      */
-    public void setEntityFlag(Boolean entityFlag) {
+    public void setXMLEntityFlag(Boolean entityFlag) {
         try {
             this.useXMLEntities = entityFlag;
         } catch (Exception e) {
@@ -707,7 +707,7 @@ public class IOHelper {
      *
      * @return boolean useXMLEntities flag
      */
-    public Boolean getEntityFlag() {
+    public Boolean getXMLEntityFlag() {
         return this.useXMLEntities;
     }
 
