@@ -15,6 +15,10 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+import org.apache.commons.io.FileUtils;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+
 /**
  * Tests for IOHelper.
  */
@@ -193,5 +197,33 @@ public class IOHelperTest extends CoreTest {
         assertEquals("100", literal.getLiteral());
         assertEquals("en", literal.getLang());
     }
+
+
+    /**
+     * Test setting useXMLEntities flag and saving resulting ontology.
+     * Requires an "expected" ontology containing entity replacements.
+     *
+     * @throws IOException on file problem
+     */
+    @Test
+    public void testOntologyUseXMLEntities() throws IOException {
+        String ontologyInputPath = "/mireot.owl";
+        String ontologyExpectedPath = "/mireot_xmlentities.owl";
+
+        File tempFile = File.createTempFile("mireot_xmlentities_test", ".owl");
+        tempFile.deleteOnExit();
+        String ontologyOutputPath = tempFile.getCanonicalFile().getAbsolutePath();
+
+        IOHelper ioHelper = new IOHelper();
+        ioHelper.setXMLEntityFlag(true);
+        OWLOntology simple = loadOntology(ontologyInputPath);
+        ioHelper.saveOntology(simple, new RDFXMLDocumentFormat(), tempFile);
+
+        OWLOntology expected = loadOntology(ontologyExpectedPath);
+        OWLOntology actual = ioHelper.loadOntology(ontologyOutputPath);
+        assertIdentical(expected, actual);
+
+    }
+
 
 }
