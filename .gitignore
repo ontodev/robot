@@ -2,7 +2,11 @@
 .classpath
 .project
 .settings
+bin/original-robot.jar
 bin/owltools2.jar
+bin/robot.jar
 examples/catalog-v001.xml
 examples/out.owl
+examples/results/
+junk/
 target/
