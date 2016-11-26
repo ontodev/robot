@@ -17,7 +17,6 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 
 /**
