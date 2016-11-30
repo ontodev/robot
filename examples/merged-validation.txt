@@ -1,0 +1,1 @@
+OWL 2 EL Profile Report: [Ontology and imports closure in profile]
