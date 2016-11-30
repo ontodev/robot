@@ -151,6 +151,15 @@ ROBOT can also create ontology files from templates. See [template.md](../docs/t
       --output results/template.owl
 
 
+## Validating Profiles
+
+OWL 2 has a number of [profiles](https://www.w3.org/TR/owl2-profiles/) that strike different balances between expressive power and reasoning efficiency. ROBOT can validate an input ontology against a profile (EL, DL, RL, QL, and Full) and generate a report. For example:
+
+    robot validate-profile -profile EL \
+      --input merged.owl \
+      --output results/merged-validation.txt
+
+
 ## Chaining
 
 On Unix platforms it's common to "chain" a series of commands, creating "pipeline" that combines several simple commands to accomplish a complex task. This works because most Unix tools communicate with streams of text. Unfortunately this doesn't work as well for OWL ontologies, because they cannot be streamed between commands, but we can achieve a similar result within ROBOT.
