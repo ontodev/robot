@@ -4,4 +4,9 @@ Import: <https://github.com/ontodev/robot/robot-core/src/test/resources/non-reas
 
 ## Test
 
-Class: Z
+# note that by referencing X, we bring it into the signature,
+# this will in turn lead to inferences about X leaking into this ontology
+# when we materialize
+
+Class: X
+Class: Z SubClassOf: X
