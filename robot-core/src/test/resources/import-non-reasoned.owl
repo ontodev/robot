@@ -1,0 +1,7 @@
+Prefix: : <http://purl.obolibrary.org/obo/test/>
+Ontology: <https://github.com/ontodev/robot/robot-core/src/test/resources/import-non-reasoned.owl>
+Import: <https://github.com/ontodev/robot/robot-core/src/test/resources/non-reasoned.owl>
+
+## Test
+
+Class: Z

@@ -1,0 +1,11 @@
+Prefix: : <http://purl.obolibrary.org/obo/test/>
+Ontology: <https://github.com/ontodev/robot/robot-core/src/test/resources/non-reasoned.owl>
+
+## Test
+
+ObjectProperty: P
+Class: X SubClassOf: Y
+Class: Y
+
+Class: A EquivalentTo: P some X
+Class: B EquivalentTo: P some Y
