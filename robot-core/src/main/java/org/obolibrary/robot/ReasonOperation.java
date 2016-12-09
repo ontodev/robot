@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -114,6 +117,7 @@ public class ReasonOperation {
         options.put("create-new-ontology", "false");
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
+        options.put("equivalent-classes-allowed", "true");
 
         return options;
     }
@@ -149,6 +153,9 @@ public class ReasonOperation {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
         logger.info("Starting reasoning...");
 
+        Function<OWLNamedObject, String> labelFunc = 
+                OntologyHelper.getLabelFunction(ontology, false);
+        
         int seconds;
         long elapsedTime;
         long startTime = System.currentTimeMillis();
@@ -175,6 +182,31 @@ public class ReasonOperation {
             }
         }
 
+        boolean isEquivalentsAllowed = optionIsTrue(options, "equivalent-classes-allowed");
+        int nEquivs = 0;
+        for (OWLClass c : ontology.getClassesInSignature()) {
+            Set<OWLClass> equivs = 
+                    reasoner.getEquivalentClasses(c).getEntitiesMinus(c);
+            if (equivs.size() > 0) {
+                nEquivs++;
+                String msg = 
+                        "Equivalency: " + c +  " == " + equivs + " // "+
+                                labelFunc.apply(c) + " == " +
+                                equivs.stream().map(labelFunc).collect(Collectors.toList());
+               logger.info(msg);
+                if (!isEquivalentsAllowed) {
+                    logger.error(msg);
+                }
+            }
+        }
+
+        if (!isEquivalentsAllowed) {
+            if (nEquivs > 0) {
+                logger.error("Equivalent classes are not allowed. Exiting with error");
+                logger.error("Run with '--equivalent-classes-allowed true' to change behavior");
+                System.exit(1); // TODO: https://github.com/ontodev/robot/issues/40
+            }
+        }
         // cache the complete set of asserted axioms at the initial state.
         // we will later use this if the -x option is passed, to avoid
         // asserting inferred axioms that are duplicates of existing axioms
