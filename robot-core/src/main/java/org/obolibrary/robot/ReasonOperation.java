@@ -151,7 +151,8 @@ public class ReasonOperation {
             OWLReasonerFactory reasonerFactory,
             Map<String, String> options) throws OWLOntologyCreationException {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
-        logger.info("Starting reasoning...");
+        
+        logger.info("Fetching labels...");
 
         Function<OWLNamedObject, String> labelFunc = 
                 OntologyHelper.getLabelFunction(ontology, false);
@@ -163,13 +164,18 @@ public class ReasonOperation {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
+        logger.info("Starting reasoning...");
         OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+        logger.info("Testing for consistency...");
         if (!reasoner.isConsistent()) {
             logger.info("Ontology is not consistent!");
             return;
         }
 
+        logger.info("Precomputing class hierarchy...");
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
+
+        logger.info("Checking for unsatisfiable classes...");
         Node<OWLClass> unsatisfiableClasses =
                 reasoner.getUnsatisfiableClasses();
         if (unsatisfiableClasses.getSize() > 1) {
@@ -184,6 +190,7 @@ public class ReasonOperation {
 
         boolean isEquivalentsAllowed = optionIsTrue(options, "equivalent-classes-allowed");
         int nEquivs = 0;
+        logger.info("Finding equivalencies...");
         for (OWLClass c : ontology.getClassesInSignature()) {
             Set<OWLClass> equivs = 
                     reasoner.getEquivalentClasses(c).getEntitiesMinus(c);
@@ -238,6 +245,7 @@ public class ReasonOperation {
         generator.fillOntology(dataFactory, newAxiomOntology);
 
         if (reasoner instanceof ExpressionMaterializingReasoner) {
+            logger.info("Creating expression materializing reasoner...");
             ExpressionMaterializingReasoner emr = (ExpressionMaterializingReasoner)reasoner;
             emr.materializeExpressions();
             for (OWLClass c : ontology.getClassesInSignature()) {
@@ -245,7 +253,7 @@ public class ReasonOperation {
                 for (OWLClassExpression sce : sces) {
                     if (!sce.getSignature().contains(dataFactory.getOWLThing())) {
                         OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
-                        logger.info("NEW:"+ax);
+                        logger.debug("NEW:"+ax);
                         manager.addAxiom(newAxiomOntology, ax);
                     }
                 }
