@@ -49,6 +49,7 @@ import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.yaml.snakeyaml.Yaml;
 
@@ -78,6 +79,11 @@ public class IOHelper {
      * Store the current JSON-LD context.
      */
     private Context context = new Context();
+
+    /**
+     * Store xml entities flag.
+     */
+    private Boolean useXMLEntities = false;
 
     /**
      * Create a new IOHelper with the default prefixes.
@@ -438,8 +444,9 @@ public class IOHelper {
         //    ((PrefixOWLDocumentFormat) format)
         //        .copyPrefixesFrom(getPrefixManager());
         //}
-
         try {
+            XMLWriterPreferences.getInstance()
+                .setUseNamespaceEntities(getXMLEntityFlag());
             ontology.getOWLOntologyManager().saveOntology(
                     ontology, format, ontologyIRI);
         } catch (OWLOntologyStorageException e) {
@@ -680,6 +687,30 @@ public class IOHelper {
             logger.warn("Could not set context {}", map);
             logger.warn(e.getMessage());
         }
+    }
+
+    /**
+     * Set whether or not XML entities will be swapped into URIs
+     * in saveOntology XML output formats.
+     *
+     * @param map a map of strings for the new JSON-LD context
+     */
+    public void setXMLEntityFlag(Boolean entityFlag) {
+        try {
+            this.useXMLEntities = entityFlag;
+        } catch (Exception e) {
+            logger.warn("Could not set useXMLEntities {}", entityFlag);
+            logger.warn(e.getMessage());
+        }
+    }
+
+    /**
+     * Get the useXMLEntities flag.
+     *
+     * @return boolean useXMLEntities flag
+     */
+    public Boolean getXMLEntityFlag() {
+        return this.useXMLEntities;
     }
 
     /**

@@ -21,20 +21,21 @@ public class CommandLineInterface {
      */
     private static CommandManager initManager() {
         CommandManager m = new CommandManager();
-        m.addCommand("annotate",        new AnnotateCommand());
-        m.addCommand("convert",         new ConvertCommand());
-        m.addCommand("diff",            new DiffCommand());
-        m.addCommand("export-prefixes", new ExportPrefixesCommand());
-        m.addCommand("extract",         new ExtractCommand());
-        m.addCommand("filter",          new FilterCommand());
-        m.addCommand("materialize",     new MaterializeCommand());
-        m.addCommand("merge",           new MergeCommand());
-        m.addCommand("query",           new QueryCommand());
-        m.addCommand("reason",          new ReasonCommand());
-        m.addCommand("reduce",          new ReduceCommand());
-        m.addCommand("relax",           new RelaxCommand());
-        m.addCommand("template",        new TemplateCommand());
-        m.addCommand("unmerge",         new UnmergeCommand());
+        m.addCommand("annotate",         new AnnotateCommand());
+        m.addCommand("convert",          new ConvertCommand());
+        m.addCommand("diff",             new DiffCommand());
+        m.addCommand("export-prefixes",  new ExportPrefixesCommand());
+        m.addCommand("extract",          new ExtractCommand());
+        m.addCommand("filter",           new FilterCommand());
+        m.addCommand("materialize",      new MaterializeCommand());
+        m.addCommand("merge",            new MergeCommand());
+        m.addCommand("query",            new QueryCommand());
+        m.addCommand("reason",           new ReasonCommand());
+        m.addCommand("reduce",           new ReduceCommand());
+        m.addCommand("relax",            new RelaxCommand());
+        m.addCommand("template",         new TemplateCommand());
+        m.addCommand("unmerge",          new UnmergeCommand());
+        m.addCommand("validate-profile", new ValidateProfileCommand());
         return m;
     }
 

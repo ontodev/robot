@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+
+    <!-- ./ -->
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/bot.owl" uri="./bot.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/convert_test.owl" uri="./convert_test.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/filtered.owl" uri="./filtered.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/map_properties_up_test.owl" uri="./map_properties_up_test.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/mireot.owl" uri="./mireot.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/redundant_subclasses.owl" uri="./redundant_subclasses.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/relax_equivalence_axioms_test.owl" uri="./relax_equivalence_axioms_test.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl" uri="./simple.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/simple_elk.owl" uri="./simple_elk.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/simple_hermit.owl" uri="./simple_hermit.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/simple_parts.owl" uri="./simple_parts.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/simple_structural.owl" uri="./simple_structural.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/star.owl" uri="./star.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/top.owl" uri="./top.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/without_redundant_subclasses.owl" uri="./without_redundant_subclasses.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/non-reasoned.owl" uri="./non-reasoned.owl"/>
+</catalog>
