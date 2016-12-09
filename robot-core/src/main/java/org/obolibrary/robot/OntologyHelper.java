@@ -426,7 +426,7 @@ public class OntologyHelper {
      * @return a map from IRIs to label strings
      */
     public static Map<IRI, String> getLabels(OWLOntology ontology) {
-        logger.info("Fetching labels for "+ontology);
+        logger.info("Fetching labels for "+ontology.getOntologyID());
         Map<IRI, String> results = new HashMap<IRI, String>();
         OWLOntologyManager manager = ontology.getOWLOntologyManager();
         OWLAnnotationProperty rdfsLabel =
