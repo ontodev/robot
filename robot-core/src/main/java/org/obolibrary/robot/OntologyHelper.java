@@ -426,6 +426,7 @@ public class OntologyHelper {
      * @return a map from IRIs to label strings
      */
     public static Map<IRI, String> getLabels(OWLOntology ontology) {
+        logger.info("Fetching labels for "+ontology);
         Map<IRI, String> results = new HashMap<IRI, String>();
         OWLOntologyManager manager = ontology.getOWLOntologyManager();
         OWLAnnotationProperty rdfsLabel =
@@ -434,6 +435,7 @@ public class OntologyHelper {
         ontologies.add(ontology);
         ReferencedEntitySetProvider resp =
                 new ReferencedEntitySetProvider(ontologies);
+        logger.info("iterating through entities...");
         for (OWLEntity entity: resp.getEntities()) {
             String value = getAnnotationString(
                     ontology, rdfsLabel, entity.getIRI());
@@ -441,6 +443,7 @@ public class OntologyHelper {
                 results.put(entity.getIRI(), value);
             }
         }
+        logger.info("Results: "+results.size());
         return results;
     }
 

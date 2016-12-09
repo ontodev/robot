@@ -163,6 +163,7 @@ public class ReasonCommand implements Command {
                 reasonerOptions.put(option, line.getOptionValue(option));
             }
         }
+        logger.info("Reasoner: "+reasonerName);
 
         ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 
