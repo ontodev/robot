@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -491,7 +492,14 @@ public class OntologyHelper {
      * @return function mapping object to label
      */
     public static Function<OWLNamedObject,String> getLabelFunction(OWLOntology ontology, boolean useIriAsDefault) {
-        Map<IRI, String> labelMap = getLabels(ontology);
+        Map<IRI, String> labelMap = new HashMap<>();
+        for (OWLAnnotationAssertionAxiom ax : ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+            if (ax.getProperty().isLabel() &&
+                    ax.getSubject() instanceof IRI &&
+                    ax.getValue() instanceof OWLLiteral) {
+                labelMap.put((IRI)ax.getSubject(), ax.getValue().asLiteral().toString());              
+            }
+        }
         return (obj) -> {
             String label;
             if (labelMap.containsKey(obj.getIRI()))
