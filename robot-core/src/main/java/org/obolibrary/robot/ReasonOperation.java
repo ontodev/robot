@@ -47,63 +47,7 @@ public class ReasonOperation {
     private static final Logger logger =
             LoggerFactory.getLogger(ReasonOperation.class);
 
-    /**
-     * Given a map of options and a key name,
-     * return the value, or null if it is not specified.
-     *
-     * @param options a map of options
-     * @param key the name of the option to get
-     * @return the value, if set, otherwise null
-     */
-    private static String getOption(Map<String, String> options,
-            String key) {
-        return getOption(options, key, null);
-    }
-
-    /**
-     * Given a map of options, a key name, and a default value,
-     * if the map contains the key, return its value,
-     * otherwise return the default value.
-     *
-     * @param options a map of options
-     * @param key the name of the option to get
-     * @param defaultValue the value to return if the key is not set
-     * @return the value, if set, otherwise the default value
-     */
-    private static String getOption(Map<String, String> options,
-            String key, String defaultValue) {
-        if (options == null) {
-            return defaultValue;
-        }
-        if (!options.containsKey(key)) {
-            return defaultValue;
-        }
-        return options.get(key);
-    }
-
-    /**
-     * Given a map of options and a key name,
-     * return true if the value is "true" or "yes",
-     * otherwise return false.
-     *
-     * @param options a map of options
-     * @param key the name of the option to get
-     * @return true if the value is "true" or "yes", false otherwise
-     */
-    private static boolean optionIsTrue(Map<String, String> options,
-            String key) {
-        String value = getOption(options, key);
-        if (value == null) {
-            return false;
-        }
-
-        value = value.trim().toLowerCase();
-        if (value.equals("true") || value.equals("yes")) {
-            return true;
-        }
-
-        return false;
-    }
+ 
 
     /**
      * Return a map from option name to default option value,
@@ -188,7 +132,7 @@ public class ReasonOperation {
             }
         }
 
-        boolean isEquivalentsAllowed = optionIsTrue(options, "equivalent-classes-allowed");
+        boolean isEquivalentsAllowed = OptionsHelper.optionIsTrue(options, "equivalent-classes-allowed");
         int nEquivs = 0;
         logger.info("Finding equivalencies...");
         for (OWLClass c : ontology.getClassesInSignature()) {
@@ -264,7 +208,7 @@ public class ReasonOperation {
                 newAxiomOntology.getAxioms().size());
 
 
-        if (optionIsTrue(options, "create-new-ontology")) {
+        if (OptionsHelper.optionIsTrue(options, "create-new-ontology")) {
             // because the ontology is passed by reference,
             // we manipulate it in place
             logger.info("Placing inferred axioms into a new ontology");
@@ -282,7 +226,7 @@ public class ReasonOperation {
 
         IRI propertyIRI = null;
         OWLAnnotationValue value = null;
-        if (optionIsTrue(options, "annotate-inferred-axioms")) {
+        if (OptionsHelper.optionIsTrue(options, "annotate-inferred-axioms")) {
             // the default is the convention used by OWLTools and GO, which is
             // the property is_inferred with a literal (note: not xsd) "true"
             propertyIRI = IRI.create(
@@ -290,7 +234,7 @@ public class ReasonOperation {
             value = dataFactory.getOWLLiteral("true");
         }
         for (OWLAxiom a : newAxiomOntology.getAxioms()) {
-            if (optionIsTrue(options, "exclude-duplicate-axioms")) {
+            if (OptionsHelper.optionIsTrue(options, "exclude-duplicate-axioms")) {
                 // if this option is passed, do not add any axioms that are duplicates
                 // of existing axioms present at initial state.
                 // It may seem this is redundant with the remove-redundant-axioms step,
@@ -303,8 +247,8 @@ public class ReasonOperation {
                     continue;
                 }
             }
-            if (optionIsTrue(options, "exclude-duplicate-axioms") ||
-                    optionIsTrue(options, "exclude-owl-thing")) {
+            if (OptionsHelper.optionIsTrue(options, "exclude-duplicate-axioms") ||
+                    OptionsHelper.optionIsTrue(options, "exclude-owl-thing")) {
                 if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
                     logger.debug("Ignoring trivial axioms with "
                             + "OWLThing in signature: "
@@ -319,7 +263,7 @@ public class ReasonOperation {
             }
         }
 
-        if (optionIsTrue(options, "remove-redundant-subclass-axioms")) {
+        if (OptionsHelper.optionIsTrue(options, "remove-redundant-subclass-axioms")) {
             removeRedundantSubClassAxioms(reasoner);
         }
         logger.info("Ontology has {} axioms after all reasoning steps.",
