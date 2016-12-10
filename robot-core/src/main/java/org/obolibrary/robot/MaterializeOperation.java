@@ -20,6 +20,7 @@ import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -69,10 +70,11 @@ public class MaterializeOperation {
      *            (null materializes all)
      * @param options
      *            A map of options for the operation
+     * @throws OWLOntologyCreationException 
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Set<OWLObjectProperty> properties, Map<String, String> options) {
+            Set<OWLObjectProperty> properties, Map<String, String> options) throws OWLOntologyCreationException {
 
         // TODO: make reasonOverImportsClosure optional rather than always true
         materialize(ontology, reasonerFactory, properties, options, true);
@@ -92,22 +94,23 @@ public class MaterializeOperation {
      *            A map of options for the operation
      * @param reasonOverImportsClosure
      *            if true will first perform materialization over all ontologies in the import closure
+     * @throws OWLOntologyCreationException 
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
             Set<OWLObjectProperty> properties,
             Map<String, String> options,
-            boolean reasonOverImportsClosure) {
+            boolean reasonOverImportsClosure) throws OWLOntologyCreationException {
 
-        logger.info("Materializing: "+ontology);
-        System.out.println("Materializing: "+ontology);
         if (reasonOverImportsClosure) {
+            logger.info("Materializing imported ontologies...");
             for (OWLOntology importedOntology : ontology.getImportsClosure()) {
                 if (!importedOntology.equals(ontology)) {
                     materialize(importedOntology, reasonerFactory, properties, options, false);
                 }
             }
         }
+        logger.info("Materializing: "+ontology);
 
 
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -183,6 +186,10 @@ public class MaterializeOperation {
         }
 
         logger.info("Adding " + newAxioms.size() + " materialized parents");
+        
+        if (OptionsHelper.optionIsTrue(options, "create-new-ontology")) {
+            ontology = manager.createOntology();
+        }
         manager.addAxioms(ontology, newAxioms);
         emr.dispose();
 
