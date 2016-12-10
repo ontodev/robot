@@ -54,7 +54,7 @@ public class MaterializeOperation {
      */
     public static Map<String, String> getDefaultOptions() {
         Map<String, String> options = new HashMap<String, String>();
-        // options.put("remove-redundant-subclass-axioms", "true");
+        options.put("create-new-ontology", "false");
         return options;
     }
 
