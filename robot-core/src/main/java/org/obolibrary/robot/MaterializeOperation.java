@@ -152,6 +152,10 @@ public class MaterializeOperation {
             if (c.equals(dataFactory.getOWLNothing())) {
                 continue;
             }
+            if (ontology.getAxioms(c, Imports.EXCLUDED).size() == 0) {
+                logger.debug("Excluding classes not in main ontology: "+c);
+                continue;
+            }
             Set<OWLClassExpression> sces = emr
                     .getSuperClassExpressions(c, true);
             if (!emr.isSatisfiable(c)) {
