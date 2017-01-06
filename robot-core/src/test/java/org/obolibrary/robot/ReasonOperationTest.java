@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
+import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -23,11 +24,11 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with StructuralReasoner.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testStructural()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .owlapi.reasoner.structural.StructuralReasonerFactory();
@@ -39,10 +40,10 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with ELK.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
-    public void testELK() throws IOException, OWLOntologyCreationException {
+    public void testELK() throws IOException, OWLOntologyCreationException, OntologyLogicException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -54,10 +55,10 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with HermiT.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
-    public void testHermit() throws IOException, OWLOntologyCreationException {
+    public void testHermit() throws IOException, OWLOntologyCreationException, OntologyLogicException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .HermiT.Reasoner.ReasonerFactory();
@@ -70,10 +71,10 @@ public class ReasonOperationTest extends CoreTest {
      * Test reasoning with JFact.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
-    public void testJFact() throws IOException, OWLOntologyCreationException {
+    public void testJFact() throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new JFactFactory();
         ReasonOperation.reason(reasoned, reasonerFactory);
@@ -85,11 +86,11 @@ public class ReasonOperationTest extends CoreTest {
      * Test inferring into new ontology.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testInferIntoNewOntology()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .HermiT.Reasoner.ReasonerFactory();
@@ -107,11 +108,11 @@ public class ReasonOperationTest extends CoreTest {
      * Test inferring into new ontology.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testInferIntoNewOntologyNonTrivial()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned =
             loadOntology("/relax_equivalence_axioms_test.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
@@ -131,11 +132,11 @@ public class ReasonOperationTest extends CoreTest {
      * Test inferring into new ontology.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testInferIntoNewOntologyNoDupes()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned =
             loadOntology("/relax_equivalence_axioms_test.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
@@ -153,11 +154,11 @@ public class ReasonOperationTest extends CoreTest {
      * Test removing redundant subclass axioms.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testRemoveRedundantSubClassAxioms()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -178,11 +179,11 @@ public class ReasonOperationTest extends CoreTest {
      * This test should return the same results as running any other reasoner
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testEMRBasic()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         OWLReasonerFactory reasonerFactory = new ExpressionMaterializingReasonerFactory(coreReasonerFactory);
@@ -196,11 +197,11 @@ public class ReasonOperationTest extends CoreTest {
      * This test effectively relaxes an equivalence axiom
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
      */
     @Test
     public void testEMRRelax()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         OWLReasonerFactory reasonerFactory = new ExpressionMaterializingReasonerFactory(coreReasonerFactory);

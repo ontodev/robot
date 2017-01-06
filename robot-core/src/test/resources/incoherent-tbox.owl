@@ -1,0 +1,11 @@
+Prefix: : <http://x.org/>
+
+Ontology: <http://purl.obolibrary.org/obo/test>
+
+Class: C
+Class: O
+   DisjointWith: C
+
+Class: D
+  SubClassOf: C
+  SubClassOf: O

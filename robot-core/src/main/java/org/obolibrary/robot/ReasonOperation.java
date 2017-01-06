@@ -10,6 +10,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
+import org.obolibrary.robot.exceptions.IncoherentRBoxException;
+import org.obolibrary.robot.exceptions.IncoherentTBoxException;
+import org.obolibrary.robot.exceptions.InconsistentOntologyException;
+import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -74,10 +78,11 @@ public class ReasonOperation {
      * @param ontology the ontology to reason over
      * @param reasonerFactory the factory to create a reasoner instance from
      * @throws OWLOntologyCreationException on ontology problem
+     * @throws OntologyLogicException on inconsistency or incoherency
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory)
-                    throws OWLOntologyCreationException {
+                    throws OWLOntologyCreationException, OntologyLogicException {
         reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -90,10 +95,11 @@ public class ReasonOperation {
      * @param reasonerFactory the factory to create a reasoner instance from
      * @param options a map of option strings, or null
      * @throws OWLOntologyCreationException on ontology problem
+     * @throws OntologyLogicException 
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Map<String, String> options) throws OWLOntologyCreationException {
+            Map<String, String> options) throws OWLOntologyCreationException, OntologyLogicException {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
         
         logger.info("Fetching labels...");
@@ -110,27 +116,10 @@ public class ReasonOperation {
 
         logger.info("Starting reasoning...");
         OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-        logger.info("Testing for consistency...");
-        if (!reasoner.isConsistent()) {
-            logger.info("Ontology is not consistent!");
-            return;
-        }
-
+        ReasonerHelper.validate(reasoner);
+ 
         logger.info("Precomputing class hierarchy...");
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
-
-        logger.info("Checking for unsatisfiable classes...");
-        Node<OWLClass> unsatisfiableClasses =
-                reasoner.getUnsatisfiableClasses();
-        if (unsatisfiableClasses.getSize() > 1) {
-            logger.info("There are {} unsatisfiable classes in the ontology.",
-                    unsatisfiableClasses.getSize());
-            for (OWLClass cls : unsatisfiableClasses) {
-                if (!cls.isOWLNothing()) {
-                    logger.info("    unsatisfiable: " + cls.getIRI());
-                }
-            }
-        }
 
         boolean isEquivalentsAllowed = OptionsHelper.optionIsTrue(options, "equivalent-classes-allowed");
         int nEquivs = 0;
