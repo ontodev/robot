@@ -8,6 +8,10 @@ import java.util.UUID;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
+import org.obolibrary.robot.exceptions.IncoherentRBoxException;
+import org.obolibrary.robot.exceptions.IncoherentTBoxException;
+import org.obolibrary.robot.exceptions.InconsistentOntologyException;
+import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
@@ -71,10 +75,11 @@ public class MaterializeOperation {
      * @param options
      *            A map of options for the operation
      * @throws OWLOntologyCreationException 
+     * @throws OntologyLogicException 
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Set<OWLObjectProperty> properties, Map<String, String> options) throws OWLOntologyCreationException {
+            Set<OWLObjectProperty> properties, Map<String, String> options) throws OWLOntologyCreationException, OntologyLogicException {
 
         // TODO: make reasonOverImportsClosure optional rather than always true
         materialize(ontology, reasonerFactory, properties, options, true);
@@ -95,12 +100,13 @@ public class MaterializeOperation {
      * @param reasonOverImportsClosure
      *            if true will first perform materialization over all ontologies in the import closure
      * @throws OWLOntologyCreationException 
+     * @throws OntologyLogicException 
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
             Set<OWLObjectProperty> properties,
             Map<String, String> options,
-            boolean reasonOverImportsClosure) throws OWLOntologyCreationException {
+            boolean reasonOverImportsClosure) throws OntologyLogicException, OWLOntologyCreationException {
 
         if (reasonOverImportsClosure) {
             logger.info("Materializing imported ontologies...");
@@ -123,11 +129,8 @@ public class MaterializeOperation {
         ExpressionMaterializingReasonerFactory merf = new ExpressionMaterializingReasonerFactory(
                 reasonerFactory);
         ExpressionMaterializingReasoner emr = merf.createReasoner(ontology);
-        if (!emr.isConsistent()) {
-            logger.error("Ontology is not consistent!");
-            return;
-        }
-
+        ReasonerHelper.validate(emr);
+        
         startTime = System.currentTimeMillis();
 
         Set<OWLAxiom> newAxioms = new HashSet<>();

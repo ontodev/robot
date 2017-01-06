@@ -12,6 +12,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
+import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -33,7 +34,7 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterialize()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
@@ -53,7 +54,7 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterializeWithReflexivity()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/mat_reflexivity_test.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
@@ -73,7 +74,7 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterializeGCIs()
-            throws IOException, OWLOntologyCreationException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/gci_example.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
@@ -93,7 +94,7 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterializeWithImports()
-            throws IOException, OWLOntologyCreationException, URISyntaxException {
+            throws IOException, OWLOntologyCreationException, OntologyLogicException, URISyntaxException {
         
         // TODO: minor, simplify this once https://github.com/ontodev/robot/issues/121 implemeted
         
