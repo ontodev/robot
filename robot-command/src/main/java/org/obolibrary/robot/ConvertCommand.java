@@ -104,6 +104,7 @@ public class ConvertCommand implements Command {
      * <li>OWLXML .owx
      * <li>Manchester .omn
      * <li>OWL Functional .ofn
+     * <li>OboGraphs JSON .json
      * </ul>
      *
      * @param state the state from the previous command, or null

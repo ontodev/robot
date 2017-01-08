@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,6 +34,10 @@ import com.opencsv.CSVReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
+import org.geneontology.obographs.io.OgJsonGenerator;
+import org.geneontology.obographs.model.GraphDocument;
+import org.geneontology.obographs.owlapi.FromOwl;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -48,7 +53,9 @@ import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.io.OWLOntologyLoaderMetaData;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.yaml.snakeyaml.Yaml;
@@ -59,6 +66,7 @@ import org.yaml.snakeyaml.Yaml;
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class IOHelper {
+        
     /**
      * Logger.
      */
@@ -357,6 +365,8 @@ public class IOHelper {
             return new ManchesterSyntaxDocumentFormat();
         } else if (formatName.equals("ofn")) {
             return new FunctionalSyntaxDocumentFormat();
+        } else if (formatName.equals("json")) {
+            return new OboGraphJsonDocumentFormat();
         } else {
             throw new IllegalArgumentException(
                     "Unknown ontology format: " + formatName);
@@ -447,8 +457,20 @@ public class IOHelper {
         try {
             XMLWriterPreferences.getInstance()
                 .setUseNamespaceEntities(getXMLEntityFlag());
-            ontology.getOWLOntologyManager().saveOntology(
-                    ontology, format, ontologyIRI);
+            
+            // first handle any non-official output formats.
+            // currently this is just OboGraphs JSON format
+            if (format instanceof OboGraphJsonDocumentFormat) {
+                FromOwl fromOwl = new FromOwl();
+                GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+                String doc = OgJsonGenerator.render(gd);
+                File outfile = new File(ontologyIRI.toURI());
+                FileUtils.writeStringToFile(outfile, doc);
+            } else {
+                // use native save functionality
+                ontology.getOWLOntologyManager().saveOntology(
+                        ontology, format, ontologyIRI);
+            }
         } catch (OWLOntologyStorageException e) {
             throw new IOException(e);
         }
