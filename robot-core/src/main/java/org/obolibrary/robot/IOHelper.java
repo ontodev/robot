@@ -693,7 +693,7 @@ public class IOHelper {
      * Set whether or not XML entities will be swapped into URIs
      * in saveOntology XML output formats.
      *
-     * @param map a map of strings for the new JSON-LD context
+     * @param entityFlag value to set
      */
     public void setXMLEntityFlag(Boolean entityFlag) {
         try {

@@ -1,16 +1,10 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
-import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -30,6 +24,7 @@ public class MaterializeOperationTest extends CoreTest {
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
+     * @throws OntologyLogicException on logic problem
      */
     @Test
     public void testMaterialize()
@@ -50,6 +45,7 @@ public class MaterializeOperationTest extends CoreTest {
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
+     * @throws OntologyLogicException on logic problem
      */
     @Test
     public void testMaterializeWithReflexivity()
@@ -70,6 +66,7 @@ public class MaterializeOperationTest extends CoreTest {
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
+     * @throws OntologyLogicException on logic problem
      */
     @Test
     public void testMaterializeGCIs()
@@ -89,20 +86,21 @@ public class MaterializeOperationTest extends CoreTest {
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
-     * @throws URISyntaxException 
+     * @throws URISyntaxException if URI incorrectly formatted
+     * @throws OntologyLogicException on logic problem
      */
     @Test
     public void testMaterializeWithImports()
             throws IOException, OWLOntologyCreationException, OntologyLogicException, URISyntaxException {
-        
+
         // TODO: minor, simplify this once https://github.com/ontodev/robot/issues/121 implemeted
-        
+
         File f = new File(getClass().getResource("/import-non-reasoned.owl").toURI());
         IOHelper ioh = new IOHelper();
         OWLOntology reasoned =  ioh.loadOntology(f, true);
         OWLOntology original =  ioh.loadOntology(f, true);
 
-        
+
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
         MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
