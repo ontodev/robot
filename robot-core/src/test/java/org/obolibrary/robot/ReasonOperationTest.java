@@ -10,6 +10,7 @@ import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -118,18 +119,21 @@ public class ReasonOperationTest extends CoreTest {
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .HermiT.Reasoner.ReasonerFactory();
         Map<String, String> opts = new HashMap<>();
+        
         // see https://github.com/ontodev/robot/issues/80
         opts.put("create-new-ontology", "true");
-        // see https://github.com/ontodev/robot/issues/80
         opts.put("annotate-inferred-axioms", "true");
 
         ReasonOperation.reason(reasoned, reasonerFactory, opts);
-        assertEquals(3, reasoned.getAxiomCount());
+
+        // note that some of the inferred axioms are trivial
+        // involving owl:Thing
+        assertEquals(15, reasoned.getAxiomCount());
         //assertIdentical("/simple_hermit.owl", reasoned);
     }
 
     /**
-     * Test inferring into new ontology.
+     * Test inferring into new ontology, excluding duplicates
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException, OntologyLogicException on ontology problem
@@ -146,7 +150,7 @@ public class ReasonOperationTest extends CoreTest {
         opts.put("annotate-inferred-axioms", "true");
         opts.put("exclude-duplicate-axioms", "true");
         ReasonOperation.reason(reasoned, reasonerFactory, opts);
-        assertEquals(1, reasoned.getAxiomCount());
+        assertEquals(5, reasoned.getAxiomCount());
         //assertIdentical("/simple_hermit.owl", reasoned);
     }
 

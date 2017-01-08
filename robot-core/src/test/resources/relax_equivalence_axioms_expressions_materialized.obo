@@ -7,8 +7,34 @@ intersection_of: X:2
 intersection_of: part_of X:3
 relationship: part_of X:3
 
+!! note in the following, there is no materialized
+!! superclasses; this is because cardinality axioms
+!! are invisible to Elk
+[Term]
+id: X:4
+intersection_of: X:5
+intersection_of: has_component X:6 {cardinality="2"}
+
+[Term]
+id: X:14
+intersection_of: X:15
+intersection_of: has_component X:16 {minCardinality="2"}
+
+[Term]
+id: X:24
+intersection_of: X:25
+intersection_of: has_component X:26 {maxCardinality="2"}
+
+[Term]
+id: X:34
+intersection_of: X:35
+intersection_of: has_component X:36 {maxCardinality="0"}
+
 [Typedef]
 id: part_of
 xref: BFO:0000050
 is_transitive: true
 
+[Typedef]
+id: has_component
+xref: RO:0002180
