@@ -27,7 +27,6 @@ public class MaterializeOperationTest extends CoreTest {
     /**
      * Test reasoning with Expression Materializing Reasoner.
      *
-     * This test effectively relaxes an equivalence axiom
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
