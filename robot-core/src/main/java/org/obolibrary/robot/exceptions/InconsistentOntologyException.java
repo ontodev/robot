@@ -10,4 +10,9 @@ package org.obolibrary.robot.exceptions;
  */
 public class InconsistentOntologyException extends OntologyLogicException {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -1915338965653787481L;
+
 }

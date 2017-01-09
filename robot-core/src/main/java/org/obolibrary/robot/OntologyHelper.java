@@ -487,8 +487,8 @@ public class OntologyHelper {
      * Generates a function that returns a label string for any named
      * object in the ontology
      * 
-     * @param ontology
-     * @param useIriAsDefault
+     * @param ontology to use
+     * @param useIriAsDefault if true then label-less classes will return IRI
      * @return function mapping object to label
      */
     public static Function<OWLNamedObject,String> getLabelFunction(OWLOntology ontology, boolean useIriAsDefault) {

@@ -6,6 +6,12 @@ package org.obolibrary.robot.exceptions;
  * @author cjm
  *
  */
-public class OntologyLogicException extends Exception {
+public abstract class OntologyLogicException extends Exception {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 8211835056287159708L;
+
+ 
 }

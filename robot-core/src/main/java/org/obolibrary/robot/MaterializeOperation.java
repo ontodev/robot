@@ -74,8 +74,8 @@ public class MaterializeOperation {
      *            (null materializes all)
      * @param options
      *            A map of options for the operation
-     * @throws OWLOntologyCreationException 
-     * @throws OntologyLogicException 
+     * @throws OWLOntologyCreationException if ontology cannot be created
+     * @throws OntologyLogicException if ontology contains logical errors
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
@@ -99,8 +99,8 @@ public class MaterializeOperation {
      *            A map of options for the operation
      * @param reasonOverImportsClosure
      *            if true will first perform materialization over all ontologies in the import closure
-     * @throws OWLOntologyCreationException 
-     * @throws OntologyLogicException 
+     * @throws OWLOntologyCreationException on ontology problem
+     * @throws OntologyLogicException  on logic problem
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,

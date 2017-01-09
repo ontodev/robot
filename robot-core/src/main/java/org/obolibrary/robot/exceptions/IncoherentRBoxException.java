@@ -2,9 +2,6 @@ package org.obolibrary.robot.exceptions;
 
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 /**
@@ -15,8 +12,15 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
  */
 public class IncoherentRBoxException extends OntologyLogicException {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 2608045757804483323L;
+
+    /**
+     * @param unsatisfiableProperties
+     */
     public IncoherentRBoxException(Set<OWLObjectProperty> unsatisfiableProperties) {
-        // TODO Auto-generated constructor stub
     }
 
 }
