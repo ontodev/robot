@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -7,17 +9,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.junit.Test;
-
-import com.github.jsonldjava.core.Context;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
-import org.apache.commons.io.FileUtils;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import com.github.jsonldjava.core.Context;
 
 /**
  * Tests for IOHelper.
@@ -225,5 +225,22 @@ public class IOHelperTest extends CoreTest {
 
     }
 
+
+    /**
+     * Tests json saving
+     * 
+     * @throws IOException on error
+     */
+    @Test
+    public void testSaveOntologyAsJson()
+            throws IOException {
+        OWLOntology ontology = loadOntology("/simple.owl");
+        File tempFile = File.createTempFile("simple-saved", ".json");
+        tempFile.deleteOnExit();
+
+        IOHelper ioHelper = new IOHelper();
+        ioHelper.saveOntology(ontology, new OboGraphJsonDocumentFormat(), tempFile);
+        
+    }
 
 }
