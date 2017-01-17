@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -162,9 +163,8 @@ public class MaterializeOperation {
             Set<OWLClassExpression> sces = emr
                     .getSuperClassExpressions(c, true);
             if (!emr.isSatisfiable(c)) {
-                // TODO: see https://github.com/ontodev/robot/issues/40
                 logger.error("Ontology is not coherent! Unsatisfiable: " + c);
-                return;
+                throw new IncoherentTBoxException(Collections.singleton(c));
             }
             for (OWLClassExpression sce : sces) {
 
