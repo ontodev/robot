@@ -1,16 +1,22 @@
 package org.obolibrary.robot;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+
+import com.google.common.base.Optional;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
@@ -46,6 +52,37 @@ public class CoreTest {
     public OWLOntology loadOntology(String path) throws IOException {
         IOHelper ioh = new IOHelper();
         return ioh.loadOntology(this.getClass().getResourceAsStream(path));
+    }
+
+    /**
+     * Load ontology using guessed catalog
+     * 
+     * @param path
+     * @return the loaded ontology
+     * @throws IOException
+     */
+    public OWLOntology loadOntologyWithCatalog(String path) throws IOException {
+        IOHelper ioh = new IOHelper();
+        String fullpath = this.getClass().getResource(path).getFile().toString();
+        return ioh.loadOntology(fullpath);
+    }
+    
+    /**
+     * Load ontology using explicit catalog
+     * 
+     * @param ontologyIRI
+     * @param catalogFile
+     * @return the loaded ontology
+     * @throws IOException
+     * @throws OWLOntologyCreationException 
+     */
+    public OWLOntology loadOntologyWithCatalog(IRI ontologyIRI, File catalogFile) throws IOException, OWLOntologyCreationException {
+        //TODO: move logic here to IOHelper
+        //IOHelper ioh = new IOHelper();
+        OWLOntologyManager manager =
+                OWLManager.createOWLOntologyManager();
+        manager.addIRIMapper(new CatalogXmlIRIMapper(catalogFile));
+        return manager.loadOntology(ontologyIRI);
     }
 
     /**
