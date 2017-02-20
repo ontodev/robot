@@ -135,6 +135,11 @@ public class MaterializeOperation {
         startTime = System.currentTimeMillis();
 
         Set<OWLAxiom> newAxioms = new HashSet<>();
+        
+        // this is entirely for reporting purposes
+        Map<OWLObjectProperty, Set<OWLAxiom>> newAxiomsByProperty = new HashMap<>();
+        
+        
 
         logger.info("Materializing..." + properties);
         if (properties == null || properties.size() == 0)
@@ -148,6 +153,7 @@ public class MaterializeOperation {
         Imports importsFlag = Imports.EXCLUDED; // TODO - make this optional
 
         for (OWLClass c : ontology.getClassesInSignature(importsFlag)) {
+            logger.debug(" Materializing parents of class "+c);
             i++;
             if (i % 100 == 1) {
                 logger.info(" Materializing parents of class " + i + "/"
@@ -167,10 +173,11 @@ public class MaterializeOperation {
                 throw new IncoherentTBoxException(Collections.singleton(c));
             }
             for (OWLClassExpression sce : sces) {
-
+                logger.debug("  PARENT: "+sce);
                 // do not make assertions involving Thing;
                 // while valid, these are trivial
                 if (sce.getSignature().contains(dataFactory.getOWLThing())) {
+                    logger.debug("Ignoring: "+sce);
                     continue;
                 }
 
@@ -179,6 +186,7 @@ public class MaterializeOperation {
                 // -- every class C is a subclass of P some C
                 // while valid, this is trivial, so we avoid asserting
                 if (sce.getSignature().contains(c)) {
+                    logger.debug("Signature contains base class: "+sce);
                     continue;
                 }
                 
@@ -186,13 +194,27 @@ public class MaterializeOperation {
                 
                 // skip axioms that already exist
                 if (ontology.getAxioms(Imports.INCLUDED).contains(ax)) {
+                    logger.debug("Already have: "+ax);
                     continue;
                 }
                 newAxioms.add(ax);
+                
+                // for reporting
+                for (OWLObjectProperty p : sce.getObjectPropertiesInSignature()) {
+                    if (!newAxiomsByProperty.containsKey(p)) {
+                        newAxiomsByProperty.put(p, new HashSet<>());
+                    }
+                    newAxiomsByProperty.get(p).add(ax);
+                }
             }
         }
+        
 
         logger.info("Adding " + newAxioms.size() + " materialized parents");
+        
+        for (OWLObjectProperty p : newAxiomsByProperty.keySet()) {
+            logger.info("  " + p +" generates: "+newAxiomsByProperty.get(p).size() + " materialized parents");   
+        }
         
         if (OptionsHelper.optionIsTrue(options, "create-new-ontology")) {
             ontology = manager.createOntology();
