@@ -44,7 +44,7 @@ public class MirrorCommand implements Command {
      * @return name
      */
     public String getName() {
-        return "convert";
+        return "mirror";
     }
 
     /**
@@ -53,7 +53,7 @@ public class MirrorCommand implements Command {
      * @return description
      */
     public String getDescription() {
-        return "convert ontology";
+        return "mirror ontology imports closure";
     }
 
     /**
