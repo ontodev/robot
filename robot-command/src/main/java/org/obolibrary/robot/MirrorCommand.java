@@ -30,11 +30,10 @@ public class MirrorCommand implements Command {
      */
     public MirrorCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("i", "input",     true, "convert ontology from a file");
-        o.addOption("I", "input-iri", true, "convert ontology from an IRI");
-        o.addOption("d", "directory",    true, "target directory");
+        o.addOption("i", "input",     true, "mirror ontology from a file");
+        o.addOption("I", "input-iri", true, "mirror ontology from an IRI");
+        o.addOption("d", "directory", true, "target directory");
         o.addOption("o", "output",    true, "output file for catalog (default catalog-v001.xml)");
-        //o.addOption("f", "format",    true, "the format: RDFXML, OBO, etc.");
         options = o;
     }
 
@@ -62,8 +61,8 @@ public class MirrorCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot convert --input <file> "
-             + "--format <format> "
+        return "robot mirror --input <file> "
+             + "--directory <directory> "
              + "--output <file>";
     }
 
@@ -121,7 +120,7 @@ public class MirrorCommand implements Command {
         }
 
         MirrorOperation.mirror(ontology, new File(dir), catalogFile);
-        logger.info("Mirrored in "+catalogFile);
+        logger.info("Mirrored in " + catalogFile);
         return state;
     }
 }

@@ -20,7 +20,7 @@ import com.google.common.base.Optional;
 
 /**
  * Mirrors ontologies on filesystem
- * 
+ *
  * @author cjm
  *
  */
@@ -31,30 +31,29 @@ public class MirrorOperation {
      */
     private static final Logger logger =
             LoggerFactory.getLogger(MirrorOperation.class);
-    
-    
-    
+
+
     /**
      * Mirrors ontologies on local filesystem
-     * 
+     *
      * @param ontologies
      * @param baseFolder
      * @param catalogFile
      * @throws IOException
      * @throws OWLOntologyStorageException
      */
-    public static void mirror(OWLOntology rootOntology, 
+    public static void mirror(OWLOntology rootOntology,
             File baseFolder, File catalogFile) throws IOException, OWLOntologyStorageException {
-        
+
         logger.info("Mirroring ontologies: "+rootOntology);
         Map<IRI, String> iriMap = new HashMap<>();
         for (OWLOntology ont : rootOntology.getImportsClosure()) {
             logger.info("Mirroring: "+ont);
             validateImports(ont);
-            
+
             OWLOntologyID ontologyID = ont.getOntologyID();
             Optional<IRI> ontologyIRI = ontologyID.getOntologyIRI();
- 
+
             // Not really sure why this is here, but apparently we can get
             // an ontology without an IRI, in which case we'll generate one
             // that is 'sort of' unique (only fails if two different machines run
@@ -89,12 +88,12 @@ public class MirrorOperation {
            }
         }
         writeCatalog(catalogFile, iriMap);
-       
+
     }
-    
+
     /**
      * Writes a catalog-v001.xml file
-     * 
+     *
      * @param path
      * @param iriMap
      * @throws IOException
@@ -107,17 +106,16 @@ public class MirrorOperation {
             lines.add("");
             lines.add("  <!-- generated mapping -->");
             lines.add("  <uri name=\""+ iri +"\" uri=\""+ iriMap.get(iri) +"\"/>");
-           
         }
-       lines.add("</catalog>\n");
+        lines.add("</catalog>\n");
         FileUtils.writeLines(catalogFile, lines);
     }
-    
+
     /**
      * Generates a local file path that should be in a 1:1 relationship with the ontology IRI
-     * 
+     *
      * The path can the point to a file that mirrors an individual ontology
-     * 
+     *
      * @param iri
      * @return path
      */
@@ -129,14 +127,19 @@ public class MirrorOperation {
         return iriString;
     }
 
-    
+
     private static void validateImports(OWLOntology ontology) throws IOException {
         Set<IRI> directImportDocuments = ontology.getDirectImportsDocuments();
         Set<OWLOntology> directImports = ontology.getDirectImports();
         if (directImports.size() < directImportDocuments.size()) {
             // less imports than actually declared
             // assume something went wrong, throw Exception
-            throw new IOException("The ontology has less actual imports then declared.\nActual: "+directImports+"\n Declared: "+directImportDocuments);
+            throw new IOException(
+                "The ontology has less actual imports then declared.\nActual: "
+                + directImports
+                + "\n Declared: "
+                + directImportDocuments
+            );
         }
     }
 }
