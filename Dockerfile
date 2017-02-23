@@ -1,9 +1,8 @@
-FROM maven:3-jdk-8
+FROM maven:3-jdk-8-alpine
 
-RUN adduser robot
+RUN adduser -D robot
 RUN mkdir -p /usr/src/app
 RUN chown robot /usr/src/app
-
 
 COPY pom.xml /usr/src/app
 COPY robot-command /usr/src/app/robot-command
