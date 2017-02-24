@@ -77,6 +77,8 @@ Other build options:
 - `mvn clean verify` rebuilds the package and runs integration tests against it, with reports in `[module]/target/failsafe-reports`
 - `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site` and `[module]/target/site`
 
+Alternatively, you can use [Docker](https://www.docker.com) with the provided [Dockerfile](Dockerfile) to build and run ROBOT from within a container. First build an image with `docker build --tag robot .` then run ROBOT from the container with the usual command-line arguments: `docker run --rm robot --help`.
+
 
 ## Development
 
