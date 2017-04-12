@@ -15,6 +15,8 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
+
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.ResultSetMgr;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
@@ -78,12 +80,14 @@ public class QueryOperation {
      * @param output The file to write to.
      * @throws FileNotFoundException if output file is not found
      */
-    public static void runQuery(DatasetGraph dsg, String query, File output)
+    public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
             throws FileNotFoundException {
+        if (outputFormat == null)
+            outputFormat = org.apache.jena.riot.Lang.CSV;
         ResultSetMgr.write(
             new FileOutputStream(output),
             execQuery(dsg, query),
-            org.apache.jena.riot.Lang.CSV);
+            outputFormat);
     }
 
     /**
