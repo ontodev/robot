@@ -11,6 +11,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.resultset.ResultSetLang;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 
@@ -38,6 +40,7 @@ public class QueryCommand implements Command {
         Options o = CommandLineHelper.getCommonOptions();
         o.addOption("i", "input",     true, "load ontology from a file");
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
+        o.addOption("f", "format",    true, "the query result format: CSV, TSV, TTL, JSONLD, etc.");
         Option select = new Option("s", "select", true,
             "run a SPARQL select query and output result");
         select.setArgs(2);
@@ -114,7 +117,29 @@ public class QueryCommand implements Command {
         if (line == null) {
             return null;
         }
-
+        String formatName = CommandLineHelper.getOptionalValue(line, "format");
+        Lang outputFormat = org.apache.jena.riot.Lang.CSV;
+        if (formatName != null) {
+            formatName = formatName.toLowerCase();
+            if (formatName.equals("tsv")) {
+                outputFormat = ResultSetLang.SPARQLResultSetTSV;
+            }
+            else if (formatName.equals("ttl")) {
+                outputFormat = Lang.TTL;
+            }
+            else if (formatName.equals("jsonld")) {
+                outputFormat = Lang.JSONLD;
+            }
+            else if (formatName.equals("nt")) {
+                outputFormat = Lang.NT;
+            }
+            else if (formatName.equals("nq")) {
+                outputFormat = Lang.NQ;
+            }
+            else {
+               
+            }
+        }
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
@@ -128,7 +153,7 @@ public class QueryCommand implements Command {
                 String query =
                     FileUtils.readFileToString(new File(select.get(i)));
                 File output = new File(select.get(i + 1));
-                QueryOperation.runQuery(dsg, query, output);
+                QueryOperation.runQuery(dsg, query, output, outputFormat);
             }
         }
 
