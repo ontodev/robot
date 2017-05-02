@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +54,7 @@ public class QueryOperation {
         ontology.getOWLOntologyManager().saveOntology(ontology,
             new TurtleDocumentFormat(), out);
         DatasetGraph dsg = DatasetGraphFactory.createMem();
-        RDFDataMgr.read(dsg.getDefaultGraph(),
-            new ByteArrayInputStream(out.toByteArray()),
-            org.apache.jena.riot.Lang.TURTLE);
+        RDFDataMgr.read(dsg.getDefaultGraph(), new ByteArrayInputStream(out.toByteArray()), Lang.TURTLE);
         return dsg;
     }
 
@@ -67,10 +66,16 @@ public class QueryOperation {
      * @return the result set
      */
     public static ResultSet execQuery(DatasetGraph dsg, String query) {
-        QueryExecution qexec =
-            QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
         return qexec.execSelect();
     }
+
+    public static Model execConstruct(DatasetGraph dsg, String query) {
+        QueryExecution exec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        return exec.execConstruct();
+    }
+
+
 
     /**
      * Run a query and write the result to a file.
@@ -82,12 +87,15 @@ public class QueryOperation {
      */
     public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
             throws FileNotFoundException {
-        if (outputFormat == null)
-            outputFormat = org.apache.jena.riot.Lang.CSV;
-        ResultSetMgr.write(
-            new FileOutputStream(output),
-            execQuery(dsg, query),
-            outputFormat);
+        if (outputFormat == null) {
+            outputFormat = Lang.CSV;
+        }
+        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query), outputFormat);
+    }
+
+    public static void runConstruct(DatasetGraph dsg, String query, File output, Lang outputFormat)
+        throws FileNotFoundException {
+        RDFDataMgr.write(new FileOutputStream(output), execConstruct(dsg, query), outputFormat);
     }
 
     /**
