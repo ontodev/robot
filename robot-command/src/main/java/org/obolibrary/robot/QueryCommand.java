@@ -2,6 +2,7 @@ package org.obolibrary.robot;
 
 import java.io.File;
 import java.util.List;
+import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,10 @@ public class QueryCommand implements Command {
             "run a SPARQL select query and output result");
         select.setArgs(2);
         o.addOption(select);
+        Option construct = new Option("c", "construct", true,
+            "run a SPARQL construct query and output result");
+        construct.setArgs(2);
+        o.addOption(construct);
         options = o;
     }
 
@@ -118,7 +123,7 @@ public class QueryCommand implements Command {
             return null;
         }
         String formatName = CommandLineHelper.getOptionalValue(line, "format");
-        Lang outputFormat = org.apache.jena.riot.Lang.CSV;
+        Lang outputFormat = Lang.CSV;
         if (formatName != null) {
             formatName = formatName.toLowerCase();
             if (formatName.equals("tsv")) {
@@ -136,9 +141,7 @@ public class QueryCommand implements Command {
             else if (formatName.equals("nq")) {
                 outputFormat = Lang.NQ;
             }
-            else {
-               
-            }
+
         }
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
@@ -150,10 +153,17 @@ public class QueryCommand implements Command {
                 CommandLineHelper.getOptionValues(line, "select");
 
             for (int i = 0; i < select.size(); i = i + 2) {
-                String query =
-                    FileUtils.readFileToString(new File(select.get(i)));
+                String query = FileUtils.readFileToString(new File(select.get(i)));
                 File output = new File(select.get(i + 1));
                 QueryOperation.runQuery(dsg, query, output, outputFormat);
+            }
+        } else if (line.hasOption("construct")) {
+            List<String> select = CommandLineHelper.getOptionalValues(line, "construct");
+
+            for (int i=0; i<select.size(); i += 2) {
+                String query = FileUtils.readFileToString(new File(select.get(i)));
+                File output = new File(select.get(i + 1));
+                QueryOperation.runConstruct(dsg, query, output, outputFormat);
             }
         }
 
