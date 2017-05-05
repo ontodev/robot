@@ -7,13 +7,14 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.profiles.OWLProfile;
+import org.semanticweb.owlapi.profiles.OWL2Profile;
 import org.semanticweb.owlapi.profiles.OWLProfileReport;
 import org.semanticweb.owlapi.profiles.Profiles;
 
 public class ValidateProfileCommand implements Command  {
-	
+
 	private final Options options;
-	
+
 	public ValidateProfileCommand() {
         Options o = CommandLineHelper.getCommonOptions();
         o.addOption("o", "output", true, "save validation report to a file");
@@ -66,12 +67,12 @@ public class ValidateProfileCommand implements Command  {
 		String profile = CommandLineHelper.getOptionalValue(line, "profile").toUpperCase();
 		final OWLProfile owlProfile;
 		switch(profile) {
-		case "DL": owlProfile = Profiles.OWL2_DL; break;
-		case "EL": owlProfile = Profiles.OWL2_EL; break;
-		case "RL": owlProfile = Profiles.OWL2_RL; break;
-		case "QL": owlProfile = Profiles.OWL2_QL; break;
-		case "FULL": owlProfile = Profiles.OWL2_FULL; break;
-		default: owlProfile = null;
+            case "DL": owlProfile = Profiles.OWL2_DL; break;
+            case "EL": owlProfile = Profiles.OWL2_EL; break;
+            case "RL": owlProfile = Profiles.OWL2_RL; break;
+            case "QL": owlProfile = Profiles.OWL2_QL; break;
+            case "FULL": owlProfile = new OWL2Profile(); break; // #162
+            default: owlProfile = null;
 		}
 		OWLProfileReport report = owlProfile.checkOntology(ontology);
 		File outputFile = CommandLineHelper.getOutputFile(line);
