@@ -83,6 +83,7 @@ public class QueryOperation {
      * @param dsg The graph to query over.
      * @param query The SPARQL query string.
      * @param output The file to write to.
+     * @param outputFormat The file format.
      * @throws FileNotFoundException if output file is not found
      */
     public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)

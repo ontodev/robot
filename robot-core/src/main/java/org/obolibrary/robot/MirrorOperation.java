@@ -36,11 +36,11 @@ public class MirrorOperation {
     /**
      * Mirrors ontologies on local filesystem
      *
-     * @param ontologies
-     * @param baseFolder
-     * @param catalogFile
-     * @throws IOException
-     * @throws OWLOntologyStorageException
+     * @param rootOntology The ontology to mirror.
+     * @param baseFolder The folder.
+     * @param catalogFile The catalog file to write to.
+     * @throws IOException on most problems.
+     * @throws OWLOntologyStorageException if the ontology cannot be saved.
      */
     public static void mirror(OWLOntology rootOntology,
             File baseFolder, File catalogFile) throws IOException, OWLOntologyStorageException {
@@ -94,9 +94,9 @@ public class MirrorOperation {
     /**
      * Writes a catalog-v001.xml file
      *
-     * @param path
-     * @param iriMap
-     * @throws IOException
+     * @param catalogFile The catalog File to write to.
+     * @param iriMap The IRIs to write.
+     * @throws IOException on any problem.
      */
     public static void writeCatalog(File catalogFile, Map<IRI,String> iriMap) throws IOException {
         List<String> lines = new ArrayList<String>();
