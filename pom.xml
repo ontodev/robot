@@ -104,7 +104,7 @@
                 <configuration>
                     <links>
                         <link>https://commons.apache.org/proper/commons-cli/javadocs/api-1.2/</link>
-                        <link>http://owlapi.sourceforge.net/javadoc/</link>
+                        <link>http://owlcs.github.io/owlapi/apidocs_4/</link>
                     </links>
                 </configuration>
             </plugin>

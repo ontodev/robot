@@ -18,7 +18,7 @@ public class IncoherentRBoxException extends OntologyLogicException {
     private static final long serialVersionUID = 2608045757804483323L;
 
     /**
-     * @param unsatisfiableProperties
+     * @param unsatisfiableProperties The unsatisfiable properties.
      */
     public IncoherentRBoxException(Set<OWLObjectProperty> unsatisfiableProperties) {
     }
