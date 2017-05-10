@@ -1,0 +1,9 @@
+Prefix: : <http://purl.obolibrary.org/obo/TEST_>
+Ontology: <http://purl.obolibrary.org/obo/test1>
+
+## A==B
+## Will also trivially infer B==A, but this is the same.
+Class: A
+  EquivalentTo: B
+
+Class: B

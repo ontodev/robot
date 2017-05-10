@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,8 +48,7 @@ public class ReasonOperationTest extends CoreTest {
     @Test
     public void testELK() throws IOException, OWLOntologyCreationException, OntologyLogicException {
         OWLOntology reasoned = loadOntology("/simple.owl");
-        OWLReasonerFactory reasonerFactory = new org.semanticweb
-                .elk.owlapi.ElkReasonerFactory();
+        OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
         ReasonOperation.reason(reasoned, reasonerFactory);
         assertIdentical("/simple_elk.owl", reasoned);
     }
@@ -173,7 +173,7 @@ public class ReasonOperationTest extends CoreTest {
         OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
-        ReasonOperation.reason(reasoned, reasonerFactory, null);
+        ReasonOperation.reason(reasoned, reasonerFactory, Collections.emptyMap());
         assertIdentical("/redundant_subclasses.owl", reasoned);
 
         Map<String, String> options = new HashMap<String, String>();

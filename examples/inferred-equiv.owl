@@ -1,0 +1,15 @@
+Prefix: : <http://purl.obolibrary.org/obo/TEST_>
+Ontology: <http://purl.obolibrary.org/obo/test1>
+
+## A and B will be inferred to be equivalent.
+## This is a new inference, not originally asserted.
+## This is a red flag as such equivalencies are often unintentional
+Class: A
+  EquivalentTo: C and D
+
+Class: B
+  EquivalentTo: C and D
+
+Class: C
+
+Class: D
