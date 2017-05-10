@@ -7,7 +7,17 @@ import java.util.List;
 /**
  *
  * Created by edouglass on 5/5/17.
+ * Enum of the three different equivalent class reasoning strategies. ALL means all equivalent classes detected
+ * are allowed. NONE means any equivalent class should fail, and ASSERTED_ONLY means that only if the inferred
+ * equivalence class has been previously asserted directly in the ontology is the equivalence class allowed.
  *
+ * This is also how the command line options are detected. For backwards compatibility, the old "true" is a synonym for
+ * ALL, and "false" is a synonym for NONE. The #validates(String) method detects if the given String is a synonym or
+ * the uncapitalized name of the enum instance. For example, either "all" or "true" would validate to the instance ALL.
+ *
+ * Lastly, one of the enum instances can easily be returned from a string with the static #from(String) method. This is
+ * like a constructor. If the given string validates to any of the enum instances, then that instance is returned. By
+ * default ALL is returned. This is how a Mode instance should be retrieved from a string (say from the command line).
  */
 public enum EquivalentClassReasoningMode {
 
@@ -56,6 +66,13 @@ public enum EquivalentClassReasoningMode {
         return s.equals(this.written()) || synonyms.contains(s);
     }
 
+    /**
+     * Canonical way to find make a Mode instance from a String (say from a command line argument). Tries to validate
+     * the string against one of the instances and if a mode instance is found, it's returned. If no match is found,
+     * ALL is returned by default.
+     * @param s String to match to a Mode instance.
+     * @return Mode enum instance that matches the String, or ALL by default.
+     */
     public static EquivalentClassReasoningMode from(String s) {
         for(EquivalentClassReasoningMode mode : EquivalentClassReasoningMode.values()) {
             if(mode.validates(s)) {
