@@ -46,7 +46,9 @@ public class ReasonCommand implements Command {
         o.addOption("x", "exclude-duplicate-axioms",     true,
                 "do not add an axiom if it exists in import chain");
         o.addOption("e", "equivalent-classes-allowed",     true,
-                "if false then detecting equivalent classes exits with error");
+                "if none then detecting equivalent classes exits with error, if all then " +
+                    "all equivalent classes are allowed, and if asserted-only then only detecting " +
+                    "equivalent classes which are already asserted are allowed, otherwise exit");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");

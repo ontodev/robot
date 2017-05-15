@@ -1,32 +1,16 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
+import org.obolibrary.robot.reason.EquivalentClassReasoning;
+import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLNamedObject;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
@@ -35,6 +19,8 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.InferredAxiomGenerator;
 import org.semanticweb.owlapi.util.InferredOntologyGenerator;
 import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
+
+import static org.obolibrary.robot.reason.EquivalentClassReasoningMode.ALL;
 
 /**
  * Reason over an ontology and add axioms.
@@ -62,7 +48,7 @@ public class ReasonOperation {
         options.put("create-new-ontology", "false");
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
-        options.put("equivalent-classes-allowed", "true");
+        options.put("equivalent-classes-allowed", ALL.written());
 
         return options;
     }
@@ -120,36 +106,14 @@ public class ReasonOperation {
         logger.info("Precomputing class hierarchy...");
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
 
-        boolean isEquivalentsAllowed = OptionsHelper.optionIsTrue(options,
-                "equivalent-classes-allowed");
-        int nEquivs = 0;
+        EquivalentClassReasoningMode mode = EquivalentClassReasoningMode.from(options.getOrDefault("equivalent-classes-allowed", ""));
         logger.info("Finding equivalencies...");
-        for (OWLClass c : ontology.getClassesInSignature()) {
-            Set<OWLClass> equivs =
-                    reasoner.getEquivalentClasses(c).getEntitiesMinus(c);
-            if (equivs.size() > 0) {
-                nEquivs++;
-                String msg =
-                        "Equivalency: " + c +  " == " + equivs + " // "
-                                + labelFunc.apply(c) + " == "
-                                + equivs.stream().map(labelFunc).collect(
-                                        Collectors.toList());
-               logger.info(msg);
-                if (!isEquivalentsAllowed) {
-                    logger.error(msg);
-                }
-            }
-        }
 
-        if (!isEquivalentsAllowed) {
-            if (nEquivs > 0) {
-                logger.error("Equivalent classes are not allowed. "
-                        + "Exiting with error");
-                logger.error("Run with '--equivalent-classes-allowed true' "
-                        + "to change behavior");
-                System.exit(1);
-                // TODO: https://github.com/ontodev/robot/issues/40
-            }
+        EquivalentClassReasoning equivalentReasoning = new EquivalentClassReasoning(ontology, reasoner, mode);
+        boolean passesEquivalenceTests = equivalentReasoning.reason();
+        equivalentReasoning.logReport(logger);
+        if(!passesEquivalenceTests) {
+            System.exit(1);
         }
         // cache the complete set of asserted axioms at the initial state.
         // we will later use this if the -x option is passed, to avoid
