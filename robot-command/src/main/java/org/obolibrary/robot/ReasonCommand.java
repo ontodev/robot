@@ -35,20 +35,21 @@ public class ReasonCommand implements Command {
      */
     public ReasonCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("r", "reasoner",  true,
+        o.addOption("r", "reasoner", true,
                 "reasoner to use: (ELK, HermiT, JFact)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
                 "switch to a new ontology containing only the inferences");
-        o.addOption("a", "annotate-inferred-axioms",     true,
+        o.addOption("a", "annotate-inferred-axioms", true,
                 "annotate all inferred axioms (only when -n is passed)");
-        o.addOption("x", "exclude-duplicate-axioms",     true,
+        o.addOption("x", "exclude-duplicate-axioms", true,
                 "do not add an axiom if it exists in import chain");
-        o.addOption("e", "equivalent-classes-allowed",     true,
-                "if none then detecting equivalent classes exits with error, if all then " +
-                    "all equivalent classes are allowed, and if asserted-only then only detecting " +
-                    "equivalent classes which are already asserted are allowed, otherwise exit");
+        o.addOption("e", "equivalent-classes-allowed", true,
+                "if none then detecting equivalent classes exits with error, if"
+                + " all then all equivalent classes are allowed, and if "
+                + "asserted-only then only detecting equivalent classes which "
+                + "are already asserted are allowed, otherwise exit");
         o.addOption("i", "input",     true, "reason ontology from a file");
         o.addOption("I", "input-iri", true, "reason ontology from an IRI");
         o.addOption("o", "output",    true, "save reasoned ontology to a file");

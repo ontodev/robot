@@ -1,16 +1,24 @@
 package org.obolibrary.robot;
 
-import java.util.*;
-import java.util.function.Function;
-
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
-import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
@@ -21,6 +29,13 @@ import org.semanticweb.owlapi.util.InferredOntologyGenerator;
 import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
 
 import static org.obolibrary.robot.reason.EquivalentClassReasoningMode.ALL;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Reason over an ontology and add axioms.
@@ -89,9 +104,6 @@ public class ReasonOperation {
 
         logger.info("Fetching labels...");
 
-        Function<OWLNamedObject, String> labelFunc =
-                OntologyHelper.getLabelFunction(ontology, false);
-
         int seconds;
         long elapsedTime;
         long startTime = System.currentTimeMillis();
@@ -106,13 +118,15 @@ public class ReasonOperation {
         logger.info("Precomputing class hierarchy...");
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
 
-        EquivalentClassReasoningMode mode = EquivalentClassReasoningMode.from(options.getOrDefault("equivalent-classes-allowed", ""));
+        EquivalentClassReasoningMode mode = EquivalentClassReasoningMode.from(
+                options.getOrDefault("equivalent-classes-allowed", ""));
         logger.info("Finding equivalencies...");
 
-        EquivalentClassReasoning equivalentReasoning = new EquivalentClassReasoning(ontology, reasoner, mode);
+        EquivalentClassReasoning equivalentReasoning =
+                new EquivalentClassReasoning(ontology, reasoner, mode);
         boolean passesEquivalenceTests = equivalentReasoning.reason();
         equivalentReasoning.logReport(logger);
-        if(!passesEquivalenceTests) {
+        if (!passesEquivalenceTests) {
             System.exit(1);
         }
         // cache the complete set of asserted axioms at the initial state.

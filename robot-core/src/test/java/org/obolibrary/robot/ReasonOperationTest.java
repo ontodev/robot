@@ -181,7 +181,8 @@ public class ReasonOperationTest extends CoreTest {
         OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
-        ReasonOperation.reason(reasoned, reasonerFactory, Collections.emptyMap());
+        ReasonOperation.reason(reasoned, reasonerFactory,
+                Collections.emptyMap());
         assertIdentical("/redundant_subclasses.owl", reasoned);
 
         Map<String, String> options = new HashMap<String, String>();
