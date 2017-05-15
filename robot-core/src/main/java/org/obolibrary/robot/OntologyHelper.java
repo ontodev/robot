@@ -486,29 +486,33 @@ public class OntologyHelper {
     /**
      * Generates a function that returns a label string for any named
      * object in the ontology
-     * 
+     *
      * @param ontology to use
      * @param useIriAsDefault if true then label-less classes will return IRI
      * @return function mapping object to label
      */
-    public static Function<OWLNamedObject,String> getLabelFunction(OWLOntology ontology, boolean useIriAsDefault) {
+    public static Function<OWLNamedObject,String> getLabelFunction(
+            OWLOntology ontology, boolean useIriAsDefault) {
         Map<IRI, String> labelMap = new HashMap<>();
-        for (OWLAnnotationAssertionAxiom ax : ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+        for (OWLAnnotationAssertionAxiom ax
+                : ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
             if (ax.getProperty().isLabel() &&
                     ax.getSubject() instanceof IRI &&
                     ax.getValue() instanceof OWLLiteral) {
-                labelMap.put((IRI)ax.getSubject(), ax.getValue().asLiteral().toString());              
+                labelMap.put((IRI)ax.getSubject(),
+                        ax.getValue().asLiteral().toString());
             }
         }
         return (obj) -> {
             String label;
-            if (labelMap.containsKey(obj.getIRI()))
+            if (labelMap.containsKey(obj.getIRI())) {
                 label = labelMap.get(obj.getIRI());
-            else if (useIriAsDefault)
+            } else if (useIriAsDefault) {
                 label = obj.getIRI().toString();
-            else
+            } else {
                 label = null;
-                
+            }
+
             return label;
         };
     }

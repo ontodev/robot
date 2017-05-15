@@ -16,8 +16,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
-import com.google.common.base.Optional;
-
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
@@ -55,28 +53,30 @@ public class CoreTest {
     }
 
     /**
-     * Load ontology using guessed catalog
-     * 
-     * @param path
+     * Load ontology using guessed catalog.
+     *
+     * @param path the resource path for the ontology
      * @return the loaded ontology
-     * @throws IOException
+     * @throws IOException on file problems
      */
     public OWLOntology loadOntologyWithCatalog(String path) throws IOException {
         IOHelper ioh = new IOHelper();
-        String fullpath = this.getClass().getResource(path).getFile().toString();
+        String fullpath = this.getClass().getResource(path).getFile()
+                .toString();
         return ioh.loadOntology(fullpath);
     }
-    
+
     /**
-     * Load ontology using explicit catalog
-     * 
-     * @param ontologyIRI
-     * @param catalogFile
+     * Load ontology using explicit catalog.
+     *
+     * @param ontologyIRI the IRI
+     * @param catalogFile the catalog
      * @return the loaded ontology
-     * @throws IOException
-     * @throws OWLOntologyCreationException 
+     * @throws IOException on file problems
+     * @throws OWLOntologyCreationException on creation error
      */
-    public OWLOntology loadOntologyWithCatalog(IRI ontologyIRI, File catalogFile) throws IOException, OWLOntologyCreationException {
+    public OWLOntology loadOntologyWithCatalog(IRI ontologyIRI,
+            File catalogFile) throws IOException, OWLOntologyCreationException {
         //TODO: move logic here to IOHelper
         //IOHelper ioh = new IOHelper();
         OWLOntologyManager manager =

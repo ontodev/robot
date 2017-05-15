@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import java.io.File;
 import java.util.List;
-import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.resultset.ResultSetLang;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 
 /**
@@ -41,7 +39,8 @@ public class QueryCommand implements Command {
         Options o = CommandLineHelper.getCommonOptions();
         o.addOption("i", "input",     true, "load ontology from a file");
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
-        o.addOption("f", "format",    true, "the query result format: CSV, TSV, TTL, JSONLD, etc.");
+        o.addOption("f", "format",    true, "the query result format: CSV, TSV,"
+                + " TTL, JSONLD, etc.");
         Option select = new Option("s", "select", true,
             "run a SPARQL select query and output result");
         select.setArgs(2);
@@ -115,7 +114,6 @@ public class QueryCommand implements Command {
      */
     public CommandState execute(CommandState state, String[] args)
             throws Exception {
-        OWLOntology outputOntology = null;
 
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -128,21 +126,20 @@ public class QueryCommand implements Command {
             formatName = formatName.toLowerCase();
             if (formatName.equals("tsv")) {
                 outputFormat = ResultSetLang.SPARQLResultSetTSV;
-            }
-            else if (formatName.equals("ttl")) {
+            } else if (formatName.equals("ttl")) {
                 outputFormat = Lang.TTL;
-            }
-            else if (formatName.equals("jsonld")) {
+
+            } else if (formatName.equals("jsonld")) {
                 outputFormat = Lang.JSONLD;
-            }
-            else if (formatName.equals("nt")) {
+
+            } else if (formatName.equals("nt")) {
                 outputFormat = Lang.NT;
-            }
-            else if (formatName.equals("nq")) {
+
+            } else if (formatName.equals("nq")) {
                 outputFormat = Lang.NQ;
             }
-
         }
+
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
@@ -153,15 +150,18 @@ public class QueryCommand implements Command {
                 CommandLineHelper.getOptionValues(line, "select");
 
             for (int i = 0; i < select.size(); i = i + 2) {
-                String query = FileUtils.readFileToString(new File(select.get(i)));
+                String query = FileUtils.readFileToString(new File(
+                        select.get(i)));
                 File output = new File(select.get(i + 1));
                 QueryOperation.runQuery(dsg, query, output, outputFormat);
             }
         } else if (line.hasOption("construct")) {
-            List<String> select = CommandLineHelper.getOptionalValues(line, "construct");
+            List<String> select = CommandLineHelper.getOptionalValues(line,
+                    "construct");
 
-            for (int i=0; i<select.size(); i += 2) {
-                String query = FileUtils.readFileToString(new File(select.get(i)));
+            for (int i = 0; i < select.size(); i += 2) {
+                String query = FileUtils.readFileToString(new File(
+                        select.get(i)));
                 File output = new File(select.get(i + 1));
                 QueryOperation.runConstruct(dsg, query, output, outputFormat);
             }

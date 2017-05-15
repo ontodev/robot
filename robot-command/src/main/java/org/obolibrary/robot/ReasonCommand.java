@@ -35,7 +35,8 @@ public class ReasonCommand implements Command {
      */
     public ReasonCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("r", "reasoner",  true, "reasoner to use: (ELK, HermiT, JFact)");
+        o.addOption("r", "reasoner",  true,
+                "reasoner to use: (ELK, HermiT, JFact)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
@@ -137,20 +138,21 @@ public class ReasonCommand implements Command {
         if (reasonerName.equals("structural")) {
             reasonerFactory = new org.semanticweb.owlapi.reasoner
                 .structural.StructuralReasonerFactory();
-        }
-        else if (reasonerName.equals("hermit")) {
+
+        } else if (reasonerName.equals("hermit")) {
             reasonerFactory = new org.semanticweb
                 .HermiT.Reasoner.ReasonerFactory();
-        }
-        else if (reasonerName.equals("jfact")) {
-        	reasonerFactory = new JFactFactory();
-        }
-        else if (reasonerName.equals("emr")) {
+
+        } else if (reasonerName.equals("jfact")) {
+            reasonerFactory = new JFactFactory();
+
+        } else if (reasonerName.equals("emr")) {
             ElkReasonerFactory innerReasonerFactory = new org.semanticweb
                     .elk.owlapi.ElkReasonerFactory();
-            reasonerFactory = new ExpressionMaterializingReasonerFactory(innerReasonerFactory);
-        }
-        else {
+            reasonerFactory = new ExpressionMaterializingReasonerFactory(
+                    innerReasonerFactory);
+
+        } else {
             reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
         }
@@ -163,7 +165,7 @@ public class ReasonCommand implements Command {
                 reasonerOptions.put(option, line.getOptionValue(option));
             }
         }
-        logger.info("Reasoner: "+reasonerName);
+        logger.info("Reasoner: " + reasonerName);
 
         ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 

@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -227,8 +227,8 @@ public class IOHelperTest extends CoreTest {
 
 
     /**
-     * Tests json saving
-     * 
+     * Tests json saving.
+     *
      * @throws IOException on error
      */
     @Test
@@ -239,8 +239,7 @@ public class IOHelperTest extends CoreTest {
         tempFile.deleteOnExit();
 
         IOHelper ioHelper = new IOHelper();
-        ioHelper.saveOntology(ontology, new OboGraphJsonDocumentFormat(), tempFile);
-        
+        ioHelper.saveOntology(ontology, new OboGraphJsonDocumentFormat(),
+            tempFile);
     }
-
 }

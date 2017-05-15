@@ -5,38 +5,29 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
-import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
-import org.obolibrary.robot.exceptions.InconsistentOntologyException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Materialize SubClassOf axioms using Expression Materializing Reasoner
+ * Materialize SubClassOf axioms using Expression Materializing Reasoner.
  *
- * 
+ *
  *
  * @see <a href="https://github.com/ontodev/robot/issues/7">issue 7</a>
  *
@@ -80,7 +71,9 @@ public class MaterializeOperation {
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Set<OWLObjectProperty> properties, Map<String, String> options) throws OWLOntologyCreationException, OntologyLogicException {
+            Set<OWLObjectProperty> properties, Map<String, String> options)
+                    throws OWLOntologyCreationException,
+                    OntologyLogicException {
 
         // TODO: make reasonOverImportsClosure optional rather than always true
         materialize(ontology, reasonerFactory, properties, options, true);
@@ -99,25 +92,27 @@ public class MaterializeOperation {
      * @param options
      *            A map of options for the operation
      * @param reasonOverImportsClosure
-     *            if true will first perform materialization over all ontologies in the import closure
+     *            if true will first perform materialization over all
+     *            ontologies in the import closure
      * @throws OWLOntologyCreationException on ontology problem
      * @throws OntologyLogicException  on logic problem
      */
     public static void materialize(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Set<OWLObjectProperty> properties,
-            Map<String, String> options,
-            boolean reasonOverImportsClosure) throws OntologyLogicException, OWLOntologyCreationException {
+            Set<OWLObjectProperty> properties, Map<String, String> options,
+            boolean reasonOverImportsClosure) throws OntologyLogicException,
+                    OWLOntologyCreationException {
 
         if (reasonOverImportsClosure) {
             logger.info("Materializing imported ontologies...");
             for (OWLOntology importedOntology : ontology.getImportsClosure()) {
                 if (!importedOntology.equals(ontology)) {
-                    materialize(importedOntology, reasonerFactory, properties, options, false);
+                    materialize(importedOntology, reasonerFactory, properties,
+                        options, false);
                 }
             }
         }
-        logger.info("Materializing: "+ontology);
+        logger.info("Materializing: " + ontology);
 
 
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -127,25 +122,25 @@ public class MaterializeOperation {
         long elapsedTime;
         long startTime = System.currentTimeMillis();
 
-        ExpressionMaterializingReasonerFactory merf = new ExpressionMaterializingReasonerFactory(
-                reasonerFactory);
+        ExpressionMaterializingReasonerFactory merf =
+                new ExpressionMaterializingReasonerFactory(reasonerFactory);
         ExpressionMaterializingReasoner emr = merf.createReasoner(ontology);
         ReasonerHelper.validate(emr);
-        
+
         startTime = System.currentTimeMillis();
 
         Set<OWLAxiom> newAxioms = new HashSet<>();
-        
+
         // this is entirely for reporting purposes
-        Map<OWLObjectProperty, Set<OWLAxiom>> newAxiomsByProperty = new HashMap<>();
-        
-        
+        Map<OWLObjectProperty, Set<OWLAxiom>> newAxiomsByProperty =
+                new HashMap<>();
 
         logger.info("Materializing..." + properties);
-        if (properties == null || properties.size() == 0)
+        if (properties == null || properties.size() == 0) {
             emr.materializeExpressions();
-        else
+        } else {
             emr.materializeExpressions(properties);
+        }
 
         logger.info("Materialization complete; iterating over classes");
 
@@ -153,7 +148,7 @@ public class MaterializeOperation {
         Imports importsFlag = Imports.EXCLUDED; // TODO - make this optional
 
         for (OWLClass c : ontology.getClassesInSignature(importsFlag)) {
-            logger.debug(" Materializing parents of class "+c);
+            logger.debug(" Materializing parents of class " + c);
             i++;
             if (i % 100 == 1) {
                 logger.info(" Materializing parents of class " + i + "/"
@@ -163,7 +158,7 @@ public class MaterializeOperation {
                 continue;
             }
             if (ontology.getAxioms(c, Imports.EXCLUDED).size() == 0) {
-                logger.debug("Excluding classes not in main ontology: "+c);
+                logger.debug("Excluding classes not in main ontology: " + c);
                 continue;
             }
             Set<OWLClassExpression> sces = emr
@@ -173,11 +168,11 @@ public class MaterializeOperation {
                 throw new IncoherentTBoxException(Collections.singleton(c));
             }
             for (OWLClassExpression sce : sces) {
-                logger.debug("  PARENT: "+sce);
+                logger.debug("  PARENT: " + sce);
                 // do not make assertions involving Thing;
                 // while valid, these are trivial
                 if (sce.getSignature().contains(dataFactory.getOWLThing())) {
-                    logger.debug("Ignoring: "+sce);
+                    logger.debug("Ignoring: " + sce);
                     continue;
                 }
 
@@ -186,21 +181,22 @@ public class MaterializeOperation {
                 // -- every class C is a subclass of P some C
                 // while valid, this is trivial, so we avoid asserting
                 if (sce.getSignature().contains(c)) {
-                    logger.debug("Signature contains base class: "+sce);
+                    logger.debug("Signature contains base class: " + sce);
                     continue;
                 }
-                
+
                 OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
-                
+
                 // skip axioms that already exist
                 if (ontology.getAxioms(Imports.INCLUDED).contains(ax)) {
-                    logger.debug("Already have: "+ax);
+                    logger.debug("Already have: " + ax);
                     continue;
                 }
                 newAxioms.add(ax);
-                
+
                 // for reporting
-                for (OWLObjectProperty p : sce.getObjectPropertiesInSignature()) {
+                for (OWLObjectProperty p
+                    : sce.getObjectPropertiesInSignature()) {
                     if (!newAxiomsByProperty.containsKey(p)) {
                         newAxiomsByProperty.put(p, new HashSet<>());
                     }
@@ -208,17 +204,19 @@ public class MaterializeOperation {
                 }
             }
         }
-        
 
         logger.info("Adding " + newAxioms.size() + " materialized parents");
-        
+
         for (OWLObjectProperty p : newAxiomsByProperty.keySet()) {
-            logger.info("  " + p +" generates: "+newAxiomsByProperty.get(p).size() + " materialized parents");   
+            logger.info("  " + p + " generates: "
+                    + newAxiomsByProperty.get(p).size()
+                    + " materialized parents");
         }
-        
+
         if (OptionsHelper.optionIsTrue(options, "create-new-ontology")) {
             ontology = manager.createOntology();
         }
+
         manager.addAxioms(ontology, newAxioms);
         emr.dispose();
 
@@ -226,7 +224,5 @@ public class MaterializeOperation {
         seconds = (int) Math.ceil(elapsedTime / 1000);
         logger.info("Asserting materialized superclasses took {} seconds.",
                 seconds);
-
     }
-
 }

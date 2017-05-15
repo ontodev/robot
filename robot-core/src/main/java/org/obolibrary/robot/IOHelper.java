@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,9 +52,7 @@ import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.io.OWLOntologyLoaderMetaData;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.yaml.snakeyaml.Yaml;
@@ -66,7 +63,7 @@ import org.yaml.snakeyaml.Yaml;
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class IOHelper {
-        
+
     /**
      * Logger.
      */
@@ -457,7 +454,7 @@ public class IOHelper {
         try {
             XMLWriterPreferences.getInstance()
                 .setUseNamespaceEntities(getXMLEntityFlag());
-            
+
             // first handle any non-official output formats.
             // currently this is just OboGraphs JSON format
             if (format instanceof OboGraphJsonDocumentFormat) {
@@ -889,6 +886,7 @@ public class IOHelper {
         while ((nextLine = csv.readNext()) != null) {
             rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
         }
+        csv.close();
         return rows;
     }
 
@@ -930,6 +928,7 @@ public class IOHelper {
         while ((nextLine = csv.readNext()) != null) {
             rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
         }
+        csv.close();
         return rows;
     }
 
@@ -952,6 +951,4 @@ public class IOHelper {
             throw new IOException("Unrecognized file type for: " + path);
         }
     }
-    
-
 }

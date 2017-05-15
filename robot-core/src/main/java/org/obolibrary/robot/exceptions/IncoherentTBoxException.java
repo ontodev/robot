@@ -5,15 +5,15 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.OWLClass;
 
 /**
- * Ontology contains unsatisfiable classes
- * 
+ * Ontology contains unsatisfiable classes.
+ *
  * @author cjm
  *
  */
 public class IncoherentTBoxException extends OntologyLogicException {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = -6157565029337883652L;
 

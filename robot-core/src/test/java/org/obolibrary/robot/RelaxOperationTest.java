@@ -14,7 +14,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 public class RelaxOperationTest extends CoreTest {
 
     /**
-     * Test relaxation, basic case
+     * Test relaxation, basic case.
      *
      * @throws IOException on file problem
      */
