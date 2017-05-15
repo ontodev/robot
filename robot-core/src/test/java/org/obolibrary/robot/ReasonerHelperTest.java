@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -13,10 +13,11 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
- * Tests convenience operations using reasoner
- * 
- * So far thus encompasses only logic validation tests (incoherency, inconsistency)
- * 
+ * Tests convenience operations using reasoner.
+ *
+ * So far thus encompasses only logic validation tests (incoherency,
+ * inconsistency)
+ *
  * @author cjm
  *
  */
@@ -24,7 +25,7 @@ public class ReasonerHelperTest extends CoreTest {
 
     /**
      * Test checking for incoherent OPs.
-     * 
+     *
      * See https://github.com/ontodev/robot/issues/104
      *
      * @throws IOException if file error
@@ -32,7 +33,8 @@ public class ReasonerHelperTest extends CoreTest {
      * @throws InconsistentOntologyException if has inconsistencies
      */
     @Test
-    public void testIncoherentRBox() throws IOException, IncoherentTBoxException, InconsistentOntologyException {
+    public void testIncoherentRBox() throws IOException,
+            IncoherentTBoxException, InconsistentOntologyException {
         OWLOntology ontology = loadOntology("/incoherent-rbox.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
@@ -40,8 +42,8 @@ public class ReasonerHelperTest extends CoreTest {
         boolean isCaughtException = false;
         try {
             ReasonerHelper.validate(reasoner);
-        }
-        catch (IncoherentRBoxException e) {
+
+        } catch (IncoherentRBoxException e) {
             isCaughtException = true;
         }
         assertTrue(isCaughtException);
@@ -49,14 +51,16 @@ public class ReasonerHelperTest extends CoreTest {
 
     /**
      * Test checking for incoherent classes.
-     * 
+     *
      * @throws IOException  if file error
      * @throws IncoherentTBoxException if has unsatisfiable classes
      * @throws InconsistentOntologyException if has inconsistencies
      * @throws IncoherentRBoxException if has unsatisfiable properties
      */
     @Test
-    public void testIncoherentTBox() throws IOException, IncoherentTBoxException, InconsistentOntologyException, IncoherentRBoxException {
+    public void testIncoherentTBox() throws IOException,
+            IncoherentTBoxException, InconsistentOntologyException,
+            IncoherentRBoxException {
         OWLOntology ontology = loadOntology("/incoherent-tbox.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
@@ -64,8 +68,8 @@ public class ReasonerHelperTest extends CoreTest {
         boolean isCaughtException = false;
         try {
             ReasonerHelper.validate(reasoner);
-        }
-        catch (IncoherentTBoxException e) {
+
+        } catch (IncoherentTBoxException e) {
             isCaughtException = true;
         }
         assertTrue(isCaughtException);
@@ -73,14 +77,16 @@ public class ReasonerHelperTest extends CoreTest {
 
     /**
      * Test checking for inconsistencies.
-     * 
+     *
      * @throws IOException  if file error
      * @throws IncoherentTBoxException if has unsatisfiable classes
      * @throws InconsistentOntologyException if has inconsistencies
      * @throws IncoherentRBoxException if has unsatisfiable properties
      */
     @Test
-    public void testInconsistentOntology() throws IOException, IncoherentTBoxException, InconsistentOntologyException, IncoherentRBoxException {
+    public void testInconsistentOntology() throws IOException,
+            IncoherentTBoxException, InconsistentOntologyException,
+            IncoherentRBoxException {
         OWLOntology ontology = loadOntology("/inconsistent.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
@@ -88,23 +94,25 @@ public class ReasonerHelperTest extends CoreTest {
         boolean isCaughtException = false;
         try {
             ReasonerHelper.validate(reasoner);
-        }
-        catch (InconsistentOntologyException e) {
+
+        } catch (InconsistentOntologyException e) {
             isCaughtException = true;
         }
         assertTrue(isCaughtException);
     }
 
     /**
-     * Test for no false positives in validation
-     * 
+     * Test for no false positives in validation.
+     *
      * @throws IOException if file error
      * @throws IncoherentTBoxException if has unsatisfiable classes
      * @throws InconsistentOntologyException if has inconsistencies
      * @throws IncoherentRBoxException if has unsatisfiable properties
      */
     @Test
-    public void testNoFalsePositives() throws IOException, IncoherentTBoxException, InconsistentOntologyException, IncoherentRBoxException {
+    public void testNoFalsePositives() throws IOException,
+            IncoherentTBoxException, InconsistentOntologyException,
+            IncoherentRBoxException {
         OWLOntology ontology = loadOntology("/simple.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();

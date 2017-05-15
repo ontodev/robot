@@ -54,7 +54,8 @@ public class QueryOperation {
         ontology.getOWLOntologyManager().saveOntology(ontology,
             new TurtleDocumentFormat(), out);
         DatasetGraph dsg = DatasetGraphFactory.createMem();
-        RDFDataMgr.read(dsg.getDefaultGraph(), new ByteArrayInputStream(out.toByteArray()), Lang.TURTLE);
+        RDFDataMgr.read(dsg.getDefaultGraph(), new ByteArrayInputStream(
+                out.toByteArray()), Lang.TURTLE);
         return dsg;
     }
 
@@ -66,16 +67,23 @@ public class QueryOperation {
      * @return the result set
      */
     public static ResultSet execQuery(DatasetGraph dsg, String query) {
-        QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        QueryExecution qexec = QueryExecutionFactory.create(query,
+                DatasetFactory.create(dsg));
         return qexec.execSelect();
     }
 
+    /**
+     * Execute a construct query.
+     *
+     * @param dsg The graph to construct in.
+     * @param query The SPARQL construct query string.
+     * @return the result.
+     */
     public static Model execConstruct(DatasetGraph dsg, String query) {
-        QueryExecution exec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        QueryExecution exec = QueryExecutionFactory.create(query,
+                DatasetFactory.create(dsg));
         return exec.execConstruct();
     }
-
-
 
     /**
      * Run a query and write the result to a file.
@@ -86,17 +94,29 @@ public class QueryOperation {
      * @param outputFormat The file format.
      * @throws FileNotFoundException if output file is not found
      */
-    public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
-            throws FileNotFoundException {
+    public static void runQuery(DatasetGraph dsg, String query, File output,
+            Lang outputFormat) throws FileNotFoundException {
         if (outputFormat == null) {
             outputFormat = Lang.CSV;
         }
-        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query), outputFormat);
+        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query),
+                outputFormat);
     }
 
-    public static void runConstruct(DatasetGraph dsg, String query, File output, Lang outputFormat)
+    /**
+     * Run a construct query and write the result.
+     *
+     * @param dsg The graph to construct in.
+     * @param query The SPARQL construct query string.
+     * @param output The file to write to.
+     * @param outputFormat The file format.
+     * @throws FileNotFoundException if output file is not found
+     */
+    public static void runConstruct(DatasetGraph dsg, String query, File output,
+            Lang outputFormat)
         throws FileNotFoundException {
-        RDFDataMgr.write(new FileOutputStream(output), execConstruct(dsg, query), outputFormat);
+        RDFDataMgr.write(new FileOutputStream(output),
+                execConstruct(dsg, query), outputFormat);
     }
 
     /**
@@ -113,6 +133,4 @@ public class QueryOperation {
         }
         return i;
     }
-
-
 }

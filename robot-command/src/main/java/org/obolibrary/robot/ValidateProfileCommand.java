@@ -11,84 +11,93 @@ import org.semanticweb.owlapi.profiles.OWL2Profile;
 import org.semanticweb.owlapi.profiles.OWLProfileReport;
 import org.semanticweb.owlapi.profiles.Profiles;
 
+/**
+ *
+ */
 public class ValidateProfileCommand implements Command  {
 
-	private final Options options;
+    /**
+     * Store the command-line options for the command.
+     */
+    private final Options options;
 
-	public ValidateProfileCommand() {
+    /**
+     * Initialize the command.
+     */
+    public ValidateProfileCommand() {
         Options o = CommandLineHelper.getCommonOptions();
         o.addOption("o", "output", true, "save validation report to a file");
-        o.addOption("p", "profile", true, "OWL profile to validate (DL, EL, RL, QL, or Full)");
+        o.addOption("p", "profile", true,
+                "OWL profile to validate (DL, EL, RL, QL, or Full)");
         o.addOption("i", "input",     true, "validate ontology from a file");
         o.addOption("I", "input-iri", true, "validate ontology from an IRI");
         options = o;
     }
 
-	@Override
-	public String getName() {
-		return "validate-profile";
-	}
+    @Override
+    public String getName() {
+        return "validate-profile";
+    }
 
-	@Override
-	public String getDescription() {
-		return "validate ontology against an OWL profile";
-	}
+    @Override
+    public String getDescription() {
+        return "validate ontology against an OWL profile";
+    }
 
-	@Override
-	public String getUsage() {
-		return "robot validate-profile --profile <profile> --output <file>";
-	}
+    @Override
+    public String getUsage() {
+        return "robot validate-profile --profile <profile> --output <file>";
+    }
 
-	@Override
-	public Options getOptions() {
-		return options;
-	}
+    @Override
+    public Options getOptions() {
+        return options;
+    }
 
-	@Override
-	public void main(String[] args) {
-		try {
-			execute(null, args);
-		} catch (Exception e) {
-			CommandLineHelper.handleException(getUsage(), getOptions(), e);
-		}
-	}
+    @Override
+    public void main(String[] args) {
+        try {
+            execute(null, args);
+        } catch (Exception e) {
+            CommandLineHelper.handleException(getUsage(), getOptions(), e);
+        }
+    }
 
-	@Override
-	public CommandState execute(CommandState state, String[] args)
-			throws Exception {
-		CommandLine line = CommandLineHelper
-			.getCommandLine(getUsage(), getOptions(), args);
-		if (line == null) {
-			return null;
-		}
-		IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-		state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-		OWLOntology ontology = state.getOntology();
-		String profile = CommandLineHelper.getRequiredValue(
-			line, "profile", "A --profile is required");
-		profile = profile.toUpperCase();
-		final OWLProfile owlProfile;
-		switch(profile) {
-			case "DL": owlProfile = Profiles.OWL2_DL; break;
-			case "EL": owlProfile = Profiles.OWL2_EL; break;
-			case "RL": owlProfile = Profiles.OWL2_RL; break;
-			case "QL": owlProfile = Profiles.OWL2_QL; break;
-			case "FULL": owlProfile = new OWL2Profile(); break; // #162
-			default: throw new Exception("Invalid profile: " + profile);
-		}
-		OWLProfileReport report = owlProfile.checkOntology(ontology);
-		File outputFile = CommandLineHelper.getOutputFile(line);
-		if (outputFile != null) {
-			FileWriter writer = new FileWriter(outputFile);
-			writer.write(report.toString());
-			writer.close();
-		} else {
-			System.out.println(report.toString());
-		}
-		if (!report.isInProfile()) {
-			throw new Exception("Ontology is not in profile " + profile);
-		}
-		return state;
-	}
-
+    @Override
+    public CommandState execute(CommandState state, String[] args)
+            throws Exception {
+        CommandLine line = CommandLineHelper
+                .getCommandLine(getUsage(), getOptions(), args);
+        if (line == null) {
+            return null;
+        }
+        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology ontology = state.getOntology();
+        String profile = CommandLineHelper.getRequiredValue(
+            line, "profile", "A --profile is required");
+        profile = profile.toUpperCase();
+        final OWLProfile owlProfile;
+        switch (profile) {
+            case "DL": owlProfile = Profiles.OWL2_DL; break;
+            case "EL": owlProfile = Profiles.OWL2_EL; break;
+            case "RL": owlProfile = Profiles.OWL2_RL; break;
+            case "QL": owlProfile = Profiles.OWL2_QL; break;
+            case "FULL": owlProfile = new OWL2Profile(); break; // #162
+            default: throw new Exception("Invalid profile: " + profile);
+        }
+        OWLProfileReport report = owlProfile.checkOntology(ontology);
+        File outputFile = CommandLineHelper.getOutputFile(line);
+        if (outputFile != null) {
+            FileWriter writer = new FileWriter(outputFile);
+            writer.write(report.toString());
+            writer.close();
+        } else {
+            System.out.println(report.toString());
+        }
+        if (!report.isInProfile()) {
+            throw new Exception("Ontology is not in profile " + profile);
+        }
+        return state;
+    }
 }

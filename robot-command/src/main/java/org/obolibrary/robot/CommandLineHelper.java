@@ -447,12 +447,13 @@ public class CommandLineHelper {
      * @throws IllegalArgumentException if the required options are not found
      * @throws IOException if the term file cannot be loaded
      */
-    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line) throws IllegalArgumentException, IOException {
+    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line)
+            throws IllegalArgumentException, IOException {
         return getTerms(ioHelper, line, false);
     }
 
     /**
-     * As getTerms, but allow the list to be empty
+     * As getTerms, but allow the list to be empty.
      *
      * @param ioHelper the IOHelper to use for loading the terms
      * @param line the command line to use
@@ -461,8 +462,8 @@ public class CommandLineHelper {
      * @throws IllegalArgumentException if the required options are not found
      * @throws IOException if the term file cannot be loaded
      */
-    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line, boolean allowEmpty)
-            throws IllegalArgumentException, IOException {
+    public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line,
+            boolean allowEmpty) throws IllegalArgumentException, IOException {
         Set<IRI> terms = getTerms(ioHelper, line, "term", "term-file");
 
         if (terms.size() == 0 && !allowEmpty) {

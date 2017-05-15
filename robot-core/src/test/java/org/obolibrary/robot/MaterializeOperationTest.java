@@ -28,20 +28,25 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterialize()
-            throws IOException, OWLOntologyCreationException, OntologyLogicException {
-        OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
+            throws IOException, OWLOntologyCreationException,
+            OntologyLogicException {
+        OWLOntology reasoned = loadOntology(
+                "/relax_equivalence_axioms_test.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
         //opts.put("exclude-owl-thing", "true");
-        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
-        assertIdentical("/relax_equivalence_axioms_expressions_materialized.obo", reasoned);
+        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null,
+                opts);
+        assertIdentical(
+                "/relax_equivalence_axioms_expressions_materialized.obo",
+                reasoned);
     }
 
     /**
      * Test reasoning with Expression Materializing Reasoner.
      *
-     * This test ensures that o trivial "C SubClassOf R some C" axioms are materialized
-     * for case where R is reflexive
+     * This test ensures that o trivial "C SubClassOf R some C" axioms are
+     * materialized for case where R is reflexive
      *
      * @throws IOException on file problem
      * @throws OWLOntologyCreationException on ontology problem
@@ -49,12 +54,14 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterializeWithReflexivity()
-            throws IOException, OWLOntologyCreationException, OntologyLogicException {
+            throws IOException, OWLOntologyCreationException,
+            OntologyLogicException {
         OWLOntology reasoned = loadOntology("/mat_reflexivity_test.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
         //opts.put("exclude-owl-thing", "true");
-        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
+        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null,
+                opts);
         assertIdentical("/mat_reflexivity_test_materialized.obo", reasoned);
     }
 
@@ -70,17 +77,19 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterializeGCIs()
-            throws IOException, OWLOntologyCreationException, OntologyLogicException {
+            throws IOException, OWLOntologyCreationException,
+            OntologyLogicException {
         OWLOntology reasoned = loadOntology("/gci_example.obo");
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
         //opts.put("exclude-owl-thing", "true");
-        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
+        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null,
+                 opts);
         assertIdentical("/gci_example_materialized.obo", reasoned);
     }
 
     /**
-     * Test reasoning with imports
+     * Test reasoning with imports.
      *
      * For motivation, see https://github.com/ontodev/robot/issues/119
      *
@@ -91,11 +100,14 @@ public class MaterializeOperationTest extends CoreTest {
      */
     @Test
     public void testMaterializeWithImports()
-            throws IOException, OWLOntologyCreationException, OntologyLogicException, URISyntaxException {
+            throws IOException, OWLOntologyCreationException,
+            OntologyLogicException, URISyntaxException {
 
-        // TODO: minor, simplify this once https://github.com/ontodev/robot/issues/121 implemeted
+        // TODO: minor, simplify this once
+        // https://github.com/ontodev/robot/issues/121 implemeted
 
-        File f = new File(getClass().getResource("/import-non-reasoned.owl").toURI());
+        File f = new File(getClass().getResource("/import-non-reasoned.owl")
+                .toURI());
         IOHelper ioh = new IOHelper();
         OWLOntology reasoned =  ioh.loadOntology(f, true);
         OWLOntology original =  ioh.loadOntology(f, true);
@@ -103,8 +115,8 @@ public class MaterializeOperationTest extends CoreTest {
 
         OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
         Map<String, String> opts = ReasonOperation.getDefaultOptions();
-        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null, opts);
+        MaterializeOperation.materialize(reasoned, coreReasonerFactory, null,
+                opts);
         assertIdentical(original, reasoned);
     }
-
 }

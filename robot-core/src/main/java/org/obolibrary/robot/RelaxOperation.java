@@ -4,13 +4,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLCardinalityRestriction;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -21,13 +18,13 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLQuantifiedObjectRestriction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Add additional SubClassOf axioms that are relaxed forms of equivalence axioms.
- * 
+ * Add additional SubClassOf axioms that are relaxed forms of equivalence
+ * axioms.
+ *
  * This is a form of incomplete reasoning that is useful when either axioms are
  * invisible to EL reasoners, or to produce an existential subclass graph that
  * has SomeValuesFrom superclasses materialized.
@@ -61,24 +58,25 @@ import org.slf4j.LoggerFactory;
  *    ...
  *    C SubClassOf X_n
  * </code>
- * 
+ *
  * Additionally, if X_i is a qualified cardinality constraint,
  * weaken to an existential
- * 
+ *
  * <h2>Usage</h2>
- * 
- * For ELK reasoners, it is recommended to use this prior to the reasoning step, as relaxation can
+ *
+ * For ELK reasoners, it is recommended to use this prior to the reasoning step,
+ * as relaxation can
  * reveal weaker forms of axioms that are outside EL.
- * 
- * It is recommended that the reduce operation is executed after relaxation, to remove
- * any redundancies within the subclass graph
- * 
- * Note that the materialize operation may seem to make the relax step pointless; materialization
- * produces the most specific existential parent. However, in some cases relaxation should still
- * be performed:
+ *
+ * It is recommended that the reduce operation is executed after relaxation, to
+ * remove any redundancies within the subclass graph
+ *
+ * Note that the materialize operation may seem to make the relax step
+ * pointless; materialization produces the most specific existential parent.
+ * However, in some cases relaxation should still be performed:
  *  - if Elk is used (see above)
  *  - if materialization is only performed on a subset of properties
- *  
+ *
  * The standard sequence is: relax-materialize-reduce, or relax-reason-reduce
  *
  * @see <a href="https://github.com/ontodev/robot/issues/7">issue 7</a>
@@ -127,9 +125,9 @@ public class RelaxOperation {
 
         for (OWLEquivalentClassesAxiom ax : eqAxioms) {
             for (OWLClassExpression x : ax.getClassExpressions()) {
-                
-                // we only relax in cases where the equivalence is between one named
-                // and one anon expression
+
+                // we only relax in cases where the equivalence is between one
+                // named and one anon expression
                 if (!x.isAnonymous()) {
                     OWLClass c = (OWLClass) x;
                     // ax = EquivalentClasses(x y1 y2 ...)
@@ -165,12 +163,12 @@ public class RelaxOperation {
     /**
      * Given an OWLClassExpression y, return a set of
      * OWLObjectSomeValuesFrom objects (p some v), where
-     * (p some v) is a superclass of y
-     * 
+     * (p some v) is a superclass of y.
+     *
      * Not guaranteed to be complete
      *
      * @param x The OWLClassExpression to check.
-     * @param dataFactory 
+     * @param dataFactory OWLDataFactory
      * @return the set of OWLObjectSomeValuesFrom objects
      */
     private static Set<OWLObjectSomeValuesFrom> getSomeValuesFromAncestor(
@@ -179,39 +177,40 @@ public class RelaxOperation {
         if (x instanceof OWLObjectSomeValuesFrom) {
             OWLObjectSomeValuesFrom svf = (OWLObjectSomeValuesFrom) x;
             svfs.add(svf);
-        }
-        else if (x instanceof OWLObjectCardinalityRestriction) {
-            OWLObjectCardinalityRestriction ocr = (OWLObjectCardinalityRestriction) x;
+
+        } else if (x instanceof OWLObjectCardinalityRestriction) {
+            OWLObjectCardinalityRestriction ocr =
+                    (OWLObjectCardinalityRestriction) x;
             OWLClassExpression filler = ocr.getFiller();
             OWLObjectPropertyExpression p = ocr.getProperty();
             if (ocr.getCardinality() > 0) {
-                OWLObjectSomeValuesFrom svf = 
+                OWLObjectSomeValuesFrom svf =
                         dataFactory.getOWLObjectSomeValuesFrom(p, filler);
                 svfs.add(svf);
             }
-           
-        }
-        else if (x instanceof OWLObjectIntersectionOf) {
+
+        } else if (x instanceof OWLObjectIntersectionOf) {
             for (OWLClassExpression op
                     : ((OWLObjectIntersectionOf) x).getOperands()) {
                 svfs.addAll(getSomeValuesFromAncestor(op, dataFactory));
             }
         }
+
         return svfs;
     }
-    
+
     /**
      * Given an OWLClassExpression y, return a set of
-     * named classes c, 
+     * named classes c,
      * such that c is a superclass of y,
-     * 
+     *
      * obtained by relaxing/unwinding expression, in a way
      * that is guaranteed valid but not guaranteed complete.
-     * 
+     *
      * This is effectively poor-mans reasoning over IntersectionOf; e.g
-     * 
+     *
      * <pre>
-     * C SubClassOf (C and ...) 
+     * C SubClassOf (C and ...)
      * </pre>
      *
      * @param x The OWLClassExpression to unwind.
@@ -230,7 +229,4 @@ public class RelaxOperation {
         }
         return cs;
     }
-
-
-
 }
