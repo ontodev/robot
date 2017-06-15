@@ -108,24 +108,23 @@ public class ReduceOperation {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
-
-        Map<OWLClass, Set<OWLClass>> subClassMap = new HashMap<>();
-        Set<OWLSubClassOfAxiom> subClassAxioms =
+        Map<OWLClass, Set<OWLClass>> assertedSubClassMap = new HashMap<>();
+        Set<OWLSubClassOfAxiom> assertedSubClassAxioms =
             ontology.getAxioms(AxiomType.SUBCLASS_OF);
         Set<OWLClassExpression> exprs = new HashSet<>();
         //Map<OWLClass, OWLClassExpression> xmap = new HashMap<>();
-        Map<OWLClassExpression, OWLClass> rxmap = new HashMap<>();
+        Map<OWLClassExpression, OWLClass> exprToNamedClassMap = new HashMap<>();
 
-        for (OWLSubClassOfAxiom ax : subClassAxioms) {
+        for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
 
             OWLClass subClass =
-                mapClass(dataFactory, rxmap, ax.getSubClass());
+                mapClass(dataFactory, exprToNamedClassMap, ax.getSubClass());
             OWLClass superClass =
-                mapClass(dataFactory, rxmap, ax.getSuperClass());
-            if (!subClassMap.containsKey(subClass)) {
-                subClassMap.put(subClass, new HashSet<OWLClass>());
+                mapClass(dataFactory, exprToNamedClassMap, ax.getSuperClass());
+            if (!assertedSubClassMap.containsKey(subClass)) {
+                assertedSubClassMap.put(subClass, new HashSet<OWLClass>());
             }
-            subClassMap.get(subClass).add(superClass);
+            assertedSubClassMap.get(subClass).add(superClass);
 
             // DEP
             if (ax.getSubClass().isAnonymous()) {
@@ -136,9 +135,9 @@ public class ReduceOperation {
             }
         }
         Set<OWLAxiom> tempAxioms = new HashSet<>();
-        for (OWLClassExpression x : rxmap.keySet()) {
+        for (OWLClassExpression x : exprToNamedClassMap.keySet()) {
             OWLAxiom ax =
-                dataFactory.getOWLEquivalentClassesAxiom(rxmap.get(x), x);
+                dataFactory.getOWLEquivalentClassesAxiom(exprToNamedClassMap.get(x), x);
             manager.addAxiom(ontology, ax);
             tempAxioms.add(ax);
         }
@@ -164,25 +163,34 @@ public class ReduceOperation {
         }
 
         Set<OWLSubClassOfAxiom> rmAxioms = new HashSet<>();
-        for (OWLSubClassOfAxiom ax : subClassAxioms) {
+        for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
 
             // TO DO: make configurable
             if (ax.getAnnotations().size() > 0) {
-                logger.debug("Protecting: " + ax);
+                logger.debug("Protecting axiom with annotations: " + ax);
                 continue;
             }
 
             logger.debug("Testing: " + ax);
             OWLClassExpression subClassExpr = ax.getSubClass();
             OWLClassExpression superClassExpr = ax.getSuperClass();
-            OWLClass subClass = rxmap.get(subClassExpr);
-            OWLClass superClass = rxmap.get(superClassExpr);
+            OWLClass subClass = exprToNamedClassMap.get(subClassExpr);
+            OWLClass superClass = exprToNamedClassMap.get(superClassExpr);
             boolean isRedundant = false;
 
-            for (OWLClass assertedSuper : subClassMap.get(subClass)) {
+            for (OWLClass assertedSuper : assertedSubClassMap.get(subClass)) {
                 if (reasoner.getSuperClasses(assertedSuper, false)
                         .containsEntity(superClass)) {
                     isRedundant = true;
+                    
+                    // DUMB CODE FOR DEBUGGING
+                    OWLClassExpression assertedSuperX = assertedSuper;
+                    for (OWLClassExpression x : exprToNamedClassMap.keySet()) {
+                        if (exprToNamedClassMap.get(x).equals(assertedSuper)) {
+                            assertedSuperX = x;
+                        }
+                    }
+                    logger.debug("Redundant: "+ax+", because "+assertedSuper+"("+assertedSuperX+") "+" subClassOf "+superClass+" ("+superClassExpr+")");
                     break;
                 }
             }
@@ -192,7 +200,7 @@ public class ReduceOperation {
                 logger.debug("GCI:" + subClassExpr);
                 for (OWLClass intermediateParent: reasoner
                         .getSuperClasses(subClass, false).getFlattened()) {
-                    if (subClassMap.containsKey(intermediateParent)) {
+                    if (assertedSubClassMap.containsKey(intermediateParent)) {
                         logger.debug(
                             "GCI intermediate parent:" + intermediateParent);
                         if (reasoner.getSuperClasses(intermediateParent, false)

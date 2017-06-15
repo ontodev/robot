@@ -16,6 +16,7 @@ import org.obolibrary.robot.exceptions.InconsistentOntologyException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
@@ -36,6 +37,7 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.InferredAxiomGenerator;
+import org.semanticweb.owlapi.util.InferredObjectPropertyCharacteristicAxiomGenerator;
 import org.semanticweb.owlapi.util.InferredOntologyGenerator;
 import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
 
@@ -156,7 +158,7 @@ public class ReasonOperation {
         // Make sure to add the axiom generators in this way!!!
         List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
                 new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
-        gens.add(new InferredSubClassAxiomGenerator());
+        gens.add(new InferredSubClassAxiomGenerator());        
         InferredOntologyGenerator generator =
                 new InferredOntologyGenerator(reasoner, gens);
         logger.info("Using these axiom generators:");

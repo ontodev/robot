@@ -90,4 +90,43 @@ public class ReduceOperationTest extends CoreTest {
         ReduceOperation.reduce(reasoned, reasonerFactory, options);
         assertIdentical("/reduce_gci_reduced.obo", reasoned);
     }
+    
+    /**
+     * This test ensures that subClassOf axioms are never removed if they lead
+     * to loss of information in the subClassOf graph
+     * 
+     * @throws IOException
+     */
+    @Test
+    public void testReduceWithEquiv() throws IOException {
+        OWLOntology reasoned = loadOntology("/equiv_reduce_test.obo");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .elk.owlapi.ElkReasonerFactory();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("remove-redundant-subclass-axioms", "true");
+
+        ReduceOperation.reduce(reasoned, reasonerFactory, options);
+        assertIdentical("/equiv_reduce_test_reduced.obo", reasoned);
+    }
+    
+    /**
+     * Edge case, taken from GO
+     * 
+     * See: 'central nervous system development' in the test file
+     * 
+     * @throws IOException
+     */
+    @Test
+    public void testReduceEdgeCase() throws IOException {
+        OWLOntology reasoned = loadOntology("/reduce-edgecase-cnd.obo");
+        OWLReasonerFactory reasonerFactory = new org.semanticweb
+            .elk.owlapi.ElkReasonerFactory();
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("remove-redundant-subclass-axioms", "true");
+
+        ReduceOperation.reduce(reasoned, reasonerFactory, options);
+        assertIdentical("/reduce-edgecase-cnd-reduced.obo", reasoned);
+    }
 }
