@@ -79,6 +79,7 @@ public class VerifyCommand implements Command {
         DatasetGraph graph = QueryOperation.loadOntology(ontology);
 
         File resultDir = new File(line.getOptionValue("report"));
+        boolean violationsExist = false;
 
         for(String filePath : line.getOptionValues("queries")) {
             File query = new File(filePath);
@@ -88,11 +89,15 @@ public class VerifyCommand implements Command {
 
             System.out.println("Rule " + filePath + ": " + resultsCopy.size() + " violation(s)");
             if(resultsCopy.size() > 0) {
+                violationsExist = true;
                 ResultSetMgr.write(System.out, resultsCopy, Lang.CSV);
                 resultsCopy.reset();
             }
             System.out.print('\n');
             ResultSetMgr.write(new FileOutputStream(resultCsv), resultsCopy, Lang.CSV);
+        }
+        if(violationsExist) {
+            System.exit(1);
         }
 
         return inputState;
