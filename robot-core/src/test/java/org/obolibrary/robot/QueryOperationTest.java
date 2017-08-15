@@ -1,10 +1,16 @@
 package org.obolibrary.robot;
 
-import java.io.IOException;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.Lists;
+import com.hp.hpl.jena.query.ResultSetFactory;
+import com.hp.hpl.jena.query.ResultSetRewindable;
 import org.junit.Test;
 
 import com.hp.hpl.jena.query.ResultSet;
@@ -14,6 +20,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.obolibrary.robot.exceptions.CannotReadQuery;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -77,5 +84,49 @@ public class QueryOperationTest extends CoreTest {
                 "http://purl.obolibrary.org/obo/UBERON_0000467");
         assertTrue(model.contains(s, p, o));
     }
+
+    @Test
+    public void testExecVerifyWithViolations() throws IOException, OWLOntologyStorageException {
+
+        OWLOntology ontology = loadOntology("/simple.owl");
+        DatasetGraph graph = QueryOperation.loadOntology(ontology);
+        String allViolations =
+            "SELECT ?s ?p ?o\n" +
+                "WHERE {\n" +
+                "    ?s ?p ?o .\n" +
+                "}\n" +
+                "LIMIT 10";
+        ResultSet resultSet = QueryOperation.execQuery(graph, allViolations);
+        ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);
+        Map<File, Tuple<ResultSetRewindable, OutputStream>> testResults = new HashMap<>();
+        ByteArrayOutputStream testOut = new ByteArrayOutputStream();
+        testResults.put(new File("/path/to/rule.sparql"), new Tuple<>(copy, testOut));
+        boolean violations = QueryOperation.execVerify(testResults);
+
+        assertTrue(violations);
+        assertEquals(7, Lists.newArrayList(testOut.toString().split("\n")).size());
+    }
+
+    @Test
+    public void testExecVerifyNoViolations() throws IOException, OWLOntologyStorageException {
+        OWLOntology ontology = loadOntology("/simple.owl");
+        DatasetGraph graph = QueryOperation.loadOntology(ontology);
+        String allViolations =
+            "SELECT ?s ?p ?o\n" +
+                "WHERE {\n" +
+                "    \n" +
+                "}\n" +
+                "LIMIT 0";
+        ResultSet resultSet = QueryOperation.execQuery(graph, allViolations);
+        ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);
+        Map<File, Tuple<ResultSetRewindable, OutputStream>> testResults = new HashMap<>();
+        ByteArrayOutputStream testOut = new ByteArrayOutputStream();
+        testResults.put(new File("/path/to/rule.sparql"), new Tuple<>(copy, testOut));
+        boolean violations = QueryOperation.execVerify(testResults);
+
+        assertFalse(violations);
+        assertEquals(1, Lists.newArrayList(testOut.toString().split("\n")).size());
+    }
+
 
 }

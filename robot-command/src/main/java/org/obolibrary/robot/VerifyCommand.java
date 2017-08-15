@@ -21,7 +21,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -43,7 +46,7 @@ public class VerifyCommand implements Command {
 
     @Override
     public String getUsage() {
-        return "robot verify --input ONTOLOGY --queries FILE [FILE [...]] --report DIR";
+        return "robot verify --input ONTOLOGY --queries FILE [FILE [...]] --report-dir DIR";
     }
 
     @Override
@@ -53,7 +56,7 @@ public class VerifyCommand implements Command {
         queries.setRequired(true);
         queries.setArgs(Option.UNLIMITED_VALUES);
         options.addOption(queries);
-        Option report = new Option("r", "report", true, "Directory to place reports in");
+        Option report = new Option("r", "report-dir", true, "Directory to place reports in");
         report.setRequired(true);
         options.addOption(report);
         options.addOption("i", "input", true, "Input Ontology");
@@ -78,24 +81,18 @@ public class VerifyCommand implements Command {
         OWLOntology ontology = ontologyManager.loadOntologyFromOntologyDocument(new File(line.getOptionValue("input")));
         DatasetGraph graph = QueryOperation.loadOntology(ontology);
 
-        File resultDir = new File(line.getOptionValue("report"));
-        boolean violationsExist = false;
+        File resultDir = new File(line.getOptionValue("report-dir"));
 
+        Map<File, Tuple<ResultSetRewindable, OutputStream>> resultMap = new HashMap<>();
         for(String filePath : line.getOptionValues("queries")) {
             File query = new File(filePath);
             ResultSet results = QueryOperation.execQuery(graph, fileContents(query));
             ResultSetRewindable resultsCopy = ResultSetFactory.copyResults(results);
             File resultCsv = resultDir.toPath().resolve(FilenameUtils.getBaseName(filePath).concat(".csv")).toFile();
-
-            System.out.println("Rule " + filePath + ": " + resultsCopy.size() + " violation(s)");
-            if(resultsCopy.size() > 0) {
-                violationsExist = true;
-                ResultSetMgr.write(System.out, resultsCopy, Lang.CSV);
-                resultsCopy.reset();
-            }
-            System.out.print('\n');
-            ResultSetMgr.write(new FileOutputStream(resultCsv), resultsCopy, Lang.CSV);
+            resultMap.put(query, new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
         }
+
+        boolean violationsExist = QueryOperation.execVerify(resultMap);
         if(violationsExist) {
             System.exit(1);
         }
