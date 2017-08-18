@@ -56,7 +56,7 @@ public class VerifyCommand implements Command {
         queries.setRequired(true);
         queries.setArgs(Option.UNLIMITED_VALUES);
         options.addOption(queries);
-        Option report = new Option("r", "report-dir", true, "Directory to place reports in");
+        Option report = new Option("O", "output-dir", true, "Directory to place reports in");
         report.setRequired(true);
         options.addOption(report);
         options.addOption("i", "input", true, "Input Ontology");
@@ -81,7 +81,7 @@ public class VerifyCommand implements Command {
         OWLOntology ontology = ontologyManager.loadOntologyFromOntologyDocument(new File(line.getOptionValue("input")));
         DatasetGraph graph = QueryOperation.loadOntology(ontology);
 
-        File resultDir = new File(line.getOptionValue("report-dir"));
+        File resultDir = new File(line.getOptionValue("output-dir"));
 
         Map<File, Tuple<ResultSetRewindable, OutputStream>> resultMap = new HashMap<>();
         for(String filePath : line.getOptionValues("queries")) {
