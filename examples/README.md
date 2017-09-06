@@ -142,7 +142,9 @@ directory passed to `-O` must exist.
 
 For example:
 
-    robot verify --input asserted-equiv.owl --queries equivalent.sparql -O results/
+```
+robot verify --input asserted-equiv.owl --queries equivalent.sparql -O results/
+```
     
 Should output as a response: 
 
