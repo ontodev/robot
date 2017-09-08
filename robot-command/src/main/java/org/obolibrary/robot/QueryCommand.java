@@ -2,7 +2,9 @@ package org.obolibrary.robot;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
+import com.hp.hpl.jena.sparql.algebra.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +43,8 @@ public class QueryCommand implements Command {
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
         o.addOption("f", "format",    true, "the query result format: CSV, TSV,"
                 + " TTL, JSONLD, etc.");
+        o.addOption("q", "sparql", true, "Path to a sparql query file");
+        o.addOption("O", "output", true, "Path to file where the results will be written to");
         Option select = new Option("s", "select", true,
             "run a SPARQL select query and output result");
         select.setArgs(2);
@@ -121,28 +125,45 @@ public class QueryCommand implements Command {
             return null;
         }
         String formatName = CommandLineHelper.getOptionalValue(line, "format");
-        Lang outputFormat = Lang.CSV;
+        Optional<Lang> outputFormat = Optional.empty();
         if (formatName != null) {
             formatName = formatName.toLowerCase();
-            if (formatName.equals("tsv")) {
-                outputFormat = ResultSetLang.SPARQLResultSetTSV;
-            } else if (formatName.equals("ttl")) {
-                outputFormat = Lang.TTL;
-
-            } else if (formatName.equals("jsonld")) {
-                outputFormat = Lang.JSONLD;
-
-            } else if (formatName.equals("nt")) {
-                outputFormat = Lang.NT;
-
-            } else if (formatName.equals("nq")) {
-                outputFormat = Lang.NQ;
+            switch (formatName) {
+                case "tsv":
+                    outputFormat = Optional.of(ResultSetLang.SPARQLResultSetTSV);
+                    break;
+                case "ttl":
+                    outputFormat = Optional.of(Lang.TTL);
+                    break;
+                case "jsonld":
+                    outputFormat = Optional.of(Lang.JSONLD);
+                    break;
+                case "nt":
+                    outputFormat = Optional.of(Lang.NT);
+                    break;
+                case "nq":
+                    outputFormat = Optional.of(Lang.NQ);
+                    break;
+                case "csv":
+                    outputFormat = Optional.of(Lang.CSV);
+                    break;
+                default:
+                    outputFormat = Optional.empty();
             }
         }
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
+
+        if(line.hasOption("sparql") && line.hasOption("output")) {
+            String queryPath = line.getOptionValue("sparql");
+            String outputPath = line.getOptionValue("output");
+            String query = FileUtils.readFileToString(new File(queryPath));
+
+            QueryOperation.runSparqlQuery(dsg, query, new File(outputPath), outputFormat);
+            return state;
+        }
 
         // Handle select
         if (line.hasOption("select")) {
@@ -153,8 +174,9 @@ public class QueryCommand implements Command {
                 String query = FileUtils.readFileToString(new File(
                         select.get(i)));
                 File output = new File(select.get(i + 1));
-                QueryOperation.runQuery(dsg, query, output, outputFormat);
+                QueryOperation.runQuery(dsg, query, output, outputFormat.orElse(Lang.CSV));
             }
+        //Handle Construct
         } else if (line.hasOption("construct")) {
             List<String> select = CommandLineHelper.getOptionalValues(line,
                     "construct");
@@ -163,7 +185,7 @@ public class QueryCommand implements Command {
                 String query = FileUtils.readFileToString(new File(
                         select.get(i)));
                 File output = new File(select.get(i + 1));
-                QueryOperation.runConstruct(dsg, query, output, outputFormat);
+                QueryOperation.runConstruct(dsg, query, output, outputFormat.orElse(Lang.CSV));
             }
         }
 

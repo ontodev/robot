@@ -5,15 +5,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
+import java.util.Optional;
 
+import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.Model;
+import org.obolibrary.robot.query.QueryResult;
+import org.obolibrary.robot.query.SparqlQueryExecution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
@@ -67,8 +67,8 @@ public class QueryOperation {
      * @return the result set
      */
     public static ResultSet execQuery(DatasetGraph dsg, String query) {
-        QueryExecution qexec = QueryExecutionFactory.create(query,
-                DatasetFactory.create(dsg));
+        QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        Query q = qexec.getQuery();
         return qexec.execSelect();
     }
 
@@ -80,8 +80,7 @@ public class QueryOperation {
      * @return the result.
      */
     public static Model execConstruct(DatasetGraph dsg, String query) {
-        QueryExecution exec = QueryExecutionFactory.create(query,
-                DatasetFactory.create(dsg));
+        QueryExecution exec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
         return exec.execConstruct();
     }
 
@@ -94,13 +93,11 @@ public class QueryOperation {
      * @param outputFormat The file format.
      * @throws FileNotFoundException if output file is not found
      */
-    public static void runQuery(DatasetGraph dsg, String query, File output,
-            Lang outputFormat) throws FileNotFoundException {
+    public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat) throws FileNotFoundException {
         if (outputFormat == null) {
             outputFormat = Lang.CSV;
         }
-        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query),
-                outputFormat);
+        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query), outputFormat);
     }
 
     /**
@@ -112,11 +109,14 @@ public class QueryOperation {
      * @param outputFormat The file format.
      * @throws FileNotFoundException if output file is not found
      */
-    public static void runConstruct(DatasetGraph dsg, String query, File output,
-            Lang outputFormat)
-        throws FileNotFoundException {
-        RDFDataMgr.write(new FileOutputStream(output),
-                execConstruct(dsg, query), outputFormat);
+    public static void runConstruct(DatasetGraph dsg, String query, File output, Lang outputFormat) throws FileNotFoundException {
+        RDFDataMgr.write(new FileOutputStream(output), execConstruct(dsg, query), outputFormat);
+    }
+
+    public static void runSparqlQuery(DatasetGraph dsg, String query, File output, Optional<Lang> outputFormat) {
+        SparqlQueryExecution execution = new SparqlQueryExecution(dsg);
+        QueryResult queryResult = execution.runQuery(query);
+        queryResult.writeResults(output, outputFormat);
     }
 
     /**
