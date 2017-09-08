@@ -93,6 +93,70 @@ For more details see:
 - [SLME](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
 - [ModuleType](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
+## Querying
+
+Robot can be used to submit [sparql](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#bind) 
+queries against an ontology. Robot currently has two commands `query` and `verify` that use sparql to
+perform queries on ontology sets.
+
+### `query`
+
+The `query` command comes in two flavors, `select` and `construct`, which are passed in as options:
+`robot query --select` or `robot query --construct`. `select` corresponds to a sparql 
+_[SELECT](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select)_ query. This is used to 
+extract data matching a pattern. 
+
+    robot query --input nucleus.owl --select subclass_of_0044464.sparql output
+
+Resulting in:
+    
+    subs,names
+    http://purl.obolibrary.org/obo/GO_0044424,intracellular part
+    http://purl.obolibrary.org/obo/GO_0005622,intracellular
+    
+The `construct` option allows one to build triples based on a pattern using a 
+[CONSTRUCT](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#construct) query. This will output
+triples in the format specified with the `--format` option, and should probably be set to "ttl" for this
+query mode. For example:
+
+    robot query --format ttl --input nucleus.owl --construct construct_some.sparql output
+    
+Has many results, but a portion could look like:
+
+    <http://purl.obolibrary.org/obo/GO_0044464>
+            part_of_inferred:  <http://purl.obolibrary.org/obo/GO_0005623> .
+    
+    <http://purl.obolibrary.org/obo/GO_0043229>
+            part_of_inferred:  <http://purl.obolibrary.org/obo/GO_0005622> .
+            
+Note that we've created a triple where none existed before. 
+
+### `verify`
+
+The verify command runs a SELECT sparql query against an ontology where the results of the query are
+considered "violations". Verify expects that there will be no results for a valid ontology. Any results
+are reported in a file and then robot exits with status 1. You can pass in as many queries
+files as you want in to the `--queries` option. They'll each be run against the ontology
+provided. Inside the results (`-O`) directory robot will create output files for each sparql query. The 
+directory passed to `-O` must exist.
+
+For example:
+
+```
+robot verify --input asserted-equiv.owl --queries equivalent.sparql -O results/
+```
+    
+Should output as a response: 
+
+    Rule /Users/edouglass/lbl/ontodev/robot/examples/equivalent.sparql: 1 violation(s)
+    first,second,firstLabel,secondLabel
+    http://purl.obolibrary.org/obo/TEST_A,http://purl.obolibrary.org/obo/TEST_B,,
+    
+And the CSV file results/equivalent.csv should have:
+
+    first,second,firstLabel,secondLabel
+    http://purl.obolibrary.org/obo/TEST_A,http://purl.obolibrary.org/obo/TEST_B,,
+
 
 ## Reasoning
 

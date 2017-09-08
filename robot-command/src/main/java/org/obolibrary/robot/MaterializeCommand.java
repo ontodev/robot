@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
-import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -37,7 +35,8 @@ public class MaterializeCommand implements Command {
      */
     public MaterializeCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("r", "reasoner",  true, "core reasoner to use: (ELK, HermiT)");
+        o.addOption("r", "reasoner",  true, "core reasoner to use: "
+                + "(ELK, HermiT)");
         o.addOption("s", "remove-redundant-subclass-axioms",
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
@@ -137,12 +136,12 @@ public class MaterializeCommand implements Command {
         if (reasonerName.equals("structural")) {
             reasonerFactory = new org.semanticweb.owlapi.reasoner
                 .structural.StructuralReasonerFactory();
-        }
-        else if (reasonerName.equals("hermit")) {
+
+        } else if (reasonerName.equals("hermit")) {
             reasonerFactory = new org.semanticweb
                 .HermiT.Reasoner.ReasonerFactory();
-        }
-        else {
+
+        } else {
             reasonerFactory = new org.semanticweb
                 .elk.owlapi.ElkReasonerFactory();
         }
@@ -155,7 +154,7 @@ public class MaterializeCommand implements Command {
                 reasonerOptions.put(option, line.getOptionValue(option));
             }
         }
-        
+
         Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, true);
         Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
         for (IRI term: terms) {
@@ -165,7 +164,8 @@ public class MaterializeCommand implements Command {
         }
 
 
-        MaterializeOperation.materialize(ontology, reasonerFactory, properties, reasonerOptions);
+        MaterializeOperation.materialize(ontology, reasonerFactory, properties,
+                reasonerOptions);
 
         CommandLineHelper.maybeSaveOutput(line, ontology);
 

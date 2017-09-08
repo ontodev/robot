@@ -2,6 +2,9 @@ package org.obolibrary.robot;
 
 import java.util.Map;
 
+/**
+ * Provides convenience methods for getting options.
+ */
 public class OptionsHelper {
 
     /**

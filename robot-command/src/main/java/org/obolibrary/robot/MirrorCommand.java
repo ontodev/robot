@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Mirrors an ontology plus its imports closure locally
+ * Mirrors an ontology plus its imports closure locally.
  *
  * @author <a href="mailto:cjmungall@lbl.gov">Chris Mungall</a>
  */
@@ -33,7 +33,8 @@ public class MirrorCommand implements Command {
         o.addOption("i", "input",     true, "mirror ontology from a file");
         o.addOption("I", "input-iri", true, "mirror ontology from an IRI");
         o.addOption("d", "directory", true, "target directory");
-        o.addOption("o", "output",    true, "output file for catalog (default catalog-v001.xml)");
+        o.addOption("o", "output",    true, "output file for catalog "
+                + "(default catalog-v001.xml)");
         options = o;
     }
 
@@ -89,7 +90,7 @@ public class MirrorCommand implements Command {
     }
 
     /**
-     * Mirrors the input ontologgy and its imports closure
+     * Mirrors the input ontologgy and its imports closure.
      *
      * @param state the state from the previous command, or null
      * @param args the command-line arguments
@@ -116,7 +117,8 @@ public class MirrorCommand implements Command {
         File catalogFile = CommandLineHelper.getOutputFile(line);
         if (catalogFile == null) {
             catalogFile = new File(dir + "/catalog-v001.xml");
-            logger.info("Using default catalog with specified directory:" + catalogFile);
+            logger.info("Using default catalog with specified directory:"
+                    + catalogFile);
         }
 
         MirrorOperation.mirror(ontology, new File(dir), catalogFile);

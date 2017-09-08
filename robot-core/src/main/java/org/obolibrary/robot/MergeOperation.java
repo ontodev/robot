@@ -38,12 +38,13 @@ public class MergeOperation {
 
     /**
      * Given one or more ontologies,
-     * add all their axioms (including their imports closures) into the first ontology,
-     * and return the first ontology.
-     * 
+     * add all their axioms (including their imports closures) into the first
+     * ontology, and return the first ontology.
+     *
      * Note the imports directives in the first ontology is preserved, but
-     * axioms from the imports closures are also added. This behavior may change, see #84
-     * 
+     * axioms from the imports closures are also added. This behavior may
+     * change, see #84
+     *
      * We use a list instead of a set because OWLAPI judges identity
      * simply by the ontology IRI, even if two ontologies have different axioms.
      *

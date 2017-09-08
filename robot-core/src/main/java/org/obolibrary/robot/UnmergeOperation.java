@@ -10,7 +10,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 
 /**
- * Remove axioms from an ontology
+ * Remove axioms from an ontology.
  *
  * @author <a href="mailto:cjmungall@lbl.gov">Chris Mungall</a>
  */
@@ -26,7 +26,7 @@ public class UnmergeOperation {
      * Given one or more ontologies,
      * remove all the axioms from the listed ontologies and their import closure
      * from the first ontology, and return the first ontology
-     * 
+     *
      * We use a list instead of a set because OWLAPI judges identity
      * simply by the ontology IRI, even if two ontologies have different axioms.
      *
@@ -41,8 +41,8 @@ public class UnmergeOperation {
 
     /**
      * Given a source ontology and a target ontology,
-      * remove all the axioms from the listed ontologies and their import closure
-     * from the target ontology.
+     * remove all the axioms from the listed ontologies and their import
+     * closure from the target ontology.
      *
      * @param ontology the source ontology to unmerge
      * @param targetOntology the ontology to remove axioms from
@@ -96,13 +96,14 @@ public class UnmergeOperation {
     public static void unmergeFrom(List<OWLOntology> ontologies,
             OWLOntology targetOntology, boolean includeAnnotations) {
         for (OWLOntology ontology: ontologies) {
-            logger.info("Removing axioms from: "+ontology);
+            logger.info("Removing axioms from: " + ontology);
             targetOntology.getOWLOntologyManager()
                 .removeAxioms(targetOntology, ontology.getAxioms());
             if (includeAnnotations) {
                 for (OWLAnnotation annotation: ontology.getAnnotations()) {
                     RemoveOntologyAnnotation remove =
-                            new RemoveOntologyAnnotation(targetOntology, annotation);
+                            new RemoveOntologyAnnotation(targetOntology,
+                                    annotation);
                     targetOntology.getOWLOntologyManager().applyChange(remove);
                 }
             }

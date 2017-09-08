@@ -51,11 +51,11 @@ public class ReduceOperationTest extends CoreTest {
         ReduceOperation.reduce(reasoned, reasonerFactory, options);
         assertIdentical("/redundant_expr_reduced.obo", reasoned);
     }
-    
+
     /**
      * If P is reflexive, and we have
      *  "A SubClassOf B" and "A SubClassOf P some B",
-     * then the second becomes redundant
+     * then the second becomes redundant.
      *
      * @throws IOException on file problem
      */
