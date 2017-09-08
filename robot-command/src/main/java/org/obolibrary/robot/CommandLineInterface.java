@@ -37,6 +37,7 @@ public class CommandLineInterface {
         m.addCommand("template",         new TemplateCommand());
         m.addCommand("unmerge",          new UnmergeCommand());
         m.addCommand("validate-profile", new ValidateProfileCommand());
+        m.addCommand("verify",           new VerifyCommand());
         return m;
     }
 

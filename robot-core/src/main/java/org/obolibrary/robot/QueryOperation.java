@@ -1,19 +1,18 @@
 package org.obolibrary.robot;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Lists;
+import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
@@ -83,6 +82,24 @@ public class QueryOperation {
         QueryExecution exec = QueryExecutionFactory.create(query,
                 DatasetFactory.create(dsg));
         return exec.execConstruct();
+    }
+
+    public static boolean execVerify(Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
+        boolean isViolation = false;
+        for(File outFile : queriesResults.keySet()) {
+            Tuple<ResultSetRewindable, OutputStream> resultAndStream = queriesResults.get(outFile);
+            ResultSetRewindable results = resultAndStream.left();
+            OutputStream outStream = resultAndStream.right();
+            System.out.println("Rule " + outFile.getCanonicalPath() + ": " + results.size() + " violation(s)");
+            if(results.size() > 0) {
+                isViolation = true;
+                ResultSetMgr.write(System.err, results, Lang.CSV);
+                results.reset();
+            }
+            System.err.print('\n');
+            ResultSetMgr.write(outStream, results, Lang.CSV);
+        }
+        return isViolation;
     }
 
     /**
