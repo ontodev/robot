@@ -147,6 +147,12 @@ public class QueryCommand implements Command {
                 case "csv":
                     outputFormat = Optional.of(Lang.CSV);
                     break;
+                case "xml":
+                    outputFormat = Optional.of(Lang.RDFXML);
+                    break;
+                case "sxml":
+                    outputFormat = Optional.of(ResultSetLang.SPARQLResultSetXML);
+                    break;
                 default:
                     outputFormat = Optional.empty();
             }

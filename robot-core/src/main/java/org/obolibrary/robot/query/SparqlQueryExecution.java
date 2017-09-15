@@ -36,6 +36,7 @@ public class SparqlQueryExecution {
 
             case Query.QueryTypeAsk:
                 boolean answer = exec.execAsk();
+                return new AskResult(answer);
 
             default:
                 throw new UnsupportedSparqlQueryType("SPARQL " + UnsupportedSparqlQueryType.queryTypeName(q) + " queries are currently unsupported.");
