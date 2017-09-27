@@ -94,6 +94,30 @@ For more details see:
 - [ModuleType](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
 
+## Querying
+
+Robot allows you to query ontology files with SPARQL. See the [W3C documentation](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/)
+for information on how SPARQL queries are written. 
+
+Robot allows sparql queries through the `query` command. You can specifically tell robot to run a sparql 
+`SELECT` query with the `--select` option, where the sparql query file is the first argument and the second
+argument is the results file path. You could make a `CONSTRUCT` sparql query with `--construct` with the same
+argument form as for `--select`. For example:
+
+    robot query --input examples/edit.owl --construct examples/test.sparql output
+    
+Specify an output language with `--format <lang>`. Support includes ttl, jsonld, nt, nq, and rdfxml for RDF
+outputs (Construct queries, etc), and tsv, csv, and sxml for sparql results outputs (Select, etc). 
+
+For any non-updating query, you don't have to use the above forms, where you need to know the kind of query 
+before you run it. Instead, you can simply supply `--sparql` and then the path to the sparql query file, `--output` and
+the path to the results output file. For example:
+
+    robot query --input examples/edit.owl --sparql examples/test.sparql --output output
+    
+This will automatically output an RDF language (since the example test.sparql is a CONSTRUCT) whereas if your query was
+a SELECT it would output in a sparql result format automatically. Specifying just overrides the defaults.
+
 ## Reasoning
 
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using [ELK](https://code.google.com/p/elk-reasoner/), a very fast reasoner that supports the EL subset of OWL 2.

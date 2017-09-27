@@ -81,7 +81,8 @@ public class QueryCommand implements Command {
      */
     public String getUsage() {
         return "robot query --input <file> "
-             + "--select <query> <result> ";
+             + "--select <query> <result> \n" +
+            "robot query --input <rdf data> --sparql <query file> --output <path to results>";
     }
 
     /**
@@ -191,7 +192,7 @@ public class QueryCommand implements Command {
                 String query = FileUtils.readFileToString(new File(
                         select.get(i)));
                 File output = new File(select.get(i + 1));
-                QueryOperation.runConstruct(dsg, query, output, outputFormat.orElse(Lang.CSV));
+                QueryOperation.runConstruct(dsg, query, output, outputFormat.orElse(Lang.TTL));
             }
         }
 
