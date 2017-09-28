@@ -185,13 +185,10 @@ public class ReasonOperation {
             // todo: set ontology id
             if (OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
                 logger.info("Placing inferred axioms with annotations into a new ontology");
-                ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION);
-
                 manager.removeAxioms(ontology,
                    ontology.getAxioms()
                        .stream()
                        .filter(nonap -> !(nonap instanceof OWLAnnotationAssertionAxiom) )
-                       .map(nonap -> nonap)
                        .collect(Collectors.toSet()));
 
             } else {
