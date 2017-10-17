@@ -95,14 +95,14 @@ For more details see:
 
 ## Querying
 
-Robot can be used to submit [sparql](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#bind) 
+Robot can be used to submit [sparql](https://www.w3.org/TR/2013/REC-sparql11-query-20130321) 
 queries against an ontology. Robot currently has two commands `query` and `verify` that use sparql to
 perform queries on ontology sets.
 
 ### `query`
 
-The `query` command comes in two flavors, `select` and `construct`, which are passed in as options:
-`robot query --select` or `robot query --construct`. `select` corresponds to a sparql 
+The `query` command comes in three flavors, `select`, `construct` and `sparql`, which are passed in as options:
+`robot query --select`, `robot query --construct`, or `robot query --sparql`. `select` corresponds to a sparql 
 _[SELECT](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select)_ query. This is used to 
 extract data matching a pattern. 
 
@@ -131,6 +131,17 @@ Has many results, but a portion could look like:
             
 Note that we've created a triple where none existed before. 
 
+## Alternate Query Form with `--sparql`
+
+For any non-updating query, you don't have to use the above forms, where you need to know the kind of query 
+before you run it. Instead, you can simply supply `--sparql` and then the path to the sparql query file, `--output` and
+the path to the results output file. For example:
+
+    robot query --input edit.owl --sparql construct_some.sparql --output output
+    
+This will automatically output an RDF language (since the example construct_some.sparql is a CONSTRUCT) whereas if your query was
+a SELECT it would output in a sparql result format automatically. Specifying just overrides the defaults.
+
 ### `verify`
 
 The verify command runs a SELECT sparql query against an ontology where the results of the query are
@@ -156,31 +167,7 @@ And the CSV file results/equivalent.csv should have:
 
     first,second,firstLabel,secondLabel
     http://purl.obolibrary.org/obo/TEST_A,http://purl.obolibrary.org/obo/TEST_B,,
-
-
-## Querying
-
-Robot allows you to query ontology files with SPARQL. See the [W3C documentation](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/)
-for information on how SPARQL queries are written. 
-
-Robot allows sparql queries through the `query` command. You can specifically tell robot to run a sparql 
-`SELECT` query with the `--select` option, where the sparql query file is the first argument and the second
-argument is the results file path. You could make a `CONSTRUCT` sparql query with `--construct` with the same
-argument form as for `--select`. For example:
-
-    robot query --input examples/edit.owl --construct examples/test.sparql output
     
-Specify an output language with `--format <lang>`. Support includes ttl, jsonld, nt, nq, and rdfxml for RDF
-outputs (Construct queries, etc), and tsv, csv, and sxml for sparql results outputs (Select, etc). 
-
-For any non-updating query, you don't have to use the above forms, where you need to know the kind of query 
-before you run it. Instead, you can simply supply `--sparql` and then the path to the sparql query file, `--output` and
-the path to the results output file. For example:
-
-    robot query --input examples/edit.owl --sparql examples/test.sparql --output output
-    
-This will automatically output an RDF language (since the example test.sparql is a CONSTRUCT) whereas if your query was
-a SELECT it would output in a sparql result format automatically. Specifying just overrides the defaults.
 
 ## Reasoning
 
