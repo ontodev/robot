@@ -41,6 +41,8 @@ public class ReasonCommand implements Command {
                 true, "remove redundant subclass axioms");
         o.addOption("n", "create-new-ontology", true,
                 "switch to a new ontology containing only the inferences");
+        o.addOption("m", "create-new-ontology-with-annotations", true,
+                "switch to a new ontology containing only the inferences and annotation properties");
         o.addOption("a", "annotate-inferred-axioms", true,
                 "annotate all inferred axioms (only when -n is passed)");
         o.addOption("x", "exclude-duplicate-axioms", true,
