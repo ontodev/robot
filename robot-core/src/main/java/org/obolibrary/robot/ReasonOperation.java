@@ -4,11 +4,24 @@ import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
-import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.Filters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLNamedObject;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
@@ -17,8 +30,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.InferredAxiomGenerator;
 import org.semanticweb.owlapi.util.InferredOntologyGenerator;
 import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
-
-import javax.annotation.Nonnull;
 
 import static org.obolibrary.robot.reason.EquivalentClassReasoningMode.ALL;
 
