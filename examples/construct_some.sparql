@@ -1,0 +1,14 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX part_of: <http://purl.obolibrary.org/obo/BFO_0000050>
+PREFIX part_of_inferred: <http://purl.obolibrary.org/obo/BFO_0000050_SOME>
+
+CONSTRUCT {
+    ?part part_of_inferred: ?whole
+}
+WHERE {
+    ?part rdfs:subClassOf [rdf:type owl:Restriction ;
+            owl:onProperty part_of: ;
+            owl:someValuesFrom ?whole ]
+}
