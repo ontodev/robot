@@ -43,8 +43,11 @@ public class QueryCommand implements Command {
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
         o.addOption("f", "format",    true, "the query result format: CSV, TSV,"
                 + " TTL, JSONLD, etc.");
-        o.addOption("q", "sparql", true, "Path to a sparql query file");
-        o.addOption("O", "output", true, "Path to file where the results will be written to");
+//        o.addOption("q", "sparql", true, "Path to a sparql query file");
+        Option sparql = new Option("q", "sparql", true, "Run any sparql query");
+        sparql.setArgs(2);
+        o.addOption(sparql);
+//        o.addOption("O", "output", true, "Path to file where the results will be written to");
         Option select = new Option("s", "select", true,
             "run a SPARQL select query and output result");
         select.setArgs(2);
@@ -82,7 +85,7 @@ public class QueryCommand implements Command {
     public String getUsage() {
         return "robot query --input <file> "
              + "--select <query> <result> \n" +
-            "robot query --input <rdf data> --sparql <query file> --output <path to results>";
+            "robot query --input <rdf data> --sparql <query file> <path to results>";
     }
 
     /**
@@ -163,17 +166,27 @@ public class QueryCommand implements Command {
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
 
-        if(line.hasOption("sparql") && line.hasOption("output")) {
-            String queryPath = line.getOptionValue("sparql");
-            String outputPath = line.getOptionValue("output");
-            String query = FileUtils.readFileToString(new File(queryPath));
+//        if(line.hasOption("sparql") && line.hasOption("output")) {
+//            String queryPath = line.getOptionValue("sparql");
+//            String outputPath = line.getOptionValue("output");
+//            String query = FileUtils.readFileToString(new File(queryPath));
+//
+//            QueryOperation.runSparqlQuery(dsg, query, new File(outputPath), outputFormat);
+//            return state;
+//        }
 
-            QueryOperation.runSparqlQuery(dsg, query, new File(outputPath), outputFormat);
-            return state;
-        }
+        if(line.hasOption("sparql")) {
+            List<String> sparql = CommandLineHelper.getOptionalValues(line, "sparql");
 
-        // Handle select
-        if (line.hasOption("select")) {
+            for (int i=0; i<sparql.size(); i += 2) {
+                String queryPath = sparql.get(i);
+                String query = FileUtils.readFileToString(new File(queryPath));
+
+                String outputPath = sparql.get(i + 1);
+                QueryOperation.runSparqlQuery(dsg, query, new File(outputPath), outputFormat);
+            }
+
+        } else if (line.hasOption("select")) { // Handle select
             List<String> select =
                 CommandLineHelper.getOptionValues(line, "select");
 
@@ -185,13 +198,13 @@ public class QueryCommand implements Command {
             }
         //Handle Construct
         } else if (line.hasOption("construct")) {
-            List<String> select = CommandLineHelper.getOptionalValues(line,
+            List<String> construct = CommandLineHelper.getOptionalValues(line,
                     "construct");
 
-            for (int i = 0; i < select.size(); i += 2) {
+            for (int i = 0; i < construct.size(); i += 2) {
                 String query = FileUtils.readFileToString(new File(
-                        select.get(i)));
-                File output = new File(select.get(i + 1));
+                        construct.get(i)));
+                File output = new File(construct.get(i + 1));
                 QueryOperation.runConstruct(dsg, query, output, outputFormat.orElse(Lang.TTL));
             }
         }

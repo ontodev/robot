@@ -137,7 +137,7 @@ For any non-updating query, you don't have to use the above forms, where you nee
 before you run it. Instead, you can simply supply `--sparql` and then the path to the sparql query file, `--output` and
 the path to the results output file. For example:
 
-    robot query --input edit.owl --sparql construct_some.sparql --output output
+    robot query --input edit.owl --sparql construct_some.sparql output
     
 This will automatically output an RDF language (since the example construct_some.sparql is a CONSTRUCT) whereas if your query was
 a SELECT it would output in a sparql result format automatically. Specifying just overrides the defaults.
