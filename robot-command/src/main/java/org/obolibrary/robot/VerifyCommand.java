@@ -28,42 +28,86 @@ import java.util.Map;
 
 
 /**
- * Command that runs a sparql query expecting zero results. Any results represent violations in the queried ontology
+ * Command that runs a sparql query expecting zero results.
+ * Any results represent violations in the queried ontology
  */
 public class VerifyCommand implements Command {
 
-    private static final Logger logger = LoggerFactory.getLogger(VerifyCommand.class);
+    /**
+     * Logger.
+     */
+    private static final Logger logger =
+        LoggerFactory.getLogger(VerifyCommand.class);
 
-    @Override
+    /**
+     * Store the command-line options for the command.
+     */
+    private Options options;
+
+    /**
+     * Initialze the command.
+     */
+    public VerifyCommand() {
+        Options o = CommandLineHelper.getCommonOptions();
+        o.addOption("i", "input", true, "Input Ontology");
+
+        Option queries = new Option("q", "queries", true,
+                "List of sparql queries to find violations");
+        queries.setRequired(true);
+        queries.setArgs(Option.UNLIMITED_VALUES);
+        o.addOption(queries);
+
+        Option report = new Option("O", "output-dir", true,
+                "Directory to place reports in");
+        report.setRequired(true);
+        o.addOption(report);
+
+        options = o;
+    }
+
+    /**
+     * Name of the command.
+     *
+     * @return name
+     */
     public String getName() {
         return "verify";
     }
 
-    @Override
+    /**
+     * Brief description of the command.
+     *
+     * @return description
+     */
     public String getDescription() {
-        return "Runs a sparql query on an ontology. Any results of the query are violations, counted, and reported";
+        return "Runs a sparql query on an ontology. "
+             + "Any results of the query are violations, counted, and reported";
     }
 
-    @Override
+    /**
+     * Command-line usage for the command.
+     *
+     * @return usage
+     */
     public String getUsage() {
-        return "robot verify --input ONTOLOGY --queries FILE [FILE [...]] --report-dir DIR";
+        return "robot verify --input ONTOLOGY "
+             + "--queries FILE [FILE [...]] --report-dir DIR";
     }
 
-    @Override
+    /**
+     * Command-line options for the command.
+     *
+     * @return options
+     */
     public Options getOptions() {
-        Options options = CommandLineHelper.getCommonOptions();
-        Option queries = new Option("q", "queries", true, "List of sparql queries to find violations");
-        queries.setRequired(true);
-        queries.setArgs(Option.UNLIMITED_VALUES);
-        options.addOption(queries);
-        Option report = new Option("O", "output-dir", true, "Directory to place reports in");
-        report.setRequired(true);
-        options.addOption(report);
-        options.addOption("i", "input", true, "Input Ontology");
         return options;
     }
 
-    @Override
+    /**
+     * Handle the command-line and file operations for the VerifyOperation.
+     *
+     * @param args strings to use as arguments
+     */
     public void main(String[] args) {
         try {
             execute(null, args);
@@ -72,24 +116,40 @@ public class VerifyCommand implements Command {
         }
     }
 
-    @Override
-    public CommandState execute(CommandState inputState, String[] args) throws Exception {
+    /**
+     * Given an input state and command line arguments,
+     * verify that the SPARQL queries return no results.
+     * The input ontology is not changed.
+     *
+     * @param state the state from the previous command, or null
+     * @param args the command-line arguments
+     * @return the unchanged state
+     * @throws Exception on any problem
+     */
+    public CommandState execute(CommandState state, String[] args)
+        throws Exception {
 
-        CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
+        CommandLine line = CommandLineHelper.getCommandLine(
+                getUsage(), getOptions(), args);
 
-        OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
-        OWLOntology ontology = ontologyManager.loadOntologyFromOntologyDocument(new File(line.getOptionValue("input")));
-        DatasetGraph graph = QueryOperation.loadOntology(ontology);
+        IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        DatasetGraph graph = QueryOperation.loadOntology(state.getOntology());
 
         File resultDir = new File(line.getOptionValue("output-dir"));
 
-        Map<File, Tuple<ResultSetRewindable, OutputStream>> resultMap = new HashMap<>();
+        Map<File, Tuple<ResultSetRewindable, OutputStream>> resultMap =
+            new HashMap<>();
         for(String filePath : line.getOptionValues("queries")) {
             File query = new File(filePath);
-            ResultSet results = QueryOperation.execQuery(graph, fileContents(query));
-            ResultSetRewindable resultsCopy = ResultSetFactory.copyResults(results);
-            File resultCsv = resultDir.toPath().resolve(FilenameUtils.getBaseName(filePath).concat(".csv")).toFile();
-            resultMap.put(query, new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
+            ResultSet results =
+                QueryOperation.execQuery(graph, fileContents(query));
+            ResultSetRewindable resultsCopy =
+                ResultSetFactory.copyResults(results);
+            String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
+            File resultCsv = resultDir.toPath().resolve(csvPath).toFile();
+            resultMap.put(query,
+              new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
         }
 
         boolean violationsExist = QueryOperation.execVerify(resultMap);
@@ -97,14 +157,20 @@ public class VerifyCommand implements Command {
             System.exit(1);
         }
 
-        return inputState;
+        return state;
     }
 
+    /**
+     * Utility function to get file contents.
+     *
+     * @param file the file to read
+     */
     private static String fileContents(File file) {
         try {
             return Files.toString(file, Charset.defaultCharset());
         } catch (IOException e) {
-            throw new CannotReadQuery("Cannot read from " + file + ": " + e.getMessage(), e);
+            String message = "Cannot read from " + file + ": " + e.getMessage();
+            throw new CannotReadQuery(message, e);
 
         }
     }
