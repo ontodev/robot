@@ -616,7 +616,12 @@ public class TemplateOperation {
                     annotations.add(
                         getStringAnnotation(checker, "A rdfs:label", value));
                 } else if (template.equals("TYPE")) {
-                    type = ioHelper.createIRI(value);
+                    OWLEntity entity = checker.getOWLEntity(value);
+                    if (entity != null) {
+                      type = entity.getIRI();
+                    } else {
+                      type = ioHelper.createIRI(value);
+                    }
                     OWLAnnotationProperty rdfType =
                         getAnnotationProperty(checker, "rdf:type");
                     annotations.add(
