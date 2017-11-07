@@ -13,9 +13,12 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -88,9 +91,10 @@ public class ReduceOperation {
      *
      * @param ontology The ontology to reduce.
      * @param reasonerFactory The reasoner factory to use.
+     * @throws OWLOntologyCreationException 
      */
     public static void reduce(OWLOntology ontology,
-            OWLReasonerFactory reasonerFactory) {
+            OWLReasonerFactory reasonerFactory) throws OWLOntologyCreationException {
         reduce(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -100,20 +104,29 @@ public class ReduceOperation {
      * @param ontology The ontology to reduce.
      * @param reasonerFactory The reasoner factory to use.
      * @param options A map of options for the operation.
+     * @throws OWLOntologyCreationException 
      */
     public static void reduce(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
-            Map<String, String> options) {
+            Map<String, String> options) throws OWLOntologyCreationException {
 
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
-
+        
+        // we treat an axiom as redundant if its is redundant within the
+        // subClassOf graph, excluding equivalence axioms
+        OWLOntology subOntology = manager.createOntology();
+        for (OWLAxiom a :  ontology.getAxioms(Imports.INCLUDED)) {
+            if (!(a instanceof OWLEquivalentClassesAxiom)) {
+                manager.addAxiom(subOntology, a);
+            }          
+        }
 
         Map<OWLClass, Set<OWLClass>> subClassMap = new HashMap<>();
         Set<OWLSubClassOfAxiom> subClassAxioms =
             ontology.getAxioms(AxiomType.SUBCLASS_OF);
         Set<OWLClassExpression> exprs = new HashSet<>();
-        //Map<OWLClass, OWLClassExpression> xmap = new HashMap<>();
+
         Map<OWLClassExpression, OWLClass> rxmap = new HashMap<>();
 
         for (OWLSubClassOfAxiom ax : subClassAxioms) {
@@ -135,17 +148,16 @@ public class ReduceOperation {
                 exprs.add(ax.getSuperClass());
             }
         }
-        Set<OWLAxiom> tempAxioms = new HashSet<>();
+
         for (OWLClassExpression x : rxmap.keySet()) {
             OWLAxiom ax =
                 dataFactory.getOWLEquivalentClassesAxiom(rxmap.get(x), x);
-            manager.addAxiom(ontology, ax);
-            tempAxioms.add(ax);
+            manager.addAxiom(subOntology, ax);
         }
 
 
         // TO DO: DRY - move to ReasonerOperation module
-        OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+        OWLReasoner reasoner = reasonerFactory.createReasoner(subOntology);
         if (!reasoner.isConsistent()) {
             logger.info("Ontology is not consistent!");
             return;
@@ -220,12 +232,6 @@ public class ReduceOperation {
                 logger.info("REMOVING REDUNDANT: " + ax);
                 rmAxioms.add(ax);
             }
-        }
-
-        // post-processing step: remove temporary equivalence axioms
-        // for anonymous expressions
-        for (OWLAxiom ax : tempAxioms) {
-            manager.removeAxiom(ontology, ax);
         }
 
         // remove redundant axiom
