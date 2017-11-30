@@ -4,12 +4,14 @@ import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
+import org.semanticweb.owlapi.search.Filters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Reason over an ontology and add axioms.
@@ -65,6 +68,7 @@ public class ReasonOperation {
         Map<String, String> options = new HashMap<String, String>();
         options.put("remove-redundant-subclass-axioms", "true");
         options.put("create-new-ontology", "false");
+        options.put("create-new-ontology-with-annotations", "false");
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
         options.put("equivalent-classes-allowed", ALL.written());
@@ -107,7 +111,7 @@ public class ReasonOperation {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
         logger.info("Fetching labels...");
-        
+
         Function<OWLNamedObject, String> labelFunc =
                 OntologyHelper.getLabelFunction(ontology, false);
 
@@ -188,12 +192,22 @@ public class ReasonOperation {
                 newAxiomOntology.getAxioms().size());
 
 
-        if (OptionsHelper.optionIsTrue(options, "create-new-ontology")) {
+        if (OptionsHelper.optionIsTrue(options, "create-new-ontology") || OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
             // because the ontology is passed by reference,
             // we manipulate it in place
-            logger.info("Placing inferred axioms into a new ontology");
             // todo: set ontology id
-            manager.removeAxioms(ontology, ontology.getAxioms());
+            if (OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
+                logger.info("Placing inferred axioms with annotations into a new ontology");
+                manager.removeAxioms(ontology,
+                   ontology.getAxioms()
+                       .stream()
+                       .filter(nonap -> !(nonap instanceof OWLAnnotationAssertionAxiom) )
+                       .collect(Collectors.toSet()));
+
+            } else {
+                logger.info("Placing inferred axioms into a new ontology");
+                manager.removeAxioms(ontology, ontology.getAxioms());
+            }
 
             Set<OWLImportsDeclaration> oids =
                     ontology.getImportsDeclarations();
