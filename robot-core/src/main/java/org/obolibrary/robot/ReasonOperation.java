@@ -73,7 +73,7 @@ public class ReasonOperation {
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
         options.put("equivalent-classes-allowed", ALL.written());
-        options.put("prevent-invalid-references", "true");
+        options.put("prevent-invalid-references", "false");
 
         return options;
     }
