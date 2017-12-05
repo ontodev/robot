@@ -73,7 +73,7 @@ public class ReasonOperation {
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
         options.put("equivalent-classes-allowed", ALL.written());
-        options.put("invalid-references-allowed", "false");
+        options.put("invalid-references-allowed", "true");
 
         return options;
     }
@@ -128,7 +128,7 @@ public class ReasonOperation {
         
         Set<InvalidReferenceViolation> referenceViolations = InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
         if (referenceViolations.size() > 0) {
-            logger.error("Reference violations found: "+referenceViolations.size());
+            logger.error("Reference violations found: "+referenceViolations.size()+" - reasoning may be incomplete");
             for (InvalidReferenceViolation v : referenceViolations) {
                 logger.error("Reference violation: "+v);
             }
