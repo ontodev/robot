@@ -73,7 +73,7 @@ public class ReasonOperation {
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
         options.put("equivalent-classes-allowed", ALL.written());
-        options.put("invalid-references-allowed", "true");
+        options.put("prevent-invalid-references", "true");
 
         return options;
     }
@@ -133,7 +133,7 @@ public class ReasonOperation {
                 logger.error("Reference violation: "+v);
             }
             
-            if (!OptionsHelper.optionIsTrue(options, "invalid-references-allowed")) {
+            if (OptionsHelper.optionIsTrue(options, "prevent-invalid-references")) {
                 throw new InvalidReferenceException(referenceViolations);
             }
             
