@@ -75,16 +75,14 @@ Other build options:
 
 - `mvn clean test` runs JUnit tests with reports in `[module]/target/surefire-reports`
 - `mvn clean verify` rebuilds the package and runs integration tests against it, with reports in `[module]/target/failsafe-reports`
-- `mvn site` generates reports (including Javadoc and Checkstyle) in `target/site` and `[module]/target/site`
+- `mvn site` generates Javadoc in `target/site` and `[module]/target/site`
 
 Alternatively, you can use [Docker](https://www.docker.com) with the provided [Dockerfile](Dockerfile) to build and run ROBOT from within a container. First build an image with `docker build --tag robot .` then run ROBOT from the container with the usual command-line arguments: `docker run --rm robot --help`.
 
 
-## Development
+## Code Style
 
-We use [Checkstyle](http://checkstyle.sourceforge.net) to enforce the default [Sun Guidelines](http://www.oracle.com/technetwork/java/javase/documentation/codeconvtoc-136057.html), with some exceptions in [checkstyle-suppressions.xml](checkstyle-suppressions.xml). Run `mvn clean site` to generate the Checkstyle reports in `target/site/checkstyle-aggregate.html`. Some of the rules are admittedly arbitrary, but consistency should help newcomers read the code. See also the [.editorconfig](.editorconfig) file, which can provide some [hints to your text editor](http://editorconfig.org).
-
-Basics: indent with four spaces; maximum line length is 80 characters; use spaces after commas, before and after operators such as `+`; no trailing whitespace; UTF-8 encoding; Unix newlines; remove unused imports; always include JavaDocs.
+We use [Google Java Style](https://google.github.io/styleguide/javaguide.html), automatically enforced with [google-java-format](https://github.com/google/google-java-format).
 
 
 # Design
