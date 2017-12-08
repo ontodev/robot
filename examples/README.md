@@ -9,9 +9,16 @@ This document will walk you through some examples of things you can do with ROBO
 
 Many ontology projects use an "edit" file for development. Editors modify this file to add terms and fix bugs, often using Protégé. When ready, the edit file is processed and packaged for release. ROBOT provides a range of commands to help with the release process.
 
-We'll use the `edit.owl` file as our running example. It contains a fragment of [Uberon](http://uberon.github.io), a cross-species anatomy ontology with rich logical axioms. You can use Protégé to look around.
+We'll use the `edit.owl` file as our running example. It contains a fragment of [Uberon](http://uberon.github.io), a cross-species anatomy ontology with rich logical axioms. You can use [Protégé](https://protege.stanford.edu) to look around.
 
 What follows is a series of example commands that can be used to process `edit.owl` in various ways. The expected results are also provided in files that you can inspect. The example commands will create new files in a new directory, but with similar names, so that you can compare the results you get with the expected results. We use this system for testing ROBOT.
+
+
+## A Note on Catalog Files
+
+ROBOT is built on [OWLAPI](http://owlcs.github.io/owlapi/). We use the same version of OWLAPI as the current Protégé release. OWLAPI supports "catalog" files (e.g. `catalog-v001.xml`) that can specify when a local file should be used instead of a remote file. This is very useful for ontology development, and many ontology projects include a catalog file.
+
+ROBOT uses catalog files in the same way that Protégé does. When loading a local file, ROBOT will look for a catalog file in the same directory, and use it if found. When loading a remote file (e.g. over HTTP) ROBOT does not look for a catalog file. So if you're using a catalog file in your project, it's best to work in a local directory.
 
 
 ## Comparing Files
