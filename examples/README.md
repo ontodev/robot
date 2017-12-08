@@ -70,6 +70,8 @@ The reuse of ontology terms creates links between data, making the ontology and 
         --input filtered.owl \
         --term-file uberon_module.txt \
         --output results/uberon_module.owl
+        
+NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first `merge`.
 
 The `--method` options fall into two groups: Minimal Information for Reuse of External Ontology Term (MIREOT) and Syntactic Locality Module Extractor (SLME).
 
