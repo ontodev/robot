@@ -220,6 +220,15 @@ Ontologies are shared in different formats. The default format used by ROBOT is 
 
     robot convert --input annotated.owl --output results/annotated.obo
 
+The file format is determined by the extension of the output file (e.g. `.obo`), but it can also be declared with the `--format` option. Valid file formats are:
+  - json
+  - obo
+  - ofn (OWL Functional)
+  - omn (OWL Manchester)
+  - owl (RDF/XML)
+  - owx (OWL/XML)
+  - ttl (Turtle)
+
 ## Mirroring
 
 Many ontologies make use of `owl:imports` to bring in other ontologies, or portions of other ontologies. Large import chains involving multiple large ontologies are more prone to run-time failure due to network errors or latency. It can therefore be beneficial to mirror or cache an external ontology's import chain locally. This can be though of as analogous to what happens with standard dependency management tools for software development.
