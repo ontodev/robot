@@ -1,6 +1,9 @@
 package org.obolibrary.robot;
 
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
+import org.obolibrary.robot.checks.InvalidReferenceChecker;
+import org.obolibrary.robot.checks.InvalidReferenceViolation;
+import org.obolibrary.robot.exceptions.InvalidReferenceException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
@@ -70,6 +73,7 @@ public class ReasonOperation {
         options.put("annotate-inferred-axioms", "false");
         options.put("exclude-duplicate-axioms", "false");
         options.put("equivalent-classes-allowed", ALL.written());
+        options.put("prevent-invalid-references", "false");
 
         return options;
     }
@@ -83,11 +87,12 @@ public class ReasonOperation {
      * @param reasonerFactory the factory to create a reasoner instance from
      * @throws OWLOntologyCreationException on ontology problem
      * @throws OntologyLogicException on inconsistency or incoherency
+     * @throws InvalidReferenceException 
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory)
                     throws OWLOntologyCreationException,
-                    OntologyLogicException {
+                    OntologyLogicException, InvalidReferenceException {
         reason(ontology, reasonerFactory, getDefaultOptions());
     }
 
@@ -101,11 +106,12 @@ public class ReasonOperation {
      * @param options a map of option strings, or null
      * @throws OWLOntologyCreationException on ontology problem
      * @throws OntologyLogicException on inconsistency or incoherency
+     * @throws InvalidReferenceException 
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
             Map<String, String> options) throws OWLOntologyCreationException,
-                    OntologyLogicException {
+                    OntologyLogicException, InvalidReferenceException {
         logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
         logger.info("Fetching labels...");
@@ -119,6 +125,19 @@ public class ReasonOperation {
 
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
+        
+        Set<InvalidReferenceViolation> referenceViolations = InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
+        if (referenceViolations.size() > 0) {
+            logger.error("Reference violations found: "+referenceViolations.size()+" - reasoning may be incomplete");
+            for (InvalidReferenceViolation v : referenceViolations) {
+                logger.error("Reference violation: "+v);
+            }
+            
+            if (OptionsHelper.optionIsTrue(options, "prevent-invalid-references")) {
+                throw new InvalidReferenceException(referenceViolations);
+            }
+            
+        }
 
         logger.info("Starting reasoning...");
         OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
