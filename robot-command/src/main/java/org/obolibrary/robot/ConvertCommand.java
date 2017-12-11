@@ -35,7 +35,8 @@ public class ConvertCommand implements Command {
         o.addOption("i", "input",     true, "convert ontology from a file");
         o.addOption("I", "input-iri", true, "convert ontology from an IRI");
         o.addOption("o", "output",    true, "save ontology to a file");
-        o.addOption("f", "format",    true, "the format: RDFXML, OBO, etc.");
+        o.addOption("f", "format",    
+        		true, "the format: obo, owl, ttl, owx, omn, ofn, json");
         options = o;
     }
 
