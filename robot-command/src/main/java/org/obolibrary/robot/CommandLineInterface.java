@@ -34,6 +34,8 @@ public class CommandLineInterface {
         m.addCommand("reason",           new ReasonCommand());
         m.addCommand("reduce",           new ReduceCommand());
         m.addCommand("relax",            new RelaxCommand());
+        m.addCommand("repair",           new RepairCommand());
+        m.addCommand("report",           new ReportCommand());
         m.addCommand("template",         new TemplateCommand());
         m.addCommand("unmerge",          new UnmergeCommand());
         m.addCommand("validate-profile", new ValidateProfileCommand());
