@@ -99,22 +99,24 @@ public class RepairOperation {
         for (InvalidReferenceViolation v : violations) {
             if (v.getCategory().equals(Category.DEPRECATED)) {
                 OWLEntity obsObj = v.getReferencedObject();
-                logger.info("Finding replacements for: "+obsObj);
-                IRI replacedBy = null; 
-                for (OWLAnnotationAssertionAxiom aaa : ontology.getAnnotationAssertionAxioms(obsObj.getIRI())) {
-                    // TODO: use a vocabulary object
-                    if (aaa.getProperty().getIRI().equals(IRI.create("http://purl.obolibrary.org/obo/IAO_0100001"))) {
-                        OWLAnnotationValue val = aaa.getValue();
-                        Optional<IRI> valIRI = val.asIRI();
-                        if (valIRI.isPresent()) {
-                            logger.info("Using URI replacement: "+valIRI);
-                            replacedBy = valIRI.get();
-                        }
-                        else {
-                            Optional<OWLLiteral> valLit = val.asLiteral();
-                            if (valLit.isPresent()) {
-                                logger.info("Using CURIE replacement: "+valLit);
-                                replacedBy = iohelper.createIRI(valLit.get().getLiteral());
+                logger.info("Finding replacements for: "+v);
+                IRI replacedBy = null;               
+                for (OWLOntology o : ontology.getImportsClosure()) {
+                    for (OWLAnnotationAssertionAxiom aaa : o.getAnnotationAssertionAxioms(obsObj.getIRI())) {
+                        // TODO: use a vocabulary class
+                        if (aaa.getProperty().getIRI().equals(IRI.create("http://purl.obolibrary.org/obo/IAO_0100001"))) {
+                            OWLAnnotationValue val = aaa.getValue();
+                            Optional<IRI> valIRI = val.asIRI();
+                            if (valIRI.isPresent()) {
+                                logger.info("Using URI replacement: "+valIRI);
+                                replacedBy = valIRI.get();
+                            }
+                            else {
+                                Optional<OWLLiteral> valLit = val.asLiteral();
+                                if (valLit.isPresent()) {
+                                    logger.info("Using CURIE replacement: "+valLit);
+                                    replacedBy = iohelper.createIRI(valLit.get().getLiteral());
+                                }
                             }
                         }
                     }
