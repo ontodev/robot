@@ -7,12 +7,17 @@ import org.obolibrary.robot.checks.InvalidReferenceViolation.Category;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.parameters.Imports;
 
 /**
+ * Checks to determine if axioms contain invalid references: to dangling classes or deprecated classes.
+ * 
+ * This is a structural check. To determine the *logical* validity of an axiom reference,
+ * robot uses OWL reasoning.
  * 
  * See: https://github.com/ontodev/robot/issues/1
  * 
@@ -53,10 +58,12 @@ public class InvalidReferenceChecker {
      * @return true if entity is deprecated
      */
     public static boolean isDeprecated(OWLOntology ontology, OWLEntity entity)  {
-        for (OWLAnnotationAssertionAxiom a : ontology.getAnnotationAssertionAxioms(entity.getIRI())) {
-            if (a.isDeprecatedIRIAssertion()) {
-                if (a.getValue().asLiteral().get().parseBoolean()) {
-                    return true;
+        for (OWLOntology o : ontology.getImportsClosure()) {
+            for (OWLAnnotationAssertionAxiom a : o.getAnnotationAssertionAxioms(entity.getIRI())) {
+                if (a.isDeprecatedIRIAssertion()) {
+                    if (a.getValue().asLiteral().get().parseBoolean()) {
+                        return true;
+                    }
                 }
             }
         }
@@ -65,6 +72,13 @@ public class InvalidReferenceChecker {
    
     
     /**
+     * Finds axioms that reference a deprecated or dangling entity.
+     * 
+     * Declaration axioms that reference a deprecated class do not count.
+     * 
+     * Note that this does not count the value field of an annotation assertion, since these
+     * reference IRIs and not entities
+     * 
      * @param ontology
      * @param axioms
      * @return all violations
@@ -77,7 +91,9 @@ public class InvalidReferenceChecker {
                     violations.add(InvalidReferenceViolation.create(axiom, e, Category.DANGLING));
                 }
                 if (isDeprecated(ontology, e)) {
-                    violations.add(InvalidReferenceViolation.create(axiom, e, Category.DEPRECATED));
+                    if (!(axiom instanceof OWLDeclarationAxiom)) {
+                        violations.add(InvalidReferenceViolation.create(axiom, e, Category.DEPRECATED));
+                    }
                 }
 
             }
