@@ -1,3 +1,8 @@
+---
+layout: default
+title: ROBOT is an OBO Tool
+---
+
 # ROBOT is an OBO Tool
 
 [![Build Status](https://travis-ci.org/ontodev/robot.svg?branch=master)](https://travis-ci.org/ontodev/robot)
