@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 public class RemoveOperationTest extends CoreTest {
 	
@@ -35,8 +34,7 @@ public class RemoveOperationTest extends CoreTest {
 	 * @throws OWLOntologyCreationException 
 	 */
 	@Test
-	public void testRemoveClass() throws IOException,
-			OWLOntologyCreationException {
+	public void testRemoveClass() throws IOException {
 		OWLOntology ontology = loadOntology(INPUT);
 		
 		Map<String, String> entities = new HashMap<>();
@@ -48,6 +46,21 @@ public class RemoveOperationTest extends CoreTest {
 	}
 	
 	/**
+	 * Test removal of descendant classes of OWLClass (anatomical cluster) from
+	 * removal.owl.
+	 * Result is identical to remove_descendants.owl.
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testRemoveDescendantClasses() throws IOException {
+		OWLOntology ontology = loadOntology(INPUT);
+		
+		RemoveOperation.removeDescendantClasses(ontology, "UBERON:0000477");
+		assertIdentical("/remove_descendants.owl", ontology);
+	}
+	
+	/**
 	 * Test removal of OWLNamedIndividual (skeleton) from remove.owl.
 	 * Result is identical to remove_individual.owl.
 	 * 
@@ -55,8 +68,7 @@ public class RemoveOperationTest extends CoreTest {
 	 * @throws OWLOntologyCreationException 
 	 */
 	@Test
-	public void testRemoveIndividual() throws IOException,
-			OWLOntologyCreationException {
+	public void testRemoveIndividual() throws IOException {
 		OWLOntology ontology = loadOntology(INPUT);
 		
 		Map<String, String> entities = new HashMap<>();
@@ -68,6 +80,19 @@ public class RemoveOperationTest extends CoreTest {
 	}
 	
 	/**
+	 * Test removal of all OWLNamedIndividuals from remove.owl.
+	 * Result is identical to remove_individual.owl (as above).
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testRemoveAllIndividuals() throws IOException {
+		OWLOntology ontology = loadOntology(INPUT);
+		RemoveOperation.removeIndividuals(ontology);
+		assertIdentical("/remove_individual.owl", ontology);
+	}
+	
+	/**
 	 * Test removal of OWLAnnotationProperty (label) from remove.owl.
 	 * Result is identical to remove_annotation.owl.
 	 * 
@@ -75,8 +100,7 @@ public class RemoveOperationTest extends CoreTest {
 	 * @throws OWLOntologyCreationException 
 	 */
 	@Test
-	public void testRemoveAnnProp() throws IOException,
-			OWLOntologyCreationException {
+	public void testRemoveAnnProp() throws IOException {
 		OWLOntology ontology = loadOntology(INPUT);
 		
 		Map<String, String> entities = new HashMap<>();
@@ -95,8 +119,7 @@ public class RemoveOperationTest extends CoreTest {
 	 * @throws OWLOntologyCreationException 
 	 */
 	@Test
-	public void testRemoveObjProp() throws IOException,
-			OWLOntologyCreationException {
+	public void testRemoveObjProp() throws IOException {
 		OWLOntology ontology = loadOntology(INPUT);
 		
 		Map<String, String> entities = new HashMap<>();
@@ -115,8 +138,7 @@ public class RemoveOperationTest extends CoreTest {
 	 * @throws OWLOntologyCreationException 
 	 */
 	@Test
-	public void testRemoveDataProp() throws IOException,
-			OWLOntologyCreationException {
+	public void testRemoveDataProp() throws IOException {
 		OWLOntology ontology = loadOntology(INPUT);
 		
 		Map<String, String> entities = new HashMap<>();

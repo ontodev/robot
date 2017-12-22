@@ -46,10 +46,10 @@ public class RemoveCommand implements Command {
         		true, "remove an AnnotationProperty");
         o.addOption("d", "datatype-property",
         		true, "remove a DatatypeProperty");
-        //o.addOption("N", "all-individuals",
-        		//true, "remove all NamedIndividuals");
-        //o.addOption("D", "descendant-classes",
-        		//true, "remove all classes descended from a class");
+        o.addOption("N", "all-individuals",
+        		true, "remove all NamedIndividuals");
+        o.addOption("D", "descendant-classes",
+        		true, "remove all classes descended from a class");
         //o.addOption("A", "anonymous-superclasses",
         		//true, "remove all anonymous superclasses from a class");
         options = o;
@@ -133,15 +133,28 @@ public class RemoveCommand implements Command {
             outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
         }
         
-        // Create map of options & their args (null if not provided)
-        Map<String, String> entities = new HashMap<>();
-        entities.put(CLASS, CommandLineHelper.getOptionalValue(line, CLASS));
-        entities.put(INDIV, CommandLineHelper.getOptionalValue(line, INDIV));
-        entities.put(OBJ, CommandLineHelper.getOptionalValue(line, OBJ));
-        entities.put(ANN, CommandLineHelper.getOptionalValue(line, ANN));
-        entities.put(DATA, CommandLineHelper.getOptionalValue(line, DATA));
+        // Remove all individuals if requested
+        if (CommandLineHelper.hasFlagOrCommand(line, "all-individuals")) {
+        	RemoveOperation.removeIndividuals(ontology);
+        }
         
-        RemoveOperation.remove(ontology, entities);
+        // Remove descendant classes if requested (given CURIE)
+        String superClassID = (CommandLineHelper.getOptionalValue(
+        		line, "descendant-classes"));
+        if (superClassID != null) {
+        	RemoveOperation.removeDescendantClasses(ontology, superClassID);
+        }
+        
+        // Create map of options & their args (null if not provided)
+        // Expects CURIEs for the entities
+        Map<String, String> entityIDs = new HashMap<>();
+        entityIDs.put(CLASS, CommandLineHelper.getOptionalValue(line, CLASS));
+        entityIDs.put(INDIV, CommandLineHelper.getOptionalValue(line, INDIV));
+        entityIDs.put(OBJ, CommandLineHelper.getOptionalValue(line, OBJ));
+        entityIDs.put(ANN, CommandLineHelper.getOptionalValue(line, ANN));
+        entityIDs.put(DATA, CommandLineHelper.getOptionalValue(line, DATA));
+        
+        RemoveOperation.remove(ontology, entityIDs);
         CommandLineHelper.maybeSaveOutput(line, ontology);
 
         state.setOntology(ontology);

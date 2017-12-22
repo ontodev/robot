@@ -5,12 +5,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,11 @@ public class RemoveOperation {
 	private static final String OBJ = "object-property";
 	private static final String ANN = "annotation-property";
 	private static final String DATA = "datatype-property";
+	
+	private static final OWLDataFactory factory = OWLManager
+												   .createOWLOntologyManager()
+												   .getOWLDataFactory();
+	private static final IOHelper ioHelper = new IOHelper();
 	
     /**
      * Logger.
@@ -39,42 +46,99 @@ public class RemoveOperation {
     public static void remove(OWLOntology ontology, 
     		Map<String, String> entities) {
     	// Get the args of provided options
-    	String className = entities.get(CLASS);
-    	String indivName = entities.get(INDIV);
-    	String objPropertyName = entities.get(OBJ);
-    	String annPropertyName = entities.get(ANN);
-    	String dataPropertyName = entities.get(DATA);
-    	
-    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    	OWLDataFactory factory = manager.getOWLDataFactory();
-    	
-    	IOHelper ioHelper = new IOHelper();
+    	String classID = entities.get(CLASS);
+    	String indivID = entities.get(INDIV);
+    	String objPropertyID = entities.get(OBJ);
+    	String annPropertyID = entities.get(ANN);
+    	String dataPropertyID = entities.get(DATA);
     	
     	// For each, check if it was provided, and remove if so
+    	// Allow for user to provide multiple types of entities
     	// Class
-    	if (className != null) {
-    		IRI iri = ioHelper.createIRI(className);
-    		remove(ontology, factory.getOWLClass(iri));
+    	if (classID != null) {
+    		remove(ontology, 
+    				factory.getOWLClass(ioHelper.createIRI(classID)));
     	}
     	// Individual
-    	if (indivName != null) {
-    		IRI iri = ioHelper.createIRI(indivName);
-    		remove(ontology, factory.getOWLNamedIndividual(iri));
+    	if (indivID != null) {
+    		remove(ontology, 
+    				factory.getOWLNamedIndividual(
+    						ioHelper.createIRI(indivID)));
     	}
     	// Object Property
-    	if (objPropertyName != null) {
-    		IRI iri = ioHelper.createIRI(objPropertyName);
-    		remove(ontology, factory.getOWLObjectProperty(iri));
+    	if (objPropertyID != null) {
+    		remove(ontology, 
+    				factory.getOWLObjectProperty(
+    						ioHelper.createIRI(objPropertyID)));
     	}
     	// Annotation Property
-    	if (annPropertyName != null) {
-    		IRI iri = ioHelper.createIRI(annPropertyName);
-    		remove(ontology, factory.getOWLAnnotationProperty(iri));
+    	if (annPropertyID != null) {
+    		remove(ontology, 
+    				factory.getOWLAnnotationProperty(
+    						ioHelper.createIRI(annPropertyID)));
     	}
     	// Datatype Property
-    	if (dataPropertyName != null) {
-    		IRI iri = ioHelper.createIRI(dataPropertyName);
-    		remove(ontology, factory.getOWLDataProperty(iri));
+    	if (dataPropertyID != null) {
+    		remove(ontology, 
+    				factory.getOWLDataProperty(
+    						ioHelper.createIRI(dataPropertyID)));
+    	}
+    }
+    
+    /**
+     * Remove all subclasses (recursive) of a given class from the ontology.
+     * Retains the original superclass.
+     * 
+     * @param ontology OWLOntology to remove from
+     * @param className CURIE of class to remove children of
+     */
+    public static void removeDescendantClasses(OWLOntology ontology, 
+    		String superClassID) {
+    	// Create OWLClass from string name
+    	OWLClass superClass = 
+    			factory.getOWLClass(ioHelper.createIRI(superClassID));
+    	// Get set of subClassOf*
+    	Set<OWLClass> subClasses = new HashSet<>();
+    	gatherDescendantClasses(ontology, superClass, subClasses);
+    	
+    	// Remove axioms for each class in the set
+    	for (OWLClass cls : subClasses) {
+    		remove(ontology, cls);
+    	}
+    }
+
+    /**
+     * Remove all named individuals and associated axioms from the ontology.
+     * 
+     * @param ontology OWLOntology to remove from
+     */
+    public static void removeIndividuals(OWLOntology ontology) {
+    	logger.debug("Removing all named individuals");
+    	
+    	Set<OWLNamedIndividual> indivs = ontology.getIndividualsInSignature();
+    	for (OWLNamedIndividual i : indivs) {
+    		remove(ontology, i);
+    	}
+    }
+    
+    /**
+     * Recursively get all subclasses of a given class.
+     * 
+     * @param ontology OWLOntology to search
+     * @param cls OWLClass to get subclasses of
+     * @param subClasses Set of OWLClasses (pass in empty)
+     */
+    private static void gatherDescendantClasses(OWLOntology ontology, 
+    		OWLClass cls, Set<OWLClass> subClasses) {
+    	Set<OWLSubClassOfAxiom> scAxioms =
+    			ontology.getSubClassAxiomsForSuperClass(cls);
+    	if (!scAxioms.isEmpty()) {
+	    	for (OWLSubClassOfAxiom ax : scAxioms) {
+	    		for (OWLClass sc : ax.getSubClass().getClassesInSignature()) {
+	    			subClasses.add(sc);
+	    			gatherDescendantClasses(ontology, sc, subClasses);
+	    		}
+	    	}
     	}
     }
     
