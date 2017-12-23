@@ -50,8 +50,8 @@ public class RemoveCommand implements Command {
         		true, "remove all NamedIndividuals");
         o.addOption("D", "descendant-classes",
         		true, "remove all classes descended from a class");
-        //o.addOption("A", "anonymous-superclasses",
-        		//true, "remove all anonymous superclasses from a class");
+        o.addOption("A", "anonymous-superclasses",
+        		true, "remove all anonymous superclasses from a class");
         options = o;
     }
     
@@ -138,9 +138,16 @@ public class RemoveCommand implements Command {
         	RemoveOperation.removeIndividuals(ontology);
         }
         
+        // Remove anonymous superclasses if requested (given CURIE)
+        String subClassID = CommandLineHelper.getOptionalValue(
+        		line, "anonymous-superclasses");
+        if (subClassID != null) {
+        	RemoveOperation.removeAnonymousSuperclasses(ontology, subClassID);
+        }
+        
         // Remove descendant classes if requested (given CURIE)
-        String superClassID = (CommandLineHelper.getOptionalValue(
-        		line, "descendant-classes"));
+        String superClassID = CommandLineHelper.getOptionalValue(
+        		line, "descendant-classes");
         if (superClassID != null) {
         	RemoveOperation.removeDescendantClasses(ontology, superClassID);
         }

@@ -7,6 +7,7 @@ import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -86,6 +87,31 @@ public class RemoveOperation {
     }
     
     /**
+     * Remove all anonymous superclasses of a given class from the ontology.
+     * 
+     * @param ontology OWLOntology to remove from
+     * @param subClassID CURIE of class to remove anon superclasses of
+     */
+    public static void removeAnonymousSuperclasses(OWLOntology ontology,
+    		String subClassID) {
+    	// Create OWLClass from String name
+    	OWLClass subClass = factory.getOWLClass(ioHelper.createIRI(subClassID));
+    	// Get set of anonymous superclass axioms
+    	Set<OWLAxiom> anons = new HashSet<>();
+		for (OWLSubClassOfAxiom ax :
+			ontology.getSubClassAxiomsForSubClass(subClass)) {
+			for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
+				if (ex.isAnonymous()) {
+					anons.add(ax);
+				}
+			}
+		}
+		// Remove axioms
+		OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    	manager.removeAxioms(ontology, anons);
+    }
+    
+    /**
      * Remove all subclasses (recursive) of a given class from the ontology.
      * Retains the original superclass.
      * 
@@ -130,10 +156,13 @@ public class RemoveOperation {
      */
     private static void gatherDescendantClasses(OWLOntology ontology, 
     		OWLClass cls, Set<OWLClass> subClasses) {
+    	// Get the SC axioms
     	Set<OWLSubClassOfAxiom> scAxioms =
     			ontology.getSubClassAxiomsForSuperClass(cls);
+    	// If this class has subclass axioms ...
     	if (!scAxioms.isEmpty()) {
 	    	for (OWLSubClassOfAxiom ax : scAxioms) {
+	    		// Add each to the set and recursively check for more children
 	    		for (OWLClass sc : ax.getSubClass().getClassesInSignature()) {
 	    			subClasses.add(sc);
 	    			gatherDescendantClasses(ontology, sc, subClasses);

@@ -46,6 +46,20 @@ public class RemoveOperationTest extends CoreTest {
 	}
 	
 	/**
+	 * Test removeal of anonymous superclasses of OWLClass (skeletal system).
+	 * Result is identical to remove_anonymous.owl.
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testRemoveAnonymousSuperClasses() throws IOException {
+		OWLOntology ontology = loadOntology(INPUT);
+		
+		RemoveOperation.removeAnonymousSuperclasses(ontology, "UBERON:0001434");
+		assertIdentical("/remove_anonymous.owl", ontology);
+	}
+	
+	/**
 	 * Test removal of descendant classes of OWLClass (anatomical cluster) from
 	 * removal.owl.
 	 * Result is identical to remove_descendants.owl.
