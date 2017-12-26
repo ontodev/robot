@@ -44,7 +44,6 @@ public class ReportOperation {
     private static final Logger logger =
             LoggerFactory.getLogger(ReportOperation.class);
 
-
     /**
      * Return a map from option name to default option value,
      * for all the available report options.
@@ -61,19 +60,20 @@ public class ReportOperation {
     /**
      * reports ontology
      * 
-     * @param ontology
-     * @param iohelper
+     * @param ontology the OWLOntology to report
+     * @param iohelper IOHelper to work with ontology
      */
     public static void report(OWLOntology ontology, IOHelper iohelper) {
         report(ontology,  iohelper, getDefaultOptions());
 
     }
+ 
     /**
      * reports ontology
      * 
-     * @param ontology
-     * @param iohelper
-     * @param options
+     * @param ontology the OWLOntology to report
+     * @param iohelper IOHelper to work with ontology
+     * @param options map of report options
      */
     public static void report(OWLOntology ontology,
             IOHelper iohelper,

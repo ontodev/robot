@@ -65,8 +65,8 @@ public class MergeOperation {
     }
     
     /**
-     * @param ontologies
-     * @return
+     * @param ontologies the list of ontologies to merge
+     * @return the first ontology
      */
     public static OWLOntology merge(List<OWLOntology> ontologies) {
         return merge(ontologies, null);

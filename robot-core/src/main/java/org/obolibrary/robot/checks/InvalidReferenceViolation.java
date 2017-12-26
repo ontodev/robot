@@ -17,9 +17,7 @@ public class InvalidReferenceViolation {
     final private OWLAxiom axiom;
     final private OWLEntity referencedObject;
     final private Category category;
-    
-    
-    
+
     private InvalidReferenceViolation(OWLAxiom axiom,
             OWLEntity referencedObject, Category category) {
         super();
@@ -29,17 +27,15 @@ public class InvalidReferenceViolation {
     }
     
     /**
-     * @param axiom
-     * @param referencedObject
-     * @param category
+     * @param axiom the OWLAxiom containing invalid reference
+     * @param referencedObject the OWLEntity that is dangling or deprecated
+     * @param category the Category of violation (deprecated or dangling)
      * @return new instance
      */
     public static InvalidReferenceViolation create(OWLAxiom axiom,
             OWLEntity referencedObject, Category category) {
         return new InvalidReferenceViolation(axiom, referencedObject, category);
     }
-
-
 
     /**
      * @return the axiom that contains the invalid reference
@@ -48,8 +44,6 @@ public class InvalidReferenceViolation {
         return axiom;
     }
 
-
-
     /**
      * @return the referencedObject that is either deprecated or dangling
      */
@@ -57,16 +51,12 @@ public class InvalidReferenceViolation {
         return referencedObject;
     }
 
-
-
     /**
      * @return the category of violation (deprecated or dangling)
      */
     public Category getCategory() {
         return category;
     }
-
-
 
     /**
      * A reference may be invalid for different reasons
@@ -80,8 +70,6 @@ public class InvalidReferenceViolation {
     public enum Category {
         DANGLING, DEPRECATED
     }
-
-
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
