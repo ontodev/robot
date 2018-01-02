@@ -2,25 +2,28 @@ package org.obolibrary.robot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
 /**
- * Handles inputs and outputs for the {@link MergeOperation}.
+ * Handles inputs and outputs for the {@link RepairOperation}.
  *
- * @author <a href="mailto:james@overton.ca">James A. Overton</a>
+ * @author cjm
  */
-public class MergeCommand implements Command {
+public class RepairCommand implements Command {
     /**
      * Logger.
      */
     private static final Logger logger =
-        LoggerFactory.getLogger(MergeCommand.class);
+        LoggerFactory.getLogger(RepairCommand.class);
 
     /**
      * Store the command-line options for the command.
@@ -28,16 +31,14 @@ public class MergeCommand implements Command {
     private Options options;
 
     /**
-     * Initialize the command.
+     * Initialze the command.
      */
-    public MergeCommand() {
+    public RepairCommand() {
         Options o = CommandLineHelper.getCommonOptions();
-        o.addOption("i", "input",     true, "merge ontology from a file");
-        o.addOption("I", "input-iri", true, "merge ontology from an IRI");
-        o.addOption("o", "output",    true, "save merged ontology to a file");
-        o.addOption("c", "collapse-import-closure", true,
-                "if value=true, then the imports closure will be merged");
-
+        o.addOption("i", "input",     true, "load ontology from a file");
+        o.addOption("I", "input-iri", true, "load ontology from an IRI");
+        o.addOption("o", "output",    true, "save ontology to a file");
+        o.addOption("O", "output-iri", true, "set OntologyIRI for output");
         options = o;
     }
 
@@ -47,7 +48,7 @@ public class MergeCommand implements Command {
      * @return name
      */
     public String getName() {
-        return "merge";
+        return "repair";
     }
 
     /**
@@ -56,7 +57,7 @@ public class MergeCommand implements Command {
      * @return description
      */
     public String getDescription() {
-        return "merge ontologies";
+        return "repair terms from an ontology";
     }
 
     /**
@@ -65,9 +66,9 @@ public class MergeCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot merge --input <file> "
-             + "--input <file> "
-             + "--output <file>";
+        return "robot repair --input <file> "
+             + "--output <file> "
+             + "--output-iri <iri>";
     }
 
     /**
@@ -80,7 +81,7 @@ public class MergeCommand implements Command {
     }
 
     /**
-     * Handle the command-line and file operations for the MergeOperation.
+     * Handle the command-line and file operations for the RepairOperation.
      *
      * @param args strings to use as arguments
      */
@@ -94,16 +95,17 @@ public class MergeCommand implements Command {
 
     /**
      * Given an input state and command line arguments,
-     * merge all ontology axioms into the first ontology
-     * and return a state with the merged ontology.
+     * repair a new ontology and return an new state.
+     * The input ontology is not changed.
      *
      * @param state the state from the previous command, or null
      * @param args the command-line arguments
-     * @return the state with the merged ontology
+     * @return a new state with the repaired ontology
      * @throws Exception on any problem
      */
     public CommandState execute(CommandState state, String[] args)
             throws Exception {
+        OWLOntology outputOntology = null;
 
         CommandLine line = CommandLineHelper
             .getCommandLine(getUsage(), getOptions(), args);
@@ -112,27 +114,18 @@ public class MergeCommand implements Command {
         }
 
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+        state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+        OWLOntology inputOntology = state.getOntology();
 
-        if (state == null) {
-            state = new CommandState();
+        IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+        if (outputIRI == null) {
+            outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
         }
 
-        List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
-        if (state != null && state.getOntology() != null) {
-            inputOntologies.add(state.getOntology());
-        }
-        inputOntologies.addAll(
-            CommandLineHelper.getInputOntologies(ioHelper, line));
-
-        if (inputOntologies.size() < 1) {
-            throw new IllegalArgumentException(
-                    "at least one inputOntology must be specified");
-        }
-
-        Map<String, String> mergeOptions =
-                MergeOperation.getDefaultOptions();
-
-        OWLOntology outputOntology = MergeOperation.merge(inputOntologies, mergeOptions);
+        RepairOperation.repair(
+                    inputOntology,
+                    ioHelper);
+        outputOntology = inputOntology;
 
         CommandLineHelper.maybeSaveOutput(line, outputOntology);
 

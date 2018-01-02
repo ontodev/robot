@@ -7,6 +7,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
@@ -18,9 +19,10 @@ public class ReduceOperationTest extends CoreTest {
      * Test removing redundant subclass axioms.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void testRemoveRedundantSubClassAxioms() throws IOException {
+    public void testRemoveRedundantSubClassAxioms() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -37,10 +39,11 @@ public class ReduceOperationTest extends CoreTest {
      * (existential restriction) axioms.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
     public void testRemoveRedundantSubClassExpressionAxioms()
-            throws IOException {
+            throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/redundant_expr.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -58,10 +61,11 @@ public class ReduceOperationTest extends CoreTest {
      * then the second becomes redundant.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
     public void testReduceWithReflexivity()
-            throws IOException {
+            throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/reduce_reflexivity_test.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -77,9 +81,10 @@ public class ReduceOperationTest extends CoreTest {
      * Test removing GCIs.
      *
      * @throws IOException on file problem
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void testReduceGci() throws IOException {
+    public void testReduceGci() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/reduce_gci_test.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();

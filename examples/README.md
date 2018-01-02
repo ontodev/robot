@@ -9,9 +9,16 @@ This document will walk you through some examples of things you can do with ROBO
 
 Many ontology projects use an "edit" file for development. Editors modify this file to add terms and fix bugs, often using Protégé. When ready, the edit file is processed and packaged for release. ROBOT provides a range of commands to help with the release process.
 
-We'll use the `edit.owl` file as our running example. It contains a fragment of [Uberon](http://uberon.github.io), a cross-species anatomy ontology with rich logical axioms. You can use Protégé to look around.
+We'll use the `edit.owl` file as our running example. It contains a fragment of [Uberon](http://uberon.github.io), a cross-species anatomy ontology with rich logical axioms. You can use [Protégé](https://protege.stanford.edu) to look around.
 
 What follows is a series of example commands that can be used to process `edit.owl` in various ways. The expected results are also provided in files that you can inspect. The example commands will create new files in a new directory, but with similar names, so that you can compare the results you get with the expected results. We use this system for testing ROBOT.
+
+
+## A Note on Catalog Files
+
+ROBOT is built on [OWLAPI](http://owlcs.github.io/owlapi/). We use the same version of OWLAPI as the current Protégé release. OWLAPI supports "catalog" files (e.g. `catalog-v001.xml`) that can specify when a local file should be used instead of a remote file. This is very useful for ontology development, and many ontology projects include a catalog file.
+
+ROBOT uses catalog files in the same way that Protégé does. When loading a local file, ROBOT will look for a catalog file in the same directory, and use it if found. When loading a remote file (e.g. over HTTP) ROBOT does not look for a catalog file. So if you're using a catalog file in your project, it's best to work in a local directory.
 
 
 ## Comparing Files
@@ -66,10 +73,12 @@ Some ontologies contain more axioms than you want to use. You can use the `filte
 
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
 
-    robot extract --method STAR
+    robot extract --method STAR \
         --input filtered.owl \
         --term-file uberon_module.txt \
         --output results/uberon_module.owl
+        
+NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first `merge`.
 
 The `--method` options fall into two groups: Minimal Information for Reuse of External Ontology Term (MIREOT) and Syntactic Locality Module Extractor (SLME).
 
@@ -80,7 +89,7 @@ The `--method` options fall into two groups: Minimal Information for Reuse of Ex
 
 For MIREOT, both "upper" (ancestor) and "lower" (descendant) limits must be specified, like this:
 
-    robot extract --method MIREOT
+    robot extract --method MIREOT \
         --input uberon_fragment.owl \
         --upper-term "obo:UBERON_0000465" \
         --lower-term "obo:UBERON_0001017" \
@@ -197,7 +206,7 @@ Robot can materialize all parent superclass and superclass expressions using the
 
     robot materialize --reasoner ELK --input emr_example.obo --term obo:BFO_0000050  --output results/emr_output.obo
 
-This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--property`
+This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--term`
 
 This can be combined with filter and reduce to create an ontology subset that is complete
 
@@ -221,6 +230,15 @@ It's important to add metadata to an ontology before releasing it, and to update
 Ontologies are shared in different formats. The default format used by ROBOT is RDF/XML, but there are other OWL formats, RDF formats, and also the OBO file format.
 
     robot convert --input annotated.owl --output results/annotated.obo
+
+The file format is determined by the extension of the output file (e.g. `.obo`), but it can also be declared with the `--format` option. Valid file formats are:
+  - json - [OBO Graphs JSON](https://github.com/geneontology/obographs/)
+  - obo - [OBO Format](http://purl.obolibrary.org/obo/oboformat)
+  - ofn - [OWL Functional](http://www.w3.org/TR/owl2-syntax/)
+  - omn - [Manchester](https://www.w3.org/TR/owl2-manchester-syntax/)
+  - owl - [RDF/XML](https://www.w3.org/TR/rdf-syntax-grammar/)
+  - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
+  - ttl - [Turtle](https://www.w3.org/TR/turtle/)
 
 ## Mirroring
 
@@ -249,6 +267,14 @@ OWL 2 has a number of [profiles](https://www.w3.org/TR/owl2-profiles/) that stri
     robot validate-profile -profile EL \
       --input merged.owl \
       --output results/merged-validation.txt
+
+## Repairing Ontologies
+
+ROBOT can repair certain problems encountered in ontologies. So far this is limited to updating axioms pointing to deprecated classes with their replacement class
+
+    robot repair \
+      --input need-of-repair.owl \
+      --output results/repaired.owl
 
 
 ## Chaining
