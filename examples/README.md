@@ -195,7 +195,7 @@ Robot can materialize all parent superclass and superclass expressions using the
 
     robot materialize --reasoner ELK --input emr_example.obo --term obo:BFO_0000050  --output results/emr_output.obo
 
-This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--property`
+This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--term`
 
 This can be combined with filter and reduce to create an ontology subset that is complete
 
