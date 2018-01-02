@@ -56,8 +56,8 @@ public class RepairOperation {
     /**
      * Repairs ontology
      * 
-     * @param ontology
-     * @param iohelper
+     * @param ontology the OWLOntology to repair
+     * @param iohelper IOHelper to work with the ontology
      */
     public static void repair(OWLOntology ontology, IOHelper iohelper) {
         repair(ontology,  iohelper, getDefaultOptions());
@@ -66,9 +66,9 @@ public class RepairOperation {
     /**
      * Repairs ontology
      * 
-     * @param ontology
-     * @param iohelper
-     * @param options
+     * @param ontology the OWLOntology to repair
+     * @param iohelper IOHelper to work with the ontology
+     * @param options map of repair options
      */
     public static void repair(OWLOntology ontology,
             IOHelper iohelper,
@@ -85,9 +85,9 @@ public class RepairOperation {
      * 
      * Assumes OBO vocabulary
      * 
-     * @param iohelper
-     * @param ontology
-     * @param violations
+     * @param iohelper IOHelper to work with the ontology
+     * @param ontology the OWLOntology to repair
+     * @param violations set of references violations
      */
     public static void repairInvalidReferences(IOHelper iohelper, OWLOntology ontology, Set<InvalidReferenceViolation> violations) {
         logger.info("Invalid references: "+violations.size());

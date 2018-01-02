@@ -28,8 +28,10 @@ public class InvalidReferenceChecker {
     
     
     /**
-     * @param ontology
-     * @param entity 
+     * Checks if entity is dangling.
+     * 
+     * @param ontology the OWLOntology to check
+     * @param entity the OWLEntity to check
      * @return true if owlClass has no logical or non-logical axioms
      */
     public static boolean isDangling(OWLOntology ontology, OWLEntity entity)  {
@@ -53,8 +55,10 @@ public class InvalidReferenceChecker {
     }
     
     /**
-     * @param ontology
-     * @param entity
+     * Checks if entity is deprecated.
+     * 
+     * @param ontology the OWLOntology to check
+     * @param entity the OWLEntity to check
      * @return true if entity is deprecated
      */
     public static boolean isDeprecated(OWLOntology ontology, OWLEntity entity)  {
@@ -79,8 +83,8 @@ public class InvalidReferenceChecker {
      * Note that this does not count the value field of an annotation assertion, since these
      * reference IRIs and not entities
      * 
-     * @param ontology
-     * @param axioms
+     * @param ontology the OWLOntology to check
+     * @param axioms set of OWLAxioms to check
      * @return all violations
      */
     public static Set<InvalidReferenceViolation> getInvalidReferenceViolations(OWLOntology ontology, Set<OWLAxiom> axioms, boolean ignoreDangling) {
@@ -103,21 +107,20 @@ public class InvalidReferenceChecker {
     }
     
     /**
-     * @param ontology
-     * @param ignoreDangling
+     * @param ontology the OWLOntology to check
+     * @param ignoreDangling boolean to ignore dangling classes
      * @return all violations in ontology
      */
     public static Set<InvalidReferenceViolation> getInvalidReferenceViolations(OWLOntology ontology, boolean ignoreDangling) {
         return getInvalidReferenceViolations(ontology, ontology.getAxioms(Imports.INCLUDED), ignoreDangling);
     }
     
-    
     /**
      * Checks an import module. If the base ontology refers to deprecated entities in the import module
      * this constitutes a violation
      * 
-     * @param importModule
-     * @param baseOntology
+     * @param importModule the OWLOntology import to check
+     * @param baseOntology the base OWLOntology to check
      * @return all deprecation-reference violations in baseOntology with respect to import module
      */
     public static Set<InvalidReferenceViolation> checkImportModule(OWLOntology importModule, OWLOntology baseOntology) {

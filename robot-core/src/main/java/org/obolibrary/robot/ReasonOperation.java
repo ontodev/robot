@@ -87,7 +87,7 @@ public class ReasonOperation {
      * @param reasonerFactory the factory to create a reasoner instance from
      * @throws OWLOntologyCreationException on ontology problem
      * @throws OntologyLogicException on inconsistency or incoherency
-     * @throws InvalidReferenceException 
+     * @throws InvalidReferenceException on unsatisfiable class(es)
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory)
@@ -106,7 +106,7 @@ public class ReasonOperation {
      * @param options a map of option strings, or null
      * @throws OWLOntologyCreationException on ontology problem
      * @throws OntologyLogicException on inconsistency or incoherency
-     * @throws InvalidReferenceException 
+     * @throws InvalidReferenceException on unsatisfiable class(es)
      */
     public static void reason(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
