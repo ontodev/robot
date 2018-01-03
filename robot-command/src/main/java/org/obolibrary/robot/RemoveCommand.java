@@ -1,7 +1,11 @@
 package org.obolibrary.robot;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -40,6 +44,8 @@ public class RemoveCommand implements Command {
         o.addOption("O", "output-iri", true, "set OntologyIRI for output");
         o.addOption("c", "class",     true, "remove a Class");
         o.addOption("n", "individual", true, "remove a NamedIndividual");
+        o.addOption("e", "entity",    true, "remove an OWL entity");
+        o.addOption("E", "entities",  true, "remove a set of OWL entities");
         o.addOption("b", "object-property",
                 true, "remove an ObjectProperty");
         o.addOption("a", "annotation-property",
@@ -150,6 +156,27 @@ public class RemoveCommand implements Command {
         		line, "descendant-classes");
         if (superClassID != null) {
         	RemoveOperation.removeDescendantClasses(ontology, superClassID);
+        }
+        
+        // Remove single entity if requesterd (given CURIE)
+        String entityID = CommandLineHelper.getOptionalValue(line, "entity");
+        if (entityID != null) {
+        	RemoveOperation.remove(ontology, entityID);
+        }
+        
+        // Remove list of entities if requested
+        // `--entities` expects a text file with entity IDs on separate lines
+        String idsFile = CommandLineHelper
+        		.getOptionalValue(line, "enitities");
+        if (idsFile != null) {
+        	try (BufferedReader br = 
+        			new BufferedReader(new FileReader(idsFile))) {
+        		String id;
+        		// Line by line remove the entity
+            	while ((id = br.readLine()) != null) {
+            		RemoveOperation.remove(ontology, id);
+            	}
+        	}
         }
         
         // Create map of options & their args (null if not provided)

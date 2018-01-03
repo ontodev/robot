@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -36,6 +37,24 @@ public class RemoveOperation {
      */
     private static final Logger logger =
         LoggerFactory.getLogger(FilterOperation.class);
+    
+    /**
+     * Remove an OWLEntity of unknown type from the ontology.
+     * 
+     * @param ontology OWLOntology to remove from
+     * @param entityID CURIE of the OWL entity to remove
+     */
+    public static void remove(OWLOntology ontology, String entityID) {
+    	// Create IRI
+    	IRI iri = ioHelper.createIRI(entityID);
+    	
+    	// Try for each OWLEntity type
+    	remove(ontology, factory.getOWLClass(iri));
+    	remove(ontology, factory.getOWLNamedIndividual(iri));
+    	remove(ontology, factory.getOWLObjectProperty(iri));
+    	remove(ontology, factory.getOWLAnnotationProperty(iri));
+    	remove(ontology, factory.getOWLDataProperty(iri));
+    }
     
     /**
      * Remove specified entities from ontology.
@@ -90,7 +109,7 @@ public class RemoveOperation {
      * Remove all anonymous superclasses of a given class from the ontology.
      * 
      * @param ontology OWLOntology to remove from
-     * @param subClassID CURIE of class to remove anon superclasses of
+     * @param subClassID CURIE of class to remove anon superclasses
      */
     public static void removeAnonymousSuperclasses(OWLOntology ontology,
     		String subClassID) {
