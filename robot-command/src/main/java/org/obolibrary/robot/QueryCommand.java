@@ -166,15 +166,6 @@ public class QueryCommand implements Command {
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
 
-//        if(line.hasOption("sparql") && line.hasOption("output")) {
-//            String queryPath = line.getOptionValue("sparql");
-//            String outputPath = line.getOptionValue("output");
-//            String query = FileUtils.readFileToString(new File(queryPath));
-//
-//            QueryOperation.runSparqlQuery(dsg, query, new File(outputPath), outputFormat);
-//            return state;
-//        }
-
         if(line.hasOption("sparql")) {
             List<String> sparql = CommandLineHelper.getOptionalValues(line, "sparql");
 

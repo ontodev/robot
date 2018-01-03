@@ -1,4 +1,4 @@
-package org.obolibrary.robot.query;
+package org.obolibrary.robot.exceptions;
 
 /**
  * Created by edouglass on 9/7/17.

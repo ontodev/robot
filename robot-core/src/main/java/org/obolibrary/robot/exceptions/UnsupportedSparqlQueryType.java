@@ -1,4 +1,4 @@
-package org.obolibrary.robot.query;
+package org.obolibrary.robot.exceptions;
 
 import com.hp.hpl.jena.query.Query;
 

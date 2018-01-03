@@ -6,8 +6,9 @@ import java.util.Optional;
 
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.Model;
-import org.obolibrary.robot.query.QueryResult;
-import org.obolibrary.robot.query.SparqlQueryExecution;
+import org.apache.commons.io.IOUtils;
+import org.obolibrary.robot.exceptions.ResultsWritingException;
+import org.obolibrary.robot.exceptions.UnsupportedSparqlQueryType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,9 +130,69 @@ public class QueryOperation {
     }
 
     public static void runSparqlQuery(DatasetGraph dsg, String query, File output, Optional<Lang> outputFormat) {
-        SparqlQueryExecution execution = new SparqlQueryExecution(dsg);
-        QueryResult queryResult = execution.runQuery(query);
-        queryResult.writeResults(output, outputFormat);
+        QueryExecution exec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        Query q = exec.getQuery();
+
+        switch (q.getQueryType()) {
+            case Query.QueryTypeSelect:
+                ResultSet pattern = exec.execSelect();
+                writeSelectResult(output, outputFormat, pattern);
+                break;
+
+            case Query.QueryTypeConstruct:
+                Model triples = exec.execConstruct();
+                writeRdfResult(output, outputFormat, triples);
+                break;
+
+            case Query.QueryTypeDescribe:
+                Model descriptionTriples = exec.execDescribe();
+                writeRdfResult(output, outputFormat, descriptionTriples);
+                break;
+
+            case Query.QueryTypeAsk:
+                boolean answer = exec.execAsk();
+                writeAskResult(output, outputFormat, answer);
+                break;
+
+            default:
+                throw new UnsupportedSparqlQueryType("SPARQL " + UnsupportedSparqlQueryType.queryTypeName(q) + " queries are currently unsupported.");
+        }
+    }
+
+    public static void writeAskResult(File outfile, Optional<Lang> format, boolean answer) {
+        PrintStream outStream = null;
+        try {
+            outStream = new PrintStream(new FileOutputStream(outfile));
+            outStream.print(answer);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            IOUtils.closeQuietly(outStream);
+        }
+    }
+
+    public static void writeRdfResult(File outfile, Optional<Lang> format, Model constructedTriples) {
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(outfile);
+            RDFDataMgr.write(out, constructedTriples, format.orElse(Lang.TTL));
+        } catch (FileNotFoundException e) {
+            throw new ResultsWritingException(e.getMessage(), e);
+        } finally {
+            IOUtils.closeQuietly(out);
+        }
+    }
+
+    public static void writeSelectResult(File outfile, Optional<Lang> format, ResultSet triplePattern) {
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(outfile);
+            ResultSetMgr.write(out, triplePattern, format.orElse(Lang.CSV));
+        } catch (FileNotFoundException e) {
+            throw new ResultsWritingException(e.getMessage(), e);
+        } finally {
+            IOUtils.closeQuietly(out);
+        }
     }
 
     /**
