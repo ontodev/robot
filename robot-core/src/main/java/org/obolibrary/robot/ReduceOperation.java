@@ -91,7 +91,7 @@ public class ReduceOperation {
      *
      * @param ontology The ontology to reduce.
      * @param reasonerFactory The reasoner factory to use.
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException
      */
     public static void reduce(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory) throws OWLOntologyCreationException {
@@ -104,7 +104,7 @@ public class ReduceOperation {
      * @param ontology The ontology to reduce.
      * @param reasonerFactory The reasoner factory to use.
      * @param options A map of options for the operation.
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException
      */
     public static void reduce(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
@@ -112,22 +112,22 @@ public class ReduceOperation {
 
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
-      
+
         // we treat an axiom as redundant if its is redundant within the
         // subClassOf graph, excluding equivalence axioms
         OWLOntology subOntology = manager.createOntology();
         for (OWLAxiom a :  ontology.getAxioms(Imports.INCLUDED)) {
             if (!(a instanceof OWLEquivalentClassesAxiom)) {
                 manager.addAxiom(subOntology, a);
-            }          
+            }
         }
 
-        Map<OWLClass, Set<OWLClass>> subClassMap = new HashMap<>();
-        Set<OWLSubClassOfAxiom> subClassAxioms =
+        Map<OWLClass, Set<OWLClass>> assertedSubClassMap = new HashMap<>();
+        Set<OWLSubClassOfAxiom> assertedSubClassAxioms =
             ontology.getAxioms(AxiomType.SUBCLASS_OF);
         Set<OWLClassExpression> exprs = new HashSet<>();
 
-        Map<OWLClassExpression, OWLClass> rxmap = new HashMap<>();
+        Map<OWLClassExpression, OWLClass> exprToNamedClassMap = new HashMap<>();
 
         for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
 
@@ -149,9 +149,9 @@ public class ReduceOperation {
             }
         }
 
-        for (OWLClassExpression x : rxmap.keySet()) {
+        for (OWLClassExpression x : exprToNamedClassMap.keySet()) {
             OWLAxiom ax =
-                dataFactory.getOWLEquivalentClassesAxiom(rxmap.get(x), x);
+                dataFactory.getOWLEquivalentClassesAxiom(exprToNamedClassMap.get(x), x);
             manager.addAxiom(subOntology, ax);
         }
 
@@ -195,7 +195,7 @@ public class ReduceOperation {
                 if (reasoner.getSuperClasses(assertedSuper, false)
                         .containsEntity(superClass)) {
                     isRedundant = true;
-                    
+
                     // DUMB CODE FOR DEBUGGING
                     OWLClassExpression assertedSuperX = assertedSuper;
                     for (OWLClassExpression x : exprToNamedClassMap.keySet()) {

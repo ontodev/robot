@@ -19,7 +19,7 @@ public class ReduceOperationTest extends CoreTest {
      * Test removing redundant subclass axioms.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException
      */
     @Test
     public void testRemoveRedundantSubClassAxioms() throws IOException, OWLOntologyCreationException {
@@ -39,7 +39,7 @@ public class ReduceOperationTest extends CoreTest {
      * (existential restriction) axioms.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException
      */
     @Test
     public void testRemoveRedundantSubClassExpressionAxioms()
@@ -61,7 +61,7 @@ public class ReduceOperationTest extends CoreTest {
      * then the second becomes redundant.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException
      */
     @Test
     public void testReduceWithReflexivity()
@@ -81,7 +81,7 @@ public class ReduceOperationTest extends CoreTest {
      * Test removing GCIs.
      *
      * @throws IOException on file problem
-     * @throws OWLOntologyCreationException 
+     * @throws OWLOntologyCreationException
      */
     @Test
     public void testReduceGci() throws IOException, OWLOntologyCreationException {
@@ -95,15 +95,16 @@ public class ReduceOperationTest extends CoreTest {
         ReduceOperation.reduce(reasoned, reasonerFactory, options);
         assertIdentical("/reduce_gci_reduced.obo", reasoned);
     }
-    
+
     /**
      * This test ensures that subClassOf axioms are never removed if they lead
      * to loss of information in the subClassOf graph
-     * 
+     *
      * @throws IOException
+     * @throws OWLOntologyCreationException
      */
     @Test
-    public void testReduceWithEquiv() throws IOException {
+    public void testReduceWithEquiv() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/equiv_reduce_test.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
@@ -114,16 +115,17 @@ public class ReduceOperationTest extends CoreTest {
         ReduceOperation.reduce(reasoned, reasonerFactory, options);
         assertIdentical("/equiv_reduce_test_reduced.obo", reasoned);
     }
-    
+
     /**
      * Edge case, taken from GO
-     * 
+     *
      * See: 'central nervous system development' in the test file
-     * 
+     *
      * @throws IOException
+     * @throws OWLOntologyCreationException
      */
     @Test
-    public void testReduceEdgeCase() throws IOException {
+    public void testReduceEdgeCase() throws IOException, OWLOntologyCreationException {
         OWLOntology reasoned = loadOntology("/reduce-edgecase-cnd.obo");
         OWLReasonerFactory reasonerFactory = new org.semanticweb
             .elk.owlapi.ElkReasonerFactory();
