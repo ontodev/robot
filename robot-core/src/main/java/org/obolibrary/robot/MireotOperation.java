@@ -1,9 +1,7 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -57,27 +55,6 @@ public class MireotOperation {
             new HashSet<OWLAnnotationProperty>();
         annotationProperties.add(dataFactory.getRDFSLabel());
         return annotationProperties;
-    }
-    
-    public static OWLOntology mireotExtract(IOHelper ioHelper, 
-    		Set<IRI> upperIRIs, Set<IRI> lowerIRIs, Set<IRI> branchIRIs,
-    		OWLOntology inputOntology) throws OWLOntologyCreationException {
-    	List<OWLOntology> outputOntologies = new ArrayList<OWLOntology>();
-        if (upperIRIs != null && upperIRIs.size() == 0) {
-            upperIRIs = null;
-        }
-        if (lowerIRIs != null && lowerIRIs.size() != 0) {
-            outputOntologies.add(
-                MireotOperation.getAncestors(inputOntology,
-                    upperIRIs, lowerIRIs, null));
-        }
-        if (branchIRIs != null && branchIRIs.size() != 0) {
-            outputOntologies.add(
-                MireotOperation.getDescendants(inputOntology,
-                    branchIRIs, null));
-        }
-        
-    	return MergeOperation.merge(outputOntologies);
     }
 
     /**

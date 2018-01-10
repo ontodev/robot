@@ -59,10 +59,10 @@ public class RelatedEntitiesHelper {
      *         entities to retrieve
      * @return Set of OWLObjects
      */
-    public static Set<OWLObject> getRelatedEntities(IRI iri,
-    		OWLOntology ontology, String relationOption) {
+    public static Set<OWLObject> getRelatedEntities(OWLOntology ontology,
+    		IRI iri, String relationOption) {
     	Set<IRI> IRIs = Sets.newHashSet(iri);
-    	return getRelatedEntities(IRIs, ontology,
+    	return getRelatedEntities(ontology, IRIs,
     			Arrays.asList(relationOption));
     }
     
@@ -76,9 +76,9 @@ public class RelatedEntitiesHelper {
      *         entities to retrieve
      * @return Set of OWLObjects
      */
-    public static Set<OWLObject> getRelatedEntities(Set<IRI> IRIs,
-    		OWLOntology ontology, String relationOption) {
-    	return getRelatedEntities(IRIs, ontology,
+    public static Set<OWLObject> getRelatedEntities(OWLOntology ontology,
+    		Set<IRI> IRIs, String relationOption) {
+    	return getRelatedEntities(ontology, IRIs,
     			Arrays.asList(relationOption));
     }
     
@@ -92,10 +92,10 @@ public class RelatedEntitiesHelper {
      *         related entities to retrieve
      * @return Set of OWLObjects
      */
-    public static Set<OWLObject> getRelatedEntities(IRI iri,
-    		OWLOntology ontology, List<String> relationOptions) {
+    public static Set<OWLObject> getRelatedEntities(OWLOntology ontology, 
+    		IRI iri, List<String> relationOptions) {
     	Set<IRI> IRIs = Sets.newHashSet(iri);
-    	return getRelatedEntities(IRIs, ontology, relationOptions);
+    	return getRelatedEntities(ontology, IRIs, relationOptions);
     }
 
     /**
@@ -107,36 +107,37 @@ public class RelatedEntitiesHelper {
      *         related entities to retrieve
      * @return Set of OWLObjects
      */
-	public static Set<OWLObject> getRelatedEntities(Set<IRI> IRIs,
-			OWLOntology ontology, List<String> relationOptions) {
+	public static Set<OWLObject> getRelatedEntities(OWLOntology ontology,
+			Set<IRI> IRIs, List<String> relationOptions) {
 		Set<OWLObject> relatedEntities = new HashSet<>();
 		Map<EntityType<?>, Set<OWLEntity>> entitiesByType =
-				sortTypes(IRIs, ontology);
+				sortTypes(ontology, IRIs);
 		for (String opt : relationOptions) {
 			if ("ancestors".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getAncestors(entitiesByType, ontology));
+						getAncestors(ontology, entitiesByType));
 			} else if ("descendants".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getDescendants(entitiesByType, ontology));
+						getDescendants(ontology, entitiesByType));
 			} else if ("equivalents".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getEquivalents(entitiesByType, ontology));
+						getEquivalents(ontology, entitiesByType));
 			} else if ("disjoints".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getDisjoints(entitiesByType, ontology));
+						getDisjoints(ontology, entitiesByType));
 			} else if ("domains".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getDomains(entitiesByType, ontology));
+						getDomains(ontology, entitiesByType));
 			} else if ("ranges".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getRanges(entitiesByType, ontology));
+						getRanges(ontology, entitiesByType));
 			} else if ("inverses".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getInverses(entitiesByType, ontology));
+						getInverses(ontology, entitiesByType));
 			} else if ("types".equals(opt.toLowerCase())) {
 				relatedEntities.addAll(
-						getTypes(entitiesByType, ontology));
+						getTypes(ontology, entitiesByType));
+			// TODO: property assertions
 			} else {
 				// TODO: Should this be an exception?
 		    	logger.warn("Invalid relation option: " + opt);
@@ -153,9 +154,8 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getAncestors(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getAncestors(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> ancestors = new HashSet<>();
 		Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
 		Set<OWLEntity> dataProperties =
@@ -163,13 +163,13 @@ public class RelatedEntitiesHelper {
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity cls : classes) {
-			getAncestors(cls.asOWLClass(), ontology, ancestors);
+			getAncestors(ontology, cls.asOWLClass(), ancestors);
 		}
 		for (OWLEntity dp : dataProperties) {
-			getAncestors(dp.asOWLDataProperty(), ontology, ancestors);
+			getAncestors(ontology, dp.asOWLDataProperty(), ancestors);
 		}
 		for (OWLEntity op : objectProperties) {
-			getAncestors(op.asOWLObjectProperty(), ontology, ancestors);
+			getAncestors(ontology, op.asOWLObjectProperty(), ancestors);
 		}
 		return ancestors;
 	}
@@ -182,9 +182,8 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getDescendants(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getDescendants(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> descendants = new HashSet<>();
 		Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
 		Set<OWLEntity> dataProperties =
@@ -192,13 +191,13 @@ public class RelatedEntitiesHelper {
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity cls : classes) {
-			getDescendants(cls.asOWLClass(), ontology, descendants);
+			getDescendants(ontology, cls.asOWLClass(), descendants);
 		}
 		for (OWLEntity dp : dataProperties) {
-			getDescendants(dp.asOWLDataProperty(), ontology, descendants);
+			getDescendants(ontology, dp.asOWLDataProperty(), descendants);
 		}
 		for (OWLEntity op : objectProperties) {
-			getDescendants(op.asOWLObjectProperty(), ontology, descendants);
+			getDescendants(ontology, op.asOWLObjectProperty(), descendants);
 		}
 		return descendants;
 	}
@@ -211,9 +210,8 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getDisjoints(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getDisjoints(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> disjoints = new HashSet<>();
 		Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
 		Set<OWLEntity> dataProperties =
@@ -221,13 +219,13 @@ public class RelatedEntitiesHelper {
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity cls : classes) {
-			getDisjoints(cls.asOWLClass(), ontology, disjoints);
+			getDisjoints(ontology, cls.asOWLClass(), disjoints);
 		}
 		for (OWLEntity dp : dataProperties) {
-			getDisjoints(dp.asOWLDataProperty(), ontology, disjoints);
+			getDisjoints(ontology, dp.asOWLDataProperty(), disjoints);
 		}
 		for (OWLEntity op : objectProperties) {
-			getDisjoints(op.asOWLObjectProperty(), ontology, disjoints);
+			getDisjoints(ontology, op.asOWLObjectProperty(), disjoints);
 		}
 		return disjoints;
 	}
@@ -240,19 +238,18 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getDomains(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getDomains(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> domains = new HashSet<>();
 		Set<OWLEntity> dataProperties =
 				entitiesByType.get(EntityType.DATA_PROPERTY);
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity dp : dataProperties) {
-			getDomains(dp.asOWLDataProperty(), ontology, domains);
+			getDomains(ontology, dp.asOWLDataProperty(), domains);
 		}
 		for (OWLEntity op : objectProperties) {
-			getDomains(op.asOWLObjectProperty(), ontology, domains);
+			getDomains(ontology, op.asOWLObjectProperty(), domains);
 		}
 		return domains;
 	}
@@ -265,9 +262,8 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getEquivalents(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getEquivalents(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> equivalents = new HashSet<>();
 		Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
 		Set<OWLEntity> dataProperties =
@@ -275,13 +271,13 @@ public class RelatedEntitiesHelper {
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity cls : classes) {
-			getEquivalents(cls.asOWLClass(), ontology, equivalents);
+			getEquivalents(ontology, cls.asOWLClass(), equivalents);
 		}
 		for (OWLEntity dp : dataProperties) {
-			getEquivalents(dp.asOWLDataProperty(), ontology, equivalents);
+			getEquivalents(ontology, dp.asOWLDataProperty(), equivalents);
 		}
 		for (OWLEntity op : objectProperties) {
-			getEquivalents(op.asOWLObjectProperty(), ontology, equivalents);
+			getEquivalents(ontology, op.asOWLObjectProperty(), equivalents);
 		}
 		return equivalents;
 	}
@@ -294,14 +290,13 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getInverses(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getInverses(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> inverses = new HashSet<>();
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity op : objectProperties) {
-			getInverses(op.asOWLObjectProperty(), ontology, inverses);
+			getInverses(ontology, op.asOWLObjectProperty(), inverses);
 		}
 		return inverses;
 	}
@@ -314,19 +309,18 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getRanges(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getRanges(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> ranges = new HashSet<>();
 		Set<OWLEntity> dataProperties =
 				entitiesByType.get(EntityType.DATA_PROPERTY);
 		Set<OWLEntity> objectProperties =
 				entitiesByType.get(EntityType.OBJECT_PROPERTY);
 		for (OWLEntity dp : dataProperties) {
-			getRanges(dp.asOWLDataProperty(), ontology, ranges);
+			getRanges(ontology, dp.asOWLDataProperty(), ranges);
 		}
 		for (OWLEntity op : objectProperties) {
-			getRanges(op.asOWLObjectProperty(), ontology, ranges);
+			getRanges(ontology, op.asOWLObjectProperty(), ranges);
 		}
 		return ranges;
 	}
@@ -339,14 +333,13 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Set of OWLObjects
 	 */
-	private static Set<OWLObject> getTypes(
-			Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-			OWLOntology ontology) {
+	private static Set<OWLObject> getTypes(OWLOntology ontology,
+			Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
 		Set<OWLObject> types = new HashSet<>();
 		Set<OWLEntity> individual =
 				entitiesByType.get(EntityType.NAMED_INDIVIDUAL);
 		for (OWLEntity i : individual) {
-			getTypes(i.asOWLNamedIndividual(), ontology, types);
+			getTypes(ontology, i.asOWLNamedIndividual(), types);
 		}
 		return types;
 	}
@@ -359,8 +352,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param ancestors Set of OWLObjects representing the ancestors
 	 */
-	private static void getAncestors(OWLClass cls,
-			OWLOntology ontology, Set<OWLObject> ancestors) {
+	private static void getAncestors(OWLOntology ontology, OWLClass cls,
+			Set<OWLObject> ancestors) {
 		Set<OWLSubClassOfAxiom> axioms =
 				ontology.getSubClassAxiomsForSubClass(cls);
 		if (!axioms.isEmpty()) {
@@ -369,7 +362,7 @@ public class RelatedEntitiesHelper {
 					for (OWLClass c :
 						ax.getSuperClass().getClassesInSignature()) {
 						ancestors.add(c);
-						getAncestors(c, ontology, ancestors);
+						getAncestors(ontology, c, ancestors);
 					}
 				} else {
 					logger.debug("Anonymous Ancestor: "
@@ -387,8 +380,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param ancestors Set of OWLObjects representing the ancestors
 	 */
-	private static void getAncestors(OWLDataProperty dataProperty,
-			OWLOntology ontology, Set<OWLObject> ancestors) {
+	private static void getAncestors(OWLOntology ontology, 
+			OWLDataProperty dataProperty, Set<OWLObject> ancestors) {
 		Set<OWLSubDataPropertyOfAxiom> axioms =
 				ontology.getDataSubPropertyAxiomsForSubProperty(dataProperty);
 		if (!axioms.isEmpty()) {
@@ -396,7 +389,7 @@ public class RelatedEntitiesHelper {
 				for (OWLDataProperty dp :
 					ax.getSuperProperty().getDataPropertiesInSignature()) {
 					ancestors.add(dp);
-					getAncestors(dp, ontology, ancestors);
+					getAncestors(ontology, dp, ancestors);
 					
 				}
 			}
@@ -410,8 +403,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param ancestors Set of OWLObjects representing the ancestors
 	 */
-	private static void getAncestors(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> ancestors) {
+	private static void getAncestors(OWLOntology ontology,
+			OWLObjectProperty objectProperty, Set<OWLObject> ancestors) {
 		Set<OWLSubObjectPropertyOfAxiom> axioms =
 				ontology.getObjectSubPropertyAxiomsForSubProperty(
 						objectProperty);
@@ -420,7 +413,7 @@ public class RelatedEntitiesHelper {
 				for (OWLObjectProperty op :
 					ax.getSuperProperty().getObjectPropertiesInSignature()) {
 					ancestors.add(op);
-					getAncestors(op, ontology, ancestors);
+					getAncestors(ontology, op, ancestors);
 					
 				}
 			}
@@ -435,7 +428,7 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param descendants Set of OWLObjects representing the descendants
 	 */
-	private static void getDescendants(OWLClass cls, OWLOntology ontology,
+	private static void getDescendants(OWLOntology ontology, OWLClass cls,
 			Set<OWLObject> descendants) {
 		Set<OWLSubClassOfAxiom> axioms =
 				ontology.getSubClassAxiomsForSuperClass(cls);
@@ -445,7 +438,7 @@ public class RelatedEntitiesHelper {
 		    		for (OWLClass c :
 		    			ax.getSubClass().getClassesInSignature()) {
 		    			descendants.add(c);
-		    			getDescendants(c, ontology, descendants);
+		    			getDescendants(ontology, c, descendants);
 		    		}
 	    		} else {
 	    			logger.debug("Anonymous Descendant: "
@@ -463,8 +456,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param descendants Set of OWLObjects representing the descendants
 	 */
-	private static void getDescendants(OWLDataProperty dataProperty,
-			OWLOntology ontology, Set<OWLObject> descendants) {
+	private static void getDescendants(OWLOntology ontology,
+			OWLDataProperty dataProperty, Set<OWLObject> descendants) {
 		Set<OWLSubDataPropertyOfAxiom> axioms =
 				ontology.getDataSubPropertyAxiomsForSuperProperty(dataProperty);
 		if (!axioms.isEmpty()) {
@@ -472,7 +465,7 @@ public class RelatedEntitiesHelper {
 	    		for (OWLDataProperty dp :
 	    			ax.getSubProperty().getDataPropertiesInSignature()) {
 	    			descendants.add(dp);
-	    			getDescendants(dp, ontology, descendants);
+	    			getDescendants(ontology, dp, descendants);
 	    		}
 	    	}
 		}
@@ -485,8 +478,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param descendants Set of OWLObjects representing the descendants
 	 */
-	private static void getDescendants(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> descendants) {
+	private static void getDescendants(OWLOntology ontology,
+			OWLObjectProperty objectProperty, Set<OWLObject> descendants) {
 		Set<OWLSubObjectPropertyOfAxiom> axioms =
     			ontology.getObjectSubPropertyAxiomsForSuperProperty(
     					objectProperty);
@@ -495,7 +488,7 @@ public class RelatedEntitiesHelper {
 	    		for (OWLObjectProperty op :
 	    			ax.getSubProperty().getObjectPropertiesInSignature()) {
 	    			descendants.add(op);
-	    			getDescendants(op, ontology, descendants);
+	    			getDescendants(ontology, op, descendants);
 	    		}
 	    	}
     	}
@@ -509,7 +502,7 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param disjoints Set of OWLObjects representing the disjoints
 	 */
-	private static void getDisjoints(OWLClass cls, OWLOntology ontology,
+	private static void getDisjoints(OWLOntology ontology, OWLClass cls,
 			Set<OWLObject> disjoints) {
 		Set<OWLDisjointClassesAxiom> axioms =
 				ontology.getDisjointClassesAxioms(cls);
@@ -535,8 +528,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param disjoints Set of OWLObjects representing the disjoints
 	 */
-	private static void getDisjoints(OWLDataProperty dataProperty,
-			OWLOntology ontology, Set<OWLObject> disjoints) {
+	private static void getDisjoints(OWLOntology ontology,
+			OWLDataProperty dataProperty, Set<OWLObject> disjoints) {
 		Set<OWLDisjointDataPropertiesAxiom> axioms =
 				ontology.getDisjointDataPropertiesAxioms(dataProperty);
 		if (!axioms.isEmpty()) {
@@ -554,8 +547,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param disjoints Set of OWLObjects representing the disjoints
 	 */
-	private static void getDisjoints(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> disjoints) {
+	private static void getDisjoints(OWLOntology ontology,
+			OWLObjectProperty objectProperty, Set<OWLObject> disjoints) {
 		Set<OWLDisjointObjectPropertiesAxiom> axioms =
 				ontology.getDisjointObjectPropertiesAxioms(objectProperty);
 		if (!axioms.isEmpty()) {
@@ -573,8 +566,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param domains Set of OWLObjects representing the domains
 	 */
-	private static void getDomains(OWLDataProperty dataProperty,
-			OWLOntology ontology, Set<OWLObject> domains) {
+	private static void getDomains(OWLOntology ontology, 
+			OWLDataProperty dataProperty, Set<OWLObject> domains) {
 		Set<OWLDataPropertyDomainAxiom> axioms =
 				ontology.getDataPropertyDomainAxioms(dataProperty);
 		if (!axioms.isEmpty()) {
@@ -592,8 +585,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param domains Set of OWLObjects representing the domains
 	 */
-	private static void getDomains(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> domains) {
+	private static void getDomains(OWLOntology ontology, 
+			OWLObjectProperty objectProperty, Set<OWLObject> domains) {
 		Set<OWLObjectPropertyDomainAxiom> axioms =
 				ontology.getObjectPropertyDomainAxioms(objectProperty);
 		if (!axioms.isEmpty()) {
@@ -612,7 +605,7 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param equivalents Set of OWLObjects representing the equivalents
 	 */
-	private static void getEquivalents(OWLClass cls, OWLOntology ontology,
+	private static void getEquivalents(OWLOntology ontology, OWLClass cls,
 			Set<OWLObject> equivalents) {
 		Set<OWLEquivalentClassesAxiom> axioms =
 				ontology.getEquivalentClassesAxioms(cls);
@@ -640,8 +633,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param equivalents Set of OWLObjects representing the equivalents
 	 */
-	private static void getEquivalents(OWLDataProperty dataProperty,
-			OWLOntology ontology, Set<OWLObject> equivalents) {
+	private static void getEquivalents(OWLOntology ontology,
+			OWLDataProperty dataProperty, Set<OWLObject> equivalents) {
 		Set<OWLEquivalentDataPropertiesAxiom> axioms =
 				ontology.getEquivalentDataPropertiesAxioms(dataProperty);
 		if (!axioms.isEmpty()) {
@@ -666,8 +659,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param equivalents Set of OWLObjects representing the equivalents
 	 */
-	private static void getEquivalents(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> equivalents) {
+	private static void getEquivalents(OWLOntology ontology,
+			OWLObjectProperty objectProperty, Set<OWLObject> equivalents) {
 		Set<OWLEquivalentObjectPropertiesAxiom> axioms =
 				ontology.getEquivalentObjectPropertiesAxioms(objectProperty);
 		if (!axioms.isEmpty()) {
@@ -690,8 +683,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param inverses Set of OWLObjects representing the inverses
 	 */
-	private static void getInverses(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> inverses) {
+	private static void getInverses(OWLOntology ontology,
+			OWLObjectProperty objectProperty, Set<OWLObject> inverses) {
 		Set<OWLInverseObjectPropertiesAxiom> axioms =
 				ontology.getInverseObjectPropertyAxioms(objectProperty);
 		if (!axioms.isEmpty()) {
@@ -710,8 +703,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param ranges Set of OWLObjects representing the ranges
 	 */
-	private static void getRanges(OWLDataProperty dataProperty,
-			OWLOntology ontology, Set<OWLObject> ranges) {
+	private static void getRanges(OWLOntology ontology,
+			OWLDataProperty dataProperty, Set<OWLObject> ranges) {
 		ranges.addAll(ontology.getDataPropertyRangeAxioms(dataProperty));
 	}
 	
@@ -723,8 +716,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param ranges Set of OWLObjects representing the ranges
 	 */
-	private static void getRanges(OWLObjectProperty objectProperty,
-			OWLOntology ontology, Set<OWLObject> ranges) {
+	private static void getRanges(OWLOntology ontology,
+			OWLObjectProperty objectProperty, Set<OWLObject> ranges) {
 		Set<OWLObjectPropertyRangeAxiom> axioms =
 				ontology.getObjectPropertyRangeAxioms(objectProperty);
 		if (!axioms.isEmpty()) {
@@ -749,8 +742,8 @@ public class RelatedEntitiesHelper {
 	 * @param ontology OWLOntology to retrieve from
 	 * @param types Set of OWLObjects representing the types
 	 */
-	private static void getTypes(OWLNamedIndividual individual,
-			OWLOntology ontology, Set<OWLObject> types) {
+	private static void getTypes(OWLOntology ontology,
+			OWLNamedIndividual individual, Set<OWLObject> types) {
 		Set<OWLClassAssertionAxiom> axioms =
 				ontology.getClassAssertionAxioms(individual);
 		if (!axioms.isEmpty()) {
@@ -774,8 +767,8 @@ public class RelatedEntitiesHelper {
 	 * @param  ontology OWLOntology to retrieve from
 	 * @return Map of EntityTypes to set of OWLEntities of that type
 	 */
-	private static Map<EntityType<?>, Set<OWLEntity>> sortTypes(Set<IRI> IRIs,
-			OWLOntology ontology) {
+	private static Map<EntityType<?>, Set<OWLEntity>> sortTypes(
+			OWLOntology ontology, Set<IRI> IRIs) {
 		Map<EntityType<?>, Set<OWLEntity>> entitiesByType = new HashMap<>();
 		Set<OWLEntity> classes = new HashSet<>();
 		Set<OWLEntity> dataProperties = new HashSet<>();

@@ -25,7 +25,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 				IRI.create("http://purl.obolibrary.org/obo/RO_0000091"));
 		Set<String> ancestors = new HashSet<>();
 		for (OWLObject a :
-			RelatedEntitiesHelper.getRelatedEntities(IRIs, ont, "ancestors")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, IRIs, "ancestors")) {
 			ancestors.add(a.toString());
 		}
 		String someVals =
@@ -49,7 +49,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 				IRI.create("http://purl.obolibrary.org/obo/RO_0000057"));
 		Set<String> descendants = new HashSet<>();
 		for (OWLObject d :
-			RelatedEntitiesHelper.getRelatedEntities(IRIs, ont, "descendants")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, IRIs, "descendants")) {
 			descendants.add(d.toString());
 		}
 		Set<String> expected = Sets.newHashSet(
@@ -66,7 +66,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 		IRI iri = IRI.create("http://purl.obolibrary.org/obo/BFO_0000002");
 		Set<String> disjoints = new HashSet<>();
 		for (OWLObject d :
-			RelatedEntitiesHelper.getRelatedEntities(iri, ont, "disjoints")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, iri, "disjoints")) {
 			disjoints.add(d.toString());
 		}
 		Set<String> expected = Sets.newHashSet(
@@ -82,7 +82,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 				IRI.create("http://purl.obolibrary.org/obo/RO_0000059"));
 		Set<String> domains = new HashSet<>();
 		for (OWLObject d :
-			RelatedEntitiesHelper.getRelatedEntities(IRIs, ont, "domains")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, IRIs, "domains")) {
 			domains.add(d.toString());
 		}
 		Set<String> expected = Sets.newHashSet(
@@ -99,7 +99,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 				IRI.create("http://purl.obolibrary.org/obo/RO_0000057"));
 		Set<String> equivalents = new HashSet<>();
 		for (OWLObject e :
-			RelatedEntitiesHelper.getRelatedEntities(IRIs, ont, "equivalents")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, IRIs, "equivalents")) {
 			equivalents.add(e.toString());
 		}
 		String oneOf = 
@@ -120,7 +120,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 		IRI iri = IRI.create("http://purl.obolibrary.org/obo/BFO_0000067");
 		Set<String> inverses = new HashSet<>();
 		for (OWLObject i :
-			RelatedEntitiesHelper.getRelatedEntities(iri, ont, "inverses")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, iri, "inverses")) {
 			inverses.add(i.toString());
 		}
 		Set<String> expected = Sets.newHashSet(
@@ -136,7 +136,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 				IRI.create("http://purl.obolibrary.org/obo/RO_0000057"));
 		Set<String> ranges = new HashSet<>();
 		for (OWLObject r :
-			RelatedEntitiesHelper.getRelatedEntities(IRIs, ont, "ranges")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, IRIs, "ranges")) {
 			ranges.add(r.toString());
 		}
 		
@@ -153,7 +153,7 @@ public class RelatedEntitiesHelperTest extends CoreTest {
 		IRI iri = IRI.create("http://purl.obolibrary.org/obo/IAO_0000229");
 		Set<String> types = new HashSet<>();
 		for (OWLObject t :
-			RelatedEntitiesHelper.getRelatedEntities(iri, ont, "types")) {
+			RelatedEntitiesHelper.getRelatedEntities(ont, iri, "types")) {
 			types.add(t.toString());
 		}
 		Set<String> expected = Sets.newHashSet(

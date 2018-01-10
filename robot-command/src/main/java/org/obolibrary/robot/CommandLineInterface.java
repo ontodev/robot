@@ -27,6 +27,7 @@ public class CommandLineInterface {
         m.addCommand("export-prefixes",  new ExportPrefixesCommand());
         m.addCommand("extract",          new ExtractCommand());
         m.addCommand("filter",           new FilterCommand());
+        m.addCommand("import",           new ImportCommand());
         m.addCommand("materialize",      new MaterializeCommand());
         m.addCommand("merge",            new MergeCommand());
         m.addCommand("mirror",           new MirrorCommand());
