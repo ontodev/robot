@@ -116,7 +116,7 @@ public class QueryOperation {
         if (outputFormat == null) {
             outputFormat = Lang.CSV;
         }
-        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query),
+        rdfWriteResults(new FileOutputStream(output), execQuery(dsg, query),
                 outputFormat);
     }
 
@@ -132,8 +132,20 @@ public class QueryOperation {
     public static void runConstruct(DatasetGraph dsg, String query, File output,
             Lang outputFormat)
         throws FileNotFoundException {
-        RDFDataMgr.write(new FileOutputStream(output),
+        rdfWriteResults(new FileOutputStream(output),
                 execConstruct(dsg, query), outputFormat);
+    }
+
+    private static void rdfWriteResults(OutputStream out, Model results, Lang outputFormat) {
+        if(!results.isEmpty()) {
+            RDFDataMgr.write(out, results, outputFormat);
+        }
+    }
+
+    private static void rdfWriteResults(OutputStream out, ResultSet results, Lang outputFormat) {
+        if(results.hasNext()) {
+            ResultSetMgr.write(out, results, outputFormat);
+        }
     }
 
     /**
