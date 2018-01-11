@@ -4,14 +4,46 @@ This document will walk you through some examples of things you can do with ROBO
 
 **NOTE**: In the following examples the `\` (backslash) character at the end of a line indicates that the command is continued on the next line. You can always delete the `\` characters and enter the command as a single line. On Windows you should use `^` (caret) character instead of `\` to indicate that the command continues on the next line.
 
+### Commands
+* [Comparing](https://github.com/ontodev/robot/tree/master/examples#comparing-files)
+* [Merging](https://github.com/ontodev/robot/tree/master/examples#merging)
+* [Unmerging](https://github.com/ontodev/robot/tree/master/examples#unmerging)
+* [Filtering](https://github.com/ontodev/robot/tree/master/examples#filtering)
+* [Removing](https://github.com/ontodev/robot/tree/master/examples#removing)
+* [Extracting](https://github.com/ontodev/robot/tree/master/examples#extracting)
+* [Querying](https://github.com/ontodev/robot/tree/master/examples#querying)
+* [Reasoning](https://github.com/ontodev/robot/tree/master/examples#reasoning)
+* [Relaxing](https://github.com/ontodev/robot/tree/master/examples#relaxing-equivalence-axioms)
+* [Reducing](https://github.com/ontodev/robot/tree/master/examples#reducing-graph)
+* [Materialization](https://github.com/ontodev/robot/tree/master/examples#materialization)
+* [Annotating](https://github.com/ontodev/robot/tree/master/examples#annotating)
+* [Converting](https://github.com/ontodev/robot/tree/master/examples#converting)
+* [Mirroring](https://github.com/ontodev/robot/tree/master/examples#mirroring)
+* [Templating](https://github.com/ontodev/robot/tree/master/examples#templating)
+* [Validating](https://github.com/ontodev/robot/tree/master/examples#validating-profiles)
+* [Repairing](https://github.com/ontodev/robot/tree/master/examples#repairing-ontologies)
+
+### Tips
+* [Chaining Commands](https://github.com/ontodev/robot/tree/master/examples#chaining)
+* [Prefixes](https://github.com/ontodev/robot/tree/master/examples#prefixes)
+* [Makefile](https://github.com/ontodev/robot/tree/master/examples#makefile)
+* [Gradle](https://github.com/ontodev/robot/tree/master/examples#gradle)
+
 
 ## Editing
 
 Many ontology projects use an "edit" file for development. Editors modify this file to add terms and fix bugs, often using Protégé. When ready, the edit file is processed and packaged for release. ROBOT provides a range of commands to help with the release process.
 
-We'll use the `edit.owl` file as our running example. It contains a fragment of [Uberon](http://uberon.github.io), a cross-species anatomy ontology with rich logical axioms. You can use Protégé to look around.
+We'll use the `edit.owl` file as our running example. It contains a fragment of [Uberon](http://uberon.github.io), a cross-species anatomy ontology with rich logical axioms. You can use [Protégé](https://protege.stanford.edu) to look around.
 
 What follows is a series of example commands that can be used to process `edit.owl` in various ways. The expected results are also provided in files that you can inspect. The example commands will create new files in a new directory, but with similar names, so that you can compare the results you get with the expected results. We use this system for testing ROBOT.
+
+
+## A Note on Catalog Files
+
+ROBOT is built on [OWLAPI](http://owlcs.github.io/owlapi/). We use the same version of OWLAPI as the current Protégé release. OWLAPI supports "catalog" files (e.g. `catalog-v001.xml`) that can specify when a local file should be used instead of a remote file. This is very useful for ontology development, and many ontology projects include a catalog file.
+
+ROBOT uses catalog files in the same way that Protégé does. When loading a local file, ROBOT will look for a catalog file in the same directory, and use it if found. When loading a remote file (e.g. over HTTP) ROBOT does not look for a catalog file. So if you're using a catalog file in your project, it's best to work in a local directory.
 
 
 ## Comparing Files
@@ -60,7 +92,30 @@ This will merge in foo, and then subtract out foo from the merged ontology.
 Some ontologies contain more axioms than you want to use. You can use the `filter` command to keep only those axioms with ObjectProperties that you specify. For example, Uberon contains rich logical axioms, but sometimes you only want to keep the 'part of' and 'has part' relations. Here we start with a fragment of Uberon and filter for parthood relations:
 
     robot filter --input uberon_fragment.owl --term obo:BFO_0000050 --term obo:BFO_0000051 --output results/filtered.owl
+    
+## Removing
 
+While `filter` specifies what to keep, `remove` allows removal of given entities (classes, individuals, and properties). For example, to remove the `has_part` (BFO:0000051) object property and all axioms that use it:
+```
+robot remove --input edit.owl --entity BFO:0000051 --output removed.owl
+```
+
+More specifically, you can specify removal with non-generic types:
+  * `--class <arg>`
+  * `--individual <arg>`
+  * `--object-property <arg>`
+  * `--annotation-property <arg>`
+  * `--datatype-property <arg>`
+
+Multiple entities can be removed by providing the path to a text file containing each entity's CURIE on a separate line:
+```
+robot remove --input edit.owl --entities ids.txt --output removed.owl
+```
+
+Other options:
+  * Remove all individuals with `--all-individuals`
+  * Remove all descendant classes of a class with `--descendant-classes <arg>`
+  * Remove all anonymous superclasses of a class with `--anonymous-superclasses <arg>`
 
 ## Extracting
 
@@ -70,6 +125,8 @@ The reuse of ontology terms creates links between data, making the ontology and 
         --input filtered.owl \
         --term-file uberon_module.txt \
         --output results/uberon_module.owl
+        
+NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first `merge`.
 
 The `--method` options fall into two groups: Minimal Information for Reuse of External Ontology Term (MIREOT) and Syntactic Locality Module Extractor (SLME).
 
@@ -186,7 +243,7 @@ Robot can materialize all parent superclass and superclass expressions using the
 
     robot materialize --reasoner ELK --input emr_example.obo --term obo:BFO_0000050  --output results/emr_output.obo
 
-This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--property`
+This operation is similar to the reason command, but will also assert parents of the form `P some D`, for all P in the set passed in via `--term`
 
 This can be combined with filter and reduce to create an ontology subset that is complete
 
@@ -210,6 +267,15 @@ It's important to add metadata to an ontology before releasing it, and to update
 Ontologies are shared in different formats. The default format used by ROBOT is RDF/XML, but there are other OWL formats, RDF formats, and also the OBO file format.
 
     robot convert --input annotated.owl --output results/annotated.obo
+
+The file format is determined by the extension of the output file (e.g. `.obo`), but it can also be declared with the `--format` option. Valid file formats are:
+  - json - [OBO Graphs JSON](https://github.com/geneontology/obographs/)
+  - obo - [OBO Format](http://purl.obolibrary.org/obo/oboformat)
+  - ofn - [OWL Functional](http://www.w3.org/TR/owl2-syntax/)
+  - omn - [Manchester](https://www.w3.org/TR/owl2-manchester-syntax/)
+  - owl - [RDF/XML](https://www.w3.org/TR/rdf-syntax-grammar/)
+  - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
+  - ttl - [Turtle](https://www.w3.org/TR/turtle/)
 
 ## Mirroring
 
@@ -238,6 +304,14 @@ OWL 2 has a number of [profiles](https://www.w3.org/TR/owl2-profiles/) that stri
     robot validate-profile -profile EL \
       --input merged.owl \
       --output results/merged-validation.txt
+
+## Repairing Ontologies
+
+ROBOT can repair certain problems encountered in ontologies. So far this is limited to updating axioms pointing to deprecated classes with their replacement class
+
+    robot repair \
+      --input need-of-repair.owl \
+      --output results/repaired.owl
 
 
 ## Chaining

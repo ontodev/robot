@@ -91,7 +91,7 @@ public class ReduceOperation {
      *
      * @param ontology The ontology to reduce.
      * @param reasonerFactory The reasoner factory to use.
-     * @throws OWLOntologyCreationException
+     * @throws OWLOntologyCreationException on ontology problem
      */
     public static void reduce(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory) throws OWLOntologyCreationException {
@@ -104,7 +104,7 @@ public class ReduceOperation {
      * @param ontology The ontology to reduce.
      * @param reasonerFactory The reasoner factory to use.
      * @param options A map of options for the operation.
-     * @throws OWLOntologyCreationException
+     * @throws OWLOntologyCreationException on ontology problem
      */
     public static void reduce(OWLOntology ontology,
             OWLReasonerFactory reasonerFactory,
