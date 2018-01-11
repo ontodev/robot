@@ -278,7 +278,7 @@ public class CommandLineHelper {
     /**
      * Given an IOHelper and a command line, check for required options
      * and return a loaded input ontology.
-     * Currently handles --input options.
+     * Currently handles --input and --input-iri options.
      *
      * @param ioHelper the IOHelper to load the ontology with
      * @param line the command line to use
@@ -290,8 +290,11 @@ public class CommandLineHelper {
             CommandLine line) throws IllegalArgumentException, IOException {
         OWLOntology inputOntology = null;
         String inputOntologyPath = getOptionalValue(line, "input");
+        String inputOntologyIRI = getOptionalValue(line, "input-iri");
         if (inputOntologyPath != null) {
             inputOntology = ioHelper.loadOntology(inputOntologyPath);
+        } else if (inputOntologyIRI != null) {
+        	inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRI));
         } else {
             throw new IllegalArgumentException(
                     "inputOntology must be specified");
@@ -367,7 +370,7 @@ public class CommandLineHelper {
     /**
      * Given an IOHelper and a command line, check for required options
      * and return a list of loaded input ontologies.
-     * Currently handles --input options.
+     * Currently handles --input and --input-iri options.
      *
      * @param ioHelper the IOHelper to load the ontology with
      * @param line the command line to use
@@ -378,9 +381,16 @@ public class CommandLineHelper {
     public static List<OWLOntology> getInputOntologies(IOHelper ioHelper,
             CommandLine line) throws IllegalArgumentException, IOException {
         List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+
         List<String> inputOntologyPaths = getOptionalValues(line, "input");
         for (String inputOntologyPath: inputOntologyPaths) {
             inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+        }
+
+        List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+        for (String inputOntologyIRI : inputOntologyIRIs) {
+        	inputOntologies.add(
+        			ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
         }
         return inputOntologies;
     }

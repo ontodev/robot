@@ -4,6 +4,31 @@ This document will walk you through some examples of things you can do with ROBO
 
 **NOTE**: In the following examples the `\` (backslash) character at the end of a line indicates that the command is continued on the next line. You can always delete the `\` characters and enter the command as a single line. On Windows you should use `^` (caret) character instead of `\` to indicate that the command continues on the next line.
 
+### Commands
+* [Comparing](https://github.com/ontodev/robot/tree/master/examples#comparing-files)
+* [Merging](https://github.com/ontodev/robot/tree/master/examples#merging)
+* [Unmerging](https://github.com/ontodev/robot/tree/master/examples#unmerging)
+* [Filtering](https://github.com/ontodev/robot/tree/master/examples#filtering)
+* [Removing](https://github.com/ontodev/robot/tree/master/examples#removing)
+* [Extracting](https://github.com/ontodev/robot/tree/master/examples#extracting)
+* [Querying](https://github.com/ontodev/robot/tree/master/examples#querying)
+* [Reasoning](https://github.com/ontodev/robot/tree/master/examples#reasoning)
+* [Relaxing](https://github.com/ontodev/robot/tree/master/examples#relaxing-equivalence-axioms)
+* [Reducing](https://github.com/ontodev/robot/tree/master/examples#reducing-graph)
+* [Materialization](https://github.com/ontodev/robot/tree/master/examples#materialization)
+* [Annotating](https://github.com/ontodev/robot/tree/master/examples#annotating)
+* [Converting](https://github.com/ontodev/robot/tree/master/examples#converting)
+* [Mirroring](https://github.com/ontodev/robot/tree/master/examples#mirroring)
+* [Templating](https://github.com/ontodev/robot/tree/master/examples#templating)
+* [Validating](https://github.com/ontodev/robot/tree/master/examples#validating-profiles)
+* [Repairing](https://github.com/ontodev/robot/tree/master/examples#repairing-ontologies)
+
+### Tips
+* [Chaining Commands](https://github.com/ontodev/robot/tree/master/examples#chaining)
+* [Prefixes](https://github.com/ontodev/robot/tree/master/examples#prefixes)
+* [Makefile](https://github.com/ontodev/robot/tree/master/examples#makefile)
+* [Gradle](https://github.com/ontodev/robot/tree/master/examples#gradle)
+
 
 ## Editing
 
@@ -67,7 +92,30 @@ This will merge in foo, and then subtract out foo from the merged ontology.
 Some ontologies contain more axioms than you want to use. You can use the `filter` command to keep only those axioms with ObjectProperties that you specify. For example, Uberon contains rich logical axioms, but sometimes you only want to keep the 'part of' and 'has part' relations. Here we start with a fragment of Uberon and filter for parthood relations:
 
     robot filter --input uberon_fragment.owl --term obo:BFO_0000050 --term obo:BFO_0000051 --output results/filtered.owl
+    
+## Removing
 
+While `filter` specifies what to keep, `remove` allows removal of given entities (classes, individuals, and properties). For example, to remove the `has_part` (BFO:0000051) object property and all axioms that use it:
+```
+robot remove --input edit.owl --entity BFO:0000051 --output removed.owl
+```
+
+More specifically, you can specify removal with non-generic types:
+  * `--class <arg>`
+  * `--individual <arg>`
+  * `--object-property <arg>`
+  * `--annotation-property <arg>`
+  * `--datatype-property <arg>`
+
+Multiple entities can be removed by providing the path to a text file containing each entity's CURIE on a separate line:
+```
+robot remove --input edit.owl --entities ids.txt --output removed.owl
+```
+
+Other options:
+  * Remove all individuals with `--all-individuals`
+  * Remove all descendant classes of a class with `--descendant-classes <arg>`
+  * Remove all anonymous superclasses of a class with `--anonymous-superclasses <arg>`
 
 ## Extracting
 
