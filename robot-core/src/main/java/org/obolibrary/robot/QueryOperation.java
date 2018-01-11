@@ -22,6 +22,7 @@ import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
+
 /**
  * Query an ontology using SPARQL.
  *
@@ -113,7 +114,8 @@ public class QueryOperation {
         if (outputFormat == null) {
             outputFormat = Lang.CSV;
         }
-        ResultSetMgr.write(new FileOutputStream(output), execQuery(dsg, query), outputFormat);
+        rdfWriteResults(new FileOutputStream(output), execQuery(dsg, query),
+                outputFormat);
     }
 
     /**
@@ -192,6 +194,18 @@ public class QueryOperation {
             throw new ResultsWritingException(e.getMessage(), e);
         } finally {
             IOUtils.closeQuietly(out);
+        }
+    }
+
+    private static void rdfWriteResults(OutputStream out, Model results, Lang outputFormat) {
+        if(!results.isEmpty()) {
+            RDFDataMgr.write(out, results, outputFormat);
+        }
+    }
+
+    private static void rdfWriteResults(OutputStream out, ResultSet results, Lang outputFormat) {
+        if(results.hasNext()) {
+            ResultSetMgr.write(out, results, outputFormat);
         }
     }
 

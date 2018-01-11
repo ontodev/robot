@@ -328,6 +328,24 @@ public class IOHelper {
         }
         return ontology;
     }
+    
+    /**
+     * Load an ontology from the web using an IRI.
+     * 
+     * @param ontologyIRI the ontology IRI to load
+     * @return a new ontology objects, with a new OWLManager
+     * @throws IOException on any problem
+     */
+    public OWLOntology loadOntology(IRI ontologyIRI) throws IOException {
+    	OWLOntology ontology = null;
+    	try {
+    		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    		ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
+    	} catch (OWLOntologyCreationException e) {
+    		throw new IOException(e);
+    	}
+    	return ontology;
+    }
 
     /**
      * Given the name of a file format, return an instance of it.
