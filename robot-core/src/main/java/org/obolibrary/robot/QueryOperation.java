@@ -23,6 +23,7 @@ import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
+
 /**
  * Query an ontology using SPARQL.
  *
