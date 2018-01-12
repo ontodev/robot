@@ -52,15 +52,11 @@ public class VerifyCommand implements Command {
         o.addOption("i", "input", true, "Input Ontology");
 
         Option queries = new Option("q", "queries", true,
-                "List of sparql queries to find violations");
-        queries.setRequired(true);
+                "verify one or more SPARQL queries");
         queries.setArgs(Option.UNLIMITED_VALUES);
         o.addOption(queries);
 
-        Option report = new Option("O", "output-dir", true,
-                "Directory to place reports in");
-        report.setRequired(true);
-        o.addOption(report);
+        o.addOption("O", "output-dir", true, "Directory to place reports in");
 
         options = o;
     }
@@ -91,7 +87,7 @@ public class VerifyCommand implements Command {
      */
     public String getUsage() {
         return "robot verify --input ONTOLOGY "
-             + "--queries FILE [FILE [...]] --report-dir DIR";
+             + "--queries FILE [FILE [...]] --output-dir DIR";
     }
 
     /**
@@ -136,7 +132,7 @@ public class VerifyCommand implements Command {
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph graph = QueryOperation.loadOntology(state.getOntology());
 
-        File resultDir = new File(line.getOptionValue("output-dir"));
+        File outputDir = new File(CommandLineHelper.getDefaultValue(line, "output-dir", "."));
 
         Map<File, Tuple<ResultSetRewindable, OutputStream>> resultMap =
             new HashMap<>();
@@ -147,7 +143,7 @@ public class VerifyCommand implements Command {
             ResultSetRewindable resultsCopy =
                 ResultSetFactory.copyResults(results);
             String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
-            File resultCsv = resultDir.toPath().resolve(csvPath).toFile();
+            File resultCsv = outputDir.toPath().resolve(csvPath).toFile();
             resultMap.put(query,
               new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
         }

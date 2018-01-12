@@ -1,10 +1,12 @@
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX cellPart: <http://purl.obolibrary.org/obo/GO_0044464>
+PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
 
-SELECT ?subs ?names
+SELECT ?class ?label
 WHERE {
-    ?subs rdfs:subClassOf cellPart: ;
-        rdfs:label ?names .
+  ?class
+    rdfs:subClassOf GO:0044464 ; # cell part
+    rdfs:label ?label .
 }
+ORDER BY ?class

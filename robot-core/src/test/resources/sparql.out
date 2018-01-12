@@ -1,5 +1,0 @@
-?s	?p	?o
-<http://purl.obolibrary.org/obo/TEST_A>	<http://www.w3.org/2002/07/owl#equivalentClass>	<http://purl.obolibrary.org/obo/TEST_B>
-<http://purl.obolibrary.org/obo/TEST_A>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Class>
-<http://purl.obolibrary.org/obo/test1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Ontology>
-<http://purl.obolibrary.org/obo/TEST_B>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Class>

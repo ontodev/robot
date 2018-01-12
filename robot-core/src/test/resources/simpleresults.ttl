@@ -1,6 +1,0 @@
-@prefix : <http:robot.obolibrary.org/tests>
-@prefix owl: <http://www.w3.org/2002/07/owl#>
-
-:TEST_A owl:equivalentClass :TEST_B .
-:TEST_A a owl:Class .
-:TEST_B a owl:Class .

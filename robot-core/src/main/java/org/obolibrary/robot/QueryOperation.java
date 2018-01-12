@@ -7,8 +7,6 @@ import java.util.Optional;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
-import org.obolibrary.robot.exceptions.ResultsWritingException;
-import org.obolibrary.robot.exceptions.UnsupportedSparqlQueryType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +16,7 @@ import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.ResultSetMgr;
+import org.apache.jena.riot.resultset.ResultSetLang;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -48,7 +47,6 @@ public class QueryOperation {
      */
     public static DatasetGraph loadOntology(OWLOntology ontology)
             throws OWLOntologyStorageException {
-        // Load ontology into graph
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ontology.getOWLOntologyManager().saveOntology(ontology,
             new TurtleDocumentFormat(), out);
@@ -59,30 +57,356 @@ public class QueryOperation {
     }
 
     /**
-     * Execute a query and return a result set.
+     * Create an empty Dataset.
      *
-     * @param dsg The graph to query over.
-     * @param query The SPARQL query string.
+     * @return an empty dataset
+     */
+    public static Dataset createEmptyDataset() {
+        return DatasetFactory.create(DatasetGraphFactory.createMem());
+    }
+
+    /**
+     * Given a SPARQL query, return its type as a string:
+     * ASK, CONSTRUCT, DESCRIBE, SELECT.
+     *
+     * @param queryString the SPARQL query string
+     * @return the query type string or null
+     * @throws IllegalArgumentException on bad query
+     */
+    public static String getQueryTypeName(String queryString) throws IllegalArgumentException {
+        QueryExecution qexec = QueryExecutionFactory.create(queryString, createEmptyDataset());
+        Query query = qexec.getQuery();
+        String queryType = null;
+        switch (query.getQueryType()) {
+            case Query.QueryTypeAsk:
+                queryType = "ASK";
+                break;
+            case Query.QueryTypeConstruct:
+                queryType = "CONSTRUCT";
+                break;
+            case Query.QueryTypeDescribe:
+                queryType = "DESCRIBE";
+                break;
+            case Query.QueryTypeSelect:
+                queryType = "SELECT";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported SPARQL query type");
+        }
+        return queryType;
+    }
+
+    /**
+     * Given a SPARQL query, return its default file format as a string.
+     *
+     * @param query the SPARQL query string
+     * @return the format name
+     */
+    public static String getDefaultFormatName(String query) {
+        QueryExecution qexec = QueryExecutionFactory.create(query, createEmptyDataset());
+        return getDefaultFormatName(qexec.getQuery());
+    }
+
+    /**
+     * Given a SPARQL query, return its default file format as a string.
+     *
+     * @param query the SPARQL query
+     * @return the format name
+     * @throws IllegalArgumentException on bad query
+     */
+    public static String getDefaultFormatName(Query query) throws IllegalArgumentException {
+        String formatName = null;
+        switch (query.getQueryType()) {
+            case Query.QueryTypeAsk:
+                formatName = "txt";
+                break;
+            case Query.QueryTypeConstruct:
+                formatName = "ttl";
+                break;
+            case Query.QueryTypeDescribe:
+                formatName = "ttl";
+                break;
+            case Query.QueryTypeSelect:
+                formatName = "csv";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported SPARQL query type");
+        }
+        return formatName;
+    }
+
+    /**
+     * Convert a format name string to a language code.
+     *
+     * @param formatName the format name as a string
+     * @return the format language code or null
+     */
+    public static Lang getFormatLang(String formatName) {
+        Lang format;
+        formatName = formatName.toLowerCase();
+        switch (formatName) {
+            case "tsv":
+                format = ResultSetLang.SPARQLResultSetTSV;
+                break;
+            case "ttl":
+                format = Lang.TTL;
+                break;
+            case "jsonld":
+                format = Lang.JSONLD;
+                break;
+            case "nt":
+                format = Lang.NT;
+                break;
+            case "nq":
+                format = Lang.NQ;
+                break;
+            case "csv":
+                format = Lang.CSV;
+                break;
+            case "xml":
+                format = Lang.RDFXML;
+                break;
+            case "sxml":
+                format = ResultSetLang.SPARQLResultSetXML;
+                break;
+            default:
+                format = null;
+        }
+        return format;
+    }
+
+    /**
+     * Run a SPARQL query (ASK, CONSTRUCT, DESCRIBE, SELECT)
+     * and return true if there were results, false otherwise.
+     *
+     * @param qexec the SPARQL QueryExecution to run
+     * @param formatName the name of the output format
+     * @param output the OutputStream to write to
+     * @return true if there are any results, false otherwise
+     * @throws IllegalArgumentException on bad query
+     */
+    public static boolean runSparqlQuery(QueryExecution qexec, String formatName, OutputStream output) throws IllegalArgumentException {
+        boolean result;
+        Query query = qexec.getQuery();
+        if (formatName == null) {
+            formatName = getDefaultFormatName(query);
+        }
+
+        switch (query.getQueryType()) {
+            case Query.QueryTypeAsk:
+                result = true;
+                writeResult(qexec.execAsk(), output);
+                break;
+            case Query.QueryTypeConstruct:
+                result = maybeWriteResult(qexec.execConstruct(), formatName, output);
+                break;
+            case Query.QueryTypeDescribe:
+                result = maybeWriteResult(qexec.execDescribe(), formatName, output);
+                break;
+            case Query.QueryTypeSelect:
+                result = maybeWriteResult(qexec.execSelect(), formatName, output);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported SPARQL query type");
+        }
+
+        return result;
+    }
+
+    /**
+     * Run a SPARQL query (ASK, CONSTRUCT, DESCRIBE, SELECT)
+     * and return true if there were results, false otherwise.
+     *
+     * @param dsg the graph to query over
+     * @param query the SPARQL query string
+     * @param formatName the name of the output format
+     * @param output the OutputStream to write to
+     * @return true if there are any results, false otherwise
+     */
+    public static boolean runSparqlQuery(DatasetGraph dsg, String query, String formatName, OutputStream output) {
+        QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        return runSparqlQuery(qexec, formatName, output);
+    }
+
+    /**
+     * If a result set has results, return true, otherwise false.
+     *
+     * @param resultSet the results to write
+     * @return true if there are results, false otherwise
+     */
+    public static boolean hasResult(ResultSet result) {
+        if (result.hasNext()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * If a model has statements, return true, otherwise false.
+     *
+     * @param resultSet the results to write
+     * @return true if there are statements, false otherwise
+     */
+    public static boolean hasResult(Model result) {
+        if (result.isEmpty()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * If a result set has results, write to the output stream and return true.
+     * Otherwise return false.
+     *
+     * @param resultSet the results to write
+     * @param formatName the name of the language to write in
+     * @param output the output stream to write to
+     * @return true if there were results, false otherwise
+     */
+    public static boolean maybeWriteResult(ResultSet result, String formatName, OutputStream output) {
+        if (hasResult(result)) {
+            writeResult(result, formatName, output);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * If a model has statements, write to the output stream and return true.
+     * Otherwise return false.
+     *
+     * @param model the model to write
+     * @param formatName the name of the language to write in
+     * @param output the output stream to write to
+     * @return true if there were statements, false otherwise
+     */
+    public static boolean maybeWriteResult(Model result, String formatName, OutputStream output) {
+        if (hasResult(result)) {
+            writeResult(result, formatName, output);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Write a boolean result to an output stream.
+     *
+     * @param result the boolean to write
+     * @param output the output stream to write to
+     */
+    public static void writeResult(boolean result, OutputStream output) {
+        PrintStream printStream = new PrintStream(output);
+        printStream.print(result);
+    }
+
+    /**
+     * Write a result set to an output stream.
+     *
+     * @param resultSet the results to write
+     * @param format the language to write in
+     * @param output the output stream to write to
+     */
+    public static void writeResult(ResultSet resultSet, Lang format, OutputStream output) {
+        ResultSetMgr.write(output, resultSet, format);
+    }
+
+    /**
+     * Write a result set to an output stream.
+     *
+     * @param resultSet the results to write
+     * @param formatName the name of the language to write in
+     * @param output the output stream to write to
+     */
+    public static void writeResult(ResultSet resultSet, String formatName, OutputStream output) {
+        writeResult(resultSet, getFormatLang(formatName), output);
+    }
+
+    /**
+     * Write a model to an output stream.
+     *
+     * @param model the model to write
+     * @param format the language to write in
+     * @param output the output stream to write to
+     */
+    public static void writeResult(Model model, Lang format, OutputStream output) {
+        RDFDataMgr.write(output, model, format);
+    }
+
+    /**
+     * Write a model to an output stream.
+     *
+     * @param model the model to write
+     * @param formatName the name of the language to write in
+     * @param output the output stream to write to
+     */
+    public static void writeResult(Model model, String formatName, OutputStream output) {
+        writeResult(model, getFormatLang(formatName), output);
+    }
+
+    /**
+     * Execute a SPARQL SELECT query and return a result set.
+     *
+     * @param dsg the graph to query over
+     * @param query the SPARQL query string
      * @return the result set
      */
     public static ResultSet execQuery(DatasetGraph dsg, String query) {
         QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
-        Query q = qexec.getQuery();
         return qexec.execSelect();
     }
 
     /**
-     * Execute a construct query.
+     * Execute a SPARQL CONSTRUCT query and return a model.
      *
      * @param dsg The graph to construct in.
      * @param query The SPARQL construct query string.
-     * @return the result.
+     * @return The result model
      */
     public static Model execConstruct(DatasetGraph dsg, String query) {
-        QueryExecution exec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
-        return exec.execConstruct();
+        QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
+        return qexec.execConstruct();
     }
 
+    /**
+     * Run a SELECT query and write the result to a file.
+     *
+     * @param dsg The graph to query over.
+     * @param query The SPARQL query string.
+     * @param output The file to write to.
+     * @param outputFormat The file format.
+     * @throws FileNotFoundException if output file is not found
+     */
+    public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat) throws FileNotFoundException {
+        if (outputFormat == null) {
+            outputFormat = Lang.CSV;
+        }
+        writeResult(execQuery(dsg, query), outputFormat, new FileOutputStream(output));
+    }
+
+    /**
+     * Run a CONSTRUCT query and write the result to a file.
+     *
+     * @param dsg The graph to construct in.
+     * @param query The SPARQL construct query string.
+     * @param output The file to write to.
+     * @param outputFormat The file format.
+     * @throws FileNotFoundException if output file is not found
+     */
+    public static void runConstruct(DatasetGraph dsg, String query, File output, Lang outputFormat) throws FileNotFoundException {
+        writeResult(execConstruct(dsg, query), outputFormat, new FileOutputStream(output));
+    }
+
+    /**
+     * Execute a verification.
+     * Writes to STDERR.
+     *
+     * @param queriesResults a map from files to query results and output streams
+     * @return true if there are any violations
+     */
     public static boolean execVerify(Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
         boolean isViolation = false;
         for(File outFile : queriesResults.keySet()) {
@@ -99,114 +423,6 @@ public class QueryOperation {
             ResultSetMgr.write(outStream, results, Lang.CSV);
         }
         return isViolation;
-    }
-
-    /**
-     * Run a query and write the result to a file.
-     *
-     * @param dsg The graph to query over.
-     * @param query The SPARQL query string.
-     * @param output The file to write to.
-     * @param outputFormat The file format.
-     * @throws FileNotFoundException if output file is not found
-     */
-    public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat) throws FileNotFoundException {
-        if (outputFormat == null) {
-            outputFormat = Lang.CSV;
-        }
-        rdfWriteResults(new FileOutputStream(output), execQuery(dsg, query),
-                outputFormat);
-    }
-
-    /**
-     * Run a construct query and write the result.
-     *
-     * @param dsg The graph to construct in.
-     * @param query The SPARQL construct query string.
-     * @param output The file to write to.
-     * @param outputFormat The file format.
-     * @throws FileNotFoundException if output file is not found
-     */
-    public static void runConstruct(DatasetGraph dsg, String query, File output, Lang outputFormat) throws FileNotFoundException {
-        RDFDataMgr.write(new FileOutputStream(output), execConstruct(dsg, query), outputFormat);
-    }
-
-    public static void runSparqlQuery(DatasetGraph dsg, String query, File output, Optional<Lang> outputFormat) {
-        QueryExecution exec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
-        Query q = exec.getQuery();
-
-        switch (q.getQueryType()) {
-            case Query.QueryTypeSelect:
-                ResultSet pattern = exec.execSelect();
-                writeSelectResult(output, outputFormat, pattern);
-                break;
-
-            case Query.QueryTypeConstruct:
-                Model triples = exec.execConstruct();
-                writeRdfResult(output, outputFormat, triples);
-                break;
-
-            case Query.QueryTypeDescribe:
-                Model descriptionTriples = exec.execDescribe();
-                writeRdfResult(output, outputFormat, descriptionTriples);
-                break;
-
-            case Query.QueryTypeAsk:
-                boolean answer = exec.execAsk();
-                writeAskResult(output, outputFormat, answer);
-                break;
-
-            default:
-                throw new UnsupportedSparqlQueryType("SPARQL " + UnsupportedSparqlQueryType.queryTypeName(q) + " queries are currently unsupported.");
-        }
-    }
-
-    public static void writeAskResult(File outfile, Optional<Lang> format, boolean answer) {
-        PrintStream outStream = null;
-        try {
-            outStream = new PrintStream(new FileOutputStream(outfile));
-            outStream.print(answer);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            IOUtils.closeQuietly(outStream);
-        }
-    }
-
-    public static void writeRdfResult(File outfile, Optional<Lang> format, Model constructedTriples) {
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(outfile);
-            RDFDataMgr.write(out, constructedTriples, format.orElse(Lang.TTL));
-        } catch (FileNotFoundException e) {
-            throw new ResultsWritingException(e.getMessage(), e);
-        } finally {
-            IOUtils.closeQuietly(out);
-        }
-    }
-
-    public static void writeSelectResult(File outfile, Optional<Lang> format, ResultSet triplePattern) {
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(outfile);
-            ResultSetMgr.write(out, triplePattern, format.orElse(Lang.CSV));
-        } catch (FileNotFoundException e) {
-            throw new ResultsWritingException(e.getMessage(), e);
-        } finally {
-            IOUtils.closeQuietly(out);
-        }
-    }
-
-    private static void rdfWriteResults(OutputStream out, Model results, Lang outputFormat) {
-        if(!results.isEmpty()) {
-            RDFDataMgr.write(out, results, outputFormat);
-        }
-    }
-
-    private static void rdfWriteResults(OutputStream out, ResultSet results, Lang outputFormat) {
-        if(results.hasNext()) {
-            ResultSetMgr.write(out, results, outputFormat);
-        }
     }
 
     /**
