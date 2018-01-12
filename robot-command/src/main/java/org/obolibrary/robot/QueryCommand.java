@@ -1,7 +1,10 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.resultset.ResultSetLang;
 
@@ -41,14 +45,28 @@ public class QueryCommand implements Command {
         o.addOption("I", "input-iri", true, "load ontology from an IRI");
         o.addOption("f", "format",    true, "the query result format: CSV, TSV,"
                 + " TTL, JSONLD, etc.");
+
+        o.addOption("O", "output-dir", true, "Directory for output");
+
         Option select = new Option("s", "select", true,
-            "run a SPARQL select query and output result");
+            "run a SPARQL SELECT query (deprecated)");
         select.setArgs(2);
         o.addOption(select);
+
         Option construct = new Option("c", "construct", true,
-            "run a SPARQL construct query and output result");
+            "run a SPARQL CONSTRUCT query (deprecated)");
         construct.setArgs(2);
         o.addOption(construct);
+
+        Option query = new Option("q", "query", true, "run a SPARQL query");
+        query.setArgs(2);
+        o.addOption(query);
+
+        Option queries = new Option("Q", "queries", true,
+                "verify one or more SPARQL queries");
+        queries.setArgs(Option.UNLIMITED_VALUES);
+        o.addOption(queries);
+
         options = o;
     }
 
@@ -76,8 +94,7 @@ public class QueryCommand implements Command {
      * @return usage
      */
     public String getUsage() {
-        return "robot query --input <file> "
-             + "--select <query> <result> ";
+        return "robot query --input <file> --query <query> <output>";
     }
 
     /**
@@ -120,51 +137,58 @@ public class QueryCommand implements Command {
         if (line == null) {
             return null;
         }
-        String formatName = CommandLineHelper.getOptionalValue(line, "format");
-        Lang outputFormat = Lang.CSV;
-        if (formatName != null) {
-            formatName = formatName.toLowerCase();
-            if (formatName.equals("tsv")) {
-                outputFormat = ResultSetLang.SPARQLResultSetTSV;
-            } else if (formatName.equals("ttl")) {
-                outputFormat = Lang.TTL;
 
-            } else if (formatName.equals("jsonld")) {
-                outputFormat = Lang.JSONLD;
-
-            } else if (formatName.equals("nt")) {
-                outputFormat = Lang.NT;
-
-            } else if (formatName.equals("nq")) {
-                outputFormat = Lang.NQ;
-            }
-        }
-
+        String format = CommandLineHelper.getOptionalValue(line, "format");
+        String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
         IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
         state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
         DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
 
-        // Handle select
-        if (line.hasOption("select")) {
-            List<String> select =
-                CommandLineHelper.getOptionValues(line, "select");
+        // Collect all queries as (queryPath, outputPath) pairs.
+        List<List<String>> queries = new ArrayList<List<String>>();
+        List<String> qs = CommandLineHelper.getOptionalValues(line, "query");
+        for (int i=0; i < qs.size(); i += 2) {
+            queries.add(qs.subList(i, i + 2));
+        }
+        qs = CommandLineHelper.getOptionalValues(line, "select");
+        for (int i=0; i < qs.size(); i += 2) {
+            queries.add(qs.subList(i, i + 2));
+        }
+        qs = CommandLineHelper.getOptionalValues(line, "construct");
+        for (int i=0; i < qs.size(); i += 2) {
+            queries.add(qs.subList(i, i + 2));
+        }
+        qs = CommandLineHelper.getOptionalValues(line, "queries");
+        for (String q: qs) {
+            List<String> xs = new ArrayList<String>();
+            xs.add(q);
+            xs.add(null);
+            queries.add(xs);
+        }
 
-            for (int i = 0; i < select.size(); i = i + 2) {
-                String query = FileUtils.readFileToString(new File(
-                        select.get(i)));
-                File output = new File(select.get(i + 1));
-                QueryOperation.runQuery(dsg, query, output, outputFormat);
-            }
-        } else if (line.hasOption("construct")) {
-            List<String> select = CommandLineHelper.getOptionalValues(line,
-                    "construct");
+        // Run queries
+        for (List<String> q: queries) {
+          String queryPath = q.get(0);
+          String outputPath = q.get(1);
 
-            for (int i = 0; i < select.size(); i += 2) {
-                String query = FileUtils.readFileToString(new File(
-                        select.get(i)));
-                File output = new File(select.get(i + 1));
-                QueryOperation.runConstruct(dsg, query, output, outputFormat);
-            }
+          String query = FileUtils.readFileToString(new File(queryPath));
+
+          String formatName = format;
+          if (formatName == null) {
+              if (outputPath == null) {
+                  formatName = QueryOperation.getDefaultFormatName(query);
+              } else {
+                  formatName = FilenameUtils.getExtension(outputPath);
+              }
+          }
+
+          if (outputPath == null) {
+              String fileName = FilenameUtils.getBaseName(queryPath) + "." + formatName;
+              outputPath = new File(outputDir).toPath().resolve(fileName).toString();
+          }
+
+          OutputStream output = new FileOutputStream(outputPath);
+          QueryOperation.runSparqlQuery(dsg, query, formatName, output);
         }
 
         return state;
