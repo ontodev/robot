@@ -92,7 +92,7 @@ This will merge in foo, and then subtract out foo from the merged ontology.
 Some ontologies contain more axioms than you want to use. You can use the `filter` command to keep only those axioms with ObjectProperties that you specify. For example, Uberon contains rich logical axioms, but sometimes you only want to keep the 'part of' and 'has part' relations. Here we start with a fragment of Uberon and filter for parthood relations:
 
     robot filter --input uberon_fragment.owl --term obo:BFO_0000050 --term obo:BFO_0000051 --output results/filtered.owl
-    
+
 ## Removing
 
 While `filter` specifies what to keep, `remove` allows removal of given entities (classes, individuals, and properties). For example, to remove the `has_part` (BFO:0000051) object property and all axioms that use it:
@@ -125,7 +125,7 @@ The reuse of ontology terms creates links between data, making the ontology and 
         --input filtered.owl \
         --term-file uberon_module.txt \
         --output results/uberon_module.owl
-        
+
 NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first `merge`.
 
 The `--method` options fall into two groups: Minimal Information for Reuse of External Ontology Term (MIREOT) and Syntactic Locality Module Extractor (SLME).
@@ -150,66 +150,59 @@ For more details see:
 - [SLME](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
 - [ModuleType](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
+
 ## Querying
 
-Robot can be used to submit [sparql](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#bind) 
-queries against an ontology. Robot currently has two commands `query` and `verify` that use sparql to
-perform queries on ontology sets.
+ROBOT can execute [SPARQL](https://www.w3.org/TR/rdf-sparql-query/)
+queries against an ontology. The `verify` command described below is similar, but is used to test that an ontology conforms to the specified rules.
 
-### `query`
+The `query` command can execute SPARQL ASK, SELECT, and CONSTRUCT queries by using the `--query` option with two arguments: a query file and an output file. The output file will only be written if the query returns some results. The output format will be inferred from the output file extension, or you can use the `--format` option.
 
-The `query` command comes in two flavors, `select` and `construct`, which are passed in as options:
-`robot query --select` or `robot query --construct`. `select` corresponds to a sparql 
-_[SELECT](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select)_ query. This is used to 
-extract data matching a pattern. 
+ASK always produces `true` or `false`.
 
-    robot query --input nucleus.owl --select subclass_of_0044464.sparql output
+SELECT produces a table, if there are any results, defaulting to CSV format. For example:
 
-Resulting in:
-    
-    subs,names
+    robot query --input nucleus.owl --query cell_part.sparql results/cell_part.csv
+
+This produces [`cell_part.csv`](cell_part.csv):
+
+    class,label
     http://purl.obolibrary.org/obo/GO_0044424,intracellular part
     http://purl.obolibrary.org/obo/GO_0005622,intracellular
-    
-The `construct` option allows one to build triples based on a pattern using a 
-[CONSTRUCT](https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#construct) query. This will output
-triples in the format specified with the `--format` option, and should probably be set to "ttl" for this
-query mode. For example:
 
-    robot query --format ttl --input nucleus.owl --construct construct_some.sparql output
-    
-Has many results, but a portion could look like:
+CONSTRUCT produces RDF data, if there are any results, defaulting to Turtle format:
 
-    <http://purl.obolibrary.org/obo/GO_0044464>
-            part_of_inferred:  <http://purl.obolibrary.org/obo/GO_0005623> .
-    
-    <http://purl.obolibrary.org/obo/GO_0043229>
-            part_of_inferred:  <http://purl.obolibrary.org/obo/GO_0005622> .
-            
-Note that we've created a triple where none existed before. 
+    robot query --format ttl --input nucleus.owl --query part_of.sparql results/part_of.ttl
 
-### `verify`
+This produces [`part_of.ttl`](part_of.ttl).
 
-The verify command runs a SELECT sparql query against an ontology where the results of the query are
-considered "violations". Verify expects that there will be no results for a valid ontology. Any results
-are reported in a file and then robot exits with status 1. You can pass in as many queries
-files as you want in to the `--queries` option. They'll each be run against the ontology
-provided. Inside the results (`-O`) directory robot will create output files for each sparql query. The 
-directory passed to `-O` must exist.
+Instead of specifying one or more pairs (query file, output file), you can specify a single `--output-dir` and use the `--queries` option to provide one or more queries of any type. Each output file will be written to the output directory with the same base name as the query file that produced it. For example the `foo.sparql` query file will produce the `foo.csv` file. The output directory must exist.
+
+    robot query --input nucleus.owl --queries cell_part_ask.sparql --output-dir results/
+
+
+## Verify
+
+The `verify` command is used to check an ontology for violations of rules. Each rule is expressed as a SPARQL SELECT query that matches violations of the rule. If the query produces any results, `verify` will exit with an error message that reports the violations. If the ontology conforms to the rule, the query should find no violations, and the `verify` command will succeed.
+
+You can use `verify` in two ways:
+
+1. `--query` query-file output-file
+2. `--queries` query-file-1 query-file-2 ... `--output-dir` some-directory
 
 For example:
 
 ```
-robot verify --input asserted-equiv.owl --queries equivalent.sparql -O results/
+robot verify --input asserted-equiv.owl --queries equivalent.sparql --output-dir results/
 ```
-    
-Should output as a response: 
 
-    Rule /Users/edouglass/lbl/ontodev/robot/examples/equivalent.sparql: 1 violation(s)
+Should output as a response:
+
+    Rule /ontodev/robot/examples/equivalent.sparql: 1 violation(s)
     first,second,firstLabel,secondLabel
     http://purl.obolibrary.org/obo/TEST_A,http://purl.obolibrary.org/obo/TEST_B,,
-    
-And the CSV file results/equivalent.csv should have:
+
+And the CSV file `results/equivalent.csv` should have:
 
     first,second,firstLabel,secondLabel
     http://purl.obolibrary.org/obo/TEST_A,http://purl.obolibrary.org/obo/TEST_B,,
@@ -281,7 +274,7 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
 
 Many ontologies make use of `owl:imports` to bring in other ontologies, or portions of other ontologies. Large import chains involving multiple large ontologies are more prone to run-time failure due to network errors or latency. It can therefore be beneficial to mirror or cache an external ontology's import chain locally. This can be though of as analogous to what happens with standard dependency management tools for software development.
 
-The following command will mirror a local 
+The following command will mirror a local
 
     robot mirror -i test.owl -d results/my-cache -o results/my-catalog.xml
 
