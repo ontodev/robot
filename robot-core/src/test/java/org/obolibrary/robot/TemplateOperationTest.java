@@ -8,8 +8,9 @@ import java.util.Map;
 import org.junit.Test;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /** Tests for TemplateOperation. */
@@ -29,22 +30,27 @@ public class TemplateOperationTest extends CoreTest {
    */
   @Test
   public void testTemplateStrings() throws Exception {
-    OWLAnnotation ann;
+    OWLAnnotationAssertionAxiom ann;
+    OWLEntity entity = dataFactory.getOWLClass(IRI.create("http://foo.com"));
     QuotedEntityChecker checker = new QuotedEntityChecker();
     checker.setIOHelper(new IOHelper());
 
-    ann = TemplateOperation.getStringAnnotation(checker, "A rdfs:label", "bar");
-    assertEquals("Annotation(rdfs:label \"bar\"^^xsd:string)", ann.toString());
+    ann = TemplateOperation.getStringAnnotation(entity, checker, "A rdfs:label", "bar");
+    assertEquals(
+        "AnnotationAssertion(rdfs:label <http://foo.com> \"bar\"^^xsd:string)", ann.toString());
 
-    ann = TemplateOperation.getTypedAnnotation(checker, "AT rdfs:label^^xsd:integer", "1");
-    assertEquals("Annotation(rdfs:label \"1\"^^xsd:integer)", ann.toString());
+    ann = TemplateOperation.getTypedAnnotation(entity, checker, "AT rdfs:label^^xsd:integer", "1");
+    assertEquals(
+        "AnnotationAssertion(rdfs:label <http://foo.com> \"1\"^^xsd:integer)", ann.toString());
 
-    ann = TemplateOperation.getLanguageAnnotation(checker, "AL rdfs:label@en", "bar");
-    assertEquals("Annotation(rdfs:label \"bar\"@en)", ann.toString());
+    ann = TemplateOperation.getLanguageAnnotation(entity, checker, "AL rdfs:label@en", "bar");
+    assertEquals("AnnotationAssertion(rdfs:label <http://foo.com> \"bar\"@en)", ann.toString());
 
     ann =
-        TemplateOperation.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"));
-    assertEquals("Annotation(rdfs:label <http://bar.com>)", ann.toString());
+        TemplateOperation.getIRIAnnotation(
+            entity, checker, "AI rdfs:label", IRI.create("http://bar.com"));
+    assertEquals(
+        "AnnotationAssertion(rdfs:label <http://foo.com> <http://bar.com>)", ann.toString());
   }
 
   /**
