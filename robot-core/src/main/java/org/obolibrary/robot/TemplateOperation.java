@@ -591,7 +591,6 @@ public class TemplateOperation {
 
     IOHelper ioHelper = checker.getIOHelper();
     IRI type = null;
-    OWLEntity entity = null;
     Set<OWLAnnotation> annotations = new HashSet<>();
     // For handling nested axioms (annotation on annotation on annotation)
     // Key is first level, value is a map with key as second level annotation
@@ -652,6 +651,15 @@ public class TemplateOperation {
           lastSub = null;
           lastAnnotation = getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
+        } else if (template.equals("TYPE")) {
+          OWLEntity entity = checker.getOWLEntity(value);
+          if (entity != null) {
+            type = entity.getIRI();
+          } else {
+            type = ioHelper.createIRI(value);
+          }
+          OWLAnnotationProperty rdfType = getAnnotationProperty(checker, "rdf:type");
+          annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
         } else if (template.startsWith("A ")) {
           lastAnnotation = getStringAnnotation(checker, template, value);
           lastSub = null;
@@ -717,7 +725,7 @@ public class TemplateOperation {
       }
     }
 
-    entity = getEntity(checker, type, id, label);
+    OWLEntity entity = getEntity(checker, type, id, label);
     if (entity == null) {
       throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
     }
