@@ -10,6 +10,23 @@
     <artifactId>robot-core</artifactId>
     <name>robot-core</name>
     <description>Core library for ROBOT, the OBO tool</description>
+    
+    <build>
+    	<plugins>
+			<plugin>
+				<groupId>com.coveo</groupId>
+				<artifactId>fmt-maven-plugin</artifactId>
+				<version>2.1.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>format</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+    	</plugins>
+    </build>
 
     <dependencies>
         <dependency>
