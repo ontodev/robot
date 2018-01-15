@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -245,7 +247,7 @@ public class TemplateOperation {
     if (template.equals("CLASS_TYPE")) {
       return true;
     }
-    if (template.matches("^(A|AA|AT|AL|AI|C) .*")) {
+    if (template.matches("^(A|AA|AAA|AT|AL|AI|C) .*")) {
       return true;
     }
     if (template.equals("CI")) {
@@ -590,12 +592,18 @@ public class TemplateOperation {
     IOHelper ioHelper = checker.getIOHelper();
     IRI type = null;
     OWLEntity entity = null;
-    Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<>();
-
     Set<OWLAnnotation> annotations = new HashSet<>();
-    Map<OWLAnnotation, Set<OWLAnnotation>> nested = new HashMap<>();
+    // For handling nested axioms (annotation on annotation on annotation)
+    // Key is first level, value is a map with key as second level annotation
+    // and value as set of third-level annotations (or empty set if none)
+    Map<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> nested = new HashMap<>();
+    // Track the last top-level annotation
     OWLAnnotation lastAnnotation = null;
-    Set<OWLAnnotation> subAnnotations;
+    // Track the last second-level annotation
+    // This is reset to null each time we return to a top-level annotation
+    OWLAnnotation lastSub = null;
+    Map<OWLAnnotation, Set<OWLAnnotation>> subAnnotations;
+    Set<OWLAnnotation> subSubAnnotations;
 
     // For each column, apply templates for annotations.
     for (int column = 0; column < headers.size(); column++) {
@@ -641,33 +649,70 @@ public class TemplateOperation {
       for (String value : values) {
         if (template.equals("LABEL")) {
           label = value;
+          lastSub = null;
           lastAnnotation = getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
         } else if (template.startsWith("A ")) {
           lastAnnotation = getStringAnnotation(checker, template, value);
+          lastSub = null;
           annotations.add(lastAnnotation);
         } else if (template.startsWith("AT ") && template.indexOf("^^") > -1) {
           lastAnnotation = getTypedAnnotation(checker, template, value);
+          lastSub = null;
           annotations.add(lastAnnotation);
         } else if (template.startsWith("AL ") && template.indexOf("@") > -1) {
           lastAnnotation = getLanguageAnnotation(checker, template, value);
+          lastSub = null;
           annotations.add(lastAnnotation);
         } else if (template.startsWith("AI ")) {
           IRI iri = ioHelper.createIRI(value);
+          lastSub = null;
           lastAnnotation = getIRIAnnotation(checker, template, iri);
           annotations.add(lastAnnotation);
+          // Handle nested annotations
         } else if (template.startsWith("AA ")) {
+          if (lastAnnotation == null) {
+            // Just in case an AA template is first
+            throw new Exception(
+                "Nested annotation "
+                    + template
+                    + " on row "
+                    + row
+                    + " requires an annotation in the previous column.");
+          }
+          lastSub = getStringAnnotation(checker, template.substring(1), value);
           if (nested.containsKey(lastAnnotation)) {
             subAnnotations = nested.get(lastAnnotation);
           } else {
-            subAnnotations = new HashSet<>();
+            subAnnotations = new HashMap<>();
           }
-          subAnnotations.add(getStringAnnotation(checker, template.substring(1), value));
+          // Add to nested with an empty set
+          subAnnotations.put(lastSub, Sets.newHashSet());
           nested.put(lastAnnotation, subAnnotations);
           // Remove from annotation set to prevent duplication
           if (annotations.contains(lastAnnotation)) {
             annotations.remove(lastAnnotation);
           }
+          // Handle deeply nested annotations
+        } else if (template.startsWith("AAA ")) {
+          if (lastSub == null) {
+            // The last sub-annotation is reset each time we go back to a top-level annotation.
+            // If there isn't an annotation with the AA template string before the AAA template,
+            // there is nothing to annotate...
+            throw new Exception(
+                "Deeply nested annotation "
+                    + template
+                    + " on row "
+                    + row
+                    + " requires a nested annotation (AA) in the previous column.");
+          }
+          // These are put in during the AA loop, so they should always be there
+          subAnnotations = nested.get(lastAnnotation);
+          subSubAnnotations = subAnnotations.get(lastSub);
+          // Add this iteration of nested annotation and put into the nested map
+          subSubAnnotations.add(getStringAnnotation(checker, template.substring(2), value));
+          subAnnotations.put(lastSub, subSubAnnotations);
+          nested.put(lastAnnotation, subAnnotations);
         }
       }
     }
@@ -676,18 +721,8 @@ public class TemplateOperation {
     if (entity == null) {
       throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
     }
-    // Create axioms from the annotations
-    for (OWLAnnotation annotation : annotations) {
-      axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation));
-    }
-    // Create nested axioms
-    for (Entry<OWLAnnotation, Set<OWLAnnotation>> annotationSet : nested.entrySet()) {
-      OWLAnnotation annotation = annotationSet.getKey();
-      subAnnotations = annotationSet.getValue();
-      axioms.add(
-          dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation, subAnnotations));
-    }
-
+    // Create axioms from OWLAnnotation sets
+    Set<OWLAnnotationAssertionAxiom> axioms = createAnnotationAxioms(entity, annotations, nested);
     // Add annotations to an entity
     OWLOntology ontology = outputManager.createOntology();
     outputManager.addAxiom(ontology, dataFactory.getOWLDeclarationAxiom(entity));
@@ -829,5 +864,50 @@ public class TemplateOperation {
     } else {
       throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
     }
+  }
+
+  /**
+   * Create a set of annotation axioms for an OWLEntity. Supports deeply nested axioms up to
+   * annotation on annotation on annotation.
+   *
+   * @param entity OWLEntity to annotation
+   * @param annotations Set of OWLAnnotations
+   * @param nested Map with top-level OWLAnnotation as key and another map (second-level
+   *     OWLAnnotation, set of third-level OWLAnnotations) as value
+   * @return Set of OWLAnnotationAssertionAxioms
+   */
+  private static Set<OWLAnnotationAssertionAxiom> createAnnotationAxioms(
+      OWLEntity entity,
+      Set<OWLAnnotation> annotations,
+      Map<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> nested) {
+    Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<>();
+    // Create axioms from the annotations
+    for (OWLAnnotation annotation : annotations) {
+      axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation));
+    }
+    // Create (deeply) nested axioms
+    for (Entry<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> annotationSet :
+        nested.entrySet()) {
+      OWLAnnotation annotation = annotationSet.getKey();
+      Set<OWLAnnotation> subAnnotationSet = new HashSet<>();
+      Set<OWLAnnotation> subSubAnnotations;
+      // For each nested annotation...
+      for (Entry<OWLAnnotation, Set<OWLAnnotation>> nestedSet :
+          annotationSet.getValue().entrySet()) {
+        OWLAnnotation subAnnotation = nestedSet.getKey();
+        subSubAnnotations = nestedSet.getValue();
+        if (subSubAnnotations.isEmpty()) {
+          subAnnotationSet.add(subAnnotation);
+        } else {
+          OWLAnnotationProperty property = subAnnotation.getProperty();
+          OWLAnnotationValue value = subAnnotation.getValue();
+          subAnnotationSet.add(dataFactory.getOWLAnnotation(property, value, subSubAnnotations));
+        }
+      }
+      axioms.add(
+          dataFactory.getOWLAnnotationAssertionAxiom(
+              entity.getIRI(), annotation, subAnnotationSet));
+    }
+    return axioms;
   }
 }
