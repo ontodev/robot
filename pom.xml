@@ -117,15 +117,6 @@
                 <artifactId>maven-jxr-plugin</artifactId>
                 <version>2.5</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.14</version>
-                <configuration>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
-                </configuration>
-            </plugin>
         </plugins>
     </reporting>
 
