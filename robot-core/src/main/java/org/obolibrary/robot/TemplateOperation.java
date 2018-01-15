@@ -1,12 +1,12 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -154,96 +154,75 @@ public class TemplateOperation {
   }
 
   /**
-   * Return a string annotation for the given template string and value. The template string format
-   * is "A [name]" and the value is any string. Also accepts nested annotations enclosed in square
-   * brackets.
+   * Return a string annotation for the given template string and value.
    *
-   * @param entity OWLEntity to annotate
    * @param checker used to resolve the annotation property
    * @param template the template string
    * @param value the value for the annotation
-   * @return a new annotation axiom with property and string literal value
+   * @return a new annotation with property and string literal value
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotationAssertionAxiom getStringAnnotation(
-      OWLEntity entity, QuotedEntityChecker checker, String template, String value)
-      throws Exception {
+  public static OWLAnnotation getStringAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
     String name = template.substring(1).trim();
-
-    // Check if there is a sub-annotation
-    if (name.contains("[") && value.contains("]")) {
-      return getNestedAnnotation(entity, checker, name, value);
-
-      // Otherwise just return the basic annotation axiom
-    } else {
-      OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-      OWLAnnotation annotation =
-          dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value));
-      return dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation);
-    }
+    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
+    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value));
   }
 
   /**
    * Return a typed annotation for the given template string and value. The template string format
    * is "AT [name]^^[datatype]" and the value is any string.
    *
-   * @param entity OWLEntity to annotate
    * @param checker used to resolve the annotation property and datatype
    * @param template the template string
    * @param value the value for the annotation
    * @return a new annotation axiom with property and typed literal value
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotationAssertionAxiom getTypedAnnotation(
-      OWLEntity entity, QuotedEntityChecker checker, String template, String value)
-      throws Exception {
+  public static OWLAnnotation getTypedAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
     template = template.substring(2).trim();
     String name = template.substring(0, template.indexOf("^^")).trim();
     String typeName = template.substring(template.indexOf("^^") + 2, template.length()).trim();
     OWLAnnotationProperty property = getAnnotationProperty(checker, name);
     OWLDatatype datatype = getDatatype(checker, typeName);
-    return dataFactory.getOWLAnnotationAssertionAxiom(
-        property, entity.getIRI(), dataFactory.getOWLLiteral(value, datatype));
+    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, datatype));
   }
 
   /**
    * Return a language tagged annotation for the given template and value. The template string
    * format is "AL [name]@[lang]" and the value is any string.
    *
-   * @param entity OWLEntity to annotate
    * @param checker used to resolve the annotation property
    * @param template the template string
    * @param value the value for the annotation
    * @return a new annotation axiom with property and language tagged literal
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotationAssertionAxiom getLanguageAnnotation(
-      OWLEntity entity, QuotedEntityChecker checker, String template, String value)
-      throws Exception {
+  public static OWLAnnotation getLanguageAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
     template = template.substring(2).trim();
     String name = template.substring(0, template.indexOf("@")).trim();
     String lang = template.substring(template.indexOf("@") + 1, template.length()).trim();
     OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotationAssertionAxiom(
-        property, entity.getIRI(), dataFactory.getOWLLiteral(value, lang));
+    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, lang));
   }
 
   /**
    * Return an IRI annotation for the given template string and value. The template string format is
    * "AI [name]" and the value is a string that can be interpreted as an IRI.
    *
-   * @param entity OWLEntity to annotate
    * @param checker used to resolve the annotation property
    * @param template the template string
    * @param value the IRI value for the annotation
    * @return a new annotation axiom with property and an IRI value
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotationAssertionAxiom getIRIAnnotation(
-      OWLEntity entity, QuotedEntityChecker checker, String template, IRI value) throws Exception {
+  public static OWLAnnotation getIRIAnnotation(
+      QuotedEntityChecker checker, String template, IRI value) throws Exception {
     String name = template.substring(2).trim();
     OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotationAssertionAxiom(property, entity.getIRI(), value);
+    return dataFactory.getOWLAnnotation(property, value);
   }
 
   /**
@@ -266,7 +245,7 @@ public class TemplateOperation {
     if (template.equals("CLASS_TYPE")) {
       return true;
     }
-    if (template.matches("^(A|AT|AL|AI|C) .*")) {
+    if (template.matches("^(A|AA|AT|AL|AI|C) .*")) {
       return true;
     }
     if (template.equals("CI")) {
@@ -610,8 +589,13 @@ public class TemplateOperation {
 
     IOHelper ioHelper = checker.getIOHelper();
     IRI type = null;
-    Set<OWLAnnotationAssertionAxiom> annotations = new HashSet<>();
     OWLEntity entity = null;
+    Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<>();
+
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    Map<OWLAnnotation, Set<OWLAnnotation>> nested = new HashMap<>();
+    OWLAnnotation lastAnnotation = null;
+    Set<OWLAnnotation> subAnnotations;
 
     // For each column, apply templates for annotations.
     for (int column = 0; column < headers.size(); column++) {
@@ -652,48 +636,62 @@ public class TemplateOperation {
         values.add(cell);
       }
 
-      // Get the label to get the entity
+      // Create OWLAnnotation objects
+      // Link any annotations on annotations in a map
       for (String value : values) {
         if (template.equals("LABEL")) {
           label = value;
-        }
-      }
-      entity = getEntity(checker, type, id, label);
-      if (entity == null) {
-        throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
-      }
-
-      // Create annotation axioms from the values
-      for (String value : values) {
-        if (template.equals("LABEL")) {
-          annotations.add(getStringAnnotation(entity, checker, "A rdfs:label", value));
-        } else if (template.equals("TYPE")) {
-          OWLEntity typeEntity = checker.getOWLEntity(value);
-          if (typeEntity != null) {
-            type = typeEntity.getIRI();
-          } else {
-            type = ioHelper.createIRI(value);
-          }
-          OWLAnnotationProperty rdfType = getAnnotationProperty(checker, "rdf:type");
-          annotations.add(
-              dataFactory.getOWLAnnotationAssertionAxiom(rdfType, typeEntity.getIRI(), type));
+          lastAnnotation = getStringAnnotation(checker, "A rdfs:label", value);
+          annotations.add(lastAnnotation);
         } else if (template.startsWith("A ")) {
-          annotations.add(getStringAnnotation(entity, checker, template, value));
+          lastAnnotation = getStringAnnotation(checker, template, value);
+          annotations.add(lastAnnotation);
         } else if (template.startsWith("AT ") && template.indexOf("^^") > -1) {
-          annotations.add(getTypedAnnotation(entity, checker, template, value));
+          lastAnnotation = getTypedAnnotation(checker, template, value);
+          annotations.add(lastAnnotation);
         } else if (template.startsWith("AL ") && template.indexOf("@") > -1) {
-          annotations.add(getLanguageAnnotation(entity, checker, template, value));
+          lastAnnotation = getLanguageAnnotation(checker, template, value);
+          annotations.add(lastAnnotation);
         } else if (template.startsWith("AI ")) {
           IRI iri = ioHelper.createIRI(value);
-          annotations.add(getIRIAnnotation(entity, checker, template, iri));
+          lastAnnotation = getIRIAnnotation(checker, template, iri);
+          annotations.add(lastAnnotation);
+        } else if (template.startsWith("AA ")) {
+          if (nested.containsKey(lastAnnotation)) {
+            subAnnotations = nested.get(lastAnnotation);
+          } else {
+            subAnnotations = new HashSet<>();
+          }
+          subAnnotations.add(getStringAnnotation(checker, template.substring(1), value));
+          nested.put(lastAnnotation, subAnnotations);
+          // Remove from annotation set to prevent duplication
+          if (annotations.contains(lastAnnotation)) {
+            annotations.remove(lastAnnotation);
+          }
         }
       }
+    }
+
+    entity = getEntity(checker, type, id, label);
+    if (entity == null) {
+      throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
+    }
+    // Create axioms from the annotations
+    for (OWLAnnotation annotation : annotations) {
+      axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation));
+    }
+    // Create nested axioms
+    for (Entry<OWLAnnotation, Set<OWLAnnotation>> annotationSet : nested.entrySet()) {
+      OWLAnnotation annotation = annotationSet.getKey();
+      subAnnotations = annotationSet.getValue();
+      axioms.add(
+          dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation, subAnnotations));
     }
 
     // Add annotations to an entity
     OWLOntology ontology = outputManager.createOntology();
     outputManager.addAxiom(ontology, dataFactory.getOWLDeclarationAxiom(entity));
-    outputManager.addAxioms(ontology, annotations);
+    outputManager.addAxioms(ontology, axioms);
 
     checker.addAll(ontology);
     MergeOperation.mergeInto(ontology, outputOntology);
@@ -831,34 +829,5 @@ public class TemplateOperation {
     } else {
       throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
     }
-  }
-
-  /**
-   * Returns an annotation with an annotation, expects the name and value to have the nested
-   * property and value enclosed in square brackets.
-   *
-   * @param entity the OWLEntity to annotate
-   * @param checker used to find entities by name
-   * @param name String name of the annotation property
-   * @param value String value of the annotation property
-   * @return OWLAnnotationAssertionAxiom
-   * @throws Exception
-   */
-  private static OWLAnnotationAssertionAxiom getNestedAnnotation(
-      OWLEntity entity, QuotedEntityChecker checker, String name, String value) throws Exception {
-    String sub = name.substring(name.indexOf("[") + 1, name.indexOf("]"));
-    String subVal = value.substring(value.indexOf("[") + 1, value.indexOf("]"));
-    name = name.split("\\[")[0].trim();
-    value = value.split("\\[")[0].trim();
-    OWLAnnotation subAnnotation =
-        dataFactory.getOWLAnnotation(
-            getAnnotationProperty(checker, sub), dataFactory.getOWLLiteral(subVal));
-
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotationAssertionAxiom(
-        property,
-        entity.getIRI(),
-        dataFactory.getOWLLiteral(value),
-        Sets.newHashSet(subAnnotation));
   }
 }
