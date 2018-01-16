@@ -19,6 +19,7 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -247,7 +248,7 @@ public class TemplateOperation {
     if (template.equals("CLASS_TYPE")) {
       return true;
     }
-    if (template.matches("^(A|AA|AAA|AT|AL|AI|C) .*")) {
+    if (template.matches("^(A|>A|>>A|AT|AL|AI|C|>C) .*")) {
       return true;
     }
     if (template.equals("CI")) {
@@ -678,7 +679,7 @@ public class TemplateOperation {
           lastAnnotation = getIRIAnnotation(checker, template, iri);
           annotations.add(lastAnnotation);
           // Handle nested annotations
-        } else if (template.startsWith("AA ")) {
+        } else if (template.startsWith(">A ")) {
           if (lastAnnotation == null) {
             // Just in case an AA template is first
             throw new Exception(
@@ -702,7 +703,7 @@ public class TemplateOperation {
             annotations.remove(lastAnnotation);
           }
           // Handle deeply nested annotations
-        } else if (template.startsWith("AAA ")) {
+        } else if (template.startsWith(">>A ")) {
           if (lastSub == null) {
             // The last sub-annotation is reset each time we go back to a top-level annotation.
             // If there isn't an annotation with the AA template string before the AAA template,
@@ -793,7 +794,9 @@ public class TemplateOperation {
     }
 
     String classType = "subclass";
-    List<OWLClassExpression> classExpressions = new ArrayList<OWLClassExpression>();
+    Set<OWLClassExpression> classExpressions = new HashSet<>();
+    OWLClassExpression lastExpression = null;
+    Map<OWLClassExpression, Set<OWLAnnotation>> annotatedExpressions = new HashMap<>();
 
     // For each column, add logical axioms.
     for (int column = 0; column < headers.size(); column++) {
@@ -827,19 +830,43 @@ public class TemplateOperation {
       } else if (template.startsWith("C ")) {
         String sub = template.substring(2).trim().replaceAll("%", content);
         try {
-          classExpressions.add(parser.parse(sub));
+          lastExpression = parser.parse(sub);
         } catch (ParserException e) {
           throw new Exception(
               String.format(
                   parseError, tableName, row + 1, id, column + 1, header, sub, e.getMessage()));
         }
+        classExpressions.add(lastExpression);
       } else if (template.startsWith("CI")) {
         IRI iri = ioHelper.createIRI(cell);
-        classExpressions.add(dataFactory.getOWLClass(iri));
+        lastExpression = dataFactory.getOWLClass(iri);
+        classExpressions.add(lastExpression);
+      } else if (template.startsWith(">C ")) {
+        if (lastExpression == null) {
+          throw new Exception(
+              "Nested annotation "
+                  + template
+                  + " on row "
+                  + row
+                  + " requires a class expression in the previous column.");
+        }
+        Set<OWLAnnotation> annotations;
+        if (annotatedExpressions.containsKey(lastExpression)) {
+          annotations = annotatedExpressions.get(lastExpression);
+        } else {
+          annotations = new HashSet<>();
+        }
+        annotations.add(getStringAnnotation(checker, template.substring(1).trim(), cell));
+        annotatedExpressions.put(lastExpression, annotations);
+        // Remove to prevent duplication
+        if (classExpressions.contains(lastExpression)) {
+          classExpressions.remove(lastExpression);
+        }
       }
     }
 
-    if (classExpressions.size() == 0) {
+    // Make sure there are expressions to add
+    if ((classExpressions.size() == 0) && (annotatedExpressions.isEmpty())) {
       return;
     }
 
@@ -865,10 +892,30 @@ public class TemplateOperation {
       for (OWLClassExpression expression : classExpressions) {
         manager.addAxiom(ontology, dataFactory.getOWLSubClassOfAxiom(cls, expression));
       }
+      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
+          annotatedExpressions.entrySet()) {
+        manager.addAxiom(
+            ontology,
+            dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
+      }
     } else if (classType.equals("equivalent")) {
+      // Since it's an intersection, all annotations will be added to the same axiom
+      Set<OWLAnnotation> annotations = new HashSet<>();
+      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
+          annotatedExpressions.entrySet()) {
+        classExpressions.add(annotatedEx.getKey());
+        annotations.addAll(annotatedEx.getValue());
+      }
       OWLObjectIntersectionOf intersection =
-          dataFactory.getOWLObjectIntersectionOf(new HashSet<OWLClassExpression>(classExpressions));
-      manager.addAxiom(ontology, dataFactory.getOWLEquivalentClassesAxiom(cls, intersection));
+          dataFactory.getOWLObjectIntersectionOf(classExpressions);
+      OWLAxiom axiom;
+      if (!annotations.isEmpty()) {
+        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, annotations);
+      } else {
+        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
+      }
+      manager.addAxiom(ontology, axiom);
+
     } else {
       throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
     }
