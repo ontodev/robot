@@ -12,6 +12,7 @@
     <description>Command-line interface for ROBOT, the OBO tool</description>
 
     <build>
+      <pluginManagement>
         <plugins>
             <!-- Build a bin/robot.jar file with all dependencies -->
 
@@ -95,6 +96,7 @@
                 </executions>
             </plugin>
         </plugins>
+      </pluginManagement>
     </build>
 
     <dependencies>
