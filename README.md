@@ -82,7 +82,7 @@ Alternatively, you can use [Docker](https://www.docker.com) with the provided [D
 
 ## Code Style
 
-We use [Google Java Style](https://google.github.io/styleguide/javaguide.html), automatically enforced with [google-java-format](https://github.com/google/google-java-format).
+We use [Google Java Style](https://google.github.io/styleguide/javaguide.html), automatically enforced with [google-java-format](https://github.com/google/google-java-format) and [fmt-maven-plugin](https://github.com/coveo/fmt-maven-plugin). You may want to use the [styleguide configuration file](https://github.com/google/styleguide) for [Eclipse](https://github.com/google/styleguide/blob/gh-pages/eclipse-java-google-style.xml) or [IntelliJ](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml).
 
 
 # Design
