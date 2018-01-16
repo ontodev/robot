@@ -91,7 +91,7 @@ public class CheckAnnotationsHelper {
     if (num < minCardinality) {
       return new InvalidCardinality(p, num, Op.LESS_THAN, minCardinality);
     }
-    if (num > maxCardinality) {
+    if (maxCardinality != null && num > maxCardinality) {
       return new InvalidCardinality(p, num, Op.MORE_THAN, maxCardinality);
     }
     return null;

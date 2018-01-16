@@ -94,12 +94,31 @@ public class MetadataChecker {
   public void runClassMetadataChecks() {
 
     for (OWLClass c : ontology.getClassesInSignature(Imports.EXCLUDED)) {
-      // check header
+      
+      if (InvalidReferenceChecker.isDangling(ontology, c)) {
+        // when referencing classes in the import chain,
+        // a stub class declaration may be entered in the main
+        // ontology; do not check this
+        continue;
+      }
+
+      
+      // set up annotation map
       Set<OWLAnnotationAssertionAxiom> aas = ontology.getAnnotationAssertionAxioms(c.getIRI());
       Map<OWLAnnotationProperty, Set<OWLAnnotationValue>> amap =
           CheckAnnotationsHelper.collectAnnotationsFromAxioms(aas);
 
+      // all classes (live or deprecated) MUST have 1 label
       checkClassCardinality("rdfs:label", 1, 1, amap, c);
+      
+      if (InvalidReferenceChecker.isDeprecated(ontology, c)) {
+        // we do not expect a deprecated class to conform to
+        // the additional checks below
+        continue;
+      }
+     
+ 
+
       checkClassCardinality("definition:", 1, 1, amap, c);
 
       // check definition has provenance
