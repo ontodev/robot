@@ -306,6 +306,12 @@ ROBOT can repair certain problems encountered in ontologies. So far this is limi
       --input need-of-repair.owl \
       --output results/repaired.owl
 
+## Reporting
+
+    robot report \
+      --input need-of-repair.owl \
+      --output report.yaml
+
 
 ## Chaining
 

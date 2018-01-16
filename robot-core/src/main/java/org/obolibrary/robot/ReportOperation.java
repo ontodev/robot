@@ -1,10 +1,17 @@
 package org.obolibrary.robot;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.obolibrary.robot.checks.CheckViolation;
+import org.obolibrary.robot.checks.ClassMetadataViolation;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.checks.InvalidReferenceViolation;
+import org.obolibrary.robot.checks.MetadataChecker;
+import org.obolibrary.robot.checks.OntologyMetadataViolation;
+import org.obolibrary.robot.report.ProblemsReport;
+import org.obolibrary.robot.report.ReportCard;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +44,10 @@ public class ReportOperation {
    *
    * @param ontology the OWLOntology to report
    * @param iohelper IOHelper to work with ontology
+   * @return report
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper) {
-    report(ontology, iohelper, getDefaultOptions());
+  public static ReportCard report(OWLOntology ontology, IOHelper iohelper) {
+    return report(ontology, iohelper, getDefaultOptions());
   }
 
   /**
@@ -48,17 +56,61 @@ public class ReportOperation {
    * @param ontology the OWLOntology to report
    * @param iohelper IOHelper to work with ontology
    * @param options map of report options
+   * @return report
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
+  public static ReportCard report(
+      OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
+
+    ReportCard reportCard = new ReportCard();
+    ProblemsReport problemsReport = new ProblemsReport();
+    reportCard.problemsReport = problemsReport;
+
+    Set<CheckViolation> violations = new HashSet<>();
+    Map<Integer, Set<CheckViolation>> violationsBySeverity = new HashMap<>();
 
     Set<InvalidReferenceViolation> refViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, true);
     for (InvalidReferenceViolation v : refViolations) {
-      System.err.println("REFERENCE VIOLATION: " + v);
+      logger.warn("REFERENCE VIOLATION: " + v);
     }
-    int totalViolations = refViolations.size();
-    if (totalViolations > 0) {
-      System.err.println("REPORT FAILED! Violations: " + totalViolations);
+    violations.addAll(refViolations);
+    problemsReport.invalidReferenceViolations = refViolations;
+
+    Set<ClassMetadataViolation> classMetadataViolations =
+        MetadataChecker.getClassMetadataViolations(ontology);
+    if (classMetadataViolations.size() > 0) {
+      for (ClassMetadataViolation v : classMetadataViolations) {
+        logger.warn("Ontology Metadata violation: " + v);
+      }
     }
+    violations.addAll(classMetadataViolations);
+    problemsReport.classMetadataViolations = classMetadataViolations;
+
+    Set<OntologyMetadataViolation> ontologyMetadataViolations =
+        MetadataChecker.getOntologyMetadataViolations(ontology);
+    if (ontologyMetadataViolations.size() > 0) {
+      for (OntologyMetadataViolation v : ontologyMetadataViolations) {
+        logger.warn("Class Metadata violation: " + v);
+      }
+    }
+    violations.addAll(ontologyMetadataViolations);
+    problemsReport.ontologyMetadataViolations = ontologyMetadataViolations;
+
+    if (violations.size() > 0) {
+      for (int s = 1; s <= 5; s++) {
+        violationsBySeverity.put(s, new HashSet<>());
+      }
+      logger.error("REPORT FAILED! Violations: " + violations.size());
+
+      for (CheckViolation v : violations) {
+        int s = v.getSeverity();
+        violationsBySeverity.get(s).add(v);
+      }
+
+      for (int s = 1; s <= 5; s++) {
+        logger.error("Severity " + s + " violations: " + violationsBySeverity.get(s).size());
+      }
+    }
+    return reportCard;
   }
 }
