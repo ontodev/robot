@@ -297,6 +297,9 @@ public class QueryOperation {
    * @param output the output stream to write to
    */
   public static void writeResult(ResultSet resultSet, Lang format, OutputStream output) {
+    if(format == null) {
+      format = Lang.CSV;
+    }
     ResultSetMgr.write(output, resultSet, format);
   }
 
@@ -319,6 +322,9 @@ public class QueryOperation {
    * @param output the output stream to write to
    */
   public static void writeResult(Model model, Lang format, OutputStream output) {
+    if(format == null) {
+      format = Lang.TTL;
+    }
     RDFDataMgr.write(output, model, format);
   }
 
