@@ -54,29 +54,22 @@ public class TemplateOperation {
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
   /**
+   * Error message when an axiom annotation does not have the appropriate annotation or class
+   * expression to the left. Expects: table name, row number, row id, column number, column name,
+   * cell value, axiom type.
+   */
+  private static String axiomAnnotationError =
+      "Axiom annotation \"%6$s\" at row %2$d (\"%3$s\"), "
+          + "column %4$d (\"%5$s\") in table \"%1$s\" "
+          + "requires %7$s in the previous column.";
+
+  /**
    * Error message when the number of header columns does not match the number of template columns.
    * Expects: table name, header count, template count.
    */
   private static String columnMismatchError =
       "The number of header columns (%2$d) must match "
           + "the number of template columns (%3$d) "
-          + "in table \"%1$s\".";
-
-  /**
-   * Error message when a required column is missing from a row. Expects: table name, row number,
-   * row id, columns number, column name.
-   */
-  private static String columnError =
-      "Missing column %4$d (\"%5$s\") " + "from row %2$d (\"%3$s\") " + "in table \"%1$s\".";
-
-  /**
-   * Error message when a required cell is null. Expects: table name, row number, row id, columns
-   * number, column name, template.
-   */
-  private static String nullCellError =
-      "Null value at row %2$d (\"%3$s\"), "
-          + "column %4$d (\"%5$s\") "
-          + "for template \"%6$s\" "
           + "in table \"%1$s\".";
 
   /**
@@ -248,7 +241,7 @@ public class TemplateOperation {
     if (template.equals("CLASS_TYPE")) {
       return true;
     }
-    if (template.matches("^(A|>A|>>A|AT|AL|AI|C|>C) .*")) {
+    if (template.matches("^(A|>A|>AT|>AL|>AI|>>A|>>AT|>>AL|>>AI|AT|AL|AI|C|>C) .*")) {
       return true;
     }
     if (template.equals("CI")) {
@@ -601,9 +594,9 @@ public class TemplateOperation {
     OWLAnnotation lastAnnotation = null;
     // Track the last second-level annotation
     // This is reset to null each time we return to a top-level annotation
-    OWLAnnotation lastSub = null;
-    Map<OWLAnnotation, Set<OWLAnnotation>> subAnnotations;
-    Set<OWLAnnotation> subSubAnnotations;
+    OWLAnnotation lastAxiomAnnotation = null;
+    Map<OWLAnnotation, Set<OWLAnnotation>> axiomAnnotations;
+    Set<OWLAnnotation> axiomAnnotationAnnotations;
 
     // For each column, apply templates for annotations.
     for (int column = 0; column < headers.size(); column++) {
@@ -645,11 +638,11 @@ public class TemplateOperation {
       }
 
       // Create OWLAnnotation objects
-      // Link any annotations on annotations in a map
+      // Link any axiom annotations in a map
       for (String value : values) {
         if (template.equals("LABEL")) {
           label = value;
-          lastSub = null;
+          lastAxiomAnnotation = null;
           lastAnnotation = getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
         } else if (template.equals("TYPE")) {
@@ -661,67 +654,64 @@ public class TemplateOperation {
           }
           OWLAnnotationProperty rdfType = getAnnotationProperty(checker, "rdf:type");
           annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
-        } else if (template.startsWith("A ")) {
-          lastAnnotation = getStringAnnotation(checker, template, value);
-          lastSub = null;
+        } else if (template.startsWith("A")) {
+          lastAxiomAnnotation = null;
+          lastAnnotation = getAnnotation(checker, ioHelper, template, value);
           annotations.add(lastAnnotation);
-        } else if (template.startsWith("AT ") && template.indexOf("^^") > -1) {
-          lastAnnotation = getTypedAnnotation(checker, template, value);
-          lastSub = null;
-          annotations.add(lastAnnotation);
-        } else if (template.startsWith("AL ") && template.indexOf("@") > -1) {
-          lastAnnotation = getLanguageAnnotation(checker, template, value);
-          lastSub = null;
-          annotations.add(lastAnnotation);
-        } else if (template.startsWith("AI ")) {
-          IRI iri = ioHelper.createIRI(value);
-          lastSub = null;
-          lastAnnotation = getIRIAnnotation(checker, template, iri);
-          annotations.add(lastAnnotation);
-          // Handle nested annotations
-        } else if (template.startsWith(">A ")) {
+        } else if (template.startsWith(">A")) {
           if (lastAnnotation == null) {
             // Just in case an AA template is first
             throw new Exception(
-                "Nested annotation "
-                    + template
-                    + " on row "
-                    + row
-                    + " requires an annotation in the previous column.");
+                String.format(
+                    axiomAnnotationError,
+                    tableName,
+                    row + 1,
+                    id,
+                    column + 1,
+                    template,
+                    value,
+                    "an annotation"));
           }
-          lastSub = getStringAnnotation(checker, template.substring(1), value);
+          // Get annotation based on annotation type
+          lastAxiomAnnotation = getAnnotation(checker, ioHelper, template.substring(1), value);
+          // If the last annotation is already in the map, get it's existing annotations
           if (nested.containsKey(lastAnnotation)) {
-            subAnnotations = nested.get(lastAnnotation);
+            axiomAnnotations = nested.get(lastAnnotation);
           } else {
-            subAnnotations = new HashMap<>();
+            axiomAnnotations = new HashMap<>();
           }
-          // Add to nested with an empty set
-          subAnnotations.put(lastSub, Sets.newHashSet());
-          nested.put(lastAnnotation, subAnnotations);
+          // Add this annotation to map of axiom annotations with an empty set
+          axiomAnnotations.put(lastAxiomAnnotation, Sets.newHashSet());
+          nested.put(lastAnnotation, axiomAnnotations);
           // Remove from annotation set to prevent duplication
           if (annotations.contains(lastAnnotation)) {
             annotations.remove(lastAnnotation);
           }
-          // Handle deeply nested annotations
-        } else if (template.startsWith(">>A ")) {
-          if (lastSub == null) {
-            // The last sub-annotation is reset each time we go back to a top-level annotation.
+          // Handle axiom annotation annotations ?
+        } else if (template.startsWith(">>A")) {
+          if (lastAxiomAnnotation == null) {
+            // The last axiom annotation is reset each time we go back to a top-level annotation.
             // If there isn't an annotation with the AA template string before the AAA template,
             // there is nothing to annotate...
             throw new Exception(
-                "Deeply nested annotation "
-                    + template
-                    + " on row "
-                    + row
-                    + " requires a nested annotation (AA) in the previous column.");
+                String.format(
+                    axiomAnnotationError,
+                    tableName,
+                    row + 1,
+                    id,
+                    column + 1,
+                    template,
+                    value,
+                    "an axiom annotation"));
           }
-          // These are put in during the AA loop, so they should always be there
-          subAnnotations = nested.get(lastAnnotation);
-          subSubAnnotations = subAnnotations.get(lastSub);
-          // Add this iteration of nested annotation and put into the nested map
-          subSubAnnotations.add(getStringAnnotation(checker, template.substring(2), value));
-          subAnnotations.put(lastSub, subSubAnnotations);
-          nested.put(lastAnnotation, subAnnotations);
+          // These are put in during the >A loop, so they should always be there
+          axiomAnnotations = nested.get(lastAnnotation);
+          axiomAnnotationAnnotations = axiomAnnotations.get(lastAxiomAnnotation);
+          // Add this iteration of annotation and put into the nested map
+          axiomAnnotationAnnotations.add(
+              getAnnotation(checker, ioHelper, template.substring(2), value));
+          axiomAnnotations.put(lastAxiomAnnotation, axiomAnnotationAnnotations);
+          nested.put(lastAnnotation, axiomAnnotations);
         }
       }
     }
@@ -731,7 +721,7 @@ public class TemplateOperation {
       throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
     }
     // Create axioms from OWLAnnotation sets
-    Set<OWLAnnotationAssertionAxiom> axioms = createAnnotationAxioms(entity, annotations, nested);
+    Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(entity, annotations, nested);
     // Add annotations to an entity
     OWLOntology ontology = outputManager.createOntology();
     outputManager.addAxiom(ontology, dataFactory.getOWLDeclarationAxiom(entity));
@@ -844,11 +834,15 @@ public class TemplateOperation {
       } else if (template.startsWith(">C ")) {
         if (lastExpression == null) {
           throw new Exception(
-              "Nested annotation "
-                  + template
-                  + " on row "
-                  + row
-                  + " requires a class expression in the previous column.");
+              String.format(
+                  axiomAnnotationError,
+                  tableName,
+                  row + 1,
+                  id,
+                  column + 1,
+                  template,
+                  cell,
+                  "a class expression"));
         }
         Set<OWLAnnotation> annotations;
         if (annotatedExpressions.containsKey(lastExpression)) {
@@ -869,7 +863,6 @@ public class TemplateOperation {
     if ((classExpressions.size() == 0) && (annotatedExpressions.isEmpty())) {
       return;
     }
-
     if (classType == null) {
       throw new Exception(String.format(missingTypeError, tableName, row + 1, id));
     }
@@ -886,18 +879,112 @@ public class TemplateOperation {
     if (cls == null) {
       throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
     }
+    Set<OWLAxiom> axioms = getLogicalAxioms(cls, classType, classExpressions, annotatedExpressions);
+    if (axioms == null) {
+      throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
+    } else {
+      ontology.getOWLOntologyManager().addAxioms(ontology, axioms);
+    }
+  }
 
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+  /**
+   * Create an OWLAnnotation based on the template string and cell value.
+   *
+   * @param checker used to resolve the annotation property
+   * @param ioHelper IOHelper used to create IRIs from values
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return OWLAnnotation, or null if template string is not supported
+   * @throws Exception if annotation property cannot be found
+   */
+  private static OWLAnnotation getAnnotation(
+      QuotedEntityChecker checker, IOHelper ioHelper, String template, String value)
+      throws Exception {
+    if (template.startsWith("A ")) {
+      return getStringAnnotation(checker, template, value);
+    } else if (template.startsWith("AT ") && template.indexOf("^^") > -1) {
+      return getTypedAnnotation(checker, template, value);
+    } else if (template.startsWith("AL ") && template.indexOf("@") > -1) {
+      return getLanguageAnnotation(checker, template, value);
+    } else if (template.startsWith("AI ")) {
+      IRI iri = ioHelper.createIRI(value);
+      return getIRIAnnotation(checker, template, iri);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Get a set of annotation axioms for an OWLEntity. Supports axiom annotations and axiom
+   * annotation annotations.
+   *
+   * @param entity OWLEntity to annotation
+   * @param annotations Set of OWLAnnotations
+   * @param nested Map with top-level OWLAnnotation as key and another map (axiom OWLAnnotation, set
+   *     of axiom annotation OWLAnnotations) as value
+   * @return Set of OWLAnnotationAssertionAxioms
+   */
+  private static Set<OWLAnnotationAssertionAxiom> getAnnotationAxioms(
+      OWLEntity entity,
+      Set<OWLAnnotation> annotations,
+      Map<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> nested) {
+    Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<>();
+    // Create basic annotations
+    for (OWLAnnotation annotation : annotations) {
+      axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation));
+    }
+    // Create annotations with axiom annotations
+    for (Entry<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> annotationPlusAxioms :
+        nested.entrySet()) {
+      OWLAnnotation annotation = annotationPlusAxioms.getKey();
+      Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
+      // For each annotation with its axiom annotations ...
+      for (Entry<OWLAnnotation, Set<OWLAnnotation>> nestedSet :
+          annotationPlusAxioms.getValue().entrySet()) {
+        OWLAnnotation axiomAnnotation = nestedSet.getKey();
+        // Check if there are annotations on the axiom annotations, and add those
+        Set<OWLAnnotation> axiomAnnotationAnnotations = nestedSet.getValue();
+        if (axiomAnnotationAnnotations.isEmpty()) {
+          axiomAnnotations.add(axiomAnnotation);
+        } else {
+          OWLAnnotationProperty property = axiomAnnotation.getProperty();
+          OWLAnnotationValue value = axiomAnnotation.getValue();
+          axiomAnnotations.add(
+              dataFactory.getOWLAnnotation(property, value, axiomAnnotationAnnotations));
+        }
+      }
+      axioms.add(
+          dataFactory.getOWLAnnotationAssertionAxiom(
+              entity.getIRI(), annotation, axiomAnnotations));
+    }
+    return axioms;
+  }
+
+  /**
+   * Get a set of OWLAxioms (subclass or equivalent) for an OWLClass. Supports axiom annotations.
+   *
+   * @param cls OWLClass to add axioms to
+   * @param classType subclass or equivalent
+   * @param classExpressions Set of OWLClassExpressions
+   * @param annotatedExpressions Map of annotated OWLClassExpressions and the Set of OWLAnnotations
+   * @return Set of OWLAxioms, or null if classType is not subclass or equivalent
+   */
+  private static Set<OWLAxiom> getLogicalAxioms(
+      OWLClass cls,
+      String classType,
+      Set<OWLClassExpression> classExpressions,
+      Map<OWLClassExpression, Set<OWLAnnotation>> annotatedExpressions) {
+    Set<OWLAxiom> axioms = new HashSet<>();
     if (classType.equals("subclass")) {
       for (OWLClassExpression expression : classExpressions) {
-        manager.addAxiom(ontology, dataFactory.getOWLSubClassOfAxiom(cls, expression));
+        axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expression));
       }
       for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
           annotatedExpressions.entrySet()) {
-        manager.addAxiom(
-            ontology,
+        axioms.add(
             dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
       }
+      return axioms;
     } else if (classType.equals("equivalent")) {
       // Since it's an intersection, all annotations will be added to the same axiom
       Set<OWLAnnotation> annotations = new HashSet<>();
@@ -914,55 +1001,9 @@ public class TemplateOperation {
       } else {
         axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
       }
-      manager.addAxiom(ontology, axiom);
-
+      return Sets.newHashSet(axiom);
     } else {
-      throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
+      return null;
     }
-  }
-
-  /**
-   * Create a set of annotation axioms for an OWLEntity. Supports deeply nested axioms up to
-   * annotation on annotation on annotation.
-   *
-   * @param entity OWLEntity to annotation
-   * @param annotations Set of OWLAnnotations
-   * @param nested Map with top-level OWLAnnotation as key and another map (second-level
-   *     OWLAnnotation, set of third-level OWLAnnotations) as value
-   * @return Set of OWLAnnotationAssertionAxioms
-   */
-  private static Set<OWLAnnotationAssertionAxiom> createAnnotationAxioms(
-      OWLEntity entity,
-      Set<OWLAnnotation> annotations,
-      Map<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> nested) {
-    Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<>();
-    // Create axioms from the annotations
-    for (OWLAnnotation annotation : annotations) {
-      axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation));
-    }
-    // Create (deeply) nested axioms
-    for (Entry<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> annotationSet :
-        nested.entrySet()) {
-      OWLAnnotation annotation = annotationSet.getKey();
-      Set<OWLAnnotation> subAnnotationSet = new HashSet<>();
-      Set<OWLAnnotation> subSubAnnotations;
-      // For each nested annotation...
-      for (Entry<OWLAnnotation, Set<OWLAnnotation>> nestedSet :
-          annotationSet.getValue().entrySet()) {
-        OWLAnnotation subAnnotation = nestedSet.getKey();
-        subSubAnnotations = nestedSet.getValue();
-        if (subSubAnnotations.isEmpty()) {
-          subAnnotationSet.add(subAnnotation);
-        } else {
-          OWLAnnotationProperty property = subAnnotation.getProperty();
-          OWLAnnotationValue value = subAnnotation.getValue();
-          subAnnotationSet.add(dataFactory.getOWLAnnotation(property, value, subSubAnnotations));
-        }
-      }
-      axioms.add(
-          dataFactory.getOWLAnnotationAssertionAxiom(
-              entity.getIRI(), annotation, subAnnotationSet));
-    }
-    return axioms;
   }
 }
