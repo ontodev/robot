@@ -241,7 +241,7 @@ public class TemplateOperation {
     if (template.equals("CLASS_TYPE")) {
       return true;
     }
-    if (template.matches("^(A|>A|>AT|>AL|>AI|>>A|>>AT|>>AL|>>AI|AT|AL|AI|C|>C) .*")) {
+    if (template.matches("^(>?C|>{0,2}A[L,T,I]?) .*")) {
       return true;
     }
     if (template.equals("CI")) {
