@@ -69,7 +69,7 @@ public class ReportOperation {
     Map<Integer, Set<CheckViolation>> violationsBySeverity = new HashMap<>();
 
     Set<InvalidReferenceViolation> refViolations =
-        InvalidReferenceChecker.getInvalidReferenceViolations(ontology, true);
+        InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
     for (InvalidReferenceViolation v : refViolations) {
       logger.warn("REFERENCE VIOLATION: " + v);
     }
