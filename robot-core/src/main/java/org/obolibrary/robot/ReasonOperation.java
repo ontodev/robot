@@ -119,8 +119,17 @@ public class ReasonOperation {
           "Reference violations found: "
               + referenceViolations.size()
               + " - reasoning may be incomplete");
+
+      int maxDanglings = 10;
+      int danglings = 0;
       for (InvalidReferenceViolation v : referenceViolations) {
-        logger.error("Reference violation: " + v);
+
+        if(v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING) && danglings < maxDanglings) {
+          logger.error("Reference violation: " + v);
+          danglings++;
+        } else if(!v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)) {
+          logger.error("Reference violation: " + v);
+        }
       }
 
       if (OptionsHelper.optionIsTrue(options, "prevent-invalid-references")) {
