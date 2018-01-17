@@ -218,7 +218,7 @@ public class QueryOperation {
   /**
    * If a result set has results, return true, otherwise false.
    *
-   * @param resultSet the results to write
+   * @param result the results to write
    * @return true if there are results, false otherwise
    */
   public static boolean hasResult(ResultSet result) {
@@ -232,7 +232,7 @@ public class QueryOperation {
   /**
    * If a model has statements, return true, otherwise false.
    *
-   * @param resultSet the results to write
+   * @param result the results to write
    * @return true if there are statements, false otherwise
    */
   public static boolean hasResult(Model result) {
@@ -247,7 +247,7 @@ public class QueryOperation {
    * If a result set has results, write to the output stream and return true. Otherwise return
    * false.
    *
-   * @param resultSet the results to write
+   * @param result the results to write
    * @param formatName the name of the language to write in
    * @param output the output stream to write to
    * @return true if there were results, false otherwise
@@ -264,7 +264,7 @@ public class QueryOperation {
   /**
    * If a model has statements, write to the output stream and return true. Otherwise return false.
    *
-   * @param model the model to write
+   * @param result the model to write
    * @param formatName the name of the language to write in
    * @param output the output stream to write to
    * @return true if there were statements, false otherwise
