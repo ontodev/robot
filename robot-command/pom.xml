@@ -13,63 +13,61 @@
   <description>Command-line interface for ROBOT: Commands for working with OWL ontologies, especially Open Biological and Biomedical Ontologes (OBO).</description>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <!-- Enforce Google Java Style -->
-        <plugin>
-          <groupId>com.coveo</groupId>
-          <artifactId>fmt-maven-plugin</artifactId>
-          <version>2.1.0</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>format</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+    <plugins>
+      <!-- Enforce Google Java Style -->
+      <plugin>
+        <groupId>com.coveo</groupId>
+        <artifactId>fmt-maven-plugin</artifactId>
+        <version>2.1.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-        <!-- Run integration tests -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.18.1</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>integration-test</goal>
-                <goal>verify</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+      <!-- Run integration tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.18.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-        <!-- Build a bin/robot.jar file with all dependencies -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>2.4.3</version>
-          <executions>
-            <execution>
-              <phase>package</phase>
-              <goals>
-                <goal>shade</goal>
-              </goals>
-              <configuration>
-                <finalName>robot</finalName>
-                <outputDirectory>${project.parent.basedir}/bin</outputDirectory>
-                <transformers>
-                  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                    <mainClass>org.obolibrary.robot.CommandLineInterface</mainClass>
-                  </transformer>
-                  <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                </transformers>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
+      <!-- Build a bin/robot.jar file with all dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>robot</finalName>
+              <outputDirectory>${project.parent.basedir}/bin</outputDirectory>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.obolibrary.robot.CommandLineInterface</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 
   <dependencies>
