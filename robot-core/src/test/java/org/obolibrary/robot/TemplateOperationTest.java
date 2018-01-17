@@ -98,9 +98,8 @@ public class TemplateOperationTest extends CoreTest {
     tables.put(path, IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
     OWLOntology template = TemplateOperation.template(tables, simpleParts);
-    assertEquals("Count classes", 4, template.getClassesInSignature().size());
-    assertEquals("Count logical axioms", 3, template.getLogicalAxiomCount());
-    assertEquals("Count all axioms", 9, template.getAxiomCount());
+    OntologyHelper.setOntologyIRI(template, IRI.create("http://test.com/template.owl"), null);
+    assertIdentical("/template.owl", template);
   }
 
   /**
