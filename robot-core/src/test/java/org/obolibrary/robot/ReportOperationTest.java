@@ -55,6 +55,21 @@ public class ReportOperationTest extends CoreTest {
         reportCard);
   }
 
+  /**
+   * 
+   * 
+   * @throws IOException
+   * @throws OWLOntologyCreationException
+   */
+  @Test
+  public void testCURIEchecks() throws IOException, OWLOntologyCreationException {
+    OWLOntology ontology = loadOntology("/bad_dbxref_test.obo");
+    IOHelper iohelper = new IOHelper();
+    ReportCard reportCard = ReportOperation.report(ontology, iohelper);
+    writeReport( new ObjectMapper(new YAMLFactory()),
+        reportCard);
+    assertEquals(3, reportCard.problemsReport.curieViolations.size());
+  }
   
   public void writeReport(ObjectMapper mapper, ReportCard reportCard) throws JsonProcessingException {
     ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();

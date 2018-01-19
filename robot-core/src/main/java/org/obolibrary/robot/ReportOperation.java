@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.obolibrary.robot.checks.CURIEChecker;
+import org.obolibrary.robot.checks.CURIEViolation;
 import org.obolibrary.robot.checks.CheckViolation;
 import org.obolibrary.robot.checks.ClassMetadataViolation;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
@@ -75,6 +78,15 @@ public class ReportOperation {
     }
     violations.addAll(refViolations);
     problemsReport.invalidReferenceViolations = refViolations;
+
+    Set<CURIEViolation> curieViolations =
+        CURIEChecker.getInvalidCURIEs(ontology, null);
+    for (CURIEViolation v : curieViolations) {
+      logger.warn("REFERENCE VIOLATION: " + v);
+    }
+    violations.addAll(curieViolations);
+    problemsReport.curieViolations = curieViolations;
+
 
     Set<ClassMetadataViolation> classMetadataViolations =
         MetadataChecker.getClassMetadataViolations(ontology);

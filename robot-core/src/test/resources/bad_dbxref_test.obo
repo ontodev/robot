@@ -1,0 +1,9 @@
+ontology: bad
+
+[Term]
+id: A
+name: a
+def: "foo" [FOO: 1]
+xref: FOO: 2
+xref: FOO:3
+xref: BAR
