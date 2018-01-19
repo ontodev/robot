@@ -1,9 +1,14 @@
 package org.obolibrary.robot.checks;
 
+import static org.junit.Assert.*;
+
 import java.util.HashSet;
 import java.util.Set;
 import org.obolibrary.robot.checks.InvalidReferenceViolation.Category;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationSubject;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
@@ -56,8 +61,11 @@ public class InvalidReferenceChecker {
    * @return true if entity is deprecated
    */
   public static boolean isDeprecated(OWLOntology ontology, OWLEntity entity) {
+    return isDeprecated(ontology, entity.getIRI());
+  }
+  public static boolean isDeprecated(OWLOntology ontology, IRI iri) {
     for (OWLOntology o : ontology.getImportsClosure()) {
-      for (OWLAnnotationAssertionAxiom a : o.getAnnotationAssertionAxioms(entity.getIRI())) {
+      for (OWLAnnotationAssertionAxiom a : o.getAnnotationAssertionAxioms(iri)) {
         if (a.isDeprecatedIRIAssertion()) {
           if (a.getValue().asLiteral().get().parseBoolean()) {
             return true;
@@ -67,6 +75,29 @@ public class InvalidReferenceChecker {
     }
     return false;
   }
+  
+  /**
+   * 
+   * See https://github.com/owlcs/owlapi/issues/317
+   * 
+   * @param ontology
+   * @param iri
+   * @return true if iri is a merged class or other entity
+   */
+  public static boolean isMergedIRI(OWLOntology ontology, IRI iri) {
+    for (OWLOntology o : ontology.getImportsClosure()) {
+      for (OWLAnnotationAssertionAxiom a : o.getAnnotationAssertionAxioms(iri)) {
+        if (a.getProperty().getIRI().toString().equals("http://purl.obolibrary.org/obo/IAO_0000231")) {
+          if (a.getValue().asIRI().isPresent() &&
+              a.getValue().asIRI().get().toString().equals("http://purl.obolibrary.org/obo/IAO_0000227")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
 
   /**
    * Finds axioms that reference a deprecated or dangling entity.
@@ -84,6 +115,8 @@ public class InvalidReferenceChecker {
       OWLOntology ontology, Set<OWLAxiom> axioms, boolean ignoreDangling) {
     Set<InvalidReferenceViolation> violations = new HashSet<>();
     for (OWLAxiom axiom : axioms) {
+      // 1. LOGICAL AXIOM CHECK
+      // note only logical axioms have entities in signature
       for (OWLEntity e : axiom.getSignature()) {
         if (!ignoreDangling && isDangling(ontology, e)) {
           violations.add(InvalidReferenceViolation.create(axiom, e, Category.DANGLING));
@@ -93,6 +126,43 @@ public class InvalidReferenceChecker {
             violations.add(InvalidReferenceViolation.create(axiom, e, Category.DEPRECATED));
           }
         }
+      }
+      // 2. NON-LOGICAL AXIOM CHECK
+      if (axiom.isAnnotationAxiom()) {
+        // check object/value:
+        // annotation axioms should not point to deprecated axioms
+        OWLAnnotationAssertionAxiom aa = (OWLAnnotationAssertionAxiom)axiom;
+        OWLAnnotationValue v = aa.getValue();
+        if (v instanceof IRI) {
+          IRI referencedIRI = (IRI)v;
+          if (isDeprecated(ontology, referencedIRI)) {
+            OWLClass fakeClass = ontology.getOWLOntologyManager().getOWLDataFactory().getOWLClass(referencedIRI);
+            violations.add(InvalidReferenceViolation.create(axiom, fakeClass, Category.DEPRECATED));           
+          }
+        }
+        // check subject
+        // in general a deprecated class can have any number of annotation axioms
+        // about it.
+        // there is an exception for merged classes, which disappear into alt_ids in obo
+        // format. See https://github.com/owlcs/owlapi/issues/317
+        // TODO: only check this for obo profiles? given how widespread this is, global check
+        // may be ok
+        OWLAnnotationSubject subj = aa.getSubject();
+        if (subj instanceof IRI) {
+          IRI subjIRI = (IRI)subj;
+          if (isMergedIRI(ontology, subjIRI)) {
+            OWLClass fakeClass = ontology.getOWLOntologyManager().getOWLDataFactory().getOWLClass(subjIRI);
+            String pstr = aa.getProperty().getIRI().toString();
+            // these are the only annotations allowed on a merged class
+            if (!aa.isDeprecatedIRIAssertion() &&
+                !pstr.equals("http://www.geneontology.org/formats/oboInOwl#id") &&
+                !pstr.equals("http://purl.obolibrary.org/obo/IAO_0000231") &&
+                !pstr.equals("http://purl.obolibrary.org/obo/IAO_0100001")) {
+              violations.add(InvalidReferenceViolation.create(aa, fakeClass, Category.ALT_ID));           
+            }
+          }
+        }
+        
       }
     }
     return violations;

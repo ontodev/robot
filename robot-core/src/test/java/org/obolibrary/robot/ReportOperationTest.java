@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 
 import org.junit.Test;
@@ -27,11 +29,32 @@ public class ReportOperationTest extends CoreTest {
     OWLOntology ontology = loadOntology("/need-of-repair.owl");
     IOHelper iohelper = new IOHelper();
     ReportCard reportCard = ReportOperation.report(ontology, iohelper);
+    assertEquals(1, reportCard.problemsReport.invalidReferenceViolations.size());
+    assertEquals(4, reportCard.problemsReport.classMetadataViolations.size());
     writeReport( new ObjectMapper(new JsonFactory()),
         reportCard);
     writeReport( new ObjectMapper(new YAMLFactory()),
         reportCard);
   }
+  
+  /**
+   * See https://github.com/owlcs/owlapi/issues/317#issuecomment-359025467
+   * 
+   * https://github.com/Phenomics/hpo-obo-qc/issues/1
+   * 
+   * @throws IOException
+   * @throws OWLOntologyCreationException
+   */
+  @Test
+  public void testOboAltIds() throws IOException, OWLOntologyCreationException {
+    OWLOntology ontology = loadOntology("/obo_altid_test.obo");
+    IOHelper iohelper = new IOHelper();
+    ReportCard reportCard = ReportOperation.report(ontology, iohelper);
+    assertEquals(1, reportCard.problemsReport.invalidReferenceViolations.size());
+    writeReport( new ObjectMapper(new YAMLFactory()),
+        reportCard);
+  }
+
   
   public void writeReport(ObjectMapper mapper, ReportCard reportCard) throws JsonProcessingException {
     ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();

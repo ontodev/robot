@@ -1,0 +1,12 @@
+ontology: bad
+
+[Term]
+id: A
+name: a
+alt_id: B
+
+[Term]
+id: B
+name: b
+is_obsolete: true
+

@@ -86,7 +86,22 @@ public class InvalidReferenceViolation implements CheckViolation {
      * 
      * (in the OBO universe, "obsolete" classes all have deprecation axioms)
      */
-    DEPRECATED
+    DEPRECATED,
+    
+    /**
+     * This category is specific to ontologies such as GO, HP, UBERON, CL
+     * that follow metadata design patterns originating in OBO Format.
+     * 
+     * Here, a special category of deprecated class is a merged class. In obo
+     * format this is represented as an alt_id tag on the replacement class, with
+     * the merged/deprecated class not appearing as a stanza in its own right. This
+     * means we should avoid placing any information about the merged class or
+     * it will be lost in the obo roundtrip.
+     * 
+     * See https://github.com/owlcs/owlapi/issues/317
+     * 
+     */
+    ALT_ID
   }
 
   /* (non-Javadoc)
