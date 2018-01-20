@@ -135,7 +135,7 @@ public class InvalidReferenceChecker extends AbstractChecker implements Checker 
         }
       }
       // 2. NON-LOGICAL AXIOM CHECK
-      if (axiom.isAnnotationAxiom()) {
+      if (axiom instanceof OWLAnnotationAssertionAxiom) {
         // check object/value:
         // annotation axioms should not point to deprecated axioms
         OWLAnnotationAssertionAxiom aa = (OWLAnnotationAssertionAxiom)axiom;
@@ -183,7 +183,7 @@ public class InvalidReferenceChecker extends AbstractChecker implements Checker 
   public static Set<InvalidReferenceViolation> getInvalidReferenceViolations(
       OWLOntology ontology, boolean ignoreDangling) {
     return getInvalidReferenceViolations(
-        ontology, ontology.getAxioms(Imports.INCLUDED), ignoreDangling);
+        ontology, ontology.getAxioms(Imports.EXCLUDED), ignoreDangling);
   }
 
   /**
@@ -197,7 +197,7 @@ public class InvalidReferenceChecker extends AbstractChecker implements Checker 
   public static Set<InvalidReferenceViolation> checkImportModule(
       OWLOntology importModule, OWLOntology baseOntology) {
     return getInvalidReferenceViolations(
-        importModule, baseOntology.getAxioms(Imports.INCLUDED), true);
+        importModule, baseOntology.getAxioms(Imports.EXCLUDED), true);
   }
   
   @Override

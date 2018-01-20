@@ -68,8 +68,11 @@ public class CURIEChecker extends AbstractChecker implements Checker {
     }
     for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
       for (OWLAnnotation a : axiom.getAnnotations()) {
-        OWLAnnotationValue v = a.getValue();
-        violations.addAll(checkCURIE(v, axiom));          
+        OWLAnnotationProperty p = a.getProperty();
+        if (isCURIEValuedProperty(p)) {
+          OWLAnnotationValue v = a.getValue();
+          violations.addAll(checkCURIE(v, axiom));
+        }
       }
     }
     return violations;

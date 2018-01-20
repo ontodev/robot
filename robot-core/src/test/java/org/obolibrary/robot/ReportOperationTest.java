@@ -30,7 +30,9 @@ public class ReportOperationTest extends CoreTest {
     IOHelper iohelper = new IOHelper();
     ReportCard reportCard = ReportOperation.report(ontology, iohelper);
     assertEquals(1, reportCard.problemsReport.invalidReferenceViolations.size());
-    assertEquals(4, reportCard.problemsReport.classMetadataViolations.size());
+    
+    // TODO: test-non-lax mode
+    assertEquals(0, reportCard.problemsReport.classMetadataViolations.size());
     writeReport( new ObjectMapper(new JsonFactory()),
         reportCard);
     writeReport( new ObjectMapper(new YAMLFactory()),

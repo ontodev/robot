@@ -309,7 +309,7 @@ ROBOT can repair certain problems encountered in ontologies. So far this is limi
 ## Reporting
 
     robot report \
-      --input need-of-repair.owl \
+      --input edit.owl \
       --output report.yaml
 
 

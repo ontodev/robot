@@ -71,6 +71,7 @@ public class ReportOperation {
     Set<CheckViolation> violations = new HashSet<>();
     Map<Integer, Set<CheckViolation>> violationsBySeverity = new HashMap<>();
 
+    logger.info("Checking owl object references...");
     Set<InvalidReferenceViolation> refViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
     for (InvalidReferenceViolation v : refViolations) {
@@ -79,7 +80,8 @@ public class ReportOperation {
     violations.addAll(refViolations);
     problemsReport.invalidReferenceViolations = refViolations;
 
-    Set<CURIEViolation> curieViolations =
+    logger.info("Checking CURIEs...");
+        Set<CURIEViolation> curieViolations =
         CURIEChecker.getInvalidCURIEs(ontology, null);
     for (CURIEViolation v : curieViolations) {
       logger.warn("REFERENCE VIOLATION: " + v);
@@ -88,6 +90,7 @@ public class ReportOperation {
     problemsReport.curieViolations = curieViolations;
 
 
+    logger.info("Checking class metadata...");
     Set<ClassMetadataViolation> classMetadataViolations =
         MetadataChecker.getClassMetadataViolations(ontology);
     if (classMetadataViolations.size() > 0) {
@@ -98,7 +101,8 @@ public class ReportOperation {
     violations.addAll(classMetadataViolations);
     problemsReport.classMetadataViolations = classMetadataViolations;
 
-    Set<OntologyMetadataViolation> ontologyMetadataViolations =
+    logger.info("Checking ontology header metadata...");
+       Set<OntologyMetadataViolation> ontologyMetadataViolations =
         MetadataChecker.getOntologyMetadataViolations(ontology);
     if (ontologyMetadataViolations.size() > 0) {
       for (OntologyMetadataViolation v : ontologyMetadataViolations) {
@@ -108,6 +112,8 @@ public class ReportOperation {
     violations.addAll(ontologyMetadataViolations);
     problemsReport.ontologyMetadataViolations = ontologyMetadataViolations;
 
+    logger.info("Summarizing...");
+    
     if (violations.size() > 0) {
       for (int s = 1; s <= 5; s++) {
         violationsBySeverity.put(s, new HashSet<>());

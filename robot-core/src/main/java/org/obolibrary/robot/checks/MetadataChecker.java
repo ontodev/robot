@@ -45,12 +45,10 @@ public class MetadataChecker extends AbstractChecker implements Checker {
   private Set<OntologyMetadataViolation> ontologyMetadataViolations = new HashSet<>();
   private Set<ClassMetadataViolation> classMetadataViolations = new HashSet<>();
   private Profile profile = Profile.LAX;
-  private Map<IRI, String> labelMap;
 
   /** @param ontology */
   public MetadataChecker(OWLOntology ontology) {
     super(ontology, null);
-    labelMap = OntologyHelper.getLabels(ontology);
     setupIOHelper();
   }
   
@@ -111,7 +109,13 @@ public class MetadataChecker extends AbstractChecker implements Checker {
         continue;
       }
 
-      
+      if (InvalidReferenceChecker.isMergedIRI(ontology, c.getIRI())) {
+        // when referencing classes in the import chain,
+        // a stub class declaration may be entered in the main
+        // ontology; do not check this
+        continue;
+      }
+     
       // set up annotation map
       Set<OWLAnnotationAssertionAxiom> aas = ontology.getAnnotationAssertionAxioms(c.getIRI());
       Map<OWLAnnotationProperty, Set<OWLAnnotationValue>> amap =
@@ -127,27 +131,31 @@ public class MetadataChecker extends AbstractChecker implements Checker {
       }
      
  
+      if (profile.equals(Profile.LAX)) {
+        checkClassCardinality("definition:", 0, 1, amap, c);
+      }
+      else {
+        checkClassCardinality("definition:", 1, 1, amap, c);
+        
+        // check definition has provenance
+        OWLAnnotationProperty defp = getProperty("definition:");
+        Set<OWLAnnotation> defAnns = new HashSet<>();
 
-      checkClassCardinality("definition:", 1, 1, amap, c);
-
-      // check definition has provenance
-      OWLAnnotationProperty defp = getProperty("definition:");
-      Set<OWLAnnotation> defAnns = new HashSet<>();
-
-      // GO-style: axiom annotation
-      for (OWLAnnotationAssertionAxiom aax : ontology.getAnnotationAssertionAxioms(c.getIRI())) {
-        if (aax.getProperty().equals(defp)) {
-          defAnns.addAll(aax.getAnnotations());
+        // GO-style: axiom annotation
+        for (OWLAnnotationAssertionAxiom aax : ontology.getAnnotationAssertionAxioms(c.getIRI())) {
+          if (aax.getProperty().equals(defp)) {
+            defAnns.addAll(aax.getAnnotations());
+          }
         }
-      }
-      if (defAnns.size() == 0) {
-        // OBI-style
-        checkClassCardinality("definition_editor:", 1, null, amap, c);
-      }
+        if (defAnns.size() == 0) {
+          // OBI-style
+          checkClassCardinality("definition_editor:", 1, null, amap, c);
+        }
 
-      String defn = getStringPropertyValue("definition:", amap);
-      if (defn != null) {
-        // TODO - style checks on text definition
+        String defn = getStringPropertyValue("definition:", amap);
+        if (defn != null) {
+          // TODO - style checks on text definition
+        }
       }
 
       // Checks for 'GO lineage' ontologies
@@ -218,11 +226,7 @@ public class MetadataChecker extends AbstractChecker implements Checker {
         CheckAnnotationsHelper.checkCardinality(
             iohelper, ontology, p, minCardinality, maxCardinality, amap);
     if (inv != null) {
-      String label = "";
-      String cstr = c.getIRI().toString();
-      if (labelMap.containsKey(cstr)) {
-        label = labelMap.get(cstr);
-      }
+      String label = getRenderer().render(c);
       classMetadataViolations.add(new ClassMetadataViolation(c, label, p, inv.toString(), 1));
     }
   }
