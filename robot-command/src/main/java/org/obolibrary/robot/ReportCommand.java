@@ -105,7 +105,7 @@ public class ReportCommand implements Command {
     }
 
     // TODO save results
-    ReportOperation.report(inputOntology, ioHelper);
+    ReportOperation.report(inputOntology);
     return state;
   }
 }

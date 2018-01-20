@@ -1,0 +1,10 @@
+## title: trailing whitespace violation(s)
+## severity: 5
+## ---
+
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?entity ?property ?value WHERE 
+  {?property a owl:AnnotationProperty .
+   ?entity ?property ?value .
+   FILTER STRENDS(str(?value), " ")}

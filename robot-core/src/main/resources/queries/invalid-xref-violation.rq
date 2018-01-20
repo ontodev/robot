@@ -1,0 +1,11 @@
+## title: invalid crossreference violation(s)
+## severity: 5
+## ---
+
+PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
+
+SELECT DISTINCT ?entity ?property ?value WHERE 
+  {VALUES ?property {oboInOwl:hasDbXref}
+   ?entity ?property ?value .
+   FILTER NOT EXISTS 
+     {FILTER regex(?value, "^([A-Z]{3}|[A-Z]{2}):[0-9]{3,7}$")}}

@@ -1,0 +1,18 @@
+## title: ontology metadata violation(s)
+## severity: 5
+## ---
+
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?entity ?property ?value WHERE 
+  {VALUES ?property
+  	{dcterms:license
+  	 dc:license
+  	 dcterms:description
+  	 dc:description
+  	 dcterms:title
+  	 dc:title}
+   ?entity a owl:Ontology
+   OPTIONAL {?entity ?property ?value}}
