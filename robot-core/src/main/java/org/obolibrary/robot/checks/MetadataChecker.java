@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.obolibrary.robot.IOHelper;
+import org.obolibrary.robot.OntologyHelper;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -23,7 +24,7 @@ import org.semanticweb.owlapi.model.parameters.Imports;
  *
  * @author cjm
  */
-public class MetadataChecker {
+public class MetadataChecker extends AbstractChecker implements Checker {
 
   /**
    * Profile/Style for an ontology
@@ -41,17 +42,25 @@ public class MetadataChecker {
     OBI_STRICT
   }
 
-  private OWLOntology ontology;
-  private IOHelper helper;
   private Set<OntologyMetadataViolation> ontologyMetadataViolations = new HashSet<>();
   private Set<ClassMetadataViolation> classMetadataViolations = new HashSet<>();
   private Profile profile = Profile.LAX;
+  private Map<IRI, String> labelMap;
 
   /** @param ontology */
   public MetadataChecker(OWLOntology ontology) {
-    super();
-    this.ontology = ontology;
-    helper = getIOHelper();
+    super(ontology, null);
+    labelMap = OntologyHelper.getLabels(ontology);
+    setupIOHelper();
+  }
+  
+  private void setupIOHelper() {
+    iohelper = new IOHelper();
+    iohelper.addPrefix("dc", "http://purl.org/dc/elements/1.1/");
+    iohelper.addPrefix("definition", "http://purl.obolibrary.org/obo/IAO_0000115");
+    iohelper.addPrefix("definition_editor", "http://purl.obolibrary.org/obo/IAO_0000117");
+    iohelper.addPrefix("obo", "http://purl.obolibrary.org/obo/");
+    iohelper.addPrefix("oboInOwl", "http://www.geneontology.org/formats/oboInOwl#");
   }
 
   /**
@@ -133,7 +142,7 @@ public class MetadataChecker {
       }
       if (defAnns.size() == 0) {
         // OBI-style
-        checkClassCardinality("obo:IAO_0000117", 1, null, amap, c);
+        checkClassCardinality("definition_editor:", 1, null, amap, c);
       }
 
       String defn = getStringPropertyValue("definition:", amap);
@@ -158,7 +167,7 @@ public class MetadataChecker {
    * @return property with the same CURIE
    */
   private OWLAnnotationProperty getProperty(String pname) {
-    IRI iri = helper.createIRI(pname);
+    IRI iri = iohelper.createIRI(pname);
     return ontology.getOWLOntologyManager().getOWLDataFactory().getOWLAnnotationProperty(iri);
   }
 
@@ -192,7 +201,7 @@ public class MetadataChecker {
       Integer severity) {
     InvalidCardinality inv =
         CheckAnnotationsHelper.checkCardinality(
-            helper, ontology, p, minCardinality, maxCardinality, amap);
+            iohelper, ontology, p, minCardinality, maxCardinality, amap);
     if (inv != null) {
       ontologyMetadataViolations.add(
           new OntologyMetadataViolation(ontology, "cardinality of " + p, severity));
@@ -207,18 +216,22 @@ public class MetadataChecker {
       OWLClass c) {
     InvalidCardinality inv =
         CheckAnnotationsHelper.checkCardinality(
-            helper, ontology, p, minCardinality, maxCardinality, amap);
+            iohelper, ontology, p, minCardinality, maxCardinality, amap);
     if (inv != null) {
-      classMetadataViolations.add(new ClassMetadataViolation(c, inv.toString(), 1));
+      String label = "";
+      String cstr = c.getIRI().toString();
+      if (labelMap.containsKey(cstr)) {
+        label = labelMap.get(cstr);
+      }
+      classMetadataViolations.add(new ClassMetadataViolation(c, label, p, inv.toString(), 1));
     }
   }
 
-  private static IOHelper getIOHelper() {
-    IOHelper helper = new IOHelper();
-    helper.addPrefix("dc", "http://purl.org/dc/elements/1.1/");
-    helper.addPrefix("definition", "http://purl.obolibrary.org/obo/IAO_0000115");
-    helper.addPrefix("obo", "http://purl.obolibrary.org/obo/");
-    helper.addPrefix("oboInOwl", "http://www.geneontology.org/formats/oboInOwl#");
-    return helper;
+ 
+
+  @Override
+  public String getName() {
+    // TODO Auto-generated method stub
+    return null;
   }
 }

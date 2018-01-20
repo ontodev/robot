@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.checks.InvalidReferenceViolation.Category;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -28,7 +30,12 @@ import org.semanticweb.owlapi.model.parameters.Imports;
  *
  * @author cjm
  */
-public class InvalidReferenceChecker {
+public class InvalidReferenceChecker extends AbstractChecker implements Checker {
+
+  public InvalidReferenceChecker(OWLOntology ontology, IOHelper iohelper) {
+    super(ontology,iohelper);
+    // TODO Auto-generated constructor stub
+  }
 
   /**
    * Checks if entity is dangling.
@@ -191,5 +198,10 @@ public class InvalidReferenceChecker {
       OWLOntology importModule, OWLOntology baseOntology) {
     return getInvalidReferenceViolations(
         importModule, baseOntology.getAxioms(Imports.INCLUDED), true);
+  }
+  
+  @Override
+  public String getName() {
+    return "CURIE checker";
   }
 }

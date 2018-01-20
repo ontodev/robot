@@ -1,6 +1,6 @@
 package org.obolibrary.robot.checks;
 
-public class MetadataViolation extends AbstractCheckViolation implements CheckViolation {
+public abstract class MetadataViolation extends AbstractCheckViolation implements CheckViolation {
 
   public MetadataViolation(String desc, int severity) {
     super(desc, severity);

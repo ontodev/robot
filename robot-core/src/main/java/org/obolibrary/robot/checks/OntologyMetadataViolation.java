@@ -18,8 +18,8 @@ public class OntologyMetadataViolation extends MetadataViolation implements Chec
   @JsonIgnore
   private final OWLOntology ontology;
 
-  public OntologyMetadataViolation(OWLOntology ontology, String name, int severity) {
-    super(name, severity);
+  public OntologyMetadataViolation(OWLOntology ontology, String desc, int severity) {
+    super(desc, severity);
     this.ontology = ontology;
   }
 
