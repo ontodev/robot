@@ -148,7 +148,7 @@ For more details see:
 
 - [MIREOT](http://dx.doi.org/10.3233/AO-2011-0087)
 - [SLME](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
-- [ModuleType](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
+- [ModuleType](http://owlcs.github.io/owlapi/apidocs_5/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
 
 ## Querying
