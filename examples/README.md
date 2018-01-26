@@ -147,7 +147,7 @@ For MIREOT, both "upper" (ancestor) and "lower" (descendant) limits must be spec
 For more details see:
 
 - [MIREOT](http://dx.doi.org/10.3233/AO-2011-0087)
-- [SLME](http://owlapi.sourceforge.net/javadoc/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
+- [SLME](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
 - [ModuleType](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
 
