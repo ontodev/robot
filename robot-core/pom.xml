@@ -37,6 +37,11 @@
             <version>2.13.0</version>
         </dependency>
         <dependency>
+			    <groupId>com.blazegraph</groupId>
+			    <artifactId>bigdata-core</artifactId>
+			    <version>2.1.4</version>
+			</dependency>
+        <dependency>
             <groupId>com.github.jsonld-java</groupId>
             <artifactId>jsonld-java</artifactId>
             <version>0.5.1</version>
@@ -56,20 +61,20 @@
           <artifactId>expression-materializing-reasoner</artifactId>
           <version>0.1.3</version>
         </dependency>
-	<dependency>
-	  <groupId>org.geneontology</groupId>
- 	  <artifactId>obographs</artifactId>
- 	  <version>0.0.8</version>
-	</dependency>
-	<dependency>
-	    <groupId>com.fasterxml.jackson.core</groupId>
-	    <artifactId>jackson-core</artifactId>
-	    <version>2.9.3</version>
-	</dependency>
-	<dependency>
-	    <groupId>com.fasterxml.jackson.dataformat</groupId>
-	    <artifactId>jackson-dataformat-yaml</artifactId>
-	    <version>2.9.3</version>
-	</dependency>
+				<dependency>
+				  <groupId>org.geneontology</groupId>
+			 	  <artifactId>obographs</artifactId>
+			 	  <version>0.0.8</version>
+				</dependency>
+				<dependency>
+				    <groupId>com.fasterxml.jackson.core</groupId>
+				    <artifactId>jackson-core</artifactId>
+				    <version>2.9.3</version>
+				</dependency>
+				<dependency>
+				    <groupId>com.fasterxml.jackson.dataformat</groupId>
+				    <artifactId>jackson-dataformat-yaml</artifactId>
+				    <version>2.9.3</version>
+				</dependency>
     </dependencies>
 </project>
