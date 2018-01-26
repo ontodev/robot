@@ -30,41 +30,55 @@ public class ViolationChecker {
    */
   public static void getViolations(OWLOntology ontology, Set<CheckerQuery> queries)
       throws Exception {
-    List<Map<String, List<Triple>>> severity1 = new ArrayList<>();
-    List<Map<String, List<Triple>>> severity2 = new ArrayList<>();
-    List<Map<String, List<Triple>>> severity3 = new ArrayList<>();
-    List<Map<String, List<Triple>>> severity4 = new ArrayList<>();
-    List<Map<String, List<Triple>>> severity5 = new ArrayList<>();
+	// Store severity level violations separately
+    Map<String, List<Triple<String, String, String>>> severity1 = new HashMap<>();
+    Map<String, List<Triple<String, String, String>>> severity2 = new HashMap<>();
+    Map<String, List<Triple<String, String, String>>> severity3 = new HashMap<>();
+    Map<String, List<Triple<String, String, String>>> severity4 = new HashMap<>();
+    Map<String, List<Triple<String, String, String>>> severity5 = new HashMap<>();
+    
+    // Track number of violations for each severity level
+    Integer count1 = 0;
+    Integer count2 = 0;
+    Integer count3 = 0;
+    Integer count4 = 0;
+    Integer count5 = 0;
 
+    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
     for (CheckerQuery query : queries) {
+      List<Triple<String, String, String>> violations;
       switch (query.severity) {
         case 1:
-          severity1.add(getViolations(ontology, query));
+          violations = getViolations(dsg, query);
+          severity1.put(query.title, violations);
+          count1 += violations.size();
         case 2:
-          severity2.add(getViolations(ontology, query));
+          violations = getViolations(dsg, query);
+          severity2.put(query.title, violations);
+          count2 += violations.size();
         case 3:
-          severity3.add(getViolations(ontology, query));
+          violations = getViolations(dsg, query);
+          severity3.put(query.title, violations);
+          count3 += violations.size();
         case 4:
-          severity4.add(getViolations(ontology, query));
+          violations = getViolations(dsg, query);
+          severity4.put(query.title, violations);
+          count4 += violations.size();
         case 5:
-          severity5.add(getViolations(ontology, query));
+          violations = getViolations(dsg, query);
+          severity5.put(query.title, violations);
+          count5 += violations.size();
       }
     }
 
-    Integer violations =
-        severity1.size()
-            + severity2.size()
-            + severity3.size()
-            + severity4.size()
-            + severity5.size();
-
+    Integer violations = count1 + count2 + count3 + count4 + count5;
     if (violations != 0) {
       logger.error("REPORT FAILED! Violations: " + violations);
-      logger.error("Severity 1 violations: " + severity1.size());
-      logger.error("Severity 2 violations: " + severity2.size());
-      logger.error("Severity 3 violations: " + severity3.size());
-      logger.error("Severity 4 violations: " + severity4.size());
-      logger.error("Severity 5 violations: " + severity5.size());
+      logger.error("Severity 1 violations: " + count1);
+      logger.error("Severity 2 violations: " + count2);
+      logger.error("Severity 3 violations: " + count3);
+      logger.error("Severity 4 violations: " + count4);
+      logger.error("Severity 5 violations: " + count5);
     } else {
       logger.info("No violations found.");
     }
@@ -78,12 +92,11 @@ public class ViolationChecker {
    * @return Map with query title as key and list of returned triples as value
    * @throws Exception on any problem
    */
-  private static Map<String, List<Triple>> getViolations(OWLOntology ontology, CheckerQuery query)
-      throws Exception {
-    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
+  private static List<Triple<String, String, String>> getViolations(DatasetGraph dsg,
+	  CheckerQuery query) throws Exception {
     ResultSet violationSet = QueryOperation.execQuery(dsg, query.queryString);
 
-    List<Triple> violations = new ArrayList<>();
+    List<Triple<String, String, String>> violations = new ArrayList<>();
     while (violationSet.hasNext()) {
       QuerySolution violation = violationSet.next();
       String entity;
@@ -106,10 +119,6 @@ public class ViolationChecker {
       }
       violations.add(Triple.of(entity, property, value));
     }
-    return new HashMap<String, List<Triple>>() {
-      {
-        put(query.title, violations);
-      }
-    };
+    return violations;
   }
 }
