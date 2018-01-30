@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+
+import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
@@ -29,6 +31,7 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 import org.semanticweb.owlapi.model.SetOntologyID;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
+import org.semanticweb.owlapi.util.SimpleRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -502,6 +505,21 @@ public class OntologyHelper {
       iris.add(entity.getIRI());
     }
     return iris;
+  }
+  
+  
+  
+  /**
+   * Creates a renderer for pretty-printing of axioms and entities
+   * 
+   * @param ontology
+   * @return renderer
+   */
+  public static OWLObjectRenderer getRenderer(OWLOntology ontology) {
+    OWLObjectRenderer renderer = new SimpleRenderer();
+    renderer.setShortFormProvider(new LabelShortFormProvider(ontology));
+    return renderer;
+    
   }
 
   /**

@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
-/** Tests for MergeOperation. */
+/** Tests RepairOperation. */
 public class RepairOperationTest extends CoreTest {
 
   /**

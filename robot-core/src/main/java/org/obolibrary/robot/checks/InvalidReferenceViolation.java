@@ -3,17 +3,31 @@ package org.obolibrary.robot.checks;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 /**
  * Represents a reference violation
+ * 
+ * An axiom is in violation if it references an OWL entity that is either
+ * 
+ *  - deprecated
+ *  - non-existent (dangling) within the current import closure
+ *  
+ * It is important for the ontology maintainer to be aware of these as they
+ * can cause incomplete results
  *
  * <p>TODO: we may want to make warnings if a class is slated for deprecation in the future: see
  * https://github.com/information-artifact-ontology/ontology-metadata/issues/22
  *
  * @author cjm
  */
-public class InvalidReferenceViolation {
+public class InvalidReferenceViolation implements CheckViolation {
 
+  @JsonSerialize(using = ToStringSerializer.class)
   private final OWLAxiom axiom;
+  
+  @JsonSerialize(using = ToStringSerializer.class)
   private final OWLEntity referencedObject;
   private final Category category;
 
@@ -58,8 +72,36 @@ public class InvalidReferenceViolation {
    * @author cjm
    */
   public enum Category {
+    /**
+     * A dangling reference violation - the axiom points to a class/entity
+     * for which there are no axioms ABOUT this class/entity in the imports closure
+     * 
+     * Here ABOUTS means either a logical axiom with the entity as subject or
+     * an annotation axiom with the entity IRI as subject
+     */
     DANGLING,
-    DEPRECATED
+    
+    /**
+     * Axiom points to a class/entity that has an owl:deprecation axiom
+     * 
+     * (in the OBO universe, "obsolete" classes all have deprecation axioms)
+     */
+    DEPRECATED,
+    
+    /**
+     * This category is specific to ontologies such as GO, HP, UBERON, CL
+     * that follow metadata design patterns originating in OBO Format.
+     * 
+     * Here, a special category of deprecated class is a merged class. In obo
+     * format this is represented as an alt_id tag on the replacement class, with
+     * the merged/deprecated class not appearing as a stanza in its own right. This
+     * means we should avoid placing any information about the merged class or
+     * it will be lost in the obo roundtrip.
+     * 
+     * See https://github.com/owlcs/owlapi/issues/317
+     * 
+     */
+    ALT_ID
   }
 
   /* (non-Javadoc)
@@ -75,5 +117,24 @@ public class InvalidReferenceViolation {
         + ", category="
         + category
         + "]";
+  }
+
+  @Override
+  public int getSeverity() {
+    if (getCategory().equals(Category.DEPRECATED)) {
+      return 2;
+    } else {
+      return 1;
+    }
+  }
+
+  @Override
+  public String getType() {
+    return "reference violation";
+  }
+
+  @Override
+  public String getDescription() {
+    return getAxiom().toString();
   }
 }

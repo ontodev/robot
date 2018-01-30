@@ -1,8 +1,12 @@
 package org.obolibrary.robot;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.File;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
+import org.obolibrary.robot.report.ReportCard;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +28,7 @@ public class ReportCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
-    o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+    o.addOption("o", "output", true, "save report a file");
     options = o;
   }
 
@@ -84,7 +87,7 @@ public class ReportCommand implements Command {
    *
    * @param state the state from the previous command, or null
    * @param args the command-line arguments
-   * @return a new state with the reported ontology
+   * @return a new state
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
@@ -99,13 +102,20 @@ public class ReportCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
-    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-    if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    // TODO save results
+    ReportCard reportCard = ReportOperation.report(inputOntology, ioHelper);
+
+    File output = CommandLineHelper.getOutputFile(line);
+
+    // TODO: allow JSON as option
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+    if (output == null) {
+      System.out.println(writer.writeValueAsString(reportCard));
+    } else {
+      writer.writeValue(output, reportCard);
     }
 
-    // TODO save results
-    ReportOperation.report(inputOntology, ioHelper);
     return state;
   }
 }
