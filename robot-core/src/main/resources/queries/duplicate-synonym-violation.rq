@@ -7,19 +7,10 @@ PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE 
-  {{VALUES ?property {obo:IAO_0000118}
-    ?entity rdfs:label ?label .
-    ?entity ?property ?value . 
-    FILTER (?label = ?value)}
-   UNION {VALUES ?property {oboInOwl:hasExactSynonym}
-          ?entity rdfs:label ?label .
-      	  ?entity ?property ?value . 
-      	  FILTER (?label = ?value)}
-   UNION {VALUES ?property {obo:IAO_0000118}
-          ?entity ?property ?value .
-   	      ?entity2 ?property ?value .
-   	      FILTER (?entity != ?entity2)}
-   UNION {VALUES ?property {oboInOwl:hasExactSynonym}
-          ?entity ?property ?value .
-   	      ?entity2 ?property ?value .
-   	      FILTER (?entity != ?entity2)}}
+   {{VALUES ?property {obo:IAO_0000118 oboInOwl:hasExactSynonym}
+     ?entity rdfs:label ?value .
+     ?entity ?property ?value . } 
+   UNION {VALUES ?property {obo:IAO_0000118 oboInOwl:hasExactSynonym}
+      ?entity ?property ?value .
+      ?entity2 ?property ?value .
+      FILTER (?entity != ?entity2)}}

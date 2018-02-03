@@ -149,7 +149,7 @@ public class ViolationChecker {
    */
   private static Map<CheckerQuery, List<BindingSet>> getViolations(
       RepositoryConnection conn, Set<CheckerQuery> queries) throws InterruptedException, ExecutionException {
-    ExecutorService executor = Executors.newCachedThreadPool();
+    ExecutorService executor = Executors.newFixedThreadPool(1);
 
     List<SparqlTask> tasks = new ArrayList<>();
     for (CheckerQuery query : queries) {
