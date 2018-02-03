@@ -9,5 +9,4 @@ SELECT DISTINCT ?entity ?property ?value WHERE
   {VALUES ?property {rdfs:label}
    ?entity owl:deprecated true .
    ?entity ?property ?value .
-   FILTER NOT EXISTS
-     {FILTER regex(?value, "^obsolete|^OBSOLETE")}}
+   FILTER (!regex(?value, "^obsolete|^OBSOLETE"))}

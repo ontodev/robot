@@ -7,4 +7,4 @@ PREFIX obo: <http://purl.obolibrary.org/obo/>
 SELECT DISTINCT ?entity ?property ?value WHERE 
   {VALUES ?property {obo:IAO_0000115}
    ?entity ?property ?value .
-   FILTER NOT EXISTS {FILTER STRENDS(str(?value), ".")}}
+   FILTER(!STRENDS(str(?value), "."))}
