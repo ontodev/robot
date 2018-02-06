@@ -474,6 +474,22 @@ public class IOHelper {
     }
     return results;
   }
+  
+  /**
+   * Try to create an IRI from a string input. If the term is not in a valid format (null), an 
+   * IllegalArgumentException is thrown to prevent null from being passed into other methods.
+   * 
+   * @param term the term to convert to an IRI
+   * @param field the field in which the term was entered, for reporting
+   * @return the new IRI if successful
+   */
+  public IRI maybeCreateIRI(String term, String field) {
+	  IRI iri = createIRI(term);
+	  if (iri == null) {
+		  throw new IllegalArgumentException(field + " \"" + term + "\" is not a valid CURIE or IRI");
+	  }
+	  return iri;
+  }
 
   /**
    * Given a term string, use the current prefixes to create an IRI.

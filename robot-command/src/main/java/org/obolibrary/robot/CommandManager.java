@@ -216,7 +216,14 @@ public class CommandManager implements Command {
     optionArgs.addAll(globalOptionArgs);
     optionArgs.addAll(localOptionArgs);
 
-    return command.execute(state, asArgs(optionArgs));
+    try {
+      state = command.execute(state, asArgs(optionArgs));
+    } catch (Exception e) {
+      // Ensure command-specific usage info is returned
+      CommandLineHelper.handleException(command.getUsage(), command.getOptions(), e);
+    }
+
+    return state;
   }
 
   /** Print general help plus a list of available commands. */

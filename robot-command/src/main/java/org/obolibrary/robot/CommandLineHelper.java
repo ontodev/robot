@@ -57,7 +57,7 @@ public class CommandLineHelper {
     final int inDoubleQuote = 2;
     int state = normal;
     StringTokenizer tok = new StringTokenizer(toProcess, "\"\' ", true);
-    Vector v = new Vector();
+    Vector<String> v = new Vector<String>();
     StringBuffer current = new StringBuffer();
     boolean lastTokenHasBeenQuoted = false;
 
@@ -513,7 +513,7 @@ public class CommandLineHelper {
     o.addOption("V", "version", false, "print version information");
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
-    o.addOption("vvv", "very-very-verbose", false, "maximum logging");
+    o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
@@ -563,14 +563,19 @@ public class CommandLineHelper {
 
   /**
    * Shared method for dealing with exceptions, printing help, and exiting. Currently prints the
-   * stack trace, then the help, then exits.
+   * error message, stack trace (DEBUG), usage, and then exits.
    *
    * @param usage the usage string for this command
    * @param options the command-line options for this command
    * @param exception the exception to handle
    */
   public static void handleException(String usage, Options options, Exception exception) {
-    exception.printStackTrace();
+    System.out.println("\n" + exception.getClass().getName() + ": " + exception.getMessage());
+    // Will only print with --very-very-verbose (DEBUG level)
+    StackTraceElement[] trace = exception.getStackTrace();
+    for (StackTraceElement t : trace) {
+      logger.debug(t.toString());
+    }
     printHelp(usage, options);
     System.exit(1);
   }
