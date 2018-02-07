@@ -35,8 +35,6 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
         robot help
 
-See [examples/README.md](https://github.com/ontodev/robot/tree/master/examples/README.md) for a tutorial with many example commands.
-
 
 ## 2. Library
 
