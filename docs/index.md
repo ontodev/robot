@@ -7,7 +7,7 @@ title: ROBOT is an OBO Tool
 
 [![Build Status](https://travis-ci.org/ontodev/robot.svg?branch=master)](https://travis-ci.org/ontodev/robot)
 
-ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org). It's still in development!
+ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org).
 
 
 # Usage
