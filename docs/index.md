@@ -23,9 +23,9 @@ This code can be used as:
 The command-line tool is packaged a Java JAR file and can be run via the `robot` shell script.
 
 1. Make sure that you have [Java 8 or later installed](https://www.java.com/en/download/installed.jsp)
-2. Download **two** files: the [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) and the right script for your platform:
-    - [`robot`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot) shell script for Unix, Linux, and Mac OS X
-    - [`robot.bat`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.bat) batch script for Windows
+2. Download **two** files: the latest release of the [`robot.jar`](https://github.com/ontodev/robot/releases/download/latest/robot.jar) file (about 30MB) and the right script for your platform:
+    - [`robot`](https://github.com/ontodev/robot/raw/master/bin/robot) shell script for Unix, Linux, and Mac OS X
+    - [`robot.bat`](https://github.com/ontodev/robot/raw/master/bin/robot.bat) batch script for Windows
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)):
     - on Unix, Linux, and Mac OS X this could be `/usr/local/bin/`
     - on Windows this could be `C:\Windows\`
@@ -40,7 +40,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
 The core ROBOT operations are written in plain Java code, and can be used from any language that uses the Java Virtual Machine. The command-line tool is both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
 
-You can download the latest [`robot.jar`](https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar) file (about 25MB) to include in your projects.
+You can download the latest [`robot.jar`](https://github.com/ontodev/robot/releases/download/latest/robot.jar) file (about 30MB) to include in your projects.
 
 
 ### Java
