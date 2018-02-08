@@ -124,10 +124,11 @@ public class ReasonOperation {
       int danglings = 0;
       for (InvalidReferenceViolation v : referenceViolations) {
 
-        if(v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING) && danglings < maxDanglings) {
+        if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
+            && danglings < maxDanglings) {
           logger.error("Reference violation: " + v);
           danglings++;
-        } else if(!v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)) {
+        } else if (!v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)) {
           logger.error("Reference violation: " + v);
         }
       }
