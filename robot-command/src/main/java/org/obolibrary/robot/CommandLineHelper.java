@@ -16,15 +16,59 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /** Convenience methods for working with command line options. */
 public class CommandLineHelper {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(CommandLineHelper.class);
+
+  /** Namespace for general input error messages. */
+  private static final String NS = "errors#input-";
+
+  /** Error message when --input is provided in a chained command. */
+  private static final String chainedInputError =
+      NS + "1 CHAINED INPUT ERROR do not use an --input option for chained commands";
+
+  /**
+   * Error message when an invalid extension is provided (file format). Expects file format. This
+   * message is duplicated in IOHelper without the NS and ID.
+   */
+  private static final String invalidFormatError = NS + "2 INVALID FORMAT ERROR unknown format: %s";
+
+  /** Error message when an invalid IRI is provided. Expects the entry field and term. */
+  private static final String invalidIRIError = 
+		  NS + "3 INVALID IRI ERROR %1 \"%2\" is not a valid CURIE or IRI";
+
+  /**
+   * Error message when an invalid prefix is provided. Expects the combined prefix. This message is
+   * duplicated in IOHelper without the NS and ID.
+   */
+  private static final String invalidPrefixError = 
+		  NS + "4 INVALID PREFIX ERROR invalid prefix string: %s";
+
+  /** Error message when user provides an invalid reasoner. Expects reasonerName in formatting. */
+  private static final String invalidReasonerError = 
+		  NS + "5 INVALID REASONER ERROR unknown reasoner: %s";
+
+  /** Error message when no input ontology is provided. */
+  private static final String missingInputError = 
+		  NS + "6 MISSING INPUT ERROR an --input is required";
+
+  /** Error message when no input ontology is provided for methods that accept multiple inputs. */
+  private static final String missingInputsError = 
+		  NS + "6 MISSING INPUT ERROR at least one --input is required";
+
+  /** Error message when input terms are not provided. */
+  private static final String missingTermsError =
+      NS + "7 MISSING TERMS ERROR term(s) are required with --term or --term-file";
 
   /**
    * Given a single string, return a list of strings split at whitespace but allowing for quoted
@@ -253,7 +297,11 @@ public class CommandLineHelper {
     }
 
     for (String prefix : getOptionalValues(line, "prefix")) {
-      ioHelper.addPrefix(prefix);
+      try {
+        ioHelper.addPrefix(prefix);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format(invalidPrefixError, prefix));
+      }
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
@@ -281,9 +329,40 @@ public class CommandLineHelper {
     } else if (inputOntologyIRI != null) {
       inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRI));
     } else {
-      throw new IllegalArgumentException("inputOntology must be specified");
+      throw new IllegalArgumentException(missingInputError);
     }
     return inputOntology;
+  }
+
+  /**
+   * Given an IOHelper and a command line, check for required options and return a list of loaded
+   * input ontologies. Currently handles --input and --input-iri options.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @return the list of input ontologies
+   * @throws IllegalArgumentException if requires options are missing
+   * @throws IOException if the ontology cannot be loaded
+   */
+  public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
+      throws IllegalArgumentException, IOException {
+    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+
+    List<String> inputOntologyPaths = getOptionalValues(line, "input");
+    for (String inputOntologyPath : inputOntologyPaths) {
+      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+    }
+
+    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    for (String inputOntologyIRI : inputOntologyIRIs) {
+      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
+    }
+
+    if (inputOntologies.isEmpty()) {
+      throw new IllegalArgumentException(missingInputsError);
+    }
+
+    return inputOntologies;
   }
 
   /**
@@ -322,7 +401,7 @@ public class CommandLineHelper {
       throws IllegalArgumentException, IOException {
     if (state != null && state.getOntology() != null) {
       if (line.hasOption("input") || line.hasOption("input-IRI")) {
-        throw new IllegalArgumentException("Do not use an --input option for chained commands");
+        throw new IllegalArgumentException(chainedInputError);
       } else {
         return state;
       }
@@ -333,8 +412,8 @@ public class CommandLineHelper {
       ontology = getInputOntology(ioHelper, line);
     } catch (Exception e) {
       if (required) {
-        e.printStackTrace(System.err);
-        throw new IllegalArgumentException("A valid input ontology must be specified");
+        // Throw message from IOHelper
+        throw new IllegalArgumentException(e);
       }
     }
 
@@ -343,32 +422,6 @@ public class CommandLineHelper {
     }
     state.setOntology(ontology);
     return state;
-  }
-
-  /**
-   * Given an IOHelper and a command line, check for required options and return a list of loaded
-   * input ontologies. Currently handles --input and --input-iri options.
-   *
-   * @param ioHelper the IOHelper to load the ontology with
-   * @param line the command line to use
-   * @return the list of input ontologies
-   * @throws IllegalArgumentException if requires options are missing
-   * @throws IOException if the ontology cannot be loaded
-   */
-  public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
-      throws IllegalArgumentException, IOException {
-    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
-
-    List<String> inputOntologyPaths = getOptionalValues(line, "input");
-    for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
-    }
-
-    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
-    for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
-    }
-    return inputOntologies;
   }
 
   /**
@@ -414,8 +467,30 @@ public class CommandLineHelper {
   public static void maybeSaveOutput(CommandLine line, OWLOntology ontology) throws IOException {
     IOHelper ioHelper = getIOHelper(line);
     for (String path : getOptionValues(line, "output")) {
-      ioHelper.saveOntology(ontology, path);
+      try {
+        ioHelper.saveOntology(ontology, path);
+      } catch (IllegalArgumentException e) {
+        // Exception from getFormat -- invalid format
+        throw new IllegalArgumentException(
+            String.format(invalidFormatError, path.substring(path.lastIndexOf(".") + 1)));
+      }
     }
+  }
+
+  /**
+   * Try to create an IRI from a string input. If the term is not in a valid format (null), an
+   * IllegalArgumentException is thrown to prevent null from being passed into other methods.
+   *
+   * @param term the term to convert to an IRI
+   * @param field the field in which the term was entered, for reporting
+   * @return the new IRI if successful
+   */
+  public static IRI maybeCreateIRI(IOHelper ioHelper, String term, String field) {
+    IRI iri = ioHelper.createIRI(term);
+    if (iri == null) {
+      throw new IllegalArgumentException(String.format(invalidIRIError, field, term));
+    }
+    return iri;
   }
 
   /**
@@ -448,7 +523,7 @@ public class CommandLineHelper {
     Set<IRI> terms = getTerms(ioHelper, line, "term", "term-file");
 
     if (terms.size() == 0 && !allowEmpty) {
-      throw new IllegalArgumentException("Must specify terms to extract.");
+      throw new IllegalArgumentException(missingTermsError);
     }
     return terms;
   }
@@ -456,6 +531,7 @@ public class CommandLineHelper {
   /**
    * Given an IOHelper and a command line, and the names of two options, check for the required
    * options and return a set of IRIs for terms. Handles single term options and term-file options.
+   * Allows empty returns.
    *
    * @param ioHelper the IOHelper to use for loading the terms
    * @param line the command line to use
@@ -483,6 +559,47 @@ public class CommandLineHelper {
     }
 
     return terms;
+  }
+
+  /**
+   * Given a string of a reasoner name from user input, return the reasoner factory. If the user
+   * input is not valid, throw IllegalArgumentExcepiton. By default, EMR is not allowed.
+   *
+   * @param line the command line to use
+   * @return OWLReasonerFactory if successful
+   */
+  public static OWLReasonerFactory getReasonerFactory(CommandLine line) {
+    return getReasonerFactory(line, false);
+  }
+
+  /**
+   * Given a string of a reasoner name from user input, return the reasoner factory. If the user
+   * input is not valid, throw IllegalArgumentExcepiton.
+   *
+   * @param line the command line to use
+   * @param allowEMR boolean specifying if EMR can be returned
+   * @return OWLReasonerFactory if successful
+   */
+  public static OWLReasonerFactory getReasonerFactory(CommandLine line, boolean allowEMR) {
+    // ELK is the default reasoner
+    String reasonerName = getDefaultValue(line, "reasoner", "ELK").trim().toLowerCase();
+    logger.info("Reasoner: " + reasonerName);
+
+    if (reasonerName.equals("structural")) {
+      return new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
+    } else if (reasonerName.equals("hermit")) {
+      return new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    } else if (reasonerName.equals("jfact")) {
+      return new JFactFactory();
+      // Reason must change behavior with EMR, so not all commands can use it
+    } else if (reasonerName.equals("emr") && allowEMR) {
+      ElkReasonerFactory innerReasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+      return new ExpressionMaterializingReasonerFactory(innerReasonerFactory);
+    } else if (reasonerName.equals("elk")) {
+      return new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+    } else {
+      throw new IllegalArgumentException(String.format(invalidReasonerError, reasonerName));
+    }
   }
 
   /**
@@ -570,12 +687,7 @@ public class CommandLineHelper {
    * @param exception the exception to handle
    */
   public static void handleException(String usage, Options options, Exception exception) {
-    System.out.println("\n" + exception.getClass().getName() + ": " + exception.getMessage());
-    // Will only print with --very-very-verbose (DEBUG level)
-    StackTraceElement[] trace = exception.getStackTrace();
-    for (StackTraceElement t : trace) {
-      logger.debug(t.toString());
-    }
+    ExceptionHelper.handleException(exception);
     printHelp(usage, options);
     System.exit(1);
   }

@@ -25,6 +25,12 @@ public class QueryOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(QueryOperation.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "query#";
+
+  /** Error message when query type is illegal. Expects: query type.*/
+  private static final String queryTypeError = NS + "2 QUERY TYPE ERROR Unknown query type: %s";
+
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed. NOTE: This is not elegant!
    * It basically pipes Turtle output from OWLAPI to Jena Arq.
@@ -59,6 +65,7 @@ public class QueryOperation {
    * @throws IllegalArgumentException on bad query
    */
   public static String getQueryTypeName(String queryString) throws IllegalArgumentException {
+    // TODO: This method is unused
     QueryExecution qexec = QueryExecutionFactory.create(queryString, createEmptyDataset());
     Query query = qexec.getQuery();
     String queryType = null;
@@ -76,7 +83,7 @@ public class QueryOperation {
         queryType = "SELECT";
         break;
       default:
-        throw new IllegalArgumentException("Unsupported SPARQL query type");
+        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
     }
     return queryType;
   }
@@ -115,7 +122,7 @@ public class QueryOperation {
         formatName = "csv";
         break;
       default:
-        throw new IllegalArgumentException("Unsupported SPARQL query type");
+        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
     }
     return formatName;
   }
@@ -193,7 +200,7 @@ public class QueryOperation {
         result = maybeWriteResult(qexec.execSelect(), formatName, output);
         break;
       default:
-        throw new IllegalArgumentException("Unsupported SPARQL query type");
+        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
     }
 
     return result;

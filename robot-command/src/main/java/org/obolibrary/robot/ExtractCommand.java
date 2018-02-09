@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
@@ -19,6 +20,30 @@ import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 public class ExtractCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ExtractCommand.class);
+
+  /** Namespace for error messages. */
+  private static final String NS = "extract#error-";
+
+  /** Error message when lower or branch terms are not specified with MIREOT. */
+  private static final String missingMireotTermsError =
+      NS
+          + "1 MISSING MIREOT TERMS ERROR "
+          + "either lower term(s) or branch term(s) must be specified for MIREOT";
+
+  /** Error message when only upper terms are specified with MIREOT. */
+  private static final String missingLowerTermError =
+      NS
+          + "2 MISSING LOWER TERMS ERROR "
+          + "lower term(s) must be specified with upper term(s) for MIREOT";
+
+  /** Error message when user provides invalid extraction method. */
+  private static final String invalidMethodError =
+      NS + "3 INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT";
+
+  private static final String invalidOptionError =
+      NS
+          + "4 INVALID OPTION ERROR "
+          + "only --term or --term-file can be used to specify extract term(s) for STAR, TOP, or BOT";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -120,8 +145,12 @@ public class ExtractCommand implements Command {
       outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
     }
 
+    // Get method, make sure it has been specified
     String method =
-        CommandLineHelper.getDefaultValue(line, "method", "mireot").trim().toLowerCase();
+        CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
+            .trim()
+            .toLowerCase();
+
     ModuleType moduleType = null;
     if (method.equals("star")) {
       moduleType = ModuleType.STAR;
@@ -133,30 +162,74 @@ public class ExtractCommand implements Command {
 
     if (method.equals("mireot")) {
       List<OWLOntology> outputOntologies = new ArrayList<OWLOntology>();
-
-      Set<IRI> upperIRIs = CommandLineHelper.getTerms(ioHelper, line, "upper-term", "upper-terms");
-      if (upperIRIs != null && upperIRIs.size() == 0) {
+      // Get terms from input (ensuring that they are in the input ontology)
+      // It's okay for any of these to return empty (allowEmpty = true)
+      // Checks for empty sets below
+      Set<IRI> upperIRIs =
+          OntologyHelper.filterExistingTerms(
+              inputOntology,
+              CommandLineHelper.getTerms(ioHelper, line, "upper-term", "upper-terms"),
+              true);
+      if (upperIRIs.size() == 0) {
         upperIRIs = null;
       }
-      Set<IRI> lowerIRIs = CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms");
-      if (lowerIRIs != null && lowerIRIs.size() != 0) {
-        outputOntologies.add(
-            MireotOperation.getAncestors(inputOntology, upperIRIs, lowerIRIs, null));
+      Set<IRI> lowerIRIs =
+          OntologyHelper.filterExistingTerms(
+              inputOntology,
+              CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms"),
+              true);
+      if (lowerIRIs.size() == 0) {
+        lowerIRIs = null;
       }
-
       Set<IRI> branchIRIs =
-          CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", "branch-from-terms");
-      if (branchIRIs != null && branchIRIs.size() != 0) {
-        outputOntologies.add(MireotOperation.getDescendants(inputOntology, branchIRIs, null));
+          OntologyHelper.filterExistingTerms(
+              inputOntology,
+              CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", "branch-from-terms"),
+              true);
+      if (branchIRIs.size() == 0) {
+        branchIRIs = null;
       }
 
+      // Need branch IRIs or lower IRIs to proceed
+      if (branchIRIs == null && lowerIRIs == null) {
+        throw new IllegalArgumentException(missingMireotTermsError);
+      } else {
+        // First check for lower IRIs, upper IRIs can be null or not
+        if (lowerIRIs != null) {
+          outputOntologies.add(
+              MireotOperation.getAncestors(inputOntology, upperIRIs, lowerIRIs, null));
+          // If there are no lower IRIs, there shouldn't be any upper IRIs
+        } else if (upperIRIs != null) {
+          throw new IllegalArgumentException(missingLowerTermError);
+        }
+        // Check for branch IRIs
+        if (branchIRIs != null) {
+          outputOntologies.add(MireotOperation.getDescendants(inputOntology, branchIRIs, null));
+        }
+      }
       outputOntology = MergeOperation.merge(outputOntologies);
     } else if (moduleType != null) {
-      outputOntology =
-          ExtractOperation.extract(
-              inputOntology, CommandLineHelper.getTerms(ioHelper, line), outputIRI, moduleType);
+      // upper-term, lower-term, and branch-from term should not be used
+      List<String> mireotTerms =
+          Arrays.asList(
+              CommandLineHelper.getOptionalValue(line, "upper-term"),
+              CommandLineHelper.getOptionalValue(line, "upper-terms"),
+              CommandLineHelper.getOptionalValue(line, "lower-term"),
+              CommandLineHelper.getOptionalValue(line, "lower-terms"),
+              CommandLineHelper.getOptionalValue(line, "branch-from-term"),
+              CommandLineHelper.getOptionalValue(line, "branch-from-terms"));
+      for (String mt : mireotTerms) {
+        if (mt != null) {
+          throw new IllegalArgumentException(invalidOptionError);
+        }
+      }
+      // Make sure the terms exist in the input ontology
+      Set<IRI> terms =
+          OntologyHelper.filterExistingTerms(
+              inputOntology, CommandLineHelper.getTerms(ioHelper, line), false);
+      outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, moduleType);
     } else {
-      throw new Exception("Method must be: MIREOT, STAR, TOP, BOT");
+      throw new Exception(invalidMethodError);
     }
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);

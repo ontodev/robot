@@ -113,10 +113,6 @@ public class MergeCommand implements Command {
     }
     inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line));
 
-    if (inputOntologies.size() < 1) {
-      throw new IllegalArgumentException("at least one inputOntology must be specified");
-    }
-
     Map<String, String> mergeOptions = MergeOperation.getDefaultOptions();
 
     OWLOntology outputOntology = MergeOperation.merge(inputOntologies, mergeOptions);

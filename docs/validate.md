@@ -5,3 +5,30 @@ OWL 2 has a number of <a href="https://www.w3.org/TR/owl2-profiles/" target="_bl
     robot validate-profile --profile EL \
       --input merged.owl \
       --output results/merged-validation.txt
+
+## Profiles
+
+* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_EL" target="_blank">EL</a>
+* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_RL" target="_blank">RL</a>
+* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_QL">QL</a>
+* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full" target="_blank">DL</a>
+* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full" target="_blank">Full</a>
+
+---
+
+## Error Messages
+
+<a name="error-1"/>
+### 1. Missing Profile Error
+
+Occurs when a `--profile` option is not provided.
+
+<a name="error-2"/>
+### 2. Invalid Profile Error
+
+Occurs when the argument to `--profile` is not one of the following: EL, DL, RL, QL, or Full. See the above documentation for more details.
+
+<a name="error-3"/>
+### 3. Profile Violation Error
+
+Occurs when the `--input` ontology does not conform to the `--profile`. See the profile descriptions for more details.

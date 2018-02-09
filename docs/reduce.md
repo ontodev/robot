@@ -6,4 +6,4 @@ ROBOT can be used to remove redundant subClassOf axioms:
       --input ribosome.owl \
       --output results/reduced.owl
 
-See [reason](/reason) for details on supported reasoners (currently JFact and EMR are not supported in `reduce`).
+See [reason](/reason) for details on supported reasoners (EMR is not supported in `reduce`).

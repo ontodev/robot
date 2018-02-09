@@ -21,3 +21,12 @@ If `--output` is provided then a report will be written with any differences bet
       --output results/release-diff.txt
 
 See <a href="/examples/release-diff.txt" target="_blank">`release-diff.txt`</a> for an example.
+
+---
+
+## Error Messages
+
+<a name="error-1"/>
+### 1. Missing Input Error
+
+Both `--left` and `--right` input ontologis are required.

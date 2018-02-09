@@ -24,12 +24,11 @@ public class FilterOperation {
    * @param properties a set of OWLObjectProperties to retain
    */
   public static void filter(OWLOntology ontology, Set<OWLObjectProperty> properties) {
-    System.out.println(properties);
     logger.debug("Filtering ontology for axioms with ObjectProperties " + properties);
 
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     Set<OWLAxiom> axioms = ontology.getAxioms();
-    logger.debug("Ontology has {} axioms before filtering", axioms);
+    logger.debug("Ontology has {} axioms before filtering", axioms.size());
 
     // For each axiom, get all its object properties,
     // then remove the properties that we're looking for.

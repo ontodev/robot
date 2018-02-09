@@ -8,17 +8,12 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.opencsv.CSVReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,9 +58,6 @@ public class IOHelper {
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(IOHelper.class);
-
-  /** RDF literal separator. */
-  private static String seperator = "\"^^";
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -242,6 +234,10 @@ public class IOHelper {
   public OWLOntology loadOntology(File ontologyFile, File catalogFile) throws IOException {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
 
+    if (!ontologyFile.exists()) {
+      throw new IllegalArgumentException("File " + ontologyFile.getName() + " does not exist");
+    }
+
     Object jsonObject = null;
 
     try {
@@ -277,9 +273,9 @@ public class IOHelper {
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError e) {
-      throw new IOException(e);
+      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(e);
+      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
     }
   }
 
@@ -354,7 +350,7 @@ public class IOHelper {
     } else if (formatName.equals("json")) {
       return new OboGraphJsonDocumentFormat();
     } else {
-      throw new IllegalArgumentException("Unknown ontology format: " + formatName);
+      throw new IllegalArgumentException("Invalid ontology format: " + formatName);
     }
   }
 
@@ -391,13 +387,9 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI) throws IOException {
-    try {
-      String formatName = FilenameUtils.getExtension(ontologyIRI.toString());
-      OWLDocumentFormat format = getFormat(formatName);
-      return saveOntology(ontology, format, ontologyIRI);
-    } catch (IllegalArgumentException e) {
-      throw new IOException(e);
-    }
+    String formatName = FilenameUtils.getExtension(ontologyIRI.toString());
+    OWLDocumentFormat format = getFormat(formatName);
+    return saveOntology(ontology, format, ontologyIRI);
   }
 
   /**
@@ -425,7 +417,8 @@ public class IOHelper {
    */
   public OWLOntology saveOntology(
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
-    logger.debug("Saving ontology {} as {} with to IRI {}", ontology, format, ontologyIRI);
+    logger.debug(
+        "Saving ontology {} as {} to IRI {}", ontology.getOntologyID(), format, ontologyIRI);
 
     // if (format instanceof PrefixOWLDocumentFormat) {
     //    ((PrefixOWLDocumentFormat) format)
@@ -474,22 +467,6 @@ public class IOHelper {
     }
     return results;
   }
-  
-  /**
-   * Try to create an IRI from a string input. If the term is not in a valid format (null), an 
-   * IllegalArgumentException is thrown to prevent null from being passed into other methods.
-   * 
-   * @param term the term to convert to an IRI
-   * @param field the field in which the term was entered, for reporting
-   * @return the new IRI if successful
-   */
-  public IRI maybeCreateIRI(String term, String field) {
-	  IRI iri = createIRI(term);
-	  if (iri == null) {
-		  throw new IllegalArgumentException(field + " \"" + term + "\" is not a valid CURIE or IRI");
-	  }
-	  return iri;
-  }
 
   /**
    * Given a term string, use the current prefixes to create an IRI.
@@ -536,6 +513,9 @@ public class IOHelper {
       IRI iri = createIRI(term);
       if (iri != null) {
         iris.add(iri);
+      } else {
+        // Warn and continue
+        logger.warn("{} is not a valid IRI.", term);
       }
     }
     return iris;
@@ -803,7 +783,7 @@ public class IOHelper {
               JsonUtils.fromString("{}"), context.getPrefixes(false), new JsonLdOptions());
       return JsonUtils.toPrettyString(compact);
     } catch (Exception e) {
-      throw new IOException("JSON-LD could not be generated", e);
+      throw new IOException(e);
     }
   }
 
@@ -827,105 +807,5 @@ public class IOHelper {
     FileWriter writer = new FileWriter(file);
     writer.write(getContextString());
     writer.close();
-  }
-
-  /**
-   * Read comma-separated values from a path to a list of lists of strings.
-   *
-   * @param path file path to the CSV file
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readCSV(String path) throws IOException {
-    return readCSV(new FileReader(path));
-  }
-
-  /**
-   * Read comma-separated values from a stream to a list of lists of strings.
-   *
-   * @param stream the stream to read from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readCSV(InputStream stream) throws IOException {
-    return readCSV(new InputStreamReader(stream));
-  }
-
-  /**
-   * Read comma-separated values from a reader to a list of lists of strings.
-   *
-   * @param reader a reader to read data from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readCSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader);
-    List<List<String>> rows = new ArrayList<List<String>>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
-  }
-
-  /**
-   * Read tab-separated values from a path to a list of lists of strings.
-   *
-   * @param path file path to the CSV file
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTSV(String path) throws IOException {
-    return readTSV(new FileReader(path));
-  }
-
-  /**
-   * Read tab-separated values from a stream to a list of lists of strings.
-   *
-   * @param stream the stream to read from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTSV(InputStream stream) throws IOException {
-    return readTSV(new InputStreamReader(stream));
-  }
-
-  /**
-   * Read tab-separated values from a reader to a list of lists of strings.
-   *
-   * @param reader a reader to read data from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader, '\t');
-    List<List<String>> rows = new ArrayList<List<String>>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
-  }
-
-  /**
-   * Read a table from a path to a list of lists of strings.
-   *
-   * @param path file path to the CSV file
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTable(String path) throws IOException {
-    File file = new File(path);
-    String extension = FilenameUtils.getExtension(file.getName());
-    extension = extension.trim().toLowerCase();
-    if (extension.equals("csv")) {
-      return readCSV(new FileReader(path));
-    } else if (extension.equals("tsv") || extension.equals("tab")) {
-      return readTSV(new FileReader(path));
-    } else {
-      throw new IOException("Unrecognized file type for: " + path);
-    }
   }
 }

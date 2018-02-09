@@ -18,6 +18,17 @@ public class DiffCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(DiffCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "diff#error-";
+
+  /** Error message when --left is not provided. */
+  private static final String missingLeftError =
+      NS + "1 MISSING INPUT ERROR Left ontology is required";
+
+  /** Error message when --right is not provided. */
+  private static final String missingRightError =
+      NS + "1 MISSING INPUT ERROR Right ontology is required";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -112,19 +123,18 @@ public class DiffCommand implements Command {
       }
     }
     if (leftOntology == null) {
-      throw new IllegalArgumentException("left ontology must be specified");
+      throw new IllegalArgumentException(missingLeftError);
     }
 
     OWLOntology rightOntology = null;
     if (rightOntology == null) {
       String rightOntologyPath = CommandLineHelper.getOptionalValue(line, "right");
-      String leftOntologyPath = CommandLineHelper.getOptionalValue(line, "left");
       if (rightOntologyPath != null) {
         rightOntology = ioHelper.loadOntology(rightOntologyPath);
       }
     }
     if (rightOntology == null) {
-      throw new IllegalArgumentException("right ontology must be specified");
+      throw new IllegalArgumentException(missingRightError);
     }
 
     Writer writer;

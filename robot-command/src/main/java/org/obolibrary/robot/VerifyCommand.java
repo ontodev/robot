@@ -29,6 +29,12 @@ public class VerifyCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(VerifyCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "verify#";
+
+  /** Error message when no query is provided. */
+  private static final String missingQueryError = NS + "1 At least one query is required";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -116,7 +122,11 @@ public class VerifyCommand implements Command {
     File outputDir = new File(CommandLineHelper.getDefaultValue(line, "output-dir", "."));
 
     Map<File, Tuple<ResultSetRewindable, OutputStream>> resultMap = new HashMap<>();
-    for (String filePath : line.getOptionValues("queries")) {
+    String[] queryFilePaths = line.getOptionValues("queries");
+    if (queryFilePaths.length == 0) {
+      throw new IllegalArgumentException(missingQueryError);
+    }
+    for (String filePath : queryFilePaths) {
       File query = new File(filePath);
       ResultSet results = QueryOperation.execQuery(graph, fileContents(query));
       ResultSetRewindable resultsCopy = ResultSetFactory.copyResults(results);
@@ -143,6 +153,7 @@ public class VerifyCommand implements Command {
       return Files.toString(file, Charset.defaultCharset());
     } catch (IOException e) {
       String message = "Cannot read from " + file + ": " + e.getMessage();
+      // TODO: Is this necessary?
       throw new CannotReadQuery(message, e);
     }
   }

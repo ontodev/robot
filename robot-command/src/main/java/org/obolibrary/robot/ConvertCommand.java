@@ -17,6 +17,21 @@ public class ConvertCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ConvertCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "convert#error-";
+
+  /** Error message when no --output is provided. */
+  private static final String missingOutputError =
+      NS + "1 MISSING OUTPUT ERROR an output file is required";
+
+  /** Error message when more than one --output is provided. */
+  private static final String multipleOutputsError =
+      NS + "2 MULTIPLE OUTPUTS ERROR only one output file is allowed";
+
+  /** Error message when a --format is not specified and the --output does not have an extension. */
+  private static final String missingFormatError =
+      NS + "3 MISSING FORMAT ERROR an output format is required";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -115,19 +130,24 @@ public class ConvertCommand implements Command {
     OWLOntology ontology = state.getOntology();
 
     String[] outputs = line.getOptionValues("output");
-    if (outputs.length == 0) {
-      throw new Exception("An output file is required.");
+    // Validate the output
+    if (outputs == null || outputs.length == 0) {
+      throw new IllegalArgumentException(missingOutputError);
     } else if (outputs.length > 1) {
-      throw new Exception("Only one output file is allowed.");
+      throw new IllegalArgumentException(multipleOutputsError);
     }
     File outputFile = CommandLineHelper.getOutputFile(line);
 
+    // Check for a format
     String formatName = CommandLineHelper.getOptionalValue(line, "format");
     if (formatName == null) {
       formatName = FilenameUtils.getExtension(outputFile.getName());
+      if (formatName.equals("")) {
+        throw new IllegalArgumentException(missingFormatError);
+      }
     }
 
-    ioHelper.saveOntology(ontology, ioHelper.getFormat(formatName), outputFile);
+    ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile);
 
     return state;
   }

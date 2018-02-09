@@ -41,153 +41,131 @@ public class OntologyHelper {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(OntologyHelper.class);
 
+  /** Namespace for general ontology error messages. */
+  private static final String NS = "errors#ontology-";
+
+  /** Error message when an unsupported axiom type is requested. Expects axiom Class. */
+  private static final String axiomTypeError =
+      NS + "1 AXIOM TYPE ERROR cannot annotate axioms of type: %s";
+
+  private static final String emptyTermsError = NS + "2 EMPTY TERMS ERROR ontology does not contain input terms";
+
   /**
-   * Set the ontology IRI and version IRI using strings.
+   * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
+   * ontology with that property and value.
    *
-   * @param ontology the ontology to change
-   * @param ontologyIRIString the ontology IRI string, or null for no change
-   * @param versionIRIString the version IRI string, or null for no change
+   * <p>Note that as axioms are immutable, the axiom is removed and replaced with a new one.
+   *
+   * @param ontology the ontology to modify
+   * @param axiom the axiom to annotate
+   * @param propertyIRI the IRI of the property to add
+   * @param value the IRI or literal value to add
    */
-  public static void setOntologyIRI(
-      OWLOntology ontology, String ontologyIRIString, String versionIRIString) {
-    IRI ontologyIRI = null;
-    if (ontologyIRIString != null) {
-      ontologyIRI = IRI.create(ontologyIRIString);
-    }
+  public static void addAxiomAnnotation(
+      OWLOntology ontology, OWLAxiom axiom, IRI propertyIRI, OWLAnnotationValue value) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory df = manager.getOWLDataFactory();
 
-    IRI versionIRI = null;
-    if (versionIRIString != null) {
-      versionIRI = IRI.create(versionIRIString);
-    }
-
-    setOntologyIRI(ontology, ontologyIRI, versionIRI);
+    OWLAnnotationProperty property = df.getOWLAnnotationProperty(propertyIRI);
+    OWLAnnotation annotation = df.getOWLAnnotation(property, value);
+    addAxiomAnnotation(ontology, axiom, Collections.singleton(annotation));
   }
 
   /**
-   * Set the ontology IRI and version IRI.
+   * Given an ontology, an axiom, and a set of annotations, annotate the axiom with the annotations
+   * in the ontology.
    *
-   * @param ontology the ontology to change
-   * @param ontologyIRI the new ontology IRI, or null for no change
-   * @param versionIRI the new version IRI, or null for no change
+   * <p>Note that as axioms are immutable, the axiom is removed and replaced with a new one.
+   *
+   * @param ontology the ontology to modify
+   * @param axiom the axiom to annotate
+   * @param annotations the set of annotation to add to the axiom
    */
-  public static void setOntologyIRI(OWLOntology ontology, IRI ontologyIRI, IRI versionIRI) {
-    OWLOntologyID currentID = ontology.getOntologyID();
-
-    if (ontologyIRI == null && versionIRI == null) {
-      // don't change anything
-      return;
-    } else if (ontologyIRI == null) {
-      ontologyIRI = currentID.getOntologyIRI().orNull();
-    } else if (versionIRI == null) {
-      versionIRI = currentID.getVersionIRI().orNull();
-    }
-
-    OWLOntologyID newID;
-    if (versionIRI == null) {
-      newID = new OWLOntologyID(ontologyIRI);
+  public static void addAxiomAnnotation(
+      OWLOntology ontology, OWLAxiom axiom, Set<OWLAnnotation> annotations) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory factory = manager.getOWLDataFactory();
+    OWLAxiom newAxiom;
+    if (axiom instanceof OWLSubClassOfAxiom) {
+      OWLSubClassOfAxiom x = ((OWLSubClassOfAxiom) axiom);
+      newAxiom = factory.getOWLSubClassOfAxiom(x.getSubClass(), x.getSuperClass(), annotations);
+      logger.debug("ANNOTATED: " + newAxiom);
     } else {
-      newID = new OWLOntologyID(ontologyIRI, versionIRI);
+      // TODO - See https://github.com/ontodev/robot/issues/67
+      throw new UnsupportedOperationException(
+          String.format(axiomTypeError, axiom.getClass()));
     }
-
-    SetOntologyID setID = new SetOntologyID(ontology, newID);
-    ontology.getOWLOntologyManager().applyChange(setID);
+    manager.removeAxiom(ontology, axiom);
+    manager.addAxiom(ontology, newAxiom);
   }
 
   /**
-   * Given an OWLAnnotationValue, return its value as a string.
+   * Given an ontology, an annotation property IRI, and an annotation value, annotate all axioms in
+   * the ontology with that property and value.
    *
-   * @param value the OWLAnnotationValue to get the string value of
-   * @return the string value
+   * @param ontology the ontology to modify
+   * @param propertyIRI the IRI of the property to add
+   * @param value the IRI or literal value to add
    */
-  public static String getValue(OWLAnnotationValue value) {
-    String result = null;
-    if (value instanceof OWLLiteral) {
-      result = ((OWLLiteral) value).getLiteral();
+  public static void addAxiomAnnotations(
+      OWLOntology ontology, IRI propertyIRI, OWLAnnotationValue value) {
+    for (OWLAxiom a : ontology.getAxioms()) {
+      addAxiomAnnotation(ontology, a, propertyIRI, value);
     }
-    return result;
   }
 
   /**
-   * Given an OWLAnnotation, return its value as a string.
+   * Given an ontology, a property IRI, and a value string, add an annotation to this ontology with
+   * that property and value.
    *
-   * @param annotation the OWLAnnotation to get the string value of
-   * @return the string value
+   * @param ontology the ontology to modify
+   * @param propertyIRI the IRI of the property to add
+   * @param value the IRI or literal value to add
    */
-  public static String getValue(OWLAnnotation annotation) {
-    return getValue(annotation.getValue());
+  public static void addOntologyAnnotation(
+      OWLOntology ontology, IRI propertyIRI, OWLAnnotationValue value) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory df = manager.getOWLDataFactory();
+
+    OWLAnnotationProperty property = df.getOWLAnnotationProperty(propertyIRI);
+    OWLAnnotation annotation = df.getOWLAnnotation(property, value);
+    addOntologyAnnotation(ontology, annotation);
   }
 
   /**
-   * Given an OWLAnnotationAssertionAxiom, return its value as a string.
+   * Annotate the ontology with the annotation.
    *
-   * @param axiom the OWLAnnotationAssertionAxiom to get the string value of
-   * @return the string value
+   * @param ontology the ontology to modify
+   * @param annotation the annotation to add
    */
-  public static String getValue(OWLAnnotationAssertionAxiom axiom) {
-    return getValue(axiom.getValue());
+  public static void addOntologyAnnotation(OWLOntology ontology, OWLAnnotation annotation) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    AddOntologyAnnotation addition = new AddOntologyAnnotation(ontology, annotation);
+    manager.applyChange(addition);
   }
 
   /**
-   * Given a set of OWLAnnotations, return the first string value as determined by natural string
-   * sorting.
+   * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
+   * the ontology.
    *
-   * @param annotations a set of OWLAnnotations to get the value of
-   * @return the first string value
+   * @param ontology the ontology to check for IRIs
+   * @param IRIs Set of IRIs to filter
+   * @param allowEmpty boolean specifying if an empty set can be returned
+   * @return Set of filtered IRIs
    */
-  public static String getValue(Set<OWLAnnotation> annotations) {
-    Set<String> valueSet = getValues(annotations);
-    List<String> valueList = new ArrayList<String>(valueSet);
-    Collections.sort(valueList);
-    String value = null;
-    if (valueList.size() > 0) {
-      value = valueList.get(0);
-    }
-    return value;
-  }
-
-  /**
-   * Given a set of OWLAnnotations, return a set of their value strings.
-   *
-   * @param annotations a set of OWLAnnotations to get the value of
-   * @return a set of the value strings
-   */
-  public static Set<String> getValues(Set<OWLAnnotation> annotations) {
-    Set<String> results = new HashSet<String>();
-    for (OWLAnnotation annotation : annotations) {
-      String value = getValue(annotation);
-      if (value != null) {
-        results.add(value);
+  public static Set<IRI> filterExistingTerms(
+      OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty) {
+    for (IRI iri : IRIs) {
+      if (!ontology.containsEntityInSignature(iri)) {
+        logger.warn("Ontology does not contain term {}", iri.toString());
+        IRIs.remove(iri);
       }
     }
-    return results;
-  }
 
-  /**
-   * Given an annotation value, return its datatype, or null.
-   *
-   * @param value the value to check
-   * @return the datatype, or null if the value has none
-   */
-  public static OWLDatatype getType(OWLAnnotationValue value) {
-    if (value instanceof OWLLiteral) {
-      return ((OWLLiteral) value).getDatatype();
+    if (IRIs.isEmpty() && !allowEmpty) {
+      throw new IllegalArgumentException(emptyTermsError);
     }
-    return null;
-  }
-
-  /**
-   * Given an annotation value, return the IRI of its datatype, or null.
-   *
-   * @param value the value to check
-   * @return the IRI of the datatype, or null if the value has none
-   */
-  public static IRI getTypeIRI(OWLAnnotationValue value) {
-    OWLDatatype datatype = getType(value);
-    if (datatype == null) {
-      return null;
-    } else {
-      return datatype.getIRI();
-    }
+    return IRIs;
   }
 
   /**
@@ -260,79 +238,6 @@ public class OntologyHelper {
 
   /**
    * Given an ontology, an optional set of annotation properties, and an optional set of subject,
-   * return a set of annotation values for those subjects and those properties.
-   *
-   * @param ontology the ontology to search (including imports closure)
-   * @param property an annotation property
-   * @param subject an annotation subject IRIs
-   * @return a filtered set of annotation values
-   */
-  public static Set<OWLAnnotationValue> getAnnotationValues(
-      OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
-    properties.add(property);
-    Set<IRI> subjects = new HashSet<IRI>();
-    subjects.add(subject);
-    return getAnnotationValues(ontology, properties, subjects);
-  }
-
-  /**
-   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
-   * return a set of annotation values for those subjects and those properties.
-   *
-   * @param ontology the ontology to search (including imports closure)
-   * @param properties a set of annotation properties, or null if all properties should be included
-   * @param subjects a set of annotation subject IRIs, or null if all subjects should be included
-   * @return a filtered set of annotation values
-   */
-  public static Set<OWLAnnotationValue> getAnnotationValues(
-      OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
-    Set<OWLAnnotationValue> results = new HashSet<OWLAnnotationValue>();
-    Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(ontology, properties, subjects);
-    for (OWLAnnotationAssertionAxiom axiom : axioms) {
-      results.add(axiom.getValue());
-    }
-    return results;
-  }
-
-  /**
-   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
-   * return a set of strings for those subjects and those properties.
-   *
-   * @param ontology the ontology to search (including imports closure)
-   * @param property an annotation property
-   * @param subject an annotation subject IRIs
-   * @return a filtered set of annotation strings
-   */
-  public static Set<String> getAnnotationStrings(
-      OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
-    properties.add(property);
-    Set<IRI> subjects = new HashSet<IRI>();
-    subjects.add(subject);
-    return getAnnotationStrings(ontology, properties, subjects);
-  }
-
-  /**
-   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
-   * return a set of strings for those subjects and those properties.
-   *
-   * @param ontology the ontology to search (including imports closure)
-   * @param properties a set of annotation properties, or null if all properties should be included
-   * @param subjects a set of annotation subject IRIs, or null if all subjects should be included
-   * @return a filtered set of annotation strings
-   */
-  public static Set<String> getAnnotationStrings(
-      OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
-    Set<String> results = new HashSet<String>();
-    Set<OWLAnnotationValue> values = getAnnotationValues(ontology, properties, subjects);
-    for (OWLAnnotationValue value : values) {
-      results.add(getValue(value));
-    }
-    return results;
-  }
-  /**
-   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
    * return the alphanumerically first annotation value string for those subjects and those
    * properties.
    *
@@ -373,89 +278,77 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, return a map from IRIs to rdfs:labels. Includes labels asserted in for all
-   * imported ontologies. If there are multiple labels, use the alphanumerically first.
+   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
+   * return a set of strings for those subjects and those properties.
    *
-   * @param ontology the ontology to use
-   * @return a map from IRIs to label strings
+   * @param ontology the ontology to search (including imports closure)
+   * @param property an annotation property
+   * @param subject an annotation subject IRIs
+   * @return a filtered set of annotation strings
    */
-  public static Map<IRI, String> getLabels(OWLOntology ontology) {
-    logger.info("Fetching labels for " + ontology.getOntologyID());
-    Map<IRI, String> results = new HashMap<IRI, String>();
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
-    Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
-    ontologies.add(ontology);
-    ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
-    logger.info("iterating through entities...");
-    for (OWLEntity entity : resp.getEntities()) {
-      String value = getAnnotationString(ontology, rdfsLabel, entity.getIRI());
-      if (value != null) {
-        results.put(entity.getIRI(), value);
-      }
+  public static Set<String> getAnnotationStrings(
+      OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
+    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    properties.add(property);
+    Set<IRI> subjects = new HashSet<IRI>();
+    subjects.add(subject);
+    return getAnnotationStrings(ontology, properties, subjects);
+  }
+
+  /**
+   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
+   * return a set of strings for those subjects and those properties.
+   *
+   * @param ontology the ontology to search (including imports closure)
+   * @param properties a set of annotation properties, or null if all properties should be included
+   * @param subjects a set of annotation subject IRIs, or null if all subjects should be included
+   * @return a filtered set of annotation strings
+   */
+  public static Set<String> getAnnotationStrings(
+      OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
+    Set<String> results = new HashSet<String>();
+    Set<OWLAnnotationValue> values = getAnnotationValues(ontology, properties, subjects);
+    for (OWLAnnotationValue value : values) {
+      results.add(getValue(value));
     }
-    logger.info("Results: " + results.size());
     return results;
   }
 
   /**
-   * Given an ontology, return a map from rdfs:label to IRIs. Includes labels asserted in for all
-   * imported ontologies. Duplicates overwrite existing with a warning.
+   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
+   * return a set of annotation values for those subjects and those properties.
    *
-   * @param ontology the ontology to use
-   * @return a map from label strings to IRIs
+   * @param ontology the ontology to search (including imports closure)
+   * @param property an annotation property
+   * @param subject an annotation subject IRIs
+   * @return a filtered set of annotation values
    */
-  public static Map<String, IRI> getLabelIRIs(OWLOntology ontology) {
-    Map<String, IRI> results = new HashMap<String, IRI>();
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
-    Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(ontology, rdfsLabel);
+  public static Set<OWLAnnotationValue> getAnnotationValues(
+      OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
+    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    properties.add(property);
+    Set<IRI> subjects = new HashSet<IRI>();
+    subjects.add(subject);
+    return getAnnotationValues(ontology, properties, subjects);
+  }
+
+  /**
+   * Given an ontology, an optional set of annotation properties, and an optional set of subject,
+   * return a set of annotation values for those subjects and those properties.
+   *
+   * @param ontology the ontology to search (including imports closure)
+   * @param properties a set of annotation properties, or null if all properties should be included
+   * @param subjects a set of annotation subject IRIs, or null if all subjects should be included
+   * @return a filtered set of annotation values
+   */
+  public static Set<OWLAnnotationValue> getAnnotationValues(
+      OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
+    Set<OWLAnnotationValue> results = new HashSet<OWLAnnotationValue>();
+    Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(ontology, properties, subjects);
     for (OWLAnnotationAssertionAxiom axiom : axioms) {
-      String value = getValue(axiom);
-      if (value == null) {
-        continue;
-      }
-      OWLAnnotationSubject subject = axiom.getSubject();
-      if (subject == null || !(subject instanceof IRI)) {
-        continue;
-      }
-      if (results.containsKey(value)) {
-        logger.warn("Duplicate rdfs:label \"" + value + "\" for subject " + subject);
-      }
-      results.put(value, (IRI) subject);
+      results.add(axiom.getValue());
     }
     return results;
-  }
-
-  /**
-   * Generates a function that returns a label string for any named object in the ontology
-   *
-   * @param ontology to use
-   * @param useIriAsDefault if true then label-less classes will return IRI
-   * @return function mapping object to label
-   */
-  public static Function<OWLNamedObject, String> getLabelFunction(
-      OWLOntology ontology, boolean useIriAsDefault) {
-    Map<IRI, String> labelMap = new HashMap<>();
-    for (OWLAnnotationAssertionAxiom ax : ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
-      if (ax.getProperty().isLabel()
-          && ax.getSubject() instanceof IRI
-          && ax.getValue() instanceof OWLLiteral) {
-        labelMap.put((IRI) ax.getSubject(), ax.getValue().asLiteral().toString());
-      }
-    }
-    return (obj) -> {
-      String label;
-      if (labelMap.containsKey(obj.getIRI())) {
-        label = labelMap.get(obj.getIRI());
-      } else if (useIriAsDefault) {
-        label = obj.getIRI().toString();
-      } else {
-        label = null;
-      }
-
-      return label;
-    };
   }
 
   /**
@@ -505,6 +398,189 @@ public class OntologyHelper {
   }
 
   /**
+   * Generates a function that returns a label string for any named object in the ontology
+   *
+   * @param ontology to use
+   * @param useIriAsDefault if true then label-less classes will return IRI
+   * @return function mapping object to label
+   */
+  public static Function<OWLNamedObject, String> getLabelFunction(
+      OWLOntology ontology, boolean useIriAsDefault) {
+    Map<IRI, String> labelMap = new HashMap<>();
+    for (OWLAnnotationAssertionAxiom ax : ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+      if (ax.getProperty().isLabel()
+          && ax.getSubject() instanceof IRI
+          && ax.getValue() instanceof OWLLiteral) {
+        labelMap.put((IRI) ax.getSubject(), ax.getValue().asLiteral().toString());
+      }
+    }
+    return (obj) -> {
+      String label;
+      if (labelMap.containsKey(obj.getIRI())) {
+        label = labelMap.get(obj.getIRI());
+      } else if (useIriAsDefault) {
+        label = obj.getIRI().toString();
+      } else {
+        label = null;
+      }
+
+      return label;
+    };
+  }
+
+  /**
+   * Given an ontology, return a map from rdfs:label to IRIs. Includes labels asserted in for all
+   * imported ontologies. Duplicates overwrite existing with a warning.
+   *
+   * @param ontology the ontology to use
+   * @return a map from label strings to IRIs
+   */
+  public static Map<String, IRI> getLabelIRIs(OWLOntology ontology) {
+    Map<String, IRI> results = new HashMap<String, IRI>();
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
+    Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(ontology, rdfsLabel);
+    for (OWLAnnotationAssertionAxiom axiom : axioms) {
+      String value = getValue(axiom);
+      if (value == null) {
+        continue;
+      }
+      OWLAnnotationSubject subject = axiom.getSubject();
+      if (subject == null || !(subject instanceof IRI)) {
+        continue;
+      }
+      if (results.containsKey(value)) {
+        logger.warn("Duplicate rdfs:label \"" + value + "\" for subject " + subject);
+      }
+      results.put(value, (IRI) subject);
+    }
+    return results;
+  }
+
+  /**
+   * Given an ontology, return a map from IRIs to rdfs:labels. Includes labels asserted in for all
+   * imported ontologies. If there are multiple labels, use the alphanumerically first.
+   *
+   * @param ontology the ontology to use
+   * @return a map from IRIs to label strings
+   */
+  public static Map<IRI, String> getLabels(OWLOntology ontology) {
+    logger.info("Fetching labels for " + ontology.getOntologyID());
+    Map<IRI, String> results = new HashMap<IRI, String>();
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
+    Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+    ontologies.add(ontology);
+    ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
+    logger.info("iterating through entities...");
+    for (OWLEntity entity : resp.getEntities()) {
+      String value = getAnnotationString(ontology, rdfsLabel, entity.getIRI());
+      if (value != null) {
+        results.put(entity.getIRI(), value);
+      }
+    }
+    logger.info("Results: " + results.size());
+    return results;
+  }
+
+  /**
+   * Given an annotation value, return its datatype, or null.
+   *
+   * @param value the value to check
+   * @return the datatype, or null if the value has none
+   */
+  public static OWLDatatype getType(OWLAnnotationValue value) {
+    if (value instanceof OWLLiteral) {
+      return ((OWLLiteral) value).getDatatype();
+    }
+    return null;
+  }
+
+  /**
+   * Given an annotation value, return the IRI of its datatype, or null.
+   *
+   * @param value the value to check
+   * @return the IRI of the datatype, or null if the value has none
+   */
+  public static IRI getTypeIRI(OWLAnnotationValue value) {
+    OWLDatatype datatype = getType(value);
+    if (datatype == null) {
+      return null;
+    } else {
+      return datatype.getIRI();
+    }
+  }
+
+  /**
+   * Given an OWLAnnotationValue, return its value as a string.
+   *
+   * @param value the OWLAnnotationValue to get the string value of
+   * @return the string value
+   */
+  public static String getValue(OWLAnnotationValue value) {
+    String result = null;
+    if (value instanceof OWLLiteral) {
+      result = ((OWLLiteral) value).getLiteral();
+    }
+    return result;
+  }
+
+  /**
+   * Given an OWLAnnotation, return its value as a string.
+   *
+   * @param annotation the OWLAnnotation to get the string value of
+   * @return the string value
+   */
+  public static String getValue(OWLAnnotation annotation) {
+    return getValue(annotation.getValue());
+  }
+
+  /**
+   * Given an OWLAnnotationAssertionAxiom, return its value as a string.
+   *
+   * @param axiom the OWLAnnotationAssertionAxiom to get the string value of
+   * @return the string value
+   */
+  public static String getValue(OWLAnnotationAssertionAxiom axiom) {
+    return getValue(axiom.getValue());
+  }
+
+  /**
+   * Given a set of OWLAnnotations, return the first string value as determined by natural string
+   * sorting.
+   *
+   * @param annotations a set of OWLAnnotations to get the value of
+   * @return the first string value
+   */
+  public static String getValue(Set<OWLAnnotation> annotations) {
+    Set<String> valueSet = getValues(annotations);
+    List<String> valueList = new ArrayList<String>(valueSet);
+    Collections.sort(valueList);
+    String value = null;
+    if (valueList.size() > 0) {
+      value = valueList.get(0);
+    }
+    return value;
+  }
+
+  /**
+   * Given a set of OWLAnnotations, return a set of their value strings.
+   *
+   * @param annotations a set of OWLAnnotations to get the value of
+   * @return a set of the value strings
+   */
+  public static Set<String> getValues(Set<OWLAnnotation> annotations) {
+    Set<String> results = new HashSet<String>();
+    for (OWLAnnotation annotation : annotations) {
+      String value = getValue(annotation);
+      if (value != null) {
+        results.add(value);
+      }
+    }
+    return results;
+  }
+
+  /**
    * Remove all annotations on this ontology. Just annotations on the ontology itself, not
    * annotations on its classes, etc.
    *
@@ -519,95 +595,54 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, a property IRI, and a value string, add an annotation to this ontology with
-   * that property and value.
+   * Set the ontology IRI and version IRI using strings.
    *
-   * @param ontology the ontology to modify
-   * @param propertyIRI the IRI of the property to add
-   * @param value the IRI or literal value to add
+   * @param ontology the ontology to change
+   * @param ontologyIRIString the ontology IRI string, or null for no change
+   * @param versionIRIString the version IRI string, or null for no change
    */
-  public static void addOntologyAnnotation(
-      OWLOntology ontology, IRI propertyIRI, OWLAnnotationValue value) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    OWLDataFactory df = manager.getOWLDataFactory();
+  public static void setOntologyIRI(
+      OWLOntology ontology, String ontologyIRIString, String versionIRIString) {
+    IRI ontologyIRI = null;
+    if (ontologyIRIString != null) {
+      ontologyIRI = IRI.create(ontologyIRIString);
+    }
 
-    OWLAnnotationProperty property = df.getOWLAnnotationProperty(propertyIRI);
-    OWLAnnotation annotation = df.getOWLAnnotation(property, value);
-    addOntologyAnnotation(ontology, annotation);
-  }
-  /**
-   * Annotate the ontology with the annotation.
-   *
-   * @param ontology the ontology to modify
-   * @param annotation the annotation to add
-   */
-  public static void addOntologyAnnotation(OWLOntology ontology, OWLAnnotation annotation) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    AddOntologyAnnotation addition = new AddOntologyAnnotation(ontology, annotation);
-    manager.applyChange(addition);
+    IRI versionIRI = null;
+    if (versionIRIString != null) {
+      versionIRI = IRI.create(versionIRIString);
+    }
+
+    setOntologyIRI(ontology, ontologyIRI, versionIRI);
   }
 
   /**
-   * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
-   * ontology with that property and value.
+   * Set the ontology IRI and version IRI.
    *
-   * <p>Note that as axioms are immutable, the axiom is removed and replaced with a new one.
-   *
-   * @param ontology the ontology to modify
-   * @param axiom the axiom to annotate
-   * @param propertyIRI the IRI of the property to add
-   * @param value the IRI or literal value to add
+   * @param ontology the ontology to change
+   * @param ontologyIRI the new ontology IRI, or null for no change
+   * @param versionIRI the new version IRI, or null for no change
    */
-  public static void addAxiomAnnotation(
-      OWLOntology ontology, OWLAxiom axiom, IRI propertyIRI, OWLAnnotationValue value) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    OWLDataFactory df = manager.getOWLDataFactory();
+  public static void setOntologyIRI(OWLOntology ontology, IRI ontologyIRI, IRI versionIRI) {
+    OWLOntologyID currentID = ontology.getOntologyID();
 
-    OWLAnnotationProperty property = df.getOWLAnnotationProperty(propertyIRI);
-    OWLAnnotation annotation = df.getOWLAnnotation(property, value);
-    addAxiomAnnotation(ontology, axiom, Collections.singleton(annotation));
-  }
+    if (ontologyIRI == null && versionIRI == null) {
+      // don't change anything
+      return;
+    } else if (ontologyIRI == null) {
+      ontologyIRI = currentID.getOntologyIRI().orNull();
+    } else if (versionIRI == null) {
+      versionIRI = currentID.getVersionIRI().orNull();
+    }
 
-  /**
-   * Given an ontology, an axiom, and a set of annotations, annotate the axiom with the annotations
-   * in the ontology.
-   *
-   * <p>Note that as axioms are immutable, the axiom is removed and replaced with a new one.
-   *
-   * @param ontology the ontology to modify
-   * @param axiom the axiom to annotate
-   * @param annotations the set of annotation to add to the axiom
-   */
-  public static void addAxiomAnnotation(
-      OWLOntology ontology, OWLAxiom axiom, Set<OWLAnnotation> annotations) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    OWLDataFactory factory = manager.getOWLDataFactory();
-    OWLAxiom newAxiom;
-    if (axiom instanceof OWLSubClassOfAxiom) {
-      OWLSubClassOfAxiom x = ((OWLSubClassOfAxiom) axiom);
-      newAxiom = factory.getOWLSubClassOfAxiom(x.getSubClass(), x.getSuperClass(), annotations);
-      logger.debug("ANNOTATED: " + newAxiom);
+    OWLOntologyID newID;
+    if (versionIRI == null) {
+      newID = new OWLOntologyID(ontologyIRI);
     } else {
-      // TODO - See https://github.com/ontodev/robot/issues/67
-      throw new UnsupportedOperationException(
-          "Cannot annotate axioms of type: " + axiom.getClass());
+      newID = new OWLOntologyID(ontologyIRI, versionIRI);
     }
-    manager.removeAxiom(ontology, axiom);
-    manager.addAxiom(ontology, newAxiom);
-  }
 
-  /**
-   * Given an ontology, an annotation property IRI, and an annotation value, annotate all axioms in
-   * the ontology with that property and value.
-   *
-   * @param ontology the ontology to modify
-   * @param propertyIRI the IRI of the property to add
-   * @param value the IRI or literal value to add
-   */
-  public static void addAxiomAnnotations(
-      OWLOntology ontology, IRI propertyIRI, OWLAnnotationValue value) {
-    for (OWLAxiom a : ontology.getAxioms()) {
-      addAxiomAnnotation(ontology, a, propertyIRI, value);
-    }
+    SetOntologyID setID = new SetOntologyID(ontology, newID);
+    ontology.getOWLOntologyManager().applyChange(setID);
   }
 }

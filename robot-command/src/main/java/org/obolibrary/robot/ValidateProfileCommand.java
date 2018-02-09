@@ -16,6 +16,21 @@ public class ValidateProfileCommand implements Command {
   /** Store the command-line options for the command. */
   private final Options options;
 
+  /** Namespace for error messages. */
+  private static final String NS = "validate#error-";
+
+  /** Error message when a profile is not provided. */
+  private static final String missingProfileError = 
+		  NS + "1 MISSING PROFILE ERROR a profile is required";
+
+  /** Error message when an invalid profile is provided. Expects profile. */
+  private static final String invalidProfileError = 
+		  NS + "2 INVALID PROFILE ERROR unknown profile: %s";
+
+  /** Error message when the ontology validates provided profile. Expects ontology IRI, profile. */
+  private static final String profileViolationError = 
+		  NS + "3 PROFILE VIOLATION ERROR %1 violates profile %2";
+
   /** Initialize the command. */
   public ValidateProfileCommand() {
     Options o = CommandLineHelper.getCommonOptions();
@@ -64,7 +79,7 @@ public class ValidateProfileCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
-    String profile = CommandLineHelper.getRequiredValue(line, "profile", "A --profile is required");
+    String profile = CommandLineHelper.getRequiredValue(line, "profile", missingProfileError);
     profile = profile.toUpperCase();
     final OWLProfile owlProfile;
     switch (profile) {
@@ -84,7 +99,7 @@ public class ValidateProfileCommand implements Command {
         owlProfile = new OWL2Profile();
         break; // #162
       default:
-        throw new Exception("Invalid profile: " + profile);
+        throw new IllegalArgumentException(String.format(invalidProfileError, profile));
     }
     OWLProfileReport report = owlProfile.checkOntology(ontology);
     File outputFile = CommandLineHelper.getOutputFile(line);
@@ -96,7 +111,9 @@ public class ValidateProfileCommand implements Command {
       System.out.println(report.toString());
     }
     if (!report.isInProfile()) {
-      throw new Exception("Ontology is not in profile " + profile);
+      throw new Exception(
+          String.format(
+              profileViolationError, ontology.getOntologyID().getOntologyIRI().orNull(), profile));
     }
     return state;
   }

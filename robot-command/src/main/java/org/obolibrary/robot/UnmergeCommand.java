@@ -106,10 +106,6 @@ public class UnmergeCommand implements Command {
     }
     inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line));
 
-    if (inputOntologies.size() < 1) {
-      throw new IllegalArgumentException("at least one inputOntology must be specified");
-    }
-
     OWLOntology outputOntology = UnmergeOperation.unmerge(inputOntologies);
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
