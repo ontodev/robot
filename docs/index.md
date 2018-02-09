@@ -5,17 +5,9 @@ title: ROBOT is an OBO Tool
 
 # ROBOT is an OBO Tool
 
-[![Build Status](https://travis-ci.org/ontodev/robot.svg?branch=master)](https://travis-ci.org/ontodev/robot)
+ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org). It can be used as a command-line tool or as a library for any language on the Java Virtual Machine.
 
-ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org).
-
-
-# Usage
-
-This code can be used as:
-
-1. a command-line tool
-2. a library for any JVM language
+See our homepage <http://robot.obolibrary.org> for documentation and examples of commands.
 
 
 ## 1. Command Line Tool
@@ -38,14 +30,19 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
 ## 2. Library
 
-The core ROBOT operations are written in plain Java code, and can be used from any language that uses the Java Virtual Machine. The command-line tool is both built on top of the library of operations. You can add use these operations in your own code, or add new operations written in any JVM language.
+ROBOT is written in Java, and can be used from any language that runs on the Java Virtual Machine. The code is divded into two parts:
 
-You can download the `robot.jar` file from the [latest release](https://github.com/ontodev/robot/releases/latest) to include in your projects.
+1. [`robot-core`](https://github.com/ontodev/robot/tree/master/robot-core/src/main/java/org/obolibrary/robot) is a library of operations for working with ontologies
+2. [`robot-command`](https://github.com/ontodev/robot/tree/master/robot-command/src/main/java/org/obolibrary/robot) is a command-line interface for using those operations
 
+ROBOT is available in Maven Central:
 
-### Java
+- [`robot-core`](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-core%22)
+- [`robot-command`](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-command%22)
 
-The library provides a number of Operation classes for manipulating ontologies. The `IOHelper` class contains convenient methods for loading and saving ontologies, and for loading sets of term IRIs. Here's an example of extracting a "core" subset from an ontology:
+You can also download the standalone `robot.jar` file from the [latest release](https://github.com/ontodev/robot/releases/latest) to include in your projects.
+
+The `robot-core` library provides a number of Operation classes for working with ontologies. The `IOHelper` class contains convenient methods for loading and saving ontologies, and for loading sets of term IRIs. Here's an example of extracting a "core" subset from an ontology:
 
     IOHelper ioHelper = new IOHelper();
     OWLOntology full = ioHelper.loadOntology("ontology.owl");
