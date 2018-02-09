@@ -1,6 +1,7 @@
 # ROBOT is an OBO Tool
 
 [![Build Status](https://travis-ci.org/ontodev/robot.svg?branch=master)](https://travis-ci.org/ontodev/robot)
+[![Javadocs](https://www.javadoc.io/badge/org.obolibrary/robot.svg)](https://www.javadoc.io/doc/org.obolibrary/robot)
 
 ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org).
 
