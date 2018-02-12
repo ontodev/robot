@@ -7,7 +7,7 @@ title: ROBOT is an OBO Tool
 
 ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org). It can be used as a command-line tool or as a library for any language on the Java Virtual Machine.
 
-See our homepage <http://robot.obolibrary.org> for documentation and examples of commands.
+See our homepage <http://robot.obolibrary.org> for documentation and examples of commands, and our JavaDocs for [`robot-core`](http://www.javadoc.io/doc/org.obolibrary.robot/robot-core/) and [`robot-command`](http://www.javadoc.io/doc/org.obolibrary.robot/robot-command/).
 
 
 ## 1. Command Line Tool
@@ -30,15 +30,10 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
 ## 2. Library
 
-ROBOT is written in Java, and can be used from any language that runs on the Java Virtual Machine. The code is divded into two parts:
+ROBOT is written in Java, and can be used from any language that runs on the Java Virtual Machine. It's available on Maven Central. The code is divided into two parts:
 
-1. [`robot-core`](https://github.com/ontodev/robot/tree/master/robot-core/src/main/java/org/obolibrary/robot) is a library of operations for working with ontologies
-2. [`robot-command`](https://github.com/ontodev/robot/tree/master/robot-command/src/main/java/org/obolibrary/robot) is a command-line interface for using those operations
-
-ROBOT is available in Maven Central:
-
-- [`robot-core`](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-core%22)
-- [`robot-command`](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-command%22)
+1. [`robot-core`](https://github.com/ontodev/robot/tree/master/robot-core/src/main/java/org/obolibrary/robot) is a library of operations for working with ontologies ([Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-core%22), [JavaDocs](http://www.javadoc.io/doc/org.obolibrary.robot/robot-core/))
+2. [`robot-command`](https://github.com/ontodev/robot/tree/master/robot-command/src/main/java/org/obolibrary/robot) is a command-line interface for using those operations ([Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-command%22), [JavaDocs](http://www.javadoc.io/doc/org.obolibrary.robot/robot-command/))
 
 You can also download the standalone `robot.jar` file from the [latest release](https://github.com/ontodev/robot/releases/latest) to include in your projects.
 
