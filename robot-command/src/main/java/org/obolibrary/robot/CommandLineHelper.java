@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
@@ -44,31 +46,39 @@ public class CommandLineHelper {
   private static final String invalidFormatError = NS + "2 INVALID FORMAT ERROR unknown format: %s";
 
   /** Error message when an invalid IRI is provided. Expects the entry field and term. */
-  private static final String invalidIRIError = 
-		  NS + "3 INVALID IRI ERROR %1 \"%2\" is not a valid CURIE or IRI";
+  private static final String invalidIRIError =
+      NS + "3 INVALID IRI ERROR %1 \"%2\" is not a valid CURIE or IRI";
 
   /**
    * Error message when an invalid prefix is provided. Expects the combined prefix. This message is
    * duplicated in IOHelper without the NS and ID.
    */
-  private static final String invalidPrefixError = 
-		  NS + "4 INVALID PREFIX ERROR invalid prefix string: %s";
+  private static final String invalidPrefixError =
+      NS + "4 INVALID PREFIX ERROR invalid prefix string: %s";
 
   /** Error message when user provides an invalid reasoner. Expects reasonerName in formatting. */
-  private static final String invalidReasonerError = 
-		  NS + "5 INVALID REASONER ERROR unknown reasoner: %s";
+  private static final String invalidReasonerError =
+      NS + "5 INVALID REASONER ERROR unknown reasoner: %s";
 
   /** Error message when no input ontology is provided. */
-  private static final String missingInputError = 
-		  NS + "6 MISSING INPUT ERROR an --input is required";
+  private static final String missingInputError =
+      NS + "6 MISSING INPUT ERROR an --input is required";
 
   /** Error message when no input ontology is provided for methods that accept multiple inputs. */
-  private static final String missingInputsError = 
-		  NS + "6 MISSING INPUT ERROR at least one --input is required";
+  private static final String missingInputsError =
+      NS + "6 MISSING INPUT ERROR at least one --input is required";
 
   /** Error message when input terms are not provided. */
   private static final String missingTermsError =
       NS + "7 MISSING TERMS ERROR term(s) are required with --term or --term-file";
+
+  /** Error message when more than one --input is specified, excluding merge and unmerge. */
+  private static final String multipleInputsError =
+      NS + "8 MULITPLE INPUTS ERROR only one --input is allowed";
+
+  /** Error message when the --inputs pattern does not include * or ?, or is not quoted */
+  private static final String wildcardError =
+      NS + "9 WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
 
   /**
    * Given a single string, return a list of strings split at whitespace but allowing for quoted
@@ -322,21 +332,29 @@ public class CommandLineHelper {
   public static OWLOntology getInputOntology(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
     OWLOntology inputOntology = null;
-    String inputOntologyPath = getOptionalValue(line, "input");
-    String inputOntologyIRI = getOptionalValue(line, "input-iri");
-    if (inputOntologyPath != null) {
-      inputOntology = ioHelper.loadOntology(inputOntologyPath);
-    } else if (inputOntologyIRI != null) {
-      inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRI));
+    // Check for multiple inputs
+    List<String> inputOntologyPaths = getOptionalValues(line, "input");
+    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    Integer check = inputOntologyPaths.size() + inputOntologyIRIs.size();
+    if (check > 1) {
+      throw new IllegalArgumentException(multipleInputsError);
+    }
+
+    if (!inputOntologyPaths.isEmpty()) {
+      inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0));
+    } else if (!inputOntologyIRIs.isEmpty()) {
+      inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
     } else {
+      // Both input options are empty
       throw new IllegalArgumentException(missingInputError);
     }
+
     return inputOntology;
   }
 
   /**
    * Given an IOHelper and a command line, check for required options and return a list of loaded
-   * input ontologies. Currently handles --input and --input-iri options.
+   * input ontologies. Currently handles --input, --input-iri, and --inputs options.
    *
    * @param ioHelper the IOHelper to load the ontology with
    * @param line the command line to use
@@ -348,14 +366,37 @@ public class CommandLineHelper {
       throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
 
+    // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     for (String inputOntologyPath : inputOntologyPaths) {
       inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
     }
 
+    // Check for input IRIs
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
     for (String inputOntologyIRI : inputOntologyIRIs) {
       inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
+    }
+
+    // Check for input patterns (wildcard)
+    List<String> inputOntologyPatterns = getOptionalValues(line, "inputs");
+    for (String inputOntologyPattern : inputOntologyPatterns) {
+      if (!inputOntologyPattern.contains("*") && !inputOntologyPattern.contains("?")) {
+        throw new IllegalArgumentException(wildcardError);
+      }
+      FileFilter fileFilter = new WildcardFileFilter(inputOntologyPattern);
+      File[] inputOntologyFiles = new File(".").listFiles(fileFilter);
+      if (inputOntologyFiles.length < 1) {
+        // Warn user, but continue (empty input checked later)
+        logger.error("No files match pattern: {}", inputOntologyPattern);
+      }
+      System.out.println("Loading matches to \"" + inputOntologyPattern + "\":");
+      int counter = 0;
+      for (File inputOntologyFile : inputOntologyFiles) {
+        counter++;
+        System.out.println(counter + ". " + inputOntologyFile.getName());
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile));
+      }
     }
 
     if (inputOntologies.isEmpty()) {

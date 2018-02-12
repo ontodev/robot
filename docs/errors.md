@@ -45,6 +45,16 @@ An input ontology must be specified with `--input`. In the case of [merge](/merg
 
 Some commands ([extract](/extract) and [filter](/filter)) require terms as input in addition to the ontology. Click on the commands for more details.
 
+<a name="input-8"/>
+### 8. Multiple Inputs Error
+
+For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `--input` may be specified.
+
+<a name="input-9"/>
+### 9. Wildcard Error
+
+Any pattern specified with `--inputs` for [merge](/merge) and [unmerge](/unmerge) must be a wildcard pattern, including either `*` (to match any number of characters) or `?` (to match any single character).
+
 ---
 
 ## Ontology Errors
