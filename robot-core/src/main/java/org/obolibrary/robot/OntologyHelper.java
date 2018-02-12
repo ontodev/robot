@@ -48,7 +48,8 @@ public class OntologyHelper {
   private static final String axiomTypeError =
       NS + "1 AXIOM TYPE ERROR cannot annotate axioms of type: %s";
 
-  private static final String emptyTermsError = NS + "2 EMPTY TERMS ERROR ontology does not contain input terms";
+  private static final String emptyTermsError =
+      NS + "2 EMPTY TERMS ERROR ontology does not contain input terms";
 
   /**
    * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
@@ -92,8 +93,7 @@ public class OntologyHelper {
       logger.debug("ANNOTATED: " + newAxiom);
     } else {
       // TODO - See https://github.com/ontodev/robot/issues/67
-      throw new UnsupportedOperationException(
-          String.format(axiomTypeError, axiom.getClass()));
+      throw new UnsupportedOperationException(String.format(axiomTypeError, axiom.getClass()));
     }
     manager.removeAxiom(ontology, axiom);
     manager.addAxiom(ontology, newAxiom);

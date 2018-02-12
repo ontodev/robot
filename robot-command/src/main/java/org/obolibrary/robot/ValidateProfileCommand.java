@@ -20,16 +20,16 @@ public class ValidateProfileCommand implements Command {
   private static final String NS = "validate#error-";
 
   /** Error message when a profile is not provided. */
-  private static final String missingProfileError = 
-		  NS + "1 MISSING PROFILE ERROR a profile is required";
+  private static final String missingProfileError =
+      NS + "1 MISSING PROFILE ERROR a profile is required";
 
   /** Error message when an invalid profile is provided. Expects profile. */
-  private static final String invalidProfileError = 
-		  NS + "2 INVALID PROFILE ERROR unknown profile: %s";
+  private static final String invalidProfileError =
+      NS + "2 INVALID PROFILE ERROR unknown profile: %s";
 
   /** Error message when the ontology validates provided profile. Expects ontology IRI, profile. */
-  private static final String profileViolationError = 
-		  NS + "3 PROFILE VIOLATION ERROR %1 violates profile %2";
+  private static final String profileViolationError =
+      NS + "3 PROFILE VIOLATION ERROR %1 violates profile %2";
 
   /** Initialize the command. */
   public ValidateProfileCommand() {

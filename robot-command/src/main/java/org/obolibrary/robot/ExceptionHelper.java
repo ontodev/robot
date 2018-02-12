@@ -3,9 +3,9 @@ package org.obolibrary.robot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
+/**
  * Convenience class to handle formatting error messages and returning links to user support.
- * 
+ *
  * @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a>
  */
 public class ExceptionHelper {
@@ -21,14 +21,15 @@ public class ExceptionHelper {
    * @param exception the exception
    */
   public static void handleException(Exception exception) {
-    String exceptionID = getExceptionID(exception.getMessage());
+    String fullMsg = trimExceptionMsg(exception);
+    String exceptionID = getExceptionID(fullMsg);
     String msg;
     // If there is an exception ID, grab the second part as the message
     if (!exceptionID.equals("")) {
-      msg = getExceptionMsg(exception.getMessage());
+      msg = getExceptionMsg(fullMsg);
       // Otherwise just return the whole thing
     } else {
-      msg = exception.getMessage();
+      msg = fullMsg;
     }
     System.out.println(msg);
     System.out.println("See http://robot.obolibrary.org/" + exceptionID + " for more details");
@@ -69,5 +70,21 @@ public class ExceptionHelper {
    */
   private static String getExceptionMsg(String msg) {
     return msg.substring(msg.indexOf(" ") + 1);
+  }
+
+  /**
+   * Given a full exception message, trim the Java exception class from the start. If there is no
+   * class, just return the message. TODO: Support more throwable classes?
+   *
+   * @param exception the Exception
+   * @return trimmed exception message String
+   */
+  private static String trimExceptionMsg(Exception exception) {
+    String msg = exception.getMessage();
+    if (msg.startsWith("java.")) {
+      return msg.substring(msg.indexOf(":") + 1).trim();
+    } else {
+      return msg;
+    }
   }
 }

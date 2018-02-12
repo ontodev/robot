@@ -77,7 +77,7 @@ public class TemplateOperation {
   private static String missingTypeError =
       NS + "12 MISSING TYPE ERROR no class type found for row %2$d (\"%3$s\") in table \"%1$s\".";
 
-/**
+  /**
    * Error message when we cannot create an IRI for a row ID. Expects: table name, row number, row
    * id.
    */
@@ -100,7 +100,7 @@ public class TemplateOperation {
           + "in table \"%1$s\": "
           + "%7$s";
 
-/**
+  /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
    * name, template.
    */
@@ -110,13 +110,12 @@ public class TemplateOperation {
           + "for column %2$d (\"%3$s\") "
           + "in table \"%1$s\".";
 
-/**
+  /**
    * Error message when a class type is not recognized. Should be "subclass" or "equivalent".
    * Expects: table name, row number, row id, value.
    */
   private static String unknownTypeError =
-      NS + "16 UNKNOWN TYPE ERROR "
-      		+ "\"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
+      NS + "16 UNKNOWN TYPE ERROR " + "\"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
 
   /**
    * Return true if the template string is valid, false otherwise.

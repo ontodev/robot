@@ -28,7 +28,7 @@ public class QueryOperation {
   /** Namespace for error messages. */
   private static final String NS = "query#";
 
-  /** Error message when query type is illegal. Expects: query type.*/
+  /** Error message when query type is illegal. Expects: query type. */
   private static final String queryTypeError = NS + "2 QUERY TYPE ERROR Unknown query type: %s";
 
   /**
