@@ -8,7 +8,7 @@ Example:
     
 ## Motivation
 
-Many ontology make use of OWL EquivalenceAxioms, particularly during the development cycle. These are required for being able to use the [reason](reason.html) command to classify an ontology. However, many downstream applications are not equipped to use these. A common scenario is to treat the ontology as a graph, and this graph is typically formed from the SubClassOf axioms in an ontology (both those connecting two named classes, and subClasses of "some values from" restrictions). The relax command allows us to capture some of the information in a form that is accessible to basic downstream applications.
+Many ontology make use of OWL EquivalenceAxioms, particularly during the development cycle. These are required for being able to use the [reason](/reason) command to classify an ontology. However, many downstream applications are not equipped to use these. A common scenario is to treat the ontology as a graph, and this graph is typically formed from the SubClassOf axioms in an ontology (both those connecting two named classes, and subClasses of "some values from" restrictions). The relax command allows us to capture some of the information in a form that is accessible to basic downstream applications.
 
 For example, given an ontology with:
 
@@ -25,4 +25,4 @@ finger SubClassOf 'part of' some hand
 
 ## Combination with other commands
 
-A common sequence is [reason](reason.html) [relax](relax.html) [reduce](reduce.html), with the last step removing any redundancies introduced by the relax step.
+A common sequence is [reason](/reason) [relax](/relax) [reduce](/reduce), with the last step removing any redundancies introduced by the relax step.
