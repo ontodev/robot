@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,24 @@ import org.slf4j.LoggerFactory;
 public class CommandManager implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(CommandManager.class);
+
+  /** Namespace for error messages. */
+  private static final String NS = "errors#";
+
+  /** Error message when no command is provided. */
+  private static final String missingCommandError =
+      NS + "MISSING COMMAND ERROR no command provided";
+
+  /** Error message when the command provided is null. */
+  private static final String nullCommandError = NS + "MISSING COMMAND ERROR command is null: %s";
+
+  /** Error message when no options are provided for a command. */
+  private static final String noOptionsError =
+      NS + "OPTIONS ERROR no options provided for command: %s";
+
+  /** Error message when there is an unknown command provided. */
+  private static final String unknownArgError =
+      NS + "UNKNOWN ARG ERROR unknown command or option: %s";
 
   /** Store the command-line options for the command. */
   private Options globalOptions;
@@ -120,7 +137,7 @@ public class CommandManager implements Command {
     try {
       execute(null, args);
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionHelper.handleException(e);
       printHelp();
       System.exit(1);
     }
@@ -137,6 +154,7 @@ public class CommandManager implements Command {
   public CommandState execute(CommandState state, String[] args) throws Exception {
     CommandLineParser parser = new PosixParser();
     CommandLine line = parser.parse(getOptions(), args, true);
+
     if (line.hasOption("help")) {
       printHelp();
       return null;
@@ -150,9 +168,9 @@ public class CommandManager implements Command {
       state = new CommandState();
     }
 
-    List<String> arguments = new ArrayList<String>(Arrays.asList(args));
+    List<String> arguments = line.getArgList();
     if (arguments.size() == 0) {
-      throw new IllegalArgumentException("No command provided");
+      throw new IllegalArgumentException(missingCommandError);
     }
 
     List<String> globalOptionArgs = getOptionArgs(globalOptions, arguments);
@@ -183,7 +201,7 @@ public class CommandManager implements Command {
       commandName = arguments.remove(0);
     }
     if (commandName == null) {
-      throw new IllegalArgumentException("No command provided");
+      throw new IllegalArgumentException(missingCommandError);
     }
 
     commandName = commandName.trim().toLowerCase();
@@ -200,21 +218,29 @@ public class CommandManager implements Command {
       return state;
     }
     if (!commands.containsKey(commandName)) {
-      throw new IllegalArgumentException("Unknown command or option: " + commandName);
+      throw new IllegalArgumentException(String.format(unknownArgError, commandName));
     }
 
     Command command = commands.get(commandName);
     if (command == null) {
-      throw new IllegalArgumentException("Command is null: " + commandName);
+      throw new IllegalArgumentException(String.format(nullCommandError, commandName));
     }
     if (command.getOptions() == null) {
-      throw new IllegalArgumentException("Command has no options: " + commandName);
+      throw new IllegalArgumentException(String.format(noOptionsError, commandName));
     }
 
     List<String> localOptionArgs = getOptionArgs(command.getOptions(), arguments);
     List<String> optionArgs = new ArrayList<String>();
     optionArgs.addAll(globalOptionArgs);
     optionArgs.addAll(localOptionArgs);
+
+    // Check to make sure the next provided arg is a valid command after parsing Option Args
+    if (!arguments.isEmpty()) {
+      String nextArg = arguments.get(0);
+      if (!commands.keySet().contains(nextArg)) {
+        throw new IllegalArgumentException(String.format(unknownArgError, nextArg));
+      }
+    }
 
     try {
       state = command.execute(state, asArgs(optionArgs));
