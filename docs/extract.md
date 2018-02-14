@@ -39,23 +39,19 @@ For more details see:
 
 ## Error Messages
 
-<a name="error-1"/>
-### 1. Missing MIREOT Term(s) Error
+### Missing MIREOT Term(s) Error
 
 MIREOT requires either `--lower-term` or `--branch-from-term` to proceed. `--upper-term` is optional.
 
-<a name="error-2"/>
-### 2. Missing Lower Term(s) Error
+### Missing Lower Term(s) Error
 
 If an `--upper-term` is specified for MIREOT, `--lower-term` (or terms) must also be specified.
 
-<a name="error-3"/>
-### 3. Invalid Method Error
+### Invalid Method Error
 
 The `--method` option only accepts: MIREOT, STAR, TOP, and BOT.
 
-<a name="error-4"/>
-### 4. Invalid Option Error
+### Invalid Option Error
 
 The following flags *should not* be used with STAR, TOP, or BOT methods:
 * `--upper-term` & `--upper-terms`

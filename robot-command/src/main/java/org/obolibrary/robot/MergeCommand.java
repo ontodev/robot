@@ -109,10 +109,13 @@ public class MergeCommand implements Command {
     }
 
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    // inputOntologies should not be empty
+    boolean notEmpty = false;
     if (state != null && state.getOntology() != null) {
+      notEmpty = true;
       inputOntologies.add(state.getOntology());
     }
-    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line));
+    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
     Map<String, String> mergeOptions = MergeOperation.getDefaultOptions();
 

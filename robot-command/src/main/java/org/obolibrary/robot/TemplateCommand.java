@@ -25,7 +25,8 @@ public class TemplateCommand implements Command {
   private static final String NS = "template#";
 
   /** Error message when a template is not provided. */
-  private static final String missingTemplateError = NS + "1 At least one template is required";
+  private static final String missingTemplateError =
+	NS + "MISSING TEMPLATE ERROR at least one template is required";
 
   /** Store the command-line options for the command. */
   private Options options;

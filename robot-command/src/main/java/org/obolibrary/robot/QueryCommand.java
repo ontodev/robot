@@ -24,10 +24,10 @@ public class QueryCommand implements Command {
   private static final Logger logger = LoggerFactory.getLogger(QueryCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "query#error-";
+  private static final String NS = "query#";
 
   private static final String missingQueryError =
-      NS + "1 MISSING QUERY ERROR at least one query must be provided";
+      NS + "MISSING QUERY ERROR at least one query must be provided";
 
   /** Store the command-line options for the command. */
   private Options options;

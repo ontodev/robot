@@ -33,52 +33,51 @@ public class CommandLineHelper {
   private static final Logger logger = LoggerFactory.getLogger(CommandLineHelper.class);
 
   /** Namespace for general input error messages. */
-  private static final String NS = "errors#input-";
+  private static final String NS = "errors#";
 
   /** Error message when --input is provided in a chained command. */
   private static final String chainedInputError =
-      NS + "1 CHAINED INPUT ERROR do not use an --input option for chained commands";
+      NS + "CHAINED INPUT ERROR do not use an --input option for chained commands";
 
   /**
    * Error message when an invalid extension is provided (file format). Expects file format. This
    * message is duplicated in IOHelper without the NS and ID.
    */
-  private static final String invalidFormatError = NS + "2 INVALID FORMAT ERROR unknown format: %s";
+  private static final String invalidFormatError = NS + "INVALID FORMAT ERROR unknown format: %s";
 
   /** Error message when an invalid IRI is provided. Expects the entry field and term. */
   private static final String invalidIRIError =
-      NS + "3 INVALID IRI ERROR %1 \"%2\" is not a valid CURIE or IRI";
+      NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
 
   /**
    * Error message when an invalid prefix is provided. Expects the combined prefix. This message is
    * duplicated in IOHelper without the NS and ID.
    */
   private static final String invalidPrefixError =
-      NS + "4 INVALID PREFIX ERROR invalid prefix string: %s";
+      NS + "INVALID PREFIX ERROR invalid prefix string: %s";
 
   /** Error message when user provides an invalid reasoner. Expects reasonerName in formatting. */
   private static final String invalidReasonerError =
-      NS + "5 INVALID REASONER ERROR unknown reasoner: %s";
+      NS + "INVALID REASONER ERROR unknown reasoner: %s";
 
   /** Error message when no input ontology is provided. */
-  private static final String missingInputError =
-      NS + "6 MISSING INPUT ERROR an --input is required";
+  private static final String missingInputError = NS + "MISSING INPUT ERROR an --input is required";
 
   /** Error message when no input ontology is provided for methods that accept multiple inputs. */
   private static final String missingInputsError =
-      NS + "6 MISSING INPUT ERROR at least one --input is required";
+      NS + "MISSING INPUT ERROR at least one --input is required";
 
   /** Error message when input terms are not provided. */
   private static final String missingTermsError =
-      NS + "7 MISSING TERMS ERROR term(s) are required with --term or --term-file";
+      NS + "MISSING TERMS ERROR term(s) are required with --term or --term-file";
 
   /** Error message when more than one --input is specified, excluding merge and unmerge. */
   private static final String multipleInputsError =
-      NS + "8 MULITPLE INPUTS ERROR only one --input is allowed";
+      NS + "MULITPLE INPUTS ERROR only one --input is allowed";
 
   /** Error message when the --inputs pattern does not include * or ?, or is not quoted */
   private static final String wildcardError =
-      NS + "9 WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
+      NS + "WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
 
   /**
    * Given a single string, return a list of strings split at whitespace but allowing for quoted
@@ -266,6 +265,7 @@ public class CommandLineHelper {
   public static String getDefaultValue(CommandLine line, String name, String defaultValue) {
     String result = defaultValue;
     if (line.hasOption(name)) {
+      // Only one arg should be passed per option
       result = line.getOptionValue(name);
     }
     return result;
@@ -358,11 +358,14 @@ public class CommandLineHelper {
    *
    * @param ioHelper the IOHelper to load the ontology with
    * @param line the command line to use
+   * @param allowEmpty if an empty list may be returned (when chaining commands, an input was
+   *     already provided)
    * @return the list of input ontologies
    * @throws IllegalArgumentException if requires options are missing
    * @throws IOException if the ontology cannot be loaded
    */
-  public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
+  public static List<OWLOntology> getInputOntologies(
+      IOHelper ioHelper, CommandLine line, boolean allowEmpty)
       throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
 
@@ -399,7 +402,7 @@ public class CommandLineHelper {
       }
     }
 
-    if (inputOntologies.isEmpty()) {
+    if (inputOntologies.isEmpty() && !allowEmpty) {
       throw new IllegalArgumentException(missingInputsError);
     }
 

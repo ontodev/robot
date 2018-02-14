@@ -17,18 +17,11 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
 
 ## Error Messages
 
-<a name="error-1"/>
-### 1. Missing Output Error
+### Output Error
 
-An output file must be specified for `convert`. If chaining commands, place `convert` last.
+`convert` requires exactly one `--output`. If you do not specify the `--output`, or specify more than one, ROBOT cannot proceed. If chaining commands, place `convert` last.
 
-<a name="error-2"/>
-### 2. Multiple Outputs Error
-
-Only one `--output` option may be specified for `convert`.
-
-<a name="error-3"/>
-### 3. Missing Format Error
+### Format Error
 
 The `convert` command expects either the `--output` file name to include an extension, or a format specified by `--format`.
 

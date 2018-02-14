@@ -22,28 +22,29 @@ public class ExtractCommand implements Command {
   private static final Logger logger = LoggerFactory.getLogger(ExtractCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "extract#error-";
+  private static final String NS = "extract#";
 
   /** Error message when lower or branch terms are not specified with MIREOT. */
   private static final String missingMireotTermsError =
       NS
-          + "1 MISSING MIREOT TERMS ERROR "
+          + "MISSING MIREOT TERMS ERROR "
           + "either lower term(s) or branch term(s) must be specified for MIREOT";
 
   /** Error message when only upper terms are specified with MIREOT. */
   private static final String missingLowerTermError =
       NS
-          + "2 MISSING LOWER TERMS ERROR "
+          + "MISSING LOWER TERMS ERROR "
           + "lower term(s) must be specified with upper term(s) for MIREOT";
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
-      NS + "3 INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT";
+      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT";
 
   private static final String invalidOptionError =
       NS
-          + "4 INVALID OPTION ERROR "
-          + "only --term or --term-file can be used to specify extract term(s) for STAR, TOP, or BOT";
+          + "INVALID OPTION ERROR "
+          + "only --term or --term-file can be used to specify extract term(s) "
+          + "for STAR, TOP, or BOT";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -164,7 +165,7 @@ public class ExtractCommand implements Command {
       List<OWLOntology> outputOntologies = new ArrayList<OWLOntology>();
       // Get terms from input (ensuring that they are in the input ontology)
       // It's okay for any of these to return empty (allowEmpty = true)
-      // Checks for empty sets below
+      // Checks for empty sets later
       Set<IRI> upperIRIs =
           OntologyHelper.filterExistingTerms(
               inputOntology,

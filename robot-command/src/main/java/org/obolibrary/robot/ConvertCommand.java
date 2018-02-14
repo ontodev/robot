@@ -18,19 +18,17 @@ public class ConvertCommand implements Command {
   private static final Logger logger = LoggerFactory.getLogger(ConvertCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "convert#error-";
+  private static final String NS = "convert#";
 
   /** Error message when no --output is provided. */
-  private static final String missingOutputError =
-      NS + "1 MISSING OUTPUT ERROR an output file is required";
+  private static final String missingOutputError = NS + "OUTPUT ERROR an output file is required";
 
   /** Error message when more than one --output is provided. */
   private static final String multipleOutputsError =
-      NS + "2 MULTIPLE OUTPUTS ERROR only one output file is allowed";
+      NS + "OUTPUT ERROR only one output file is allowed";
 
   /** Error message when a --format is not specified and the --output does not have an extension. */
-  private static final String missingFormatError =
-      NS + "3 MISSING FORMAT ERROR an output format is required";
+  private static final String missingFormatError = NS + "FORMAT ERROR an output format is required";
 
   /** Store the command-line options for the command. */
   private Options options;

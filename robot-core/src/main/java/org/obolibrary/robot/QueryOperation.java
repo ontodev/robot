@@ -29,7 +29,7 @@ public class QueryOperation {
   private static final String NS = "query#";
 
   /** Error message when query type is illegal. Expects: query type. */
-  private static final String queryTypeError = NS + "2 QUERY TYPE ERROR Unknown query type: %s";
+  private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
 
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed. NOTE: This is not elegant!

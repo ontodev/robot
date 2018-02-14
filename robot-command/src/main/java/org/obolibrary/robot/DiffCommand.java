@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +20,21 @@ public class DiffCommand implements Command {
   private static final Logger logger = LoggerFactory.getLogger(DiffCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "diff#error-";
+  private static final String NS = "diff#";
+
+  private static final String doubleLeftError =
+      NS + "DOUBLE INPUT ERROR only one left ontology allowed";
+
+  private static final String doubleRightError =
+      NS + "DOUBLE INPUT ERROR only one right ontology allowed";
 
   /** Error message when --left is not provided. */
   private static final String missingLeftError =
-      NS + "1 MISSING INPUT ERROR Left ontology is required";
+      NS + "MISSING INPUT ERROR left ontology is required";
 
   /** Error message when --right is not provided. */
   private static final String missingRightError =
-      NS + "1 MISSING INPUT ERROR Right ontology is required";
+      NS + "MISSING INPUT ERROR right ontology is required";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -36,9 +43,9 @@ public class DiffCommand implements Command {
   public DiffCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("l", "left", true, "load left ontology from file");
-    // o.addOption("L", "left-iri",  true, "load left ontology from IRI");
+    o.addOption("L", "left-iri", true, "load left ontology from IRI");
     o.addOption("r", "right", true, "load right ontology from file");
-    // o.addOption("R", "right-iri", true, "load right ontology from IRI");
+    o.addOption("R", "right-iri", true, "load right ontology from IRI");
     o.addOption("o", "output", true, "save results to file");
     options = o;
   }
@@ -118,8 +125,13 @@ public class DiffCommand implements Command {
     }
     if (leftOntology == null) {
       String leftOntologyPath = CommandLineHelper.getOptionalValue(line, "left");
-      if (leftOntologyPath != null) {
+      String leftOntologyIRI = CommandLineHelper.getOptionalValue(line, "left-iri");
+      if (leftOntologyPath != null && leftOntologyIRI != null) {
+        throw new IllegalArgumentException(doubleLeftError);
+      } else if (leftOntologyPath != null) {
         leftOntology = ioHelper.loadOntology(leftOntologyPath);
+      } else if (leftOntologyIRI != null) {
+        leftOntology = ioHelper.loadOntology(IRI.create(leftOntologyIRI));
       }
     }
     if (leftOntology == null) {
@@ -129,8 +141,13 @@ public class DiffCommand implements Command {
     OWLOntology rightOntology = null;
     if (rightOntology == null) {
       String rightOntologyPath = CommandLineHelper.getOptionalValue(line, "right");
-      if (rightOntologyPath != null) {
+      String rightOntologyIRI = CommandLineHelper.getOptionalValue(line, "right-iri");
+      if (rightOntologyPath != null && rightOntologyIRI != null) {
+        throw new IllegalArgumentException(doubleRightError);
+      } else if (rightOntologyPath != null) {
         rightOntology = ioHelper.loadOntology(rightOntologyPath);
+      } else if (rightOntologyIRI != null) {
+        rightOntology = ioHelper.loadOntology(IRI.create(rightOntologyIRI));
       }
     }
     if (rightOntology == null) {

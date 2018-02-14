@@ -18,17 +18,14 @@ OWL 2 has a number of <a href="https://www.w3.org/TR/owl2-profiles/" target="_bl
 
 ## Error Messages
 
-<a name="error-1"/>
-### 1. Missing Profile Error
+### Missing Profile Error
 
 Occurs when a `--profile` option is not provided.
 
-<a name="error-2"/>
-### 2. Invalid Profile Error
+### Invalid Profile Error
 
 Occurs when the argument to `--profile` is not one of the following: EL, DL, RL, QL, or Full. See the above documentation for more details.
 
-<a name="error-3"/>
-### 3. Profile Violation Error
+### Profile Violation Error
 
 Occurs when the `--input` ontology does not conform to the `--profile`. See the profile descriptions for more details.

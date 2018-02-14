@@ -102,10 +102,12 @@ public class UnmergeCommand implements Command {
     }
 
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    boolean notEmpty = false;
     if (state != null && state.getOntology() != null) {
+      notEmpty = true;
       inputOntologies.add(state.getOntology());
     }
-    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line));
+    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
     OWLOntology outputOntology = UnmergeOperation.unmerge(inputOntologies);
 

@@ -64,13 +64,11 @@ These three options are particularly useful when chaining commands. For instance
 
 ## Error Messages
 
-<a name="error-1"/>
-### 1. Missing Template Error
+### Missing Template Error
 
 You must specify at least one template with `--template` to proceed.
 
-<a name="error-2"/>
-### 2. Annotation Property Error
+### Annotation Property Error
 
 The annotation property provided could not be resolved. Check your template to ensure the provided annotation property is in a correct IRI or CURIE format. For legibility, using CURIEs is recommended, but you must ensure that the prefix is defined.
 ```
@@ -78,8 +76,7 @@ A rdfs:label
 A http://www.w3.org/2000/01/rdf-schema#label
 ```
 
-<a name="error-3"/>
-### 3. Datatype Error
+### Datatype Error
 
 The datatype provided in an `AT` template string could not be resolved. Check your template to ensure the provided datatype is in a correct IRI or CURIE format. For legibility, using CURIEs is recommended, but you must ensure that the prefix is defined.
 ```
@@ -87,44 +84,37 @@ AT rdfs:label^^xsd:string
 AT rdfs:label^^http://www.w3.org/2001/XMLSchema#string
 ```
 
-<a name="error-4"/>
-### 4. File Type Error
+### File Type Error
 
 The `--template` option accepts the following file types: CSV, TSV, or TAB.
 
-<a name="error-5"/>
-### 5. ID Error
+### ID Error
 
 Each template must have an ID column. Keep in mind that if the template has an ID column, but it is not filled in for a row, that row will be skipped.
 
-<a name="error-6"/>
-### 6. IRI Error
+### IRI Error
 
 The IRI provided as the value (in a row) to an `AI` template string could not be resolved as an IRI. Check your template to ensure the provided value is in a correct IRI or CURIE format. If using CURIEs, remember to ensure the prefix is defined.
 
-<a name="error-7"/>
-### 7. Language Format Error
+### Language Format Error
 
 The template string for an `AL` annotation must always include `@`.
 ```
 AL rdfs:label@en
 ```
 
-<a name="error-8"/>
-### 8. Template File Error
+### Template File Error
 
 The template cannot be found in the current directory. Make sure the file exists and your path is correct.
 
-<a name="error-9"/>
-### 9. Typed Format Error
+### Typed Format Error
 
 The template string for an `AT` annotation must always include `^^`.
 ```
 AT rdfs:label^^xsd:string
 ```
 
-<a name="error-10"/>
-### 10. Axiom Annotation Error
+### Axiom Annotation Error
 
 An axiom annotation is an annotation on an axiom, either a class axiom or another annotation. Because of this, any time `>A` is used, an annotation must be in the previous column. Any time `>C` is used, a class expression must be in the previous column.
 ```
@@ -132,32 +122,26 @@ A rdfs:label,>A rdfs:comment
 C %,>C rdfs:comment
 ```
 
-<a name="error-11"/>
-### 11. Column Mismatch Error
+### Column Mismatch Error
 
 There number of header columns (first row) must be equal to the number of template string columns (second row).
 
-<a name="error-12"/>
-### 12. Missing Type Error
+### Missing Type Error
 
 If no `CLASS_TYPE` column is included, ROBOT will default to using `subclass`. If a `CLASS_TYPE` column is included, though, each row must include a specified class type. If the `CLASS_TYPE` is left empty, this error message will be returned.
 
-<a name="error-13"/>
-### 13. Null ID Error
+### Null ID Error
 
 An IRI cannot be created from the provided ID. This is most likely because the ID is not formatted properly, as an IRI or a CURIE.
 
-<a name="error-14"/>
-### 14. Parse Error
+### Parse Error
 
 The content of a class expression cell (`C`) was not able to be parsed by OWLAPI. Check the formatting of the cell and the template string to ensure you are using valid CURIEs and/or IRIs.
 
-<a name="error-15"/>
-### 15. Unknown Template Error
+### Unknown Template Error
 
 Valid template strings are limited to the <a href="#template-strings">described above</a>. If a different template string is provided, this error message will be returned.
 
-<a name="error-16"/>
-### 16. Unknown Type Error
+### Unknown Type Error
 
 The `CLASS_TYPE` values are limited to `subclass` or `equivalent`. Anything else placed in that column will result in this error message.

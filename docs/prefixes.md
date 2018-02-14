@@ -22,7 +22,6 @@ The various prefix options can be used with any command. When chaining commands,
 
 ## Error Messages
 
-<a name="error-1"/>
-### 1. JDON-LD Error
+### JDON-LD Error
 
 ROBOT encounterd a problem while writing the given prefixes to JSON-LD.

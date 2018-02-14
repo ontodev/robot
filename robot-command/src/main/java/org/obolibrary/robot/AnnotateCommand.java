@@ -20,36 +20,32 @@ public class AnnotateCommand implements Command {
   private static final Logger logger = LoggerFactory.getLogger(AnnotateCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "annotate#error-";
+  private static final String NS = "annotate#";
 
   /** Error message when --annotation is not a valid PROP VALUE. */
   private static final String annotationFormatError =
-      NS + "1 ANNOTATION FORMAT ERROR each annotation must include PROP VALUE";
+      NS + "ANNOTATION FORMAT ERROR each annotation must include PROP VALUE";
 
   /** Error message when --link-annotation is not a valid PROP LINK. */
   private static final String linkAnnotationFormatError =
-      NS + "2 LINK ANNOTATION FORMAT ERROR each link annotation must include PROP LINK";
+      NS + "ANNOTATION FORMAT ERROR each link annotation must include PROP LINK";
 
   /** Error message when --language-annotation is not a valid PROP VALUE LANG. */
   private static final String langAnnotationFormatError =
-      NS
-          + "3 LANGUAGE ANNOTATION FORMAT ERROR "
-          + "each language annotation must include PROP VALUE LANG";
+      NS + "ANNOTATION FORMAT ERROR " + "each language annotation must include PROP VALUE LANG";
 
   /** Error message when --typed-annotation is not a valid PROP VALUE TYPE. */
   private static final String typedAnnotationFormatError =
-      NS
-          + "4 TYPED ANNOTATION FORMAT ERROR "
-          + "each typed annotation must include PROP VALUE TYPE";
+      NS + "ANNOTATION FORMAT ERROR " + "each typed annotation must include PROP VALUE TYPE";
 
   /** Error message when --axiom-annotation is not a valid PROP VALUE. */
   private static final String axiomAnnotationFormatError =
-      NS + "5 AXIOM ANNOTATION FORMAT ERROR each axiom annotation must include PROP VALUE";
+      NS + "ANNOTATION FORMAT ERROR each axiom annotation must include PROP VALUE";
 
   /** Error message when there are no annotation inputs. */
   private static final String missingAnnotationError =
       NS
-          + "6 MISSING ANNOTATION ERROR "
+          + "MISSING ANNOTATION ERROR "
           + "at least one annotation option or annotation file is required";
 
   /** Store the command-line options for the command. */

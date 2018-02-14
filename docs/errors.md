@@ -6,52 +6,66 @@ If you run into any other errors or exceptions not listed, or have any issues wi
 
 ---
 
-## Input Errors
+## Command & Option Errors
 
-<a name="input-1"/>
-### 1. Chained Input Error
+### Chained Input Error
 
 [Chained commands](/chaining) take the output of the last command as the input of the next. Because of this, `--input` should only be used with the first command in the chain. This excludes [merge](/merge) and [unmerge](/unmerge), which allow multiple inputs.
 
-<a name="input-2"/>
-### 2. Invalid Format Error
+### Invalid Format Error
 
 When specifying the `--output` (or `--format` for converting), make sure the file has a valid extension. See [convert](/convert) for a current list of ontology formats.
 
-<a name="input-3"/>
-### 3. Invalid IRI Error
+### Invalid IRI Error
 
 Many commands involve creating IRIs from provided string representations of the <a href="https://www.w3.org/TR/2010/NOTE-curie-20101216/" target="_blank">CURIE</a> or full IRI. If the provided field is not a string in valid CURIE or IRI format, the actual IRI cannot be created.
 
 When using CURIEs, make sure the prefix is defined, or add it with `--prefix`.
 
-<a name="input-4"/>
-### 4. Invalid Prefix Error
+### Invalid Prefix Error
 
 Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/prefixes) for more details on adding prefixes.
 
-<a name="input-5"/>
-### 5. Invalid Reasoner Error
+### Invalid Reasoner Error
 
 [Reason](/reason), [materialize](/materialize), and [reduce](/reduce) all expect `--reasoner` options. All three commands support `structural`, `hermit`, `jfact`, and `elk`. Only the reason command supports `emr`. Click on the command for more details
 
-<a name="input-6"/>
-### 6. Missing Input Error
+### Missing Command Error
+
+A valid command must be provided, running just `robot` will not perform any action.
+
+### Missing Input Error
 
 An input ontology must be specified with `--input`. In the case of [merge](/merge) and [unmerge](/unmerge), at least one input is required.
 
-<a name="input-7"/>
-### 7. Missing Term(s) Error
+### Missing Term(s) Error
 
 Some commands ([extract](/extract) and [filter](/filter)) require terms as input in addition to the ontology. Click on the commands for more details.
 
-<a name="input-8"/>
-### 8. Multiple Inputs Error
+### Multiple Inputs Error
 
 For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `--input` may be specified.
 
-<a name="input-9"/>
-### 9. Wildcard Error
+### Options Error
+
+Each command requires a set of options, although it is more common to get a `MISSING INPUT ERROR`. See the command-specific documentation for more details.
+
+### Unknown Arg Error
+
+This error message may appear for one of two common reasons:
+1. A command or option (the argument) was typed incorrectly, or it not exist.
+
+2. Multiple arguments have been provided to an option that only accepts one argument. For example, the `--term` option for [extract](/extract) only accepts one argument. The following would **not** work:
+```
+$ robot extract --input foo.owl --term foo:0000001 foo:0000002
+UNKNOWN ARG ERROR unknown command or option: foo:0000002
+```
+Instead, use this (or a `--term-file`):
+```
+robot extract --input foo.owl --term foo:0000001 --term foo:0000002
+```
+
+### Wildcard Error
 
 Any pattern specified with `--inputs` for [merge](/merge) and [unmerge](/unmerge) must be a wildcard pattern, including either `*` (to match any number of characters) or `?` (to match any single character).
 
@@ -59,13 +73,12 @@ Any pattern specified with `--inputs` for [merge](/merge) and [unmerge](/unmerge
 
 ## Ontology Errors
 
-<a name="ontology-1"/>
-### 1. Axiom Type Error
+### Axiom Type Error
 
-Currently, ROBOT can only annotate subClassOf axioms. See <a href="" target="_blank">GitHub issue #67</a> for more details.
+Currently, ROBOT can only annotate subClassOf axioms.<br>
+See <a href="" target="_blank">GitHub issue #67</a> for more details.
 
-<a name="ontology-2"/>
-### 2. Empty Terms Error
+### Empty Terms Error
 
 For commands that take input terms, ROBOT will check the ontology to ensure those terms exist before proceeding. If the terms do not exist, then there are no tasks to complete so an error message is returned.
 

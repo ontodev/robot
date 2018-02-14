@@ -37,44 +37,44 @@ public class TemplateHelper {
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
   /** Namespace for error messages. */
-  private static final String NS = "template#error-";
+  private static final String NS = "template#";
 
   /**
    * Error message when annotation property cannot be resolved. Expects: annotation property name.
    */
   private static final String annotationPropertyError =
-      NS + "2 ANNOTATION PROPERTY ERROR could not handle annotation property: %s";
+      NS + "ANNOTATION PROPERTY ERROR could not handle annotation property: %s";
 
   /** Error message when datatype cannot be resolved. Expects: datatype name. */
-  private static final String datatypeError = NS + "3 DATATYPE ERROR could not find datatype: %s";
+  private static final String datatypeError = NS + "DATATYPE ERROR could not find datatype: %s";
 
   /** Error message when template file type is not CSV, TSV, or TAB. Expects: file name. */
   private static final String fileTypeError =
-      NS + "4 FILE TYPE ERROR unrecognized file type for: %s";
+      NS + "FILE TYPE ERROR unrecognized file type for: %s";
 
   /** Error message when the template does not have an ID column. Expects: table name. */
-  private static final String idError = NS + "5 ID ERROR an \"ID\" column is required in table %s";
+  private static final String idError = NS + "ID ERROR an \"ID\" column is required in table %s";
 
   /** Error message when the IRI in an IRI annotation cannot be resolved. Expects: value. */
-  private static final String iriError = NS + "6 IRI ERROR could not create IRI annotation: %s";
+  private static final String iriError = NS + "IRI ERROR could not create IRI annotation: %s";
 
   /**
    * Error message when a language annotation string does not include "@{lang}". Expects: template
    * string
    */
   private static final String languageFormatError =
-      NS + "7 LANGUAGE FORMAT ERROR invalid language annotation template string: %s";
+      NS + "LANGUAGE FORMAT ERROR invalid language annotation template string: %s";
 
   /** Error message when the template file does not exist. Expects: file name. */
   private static final String templateFileError =
-      NS + "8 TEMPLATE FILE ERROR template %s does not exist";
+      NS + "TEMPLATE FILE ERROR template %s does not exist";
 
   /**
    * Error message when a language annotation string does not include "^^{type}". Expects: template
    * string
    */
   private static final String typedFormatError =
-      NS + "9 TYPED FORMAT ERROR invalid typed annotation string: %s";
+      NS + "TYPED FORMAT ERROR invalid typed annotation string: %s";
 
   /** OWL Namespace. */
   private static String owl = "http://www.w3.org/2002/07/owl#";

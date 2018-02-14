@@ -47,7 +47,7 @@ public class TemplateOperation {
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
   /** Namespace for error messages. */
-  private static final String NS = "template#error-";
+  private static final String NS = "template#";
 
   /**
    * Error message when an axiom annotation does not have the appropriate annotation or class
@@ -56,7 +56,7 @@ public class TemplateOperation {
    */
   private static String axiomAnnotationError =
       NS
-          + "10 AXIOM ANNOTATION ERROR \"%6$s\" at row %2$d (\"%3$s\"), "
+          + "AXIOM ANNOTATION ERROR \"%6$s\" at row %2$d (\"%3$s\"), "
           + "column %4$d (\"%5$s\") in table \"%1$s\" "
           + "requires %7$s in the previous column.";
 
@@ -66,7 +66,7 @@ public class TemplateOperation {
    */
   private static String columnMismatchError =
       NS
-          + "11 COLUMN MISMATCH ERROR the number of header columns (%2$d) must match "
+          + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match "
           + "the number of template columns (%3$d) "
           + "in table \"%1$s\".";
 
@@ -75,7 +75,7 @@ public class TemplateOperation {
    * "equivalent". Expects: table name, row number, row id.
    */
   private static String missingTypeError =
-      NS + "12 MISSING TYPE ERROR no class type found for row %2$d (\"%3$s\") in table \"%1$s\".";
+      NS + "MISSING TYPE ERROR no class type found for row %2$d (\"%3$s\") in table \"%1$s\".";
 
   /**
    * Error message when we cannot create an IRI for a row ID. Expects: table name, row number, row
@@ -83,7 +83,7 @@ public class TemplateOperation {
    */
   private static String nullIDError =
       NS
-          + "13 NULL ID ERROR could not create IRI for ID \"%3$s\" "
+          + "NULL ID ERROR could not create IRI for ID \"%3$s\" "
           + "with label \"%4$s\" "
           + "at row %2$d "
           + "in table \"%1$s\".";
@@ -94,7 +94,7 @@ public class TemplateOperation {
    */
   private static String parseError =
       NS
-          + "14 PARSE ERROR error while parsing \"%6$s\" "
+          + "PARSE ERROR error while parsing \"%6$s\" "
           + "at row %2$d (\"%3$s\"), "
           + "column %4$d (\"%5$s\") "
           + "in table \"%1$s\": "
@@ -106,7 +106,7 @@ public class TemplateOperation {
    */
   private static String unknownTemplateError =
       NS
-          + "15 UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" "
+          + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" "
           + "for column %2$d (\"%3$s\") "
           + "in table \"%1$s\".";
 
@@ -115,7 +115,7 @@ public class TemplateOperation {
    * Expects: table name, row number, row id, value.
    */
   private static String unknownTypeError =
-      NS + "16 UNKNOWN TYPE ERROR " + "\"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
+      NS + "UNKNOWN TYPE ERROR \"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
 
   /**
    * Return true if the template string is valid, false otherwise.
