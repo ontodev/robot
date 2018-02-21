@@ -20,8 +20,7 @@ public class ExportPrefixesCommand implements Command {
   private static final String NS = "prefixes#";
 
   /** Error message when JSON-LD context cannot be generated. */
-  private static final String jsonLDError =
-      NS + "JSON-LD ERROR the JSON-LD could not be generated";
+  private static final String jsonLDError = NS + "JSON-LD ERROR the JSON-LD could not be generated";
 
   /** Store the command-line options for the command. */
   private Options options;

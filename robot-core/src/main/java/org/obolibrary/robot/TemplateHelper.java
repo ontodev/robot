@@ -49,8 +49,7 @@ public class TemplateHelper {
   private static final String datatypeError = NS + "DATATYPE ERROR could not find datatype: %s";
 
   /** Error message when template file type is not CSV, TSV, or TAB. Expects: file name. */
-  private static final String fileTypeError =
-      NS + "FILE TYPE ERROR unrecognized file type for: %s";
+  private static final String fileTypeError = NS + "FILE TYPE ERROR unrecognized file type for: %s";
 
   /** Error message when the template does not have an ID column. Expects: table name. */
   private static final String idError = NS + "ID ERROR an \"ID\" column is required in table %s";

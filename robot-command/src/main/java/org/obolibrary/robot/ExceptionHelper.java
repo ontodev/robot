@@ -75,19 +75,19 @@ public class ExceptionHelper {
       return msg;
     }
   }
-  
+
   /**
    * Given an exception message, remove the error namespace. If no namespace is provided, just
    * return the message.
-   * 
+   *
    * @param msg exception message
    * @return message without the command namespace
    */
   private static String trimExceptionID(String msg) {
-	if (msg.contains("#")) {
-	  return msg.substring(msg.indexOf("#"));
-	} else {
-	  return msg;
-	}
+    if (msg.contains("#")) {
+      return msg.substring(msg.indexOf("#"));
+    } else {
+      return msg;
+    }
   }
 }

@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,7 +169,7 @@ public class CommandManager implements Command {
       state = new CommandState();
     }
 
-    List<String> arguments = line.getArgList();
+    List<String> arguments = new ArrayList<String>(Arrays.asList(args));
     if (arguments.size() == 0) {
       throw new IllegalArgumentException(missingCommandError);
     }

@@ -34,7 +34,7 @@ public class VerifyCommand implements Command {
 
   /** Error message when no query is provided. */
   private static final String missingQueryError =
-	NS + "MISSING QUERY ERROR at least one query is required";
+      NS + "MISSING QUERY ERROR at least one query is required";
 
   /** Store the command-line options for the command. */
   private Options options;
