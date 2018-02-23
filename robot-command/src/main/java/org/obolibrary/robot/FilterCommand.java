@@ -105,7 +105,10 @@ public class FilterCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line);
+    // Filter out terms that are not in the ontology
+    Set<IRI> terms =
+        OntologyHelper.filterExistingTerms(
+            ontology, CommandLineHelper.getTerms(ioHelper, line), false);
     Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
     for (IRI term : terms) {
       properties.add(

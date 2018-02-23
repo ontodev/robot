@@ -33,17 +33,16 @@ public class TemplateOperationTest extends CoreTest {
     QuotedEntityChecker checker = new QuotedEntityChecker();
     checker.setIOHelper(new IOHelper());
 
-    ann = TemplateOperation.getStringAnnotation(checker, "A rdfs:label", "bar");
+    ann = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", "bar");
     assertEquals("Annotation(rdfs:label \"bar\"^^xsd:string)", ann.toString());
 
-    ann = TemplateOperation.getTypedAnnotation(checker, "AT rdfs:label^^xsd:integer", "1");
+    ann = TemplateHelper.getTypedAnnotation(checker, "AT rdfs:label^^xsd:integer", "1");
     assertEquals("Annotation(rdfs:label \"1\"^^xsd:integer)", ann.toString());
 
-    ann = TemplateOperation.getLanguageAnnotation(checker, "AL rdfs:label@en", "bar");
+    ann = TemplateHelper.getLanguageAnnotation(checker, "AL rdfs:label@en", "bar");
     assertEquals("Annotation(rdfs:label \"bar\"@en)", ann.toString());
 
-    ann =
-        TemplateOperation.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"));
+    ann = TemplateHelper.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"));
     assertEquals("Annotation(rdfs:label <http://bar.com>)", ann.toString());
   }
 
@@ -95,7 +94,7 @@ public class TemplateOperationTest extends CoreTest {
   public void testTemplateCSV() throws Exception {
     Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
     String path = "/template.csv";
-    tables.put(path, IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
+    tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
     OWLOntology template = TemplateOperation.template(tables, simpleParts);
     OntologyHelper.setOntologyIRI(template, IRI.create("http://test.com/template.owl"), null);
@@ -111,9 +110,9 @@ public class TemplateOperationTest extends CoreTest {
   public void testTemplates() throws Exception {
     Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
     String path = "/template-ids.csv";
-    tables.put(path, IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
+    tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     path = "/template-labels.csv";
-    tables.put(path, IOHelper.readCSV(this.getClass().getResourceAsStream(path)));
+    tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
     OWLOntology template = TemplateOperation.template(tables, simpleParts);
     assertEquals("Count classes", 4, template.getClassesInSignature().size());

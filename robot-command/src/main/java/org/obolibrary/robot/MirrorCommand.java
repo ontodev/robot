@@ -104,7 +104,7 @@ public class MirrorCommand implements Command {
     File catalogFile = CommandLineHelper.getOutputFile(line);
     if (catalogFile == null) {
       catalogFile = new File(dir + "/catalog-v001.xml");
-      logger.info("Using default catalog with specified directory:" + catalogFile);
+      logger.info("Using default catalog with specified directory: " + catalogFile);
     }
 
     MirrorOperation.mirror(ontology, new File(dir), catalogFile);

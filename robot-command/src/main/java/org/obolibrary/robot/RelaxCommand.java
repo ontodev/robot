@@ -52,7 +52,7 @@ public class RelaxCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot relax --input <file> " + "--reasoner <name> " + "[options] " + "--output <file>";
+    return "robot relax --input <file> " + "[options] " + "--output <file>";
   }
 
   /**

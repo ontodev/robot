@@ -16,3 +16,5 @@ This can be [chained](/chaining) with [filter](/filter) and [reduce](/reduce) to
       --term BFO:0000050 \
       filter -t BFO:0000050 \
       reduce --output results/emr_reduced.obo
+
+See [reason](/reason) for details on supported reasoners (EMR is not supported in `materialize`).

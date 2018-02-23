@@ -19,3 +19,33 @@ Including at least the following annotations is recommended:
   * Title (<a href="http://purl.org/dc/terms/title" target="_blank">`dcterms:title`</a>)
   * Description (<a href="http://purl.org/dc/terms/description" target="_blank">`dcterms:description`</a>)
   * License (<a href="http://purl.org/dc/terms/license" target="_blank">`dcterms:license`</a>)
+
+---
+
+## Error Messages
+
+### Annotation Format Error
+
+Arguments to `--annotation`  or `--axiom-annotation` option must follow the `PROP VALUE` format:
+```
+--annotation rdfs:comment "this is a comment"`
+```
+
+Arguments to `--link-annotation` option must follow the `PROP LINK` format:
+```
+--link-annotation dc:license https://creativecommons.org/publicdomain/zero/1.0/
+```
+
+Arguments to `--language-annotation` option must follow the `PROP VALUE LANG` format:
+```
+--language-annotation rdfs:label "label" en
+```
+
+Arguments to `--typed-annotation` option must follow the `PROP VALUE TYPE` format:
+```
+--typed-annotation rdfs:label "label" xsd:string
+```
+
+### Missing Annotation Error
+
+No annotations were provided for the `annotate` command. The `--remove-annotations` option is also accepted in place of annotations.

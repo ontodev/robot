@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,35 @@ import org.slf4j.LoggerFactory;
 public class AnnotateCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(AnnotateCommand.class);
+
+  /** Namespace for error messages. */
+  private static final String NS = "annotate#";
+
+  /** Error message when --annotation is not a valid PROP VALUE. */
+  private static final String annotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR each annotation must include PROP VALUE";
+
+  /** Error message when --link-annotation is not a valid PROP LINK. */
+  private static final String linkAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR each link annotation must include PROP LINK";
+
+  /** Error message when --language-annotation is not a valid PROP VALUE LANG. */
+  private static final String langAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR " + "each language annotation must include PROP VALUE LANG";
+
+  /** Error message when --typed-annotation is not a valid PROP VALUE TYPE. */
+  private static final String typedAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR " + "each typed annotation must include PROP VALUE TYPE";
+
+  /** Error message when --axiom-annotation is not a valid PROP VALUE. */
+  private static final String axiomAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR each axiom annotation must include PROP VALUE";
+
+  /** Error message when there are no annotation inputs. */
+  private static final String missingAnnotationError =
+      NS
+          + "MISSING ANNOTATION ERROR "
+          + "at least one annotation option or annotation file is required";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -133,60 +163,96 @@ public class AnnotateCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
+    boolean hasAnnotation = false;
 
     // Remove all annotation on the ontology
     if (line.hasOption("remove-annotations")) {
+      hasAnnotation = true;
       OntologyHelper.removeOntologyAnnotations(ontology);
     }
 
-    // Add annotations
-    List<String> items;
+    String property = null;
+    String value = null;
 
     // Add annotations with PROP VALUE
-    items = CommandLineHelper.getOptionValues(line, "annotation");
-    while (items.size() > 0) {
-      String property = items.remove(0);
-      String value = items.remove(0);
-      OntologyHelper.addOntologyAnnotation(
-          ontology, ioHelper.createIRI(property), ioHelper.createLiteral(value));
+    List<String> annotationItems = CommandLineHelper.getOptionValues(line, "annotation");
+    while (annotationItems.size() > 0) {
+      hasAnnotation = true;
+      // Check for valid input
+      try {
+        property = annotationItems.remove(0);
+        value = annotationItems.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(annotationFormatError);
+      }
+      IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
+      OntologyHelper.addOntologyAnnotation(ontology, iri, IOHelper.createLiteral(value));
     }
 
     // Add link-annotations with PROP LINK
-    items = CommandLineHelper.getOptionValues(line, "link-annotation");
-    while (items.size() > 0) {
-      String property = items.remove(0);
-      String value = items.remove(0);
-      OntologyHelper.addOntologyAnnotation(
-          ontology, ioHelper.createIRI(property), ioHelper.createIRI(value));
+    List<String> linkItems = CommandLineHelper.getOptionValues(line, "link-annotation");
+    while (linkItems.size() > 0) {
+      hasAnnotation = true;
+      // Check for valid input
+      try {
+        property = linkItems.remove(0);
+        value = linkItems.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(linkAnnotationFormatError);
+      }
+      IRI propIRI = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
+      IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "value");
+      OntologyHelper.addOntologyAnnotation(ontology, propIRI, valueIRI);
     }
 
     // Add language-annotations with PROP VALUE LANG
-    items = CommandLineHelper.getOptionValues(line, "language-annotation");
-    while (items.size() > 0) {
-      String property = items.remove(0);
-      String value = items.remove(0);
-      String lang = items.remove(0);
+    List<String> langItems = CommandLineHelper.getOptionValues(line, "language-annotation");
+    while (langItems.size() > 0) {
+      hasAnnotation = true;
+      // Check for valid input
+      String lang = null;
+      try {
+        property = langItems.remove(0);
+        value = langItems.remove(0);
+        lang = langItems.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(langAnnotationFormatError);
+      }
+      IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       OntologyHelper.addOntologyAnnotation(
-          ontology, ioHelper.createIRI(property), ioHelper.createTaggedLiteral(value, lang));
+          ontology, iri, IOHelper.createTaggedLiteral(value, lang));
     }
 
     // Add typed-annotations with PROP VALUE TYPE
-    items = CommandLineHelper.getOptionValues(line, "typed-annotation");
-    while (items.size() > 0) {
-      String property = items.remove(0);
-      String value = items.remove(0);
-      String type = items.remove(0);
-      OntologyHelper.addOntologyAnnotation(
-          ontology, ioHelper.createIRI(property), ioHelper.createTypedLiteral(value, type));
+    List<String> typedItems = CommandLineHelper.getOptionValues(line, "typed-annotation");
+    while (typedItems.size() > 0) {
+      hasAnnotation = true;
+      // Check for valid input
+      String type = null;
+      try {
+        property = typedItems.remove(0);
+        value = typedItems.remove(0);
+        type = typedItems.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(typedAnnotationFormatError);
+      }
+      IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
+      OntologyHelper.addOntologyAnnotation(ontology, iri, ioHelper.createTypedLiteral(value, type));
     }
 
     // Add annotations with PROP VALUE
-    items = CommandLineHelper.getOptionValues(line, "axiom-annotation");
-    while (items.size() > 0) {
-      String property = items.remove(0);
-      String value = items.remove(0);
-      OntologyHelper.addAxiomAnnotations(
-          ontology, ioHelper.createIRI(property), ioHelper.createLiteral(value));
+    List<String> axiomItems = CommandLineHelper.getOptionValues(line, "axiom-annotation");
+    while (axiomItems.size() > 0) {
+      hasAnnotation = true;
+      // Check for valid input
+      try {
+        property = axiomItems.remove(0);
+        value = axiomItems.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(axiomAnnotationFormatError);
+      }
+      IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
+      OntologyHelper.addAxiomAnnotations(ontology, iri, IOHelper.createLiteral(value));
     }
 
     // Load any annotation files as ontologies and merge them in
@@ -196,6 +262,7 @@ public class AnnotateCommand implements Command {
       ontologies.add(ioHelper.loadOntology(path));
     }
     if (ontologies.size() > 0) {
+      hasAnnotation = true;
       MergeOperation.mergeInto(ontologies, ontology, true);
     }
 
@@ -203,7 +270,13 @@ public class AnnotateCommand implements Command {
     String ontologyIRI = CommandLineHelper.getOptionalValue(line, "ontology-iri");
     String versionIRI = CommandLineHelper.getOptionalValue(line, "version-iri");
     if (ontologyIRI != null || versionIRI != null) {
+      hasAnnotation = true;
       OntologyHelper.setOntologyIRI(ontology, ontologyIRI, versionIRI);
+    }
+
+    // Validate that annotations were provided
+    if (!hasAnnotation) {
+      throw new IllegalArgumentException(missingAnnotationError);
     }
 
     CommandLineHelper.maybeSaveOutput(line, ontology);

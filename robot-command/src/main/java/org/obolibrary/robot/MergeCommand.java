@@ -26,6 +26,7 @@ public class MergeCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "merge ontology from a file");
     o.addOption("I", "input-iri", true, "merge ontology from an IRI");
+    o.addOption("p", "inputs", true, "merge ontologies matching wildcard pattern");
     o.addOption("o", "output", true, "save merged ontology to a file");
     o.addOption(
         "c",
@@ -108,14 +109,13 @@ public class MergeCommand implements Command {
     }
 
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    // inputOntologies should not be empty
+    boolean notEmpty = false;
     if (state != null && state.getOntology() != null) {
+      notEmpty = true;
       inputOntologies.add(state.getOntology());
     }
-    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line));
-
-    if (inputOntologies.size() < 1) {
-      throw new IllegalArgumentException("at least one inputOntology must be specified");
-    }
+    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
     Map<String, String> mergeOptions = MergeOperation.getDefaultOptions();
 

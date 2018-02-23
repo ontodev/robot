@@ -23,6 +23,12 @@ public class QueryCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(QueryCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "query#";
+
+  private static final String missingQueryError =
+      NS + "MISSING QUERY ERROR at least one query must be provided";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -146,6 +152,10 @@ public class QueryCommand implements Command {
       xs.add(q);
       xs.add(null);
       queries.add(xs);
+    }
+
+    if (queries.isEmpty()) {
+      throw new IllegalArgumentException(missingQueryError);
     }
 
     // Run queries

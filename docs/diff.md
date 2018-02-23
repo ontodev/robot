@@ -21,3 +21,22 @@ If `--output` is provided then a report will be written with any differences bet
       --output results/release-diff.txt
 
 See <a href="/examples/release-diff.txt" target="_blank">`release-diff.txt`</a> for an example.
+
+You can also compare ontologies by IRI with `--left-iri` and `--right-iri`. You may want to compare a local file to a release, in which case:
+<!-- DO NOT TEST -->
+```
+robot diff --left edit.owl \
+  --right-iri http://purl.obolibrary.org/obo/release.owl
+```
+
+---
+
+## Error Messages
+
+### Double Input Error
+
+You may specify the input with either `--left`/`--right` or `--left-iri`/`--right-iri`, but you may not use both option methods for one side.
+
+### Missing Input Error
+
+Both `--left` and `--right` input ontologies are required.

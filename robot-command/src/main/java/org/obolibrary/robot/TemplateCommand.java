@@ -21,6 +21,13 @@ public class TemplateCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(TemplateCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "template#";
+
+  /** Error message when a template is not provided. */
+  private static final String missingTemplateError =
+      NS + "MISSING TEMPLATE ERROR at least one template is required";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -114,11 +121,11 @@ public class TemplateCommand implements Command {
     // Read the whole CSV into a nested list of strings.
     List<String> templatePaths = CommandLineHelper.getOptionalValues(line, "template");
     if (templatePaths.size() == 0) {
-      throw new Exception("At least one template is required");
+      throw new IllegalArgumentException(missingTemplateError);
     }
     Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
     for (String templatePath : templatePaths) {
-      tables.put(templatePath, ioHelper.readTable(templatePath));
+      tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
 
     OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null, ioHelper);
@@ -131,7 +138,7 @@ public class TemplateCommand implements Command {
     List<OWLOntology> ontologies;
     if (line.hasOption("ancestors") && inputOntology != null) {
       Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
-      iris.removeAll(TemplateOperation.getIRIs(tables, ioHelper));
+      iris.removeAll(TemplateHelper.getIRIs(tables, ioHelper));
       OWLOntology ancestors =
           MireotOperation.getAncestors(
               inputOntology, null, iris, MireotOperation.getDefaultAnnotationProperties());
