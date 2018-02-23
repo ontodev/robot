@@ -1,0 +1,710 @@
+format-version: 1.2
+subsetdef: goantislim_grouping "Grouping classes that can be excluded"
+subsetdef: gocheck_do_not_annotate "Term not to be used for direct annotation"
+subsetdef: gocheck_do_not_manually_annotate "Term not to be used for direct manual annotation"
+subsetdef: goslim_agr "AGR slim"
+subsetdef: goslim_aspergillus "Aspergillus GO slim"
+subsetdef: goslim_candida "Candida GO slim"
+subsetdef: goslim_chembl "ChEMBL protein targets summary"
+subsetdef: goslim_generic "Generic GO slim"
+subsetdef: goslim_goa "GOA and proteome slim"
+subsetdef: goslim_metagenomics "Metagenomics GO slim"
+subsetdef: goslim_mouse "Mouse GO slim"
+subsetdef: goslim_pir "PIR GO slim"
+subsetdef: goslim_plant "Plant GO slim"
+subsetdef: goslim_pombe "Fission yeast GO slim"
+subsetdef: goslim_synapse "synapse GO slim"
+subsetdef: goslim_virus "Viral GO slim"
+subsetdef: goslim_yeast "Yeast GO slim"
+subsetdef: gosubset_prok "Prokaryotic GO subset"
+subsetdef: mf_needs_review "Catalytic activity terms in need of attention"
+subsetdef: termgenie_unvetted "Terms created by TermGenie that do not follow a template and require additional vetting by editors"
+subsetdef: virus_checked "Viral overhaul terms"
+synonymtypedef: syngo_official_label "label approved by the SynGO project"
+synonymtypedef: systematic_synonym "Systematic synonym" EXACT
+ontology: go
+
+[Term]
+id: BFO:0000004
+namespace: gene_ontology
+is_a: BFO:0000002
+
+[Term]
+id: BFO:0000015
+namespace: gene_ontology
+is_a: BFO:0000003
+
+[Term]
+id: BFO:0000030
+namespace: gene_ontology
+is_a: BFO:0000040
+
+[Term]
+id: BFO:0000040
+namespace: gene_ontology
+is_a: BFO:0000004
+
+[Term]
+id: CARO:0000003
+namespace: gene_ontology
+is_a: CARO:0000006
+
+[Term]
+id: CARO:0000006
+namespace: gene_ontology
+is_a: BFO:0000040
+
+[Term]
+id: CL:0000000
+namespace: gene_ontology
+is_a: CARO:0000003
+
+[Term]
+id: CL:0000003
+namespace: gene_ontology
+is_a: CL:0000000
+
+[Term]
+id: CL:0000211
+namespace: gene_ontology
+is_a: CL:0000003
+
+[Term]
+id: CL:0000255
+namespace: gene_ontology
+is_a: CL:0000003
+
+[Term]
+id: CL:0000393
+namespace: gene_ontology
+is_a: CL:0000211
+
+[Term]
+id: CL:0000404
+namespace: gene_ontology
+is_a: CL:0000211
+
+[Term]
+id: CL:0000540
+namespace: gene_ontology
+is_a: CL:0000393
+is_a: CL:0000404
+is_a: CL:0002319
+
+[Term]
+id: CL:0000548
+namespace: gene_ontology
+is_a: CL:0000255
+
+[Term]
+id: CL:0002319
+namespace: gene_ontology
+is_a: CL:0000548
+is_a: CL:0002371
+
+[Term]
+id: CL:0002371
+namespace: gene_ontology
+is_a: CL:0000003
+
+[Term]
+id: CL:1001611
+namespace: gene_ontology
+is_a: CL:2000029
+
+[Term]
+id: CL:2000029
+namespace: gene_ontology
+is_a: CL:0000540
+
+[Term]
+id: GO:0007275
+name: multicellular organism development
+namespace: biological_process
+def: "The biological process whose specific outcome is the progression of a multicellular organism over time from an initial condition (e.g. a zygote or a young adult) to a later condition (e.g. a multicellular animal or an aged adult)." [GOC:dph, GOC:ems, GOC:isa_complete, GOC:tb]
+comment: Note that this term was 'developmental process'.
+subset: goslim_chembl
+subset: goslim_plant
+is_a: GO:0044707 ! single-multicellular organism process
+is_a: GO:0044767 ! single-organism developmental process
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_developmental_progression_of UBERON:0000468
+relationship: results_in_developmental_progression_of UBERON:0000468
+
+[Term]
+id: GO:0007399
+name: nervous system development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of nervous tissue over time, from its formation to its mature state." [GOC:dgh]
+synonym: "pan-neural process" RELATED []
+is_a: GO:0048731 ! system development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0001016
+relationship: results_in_development_of UBERON:0001016
+
+[Term]
+id: GO:0007417
+name: central nervous system development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of the central nervous system over time, from its formation to the mature structure. The central nervous system is the core nervous system that serves an integrating and coordinating function. In vertebrates it consists of the brain and spinal cord. In those invertebrates with a central nervous system it typically consists of a brain, cerebral ganglia and a nerve cord." [GOC:bf, GOC:jid, ISBN:0582227089]
+synonym: "CNS development" EXACT []
+xref: Wikipedia:Neural_development
+is_a: GO:0048731 ! system development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0001017
+relationship: part_of GO:0007399 ! nervous system development
+relationship: results_in_development_of UBERON:0001017
+
+[Term]
+id: GO:0007420
+name: brain development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of the brain over time, from its formation to the mature structure. Brain development begins with patterning events in the neural tube and ends with the mature structure that is the center of thought and emotion. The brain is responsible for the coordination and control of bodily activities and the interpretation of information from the senses (sight, hearing, smell, etc.)." [GOC:dph, GOC:jid, GOC:tb, UBERON:0000955]
+is_a: GO:0044767 ! single-organism developmental process
+is_a: GO:0048513 ! animal organ development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0000955
+relationship: part_of GO:0007417 ! central nervous system development
+relationship: part_of GO:0060322 ! head development
+relationship: results_in_development_of UBERON:0000955
+
+[Term]
+id: GO:0008150
+name: biological_process
+namespace: biological_process
+alt_id: GO:0000004
+alt_id: GO:0007582
+def: "Any process specifically pertinent to the functioning of integrated living units: cells, tissues, organs, and organisms. A process is a collection of molecular events with a defined beginning and end." [GOC:go_curators, GOC:isa_complete]
+comment: Note that, in addition to forming the root of the biological process ontology, this term is recommended for use for the annotation of gene products whose biological process is unknown. Note that when this term is used for annotation, it indicates that no information was available about the biological process of the gene product annotated as of the date the annotation was made; the evidence code ND, no data, is used to indicate this.
+subset: goslim_aspergillus
+subset: goslim_candida
+subset: goslim_chembl
+subset: goslim_generic
+subset: goslim_metagenomics
+subset: goslim_pir
+subset: goslim_plant
+subset: goslim_pombe
+subset: goslim_yeast
+subset: gosubset_prok
+synonym: "biological process" EXACT []
+synonym: "physiological process" EXACT []
+xref: Wikipedia:Biological_process
+is_a: BFO:0000015
+
+[Term]
+id: GO:0009987
+name: cellular process
+namespace: biological_process
+alt_id: GO:0008151
+alt_id: GO:0050875
+def: "Any process that is carried out at the cellular level, but not necessarily restricted to a single cell. For example, cell communication occurs among more than one cell, but occurs at the cellular level." [GOC:go_curators, GOC:isa_complete]
+subset: goslim_pir
+subset: goslim_plant
+subset: gosubset_prok
+synonym: "cell growth and/or maintenance" NARROW []
+synonym: "cell physiology" EXACT []
+synonym: "cellular physiological process" EXACT []
+is_a: GO:0008150 ! biological_process
+disjoint_from: GO:0044848
+
+[Term]
+id: GO:0021549
+name: cerebellum development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of the cerebellum over time, from its formation to the mature structure. The cerebellum is the portion of the brain in the back of the head between the cerebrum and the pons. In mice, the cerebellum controls balance for walking and standing, modulates the force and range of movement and is involved in the learning of motor skills." [GO_REF:0000021, GOC:cls, GOC:dgh, GOC:dph, GOC:jid, GOC:mtg_15jun06, ISBN:0838580343]
+comment: This term was added by GO_REF:0000021.
+is_a: GO:0044767 ! single-organism developmental process
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0002037
+relationship: part_of GO:0022037 ! metencephalon development
+relationship: results_in_development_of UBERON:0002037
+
+[Term]
+id: GO:0021953
+name: central nervous system neuron differentiation
+namespace: biological_process
+def: "The process in which a relatively unspecialized cell acquires specialized features of a neuron whose cell body resides in the central nervous system." [GO_REF:0000021, GOC:cls, GOC:dgh, GOC:dph, GOC:jid, GOC:mtg_15jun06]
+comment: This term was added by GO_REF:0000021.
+is_a: GO:0030182 ! neuron differentiation
+intersection_of: GO:0030154 ! cell differentiation
+intersection_of: results_in_acquisition_of_features_of CL:2000029
+relationship: part_of GO:0007417 ! central nervous system development
+relationship: results_in_acquisition_of_features_of CL:2000029
+
+[Term]
+id: GO:0021954
+name: central nervous system neuron development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of a neuron whose cell body is located in the central nervous system, from initial commitment of the cell to a neuronal fate, to the fully functional differentiated neuron." [GO_REF:0000021, GOC:cls, GOC:dgh, GOC:dph, GOC:jid, GOC:mtg_15jun06]
+comment: This term was added by GO_REF:0000021.
+is_a: GO:0048666 ! neuron development
+intersection_of: GO:0048468 ! cell development
+intersection_of: results_in_development_of CL:2000029
+relationship: part_of GO:0021953 ! central nervous system neuron differentiation
+relationship: results_in_development_of CL:2000029
+
+[Term]
+id: GO:0022008
+name: neurogenesis
+namespace: biological_process
+def: "Generation of cells within the nervous system." [GO_REF:0000021, GOC:cls, GOC:curators, GOC:dgh, GOC:dph, GOC:jid, GOC:mtg_15jun06]
+comment: This term was added by GO_REF:0000021.
+synonym: "nervous system cell generation" EXACT systematic_synonym []
+synonym: "neural cell differentiation" RELATED [GOC:BHF, GOC:dph]
+xref: Wikipedia:Neurogenesis
+is_a: GO:0030154 ! cell differentiation
+relationship: part_of GO:0007399 ! nervous system development
+
+[Term]
+id: GO:0022037
+name: metencephalon development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of the metencephalon over time, from its formation to the mature structure." [GO_REF:0000021, GOC:cls, GOC:curators, GOC:dgh, GOC:dph, GOC:jid, GOC:mtg_15jun06]
+comment: This term was added by GO_REF:0000021.
+is_a: GO:0044767 ! single-organism developmental process
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0001895
+relationship: part_of GO:0030902 ! hindbrain development
+relationship: results_in_development_of UBERON:0001895
+
+[Term]
+id: GO:0030154
+name: cell differentiation
+namespace: biological_process
+def: "The process in which relatively unspecialized cells, e.g. embryonic or regenerative cells, acquire specialized structural and/or functional features that characterize the cells, tissues, or organs of the mature organism or some other relatively stable phase of the organism's life history. Differentiation includes the processes involved in commitment of a cell to a specific fate and its subsequent development to the mature state." [ISBN:0198506732]
+subset: goslim_chembl
+subset: goslim_generic
+subset: goslim_mouse
+subset: goslim_plant
+subset: gosubset_prok
+xref: Wikipedia:Cellular_differentiation
+is_a: GO:0048869 ! cellular developmental process
+intersection_of: GO:0048869 ! cellular developmental process
+intersection_of: results_in_acquisition_of_features_of CL:0000000
+relationship: results_in_acquisition_of_features_of CL:0000000
+
+[Term]
+id: GO:0030182
+name: neuron differentiation
+namespace: biological_process
+def: "The process in which a relatively unspecialized cell acquires specialized features of a neuron." [GOC:mah]
+is_a: GO:0030154 ! cell differentiation
+intersection_of: GO:0030154 ! cell differentiation
+intersection_of: results_in_acquisition_of_features_of CL:0000540
+relationship: part_of GO:0048699 ! generation of neurons
+relationship: results_in_acquisition_of_features_of CL:0000540
+
+[Term]
+id: GO:0030902
+name: hindbrain development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of the hindbrain over time, from its formation to the mature structure. The hindbrain is the posterior of the three primary divisions of the developing chordate brain, or the corresponding part of the adult brain (in vertebrates, includes the cerebellum, pons, and medulla oblongata and controls the autonomic functions and equilibrium)." [http://www2.merriam-webster.com/cgi-bin/mwmednlm?book=Medical&amp;va=hindbrain]
+synonym: "rhombencephalon development" EXACT []
+is_a: GO:0044767 ! single-organism developmental process
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0002028
+relationship: part_of GO:0007420 ! brain development
+relationship: results_in_development_of UBERON:0002028
+
+[Term]
+id: GO:0032501
+name: multicellular organismal process
+namespace: biological_process
+alt_id: GO:0050874
+def: "Any biological process, occurring at the level of a multicellular organism, pertinent to its function." [GOC:curators, GOC:dph, GOC:isa_complete, GOC:tb]
+subset: goslim_pir
+synonym: "organismal physiological process" EXACT []
+is_a: GO:0008150 ! biological_process
+disjoint_from: GO:0044848
+relationship: never_in_taxon NCBITaxon:4896 {id="GOTAX:0000538"}
+relationship: never_in_taxon NCBITaxon:4932 {id="GOTAX:0000537"}
+relationship: only_in_taxon NCBITaxon:2759 {id="GOTAX:0000299"}
+
+[Term]
+id: GO:0032502
+name: developmental process
+namespace: biological_process
+def: "A biological process whose specific outcome is the progression of an integrated living unit: an anatomical structure (which may be a subcellular structure, cell, tissue, or organ), or organism over time from an initial condition to a later condition." [GOC:isa_complete]
+subset: goslim_agr
+subset: goslim_aspergillus
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "development" NARROW []
+is_a: GO:0008150 ! biological_process
+disjoint_from: GO:0044848
+
+[Term]
+id: GO:0044699
+name: single-organism process
+namespace: biological_process
+def: "A biological process that involves only one organism." [GOC:jl]
+synonym: "single organism process" EXACT []
+is_a: GO:0008150 ! biological_process
+intersection_of: GO:0008150 ! biological_process
+intersection_of: bearer_of PATO:0002487
+disjoint_from: GO:0044848
+relationship: bearer_of PATO:0002487
+
+[Term]
+id: GO:0044707
+name: single-multicellular organism process
+namespace: biological_process
+def: "A biological process occurring within a single, multicellular organism." [GOC:jl]
+is_a: GO:0032501 ! multicellular organismal process
+is_a: GO:0044699 ! single-organism process
+intersection_of: GO:0032501 ! multicellular organismal process
+intersection_of: bearer_of PATO:0002487
+
+[Term]
+id: GO:0044763
+name: single-organism cellular process
+namespace: biological_process
+def: "Any process that is carried out at the cellular level, occurring within a single organism." [GOC:jl]
+is_a: GO:0009987 ! cellular process
+is_a: GO:0044699 ! single-organism process
+intersection_of: GO:0009987 ! cellular process
+intersection_of: bearer_of PATO:0002487
+
+[Term]
+id: GO:0044767
+name: single-organism developmental process
+namespace: biological_process
+def: "A biological process whose specific outcome is the progression of an integrated living unit: an anatomical structure (which may be a subcellular structure, cell, tissue, or organ), or organism over time from an initial condition to a later condition, involving only one organism." [GOC:jl]
+is_a: GO:0032502 ! developmental process
+is_a: GO:0044699 ! single-organism process
+intersection_of: GO:0032502 ! developmental process
+intersection_of: bearer_of PATO:0002487
+
+[Term]
+id: GO:0048468
+name: cell development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of the cell over time, from its formation to the mature structure. Cell development does not include the steps involved in committing a cell to a specific fate." [GOC:go_curators]
+subset: goslim_candida
+subset: gosubset_prok
+synonym: "terminal differentiation" RELATED [GOC:dph, GOC:tb]
+is_a: GO:0048856 ! anatomical structure development
+is_a: GO:0048869 ! cellular developmental process
+intersection_of: GO:0008150 ! biological_process
+intersection_of: results_in_development_of CL:0000000
+relationship: part_of GO:0030154 ! cell differentiation
+relationship: results_in_development_of CL:0000000
+
+[Term]
+id: GO:0048513
+name: animal organ development
+namespace: biological_process
+def: "Development of a tissue or tissues that work together to perform a specific function or functions. Development pertains to the process whose specific outcome is the progression of a structure over time, from its formation to the mature structure. Organs are commonly observed as visibly distinct structures, but may also exist as loosely associated clusters of cells that work together to perform a specific function or functions." [GOC:dph, GOC:jid]
+synonym: "development of an organ" EXACT []
+synonym: "organogenesis" EXACT []
+xref: Wikipedia:Organogenesis
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0000062
+relationship: part_of GO:0048731 ! system development
+relationship: results_in_development_of UBERON:0000062
+
+[Term]
+id: GO:0048666
+name: neuron development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of a neuron over time, from initial commitment of the cell to a specific fate, to the fully functional differentiated cell." [GOC:dph]
+is_a: GO:0048468 ! cell development
+intersection_of: GO:0032502 ! developmental process
+intersection_of: results_in_development_of CL:0000540
+relationship: part_of GO:0030182 ! neuron differentiation
+relationship: results_in_development_of CL:0000540
+
+[Term]
+id: GO:0048699
+name: generation of neurons
+namespace: biological_process
+def: "The process in which nerve cells are generated. This includes the production of neuroblasts and their differentiation into neurons." [GOC:nln]
+synonym: "neuron generation" EXACT [GOC:curators]
+is_a: GO:0022008 ! neurogenesis
+
+[Term]
+id: GO:0048731
+name: system development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of an organismal system over time, from its formation to the mature structure. A system is a regularly interacting or interdependent group of organs or tissues that work together to carry out a given biological process." [GOC:dph, GOC:jid]
+subset: goslim_mouse
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0000467
+relationship: part_of GO:0007275 ! multicellular organism development
+relationship: results_in_development_of UBERON:0000467
+
+[Term]
+id: GO:0048856
+name: anatomical structure development
+namespace: biological_process
+def: "The biological process whose specific outcome is the progression of an anatomical structure from an initial condition to its mature state. This process begins with the formation of the structure and ends with the mature structure, whatever form that may be including its natural destruction. An anatomical structure is any biological entity that occupies space and is distinguished from its surroundings. Anatomical structures can be macroscopic such as a carpel, or microscopic such as an acrosome." [GO_REF:0000021, GOC:mtg_15jun06]
+comment: This term was added by GO_REF:0000021.
+subset: goslim_chembl
+subset: goslim_generic
+synonym: "development of an anatomical structure" EXACT []
+is_a: GO:0032502 ! developmental process
+intersection_of: GO:0032502 ! developmental process
+intersection_of: results_in_development_of UBERON:0000061
+relationship: results_in_development_of UBERON:0000061
+
+[Term]
+id: GO:0048869
+name: cellular developmental process
+namespace: biological_process
+def: "A biological process whose specific outcome is the progression of a cell over time from an initial condition to a later condition." [GOC:isa_complete]
+subset: gosubset_prok
+is_a: GO:0044763 ! single-organism cellular process
+is_a: GO:0044767 ! single-organism developmental process
+
+[Term]
+id: GO:0060322
+name: head development
+namespace: biological_process
+def: "The biological process whose specific outcome is the progression of a head from an initial condition to its mature state. The head is the anterior-most division of the body." [GOC:dph]
+is_a: GO:0044767 ! single-organism developmental process
+is_a: GO:0048856 ! anatomical structure development
+intersection_of: GO:0048856 ! anatomical structure development
+intersection_of: results_in_development_of UBERON:0000033
+relationship: results_in_development_of UBERON:0000033
+
+[Term]
+id: GO:0098749
+name: cerebellar neuron development
+namespace: biological_process
+def: "The process whose specific outcome is the progression of a cerebellar neuron over time, from initial commitment of the cell to a specific fate, to the fully functional differentiated cell." [GOC:dos]
+is_a: GO:0021954 ! central nervous system neuron development
+intersection_of: GO:0032502 ! developmental process
+intersection_of: results_in_development_of CL:1001611
+relationship: part_of GO:0021549 ! cerebellum development
+relationship: results_in_development_of CL:1001611
+
+[Term]
+id: NCBITaxon:131567
+namespace: gene_ontology
+is_a: NCBITaxon:1
+
+[Term]
+id: NCBITaxon:2759
+namespace: gene_ontology
+is_a: NCBITaxon:131567
+is_a: OBI:0100026
+
+[Term]
+id: OBI:0100026
+namespace: gene_ontology
+is_a: BFO:0000030
+
+[Term]
+id: PATO:0001236
+namespace: gene_ontology
+is_a: PATO:0000001
+
+[Term]
+id: PATO:0002487
+namespace: gene_ontology
+is_a: PATO:0001236
+
+[Term]
+id: UBERON:0000033
+namespace: gene_ontology
+is_a: UBERON:0011676
+
+[Term]
+id: UBERON:0000061
+namespace: gene_ontology
+is_a: UBERON:0000465
+
+[Term]
+id: UBERON:0000062
+namespace: gene_ontology
+is_a: UBERON:0010000
+
+[Term]
+id: UBERON:0000063
+namespace: gene_ontology
+is_a: UBERON:0000064
+
+[Term]
+id: UBERON:0000064
+namespace: gene_ontology
+is_a: UBERON:0010000
+
+[Term]
+id: UBERON:0000073
+namespace: gene_ontology
+is_a: CARO:0000003
+is_a: UBERON:0000481
+
+[Term]
+id: UBERON:0000465
+namespace: gene_ontology
+is_a: BFO:0000040
+is_a: UBERON:0001062
+
+[Term]
+id: UBERON:0000467
+namespace: gene_ontology
+is_a: UBERON:0000061
+
+[Term]
+id: UBERON:0000468
+namespace: gene_ontology
+is_a: UBERON:0010000
+
+[Term]
+id: UBERON:0000475
+namespace: gene_ontology
+is_a: CARO:0000003
+is_a: UBERON:0010000
+
+[Term]
+id: UBERON:0000481
+namespace: gene_ontology
+is_a: UBERON:0010000
+
+[Term]
+id: UBERON:0000955
+namespace: gene_ontology
+is_a: UBERON:0000062
+is_a: UBERON:0004121
+
+[Term]
+id: UBERON:0001016
+namespace: gene_ontology
+is_a: CARO:0000003
+is_a: UBERON:0000467
+
+[Term]
+id: UBERON:0001017
+namespace: gene_ontology
+is_a: UBERON:0004121
+is_a: UBERON:0011216
+
+[Term]
+id: UBERON:0001062
+namespace: gene_ontology
+is_a: BFO:0000004
+
+[Term]
+id: UBERON:0001895
+namespace: gene_ontology
+is_a: UBERON:0004733
+
+[Term]
+id: UBERON:0002028
+namespace: gene_ontology
+is_a: UBERON:0002616
+is_a: UBERON:0010314
+
+[Term]
+id: UBERON:0002037
+namespace: gene_ontology
+is_a: UBERON:0002616
+is_a: UBERON:0010314
+
+[Term]
+id: UBERON:0002616
+namespace: gene_ontology
+is_a: UBERON:0000073
+is_a: UBERON:0004121
+
+[Term]
+id: UBERON:0004121
+namespace: gene_ontology
+is_a: CARO:0000003
+is_a: UBERON:0000061
+
+[Term]
+id: UBERON:0004732
+namespace: gene_ontology
+is_a: CARO:0000003
+is_a: UBERON:0000063
+
+[Term]
+id: UBERON:0004733
+namespace: gene_ontology
+is_a: UBERON:0004121
+is_a: UBERON:0004732
+is_a: UBERON:0010314
+
+[Term]
+id: UBERON:0010000
+namespace: gene_ontology
+is_a: UBERON:0000061
+
+[Term]
+id: UBERON:0010314
+namespace: gene_ontology
+is_a: CARO:0000003
+is_a: UBERON:0000061
+
+[Term]
+id: UBERON:0011216
+namespace: gene_ontology
+is_a: UBERON:0010000
+
+[Term]
+id: UBERON:0011676
+namespace: gene_ontology
+is_a: UBERON:0000475
+
+[Typedef]
+id: bearer_of
+name: bearer of
+namespace: external
+xref: RO:0000053
+
+[Typedef]
+id: never_in_taxon
+name: never_in_taxon
+namespace: external
+xref: RO:0002161
+expand_assertion_to: "Class: ?X DisjointWith: RO_0002162 some ?Y" []
+is_metadata_tag: true
+is_class_level: true
+
+[Typedef]
+id: only_in_taxon
+name: only in taxon
+namespace: external
+xref: RO:0002160
+is_a: in_taxon
+
+[Typedef]
+id: part_of
+name: part of
+namespace: external
+xref: BFO:0000050
+is_transitive: true
+is_a: overlaps
+inverse_of: has_part
+
+[Typedef]
+id: results_in_acquisition_of_features_of
+name: results in acquisition of features of
+namespace: external
+xref: RO:0002315
+is_a: has_participant
+is_a: results_in_developmental_progression_of ! results in developmental progression of
+
+[Typedef]
+id: results_in_development_of
+name: results in development of
+namespace: external
+xref: RO:0002296
+is_a: has_participant
+is_a: results_in_developmental_progression_of ! results in developmental progression of
+
+[Typedef]
+id: results_in_developmental_progression_of
+name: results in developmental progression of
+namespace: external
+xref: RO:0002295
+is_a: developmentally_related_to
+
