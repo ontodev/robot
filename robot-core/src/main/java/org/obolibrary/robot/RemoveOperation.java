@@ -63,8 +63,7 @@ public class RemoveOperation {
      * @param entities map of entity type (key) and CURIE (val), 
      *                 see RemoveOperation variable declarations for types
      */
-    public static void remove(OWLOntology ontology, 
-    		Map<String, String> entities) {
+    public static void remove(OWLOntology ontology, Map<String, String> entities) {
     	// Get the args of provided options
     	String classID = entities.get(CLASS);
     	String indivID = entities.get(INDIV);
@@ -139,16 +138,11 @@ public class RemoveOperation {
      */
     public static void removeDescendantClasses(OWLOntology ontology, 
     		String superClassID) {
-    	// Create OWLClass from string name
-    	OWLClass superClass = 
-    			factory.getOWLClass(ioHelper.createIRI(superClassID));
     	// Get set of subClassOf*
-    	Set<OWLClass> subClasses = new HashSet<>();
-    	gatherDescendantClasses(ontology, superClass, subClasses);
-    	
+    	Set<OWLClass> subClasses = RelatedEntitiesHelper.getRelatedClasses(ontology, ioHelper.createIRI(superClassID), "descendants");
     	// Remove axioms for each class in the set
     	for (OWLClass cls : subClasses) {
-    		remove(ontology, cls);
+    		  remove(ontology, cls);
     	}
     }
 
@@ -158,35 +152,9 @@ public class RemoveOperation {
      * @param ontology OWLOntology to remove from
      */
     public static void removeIndividuals(OWLOntology ontology) {
-    	logger.debug("Removing all named individuals");
-    	
     	Set<OWLNamedIndividual> indivs = ontology.getIndividualsInSignature();
     	for (OWLNamedIndividual i : indivs) {
     		remove(ontology, i);
-    	}
-    }
-    
-    /**
-     * Recursively get all subclasses of a given class.
-     * 
-     * @param ontology OWLOntology to search
-     * @param cls OWLClass to get subclasses of
-     * @param subClasses Set of OWLClasses (pass in empty)
-     */
-    private static void gatherDescendantClasses(OWLOntology ontology, 
-    		OWLClass cls, Set<OWLClass> subClasses) {
-    	// Get the SC axioms
-    	Set<OWLSubClassOfAxiom> scAxioms =
-    			ontology.getSubClassAxiomsForSuperClass(cls);
-    	// If this class has subclass axioms ...
-    	if (!scAxioms.isEmpty()) {
-	    	for (OWLSubClassOfAxiom ax : scAxioms) {
-	    		// Add each to the set and recursively check for more children
-	    		for (OWLClass sc : ax.getSubClass().getClassesInSignature()) {
-	    			subClasses.add(sc);
-	    			gatherDescendantClasses(ontology, sc, subClasses);
-	    		}
-	    	}
     	}
     }
     
