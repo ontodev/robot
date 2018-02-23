@@ -12,3 +12,5 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
   - owl - [RDF/XML](https://www.w3.org/TR/rdf-syntax-grammar/)
   - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
   - ttl - [Turtle](https://www.w3.org/TR/turtle/)
+
+By default, the OBO writer strictly enforces <a href="http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4" target="_blank">document structure rules</a>. If an ontology violates these, the convert to OBO operation will fail. These checks can be ignored by including `--check false`.

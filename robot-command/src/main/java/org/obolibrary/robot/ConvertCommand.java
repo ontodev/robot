@@ -27,6 +27,7 @@ public class ConvertCommand implements Command {
     o.addOption("I", "input-iri", true, "convert ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("f", "format", true, "the format: obo, owl, ttl, owx, omn, ofn, json");
+    o.addOption("c", "check", true, "if false, ignore OBO document structure checks");
     options = o;
   }
 
@@ -127,8 +128,17 @@ public class ConvertCommand implements Command {
       formatName = FilenameUtils.getExtension(outputFile.getName());
     }
 
-    ioHelper.saveOntology(ontology, ioHelper.getFormat(formatName), outputFile);
+    boolean checkOBO = true;
+    String check = CommandLineHelper.getDefaultValue(line, "check", "true");
+    if ("false".equals(check.toLowerCase())) {
+      checkOBO = false;
+      // TODO: Align with detailed error reporting
+    } else if (!"true".equals(check.toLowerCase())) {
+      throw new IllegalArgumentException("the arg to --check should be either TRUE or FALSE");
+    }
 
+    // TODO: Error handling for FrameStructureException
+    ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
     return state;
   }
 }
