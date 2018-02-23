@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
@@ -16,6 +17,27 @@ import org.slf4j.LoggerFactory;
 public class ConvertCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ConvertCommand.class);
+
+  /** Namespace for error messages. */
+  private static final String NS = "convert#";
+
+  /** Error message when the arg to --check is not true or false */
+  private static final String checkArgError =
+      NS + "CHECK ARG ERROR the arg to --check should be either TRUE or FALSE";
+
+  /** Error message when no --output is provided. */
+  private static final String missingOutputError = NS + "OUTPUT ERROR an output file is required";
+
+  /** Error message when more than one --output is provided. */
+  private static final String multipleOutputsError =
+      NS + "OUTPUT ERROR only one output file is allowed";
+
+  /** Error message when a --format is not specified and the --output does not have an extension. */
+  private static final String missingFormatError = NS + "FORMAT ERROR an output format is required";
+
+  /** Error message when --check is true and the document is not in valid OBO structure */
+  private static final String oboStructureError =
+      NS + "OBO STRUCTURE ERROR the ontology does not conform to OBO structure rules";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -116,29 +138,43 @@ public class ConvertCommand implements Command {
     OWLOntology ontology = state.getOntology();
 
     String[] outputs = line.getOptionValues("output");
-    if (outputs.length == 0) {
-      throw new Exception("An output file is required.");
+    // Validate the output
+    if (outputs == null || outputs.length == 0) {
+      throw new IllegalArgumentException(missingOutputError);
     } else if (outputs.length > 1) {
-      throw new Exception("Only one output file is allowed.");
+      throw new IllegalArgumentException(multipleOutputsError);
     }
     File outputFile = CommandLineHelper.getOutputFile(line);
 
+    // Check for a format
     String formatName = CommandLineHelper.getOptionalValue(line, "format");
     if (formatName == null) {
       formatName = FilenameUtils.getExtension(outputFile.getName());
+      if (formatName.equals("")) {
+        throw new IllegalArgumentException(missingFormatError);
+      }
     }
 
     boolean checkOBO = true;
     String check = CommandLineHelper.getDefaultValue(line, "check", "true");
     if ("false".equals(check.toLowerCase())) {
       checkOBO = false;
-      // TODO: Align with detailed error reporting
     } else if (!"true".equals(check.toLowerCase())) {
-      throw new IllegalArgumentException("the arg to --check should be either TRUE or FALSE");
+      throw new IllegalArgumentException(checkArgError);
     }
 
-    // TODO: Error handling for FrameStructureException
-    ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
+    try {
+      ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
+    } catch (IOException e) {
+      // specific feedback for writing to OBO
+      if (e.getMessage().contains("FrameStructureException")) {
+        logger.debug(e.getMessage());
+        throw new Exception(oboStructureError);
+      } else {
+        throw e;
+      }
+    }
+
     return state;
   }
 }

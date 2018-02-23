@@ -25,6 +25,7 @@ public class UnmergeCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "unmerge ontology from a file");
     o.addOption("I", "input-iri", true, "unmerge ontology from an IRI");
+    o.addOption("p", "inputs", true, "unmerge ontologies matching wildcard pattern");
     o.addOption("o", "output", true, "save unmerged ontology to a file");
     options = o;
   }
@@ -101,14 +102,12 @@ public class UnmergeCommand implements Command {
     }
 
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    boolean notEmpty = false;
     if (state != null && state.getOntology() != null) {
+      notEmpty = true;
       inputOntologies.add(state.getOntology());
     }
-    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line));
-
-    if (inputOntologies.size() < 1) {
-      throw new IllegalArgumentException("at least one inputOntology must be specified");
-    }
+    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
     OWLOntology outputOntology = UnmergeOperation.unmerge(inputOntologies);
 

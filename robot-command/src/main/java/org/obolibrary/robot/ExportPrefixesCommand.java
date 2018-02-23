@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
@@ -14,6 +15,12 @@ import org.slf4j.LoggerFactory;
 public class ExportPrefixesCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ExportPrefixesCommand.class);
+
+  /** Namespace for error messages. */
+  private static final String NS = "prefixes#";
+
+  /** Error message when JSON-LD context cannot be generated. */
+  private static final String jsonLDError = NS + "JSON-LD ERROR the JSON-LD could not be generated";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -93,9 +100,17 @@ public class ExportPrefixesCommand implements Command {
 
     File outputFile = CommandLineHelper.getOutputFile(line);
     if (outputFile != null) {
-      ioHelper.saveContext(outputFile);
+      try {
+        ioHelper.saveContext(outputFile);
+      } catch (IOException e) {
+        throw new IOException(jsonLDError, e);
+      }
     } else {
-      System.out.println(ioHelper.getContextString());
+      try {
+        System.out.println(ioHelper.getContextString());
+      } catch (IOException e) {
+        throw new IOException(jsonLDError, e);
+      }
     }
 
     return state;

@@ -8,20 +8,15 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.opencsv.CSVReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -245,6 +240,10 @@ public class IOHelper {
   public OWLOntology loadOntology(File ontologyFile, File catalogFile) throws IOException {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
 
+    if (!ontologyFile.exists()) {
+      throw new IllegalArgumentException("File " + ontologyFile.getName() + " does not exist");
+    }
+
     Object jsonObject = null;
 
     try {
@@ -280,9 +279,9 @@ public class IOHelper {
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError e) {
-      throw new IOException(e);
+      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(e);
+      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
     }
   }
 
@@ -357,7 +356,7 @@ public class IOHelper {
     } else if (formatName.equals("json")) {
       return new OboGraphJsonDocumentFormat();
     } else {
-      throw new IllegalArgumentException("Unknown ontology format: " + formatName);
+      throw new IllegalArgumentException("Invalid ontology format: " + formatName);
     }
   }
 
@@ -452,33 +451,33 @@ public class IOHelper {
     //    ((PrefixOWLDocumentFormat) format)
     //        .copyPrefixesFrom(getPrefixManager());
     // }
-    try {
-      XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
+    XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
 
-      // first handle any non-official output formats.
-      // currently this is just OboGraphs JSON format
-      if (format instanceof OboGraphJsonDocumentFormat) {
-        FromOwl fromOwl = new FromOwl();
-        GraphDocument gd = fromOwl.generateGraphDocument(ontology);
-        String doc = OgJsonGenerator.render(gd);
-        File outfile = new File(ontologyIRI.toURI());
-        FileUtils.writeStringToFile(outfile, doc);
-      } else if (format instanceof OBODocumentFormat && !checkOBO) {
-        // only use this method when ignoring OBO checking, otherwise use native save
-        OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
-        OBODoc oboOntology = bridge.convert(ontology);
-        File f = new File(ontologyIRI.getShortForm());
-        f.createNewFile();
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
-        OBOFormatWriter oboWriter = new OBOFormatWriter();
-        oboWriter.setCheckStructure(checkOBO);
-        oboWriter.write(oboOntology, bw);
-      } else {
-        // use native save functionality
+    // first handle any non-official output formats.
+    // currently this is just OboGraphs JSON format
+    if (format instanceof OboGraphJsonDocumentFormat) {
+      FromOwl fromOwl = new FromOwl();
+      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      String doc = OgJsonGenerator.render(gd);
+      File outfile = new File(ontologyIRI.toURI());
+      FileUtils.writeStringToFile(outfile, doc);
+    } else if (format instanceof OBODocumentFormat && !checkOBO) {
+      // only use this method when ignoring OBO checking, otherwise use native save
+      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
+      OBODoc oboOntology = bridge.convert(ontology);
+      File f = new File(ontologyIRI.getShortForm());
+      f.createNewFile();
+      BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
+      OBOFormatWriter oboWriter = new OBOFormatWriter();
+      oboWriter.setCheckStructure(checkOBO);
+      oboWriter.write(oboOntology, bw);
+    } else {
+      // use native save functionality
+      try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
+      } catch (OWLOntologyStorageException e) {
+        throw new IOException(e);
       }
-    } catch (OWLOntologyStorageException e) {
-      throw new IOException(e);
     }
     return ontology;
   }
@@ -551,6 +550,9 @@ public class IOHelper {
       IRI iri = createIRI(term);
       if (iri != null) {
         iris.add(iri);
+      } else {
+        // Warn and continue
+        logger.warn("{} is not a valid IRI.", term);
       }
     }
     return iris;
@@ -818,7 +820,7 @@ public class IOHelper {
               JsonUtils.fromString("{}"), context.getPrefixes(false), new JsonLdOptions());
       return JsonUtils.toPrettyString(compact);
     } catch (Exception e) {
-      throw new IOException("JSON-LD could not be generated", e);
+      throw new IOException(e);
     }
   }
 
@@ -842,105 +844,5 @@ public class IOHelper {
     FileWriter writer = new FileWriter(file);
     writer.write(getContextString());
     writer.close();
-  }
-
-  /**
-   * Read comma-separated values from a path to a list of lists of strings.
-   *
-   * @param path file path to the CSV file
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readCSV(String path) throws IOException {
-    return readCSV(new FileReader(path));
-  }
-
-  /**
-   * Read comma-separated values from a stream to a list of lists of strings.
-   *
-   * @param stream the stream to read from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readCSV(InputStream stream) throws IOException {
-    return readCSV(new InputStreamReader(stream));
-  }
-
-  /**
-   * Read comma-separated values from a reader to a list of lists of strings.
-   *
-   * @param reader a reader to read data from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readCSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader);
-    List<List<String>> rows = new ArrayList<List<String>>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
-  }
-
-  /**
-   * Read tab-separated values from a path to a list of lists of strings.
-   *
-   * @param path file path to the CSV file
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTSV(String path) throws IOException {
-    return readTSV(new FileReader(path));
-  }
-
-  /**
-   * Read tab-separated values from a stream to a list of lists of strings.
-   *
-   * @param stream the stream to read from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTSV(InputStream stream) throws IOException {
-    return readTSV(new InputStreamReader(stream));
-  }
-
-  /**
-   * Read tab-separated values from a reader to a list of lists of strings.
-   *
-   * @param reader a reader to read data from
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader, '\t');
-    List<List<String>> rows = new ArrayList<List<String>>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
-  }
-
-  /**
-   * Read a table from a path to a list of lists of strings.
-   *
-   * @param path file path to the CSV file
-   * @return a list of lists of strings
-   * @throws IOException on file or reading problems
-   */
-  public static List<List<String>> readTable(String path) throws IOException {
-    File file = new File(path);
-    String extension = FilenameUtils.getExtension(file.getName());
-    extension = extension.trim().toLowerCase();
-    if (extension.equals("csv")) {
-      return readCSV(new FileReader(path));
-    } else if (extension.equals("tsv") || extension.equals("tab")) {
-      return readTSV(new FileReader(path));
-    } else {
-      throw new IOException("Unrecognized file type for: " + path);
-    }
   }
 }
