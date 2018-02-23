@@ -25,12 +25,15 @@ public class ExceptionHelper {
     if (msg != null) {
       String exceptionID = getExceptionID(msg);
       System.out.println(trimExceptionID(msg));
-      System.out.println("See http://robot.obolibrary.org/" + exceptionID + " for more details");
+      System.out.println("For details see: http://robot.obolibrary.org/" + exceptionID + "\n");
     }
     // Will only print with --very-very-verbose (DEBUG level)
-    StackTraceElement[] trace = exception.getStackTrace();
-    for (StackTraceElement t : trace) {
-      logger.debug(t.toString());
+    if (logger.isDebugEnabled()) {
+      StackTraceElement[] trace = exception.getStackTrace();
+      for (StackTraceElement t : trace) {
+        logger.debug(t.toString());
+      }
+      System.out.println();
     }
   }
 
@@ -85,7 +88,7 @@ public class ExceptionHelper {
    */
   private static String trimExceptionID(String msg) {
     if (msg.contains("#")) {
-      return msg.substring(msg.indexOf("#"));
+      return msg.substring(msg.indexOf("#") + 1);
     } else {
       return msg;
     }

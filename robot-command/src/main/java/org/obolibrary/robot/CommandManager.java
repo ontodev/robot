@@ -149,19 +149,13 @@ public class CommandManager implements Command {
    *
    * @param state an state to work with, or null
    * @param args the command-line arguments
-   * @return the result state of the last subcommand
+   * @return the result state of the last subcommand or null on bad input
    * @throws Exception on any problems
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-    CommandLineParser parser = new PosixParser();
-    CommandLine line = parser.parse(getOptions(), args, true);
+    CommandLine line = CommandLineHelper.maybeGetCommandLine(getUsage(), getOptions(), args, true);
 
-    if (line.hasOption("help")) {
-      printHelp();
-      return null;
-    }
-    if (line.hasOption("version")) {
-      CommandLineHelper.printVersion();
+    if (line == null) {
       return null;
     }
 

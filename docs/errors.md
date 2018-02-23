@@ -34,6 +34,10 @@ Prefixes (added with `--prefix`) should be strings in the following format: `"fo
 
 A valid command must be provided, running just `robot` will not perform any action.
 
+### Missing Requirement Error
+
+Some commands require certain options to be present. See the documentation for the specific command.
+
 ### Missing Input Error
 
 An input ontology must be specified with `--input`. In the case of [merge](/merge) and [unmerge](/unmerge), at least one input is required.

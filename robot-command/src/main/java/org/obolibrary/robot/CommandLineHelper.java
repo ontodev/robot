@@ -60,6 +60,9 @@ public class CommandLineHelper {
   private static final String invalidReasonerError =
       NS + "INVALID REASONER ERROR unknown reasoner: %s";
 
+  /** Error message when no input ontology is provided for methods that accept multiple inputs. */
+  private static final String missingRequirementError = NS + "MISSING REQUIREMENT ERROR %s";
+
   /** Error message when no input ontology is provided. */
   private static final String missingInputError = NS + "MISSING INPUT ERROR an --input is required";
 
@@ -285,7 +288,7 @@ public class CommandLineHelper {
       throws IllegalArgumentException {
     String result = getOptionalValue(line, name);
     if (result == null) {
-      throw new IllegalArgumentException(message);
+      throw new IllegalArgumentException(String.format(missingRequirementError, message));
     }
     return result;
   }
@@ -683,19 +686,19 @@ public class CommandLineHelper {
   }
 
   /**
-   * Parse the command line, handle help and other common options, (May exit!) and return a
-   * CommandLine.
+   * Parse the command line, handle help and other common options, and return null or a CommandLine.
    *
    * @param usage the usage string for this command
    * @param options the command-line options for this command
    * @param args the command-line arguments provided
-   * @return a new CommandLine object
+   * @param stopAtNonOption same as CommandLineParser
+   * @return a new CommandLine object or null
    * @throws ParseException if the arguments cannot be parsed
    */
-  public static CommandLine getCommandLine(String usage, Options options, String[] args)
-      throws ParseException {
+  public static CommandLine maybeGetCommandLine(
+      String usage, Options options, String[] args, boolean stopAtNonOption) throws ParseException {
     CommandLineParser parser = new PosixParser();
-    CommandLine line = parser.parse(options, args);
+    CommandLine line = parser.parse(options, args, stopAtNonOption);
 
     String level;
     if (line.hasOption("very-very-verbose")) {
@@ -712,13 +715,32 @@ public class CommandLineHelper {
 
     if (hasFlagOrCommand(line, "help")) {
       printHelp(usage, options);
-      System.exit(0);
+      return null;
     }
     if (hasFlagOrCommand(line, "version")) {
       printVersion();
-      System.exit(0);
+      return null;
     }
 
+    return line;
+  }
+
+  /**
+   * Parse the command line, handle help and other common options, (May exit!) and return a
+   * CommandLine.
+   *
+   * @param usage the usage string for this command
+   * @param options the command-line options for this command
+   * @param args the command-line arguments provided
+   * @return a new CommandLine object or exit(0)
+   * @throws ParseException if the arguments cannot be parsed
+   */
+  public static CommandLine getCommandLine(String usage, Options options, String[] args)
+      throws ParseException {
+    CommandLine line = maybeGetCommandLine(usage, options, args, false);
+    if (line == null) {
+      System.exit(0);
+    }
     return line;
   }
 
