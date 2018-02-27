@@ -8,4 +8,5 @@ SELECT DISTINCT ?entity ?property ?value WHERE
   {VALUES ?property {obo:IAO_0000115}
    ?entity obo:IAO_0000115 ?value .
    ?entity2 obo:IAO_0000115 ?value . 
-   FILTER (?entity != ?entity2)}
+   FILTER (?entity != ?entity2)
+   FILTER (!isBlank(?entity))}

@@ -10,4 +10,6 @@ SELECT DISTINCT ?entity ?property ?value WHERE
    ?entity a owl:Class .
    ?entity ?property ?value .
    ?entity ?property ?value2 .
-   FILTER (?value != ?value2)}
+   FILTER (?value != ?value2)
+   FILTER (!isBlank(?value))
+   FILTER (!isBlank(?value2))}

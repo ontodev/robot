@@ -27,61 +27,67 @@ public class ViolationChecker {
    * @param ontology OWLOntology to report on
    * @param queries Set of CheckerQuery objects
    * @throws Exception on any problem
+   * @return map of severity (key) and list of Violation objects (value)
    */
-  public static void getViolations(OWLOntology ontology, Set<CheckerQuery> queries)
-      throws Exception {
-	// Store severity level violations separately
-    Map<String, List<Triple<String, String, String>>> severity1 = new HashMap<>();
-    Map<String, List<Triple<String, String, String>>> severity2 = new HashMap<>();
-    Map<String, List<Triple<String, String, String>>> severity3 = new HashMap<>();
-    Map<String, List<Triple<String, String, String>>> severity4 = new HashMap<>();
-    Map<String, List<Triple<String, String, String>>> severity5 = new HashMap<>();
-    
-    // Track number of violations for each severity level
+  public static Map<Integer, List<Violation>> getViolations(
+      OWLOntology ontology, Set<CheckerQuery> queries) throws Exception {
+    // create violation map
+    Map<Integer, List<Violation>> violations;
+    {
+      violations = new HashMap<Integer, List<Violation>>();
+      violations.put(1, new ArrayList<>());
+      violations.put(2, new ArrayList<>());
+      violations.put(3, new ArrayList<>());
+      violations.put(4, new ArrayList<>());
+      violations.put(5, new ArrayList<>());
+    }
+
     Integer count1 = 0;
     Integer count2 = 0;
     Integer count3 = 0;
     Integer count4 = 0;
     Integer count5 = 0;
 
+    // add results to map
     DatasetGraph dsg = QueryOperation.loadOntology(ontology);
     for (CheckerQuery query : queries) {
-      List<Triple<String, String, String>> violations;
+      Violation violation;
       switch (query.severity) {
         case 1:
-          violations = getViolations(dsg, query);
-          severity1.put(query.title, violations);
-          count1 += violations.size();
+          violation = getViolations(dsg, query);
+          updateValues(violations, 1, violation);
+          count1 += violation.getTriples().size();
         case 2:
-          violations = getViolations(dsg, query);
-          severity2.put(query.title, violations);
-          count2 += violations.size();
+          violation = getViolations(dsg, query);
+          updateValues(violations, 2, violation);
+          count2 += violation.getTriples().size();
         case 3:
-          violations = getViolations(dsg, query);
-          severity3.put(query.title, violations);
-          count3 += violations.size();
+          violation = getViolations(dsg, query);
+          updateValues(violations, 3, violation);
+          count3 += violation.getTriples().size();
         case 4:
-          violations = getViolations(dsg, query);
-          severity4.put(query.title, violations);
-          count4 += violations.size();
+          violation = getViolations(dsg, query);
+          updateValues(violations, 4, violation);
+          count4 += violation.getTriples().size();
         case 5:
-          violations = getViolations(dsg, query);
-          severity5.put(query.title, violations);
-          count5 += violations.size();
+          violation = getViolations(dsg, query);
+          updateValues(violations, 5, violation);
+          count5 += violation.getTriples().size();
       }
     }
-
-    Integer violations = count1 + count2 + count3 + count4 + count5;
-    if (violations != 0) {
-      logger.error("REPORT FAILED! Violations: " + violations);
+    // get number of violations
+    Integer violationCount = count1 + count2 + count3 + count4 + count5;
+    if (violationCount != 0) {
+      logger.error("REPORT FAILED! Violations: " + violationCount);
       logger.error("Severity 1 violations: " + count1);
       logger.error("Severity 2 violations: " + count2);
       logger.error("Severity 3 violations: " + count3);
       logger.error("Severity 4 violations: " + count4);
       logger.error("Severity 5 violations: " + count5);
     } else {
-      logger.info("No violations found.");
+      logger.info("REPORT PASSED! No violations found.");
     }
+    return violations;
   }
 
   /**
@@ -92,8 +98,7 @@ public class ViolationChecker {
    * @return Map with query title as key and list of returned triples as value
    * @throws Exception on any problem
    */
-  private static List<Triple<String, String, String>> getViolations(DatasetGraph dsg,
-	  CheckerQuery query) throws Exception {
+  private static Violation getViolations(DatasetGraph dsg, CheckerQuery query) throws Exception {
     ResultSet violationSet = QueryOperation.execQuery(dsg, query.queryString);
 
     List<Triple<String, String, String>> violations = new ArrayList<>();
@@ -119,6 +124,23 @@ public class ViolationChecker {
       }
       violations.add(Triple.of(entity, property, value));
     }
-    return violations;
+    return new Violation(query, violations);
+  }
+
+  /**
+   * Convenience function to add a new Violation value to a list of Violation objects associated
+   * with an Integer key in a map.
+   *
+   * @param map the hash map
+   * @param key the Integer key
+   * @param addValue the Violation value to add
+   * @return the map with the new value appended to the list associated with key
+   */
+  private static Map<Integer, List<Violation>> updateValues(
+      Map<Integer, List<Violation>> map, Integer key, Violation addValue) {
+    List<Violation> values = map.get(key);
+    values.add(addValue);
+    map.put(key, values);
+    return map;
   }
 }

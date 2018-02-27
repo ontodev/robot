@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,7 @@ public class ReportCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
-    o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+    o.addOption("o", "output", true, "save report to a file");
     options = o;
   }
 
@@ -53,7 +51,7 @@ public class ReportCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot report --input <file> " + "--output <file> " + "--output-iri <iri>";
+    return "robot report --input <file> " + "--output <file> ";
   }
 
   /**
@@ -99,13 +97,11 @@ public class ReportCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
-    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-    if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
-    }
+    // output is optional - no output means the file will not be written anywhere
+    String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
     // TODO save results
-    ReportOperation.report(inputOntology);
+    ReportOperation.report(inputOntology, outputPath);
     return state;
   }
 }

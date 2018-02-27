@@ -9,10 +9,12 @@ SELECT DISTINCT ?entity ?property ?value WHERE
   {{?entity ?any ?o
     FILTER NOT EXISTS {?entity rdfs:label ?value}
     FILTER NOT EXISTS {?entity a owl:Ontology}
-    FILTER NOT EXISTS {?entity owl:deprecated true}}
+    FILTER NOT EXISTS {?entity owl:deprecated true}
+    FILTER (!isBlank(?entity))}
    UNION
    {VALUES ?property {rdfs:label}
    	?entity ?property ?value .
     ?entity ?property ?value2 .
     FILTER (?value != ?value2) .
-    FILTER NOT EXISTS {?entity owl:deprecated true}}}
+    FILTER NOT EXISTS {?entity owl:deprecated true}}
+    FILTER (!isBlank(?entity))}
