@@ -133,7 +133,7 @@ public class MirrorOperation {
       // less imports than actually declared
       // assume something went wrong, throw Exception
       throw new IOException(
-          "The ontology has less actual imports then declared.\nActual: "
+          "the ontology has less actual imports then declared.\nActual: "
               + directImports
               + "\n Declared: "
               + directImportDocuments);

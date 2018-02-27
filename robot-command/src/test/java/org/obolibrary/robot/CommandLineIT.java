@@ -15,19 +15,22 @@ import org.semanticweb.owlapi.model.OWLOntology;
 public class CommandLineIT {
 
   /** Path to the executable script. */
-  private String execPath = "../bin/robot";
+  private String execPath = "../../bin/robot";
+
+  /** Path to the docs. */
+  private String docsPath = "../docs/";
 
   /** Path to the examples/ directory. */
-  private String examplesPath = "../examples/";
-
-  /** Path to the examples README file. */
-  private String readmePath = examplesPath + "README.md";
+  private String examplesPath = docsPath + "examples/";
 
   /** Path to the examples/results/ directory. */
   private String resultsPath = examplesPath + "results/";
 
   /** Path to the command output log. */
   private String outputPath = "target/integration-tests.txt";
+
+  // TODO: Change to single examples folder in docs dir
+  // and use the different MD files in docs dir
 
   /**
    * Trim whitespace and trailing backslash from the given string.
@@ -46,8 +49,8 @@ public class CommandLineIT {
    * @return a list of example commands
    * @throws IOException if the README cannot be read
    */
-  private List<String> extractCommands() throws IOException {
-    String content = FileUtils.readFileToString(new File(readmePath));
+  private List<String> extractCommands(File docFile) throws IOException {
+    String content = FileUtils.readFileToString(docFile);
     List<String> lines = Arrays.asList(content.replaceAll("\\r", "").split("\\n"));
     List<String> commands = new ArrayList<String>();
 
@@ -178,14 +181,22 @@ public class CommandLineIT {
   }
 
   /**
-   * Test all commands in the examples/README.md file.
+   * Test all commands in the docs/ folder.
    *
    * @throws Exception on any problem
    */
   @Test
   public void testExecute() throws Exception {
     cleanResults();
-    List<String> commands = extractCommands();
+    File docsFolder = new File(docsPath);
+    File[] docs = docsFolder.listFiles();
+    // Get commands from each doc (that ends with .md and is not the index)
+    List<String> commands = new ArrayList<>();
+    for (File d : docs) {
+      if (d.getName().endsWith("md") && !d.getName().equals("index.md")) {
+        commands.addAll(extractCommands(d));
+      }
+    }
     for (String command : commands) {
       runCommand(command);
     }

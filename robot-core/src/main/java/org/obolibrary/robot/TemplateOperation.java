@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,14 +17,11 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
@@ -44,14 +40,14 @@ public class TemplateOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(TemplateOperation.class);
 
-  /** OWL Namespace. */
-  private static String owl = "http://www.w3.org/2002/07/owl#";
-
   /** Shared OWLOntologyManager. */
   private static OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
 
   /** Shared DataFactory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
+
+  /** Namespace for error messages. */
+  private static final String NS = "template#";
 
   /**
    * Error message when an axiom annotation does not have the appropriate annotation or class
@@ -59,7 +55,8 @@ public class TemplateOperation {
    * cell value, axiom type.
    */
   private static String axiomAnnotationError =
-      "Axiom annotation \"%6$s\" at row %2$d (\"%3$s\"), "
+      NS
+          + "AXIOM ANNOTATION ERROR \"%6$s\" at row %2$d (\"%3$s\"), "
           + "column %4$d (\"%5$s\") in table \"%1$s\" "
           + "requires %7$s in the previous column.";
 
@@ -68,38 +65,9 @@ public class TemplateOperation {
    * Expects: table name, header count, template count.
    */
   private static String columnMismatchError =
-      "The number of header columns (%2$d) must match "
+      NS
+          + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match "
           + "the number of template columns (%3$d) "
-          + "in table \"%1$s\".";
-
-  /**
-   * Error message when a template cannot be understood. Expects: table name, column number, column
-   * name, template.
-   */
-  private static String unknownTemplateError =
-      "Could not interpret template string \"%4$s\" "
-          + "for column %2$d (\"%3$s\")."
-          + "in table \"%1$s\".";
-
-  /**
-   * Error message when content cannot be parsed. Expects: table name, row number, row id, columns
-   * number, column name, content, message.
-   */
-  private static String parseError =
-      "Error while parsing \"%6$s\" "
-          + "at row %2$d (\"%3$s\"), "
-          + "column %4$d (\"%5$s\") "
-          + "in table \"%1$s\": "
-          + "%7$s";
-
-  /**
-   * Error message when we cannot create an IRI for a row ID. Expects: table name, row number, row
-   * id.
-   */
-  private static String nullIDError =
-      "Could not create IRI for ID \"%3$s\" "
-          + "with label \"%4$s\" "
-          + "at row %2$d "
           + "in table \"%1$s\".";
 
   /**
@@ -107,119 +75,47 @@ public class TemplateOperation {
    * "equivalent". Expects: table name, row number, row id.
    */
   private static String missingTypeError =
-      "No class type found for row %2$d (\"%3$s\") " + "in table \"%1$s\".";
+      NS + "MISSING TYPE ERROR no class type found for row %2$d (\"%3$s\") in table \"%1$s\".";
+
+  /**
+   * Error message when we cannot create an IRI for a row ID. Expects: table name, row number, row
+   * id.
+   */
+  private static String nullIDError =
+      NS
+          + "NULL ID ERROR could not create IRI for ID \"%3$s\" "
+          + "with label \"%4$s\" "
+          + "at row %2$d "
+          + "in table \"%1$s\".";
+
+  /**
+   * Error message when content cannot be parsed. Expects: table name, row number, row id, columns
+   * number, column name, content, message.
+   */
+  private static String parseError =
+      NS
+          + "PARSE ERROR error while parsing \"%6$s\" "
+          + "at row %2$d (\"%3$s\"), "
+          + "column %4$d (\"%5$s\") "
+          + "in table \"%1$s\": "
+          + "%7$s";
+
+  /**
+   * Error message when a template cannot be understood. Expects: table name, column number, column
+   * name, template.
+   */
+  private static String unknownTemplateError =
+      NS
+          + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" "
+          + "for column %2$d (\"%3$s\") "
+          + "in table \"%1$s\".";
 
   /**
    * Error message when a class type is not recognized. Should be "subclass" or "equivalent".
    * Expects: table name, row number, row id, value.
    */
   private static String unknownTypeError =
-      "Unknown class type \"%4$s\" " + "for row %2$d (\"%3$s\") " + "in table \"%1$s\".";
-
-  /**
-   * Find an annotation property with the given name or create one.
-   *
-   * @param checker used to search by rdfs:label (for example)
-   * @param name the name to search for
-   * @return an annotation property
-   * @throws Exception if the name cannot be resolved
-   */
-  public static OWLAnnotationProperty getAnnotationProperty(
-      QuotedEntityChecker checker, String name) throws Exception {
-    OWLAnnotationProperty property = checker.getOWLAnnotationProperty(name, true);
-    if (property != null) {
-      return property;
-    }
-    throw new Exception("Could not find annotation property: " + name);
-  }
-
-  /**
-   * Find a datatype with the given name or create one.
-   *
-   * @param checker used to search by rdfs:label (for example)
-   * @param name the name to search for
-   * @return a datatype
-   * @throws Exception if the name cannot be resolved
-   */
-  public static OWLDatatype getDatatype(QuotedEntityChecker checker, String name) throws Exception {
-    OWLDatatype datatype = checker.getOWLDatatype(name, true);
-    if (datatype != null) {
-      return datatype;
-    }
-    throw new Exception("Could not find datatype: " + name);
-  }
-
-  /**
-   * Return a string annotation for the given template string and value.
-   *
-   * @param checker used to resolve the annotation property
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return a new annotation with property and string literal value
-   * @throws Exception if the annotation property cannot be found
-   */
-  public static OWLAnnotation getStringAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    String name = template.substring(1).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value));
-  }
-
-  /**
-   * Return a typed annotation for the given template string and value. The template string format
-   * is "AT [name]^^[datatype]" and the value is any string.
-   *
-   * @param checker used to resolve the annotation property and datatype
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return a new annotation axiom with property and typed literal value
-   * @throws Exception if the annotation property cannot be found
-   */
-  public static OWLAnnotation getTypedAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    template = template.substring(2).trim();
-    String name = template.substring(0, template.indexOf("^^")).trim();
-    String typeName = template.substring(template.indexOf("^^") + 2, template.length()).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    OWLDatatype datatype = getDatatype(checker, typeName);
-    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, datatype));
-  }
-
-  /**
-   * Return a language tagged annotation for the given template and value. The template string
-   * format is "AL [name]@[lang]" and the value is any string.
-   *
-   * @param checker used to resolve the annotation property
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return a new annotation axiom with property and language tagged literal
-   * @throws Exception if the annotation property cannot be found
-   */
-  public static OWLAnnotation getLanguageAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    template = template.substring(2).trim();
-    String name = template.substring(0, template.indexOf("@")).trim();
-    String lang = template.substring(template.indexOf("@") + 1, template.length()).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, lang));
-  }
-
-  /**
-   * Return an IRI annotation for the given template string and value. The template string format is
-   * "AI [name]" and the value is a string that can be interpreted as an IRI.
-   *
-   * @param checker used to resolve the annotation property
-   * @param template the template string
-   * @param value the IRI value for the annotation
-   * @return a new annotation axiom with property and an IRI value
-   * @throws Exception if the annotation property cannot be found
-   */
-  public static OWLAnnotation getIRIAnnotation(
-      QuotedEntityChecker checker, String template, IRI value) throws Exception {
-    String name = template.substring(2).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotation(property, value);
-  }
+      NS + "UNKNOWN TYPE ERROR \"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
 
   /**
    * Return true if the template string is valid, false otherwise.
@@ -418,135 +314,6 @@ public class TemplateOperation {
   }
 
   /**
-   * Use type, id, and label information to get an entity from the data in a row. Requires either:
-   * an id (default type is owl:Class); an id and type; or a label.
-   *
-   * @param checker for looking up labels
-   * @param type the IRI of the type for this entity, or null
-   * @param id the ID for this entity, or null
-   * @param label the label for this entity, or null
-   * @return the entity
-   * @throws Exception if the entity cannot be created
-   */
-  public static OWLEntity getEntity(QuotedEntityChecker checker, IRI type, String id, String label)
-      throws Exception {
-
-    IOHelper ioHelper = checker.getIOHelper();
-
-    if (id != null && ioHelper != null) {
-      IRI iri = ioHelper.createIRI(id);
-      if (type == null) {
-        type = IRI.create(owl + "Class");
-      }
-      String t = type.toString();
-      if (t.equals(owl + "Class")) {
-        return dataFactory.getOWLClass(iri);
-      } else if (t.equals(owl + "AnnotationProperty")) {
-        return dataFactory.getOWLAnnotationProperty(iri);
-      } else if (t.equals(owl + "ObjectProperty")) {
-        return dataFactory.getOWLObjectProperty(iri);
-      } else if (t.equals(owl + "DatatypeProperty")) {
-        return dataFactory.getOWLDataProperty(iri);
-      } else if (t.equals(owl + "Datatype")) {
-        return dataFactory.getOWLDatatype(iri);
-      } else {
-        return dataFactory.getOWLNamedIndividual(iri);
-      }
-    }
-
-    if (label != null && type != null) {
-      String t = type.toString();
-      if (t.equals(owl + "Class")) {
-        return checker.getOWLClass(label);
-      } else if (t.equals(owl + "AnnotationProperty")) {
-        return checker.getOWLAnnotationProperty(label);
-      } else if (t.equals(owl + "ObjectProperty")) {
-        return checker.getOWLObjectProperty(label);
-      } else if (t.equals(owl + "DatatypeProperty")) {
-        return checker.getOWLDataProperty(label);
-      } else if (t.equals(owl + "Datatype")) {
-        return checker.getOWLDatatype(label);
-      } else {
-        return checker.getOWLIndividual(label);
-      }
-    }
-
-    if (label != null) {
-      return checker.getOWLEntity(label);
-    }
-
-    return null;
-  }
-
-  /**
-   * Get a list of the IRIs defined in a set of template tables.
-   *
-   * @param tables a map from table names to tables
-   * @param ioHelper used to find entities by name
-   * @return a list of IRIs
-   * @throws Exception when names or templates cannot be handled
-   */
-  public static List<IRI> getIRIs(Map<String, List<List<String>>> tables, IOHelper ioHelper)
-      throws Exception {
-    List<IRI> iris = new ArrayList<IRI>();
-    for (Map.Entry<String, List<List<String>>> table : tables.entrySet()) {
-      String tableName = table.getKey();
-      List<List<String>> rows = table.getValue();
-      iris.addAll(getIRIs(tableName, rows, ioHelper));
-    }
-    return iris;
-  }
-
-  /**
-   * Get a list of the IRIs defined in a template table.
-   *
-   * @param tableName the name of the table
-   * @param rows the table of data
-   * @param ioHelper used to find entities by name
-   * @return a list of IRIs
-   * @throws Exception when names or templates cannot be handled
-   */
-  public static List<IRI> getIRIs(String tableName, List<List<String>> rows, IOHelper ioHelper)
-      throws Exception {
-    // Find the ID column.
-    List<String> templates = rows.get(1);
-    int idColumn = -1;
-    for (int column = 0; column < templates.size(); column++) {
-      String template = templates.get(column);
-      if (template == null) {
-        continue;
-      }
-      template = template.trim();
-      if (template.equals("ID")) {
-        idColumn = column;
-      }
-    }
-    if (idColumn == -1) {
-      throw new Exception("Template row must include an \"ID\" column " + "in table " + tableName);
-    }
-
-    List<IRI> iris = new ArrayList<IRI>();
-    for (int row = 2; row < rows.size(); row++) {
-      String id = null;
-      try {
-        id = rows.get(row).get(idColumn);
-      } catch (IndexOutOfBoundsException e) {
-        continue;
-      }
-      if (id == null || id.trim().isEmpty()) {
-        continue;
-      }
-      IRI iri = ioHelper.createIRI(id);
-      if (iri == null) {
-        continue;
-      }
-      iris.add(iri);
-    }
-
-    return iris;
-  }
-
-  /**
    * Use templates to add entities and their annotations to an ontology.
    *
    * @param outputOntology the ontology to add axioms to
@@ -643,7 +410,7 @@ public class TemplateOperation {
         if (template.equals("LABEL")) {
           label = value;
           lastAxiomAnnotation = null;
-          lastAnnotation = getStringAnnotation(checker, "A rdfs:label", value);
+          lastAnnotation = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
         } else if (template.equals("TYPE")) {
           OWLEntity entity = checker.getOWLEntity(value);
@@ -652,11 +419,11 @@ public class TemplateOperation {
           } else {
             type = ioHelper.createIRI(value);
           }
-          OWLAnnotationProperty rdfType = getAnnotationProperty(checker, "rdf:type");
+          OWLAnnotationProperty rdfType = TemplateHelper.getAnnotationProperty(checker, "rdf:type");
           annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
         } else if (template.startsWith("A")) {
           lastAxiomAnnotation = null;
-          lastAnnotation = getAnnotation(checker, ioHelper, template, value);
+          lastAnnotation = TemplateHelper.getAnnotation(checker, ioHelper, template, value);
           annotations.add(lastAnnotation);
         } else if (template.startsWith(">A")) {
           if (lastAnnotation == null) {
@@ -673,7 +440,8 @@ public class TemplateOperation {
                     "an annotation"));
           }
           // Get annotation based on annotation type
-          lastAxiomAnnotation = getAnnotation(checker, ioHelper, template.substring(1), value);
+          lastAxiomAnnotation =
+              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(1), value);
           // If the last annotation is already in the map, get it's existing annotations
           if (nested.containsKey(lastAnnotation)) {
             axiomAnnotations = nested.get(lastAnnotation);
@@ -709,19 +477,20 @@ public class TemplateOperation {
           axiomAnnotationAnnotations = axiomAnnotations.get(lastAxiomAnnotation);
           // Add this iteration of annotation and put into the nested map
           axiomAnnotationAnnotations.add(
-              getAnnotation(checker, ioHelper, template.substring(2), value));
+              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(2), value));
           axiomAnnotations.put(lastAxiomAnnotation, axiomAnnotationAnnotations);
           nested.put(lastAnnotation, axiomAnnotations);
         }
       }
     }
 
-    OWLEntity entity = getEntity(checker, type, id, label);
+    OWLEntity entity = TemplateHelper.getEntity(checker, type, id, label);
     if (entity == null) {
       throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
     }
     // Create axioms from OWLAnnotation sets
-    Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(entity, annotations, nested);
+    Set<OWLAnnotationAssertionAxiom> axioms =
+        TemplateHelper.getAnnotationAxioms(entity, annotations, nested);
     // Add annotations to an entity
     OWLOntology ontology = outputManager.createOntology();
     outputManager.addAxiom(ontology, dataFactory.getOWLDeclarationAxiom(entity));
@@ -850,7 +619,8 @@ public class TemplateOperation {
         } else {
           annotations = new HashSet<>();
         }
-        annotations.add(getStringAnnotation(checker, template.substring(1).trim(), cell));
+        annotations.add(
+            TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
         annotatedExpressions.put(lastExpression, annotations);
         // Remove to prevent duplication
         if (classExpressions.contains(lastExpression)) {
@@ -879,131 +649,12 @@ public class TemplateOperation {
     if (cls == null) {
       throw new Exception(String.format(nullIDError, tableName, row + 1, id, label));
     }
-    Set<OWLAxiom> axioms = getLogicalAxioms(cls, classType, classExpressions, annotatedExpressions);
+    Set<OWLAxiom> axioms =
+        TemplateHelper.getLogicalAxioms(cls, classType, classExpressions, annotatedExpressions);
     if (axioms == null) {
       throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
     } else {
       ontology.getOWLOntologyManager().addAxioms(ontology, axioms);
-    }
-  }
-
-  /**
-   * Create an OWLAnnotation based on the template string and cell value.
-   *
-   * @param checker used to resolve the annotation property
-   * @param ioHelper IOHelper used to create IRIs from values
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return OWLAnnotation, or null if template string is not supported
-   * @throws Exception if annotation property cannot be found
-   */
-  private static OWLAnnotation getAnnotation(
-      QuotedEntityChecker checker, IOHelper ioHelper, String template, String value)
-      throws Exception {
-    if (template.startsWith("A ")) {
-      return getStringAnnotation(checker, template, value);
-    } else if (template.startsWith("AT ") && template.indexOf("^^") > -1) {
-      return getTypedAnnotation(checker, template, value);
-    } else if (template.startsWith("AL ") && template.indexOf("@") > -1) {
-      return getLanguageAnnotation(checker, template, value);
-    } else if (template.startsWith("AI ")) {
-      IRI iri = ioHelper.createIRI(value);
-      return getIRIAnnotation(checker, template, iri);
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Get a set of annotation axioms for an OWLEntity. Supports axiom annotations and axiom
-   * annotation annotations.
-   *
-   * @param entity OWLEntity to annotation
-   * @param annotations Set of OWLAnnotations
-   * @param nested Map with top-level OWLAnnotation as key and another map (axiom OWLAnnotation, set
-   *     of axiom annotation OWLAnnotations) as value
-   * @return Set of OWLAnnotationAssertionAxioms
-   */
-  private static Set<OWLAnnotationAssertionAxiom> getAnnotationAxioms(
-      OWLEntity entity,
-      Set<OWLAnnotation> annotations,
-      Map<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> nested) {
-    Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<>();
-    // Create basic annotations
-    for (OWLAnnotation annotation : annotations) {
-      axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation));
-    }
-    // Create annotations with axiom annotations
-    for (Entry<OWLAnnotation, Map<OWLAnnotation, Set<OWLAnnotation>>> annotationPlusAxioms :
-        nested.entrySet()) {
-      OWLAnnotation annotation = annotationPlusAxioms.getKey();
-      Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
-      // For each annotation with its axiom annotations ...
-      for (Entry<OWLAnnotation, Set<OWLAnnotation>> nestedSet :
-          annotationPlusAxioms.getValue().entrySet()) {
-        OWLAnnotation axiomAnnotation = nestedSet.getKey();
-        // Check if there are annotations on the axiom annotations, and add those
-        Set<OWLAnnotation> axiomAnnotationAnnotations = nestedSet.getValue();
-        if (axiomAnnotationAnnotations.isEmpty()) {
-          axiomAnnotations.add(axiomAnnotation);
-        } else {
-          OWLAnnotationProperty property = axiomAnnotation.getProperty();
-          OWLAnnotationValue value = axiomAnnotation.getValue();
-          axiomAnnotations.add(
-              dataFactory.getOWLAnnotation(property, value, axiomAnnotationAnnotations));
-        }
-      }
-      axioms.add(
-          dataFactory.getOWLAnnotationAssertionAxiom(
-              entity.getIRI(), annotation, axiomAnnotations));
-    }
-    return axioms;
-  }
-
-  /**
-   * Get a set of OWLAxioms (subclass or equivalent) for an OWLClass. Supports axiom annotations.
-   *
-   * @param cls OWLClass to add axioms to
-   * @param classType subclass or equivalent
-   * @param classExpressions Set of OWLClassExpressions
-   * @param annotatedExpressions Map of annotated OWLClassExpressions and the Set of OWLAnnotations
-   * @return Set of OWLAxioms, or null if classType is not subclass or equivalent
-   */
-  private static Set<OWLAxiom> getLogicalAxioms(
-      OWLClass cls,
-      String classType,
-      Set<OWLClassExpression> classExpressions,
-      Map<OWLClassExpression, Set<OWLAnnotation>> annotatedExpressions) {
-    Set<OWLAxiom> axioms = new HashSet<>();
-    if (classType.equals("subclass")) {
-      for (OWLClassExpression expression : classExpressions) {
-        axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expression));
-      }
-      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
-          annotatedExpressions.entrySet()) {
-        axioms.add(
-            dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
-      }
-      return axioms;
-    } else if (classType.equals("equivalent")) {
-      // Since it's an intersection, all annotations will be added to the same axiom
-      Set<OWLAnnotation> annotations = new HashSet<>();
-      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
-          annotatedExpressions.entrySet()) {
-        classExpressions.add(annotatedEx.getKey());
-        annotations.addAll(annotatedEx.getValue());
-      }
-      OWLObjectIntersectionOf intersection =
-          dataFactory.getOWLObjectIntersectionOf(classExpressions);
-      OWLAxiom axiom;
-      if (!annotations.isEmpty()) {
-        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, annotations);
-      } else {
-        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
-      }
-      return Sets.newHashSet(axiom);
-    } else {
-      return null;
     }
   }
 }

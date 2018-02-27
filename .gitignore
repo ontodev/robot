@@ -4,11 +4,13 @@
 .settings
 .idea
 *.iml
+Gemfile*
 bin/original-robot.jar
 bin/owltools2.jar
 bin/robot.jar
-examples/catalog-v001.xml
-examples/out.owl
-examples/results/
+docs/_site/
+docs/examples/catalog-v001.xml
+docs/examples/out.owl
+docs/examples/results/
 junk/
 target/
