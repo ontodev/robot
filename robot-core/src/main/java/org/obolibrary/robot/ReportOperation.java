@@ -1,5 +1,8 @@
 package org.obolibrary.robot;
 
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,17 +16,18 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import org.apache.commons.lang3.tuple.Triple;
 import org.obolibrary.robot.checks.CheckerQuery;
+import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
-import org.obolibrary.robot.checks.ViolationChecker;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +48,10 @@ public class ReportOperation {
   private static final Logger logger = LoggerFactory.getLogger(ReportOperation.class);
 
   /** Newline character. */
-  private static final String newLine = System.getProperty("line.separator");
+  // private static final String newLine = System.getProperty("line.separator");
 
   /**
-   * Reports ontology using SPARQL queries. Also checks for the same violation as
-   * InvalidReferenceViolations.
+   * Reports ontology using SPARQL queries.
    *
    * @param ontology OWLOntology to report
    * @param outputPath String path to write report file to (or null)
@@ -61,9 +64,8 @@ public class ReportOperation {
       CheckerQuery q = new CheckerQuery(query);
       queries.add(q);
     }
-    Map<Integer, List<Violation>> violationMap = ViolationChecker.getViolations(ontology, queries);
-    String yaml = createYamlReport(violationMap);
-    // write to file (if provided)
+    Report report = createReport(ontology, queries);
+    String yaml = report.toYaml();
     if (outputPath != null) {
       try (FileWriter fw = new FileWriter(outputPath);
           BufferedWriter bw = new BufferedWriter(fw)) {
@@ -73,6 +75,54 @@ public class ReportOperation {
     } else {
       // just output to terminal if no output path provided
       System.out.println(yaml);
+    }
+  }
+
+  /**
+   * Given an ontology and a set of queries, create a report containing all violations. Violations
+   * are added based on the query results. If there are no violations, the Report will pass and no
+   * Report object will be returned.
+   *
+   * @param ontology OWLOntology to report on
+   * @param queries set of CheckerQueries
+   * @return Report (on violations) or null (on no violations)
+   * @throws OWLOntologyStorageException on issue loading ontology as DatasetGraph
+   * @throws Exception
+   */
+  private static Report createReport(OWLOntology ontology, Set<CheckerQuery> queries)
+      throws OWLOntologyStorageException {
+    Report report = new Report(ontology);
+    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
+    for (CheckerQuery query : queries) {
+      report.addViolations(query.severity, query.title, getViolations(dsg, query));
+    }
+    Integer violationCount = report.getTotalViolations();
+    if (violationCount != 0) {
+      logger.error("REPORT FAILED! Violations: " + violationCount);
+      logger.error("Severity 1 violations: " + report.getTotalViolations(1));
+      logger.error("Severity 2 violations: " + report.getTotalViolations(2));
+      logger.error("Severity 3 violations: " + report.getTotalViolations(3));
+      logger.error("Severity 4 violations: " + report.getTotalViolations(4));
+      logger.error("Severity 5 violations: " + report.getTotalViolations(5));
+    } else {
+      System.out.println("REPORT PASSED! No violations found.");
+    }
+    return report;
+  }
+
+  /**
+   * Given a QuerySolution and a String var to retrieve, return the value of the the var. If the var
+   * is not in the solution, return null.
+   *
+   * @param qs QuerySolution
+   * @param var String variable to retrieve from result
+   * @return string or null
+   */
+  private static String getQueryResultOrNull(QuerySolution qs, String var) {
+    try {
+      return qs.get(var).toString();
+    } catch (NullPointerException e) {
+      return null;
     }
   }
 
@@ -146,32 +196,43 @@ public class ReportOperation {
   }
 
   /**
-   * Convert the Violation objects to YAML output.
+   * Given an ontology as a DatasetGraph and a query as a CheckerQuery, return the violations found
+   * by that query.
    *
-   * @param violations map of severity level (key, integer) and list of violation objects
-   * @return YAML string
+   * @param dsg the ontology
+   * @param query the query
+   * @return List of Violations
    */
-  private static String createYamlReport(Map<Integer, List<Violation>> violationMap) {
-    StringBuilder sb = new StringBuilder();
-    for (Integer key = 1; key <= 5; key++) {
-      sb.append("- severity    : " + key + newLine);
-      sb.append("  violations  :" + newLine);
-      List<Violation> violations = violationMap.get(key);
-      for (Violation violation : violations) {
-        sb.append("  - title   : " + violation.getTitle() + newLine);
-        sb.append("    triples :" + newLine);
-        for (Triple<String, String, String> triple : violation.getTriples()) {
-          sb.append(
-              "    - "
-                  + triple.getLeft()
-                  + " "
-                  + triple.getMiddle()
-                  + " "
-                  + triple.getRight()
-                  + newLine);
-        }
+  private static List<Violation> getViolations(DatasetGraph dsg, CheckerQuery query) {
+    ResultSet violationSet = QueryOperation.execQuery(dsg, query.queryString);
+
+    Map<String, Violation> violations = new HashMap<>();
+    Violation violation = null;
+
+    while (violationSet.hasNext()) {
+      QuerySolution qs = violationSet.next();
+      // entity should never be null
+      String entity = getQueryResultOrNull(qs, "entity");
+      // skip RDFS and OWL terms
+      // TODO: should we ignore oboInOwl, FOAF, and DC as well?
+      if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
+        continue;
       }
+      // find out if a this Violation already exists for this entity
+      violation = violations.get(entity);
+      // if the entity hasn't been added, create a new Violation
+      if (violation == null) {
+        violation = new Violation(entity);
+      }
+      // try and get a property and value from the query
+      String property = getQueryResultOrNull(qs, "property");
+      String value = getQueryResultOrNull(qs, "value");
+      // add details to Violation
+      if (property != null) {
+        violation.addStatement(property, value);
+      }
+      violations.put(entity, violation);
     }
-    return sb.toString();
+    return new ArrayList<>(violations.values());
   }
 }
