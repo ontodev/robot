@@ -1,9 +1,9 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.Test;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -22,7 +22,8 @@ public class FilterOperationTest extends CoreTest {
   public void testFilterNothing() throws IOException {
     Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
     OWLOntology filtered = loadOntology("/simple.owl");
-    FilterOperation.filter(filtered, properties);
+    FilterOperation.filter(
+        filtered, properties, Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
     assertIdentical("/simple.owl", filtered);
   }
 
@@ -36,7 +37,8 @@ public class FilterOperationTest extends CoreTest {
   public void testRemoveParts() throws IOException {
     Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
     OWLOntology filtered = loadOntology("/simple_parts.owl");
-    FilterOperation.filter(filtered, properties);
+    FilterOperation.filter(
+        filtered, properties, Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
     assertIdentical("/simple.owl", filtered);
   }
 
@@ -56,7 +58,8 @@ public class FilterOperationTest extends CoreTest {
     properties.add(df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of")));
 
     OWLOntology filtered = loadOntology("/simple_parts.owl");
-    FilterOperation.filter(filtered, properties);
+    FilterOperation.filter(
+        filtered, properties, Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
 
     assertIdentical("/simple_parts.owl", filtered);
   }
