@@ -121,20 +121,7 @@ public class MaterializeCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
-
-    // ELK is the default reasoner
-    String reasonerName =
-        CommandLineHelper.getDefaultValue(line, "reasoner", "ELK").trim().toLowerCase();
-    OWLReasonerFactory reasonerFactory;
-    if (reasonerName.equals("structural")) {
-      reasonerFactory = new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
-
-    } else if (reasonerName.equals("hermit")) {
-      reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
-
-    } else {
-      reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
-    }
+    OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line);
 
     // Override default reasoner options with command-line options
     Map<String, String> reasonerOptions = ReasonOperation.getDefaultOptions();

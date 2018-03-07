@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,15 +17,70 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /** Convenience methods for working with command line options. */
 public class CommandLineHelper {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(CommandLineHelper.class);
+
+  /** Namespace for general input error messages. */
+  private static final String NS = "errors#";
+
+  /** Error message when --input is provided in a chained command. */
+  private static final String chainedInputError =
+      NS + "CHAINED INPUT ERROR do not use an --input option for chained commands";
+
+  /**
+   * Error message when an invalid extension is provided (file format). Expects file format. This
+   * message is duplicated in IOHelper without the NS and ID.
+   */
+  private static final String invalidFormatError = NS + "INVALID FORMAT ERROR unknown format: %s";
+
+  /** Error message when an invalid IRI is provided. Expects the entry field and term. */
+  private static final String invalidIRIError =
+      NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
+
+  /**
+   * Error message when an invalid prefix is provided. Expects the combined prefix. This message is
+   * duplicated in IOHelper without the NS and ID.
+   */
+  private static final String invalidPrefixError =
+      NS + "INVALID PREFIX ERROR invalid prefix string: %s";
+
+  /** Error message when user provides an invalid reasoner. Expects reasonerName in formatting. */
+  private static final String invalidReasonerError =
+      NS + "INVALID REASONER ERROR unknown reasoner: %s";
+
+  /** Error message when no input ontology is provided for methods that accept multiple inputs. */
+  private static final String missingRequirementError = NS + "MISSING REQUIREMENT ERROR %s";
+
+  /** Error message when no input ontology is provided. */
+  private static final String missingInputError = NS + "MISSING INPUT ERROR an --input is required";
+
+  /** Error message when no input ontology is provided for methods that accept multiple inputs. */
+  private static final String missingInputsError =
+      NS + "MISSING INPUT ERROR at least one --input is required";
+
+  /** Error message when input terms are not provided. */
+  private static final String missingTermsError =
+      NS + "MISSING TERMS ERROR term(s) are required with --term or --term-file";
+
+  /** Error message when more than one --input is specified, excluding merge and unmerge. */
+  private static final String multipleInputsError =
+      NS + "MULITPLE INPUTS ERROR only one --input is allowed";
+
+  /** Error message when the --inputs pattern does not include * or ?, or is not quoted */
+  private static final String wildcardError =
+      NS + "WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
 
   /**
    * Given a single string, return a list of strings split at whitespace but allowing for quoted
@@ -57,7 +113,7 @@ public class CommandLineHelper {
     final int inDoubleQuote = 2;
     int state = normal;
     StringTokenizer tok = new StringTokenizer(toProcess, "\"\' ", true);
-    Vector v = new Vector();
+    Vector<String> v = new Vector<String>();
     StringBuffer current = new StringBuffer();
     boolean lastTokenHasBeenQuoted = false;
 
@@ -212,6 +268,7 @@ public class CommandLineHelper {
   public static String getDefaultValue(CommandLine line, String name, String defaultValue) {
     String result = defaultValue;
     if (line.hasOption(name)) {
+      // Only one arg should be passed per option
       result = line.getOptionValue(name);
     }
     return result;
@@ -231,7 +288,7 @@ public class CommandLineHelper {
       throws IllegalArgumentException {
     String result = getOptionalValue(line, name);
     if (result == null) {
-      throw new IllegalArgumentException(message);
+      throw new IllegalArgumentException(String.format(missingRequirementError, message));
     }
     return result;
   }
@@ -253,7 +310,11 @@ public class CommandLineHelper {
     }
 
     for (String prefix : getOptionalValues(line, "prefix")) {
-      ioHelper.addPrefix(prefix);
+      try {
+        ioHelper.addPrefix(prefix);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format(invalidPrefixError, prefix));
+      }
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
@@ -274,16 +335,81 @@ public class CommandLineHelper {
   public static OWLOntology getInputOntology(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
     OWLOntology inputOntology = null;
-    String inputOntologyPath = getOptionalValue(line, "input");
-    String inputOntologyIRI = getOptionalValue(line, "input-iri");
-    if (inputOntologyPath != null) {
-      inputOntology = ioHelper.loadOntology(inputOntologyPath);
-    } else if (inputOntologyIRI != null) {
-      inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRI));
-    } else {
-      throw new IllegalArgumentException("inputOntology must be specified");
+    // Check for multiple inputs
+    List<String> inputOntologyPaths = getOptionalValues(line, "input");
+    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    Integer check = inputOntologyPaths.size() + inputOntologyIRIs.size();
+    if (check > 1) {
+      throw new IllegalArgumentException(multipleInputsError);
     }
+
+    if (!inputOntologyPaths.isEmpty()) {
+      inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0));
+    } else if (!inputOntologyIRIs.isEmpty()) {
+      inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
+    } else {
+      // Both input options are empty
+      throw new IllegalArgumentException(missingInputError);
+    }
+
     return inputOntology;
+  }
+
+  /**
+   * Given an IOHelper and a command line, check for required options and return a list of loaded
+   * input ontologies. Currently handles --input, --input-iri, and --inputs options.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @param allowEmpty if an empty list may be returned (when chaining commands, an input was
+   *     already provided)
+   * @return the list of input ontologies
+   * @throws IllegalArgumentException if requires options are missing
+   * @throws IOException if the ontology cannot be loaded
+   */
+  public static List<OWLOntology> getInputOntologies(
+      IOHelper ioHelper, CommandLine line, boolean allowEmpty)
+      throws IllegalArgumentException, IOException {
+    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+
+    // Check for input files
+    List<String> inputOntologyPaths = getOptionalValues(line, "input");
+    for (String inputOntologyPath : inputOntologyPaths) {
+      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+    }
+
+    // Check for input IRIs
+    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    for (String inputOntologyIRI : inputOntologyIRIs) {
+      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
+    }
+
+    // Check for input patterns (wildcard)
+    List<String> inputOntologyPatterns = getOptionalValues(line, "inputs");
+    for (String inputOntologyPattern : inputOntologyPatterns) {
+      if (!inputOntologyPattern.contains("*") && !inputOntologyPattern.contains("?")) {
+        throw new IllegalArgumentException(wildcardError);
+      }
+      FileFilter fileFilter = new WildcardFileFilter(inputOntologyPattern);
+      File[] inputOntologyFiles = new File(".").listFiles(fileFilter);
+      if (inputOntologyFiles.length < 1) {
+        // Warn user, but continue (empty input checked later)
+        logger.error("No files match pattern: {}", inputOntologyPattern);
+      }
+      System.out.println("Loading matches to \"" + inputOntologyPattern + "\":");
+      int counter = 0;
+      for (File inputOntologyFile : inputOntologyFiles) {
+        counter++;
+        System.out.println(counter + ". " + inputOntologyFile.getName());
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile));
+      }
+    }
+
+    if (inputOntologies.isEmpty() && !allowEmpty) {
+      throw new IllegalArgumentException(missingInputsError);
+    }
+
+    return inputOntologies;
   }
 
   /**
@@ -322,7 +448,7 @@ public class CommandLineHelper {
       throws IllegalArgumentException, IOException {
     if (state != null && state.getOntology() != null) {
       if (line.hasOption("input") || line.hasOption("input-IRI")) {
-        throw new IllegalArgumentException("Do not use an --input option for chained commands");
+        throw new IllegalArgumentException(chainedInputError);
       } else {
         return state;
       }
@@ -333,8 +459,8 @@ public class CommandLineHelper {
       ontology = getInputOntology(ioHelper, line);
     } catch (Exception e) {
       if (required) {
-        e.printStackTrace(System.err);
-        throw new IllegalArgumentException("A valid input ontology must be specified");
+        // Throw message from IOHelper
+        throw new IllegalArgumentException(e);
       }
     }
 
@@ -343,32 +469,6 @@ public class CommandLineHelper {
     }
     state.setOntology(ontology);
     return state;
-  }
-
-  /**
-   * Given an IOHelper and a command line, check for required options and return a list of loaded
-   * input ontologies. Currently handles --input and --input-iri options.
-   *
-   * @param ioHelper the IOHelper to load the ontology with
-   * @param line the command line to use
-   * @return the list of input ontologies
-   * @throws IllegalArgumentException if requires options are missing
-   * @throws IOException if the ontology cannot be loaded
-   */
-  public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
-      throws IllegalArgumentException, IOException {
-    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
-
-    List<String> inputOntologyPaths = getOptionalValues(line, "input");
-    for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
-    }
-
-    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
-    for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
-    }
-    return inputOntologies;
   }
 
   /**
@@ -414,8 +514,30 @@ public class CommandLineHelper {
   public static void maybeSaveOutput(CommandLine line, OWLOntology ontology) throws IOException {
     IOHelper ioHelper = getIOHelper(line);
     for (String path : getOptionValues(line, "output")) {
-      ioHelper.saveOntology(ontology, path);
+      try {
+        ioHelper.saveOntology(ontology, path);
+      } catch (IllegalArgumentException e) {
+        // Exception from getFormat -- invalid format
+        throw new IllegalArgumentException(
+            String.format(invalidFormatError, path.substring(path.lastIndexOf(".") + 1)));
+      }
     }
+  }
+
+  /**
+   * Try to create an IRI from a string input. If the term is not in a valid format (null), an
+   * IllegalArgumentException is thrown to prevent null from being passed into other methods.
+   *
+   * @param term the term to convert to an IRI
+   * @param field the field in which the term was entered, for reporting
+   * @return the new IRI if successful
+   */
+  public static IRI maybeCreateIRI(IOHelper ioHelper, String term, String field) {
+    IRI iri = ioHelper.createIRI(term);
+    if (iri == null) {
+      throw new IllegalArgumentException(String.format(invalidIRIError, field, term));
+    }
+    return iri;
   }
 
   /**
@@ -448,7 +570,7 @@ public class CommandLineHelper {
     Set<IRI> terms = getTerms(ioHelper, line, "term", "term-file");
 
     if (terms.size() == 0 && !allowEmpty) {
-      throw new IllegalArgumentException("Must specify terms to extract.");
+      throw new IllegalArgumentException(missingTermsError);
     }
     return terms;
   }
@@ -456,6 +578,7 @@ public class CommandLineHelper {
   /**
    * Given an IOHelper and a command line, and the names of two options, check for the required
    * options and return a set of IRIs for terms. Handles single term options and term-file options.
+   * Allows empty returns.
    *
    * @param ioHelper the IOHelper to use for loading the terms
    * @param line the command line to use
@@ -486,6 +609,47 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given a string of a reasoner name from user input, return the reasoner factory. If the user
+   * input is not valid, throw IllegalArgumentExcepiton. By default, EMR is not allowed.
+   *
+   * @param line the command line to use
+   * @return OWLReasonerFactory if successful
+   */
+  public static OWLReasonerFactory getReasonerFactory(CommandLine line) {
+    return getReasonerFactory(line, false);
+  }
+
+  /**
+   * Given a string of a reasoner name from user input, return the reasoner factory. If the user
+   * input is not valid, throw IllegalArgumentExcepiton.
+   *
+   * @param line the command line to use
+   * @param allowEMR boolean specifying if EMR can be returned
+   * @return OWLReasonerFactory if successful
+   */
+  public static OWLReasonerFactory getReasonerFactory(CommandLine line, boolean allowEMR) {
+    // ELK is the default reasoner
+    String reasonerName = getDefaultValue(line, "reasoner", "ELK").trim().toLowerCase();
+    logger.info("Reasoner: " + reasonerName);
+
+    if (reasonerName.equals("structural")) {
+      return new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
+    } else if (reasonerName.equals("hermit")) {
+      return new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    } else if (reasonerName.equals("jfact")) {
+      return new JFactFactory();
+      // Reason must change behavior with EMR, so not all commands can use it
+    } else if (reasonerName.equals("emr") && allowEMR) {
+      ElkReasonerFactory innerReasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+      return new ExpressionMaterializingReasonerFactory(innerReasonerFactory);
+    } else if (reasonerName.equals("elk")) {
+      return new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+    } else {
+      throw new IllegalArgumentException(String.format(invalidReasonerError, reasonerName));
+    }
+  }
+
+  /**
    * Print a help message for a command.
    *
    * @param usage the usage information for the command
@@ -513,7 +677,7 @@ public class CommandLineHelper {
     o.addOption("V", "version", false, "print version information");
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
-    o.addOption("vvv", "very-very-verbose", false, "maximum logging");
+    o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
@@ -522,19 +686,19 @@ public class CommandLineHelper {
   }
 
   /**
-   * Parse the command line, handle help and other common options, (May exit!) and return a
-   * CommandLine.
+   * Parse the command line, handle help and other common options, and return null or a CommandLine.
    *
    * @param usage the usage string for this command
    * @param options the command-line options for this command
    * @param args the command-line arguments provided
-   * @return a new CommandLine object
+   * @param stopAtNonOption same as CommandLineParser
+   * @return a new CommandLine object or null
    * @throws ParseException if the arguments cannot be parsed
    */
-  public static CommandLine getCommandLine(String usage, Options options, String[] args)
-      throws ParseException {
+  public static CommandLine maybeGetCommandLine(
+      String usage, Options options, String[] args, boolean stopAtNonOption) throws ParseException {
     CommandLineParser parser = new PosixParser();
-    CommandLine line = parser.parse(options, args);
+    CommandLine line = parser.parse(options, args, stopAtNonOption);
 
     String level;
     if (line.hasOption("very-very-verbose")) {
@@ -551,26 +715,45 @@ public class CommandLineHelper {
 
     if (hasFlagOrCommand(line, "help")) {
       printHelp(usage, options);
-      System.exit(0);
+      return null;
     }
     if (hasFlagOrCommand(line, "version")) {
       printVersion();
-      System.exit(0);
+      return null;
     }
 
     return line;
   }
 
   /**
+   * Parse the command line, handle help and other common options, (May exit!) and return a
+   * CommandLine.
+   *
+   * @param usage the usage string for this command
+   * @param options the command-line options for this command
+   * @param args the command-line arguments provided
+   * @return a new CommandLine object or exit(0)
+   * @throws ParseException if the arguments cannot be parsed
+   */
+  public static CommandLine getCommandLine(String usage, Options options, String[] args)
+      throws ParseException {
+    CommandLine line = maybeGetCommandLine(usage, options, args, false);
+    if (line == null) {
+      System.exit(0);
+    }
+    return line;
+  }
+
+  /**
    * Shared method for dealing with exceptions, printing help, and exiting. Currently prints the
-   * stack trace, then the help, then exits.
+   * error message, stack trace (DEBUG), usage, and then exits.
    *
    * @param usage the usage string for this command
    * @param options the command-line options for this command
    * @param exception the exception to handle
    */
   public static void handleException(String usage, Options options, Exception exception) {
-    exception.printStackTrace();
+    ExceptionHelper.handleException(exception);
     printHelp(usage, options);
     System.exit(1);
   }

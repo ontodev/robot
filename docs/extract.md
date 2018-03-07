@@ -34,3 +34,26 @@ For more details see:
 - <a href="http://dx.doi.org/10.3233/AO-2011-0087" target="_blank">MIREOT</a>
 - <a href="http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html" target="_blank">SLME</a>
 - <a href="http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html" target="_blank">ModuleType</a>
+
+---
+
+## Error Messages
+
+### Missing MIREOT Term(s) Error
+
+MIREOT requires either `--lower-term` or `--branch-from-term` to proceed. `--upper-term` is optional.
+
+### Missing Lower Term(s) Error
+
+If an `--upper-term` is specified for MIREOT, `--lower-term` (or terms) must also be specified.
+
+### Invalid Method Error
+
+The `--method` option only accepts: MIREOT, STAR, TOP, and BOT.
+
+### Invalid Option Error
+
+The following flags *should not* be used with STAR, TOP, or BOT methods:
+* `--upper-term` & `--upper-terms`
+* `--lower-term` & `--lower-terms`
+* `--branch-from-term` & `--branch-from-terms`

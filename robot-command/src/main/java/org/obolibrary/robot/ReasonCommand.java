@@ -130,27 +130,7 @@ public class ReasonCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
-
-    // ELK is the default reasoner
-    String reasonerName =
-        CommandLineHelper.getDefaultValue(line, "reasoner", "ELK").trim().toLowerCase();
-    OWLReasonerFactory reasonerFactory;
-    if (reasonerName.equals("structural")) {
-      reasonerFactory = new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
-
-    } else if (reasonerName.equals("hermit")) {
-      reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
-
-    } else if (reasonerName.equals("jfact")) {
-      reasonerFactory = new JFactFactory();
-
-    } else if (reasonerName.equals("emr")) {
-      ElkReasonerFactory innerReasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
-      reasonerFactory = new ExpressionMaterializingReasonerFactory(innerReasonerFactory);
-
-    } else {
-      reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
-    }
+    OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line, true);
 
     // Override default reasoner options with command-line options
     Map<String, String> reasonerOptions = ReasonOperation.getDefaultOptions();
@@ -159,7 +139,6 @@ public class ReasonCommand implements Command {
         reasonerOptions.put(option, line.getOptionValue(option));
       }
     }
-    logger.info("Reasoner: " + reasonerName);
 
     // Return true if successful, false if it was not succesful
     boolean success = ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);

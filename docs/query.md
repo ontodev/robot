@@ -27,3 +27,15 @@ Instead of specifying one or more pairs (query file, output file), you can speci
     robot query --input nucleus.owl \
       --queries cell_part_ask.sparql \
       --output-dir results/
+
+---
+
+## Error Messages
+
+### Missing Query Error
+
+You must specify a query to execute with `--query` or `--queries`.
+
+### Query Type Error
+
+Each SPARQL query should be a SELECT, ASK, DESCRIBE, or CONSTRUCT.
