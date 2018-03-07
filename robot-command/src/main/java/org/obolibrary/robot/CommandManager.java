@@ -159,6 +159,9 @@ public class CommandManager implements Command {
 
     while (arguments.size() > 0) {
       state = executeCommand(state, globalOptionArgs, arguments);
+      if (state.hadAnError()) {
+        System.exit(1);
+      }
     }
 
     return state;
@@ -216,7 +219,14 @@ public class CommandManager implements Command {
     optionArgs.addAll(globalOptionArgs);
     optionArgs.addAll(localOptionArgs);
 
-    return command.execute(state, asArgs(optionArgs));
+    long start = System.currentTimeMillis();
+
+    CommandState s = command.execute(state, asArgs(optionArgs));
+
+    double duration = (System.currentTimeMillis() - start) / 1000.0;
+    System.out.println(commandName + " took " + duration + " seconds");
+
+    return s;
   }
 
   /** Print general help plus a list of available commands. */

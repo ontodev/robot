@@ -161,7 +161,9 @@ public class ReasonCommand implements Command {
     }
     logger.info("Reasoner: " + reasonerName);
 
-    ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
+    // Return true if successful, false if it was not succesful
+    boolean success = ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
+    state.setHadError(!success);
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
 

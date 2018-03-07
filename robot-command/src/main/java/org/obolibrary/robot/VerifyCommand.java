@@ -126,9 +126,7 @@ public class VerifyCommand implements Command {
     }
 
     boolean violationsExist = QueryOperation.execVerify(resultMap);
-    if (violationsExist) {
-      System.exit(1);
-    }
+    state.setHadError(violationsExist);
 
     return state;
   }
