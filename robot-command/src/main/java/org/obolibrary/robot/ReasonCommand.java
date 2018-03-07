@@ -3,13 +3,10 @@ package org.obolibrary.robot;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
-import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /**
  * Handles inputs and outputs for the {@link ReasonOperation}.
@@ -141,8 +138,7 @@ public class ReasonCommand implements Command {
     }
 
     // Return true if successful, false if it was not succesful
-    boolean success = ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
-    state.setHadError(!success);
+    ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
 

@@ -408,7 +408,7 @@ public class QueryOperation {
    * @return true if there are any violations
    */
   public static boolean execVerify(
-      Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
+      Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws Exception {
     boolean isViolation = false;
     for (File outFile : queriesResults.keySet()) {
       Tuple<ResultSetRewindable, OutputStream> resultAndStream = queriesResults.get(outFile);

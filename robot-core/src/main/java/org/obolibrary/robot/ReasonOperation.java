@@ -14,6 +14,7 @@ import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.obolibrary.robot.exceptions.InvalidReferenceException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
+import org.obolibrary.robot.exceptions.ReasoningException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -79,9 +80,10 @@ public class ReasonOperation {
    * @throws OntologyLogicException on inconsistency or incoherency
    * @throws InvalidReferenceException on unsatisfiable class(es)
    */
-  public static boolean reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
-    return reason(ontology, reasonerFactory, getDefaultOptions());
+  public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
+      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException,
+          ReasoningException {
+    reason(ontology, reasonerFactory, getDefaultOptions());
   }
 
   /**
@@ -96,9 +98,10 @@ public class ReasonOperation {
    * @throws OntologyLogicException on inconsistency or incoherency
    * @throws InvalidReferenceException on unsatisfiable class(es)
    */
-  public static boolean reason(
+  public static void reason(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
+      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException,
+          ReasoningException {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
     logger.info("Fetching labels...");
@@ -152,7 +155,7 @@ public class ReasonOperation {
     boolean passesEquivalenceTests = equivalentReasoning.reason();
     equivalentReasoning.logReport(logger);
     if (!passesEquivalenceTests) {
-      return false;
+      throw new ReasoningException();
     }
     // cache the complete set of asserted axioms at the initial state.
     // we will later use this if the -x option is passed, to avoid
@@ -270,8 +273,6 @@ public class ReasonOperation {
     elapsedTime = System.currentTimeMillis() - startTime;
     seconds = (int) Math.ceil(elapsedTime / 1000);
     logger.info("Filling took {} seconds.", seconds);
-
-    return true;
   }
 
   /**

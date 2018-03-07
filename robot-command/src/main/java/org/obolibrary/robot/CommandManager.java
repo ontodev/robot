@@ -240,16 +240,16 @@ public class CommandManager implements Command {
       }
     }
 
+    long start = System.currentTimeMillis();
     try {
-      long start = System.currentTimeMillis();
-
       state = command.execute(state, asArgs(optionArgs));
 
-      double duration = (System.currentTimeMillis() - start) / 1000.0;
-      System.out.println(commandName + " took " + duration + " seconds");
     } catch (Exception e) {
       // Ensure command-specific usage info is returned
       CommandLineHelper.handleException(command.getUsage(), command.getOptions(), e);
+    } finally {
+      double duration = (System.currentTimeMillis() - start) / 1000.0;
+      System.out.println(commandName + " took " + duration + " seconds");
     }
 
     return state;
