@@ -138,7 +138,7 @@ public class VerifyCommand implements Command {
 
     boolean violationsExist = QueryOperation.execVerify(resultMap);
     if (violationsExist) {
-      System.exit(1);
+      throw new VerifyException();
     }
 
     return state;
@@ -156,6 +156,12 @@ public class VerifyCommand implements Command {
       String message = "Cannot read from " + file + ": " + e.getMessage();
       // TODO: Is this necessary?
       throw new CannotReadQuery(message, e);
+    }
+  }
+
+  public static class VerifyException extends Exception {
+    public VerifyException() {
+      super();
     }
   }
 }

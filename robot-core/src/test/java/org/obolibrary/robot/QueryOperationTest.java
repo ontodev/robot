@@ -77,7 +77,7 @@ public class QueryOperationTest extends CoreTest {
   }
 
   @Test
-  public void testExecVerifyWithViolations() throws IOException, OWLOntologyStorageException {
+  public void testExecVerifyWithViolations() throws Exception {
 
     OWLOntology ontology = loadOntology("/simple.owl");
     DatasetGraph graph = QueryOperation.loadOntology(ontology);
@@ -95,7 +95,7 @@ public class QueryOperationTest extends CoreTest {
   }
 
   @Test
-  public void testExecVerifyNoViolations() throws IOException, OWLOntologyStorageException {
+  public void testExecVerifyNoViolations() throws Exception {
     OWLOntology ontology = loadOntology("/simple.owl");
     DatasetGraph graph = QueryOperation.loadOntology(ontology);
     String allViolations = "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    \n" + "}\n" + "LIMIT 0";

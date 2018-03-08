@@ -8,13 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.obolibrary.robot.exceptions.InvalidReferenceException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
+import org.obolibrary.robot.exceptions.ReasoningException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -26,7 +26,6 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -72,7 +71,8 @@ public class ReasonOperation {
 
   /**
    * Given an ontology, the name of a reasoner, and an output IRI, return the ontology with inferred
-   * axioms added, using the default reasoner options.
+   * axioms added, using the default reasoner options. Returns true if the reason operation was
+   * successful, false if there was an equivalence class error.
    *
    * @param ontology the ontology to reason over
    * @param reasonerFactory the factory to create a reasoner instance from
@@ -81,13 +81,15 @@ public class ReasonOperation {
    * @throws InvalidReferenceException on unsatisfiable class(es)
    */
   public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
+      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException,
+          ReasoningException {
     reason(ontology, reasonerFactory, getDefaultOptions());
   }
 
   /**
    * Given an ontology, the name of a reasoner, an output IRI, and an optional map of reasoner
-   * options, return the ontology with inferred axioms added.
+   * options, return the ontology with inferred axioms added. Returns true if the reason operation
+   * was successful, false if there was an equivalence class error.
    *
    * @param ontology the ontology to reason over
    * @param reasonerFactory the factory to create a reasoner instance from
@@ -98,12 +100,11 @@ public class ReasonOperation {
    */
   public static void reason(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
+      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException,
+          ReasoningException {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
     logger.info("Fetching labels...");
-
-    Function<OWLNamedObject, String> labelFunc = OntologyHelper.getLabelFunction(ontology, false);
 
     int seconds;
     long elapsedTime;
@@ -154,7 +155,7 @@ public class ReasonOperation {
     boolean passesEquivalenceTests = equivalentReasoning.reason();
     equivalentReasoning.logReport(logger);
     if (!passesEquivalenceTests) {
-      System.exit(1);
+      throw new ReasoningException();
     }
     // cache the complete set of asserted axioms at the initial state.
     // we will later use this if the -x option is passed, to avoid
@@ -162,8 +163,7 @@ public class ReasonOperation {
     Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
 
     // Make sure to add the axiom generators in this way!!!
-    List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
-        new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
     gens.add(new InferredSubClassAxiomGenerator());
     InferredOntologyGenerator generator = new InferredOntologyGenerator(reasoner, gens);
     logger.info("Using these axiom generators:");

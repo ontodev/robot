@@ -136,6 +136,8 @@ public class ReasonCommand implements Command {
         reasonerOptions.put(option, line.getOptionValue(option));
       }
     }
+
+    // Return true if successful, false if it was not succesful
     ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
