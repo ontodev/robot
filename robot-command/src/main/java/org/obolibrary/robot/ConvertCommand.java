@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
@@ -20,6 +21,10 @@ public class ConvertCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "convert#";
 
+  /** Error message when the arg to --check is not true or false */
+  private static final String checkArgError =
+      NS + "CHECK ARG ERROR the arg to --check should be either TRUE or FALSE";
+
   /** Error message when no --output is provided. */
   private static final String missingOutputError = NS + "OUTPUT ERROR an output file is required";
 
@@ -29,6 +34,10 @@ public class ConvertCommand implements Command {
 
   /** Error message when a --format is not specified and the --output does not have an extension. */
   private static final String missingFormatError = NS + "FORMAT ERROR an output format is required";
+
+  /** Error message when --check is true and the document is not in valid OBO structure */
+  private static final String oboStructureError =
+      NS + "OBO STRUCTURE ERROR the ontology does not conform to OBO structure rules";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -40,6 +49,7 @@ public class ConvertCommand implements Command {
     o.addOption("I", "input-iri", true, "convert ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("f", "format", true, "the format: obo, owl, ttl, owx, omn, ofn, json");
+    o.addOption("c", "check", true, "if false, ignore OBO document structure checks");
     options = o;
   }
 
@@ -145,7 +155,25 @@ public class ConvertCommand implements Command {
       }
     }
 
-    ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile);
+    boolean checkOBO = true;
+    String check = CommandLineHelper.getDefaultValue(line, "check", "true");
+    if ("false".equals(check.toLowerCase())) {
+      checkOBO = false;
+    } else if (!"true".equals(check.toLowerCase())) {
+      throw new IllegalArgumentException(checkArgError);
+    }
+
+    try {
+      ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
+    } catch (IOException e) {
+      // specific feedback for writing to OBO
+      if (e.getMessage().contains("FrameStructureException")) {
+        logger.debug(e.getMessage());
+        throw new Exception(oboStructureError);
+      } else {
+        throw e;
+      }
+    }
 
     return state;
   }

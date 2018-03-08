@@ -8,12 +8,15 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +30,9 @@ import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
+import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
+import org.obolibrary.oboformat.model.OBODoc;
+import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
@@ -387,27 +393,17 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI) throws IOException {
-    String formatName = FilenameUtils.getExtension(ontologyIRI.toString());
-    OWLDocumentFormat format = getFormat(formatName);
-    return saveOntology(ontology, format, ontologyIRI);
+    try {
+      String formatName = FilenameUtils.getExtension(ontologyIRI.toString());
+      OWLDocumentFormat format = getFormat(formatName);
+      return saveOntology(ontology, format, ontologyIRI, true);
+    } catch (IllegalArgumentException e) {
+      throw new IOException(e);
+    }
   }
 
   /**
    * Save an ontology in the given format to a file.
-   *
-   * @param ontology the ontology to save
-   * @param format the ontology format to use
-   * @param ontologyFile the file to save the ontology to
-   * @return the saved ontology
-   * @throws IOException on any problem
-   */
-  public OWLOntology saveOntology(
-      final OWLOntology ontology, OWLDocumentFormat format, File ontologyFile) throws IOException {
-    return saveOntology(ontology, format, IRI.create(ontologyFile));
-  }
-
-  /**
-   * Save an ontology in the given format to an IRI.
    *
    * @param ontology the ontology to save
    * @param format the ontology format to use
@@ -416,31 +412,72 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology saveOntology(
-      final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
-    logger.debug(
-        "Saving ontology {} as {} to IRI {}", ontology.getOntologyID(), format, ontologyIRI);
+      final OWLOntology ontology, OWLDocumentFormat format, File ontologyFile) throws IOException {
+    return saveOntology(ontology, format, ontologyFile, true);
+  }
+
+  /**
+   * Save an ontology in the given format to a file, with the option to ignore OBO document checks.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyFile the file to save the ontology to
+   * @param checkOBO if false, ignore OBO document checks
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology, OWLDocumentFormat format, File ontologyFile, boolean checkOBO)
+      throws IOException {
+    return saveOntology(ontology, format, IRI.create(ontologyFile), checkOBO);
+  }
+
+  /**
+   * Save an ontology in the given format to an IRI, with the option to ignore OBO document checks.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyIRI the IRI to save the ontology to
+   * @param checkOBO if false, ignore OBO document checks
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI, boolean checkOBO)
+      throws IOException {
+    logger.debug("Saving ontology {} as {} with to IRI {}", ontology, format, ontologyIRI);
 
     // if (format instanceof PrefixOWLDocumentFormat) {
     //    ((PrefixOWLDocumentFormat) format)
     //        .copyPrefixesFrom(getPrefixManager());
     // }
-    try {
-      XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
+    XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
 
-      // first handle any non-official output formats.
-      // currently this is just OboGraphs JSON format
-      if (format instanceof OboGraphJsonDocumentFormat) {
-        FromOwl fromOwl = new FromOwl();
-        GraphDocument gd = fromOwl.generateGraphDocument(ontology);
-        String doc = OgJsonGenerator.render(gd);
-        File outfile = new File(ontologyIRI.toURI());
-        FileUtils.writeStringToFile(outfile, doc);
-      } else {
-        // use native save functionality
+    // first handle any non-official output formats.
+    // currently this is just OboGraphs JSON format
+    if (format instanceof OboGraphJsonDocumentFormat) {
+      FromOwl fromOwl = new FromOwl();
+      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      String doc = OgJsonGenerator.render(gd);
+      File outfile = new File(ontologyIRI.toURI());
+      FileUtils.writeStringToFile(outfile, doc);
+    } else if (format instanceof OBODocumentFormat && !checkOBO) {
+      // only use this method when ignoring OBO checking, otherwise use native save
+      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
+      OBODoc oboOntology = bridge.convert(ontology);
+      File f = new File(ontologyIRI.getShortForm());
+      f.createNewFile();
+      BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
+      OBOFormatWriter oboWriter = new OBOFormatWriter();
+      oboWriter.setCheckStructure(checkOBO);
+      oboWriter.write(oboOntology, bw);
+    } else {
+      // use native save functionality
+      try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
+      } catch (OWLOntologyStorageException e) {
+        throw new IOException(e);
       }
-    } catch (OWLOntologyStorageException e) {
-      throw new IOException(e);
     }
     return ontology;
   }
