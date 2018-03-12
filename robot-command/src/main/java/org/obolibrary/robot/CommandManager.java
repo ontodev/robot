@@ -244,7 +244,7 @@ public class CommandManager implements Command {
       // Ensure command-specific usage info is returned
       CommandLineHelper.handleException(command.getUsage(), command.getOptions(), e);
     } finally {
-      double duration = (System.currentTimeMillis() - start)/1000.0;
+      double duration = (System.currentTimeMillis() - start) / 1000.0;
       System.out.println(commandName + " took " + duration + " seconds");
     }
 
