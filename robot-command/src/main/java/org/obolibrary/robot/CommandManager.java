@@ -245,7 +245,7 @@ public class CommandManager implements Command {
       CommandLineHelper.handleException(command.getUsage(), command.getOptions(), e);
     } finally {
       double duration = (System.currentTimeMillis() - start) / 1000.0;
-      System.out.println(commandName + " took " + duration + " seconds");
+      logger.warn("Subcommand Timing: " + commandName + " took " + duration + " seconds");
     }
 
     return state;
