@@ -237,11 +237,15 @@ public class CommandManager implements Command {
       }
     }
 
+    long start = System.currentTimeMillis();
     try {
       state = command.execute(state, asArgs(optionArgs));
     } catch (Exception e) {
       // Ensure command-specific usage info is returned
       CommandLineHelper.handleException(command.getUsage(), command.getOptions(), e);
+    } finally {
+      double duration = (System.currentTimeMillis() - start) / 1000.0;
+      logger.warn("Subcommand Timing: " + commandName + " took " + duration + " seconds");
     }
 
     return state;
