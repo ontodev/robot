@@ -51,6 +51,7 @@ public class RemoveCommand implements Command {
     o.addOption("a", "entity-and-descendants", true, "remove an entity and its descendants");
     o.addOption(
         "A", "entities-and-descendants", true, "remove a set of entities and their descendants");
+    o.addOption("m", "import", true, "remove an import and its entities ('all' for all imports)");
     options = o;
 
     Option a;
@@ -269,6 +270,17 @@ public class RemoveCommand implements Command {
     }
 
     RemoveOperation.removeWithAnnotations(ontology, annotations);
+
+    // Remove imports and their entities
+    String importString = CommandLineHelper.getOptionalValue(line, "import");
+    if (importString != null) {
+      if ("all".equalsIgnoreCase(importString)) {
+        RemoveOperation.removeImports(ontology);
+      } else {
+        IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, importString, "import");
+        RemoveOperation.removeImports(ontology, iri);
+      }
+    }
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
