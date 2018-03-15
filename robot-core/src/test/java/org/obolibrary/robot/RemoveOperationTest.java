@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 public class RemoveOperationTest extends CoreTest {
@@ -37,11 +38,7 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveClass() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    Map<String, String> entities = new HashMap<>();
-    entities.putAll(nullEntities);
-    entities.put(CLASS, "UBERON:0004770");
-
-    RemoveOperation.remove(ontology, entities);
+    RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_0004770"));
     assertIdentical("/remove_class.owl", ontology);
   }
 
@@ -55,7 +52,8 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveAnonymousSuperClasses() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    RemoveOperation.removeAnonymousSuperclasses(ontology, "UBERON:0001434");
+    RemoveOperation.removeAnonymousClasses(
+        ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_0001434"));
     assertIdentical("/remove_anonymous.owl", ontology);
   }
 
@@ -69,7 +67,8 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveDescendantClasses() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    RemoveOperation.removeDescendantClasses(ontology, "UBERON:0000477");
+    RemoveOperation.removeDescendants(
+        ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_0000477"));
     assertIdentical("/remove_descendants.owl", ontology);
   }
 
@@ -84,11 +83,7 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveIndividual() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    Map<String, String> entities = new HashMap<>();
-    entities.putAll(nullEntities);
-    entities.put(INDIV, "UBERON:9999999");
-
-    RemoveOperation.remove(ontology, entities);
+    RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_9999999"));
     assertIdentical("/remove_individual.owl", ontology);
   }
 
@@ -116,11 +111,7 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveAnnProp() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    Map<String, String> entities = new HashMap<>();
-    entities.putAll(nullEntities);
-    entities.put(ANN, "rdfs:label");
-
-    RemoveOperation.remove(ontology, entities);
+    RemoveOperation.remove(ontology, IRI.create("http://www.w3.org/2000/01/rdf-schema#label"));
     assertIdentical("/remove_annotation.owl", ontology);
   }
 
@@ -135,11 +126,7 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveObjProp() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    Map<String, String> entities = new HashMap<>();
-    entities.putAll(nullEntities);
-    entities.put(OBJ, "BFO:0000051");
-
-    RemoveOperation.remove(ontology, entities);
+    RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/BFO_0000051"));
     assertIdentical("/remove_obj_prop.owl", ontology);
   }
 
@@ -154,11 +141,7 @@ public class RemoveOperationTest extends CoreTest {
   public void testRemoveDataProp() throws IOException {
     OWLOntology ontology = loadOntology(INPUT);
 
-    Map<String, String> entities = new HashMap<>();
-    entities.putAll(nullEntities);
-    entities.put(DATA, "UBERON:8888888");
-
-    RemoveOperation.remove(ontology, entities);
+    RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_8888888"));
     assertIdentical("/remove_data_prop.owl", ontology);
   }
 }

@@ -1,36 +1,18 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.Sets;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import org.semanticweb.owlapi.model.EntityType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
+import org.semanticweb.owlapi.model.OWLDataRange;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,324 +28,25 @@ public class RelatedEntitiesHelper {
   private static final Logger logger = LoggerFactory.getLogger(ReduceOperation.class);
 
   /**
-   * Convenience method to return named classes for a given relation. Does not include anonymous
-   * classes.
-   *
-   * @param ontology OWLOntology to retrieve entities from
-   * @param iri IRI to retrieve related entities of
-   * @param relationOption String option specifying what types of related entities to retrieve
-   * @return Set of related OWLClasses
-   */
-  public static Set<OWLClass> getRelatedClasses(
-      OWLOntology ontology, IRI iri, String relationOption) {
-    Set<OWLObject> relatedObjects = getRelatedEntities(ontology, iri, relationOption, true);
-    Set<OWLClass> relatedClasses = new HashSet<>();
-    for (OWLObject object : relatedObjects) {
-      relatedClasses.addAll(object.getClassesInSignature());
-    }
-    return relatedClasses;
-  }
-
-  /**
-   * Returns a set of related entities as OWLObjects for an IRI. Handles one IRI, one relation
-   * option.
-   *
-   * @param ontology OWLOntology to retrieve entities from
-   * @param iri IRI to retrieve related entities of
-   * @param relationOption String option specifying what types of related entities to retrieve
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  public static Set<OWLObject> getRelatedEntities(
-      OWLOntology ontology, IRI iri, String relationOption, boolean excludeAnonymous) {
-    Set<IRI> IRIs = Sets.newHashSet(iri);
-    return getRelatedEntities(ontology, IRIs, Arrays.asList(relationOption), excludeAnonymous);
-  }
-
-  /**
-   * Returns a set of related entities as OWLObjects for an IRI. Handles multiple IRIs, one relation
-   * options.
-   *
-   * @param ontology OWLOntology to retrieve entities from
-   * @param IRIs Set of IRIs to retrieve related entities of
-   * @param relationOption String option specifying what types of related entities to retrieve
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  public static Set<OWLObject> getRelatedEntities(
-      OWLOntology ontology, Set<IRI> IRIs, String relationOption, boolean excludeAnonymous) {
-    return getRelatedEntities(ontology, IRIs, Arrays.asList(relationOption), excludeAnonymous);
-  }
-
-  /**
-   * Returns a set of related entities as OWLObjects for an IRI. Handles one IRI, multiple relation
-   * options.
-   *
-   * @param ontology OWLOntology to retrieve entities from
-   * @param iri IRI to retrieve related entities of
-   * @param relationOptions List of string options specifying what types of related entities to
-   *     retrieve
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  public static Set<OWLObject> getRelatedEntities(
-      OWLOntology ontology, IRI iri, List<String> relationOptions, boolean excludeAnonymous) {
-    Set<IRI> IRIs = Sets.newHashSet(iri);
-    return getRelatedEntities(ontology, IRIs, relationOptions, excludeAnonymous);
-  }
-
-  /**
-   * Returns a set of related entities as OWLObjects for a given set of IRIs.
-   *
-   * @param IRIs Set of IRIs to retrieve related entities of
-   * @param ontology OWLOntology to retrieve entities from
-   * @param relationOptions List of string options specifying what types of related entities to
-   *     retrieve
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  public static Set<OWLObject> getRelatedEntities(
-      OWLOntology ontology, Set<IRI> IRIs, List<String> relationOptions, boolean excludeAnonymous) {
-    Set<OWLObject> relatedEntities = new HashSet<>();
-    Map<EntityType<?>, Set<OWLEntity>> entitiesByType = sortTypes(ontology, IRIs);
-    for (String opt : relationOptions) {
-      if ("ancestors".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getAncestors(ontology, entitiesByType, excludeAnonymous));
-      } else if ("descendants".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getDescendants(ontology, entitiesByType, excludeAnonymous));
-      } else if ("equivalents".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getEquivalents(ontology, entitiesByType, excludeAnonymous));
-      } else if ("disjoints".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getDisjoints(ontology, entitiesByType, excludeAnonymous));
-      } else if ("domains".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getDomains(ontology, entitiesByType));
-      } else if ("ranges".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getRanges(ontology, entitiesByType));
-      } else if ("inverses".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getInverses(ontology, entitiesByType));
-      } else if ("types".equals(opt.toLowerCase())) {
-        relatedEntities.addAll(getTypes(ontology, entitiesByType));
-        // TODO: property assertions
-      } else {
-        // TODO: Should this be an exception?
-        logger.warn("Invalid relation option: " + opt);
-      }
-    }
-    return relatedEntities;
-  }
-
-  /**
-   * Returns a set of ancestors as OWLObjects for a set of entities
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getAncestors(
-      OWLOntology ontology,
-      Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-      boolean excludeAnonymous) {
-    Set<OWLObject> ancestors = new HashSet<>();
-    Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
-    Set<OWLEntity> dataProperties = entitiesByType.get(EntityType.DATA_PROPERTY);
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity cls : classes) {
-      getAncestors(ontology, cls.asOWLClass(), ancestors, excludeAnonymous);
-    }
-    for (OWLEntity dp : dataProperties) {
-      getAncestors(ontology, dp.asOWLDataProperty(), ancestors);
-    }
-    for (OWLEntity op : objectProperties) {
-      getAncestors(ontology, op.asOWLObjectProperty(), ancestors);
-    }
-    return ancestors;
-  }
-
-  /**
-   * Returns a set of descendants as OWLObjects for a set of entities
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getDescendants(
-      OWLOntology ontology,
-      Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-      boolean excludeAnonymous) {
-    Set<OWLObject> descendants = new HashSet<>();
-    Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
-    Set<OWLEntity> dataProperties = entitiesByType.get(EntityType.DATA_PROPERTY);
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity cls : classes) {
-      getDescendants(ontology, cls.asOWLClass(), descendants, excludeAnonymous);
-    }
-    for (OWLEntity dp : dataProperties) {
-      getDescendants(ontology, dp.asOWLDataProperty(), descendants);
-    }
-    for (OWLEntity op : objectProperties) {
-      getDescendants(ontology, op.asOWLObjectProperty(), descendants);
-    }
-    return descendants;
-  }
-
-  /**
-   * Returns a set of disjoints as OWLObjects for a set of entities
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getDisjoints(
-      OWLOntology ontology,
-      Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-      boolean excludeAnonymous) {
-    Set<OWLObject> disjoints = new HashSet<>();
-    Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
-    Set<OWLEntity> dataProperties = entitiesByType.get(EntityType.DATA_PROPERTY);
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity cls : classes) {
-      getDisjoints(ontology, cls.asOWLClass(), disjoints, excludeAnonymous);
-    }
-    for (OWLEntity dp : dataProperties) {
-      getDisjoints(ontology, dp.asOWLDataProperty(), disjoints);
-    }
-    for (OWLEntity op : objectProperties) {
-      getDisjoints(ontology, op.asOWLObjectProperty(), disjoints);
-    }
-    return disjoints;
-  }
-
-  /**
-   * Returns a set of domains as OWLObjects for a set of entities
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getDomains(
-      OWLOntology ontology, Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
-    Set<OWLObject> domains = new HashSet<>();
-    Set<OWLEntity> dataProperties = entitiesByType.get(EntityType.DATA_PROPERTY);
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity dp : dataProperties) {
-      getDomains(ontology, dp.asOWLDataProperty(), domains);
-    }
-    for (OWLEntity op : objectProperties) {
-      getDomains(ontology, op.asOWLObjectProperty(), domains);
-    }
-    return domains;
-  }
-
-  /**
-   * Returns a set of equivalents as OWLObjects for a set of entities
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @param excludeAnonymous if true, do not include any anonymous classes
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getEquivalents(
-      OWLOntology ontology,
-      Map<EntityType<?>, Set<OWLEntity>> entitiesByType,
-      boolean excludeAnonymous) {
-    Set<OWLObject> equivalents = new HashSet<>();
-    Set<OWLEntity> classes = entitiesByType.get(EntityType.CLASS);
-    Set<OWLEntity> dataProperties = entitiesByType.get(EntityType.DATA_PROPERTY);
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity cls : classes) {
-      getEquivalents(ontology, cls.asOWLClass(), equivalents, excludeAnonymous);
-    }
-    for (OWLEntity dp : dataProperties) {
-      getEquivalents(ontology, dp.asOWLDataProperty(), equivalents);
-    }
-    for (OWLEntity op : objectProperties) {
-      getEquivalents(ontology, op.asOWLObjectProperty(), equivalents);
-    }
-    return equivalents;
-  }
-
-  /**
-   * Returns a set of inverses as OWLObjects for a set of entities.
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getInverses(
-      OWLOntology ontology, Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
-    Set<OWLObject> inverses = new HashSet<>();
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity op : objectProperties) {
-      getInverses(ontology, op.asOWLObjectProperty(), inverses);
-    }
-    return inverses;
-  }
-
-  /**
-   * Returns a set of ranges as OWLObjects for a set of entities.
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getRanges(
-      OWLOntology ontology, Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
-    Set<OWLObject> ranges = new HashSet<>();
-    Set<OWLEntity> dataProperties = entitiesByType.get(EntityType.DATA_PROPERTY);
-    Set<OWLEntity> objectProperties = entitiesByType.get(EntityType.OBJECT_PROPERTY);
-    for (OWLEntity dp : dataProperties) {
-      getRanges(ontology, dp.asOWLDataProperty(), ranges);
-    }
-    for (OWLEntity op : objectProperties) {
-      getRanges(ontology, op.asOWLObjectProperty(), ranges);
-    }
-    return ranges;
-  }
-
-  /**
-   * Returns a set of types as OWLObjects for a set of entities.
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param entitiesByType Map of EntityTypes (key) and sets of OWLEntities of that type (val)
-   * @return Set of OWLObjects
-   */
-  private static Set<OWLObject> getTypes(
-      OWLOntology ontology, Map<EntityType<?>, Set<OWLEntity>> entitiesByType) {
-    Set<OWLObject> types = new HashSet<>();
-    Set<OWLEntity> individual = entitiesByType.get(EntityType.NAMED_INDIVIDUAL);
-    for (OWLEntity i : individual) {
-      getTypes(ontology, i.asOWLNamedIndividual(), types);
-    }
-    return types;
-  }
-
-  /**
    * Returns a set of ancestors for a class. Named classes are added as OWLClasses, anonymous
    * classes are added as OWLClassExpressions.
    *
    * @param ontology OWLOntology to retrieve from
    * @param cls OWLClass to get ancestors of
-   * @param ancestors Set of OWLObjects representing the ancestors
+   * @param ancestors Set of OWLClassExpressions representing the ancestors
    * @param excludeAnonymous if true, do not include anonymous classes
    */
-  private static void getAncestors(
-      OWLOntology ontology, OWLClass cls, Set<OWLObject> ancestors, boolean excludeAnonymous) {
-    Set<OWLSubClassOfAxiom> axioms = ontology.getSubClassAxiomsForSubClass(cls);
-    if (!axioms.isEmpty()) {
-      for (OWLSubClassOfAxiom ax : axioms) {
-        if (!ax.getSuperClass().isAnonymous()) {
-          for (OWLClass c : ax.getSuperClass().getClassesInSignature()) {
-            ancestors.add(c);
-            getAncestors(ontology, c, ancestors, excludeAnonymous);
-          }
-        } else if (!excludeAnonymous) {
-          ancestors.add(ax.getSuperClass());
-        }
-      }
-    }
+  public static void getAncestors(
+      OWLOntology ontology, OWLClass cls, Set<OWLClassExpression> ancestors) {
+	for (OWLClassExpression classExpression : EntitySearcher.getSuperClasses(cls, ontology)) {
+		ancestors.add(classExpression);
+		if (!classExpression.isAnonymous()) {
+			OWLClass superClass = classExpression.asOWLClass();
+			if (!superClass.isTopEntity()) {
+			  getAncestors(ontology, superClass, ancestors);
+			}
+		}
+	}
   }
 
   /**
@@ -371,20 +54,17 @@ public class RelatedEntitiesHelper {
    *
    * @param ontology OWLOntology to retrieve from
    * @param dataProperty OWLDataProperty to get ancestors of
-   * @param ancestors Set of OWLObjects representing the ancestors
+   * @param ancestors Set of OWLDataProperties representing the ancestors
    */
-  private static void getAncestors(
-      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLObject> ancestors) {
-    Set<OWLSubDataPropertyOfAxiom> axioms =
-        ontology.getDataSubPropertyAxiomsForSubProperty(dataProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLSubDataPropertyOfAxiom ax : axioms) {
-        for (OWLDataProperty dp : ax.getSuperProperty().getDataPropertiesInSignature()) {
-          ancestors.add(dp);
-          getAncestors(ontology, dp, ancestors);
-        }
-      }
-    }
+  public static void getAncestors(
+      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> ancestors) {
+	  for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getSuperProperties(dataProperty, ontology)) {
+		  OWLDataProperty superProperty = propertyExpression.asOWLDataProperty();
+		  ancestors.add(superProperty);
+		  if (!superProperty.isTopEntity()) {
+		    getAncestors(ontology, superProperty, ancestors);
+	      }
+       }
   }
 
   /**
@@ -392,397 +72,244 @@ public class RelatedEntitiesHelper {
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get ancestors of
-   * @param ancestors Set of OWLObjects representing the ancestors
+   * @param ancestors Set of OWLObjectPropertyExpressions representing the ancestors
+   * @param excludeAnonymous if true, do not include anonymous property expressions (e.g. inverses)
    */
-  private static void getAncestors(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> ancestors) {
-    Set<OWLSubObjectPropertyOfAxiom> axioms =
-        ontology.getObjectSubPropertyAxiomsForSubProperty(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLSubObjectPropertyOfAxiom ax : axioms) {
-        for (OWLObjectProperty op : ax.getSuperProperty().getObjectPropertiesInSignature()) {
-          ancestors.add(op);
-          getAncestors(ontology, op, ancestors);
-        }
-      }
-    }
+  public static void getAncestors(
+      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObjectPropertyExpression> ancestors) {
+	  for (OWLObjectPropertyExpression propertyExpression : EntitySearcher.getSuperProperties(objectProperty, ontology)) {
+		  ancestors.add(propertyExpression);
+		  if (!propertyExpression.isAnonymous()) {
+			  OWLObjectProperty superProperty = propertyExpression.asOWLObjectProperty();
+			  if (!superProperty.isTopEntity()) {
+				  getAncestors(ontology, superProperty, ancestors);
+			  }
+		  }
+	  }
   }
 
   /**
-   * Returns a set of descendants for a class. Named classes are added as OWLClasses, anonymous
-   * classes are added as OWLClassExpressions.
+   * Given an ontology, an class, and an empty set, fills the set with descendants of the class.
    *
    * @param ontology OWLOntology to retrieve from
    * @param cls OWLClass to get descendants of
-   * @param descendants Set of OWLObjects representing the descendants
-   * @param excludeAnonymous if true, do not include anonymous classes
+   * @param descendants Set of OWLClasses representing the descendants
+ * @return 
    */
-  private static void getDescendants(
-      OWLOntology ontology, OWLClass cls, Set<OWLObject> descendants, boolean excludeAnonymous) {
-    Set<OWLSubClassOfAxiom> axioms = ontology.getSubClassAxiomsForSuperClass(cls);
-    if (!axioms.isEmpty()) {
-      for (OWLSubClassOfAxiom ax : axioms) {
-        if (!ax.getSubClass().isAnonymous()) {
-          for (OWLClass c : ax.getSubClass().getClassesInSignature()) {
-            descendants.add(c);
-            getDescendants(ontology, c, descendants, excludeAnonymous);
-          }
-        } else if (!excludeAnonymous) {
-          descendants.add(ax.getSubClass());
-        }
-      }
-    }
+  public static void getDescendants(
+      OWLOntology ontology, OWLClass cls, Set<OWLClass> descendants) {
+	  for (OWLClassExpression classExpression : EntitySearcher.getSubClasses(cls, ontology)) {
+		  OWLClass subClass = classExpression.asOWLClass();
+		  descendants.add(subClass);
+		  if (!subClass.isBottomEntity()) {
+			  getDescendants(ontology, subClass, descendants);
+		  }
+	  }
   }
 
   /**
-   * Returns a set of descendants for a datatype property.
+   * Given an ontology, a data property, and an empty set, fills the set with descendants of the
+   * data property.
    *
    * @param ontology OWLOntology to retrieve from
    * @param dataProperty OWLDataProperty to get descendants of
-   * @param descendants Set of OWLObjects representing the descendants
+   * @param descendants Set of OWLDataProperties representing the descendants
    */
-  private static void getDescendants(
-      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLObject> descendants) {
-    Set<OWLSubDataPropertyOfAxiom> axioms =
-        ontology.getDataSubPropertyAxiomsForSuperProperty(dataProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLSubDataPropertyOfAxiom ax : axioms) {
-        for (OWLDataProperty dp : ax.getSubProperty().getDataPropertiesInSignature()) {
-          descendants.add(dp);
-          getDescendants(ontology, dp, descendants);
-        }
-      }
-    }
+  public static void getDescendants(
+      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> descendants) {
+	  for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getSubProperties(dataProperty, ontology)) {
+		  OWLDataProperty subProperty = propertyExpression.asOWLDataProperty();
+		  descendants.add(subProperty);
+		  if (!subProperty.isBottomEntity()) {
+			  getDescendants(ontology, subProperty, descendants);
+		  }
+	  }
   }
 
   /**
-   * Returns a set of descendants for an object property.
+   * Given an ontology, a data property, and an empty set, fills the set with descendants of the
+   * data property.
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get descendants of
-   * @param descendants Set of OWLObjects representing the descendants
+   * @param descendants Set of OWLObjectProperties representing the descendants
    */
-  private static void getDescendants(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> descendants) {
-    Set<OWLSubObjectPropertyOfAxiom> axioms =
-        ontology.getObjectSubPropertyAxiomsForSuperProperty(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLSubObjectPropertyOfAxiom ax : axioms) {
-        for (OWLObjectProperty op : ax.getSubProperty().getObjectPropertiesInSignature()) {
-          descendants.add(op);
-          getDescendants(ontology, op, descendants);
-        }
-      }
-    }
+  public static void getDescendants(
+      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObjectProperty> descendants) {
+    for (OWLObjectPropertyExpression propertyExpression : EntitySearcher.getSubProperties(objectProperty, ontology)) {
+		  OWLObjectProperty subProperty = propertyExpression.asOWLObjectProperty();
+		  descendants.add(subProperty);
+		  if (!subProperty.isBottomEntity()) {
+			  getDescendants(ontology, subProperty, descendants);
+		  }
+	  }
   }
 
   /**
-   * Returns a set of disjoints for a class. Named classes are added as OWLClasses, anonymous
-   * classes are added as OWLClassExpressions.
+   * Given an ontology, a class, and whether anonymous classes should be included in the result or
+   * not, return a set of class expressions representing disjoint classes of the given class.
    *
    * @param ontology OWLOntology to retrieve from
    * @param cls OWLClass to get disjoints of
-   * @param disjoints Set of OWLObjects representing the disjoints
-   * @param excludeAnonymous if true, do not include anonymous classes
+   * @return set of OWLClassExpressions
    */
-  private static void getDisjoints(
-      OWLOntology ontology, OWLClass cls, Set<OWLObject> disjoints, boolean excludeAnonymous) {
-    Set<OWLDisjointClassesAxiom> axioms = ontology.getDisjointClassesAxioms(cls);
-    if (!axioms.isEmpty()) {
-      for (OWLDisjointClassesAxiom ax : axioms) {
-        for (OWLClassExpression ex : ax.getClassExpressions()) {
-          if (!ex.isAnonymous()) {
-            disjoints.addAll(ex.getClassesInSignature());
-          } else if (!excludeAnonymous) {
-            disjoints.add(ex);
-          }
-        }
-      }
-    }
-    disjoints.remove(cls);
+  public static Set<OWLClassExpression> getDisjoints(OWLOntology ontology, OWLClass cls) {
+	  return (Set<OWLClassExpression>) EntitySearcher.getDisjointClasses(cls, ontology);
   }
 
   /**
-   * Returns a set of disjoints for a datatype property.
+   * Given an ontology and a data property, return a set of data properties that are disjoint from
+   * the given property.
    *
    * @param ontology OWLOntology to retrieve from
    * @param dataProperty OWLDataProperty to get disjoints of
-   * @param disjoints Set of OWLObjects representing the disjoints
+   * @return set of OWLDataProperties
    */
-  private static void getDisjoints(
-      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLObject> disjoints) {
-    Set<OWLDisjointDataPropertiesAxiom> axioms =
-        ontology.getDisjointDataPropertiesAxioms(dataProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLDisjointDataPropertiesAxiom ax : axioms) {
-        disjoints.addAll(ax.getDataPropertiesInSignature());
-      }
+  public static Set<OWLDataProperty> getDisjoints(OWLOntology ontology, OWLDataProperty dataProperty) {
+    Set<OWLDataProperty> disjoints = new HashSet<>();
+    for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getDisjointProperties(dataProperty, ontology)) {
+    	disjoints.add(propertyExpression.asOWLDataProperty());
     }
-    disjoints.remove(dataProperty);
+    return disjoints;
   }
 
   /**
-   * Returns a set of disjoints for an object property.
+   * Given an ontology and an object property, return a set of object properties that are disjoint
+   * from the given property.
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get disjoints of
-   * @param disjoints Set of OWLObjects representing the disjoints
+   * @return set of OWLDataProperties
    */
-  private static void getDisjoints(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> disjoints) {
-    Set<OWLDisjointObjectPropertiesAxiom> axioms =
-        ontology.getDisjointObjectPropertiesAxioms(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLDisjointObjectPropertiesAxiom ax : axioms) {
-        disjoints.addAll(ax.getObjectPropertiesInSignature());
-      }
-    }
-    disjoints.remove(objectProperty);
+  public static Set<OWLObjectPropertyExpression> getDisjoints(OWLOntology ontology, OWLObjectProperty objectProperty) {
+	  return (Set<OWLObjectPropertyExpression>) EntitySearcher.getDisjointProperties(objectProperty, ontology);
   }
 
   /**
-   * Returns a set of domains for a datatype property.
+   * Given an ontology, a data property, and whether to include anonymous classes or not, return the
+   * set of class expressions representing the domains of the given property.
    *
    * @param ontology OWLOntology to retrieve from
    * @param dataProperty OWLDataProperty to get domains of
-   * @param domains Set of OWLObjects representing the domains
+   * @param includeAnonymous if true, include anonymous classes
+   * @return set of OWLClassExpressions
    */
-  private static void getDomains(
-      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLObject> domains) {
-    Set<OWLDataPropertyDomainAxiom> axioms = ontology.getDataPropertyDomainAxioms(dataProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLDataPropertyDomainAxiom ax : axioms) {
-        // TODO: Support for anon domains is probably unnecessary
-        domains.addAll(ax.getClassesInSignature());
-      }
-    }
+  public static Set<OWLClassExpression> getDomains(OWLOntology ontology, OWLDataProperty dataProperty) {
+	  return (Set<OWLClassExpression>) EntitySearcher.getDomains(dataProperty, ontology);
   }
 
   /**
-   * Returns a set of domains for an object property.
+   * Given an ontology, an object property, and whether to include anonymous classes or not, return
+   * the set of class expressions representing the domains of the given property.
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get domains of
-   * @param domains Set of OWLObjects representing the domains
+   * @param includeAnonymous if true, include anonymous classes
+   * @return set of OWLClassExpressions
    */
-  private static void getDomains(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> domains) {
-    Set<OWLObjectPropertyDomainAxiom> axioms =
-        ontology.getObjectPropertyDomainAxioms(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLObjectPropertyDomainAxiom ax : axioms) {
-        // TODO: Support for anon domains is probably unnecessary
-        domains.addAll(ax.getClassesInSignature());
-      }
-    }
+  public static Set<OWLClassExpression> getDomains(OWLOntology ontology, OWLObjectProperty objectProperty) {
+	  return (Set<OWLClassExpression>) EntitySearcher.getDomains(objectProperty, ontology);
   }
 
   /**
-   * Returns a set of equivalents for a class. Named classes are added as OWLClasses, anonymous
-   * classes are added as OWLClassExpressions.
+   * Given an ontology, a class, and an empty set, fill the set with class expressions representing
+   * equivalent classes.
    *
    * @param ontology OWLOntology to retrieve from
    * @param cls OWLClass to get equivalents of
    * @param equivalents Set of OWLObjects representing the equivalents
-   * @param excludeAnonymous if true, do not include anonymous classes
    */
-  private static void getEquivalents(
-      OWLOntology ontology, OWLClass cls, Set<OWLObject> equivalents, boolean excludeAnonymous) {
-    Set<OWLEquivalentClassesAxiom> axioms = ontology.getEquivalentClassesAxioms(cls);
-    if (!axioms.isEmpty()) {
-      for (OWLEquivalentClassesAxiom ax : axioms) {
-        for (OWLClassExpression ex : ax.getClassExpressions()) {
-          if (!ex.isAnonymous()) {
-            equivalents.addAll(ex.getClassesInSignature());
-          } else if (!excludeAnonymous) {
-            equivalents.add(ex);
-          }
-        }
-      }
+  public static void getEquivalents(OWLOntology ontology, OWLClass cls, Set<OWLClassExpression> equivalents) {
+    for (OWLClassExpression classExpression : EntitySearcher.getEquivalentClasses(cls, ontology)) {
+    	equivalents.add(classExpression);
+    	if (!classExpression.isAnonymous()) {
+    		OWLClass eqClass = classExpression.asOWLClass();
+    		if (!eqClass.isBottomEntity() && !eqClass.isTopEntity()) {
+    		  getEquivalents(ontology, eqClass, equivalents);
+    		}
+    	}
     }
-    equivalents.remove(cls);
   }
 
   /**
-   * Returns a set of equivalents for a datatype property. Inverse equivalents are added as
-   * OWLEquivalentDataPropertiesAxiom, otherwise added as OWLDataProperty.
+   * Given an ontology, a data property, and an empty set, fill the set with equivalent data
+   * properties.
    *
    * @param ontology OWLOntology to retrieve from
    * @param dataProperty OWLDataProperty to get equivalents of
-   * @param equivalents Set of OWLObjects representing the equivalents
+   * @param equivalents Set of OWLDataProperties representing the equivalents
    */
-  private static void getEquivalents(
-      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLObject> equivalents) {
-    Set<OWLEquivalentDataPropertiesAxiom> axioms =
-        ontology.getEquivalentDataPropertiesAxioms(dataProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLEquivalentDataPropertiesAxiom ax : axioms) {
-        if (!ax.toString().contains("InverseOf")) {
-          equivalents.addAll(ax.getDataPropertiesInSignature());
-        } else {
-          logger.debug("Inverse Equivalent: " + ax.toString());
-          equivalents.add(ax);
-        }
-      }
+  public static void getEquivalents(OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> equivalents) {
+    for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getEquivalentProperties(dataProperty, ontology)) {
+    	OWLDataProperty eqProperty = propertyExpression.asOWLDataProperty();
+    	equivalents.add(eqProperty);
+    	if (!eqProperty.isBottomEntity() && !eqProperty.isTopEntity()) {
+  		  getEquivalents(ontology, eqProperty, equivalents);
+  		}
     }
-    equivalents.remove(dataProperty);
   }
 
   /**
-   * Returns a set of equivalents for an object property. Inverse equivalents are added as
-   * OWLEquivalentObjectPropertiesAxiom, otherwise added as OWLObjectProperty.
+   * Given an ontology, an object property, and an empty set, fill the set with equivalent object
+   * properties.
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get equivalents of
-   * @param equivalents Set of OWLObjects representing the equivalents
+   * @param equivalents Set of OWLObjectPropertyExpressions representing the equivalents
    */
-  private static void getEquivalents(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> equivalents) {
-    Set<OWLEquivalentObjectPropertiesAxiom> axioms =
-        ontology.getEquivalentObjectPropertiesAxioms(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLEquivalentObjectPropertiesAxiom ax : axioms) {
-        if (!ax.toString().contains("InverseOf")) {
-          equivalents.addAll(ax.getObjectPropertiesInSignature());
-        } else {
-          logger.debug("Inverse Equivalent: " + ax.toString());
-          equivalents.add(ax);
-        }
-      }
+  public static void getEquivalents(OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObjectPropertyExpression> equivalents) {
+    for (OWLObjectPropertyExpression propertyExpression : EntitySearcher.getEquivalentProperties(objectProperty, ontology)) {
+    	equivalents.add(propertyExpression);
+    	if (!propertyExpression.isAnonymous()) {
+    		OWLObjectProperty eqProperty = propertyExpression.asOWLObjectProperty();
+    		if (!eqProperty.isBottomEntity() && !eqProperty.isTopEntity()) {
+    	  		  getEquivalents(ontology, eqProperty, equivalents);
+    	    }
+    	}
     }
-    equivalents.remove(objectProperty);
   }
 
   /**
-   * Returns a set of inverse properties for an object property.
+   * Given an ontology and an object property, return a set of inverse object properties.
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get inverses of
-   * @param inverses Set of OWLObjects representing the inverses
+   * @return Set of OWLObjectPropertyExpressions representing the inverses
    */
-  private static void getInverses(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> inverses) {
-    Set<OWLInverseObjectPropertiesAxiom> axioms =
-        ontology.getInverseObjectPropertyAxioms(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLInverseObjectPropertiesAxiom ax : axioms) {
-        inverses.addAll(ax.getObjectPropertiesInSignature());
-      }
-    }
-    inverses.remove(objectProperty);
+  public static Set<OWLObjectPropertyExpression> getInverses(OWLOntology ontology, OWLObjectProperty objectProperty) {
+    return (Set<OWLObjectPropertyExpression>) EntitySearcher.getInverses(objectProperty, ontology);
   }
 
   /**
-   * Returns a set of ranges for a datatype property. All ranges are returned as axioms.
+   * Given an ontology and a data property, return a set of ranges.
    *
    * @param ontology OWLOntology to retrieve from
    * @param dataProperty OWLDataProperty to get ranges of
-   * @param ranges Set of OWLObjects representing the ranges
+   * @return Set of OWLDataRanges
    */
-  private static void getRanges(
-      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLObject> ranges) {
-    ranges.addAll(ontology.getDataPropertyRangeAxioms(dataProperty));
+  public static Set<OWLDataRange> getRanges(OWLOntology ontology, OWLDataProperty dataProperty) {
+    return (Set<OWLDataRange>) EntitySearcher.getRanges(dataProperty, ontology);
   }
 
   /**
-   * Returns a set of ranges for an object property. Includes named classes as OWLClasses and
-   * anonymous classes as OWLClassExpressions.
+   * Given an ontology and an object property, return a set of ranges.
    *
    * @param ontology OWLOntology to retrieve from
    * @param objectProperty OWLObjectProperty to get ranges of
-   * @param ranges Set of OWLObjects representing the ranges
+   * @return Set of OWLClassExpressions
    */
-  private static void getRanges(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObject> ranges) {
-    Set<OWLObjectPropertyRangeAxiom> axioms = ontology.getObjectPropertyRangeAxioms(objectProperty);
-    if (!axioms.isEmpty()) {
-      for (OWLObjectPropertyRangeAxiom ax : axioms) {
-        for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
-          if (!ex.isAnonymous()) {
-            ranges.addAll(ex.getClassesInSignature());
-          } else {
-            logger.debug("Anonymous Object Property Range: " + ex.toString());
-            ranges.add(ex);
-          }
-        }
-      }
-    }
+  public static Set<OWLClassExpression> getRanges(OWLOntology ontology, OWLObjectProperty objectProperty) {
+    return (Set<OWLClassExpression>) EntitySearcher.getRanges(objectProperty, ontology);
   }
 
   /**
-   * Returns a set of types for a named individual.
+   * Given an ontology and an individual, return a set of types.
    *
    * @param ontology OWLOntology to retrieve from
    * @param individual OWLNamedIndividual to get types of
-   * @param types Set of OWLObjects representing the types
+   * @return Set of OWLClassExpressions
    */
-  private static void getTypes(
-      OWLOntology ontology, OWLNamedIndividual individual, Set<OWLObject> types) {
-    Set<OWLClassAssertionAxiom> axioms = ontology.getClassAssertionAxioms(individual);
-    if (!axioms.isEmpty()) {
-      for (OWLClassAssertionAxiom ax : axioms) {
-        if (!ax.getClassExpression().isAnonymous()) {
-          types.addAll(ax.getClassesInSignature());
-        } else {
-          logger.debug("Anonymous Type: " + ax.getClassExpression().toString());
-        }
-      }
-    }
-  }
-
-  /**
-   * Returns a map of the entities sorted by their EntityType where EntityType is the key, and a set
-   * of OWLEntities of that type is the value. Sorts for CLASS, DATA_PROPERTY, NAMED_INDIVIDUAL, and
-   * OBJECT_PROPERTY.
-   *
-   * @param ontology OWLOntology to retrieve from
-   * @param IRIs Set of IRIs to sort into types
-   * @return Map of EntityTypes to set of OWLEntities of that type
-   */
-  private static Map<EntityType<?>, Set<OWLEntity>> sortTypes(OWLOntology ontology, Set<IRI> IRIs) {
-    Map<EntityType<?>, Set<OWLEntity>> entitiesByType = new HashMap<>();
-    Set<OWLEntity> classes = new HashSet<>();
-    Set<OWLEntity> dataProperties = new HashSet<>();
-    Set<OWLEntity> individuals = new HashSet<>();
-    Set<OWLEntity> objectProperties = new HashSet<>();
-    for (IRI iri : IRIs) {
-      // Get the OWLEntity for the IRI
-      Set<OWLEntity> owlEntities = ontology.getEntitiesInSignature(iri);
-      // Check that there is exactly one entity, throw exception if not
-      if (owlEntities.size() == 0) {
-        logger.warn(
-            "IRI " + iri.toString() + " does not exist in " + ontology.getOntologyID().toString());
-      } else if (owlEntities.size() > 1) {
-        logger.warn(
-            "Multiple entities for IRI "
-                + iri.toString()
-                + " in "
-                + ontology.getOntologyID().toString());
-      }
-      // Get EntityType
-      for (OWLEntity e : owlEntities) {
-        EntityType<?> entityType = e.getEntityType();
-        if (entityType == EntityType.CLASS) {
-          classes.add(e.asOWLClass());
-        } else if (entityType == EntityType.DATA_PROPERTY) {
-          dataProperties.add(e.asOWLDataProperty());
-        } else if (entityType == EntityType.OBJECT_PROPERTY) {
-          objectProperties.add(e.asOWLObjectProperty());
-        } else if (entityType == EntityType.NAMED_INDIVIDUAL) {
-          individuals.add(e.asOWLNamedIndividual());
-        } else {
-          logger.warn(
-              e.toStringID()
-                  + " must be a class, datatype "
-                  + "property, object property, or individual.");
-        }
-      }
-    }
-    // Add to map
-    entitiesByType.put(EntityType.CLASS, classes);
-    entitiesByType.put(EntityType.DATA_PROPERTY, dataProperties);
-    entitiesByType.put(EntityType.NAMED_INDIVIDUAL, individuals);
-    entitiesByType.put(EntityType.OBJECT_PROPERTY, objectProperties);
-    return entitiesByType;
+  public static Set<OWLClassExpression> getTypes(OWLOntology ontology, OWLNamedIndividual individual) {
+    return (Set<OWLClassExpression>) EntitySearcher.getTypes(individual, ontology);
   }
 }

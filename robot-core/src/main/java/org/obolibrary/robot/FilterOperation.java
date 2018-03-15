@@ -2,12 +2,18 @@ package org.obolibrary.robot;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -35,22 +41,44 @@ public class FilterOperation {
    */
   public static void filter(
       OWLOntology ontology,
-      Set<OWLObjectProperty> properties,
-      Set<OWLClass> classes,
-      Set<OWLNamedIndividual> individuals,
+      Set<IRI> entityIRIs,
+      Set<IRI> descendantIRIs,
+      Set<IRI> nodeIRIs,
       Set<OWLAnnotation> annotations) {
-    if (!properties.isEmpty()) {
-      filterProperties(ontology, properties);
+	OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+	Set<OWLClass> classes = new HashSet<>();
+	Set<OWLObjectProperty> properties = new HashSet<>();
+	Set<OWLNamedIndividual> individuals = new HashSet<>();
+    for (IRI iri : entityIRIs) {
+    	classes.add(dataFactory.getOWLClass(iri));
+    	properties.add(dataFactory.getOWLObjectProperty(iri));
+    	individuals.add(dataFactory.getOWLNamedIndividual(iri));
     }
-    if (!classes.isEmpty()) {
-      filterClasses(ontology, classes);
+    filterClasses(ontology, classes);
+    filterProperties(ontology, properties);
+    filterIndividuals(ontology, individuals);
+    
+    classes.clear();
+    properties.clear();
+    for (IRI iri : descendantIRIs) {
+    	RelatedEntitiesHelper.getDescendants(ontology, dataFactory.getOWLClass(iri), classes);
+    	RelatedEntitiesHelper.getDescendants(ontology, dataFactory.getOWLObjectProperty(iri), properties);
     }
-    if (!individuals.isEmpty()) {
-      filterIndividuals(ontology, individuals);
+    filterClasses(ontology, classes);
+    filterProperties(ontology, properties);
+    
+    classes.clear();
+    properties.clear();
+    for (IRI iri : nodeIRIs) {
+    	OWLClass cls = dataFactory.getOWLClass(iri);
+    	RelatedEntitiesHelper.getDescendants(ontology, cls, classes);
+    	classes.add(cls);
+    	OWLObjectProperty property = dataFactory.getOWLObjectProperty(iri);
+    	RelatedEntitiesHelper.getDescendants(ontology, property, properties);
+    	properties.add(property);
     }
-    if (!annotations.isEmpty()) {
-      filterAnnotations(ontology, annotations);
-    }
+    filterClasses(ontology, classes);
+    filterProperties(ontology, properties);
   }
 
   /**
@@ -123,19 +151,20 @@ public class FilterOperation {
    */
   private static void filterIndividuals(OWLOntology ontology, Set<OWLNamedIndividual> individuals) {
     logger.debug("Filtering ontology for NamedIndividuals matching " + individuals);
-    Set<OWLEntity> entities = new HashSet<>();
-    Set<OWLEntity> filteredEntities = new HashSet<>();
-    entities.addAll(ontology.getIndividualsInSignature());
-    logger.debug("Ontology has {} individuals before filtering", entities.size());
-    entities.addAll(ontology.getClassesInSignature());
+    Set<OWLNamedIndividual> removeIndividuals = ontology.getIndividualsInSignature();
+    Set<OWLClass> removeClasses = ontology.getClassesInSignature();
+    logger.debug("Ontology has {} individuals before filtering", removeIndividuals.size());
+    removeIndividuals.removeAll(individuals);
+    
     for (OWLNamedIndividual individual : individuals) {
-      filteredEntities.add(individual);
-      for (OWLClassAssertionAxiom axiom : ontology.getClassAssertionAxioms(individual)) {
-        filteredEntities.addAll(axiom.getClassesInSignature());
-      }
+    	for (OWLClassExpression type : RelatedEntitiesHelper.getTypes(ontology, individual)) {
+    		if (!type.isAnonymous()) {
+    			removeClasses.remove(type.asOWLClass());
+    		}
+    	}
     }
-    entities.removeAll(filteredEntities);
-    RemoveOperation.remove(ontology, entities);
+    RemoveOperation.remove(ontology, removeClasses);
+    RemoveOperation.remove(ontology, removeClasses);
     logger.debug(
         "Ontology has {} individuals after filtering", ontology.getIndividualsInSignature().size());
   }
