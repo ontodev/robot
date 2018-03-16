@@ -178,23 +178,23 @@ public class RemoveCommand implements Command {
     IRIs =
         CommandLineHelper.getTerms(
             ioHelper, line, "descendants-of-entity", "descendants-of-entities");
-    if (!IRIs.isEmpty()) {
-      RemoveOperation.removeDescendants(ontology, IRIs);
+    for (IRI iri : IRIs) {
+      RemoveOperation.removeDescendants(ontology, iri);
     }
 
     // Remove entities, no descendants
     IRIs = CommandLineHelper.getTerms(ioHelper, line, "entity", "entities");
-    if (!IRIs.isEmpty()) {
-      RemoveOperation.remove(ontology, IRIs);
+    for (IRI iri : IRIs) {
+      RemoveOperation.remove(ontology, iri);
     }
 
     // Remove entities and descendants
     IRIs =
         CommandLineHelper.getTerms(
             ioHelper, line, "entity-and-descendants", "entities-and-descendants");
-    if (!IRIs.isEmpty()) {
-      RemoveOperation.remove(ontology, IRIs);
-      RemoveOperation.removeDescendants(ontology, IRIs);
+    for (IRI iri : IRIs) {
+      RemoveOperation.remove(ontology, iri);
+      RemoveOperation.removeDescendants(ontology, iri);
     }
 
     // Remove entities with annotations

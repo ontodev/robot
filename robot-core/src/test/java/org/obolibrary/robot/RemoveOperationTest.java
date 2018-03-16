@@ -31,11 +31,11 @@ public class RemoveOperationTest extends CoreTest {
    * Test removal of OWLClass (articular system) from remove.owl. Result is identical to
    * remove_class.owl.
    *
-   * @throws IOException
+   * @throws Exception
    * @throws OWLOntologyCreationException
    */
   @Test
-  public void testRemoveClass() throws IOException {
+  public void testRemoveClass() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_0004770"));
@@ -46,10 +46,10 @@ public class RemoveOperationTest extends CoreTest {
    * Test removeal of anonymous superclasses of OWLClass (skeletal system). Result is identical to
    * remove_anonymous.owl.
    *
-   * @throws IOException
+   * @throws Exception
    */
   @Test
-  public void testRemoveAnonymousSuperClasses() throws IOException {
+  public void testRemoveAnonymousSuperClasses() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.removeAnonymousClasses(
@@ -61,10 +61,10 @@ public class RemoveOperationTest extends CoreTest {
    * Test removal of descendant classes of OWLClass (anatomical cluster) from removal.owl. Result is
    * identical to remove_descendants.owl.
    *
-   * @throws IOException
+   * @throws Exception
    */
   @Test
-  public void testRemoveDescendantClasses() throws IOException {
+  public void testRemoveDescendantClasses() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.removeDescendants(
@@ -76,11 +76,11 @@ public class RemoveOperationTest extends CoreTest {
    * Test removal of OWLNamedIndividual (skeleton) from remove.owl. Result is identical to
    * remove_individual.owl.
    *
-   * @throws IOException
+   * @throws Exception
    * @throws OWLOntologyCreationException
    */
   @Test
-  public void testRemoveIndividual() throws IOException {
+  public void testRemoveIndividual() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_9999999"));
@@ -104,11 +104,11 @@ public class RemoveOperationTest extends CoreTest {
    * Test removal of OWLAnnotationProperty (label) from remove.owl. Result is identical to
    * remove_annotation.owl.
    *
-   * @throws IOException
+   * @throws Exception
    * @throws OWLOntologyCreationException
    */
   @Test
-  public void testRemoveAnnProp() throws IOException {
+  public void testRemoveAnnProp() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.remove(ontology, IRI.create("http://www.w3.org/2000/01/rdf-schema#label"));
@@ -119,11 +119,11 @@ public class RemoveOperationTest extends CoreTest {
    * Test removal of OWLObjectProperty (has_part) from remove.owl. Result is identical to
    * remove_obj_prop.owl.
    *
-   * @throws IOException
+   * @throws Exception
    * @throws OWLOntologyCreationException
    */
   @Test
-  public void testRemoveObjProp() throws IOException {
+  public void testRemoveObjProp() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/BFO_0000051"));
@@ -134,11 +134,11 @@ public class RemoveOperationTest extends CoreTest {
    * Test removal of OWLDataProperty (height) from remove.owl. Result is identical to
    * remove_data_prop.owl.
    *
-   * @throws IOException
+   * @throws Exception
    * @throws OWLOntologyCreationException
    */
   @Test
-  public void testRemoveDataProp() throws IOException {
+  public void testRemoveDataProp() throws Exception {
     OWLOntology ontology = loadOntology(INPUT);
 
     RemoveOperation.remove(ontology, IRI.create("http://purl.obolibrary.org/obo/UBERON_8888888"));

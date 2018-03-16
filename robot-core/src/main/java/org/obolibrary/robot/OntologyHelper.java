@@ -48,8 +48,17 @@ public class OntologyHelper {
   private static final String axiomTypeError =
       NS + "AXIOM TYPE ERROR cannot annotate axioms of type: %s";
 
+  /** Error message when the ontology does not contain any of the terms. */
   private static final String emptyTermsError =
       NS + "EMPTY TERMS ERROR ontology does not contain input terms";
+
+  /** Error message when entity does not exist in the ontology. */
+  private static final String missingEntityError =
+      NS + "MISSING ENTITY ERROR ontology does not contain entity: %s";
+
+  /** Error message when one IRI represents more than one entity. */
+  private static final String multipleEntitiesError =
+      NS + "MULTIPLE ENTITIES ERROR multiple entities represented by: %s";
 
   /**
    * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
@@ -142,6 +151,68 @@ public class OntologyHelper {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     AddOntologyAnnotation addition = new AddOntologyAnnotation(ontology, annotation);
     manager.applyChange(addition);
+  }
+
+  /**
+   * Given input and output ontologies, a target entity, and a set of annotation properties, copy
+   * the target entity from the input ontology to the output ontology, along with the specified
+   * annotations. If the entity is already in the outputOntology, then return without making any
+   * changes. The input ontology is not changed.
+   *
+   * @param inputOntology the ontology to copy from
+   * @param outputOntology the ontology to copy to
+   * @param entity the target entity that will have its ancestors copied
+   * @param annotationProperties the annotations to copy
+   */
+  public static void copy(
+      OWLOntology inputOntology,
+      OWLOntology outputOntology,
+      OWLEntity entity,
+      Set<OWLAnnotationProperty> annotationProperties) {
+    OWLDataFactory dataFactory = inputOntology.getOWLOntologyManager().getOWLDataFactory();
+    // Don't copy OWLThing
+    if (entity == dataFactory.getOWLThing()) {
+      return;
+    }
+    // Don't copy OWLNothing
+    if (entity == dataFactory.getOWLNothing()) {
+      return;
+    }
+    // Don't copy existing terms
+    if (outputOntology.containsEntityInSignature(entity)) {
+      return;
+    }
+
+    OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
+    if (entity.isOWLAnnotationProperty()) {
+      outputManager.addAxiom(
+          outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLAnnotationProperty()));
+    } else if (entity.isOWLObjectProperty()) {
+      outputManager.addAxiom(
+          outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLObjectProperty()));
+    } else if (entity.isOWLDataProperty()) {
+      outputManager.addAxiom(
+          outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLDataProperty()));
+    } else if (entity.isOWLDatatype()) {
+      outputManager.addAxiom(
+          outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLDatatype()));
+    } else if (entity.isOWLClass()) {
+      outputManager.addAxiom(
+          outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLClass()));
+    } else if (entity.isOWLNamedIndividual()) {
+      outputManager.addAxiom(
+          outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLNamedIndividual()));
+    }
+
+    Set<OWLAnnotationAssertionAxiom> axioms =
+        inputOntology.getAnnotationAssertionAxioms(entity.getIRI());
+    for (OWLAnnotationAssertionAxiom axiom : axioms) {
+      if (annotationProperties == null || annotationProperties.contains(axiom.getProperty())) {
+        // Copy the annotation property and then the axiom.
+        copy(inputOntology, outputOntology, (OWLEntity) axiom.getProperty(), annotationProperties);
+        outputManager.addAxiom(outputOntology, axiom);
+      }
+    }
   }
 
   /**
@@ -352,20 +423,40 @@ public class OntologyHelper {
   }
 
   /**
+   * Given an ontology and an IRI, get the OWLEntity object represented by the IRI.
+   *
+   * @param ontology OWLOntology to retrieve from
+   * @param iri IRI to get type of
+   * @return OWLEntity
+   */
+  public static OWLEntity getEntity(OWLOntology ontology, IRI iri) throws Exception {
+    // Get the OWLEntity for the IRI
+    Set<OWLEntity> owlEntities = ontology.getEntitiesInSignature(iri);
+    // Check that there is exactly one entity, throw exception if not
+    if (owlEntities.size() == 0) {
+      throw new Exception(String.format(missingEntityError, iri.toString()));
+    } else if (owlEntities.size() > 1) {
+      throw new Exception(String.format(multipleEntitiesError, iri.toString()));
+    }
+    return owlEntities.iterator().next();
+  }
+
+  /**
    * Given an ontology and a set of term IRIs, return a set of entities for those IRIs. The input
    * ontology is not changed.
    *
    * @param ontology the ontology to search
    * @param iris the IRIs of the entities to find
    * @return a set of OWLEntities with the given IRIs
+   * @throws Exception
    */
-  public static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> iris) {
+  public static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> iris) throws Exception {
     Set<OWLEntity> entities = new HashSet<OWLEntity>();
     if (iris == null) {
       return entities;
     }
     for (IRI iri : iris) {
-      entities.addAll(ontology.getEntitiesInSignature(iri, true));
+      entities.add(getEntity(ontology, iri));
     }
     return entities;
   }

@@ -2,16 +2,16 @@ package org.obolibrary.robot;
 
 import java.util.HashSet;
 import java.util.Set;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.RemoveImport;
@@ -21,48 +21,68 @@ import org.slf4j.LoggerFactory;
 
 public class RemoveOperation {
 
-  /** Data factory. */
-  private static final OWLDataFactory factory =
-      OWLManager.createOWLOntologyManager().getOWLDataFactory();
-
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(FilterOperation.class);
-  
+
   /** Namespace for error messages. */
   private static final String NS = "remove#";
-  
+
   /** Error message when an import ontology does not have an IRI. */
-  private static final String nullIRIError = NS + "NULL IRI ERROR import ontology does not have an IRI";
-  
+  private static final String nullIRIError =
+      NS + "NULL IRI ERROR import ontology does not have an IRI";
+
   /** Error message when the ontology does not import the provided IRI. Expects: IRI as string. */
-  private static final String missingImportError = NS + "MISSING IMPORT ERROR ontology does not contain import: %s";
+  private static final String missingImportError =
+      NS + "MISSING IMPORT ERROR ontology does not contain import: %s";
+
+  /** Error message when the entity type for an operation is not valid. */
+  private static final String entityTypeError =
+      NS + "ENTITY TYPE ERROR %s is not a valid type to retrieve %s";
 
   /**
-   * Given an OWLOntology and a set of IRIs, remove the entities represented by the IRIs from the
-   * ontology.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param IRIs set of IRIs to remove
+   * @param ontology
+   * @param iri
+   * @throws Exception
    */
-  public static void remove(OWLOntology ontology, Set<IRI> IRIs) {
-    for (IRI iri : IRIs) {
-      remove(ontology, iri);
+  public static void remove(OWLOntology ontology, IRI iri) throws Exception {
+    OWLEntity entity = OntologyHelper.getEntity(ontology, iri);
+    remove(ontology, entity);
+  }
+
+  /**
+   * @param ontology
+   * @param entities
+   */
+  public static void remove(OWLOntology ontology, Set<OWLEntity> entities) {
+    for (OWLEntity entity : entities) {
+      remove(ontology, entity);
     }
   }
 
   /**
-   * Given an OWLOntology and an IRI, remove the entity represented by the IRI from the ontology.
+   * Given an OWLOntology and an OWLEntity, remove the entity and associated axioms from the
+   * ontology.
    *
    * @param ontology OWLOntology to remove from
-   * @param iri IRI of the entity to remove
+   * @param entity OWLEntity to remove
    */
-  public static void remove(OWLOntology ontology, IRI iri) {
-    // Try for each OWLEntity type
-    remove(ontology, factory.getOWLClass(iri));
-    remove(ontology, factory.getOWLNamedIndividual(iri));
-    remove(ontology, factory.getOWLObjectProperty(iri));
-    remove(ontology, factory.getOWLAnnotationProperty(iri));
-    remove(ontology, factory.getOWLDataProperty(iri));
+  public static void remove(OWLOntology ontology, OWLEntity entity) {
+    logger.debug("Removing from ontology: " + entity);
+
+    Set<OWLAxiom> axioms = new HashSet<>();
+    // Add any logical axioms using the class entity
+
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      if (axiom.getSignature().contains(entity)) {
+        axioms.add(axiom);
+      }
+    }
+    // Add any assertions on the class entity
+    axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity.getIRI(), ontology));
+    axioms.addAll(EntitySearcher.getReferencingAxioms(entity, ontology));
+    // Remove all
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    manager.removeAxioms(ontology, axioms);
   }
 
   /**
@@ -77,45 +97,138 @@ public class RemoveOperation {
     }
   }
 
-  /**
-   * Given an OWLOntology and a string classID, remove all anonymous superclasses of the class from
-   * the ontology. If classID = all, remove ALL anonymous superclasses asserted in the ontology.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param classID CURIE of class to remove anon superclasses, or all
-   */
-  public static void removeAnonymousClasses(OWLOntology ontology, IRI iri) {
-    OWLClass cls = factory.getOWLClass(iri);
-    removeAnonymousClasses(ontology, cls);
-  }
-
-  /**
-   * Given an OWLOntology and a set of entity IDs, remove the descendants of all the entities. Does
-   * not remove the entity itself.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param IRIs set of IRIs to remove
-   */
-  public static void removeDescendants(OWLOntology ontology, Set<IRI> IRIs) {
-    for (IRI iri : IRIs) {
-      removeDescendants(ontology, iri);
+  public static void removeAnonymousClasses(OWLOntology ontology, IRI iri) throws Exception {
+    OWLEntity entity = OntologyHelper.getEntity(ontology, iri);
+    if (entity.isOWLClass()) {
+      removeAnonymousClasses(ontology, entity.asOWLClass());
+    } else {
+      throw new Exception(
+          String.format(entityTypeError, entity.getEntityType().toString(), "anonymous classes"));
     }
   }
 
   /**
-   * Given an OWLOntology and an entityID, remove all descendants of the entity. Retains the entity
-   * itself.
+   * Given an OWLOntology and an OWLClass, remove any anonymous superclasses of the class from the
+   * ontology.
    *
    * @param ontology OWLOntology to remove from
-   * @param iri IRI of entity to remove
+   * @param cls OWLClass to remove anonymous superclasses of
    */
-  public static void removeDescendants(OWLOntology ontology, IRI iri) {
-    Set<OWLObject> descendants =
-        RelatedEntitiesHelper.getRelatedEntities(ontology, iri, "descendants", true);
-    for (OWLObject descendant : descendants) {
-      for (OWLEntity e : descendant.getSignature()) {
-        remove(ontology, e);
+  public static void removeAnonymousClasses(OWLOntology ontology, OWLClass cls) {
+    // Get set of anonymous superclass axioms
+    Set<OWLAxiom> anons = new HashSet<>();
+    for (OWLAxiom ax : ontology.getSubClassAxiomsForSubClass(cls)) {
+      for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
+        if (ex.isAnonymous()) {
+          anons.add(ax);
+        }
       }
+    }
+    for (OWLAxiom ax : ontology.getEquivalentClassesAxioms(cls)) {
+      for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
+        if (ex.isAnonymous()) {
+          anons.add(ax);
+        }
+      }
+    }
+    // Remove axioms
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    manager.removeAxioms(ontology, anons);
+  }
+
+  /**
+   * @param ontology
+   * @param iri
+   * @throws Exception
+   */
+  public static void removeDescendants(OWLOntology ontology, IRI iri) throws Exception {
+    removeDescendants(ontology, OntologyHelper.getEntity(ontology, iri));
+  }
+
+  /**
+   * @param ontology
+   * @param entity
+   * @throws Exception
+   */
+  public static void removeDescendants(OWLOntology ontology, OWLEntity entity) throws Exception {
+    if (entity.isOWLClass()) {
+      removeDescendants(ontology, entity.asOWLClass());
+    } else if (entity.isOWLAnnotationProperty()) {
+      removeDescendants(ontology, entity.asOWLAnnotationProperty());
+    } else if (entity.isOWLDataProperty()) {
+      removeDescendants(ontology, entity.asOWLDataProperty());
+    } else if (entity.isOWLObjectProperty()) {
+      removeDescendants(ontology, entity.asOWLObjectProperty());
+    } else {
+      throw new Exception(
+          String.format(entityTypeError, entity.getEntityType().toString(), "descendants"));
+    }
+  }
+
+  /**
+   * @param ontology
+   * @param cls
+   */
+  public static void removeDescendants(OWLOntology ontology, OWLClass cls) {
+    Set<OWLClass> descendants = new HashSet<>();
+    RelatedEntitiesHelper.getDescendants(ontology, cls, descendants);
+    for (OWLClass descendant : descendants) {
+      remove(ontology, descendant);
+    }
+  }
+
+  /**
+   * @param ontology
+   * @param annotationProperty
+   */
+  public static void removeDescendants(
+      OWLOntology ontology, OWLAnnotationProperty annotationProperty) {
+    Set<OWLAnnotationProperty> descendants = new HashSet<>();
+    RelatedEntitiesHelper.getDescendants(ontology, annotationProperty, descendants);
+    for (OWLAnnotationProperty descendant : descendants) {
+      remove(ontology, descendant);
+    }
+  }
+
+  /**
+   * @param ontology
+   * @param dataProperty
+   */
+  public static void removeDescendants(OWLOntology ontology, OWLDataProperty dataProperty) {
+    Set<OWLDataProperty> descendants = new HashSet<>();
+    RelatedEntitiesHelper.getDescendants(ontology, dataProperty, descendants);
+    for (OWLDataProperty descendant : descendants) {
+      remove(ontology, descendant);
+    }
+  }
+
+  /**
+   * @param ontology
+   * @param objectProperty
+   */
+  public static void removeDescendants(OWLOntology ontology, OWLObjectProperty objectProperty) {
+    Set<OWLObjectProperty> descendants = new HashSet<>();
+    RelatedEntitiesHelper.getDescendants(ontology, objectProperty, descendants);
+    for (OWLObjectProperty descendant : descendants) {
+      remove(ontology, descendant);
+    }
+  }
+
+  /**
+   * Given an OWLOntology, remove all import axioms.
+   *
+   * @param ontology OWLOntology to remove from
+   * @throws Exception if any import does not have an IRI
+   */
+  public static void removeImports(OWLOntology ontology) throws Exception {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    for (OWLOntology i : ontology.getImports()) {
+      IRI iri = i.getOntologyID().getOntologyIRI().orNull();
+      if (iri == null) {
+        throw new Exception(nullIRIError);
+      }
+      manager.applyChange(
+          new RemoveImport(ontology, manager.getOWLDataFactory().getOWLImportsDeclaration(iri)));
     }
   }
 
@@ -143,24 +256,6 @@ public class RemoveOperation {
   }
 
   /**
-   * Given an OWLOntology, remove all import axioms.
-   *
-   * @param ontology OWLOntology to remove from
-   * @throws Exception if any import does not have an IRI
-   */
-  public static void removeImports(OWLOntology ontology) throws Exception {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    for (OWLOntology i : ontology.getImports()) {
-      IRI iri = i.getOntologyID().getOntologyIRI().orNull();
-      if (iri == null) {
-    	  throw new Exception(nullIRIError);
-      }
-      manager.applyChange(
-          new RemoveImport(ontology, manager.getOWLDataFactory().getOWLImportsDeclaration(iri)));
-    }
-  }
-
-  /**
    * Given an OWLOntology, remove all named individuals and associated axioms from the ontology.
    *
    * @param ontology OWLOntology to remove from
@@ -181,11 +276,7 @@ public class RemoveOperation {
    */
   public static void removeWithAnnotations(OWLOntology ontology, Set<OWLAnnotation> annotations) {
     Set<OWLEntity> entities = new HashSet<>();
-    entities.addAll(ontology.getClassesInSignature());
-    entities.addAll(ontology.getAnnotationPropertiesInSignature());
-    entities.addAll(ontology.getObjectPropertiesInSignature());
-    entities.addAll(ontology.getDataPropertiesInSignature());
-    entities.addAll(ontology.getIndividualsInSignature());
+    entities.addAll(OntologyHelper.getEntities(ontology));
     for (OWLEntity e : entities) {
       for (OWLAnnotation compare : EntitySearcher.getAnnotations(e, ontology)) {
         if (annotations.contains(compare)) {
@@ -193,60 +284,5 @@ public class RemoveOperation {
         }
       }
     }
-  }
-
-  /**
-   * Given an OWLOntology and an OWLEntity, remove the entity and associated axioms from the
-   * ontology.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param entity OWLEntity to remove
-   */
-  private static void remove(OWLOntology ontology, OWLEntity entity) {
-    logger.debug("Removing from ontology: " + entity);
-
-    Set<OWLAxiom> axioms = new HashSet<>();
-    // Add any logical axioms using the class entity
-
-    for (OWLAxiom axiom : ontology.getAxioms()) {
-      if (axiom.getSignature().contains(entity)) {
-        axioms.add(axiom);
-      }
-    }
-    // Add any assertions on the class entity
-    axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity.getIRI(), ontology));
-    axioms.addAll(EntitySearcher.getReferencingAxioms(entity, ontology));
-    // Remove all
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    manager.removeAxioms(ontology, axioms);
-  }
-
-  /**
-   * Given an OWLOntology and an OWLClass, remove any anonymous superclasses of the class from the
-   * ontology.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param cls OWLClass to remove anonymous superclasses of
-   */
-  private static void removeAnonymousClasses(OWLOntology ontology, OWLClass cls) {
-    // Get set of anonymous superclass axioms
-    Set<OWLAxiom> anons = new HashSet<>();
-    for (OWLAxiom ax : ontology.getSubClassAxiomsForSubClass(cls)) {
-      for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
-        if (ex.isAnonymous()) {
-          anons.add(ax);
-        }
-      }
-    }
-    for (OWLAxiom ax : ontology.getEquivalentClassesAxioms(cls)) {
-      for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
-        if (ex.isAnonymous()) {
-          anons.add(ax);
-        }
-      }
-    }
-    // Remove axioms
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    manager.removeAxioms(ontology, anons);
   }
 }

@@ -2,13 +2,13 @@ package org.obolibrary.robot;
 
 import java.util.HashSet;
 import java.util.Set;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDataRange;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -38,15 +38,15 @@ public class RelatedEntitiesHelper {
    */
   public static void getAncestors(
       OWLOntology ontology, OWLClass cls, Set<OWLClassExpression> ancestors) {
-	for (OWLClassExpression classExpression : EntitySearcher.getSuperClasses(cls, ontology)) {
-		ancestors.add(classExpression);
-		if (!classExpression.isAnonymous()) {
-			OWLClass superClass = classExpression.asOWLClass();
-			if (!superClass.isTopEntity()) {
-			  getAncestors(ontology, superClass, ancestors);
-			}
-		}
-	}
+    for (OWLClassExpression classExpression : EntitySearcher.getSuperClasses(cls, ontology)) {
+      ancestors.add(classExpression);
+      if (!classExpression.isAnonymous()) {
+        OWLClass superClass = classExpression.asOWLClass();
+        if (!superClass.isTopEntity()) {
+          getAncestors(ontology, superClass, ancestors);
+        }
+      }
+    }
   }
 
   /**
@@ -58,13 +58,14 @@ public class RelatedEntitiesHelper {
    */
   public static void getAncestors(
       OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> ancestors) {
-	  for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getSuperProperties(dataProperty, ontology)) {
-		  OWLDataProperty superProperty = propertyExpression.asOWLDataProperty();
-		  ancestors.add(superProperty);
-		  if (!superProperty.isTopEntity()) {
-		    getAncestors(ontology, superProperty, ancestors);
-	      }
-       }
+    for (OWLDataPropertyExpression propertyExpression :
+        EntitySearcher.getSuperProperties(dataProperty, ontology)) {
+      OWLDataProperty superProperty = propertyExpression.asOWLDataProperty();
+      ancestors.add(superProperty);
+      if (!superProperty.isTopEntity()) {
+        getAncestors(ontology, superProperty, ancestors);
+      }
+    }
   }
 
   /**
@@ -76,16 +77,19 @@ public class RelatedEntitiesHelper {
    * @param excludeAnonymous if true, do not include anonymous property expressions (e.g. inverses)
    */
   public static void getAncestors(
-      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObjectPropertyExpression> ancestors) {
-	  for (OWLObjectPropertyExpression propertyExpression : EntitySearcher.getSuperProperties(objectProperty, ontology)) {
-		  ancestors.add(propertyExpression);
-		  if (!propertyExpression.isAnonymous()) {
-			  OWLObjectProperty superProperty = propertyExpression.asOWLObjectProperty();
-			  if (!superProperty.isTopEntity()) {
-				  getAncestors(ontology, superProperty, ancestors);
-			  }
-		  }
-	  }
+      OWLOntology ontology,
+      OWLObjectProperty objectProperty,
+      Set<OWLObjectPropertyExpression> ancestors) {
+    for (OWLObjectPropertyExpression propertyExpression :
+        EntitySearcher.getSuperProperties(objectProperty, ontology)) {
+      ancestors.add(propertyExpression);
+      if (!propertyExpression.isAnonymous()) {
+        OWLObjectProperty superProperty = propertyExpression.asOWLObjectProperty();
+        if (!superProperty.isTopEntity()) {
+          getAncestors(ontology, superProperty, ancestors);
+        }
+      }
+    }
   }
 
   /**
@@ -94,17 +98,37 @@ public class RelatedEntitiesHelper {
    * @param ontology OWLOntology to retrieve from
    * @param cls OWLClass to get descendants of
    * @param descendants Set of OWLClasses representing the descendants
- * @return 
+   * @return
+   */
+  public static void getDescendants(OWLOntology ontology, OWLClass cls, Set<OWLClass> descendants) {
+    for (OWLClassExpression classExpression : EntitySearcher.getSubClasses(cls, ontology)) {
+      OWLClass subClass = classExpression.asOWLClass();
+      descendants.add(subClass);
+      if (!subClass.isBottomEntity()) {
+        getDescendants(ontology, subClass, descendants);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology, an annotation property, and an empty set, fills the set with descendants of
+   * the annotation property.
+   *
+   * @param ontology OWLOntology to retrieve from
+   * @param dataProperty OWLDataProperty to get descendants of
+   * @param descendants Set of OWLDataProperties representing the descendants
    */
   public static void getDescendants(
-      OWLOntology ontology, OWLClass cls, Set<OWLClass> descendants) {
-	  for (OWLClassExpression classExpression : EntitySearcher.getSubClasses(cls, ontology)) {
-		  OWLClass subClass = classExpression.asOWLClass();
-		  descendants.add(subClass);
-		  if (!subClass.isBottomEntity()) {
-			  getDescendants(ontology, subClass, descendants);
-		  }
-	  }
+      OWLOntology ontology,
+      OWLAnnotationProperty annotationProperty,
+      Set<OWLAnnotationProperty> descendants) {
+    for (OWLAnnotationProperty subProperty :
+        EntitySearcher.getSubProperties(annotationProperty, ontology)) {
+      descendants.add(subProperty);
+      if (!subProperty.isBottomEntity()) {
+        getDescendants(ontology, subProperty, descendants);
+      }
+    }
   }
 
   /**
@@ -117,13 +141,14 @@ public class RelatedEntitiesHelper {
    */
   public static void getDescendants(
       OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> descendants) {
-	  for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getSubProperties(dataProperty, ontology)) {
-		  OWLDataProperty subProperty = propertyExpression.asOWLDataProperty();
-		  descendants.add(subProperty);
-		  if (!subProperty.isBottomEntity()) {
-			  getDescendants(ontology, subProperty, descendants);
-		  }
-	  }
+    for (OWLDataPropertyExpression propertyExpression :
+        EntitySearcher.getSubProperties(dataProperty, ontology)) {
+      OWLDataProperty subProperty = propertyExpression.asOWLDataProperty();
+      descendants.add(subProperty);
+      if (!subProperty.isBottomEntity()) {
+        getDescendants(ontology, subProperty, descendants);
+      }
+    }
   }
 
   /**
@@ -136,13 +161,14 @@ public class RelatedEntitiesHelper {
    */
   public static void getDescendants(
       OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObjectProperty> descendants) {
-    for (OWLObjectPropertyExpression propertyExpression : EntitySearcher.getSubProperties(objectProperty, ontology)) {
-		  OWLObjectProperty subProperty = propertyExpression.asOWLObjectProperty();
-		  descendants.add(subProperty);
-		  if (!subProperty.isBottomEntity()) {
-			  getDescendants(ontology, subProperty, descendants);
-		  }
-	  }
+    for (OWLObjectPropertyExpression propertyExpression :
+        EntitySearcher.getSubProperties(objectProperty, ontology)) {
+      OWLObjectProperty subProperty = propertyExpression.asOWLObjectProperty();
+      descendants.add(subProperty);
+      if (!subProperty.isBottomEntity()) {
+        getDescendants(ontology, subProperty, descendants);
+      }
+    }
   }
 
   /**
@@ -154,7 +180,7 @@ public class RelatedEntitiesHelper {
    * @return set of OWLClassExpressions
    */
   public static Set<OWLClassExpression> getDisjoints(OWLOntology ontology, OWLClass cls) {
-	  return (Set<OWLClassExpression>) EntitySearcher.getDisjointClasses(cls, ontology);
+    return (Set<OWLClassExpression>) EntitySearcher.getDisjointClasses(cls, ontology);
   }
 
   /**
@@ -165,10 +191,12 @@ public class RelatedEntitiesHelper {
    * @param dataProperty OWLDataProperty to get disjoints of
    * @return set of OWLDataProperties
    */
-  public static Set<OWLDataProperty> getDisjoints(OWLOntology ontology, OWLDataProperty dataProperty) {
+  public static Set<OWLDataProperty> getDisjoints(
+      OWLOntology ontology, OWLDataProperty dataProperty) {
     Set<OWLDataProperty> disjoints = new HashSet<>();
-    for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getDisjointProperties(dataProperty, ontology)) {
-    	disjoints.add(propertyExpression.asOWLDataProperty());
+    for (OWLDataPropertyExpression propertyExpression :
+        EntitySearcher.getDisjointProperties(dataProperty, ontology)) {
+      disjoints.add(propertyExpression.asOWLDataProperty());
     }
     return disjoints;
   }
@@ -181,8 +209,10 @@ public class RelatedEntitiesHelper {
    * @param objectProperty OWLObjectProperty to get disjoints of
    * @return set of OWLDataProperties
    */
-  public static Set<OWLObjectPropertyExpression> getDisjoints(OWLOntology ontology, OWLObjectProperty objectProperty) {
-	  return (Set<OWLObjectPropertyExpression>) EntitySearcher.getDisjointProperties(objectProperty, ontology);
+  public static Set<OWLObjectPropertyExpression> getDisjoints(
+      OWLOntology ontology, OWLObjectProperty objectProperty) {
+    return (Set<OWLObjectPropertyExpression>)
+        EntitySearcher.getDisjointProperties(objectProperty, ontology);
   }
 
   /**
@@ -194,8 +224,9 @@ public class RelatedEntitiesHelper {
    * @param includeAnonymous if true, include anonymous classes
    * @return set of OWLClassExpressions
    */
-  public static Set<OWLClassExpression> getDomains(OWLOntology ontology, OWLDataProperty dataProperty) {
-	  return (Set<OWLClassExpression>) EntitySearcher.getDomains(dataProperty, ontology);
+  public static Set<OWLClassExpression> getDomains(
+      OWLOntology ontology, OWLDataProperty dataProperty) {
+    return (Set<OWLClassExpression>) EntitySearcher.getDomains(dataProperty, ontology);
   }
 
   /**
@@ -207,8 +238,9 @@ public class RelatedEntitiesHelper {
    * @param includeAnonymous if true, include anonymous classes
    * @return set of OWLClassExpressions
    */
-  public static Set<OWLClassExpression> getDomains(OWLOntology ontology, OWLObjectProperty objectProperty) {
-	  return (Set<OWLClassExpression>) EntitySearcher.getDomains(objectProperty, ontology);
+  public static Set<OWLClassExpression> getDomains(
+      OWLOntology ontology, OWLObjectProperty objectProperty) {
+    return (Set<OWLClassExpression>) EntitySearcher.getDomains(objectProperty, ontology);
   }
 
   /**
@@ -219,15 +251,16 @@ public class RelatedEntitiesHelper {
    * @param cls OWLClass to get equivalents of
    * @param equivalents Set of OWLObjects representing the equivalents
    */
-  public static void getEquivalents(OWLOntology ontology, OWLClass cls, Set<OWLClassExpression> equivalents) {
+  public static void getEquivalents(
+      OWLOntology ontology, OWLClass cls, Set<OWLClassExpression> equivalents) {
     for (OWLClassExpression classExpression : EntitySearcher.getEquivalentClasses(cls, ontology)) {
-    	equivalents.add(classExpression);
-    	if (!classExpression.isAnonymous()) {
-    		OWLClass eqClass = classExpression.asOWLClass();
-    		if (!eqClass.isBottomEntity() && !eqClass.isTopEntity()) {
-    		  getEquivalents(ontology, eqClass, equivalents);
-    		}
-    	}
+      equivalents.add(classExpression);
+      if (!classExpression.isAnonymous()) {
+        OWLClass eqClass = classExpression.asOWLClass();
+        if (!eqClass.isBottomEntity() && !eqClass.isTopEntity()) {
+          getEquivalents(ontology, eqClass, equivalents);
+        }
+      }
     }
   }
 
@@ -239,13 +272,15 @@ public class RelatedEntitiesHelper {
    * @param dataProperty OWLDataProperty to get equivalents of
    * @param equivalents Set of OWLDataProperties representing the equivalents
    */
-  public static void getEquivalents(OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> equivalents) {
-    for (OWLDataPropertyExpression propertyExpression : EntitySearcher.getEquivalentProperties(dataProperty, ontology)) {
-    	OWLDataProperty eqProperty = propertyExpression.asOWLDataProperty();
-    	equivalents.add(eqProperty);
-    	if (!eqProperty.isBottomEntity() && !eqProperty.isTopEntity()) {
-  		  getEquivalents(ontology, eqProperty, equivalents);
-  		}
+  public static void getEquivalents(
+      OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLDataProperty> equivalents) {
+    for (OWLDataPropertyExpression propertyExpression :
+        EntitySearcher.getEquivalentProperties(dataProperty, ontology)) {
+      OWLDataProperty eqProperty = propertyExpression.asOWLDataProperty();
+      equivalents.add(eqProperty);
+      if (!eqProperty.isBottomEntity() && !eqProperty.isTopEntity()) {
+        getEquivalents(ontology, eqProperty, equivalents);
+      }
     }
   }
 
@@ -257,15 +292,19 @@ public class RelatedEntitiesHelper {
    * @param objectProperty OWLObjectProperty to get equivalents of
    * @param equivalents Set of OWLObjectPropertyExpressions representing the equivalents
    */
-  public static void getEquivalents(OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLObjectPropertyExpression> equivalents) {
-    for (OWLObjectPropertyExpression propertyExpression : EntitySearcher.getEquivalentProperties(objectProperty, ontology)) {
-    	equivalents.add(propertyExpression);
-    	if (!propertyExpression.isAnonymous()) {
-    		OWLObjectProperty eqProperty = propertyExpression.asOWLObjectProperty();
-    		if (!eqProperty.isBottomEntity() && !eqProperty.isTopEntity()) {
-    	  		  getEquivalents(ontology, eqProperty, equivalents);
-    	    }
-    	}
+  public static void getEquivalents(
+      OWLOntology ontology,
+      OWLObjectProperty objectProperty,
+      Set<OWLObjectPropertyExpression> equivalents) {
+    for (OWLObjectPropertyExpression propertyExpression :
+        EntitySearcher.getEquivalentProperties(objectProperty, ontology)) {
+      equivalents.add(propertyExpression);
+      if (!propertyExpression.isAnonymous()) {
+        OWLObjectProperty eqProperty = propertyExpression.asOWLObjectProperty();
+        if (!eqProperty.isBottomEntity() && !eqProperty.isTopEntity()) {
+          getEquivalents(ontology, eqProperty, equivalents);
+        }
+      }
     }
   }
 
@@ -276,7 +315,8 @@ public class RelatedEntitiesHelper {
    * @param objectProperty OWLObjectProperty to get inverses of
    * @return Set of OWLObjectPropertyExpressions representing the inverses
    */
-  public static Set<OWLObjectPropertyExpression> getInverses(OWLOntology ontology, OWLObjectProperty objectProperty) {
+  public static Set<OWLObjectPropertyExpression> getInverses(
+      OWLOntology ontology, OWLObjectProperty objectProperty) {
     return (Set<OWLObjectPropertyExpression>) EntitySearcher.getInverses(objectProperty, ontology);
   }
 
@@ -298,7 +338,8 @@ public class RelatedEntitiesHelper {
    * @param objectProperty OWLObjectProperty to get ranges of
    * @return Set of OWLClassExpressions
    */
-  public static Set<OWLClassExpression> getRanges(OWLOntology ontology, OWLObjectProperty objectProperty) {
+  public static Set<OWLClassExpression> getRanges(
+      OWLOntology ontology, OWLObjectProperty objectProperty) {
     return (Set<OWLClassExpression>) EntitySearcher.getRanges(objectProperty, ontology);
   }
 
@@ -309,7 +350,8 @@ public class RelatedEntitiesHelper {
    * @param individual OWLNamedIndividual to get types of
    * @return Set of OWLClassExpressions
    */
-  public static Set<OWLClassExpression> getTypes(OWLOntology ontology, OWLNamedIndividual individual) {
+  public static Set<OWLClassExpression> getTypes(
+      OWLOntology ontology, OWLNamedIndividual individual) {
     return (Set<OWLClassExpression>) EntitySearcher.getTypes(individual, ontology);
   }
 }

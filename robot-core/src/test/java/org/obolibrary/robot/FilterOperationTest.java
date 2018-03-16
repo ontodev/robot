@@ -2,65 +2,60 @@ package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import org.junit.Test;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 /** Tests for FilterOperation. */
 public class FilterOperationTest extends CoreTest {
+
+  private final IOHelper ioHelper = new IOHelper();
+
+  private final OWLDataFactory df = OWLManager.getOWLDataFactory();
+
   /**
-   * Filter all object properties from an ontology that has no object properties. Result is
-   * identical.
+   * Test filtering for entities that have a given annotation.
    *
-   * @throws IOException on file problem
+   * @throws Exception
+   */
+  public void testFilterAnnotation() throws Exception {
+    OWLOntology simple = loadOntology("/simple.owl");
+    OWLAnnotation annotation =
+        df.getOWLAnnotation(
+            df.getOWLAnnotationProperty(ioHelper.createIRI("rdfs:label")),
+            df.getOWLLiteral("Test 1", df.getOWLDatatype(ioHelper.createIRI("rdf:PlainLiteral"))));
+    OWLOntology filtered = FilterOperation.filterAnnotations(simple, Sets.newHashSet(annotation));
+    assertIdentical("/simple_filtered.owl", filtered);
+  }
+
+  /**
+   * Test filtering for a class.
+   *
+   * @throws IOException
    */
   @Test
-  public void testFilterNothing() throws IOException {
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+  public void testFilterClass() throws IOException {
     OWLOntology filtered = loadOntology("/simple.owl");
-    FilterOperation.filter(
-        filtered, properties, Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
-    assertIdentical("/simple.owl", filtered);
+    OWLClass cls = df.getOWLClass(IRI.create(base + "simple.owl#test1"));
+    FilterOperation.filterClasses(filtered, Sets.newHashSet(cls));
+    assertIdentical("/simple_filtered.owl", filtered);
   }
 
   /**
-   * Filter all object properties from an ontology that has just one object property. Result matches
-   * the simple.owl ontology.
+   * Test filtering for an object property.
    *
-   * @throws IOException on file problem
+   * @throws IOException
    */
   @Test
-  public void testRemoveParts() throws IOException {
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+  public void testFilterProperty() throws IOException {
     OWLOntology filtered = loadOntology("/simple_parts.owl");
-    FilterOperation.filter(
-        filtered, properties, Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
-    assertIdentical("/simple.owl", filtered);
-  }
-
-  /**
-   * Filter for one object property from an ontology that has just one object property. Result is
-   * identical.
-   *
-   * @throws IOException on file problem
-   */
-  @Test
-  public void testKeepParts() throws IOException {
-    OWLOntology simpleParts = loadOntology("/simple_parts.owl");
-
-    OWLOntologyManager manager = simpleParts.getOWLOntologyManager();
-    OWLDataFactory df = manager.getOWLDataFactory();
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
-    properties.add(df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of")));
-
-    OWLOntology filtered = loadOntology("/simple_parts.owl");
-    FilterOperation.filter(
-        filtered, properties, Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
-
+    OWLObjectProperty property = df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of"));
+    FilterOperation.filterProperties(filtered, Sets.newHashSet(property));
     assertIdentical("/simple_parts.owl", filtered);
   }
 }

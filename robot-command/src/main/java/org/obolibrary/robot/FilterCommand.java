@@ -10,10 +10,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
-import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +24,25 @@ public class FilterCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(FilterCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "filter#";
+
+  /** Error message when --annotation is not a valid PROP VALUE. */
+  private static final String annotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR each annotation must include PROP VALUE";
+
+  /** Error message when --link-annotation is not a valid PROP LINK. */
+  private static final String linkAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR each link annotation must include PROP LINK";
+
+  /** Error message when --language-annotation is not a valid PROP VALUE LANG. */
+  private static final String langAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR " + "each language annotation must include PROP VALUE LANG";
+
+  /** Error message when --typed-annotation is not a valid PROP VALUE TYPE. */
+  private static final String typedAnnotationFormatError =
+      NS + "ANNOTATION FORMAT ERROR " + "each typed annotation must include PROP VALUE TYPE";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -36,12 +52,17 @@ public class FilterCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("c", "class", true, "filter on a class and its descendants");
-    o.addOption("C", "classes", true, "filter on a set of classes and their descendants");
-    o.addOption("n", "individual", true, "filter on an individual and its type(s)");
-    o.addOption("N", "individuals", true, "filter on a set of individuals and their types");
-    o.addOption("p", "property", true, "filter on an object property");
-    o.addOption("P", "properties", true, "filter on a set of object properties");
+    o.addOption("e", "entity", true, "filter on an entity");
+    o.addOption("E", "entities", true, "filter on a set of entities");
+    o.addOption("d", "descendants-of-entity", true, "filter for the descendants of an entity");
+    o.addOption(
+        "D", "descendants-of-entities", true, "filter for the descendants of a set of entities");
+    o.addOption("a", "entity-and-descendants", true, "filter for an entity and its descendants");
+    o.addOption(
+        "A",
+        "entities-and-descendants",
+        true,
+        "filter for a set of entities and their descendants");
     options = o;
 
     Option a;
@@ -138,32 +159,23 @@ public class FilterCommand implements Command {
     OWLOntology ontology = state.getOntology();
     OWLDataFactory factory = ontology.getOWLOntologyManager().getOWLDataFactory();
 
-    // Check for classes to filter on
-    Set<IRI> classIRIs =
+    // Get IRIs of entities to filter
+    Set<IRI> entityIRIs =
         OntologyHelper.filterExistingTerms(
-            ontology, CommandLineHelper.getTerms(ioHelper, line, "class", "classes"), true);
-    Set<OWLClass> classes = new HashSet<>();
-    for (IRI iri : classIRIs) {
-      classes.add(factory.getOWLClass(iri));
-    }
-
-    // Check for object properties to filter on
-    Set<IRI> propertyIRIs = CommandLineHelper.getTerms(ioHelper, line, "property", "properties");
-    Set<OWLObjectProperty> properties = new HashSet<>();
-    for (IRI iri : propertyIRIs) {
-      properties.add(factory.getOWLObjectProperty(iri));
-    }
-
-    // Check for individuals to filter on
-    Set<IRI> individualIRIs =
+            ontology, CommandLineHelper.getTerms(ioHelper, line, "entity", "entities"), true);
+    Set<IRI> descendantIRIs =
         OntologyHelper.filterExistingTerms(
             ontology,
-            CommandLineHelper.getTerms(ioHelper, line, "individual", "individuals"),
+            CommandLineHelper.getTerms(
+                ioHelper, line, "descendants-of-entity", "descendants-of-entities"),
             true);
-    Set<OWLNamedIndividual> individuals = new HashSet<>();
-    for (IRI iri : individualIRIs) {
-      individuals.add(factory.getOWLNamedIndividual(iri));
-    }
+    Set<IRI> nodeIRIs =
+        OntologyHelper.filterExistingTerms(
+            ontology,
+            CommandLineHelper.getTerms(
+                ioHelper, line, "entity-and-desendants", "entities-and-descendants"),
+            true);
+    FilterOperation.filter(ontology, entityIRIs, descendantIRIs, nodeIRIs);
 
     // Check for annotations to filter on
     Set<OWLAnnotation> annotations = new HashSet<>();
@@ -176,12 +188,14 @@ public class FilterCommand implements Command {
         propertyString = annotationItems.remove(0);
         valueString = annotationItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        // TODO: Set up exception
+        throw new IllegalArgumentException(annotationFormatError);
       }
       OWLAnnotationProperty property =
           factory.getOWLAnnotationProperty(
               CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "annotation"));
-      OWLAnnotationValue value = IOHelper.createLiteral(valueString);
+      OWLAnnotationValue value =
+          factory.getOWLLiteral(
+              valueString, factory.getOWLDatatype(ioHelper.createIRI("rdf:PlainLiteral")));
       annotations.add(factory.getOWLAnnotation(property, value));
     }
 
@@ -192,7 +206,7 @@ public class FilterCommand implements Command {
         propertyString = linkAnnotationItems.remove(0);
         valueString = linkAnnotationItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        // TODO: Set up exception
+        throw new IllegalArgumentException(linkAnnotationFormatError);
       }
       OWLAnnotationProperty property =
           factory.getOWLAnnotationProperty(
@@ -210,7 +224,7 @@ public class FilterCommand implements Command {
         valueString = typedAnnotationItems.remove(0);
         typeString = typedAnnotationItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        // TODO
+        throw new IllegalArgumentException(typedAnnotationFormatError);
       }
       OWLAnnotationProperty property =
           factory.getOWLAnnotationProperty(
@@ -219,8 +233,25 @@ public class FilterCommand implements Command {
       annotations.add(factory.getOWLAnnotation(property, value));
     }
 
-    FilterOperation.filter(ontology, properties, classes, individuals, annotations);
-    CommandLineHelper.maybeSaveOutput(line, ontology);
+    // Check for language annotations to filter on
+    List<String> languageAnnotationItems =
+        CommandLineHelper.getOptionValues(line, "language-annotation");
+    while (languageAnnotationItems.size() > 0) {
+      try {
+        propertyString = languageAnnotationItems.remove(0);
+        valueString = languageAnnotationItems.remove(0);
+        typeString = languageAnnotationItems.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(langAnnotationFormatError);
+      }
+      OWLAnnotationProperty property =
+          factory.getOWLAnnotationProperty(
+              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "language-annotation"));
+      OWLAnnotationValue value = ioHelper.createTypedLiteral(valueString, typeString);
+      annotations.add(factory.getOWLAnnotation(property, value));
+    }
+    OWLOntology outputOntology = FilterOperation.filterAnnotations(ontology, annotations);
+    CommandLineHelper.maybeSaveOutput(line, outputOntology);
     return state;
   }
 }
