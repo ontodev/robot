@@ -1,5 +1,8 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -107,16 +110,16 @@ public class ReduceOperation {
     Map<OWLClass, Set<OWLClass>> assertedSubClassMap = new HashMap<>();
     Set<OWLSubClassOfAxiom> assertedSubClassAxioms = ontology.getAxioms(AxiomType.SUBCLASS_OF);
     Set<OWLClassExpression> exprs = new HashSet<>();
-
     Map<OWLClassExpression, OWLClass> exprToNamedClassMap = new HashMap<>();
 
     for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
-
       OWLClass subClass = mapClass(dataFactory, exprToNamedClassMap, ax.getSubClass());
       OWLClass superClass = mapClass(dataFactory, exprToNamedClassMap, ax.getSuperClass());
+
       if (!assertedSubClassMap.containsKey(subClass)) {
         assertedSubClassMap.put(subClass, new HashSet<OWLClass>());
       }
+
       assertedSubClassMap.get(subClass).add(superClass);
 
       // DEP
@@ -151,9 +154,17 @@ public class ReduceOperation {
       }
     }
 
+    // Constructing an inverse map of exprToNamedClassMap, which will be generated and used for the
+    // purpose of debugging only.
+    Multimap<OWLClass, OWLClassExpression> revExprToNamedClassMap = HashMultimap.create();
+    if (logger.isDebugEnabled()) {
+      for (Map.Entry<OWLClassExpression, OWLClass> entry : exprToNamedClassMap.entrySet()) {
+        revExprToNamedClassMap.put(entry.getValue(), entry.getKey());
+      }
+    }
+
     Set<OWLSubClassOfAxiom> rmAxioms = new HashSet<>();
     for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
-
       // TO DO: make configurable
       if (ax.getAnnotations().size() > 0) {
         logger.debug("Protecting axiom with annotations: " + ax);
@@ -170,27 +181,36 @@ public class ReduceOperation {
       for (OWLClass assertedSuper : assertedSubClassMap.get(subClass)) {
         if (reasoner.getSuperClasses(assertedSuper, false).containsEntity(superClass)) {
           isRedundant = true;
-
-          // DUMB CODE FOR DEBUGGING
+          // (Previous) DUMB CODE FOR DEBUGGING
+          /*
           OWLClassExpression assertedSuperX = assertedSuper;
           for (OWLClassExpression x : exprToNamedClassMap.keySet()) {
             if (exprToNamedClassMap.get(x).equals(assertedSuper)) {
               assertedSuperX = x;
             }
           }
-          logger.debug(
-              "Redundant: "
-                  + ax
-                  + ", because "
-                  + assertedSuper
-                  + "("
-                  + assertedSuperX
-                  + ") "
-                  + " subClassOf "
-                  + superClass
-                  + " ("
-                  + superClassExpr
-                  + ")");
+          */
+
+          // Optimized codes that will run only if the debugging mode is enabled
+          if (logger.isDebugEnabled()) {
+            Collection<OWLClassExpression> classExprs = revExprToNamedClassMap.get(assertedSuper);
+            for (OWLClassExpression assertedSuperX : classExprs) {
+              logger.debug(
+                  "Redundant: "
+                      + ax
+                      + ", because "
+                      + assertedSuper
+                      + "("
+                      + assertedSuperX
+                      + ") "
+                      + " subClassOf "
+                      + superClass
+                      + " ("
+                      + superClassExpr
+                      + ")");
+            }
+          }
+
           break;
         }
       }
