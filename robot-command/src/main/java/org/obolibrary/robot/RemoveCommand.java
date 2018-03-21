@@ -1,16 +1,18 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public class RemoveCommand implements Command {
 
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(ExtractCommand.class);
+  private static final Logger logger = LoggerFactory.getLogger(RemoveCommand.class);
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -30,55 +32,13 @@ public class RemoveCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "output-iri", true, "set OntologyIRI for output");
-    o.addOption("N", "all-individuals", true, "if true, remove all individuals");
     o.addOption("e", "entity", true, "remove an entity");
     o.addOption("E", "entities", true, "remove a set of entities");
-    o.addOption(
-        "d",
-        "descendants-of-entity",
-        true,
-        "remove all descendants of an entity, without removing the entity");
-    o.addOption(
-        "D",
-        "descendants-of-entities",
-        true,
-        "remove all descendants of a set of entities, without removing the entities");
-    o.addOption(
-        "s",
-        "anonymous-classes",
-        true,
-        "remove anonymous classes associated with a class ('all' for all classes)");
-    o.addOption("a", "entity-and-descendants", true, "remove an entity and its descendants");
-    o.addOption(
-        "A", "entities-and-descendants", true, "remove a set of entities and their descendants");
-    o.addOption("m", "import", true, "remove an import and its entities ('all' for all imports)");
+    o.addOption("s", "select", true, "remove a set of entities using one or more relation options");
+    o.addOption("a", "axioms", true, "remove axioms from a set of entities (default: all)");
     options = o;
 
-    Option a;
-
-    // Filter on an annotation (PROP VAL)
-    a = new Option("n", "remove entities with annotation PROP VAL");
-    a.setLongOpt("annotation");
-    a.setArgs(2);
-    options.addOption(a);
-
-    // Filter on a link annotation (PROP IRI)
-    a = new Option("l", "remove entities with annotation PROP IRI");
-    a.setLongOpt("link-annotation");
-    a.setArgs(2);
-    options.addOption(a);
-
-    // Filter on a typed annotation (PROP VAL TYPE)
-    a = new Option("t", "remove entities with annotation PROP VAL TYPE");
-    a.setLongOpt("typed-annotation");
-    a.setArgs(3);
-    options.addOption(a);
-
-    // Filter on a typed annotation (PROP VAL LANG)
-    a = new Option("L", "remove entities with annotation PROP VAL LANG");
-    a.setLongOpt("language-annotation");
-    a.setArgs(3);
-    options.addOption(a);
+    // TODO: imports, anonymous, annotations
   }
 
   /**
@@ -149,138 +109,101 @@ public class RemoveCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
+    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
     if (outputIRI == null) {
       outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     }
-
-    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
-
-    // Remove all individuals if true (defaults to false)
-    if (CommandLineHelper.getBooleanValue(line, "all-individuals", false)) {
-      RemoveOperation.removeIndividuals(ontology);
+    // Get a set of entities
+    Set<OWLEntity> entities = new HashSet<>();
+    for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
+      entities.add(OntologyHelper.getEntity(ontology, iri));
     }
-
-    // Remove anonymous superclasses if requested (ID or 'all')
-    String entityID = CommandLineHelper.getOptionalValue(line, "anonymous-classes");
-    if (entityID != null) {
-      if ("all".equalsIgnoreCase(entityID)) {
-        RemoveOperation.removeAnonymousClasses(ontology);
-      } else {
-        IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, entityID, "anonymous-classes");
-        RemoveOperation.removeAnonymousClasses(ontology, iri);
-      }
-    }
-
-    Set<IRI> IRIs;
-
-    // Remove descendants of entities
-    IRIs =
-        CommandLineHelper.getTerms(
-            ioHelper, line, "descendants-of-entity", "descendants-of-entities");
-    for (IRI iri : IRIs) {
-      RemoveOperation.removeDescendants(ontology, iri);
-    }
-
-    // Remove entities, no descendants
-    IRIs = CommandLineHelper.getTerms(ioHelper, line, "entity", "entities");
-    for (IRI iri : IRIs) {
-      RemoveOperation.remove(ontology, iri);
-    }
-
-    // Remove entities and descendants
-    IRIs =
-        CommandLineHelper.getTerms(
-            ioHelper, line, "entity-and-descendants", "entities-and-descendants");
-    for (IRI iri : IRIs) {
-      RemoveOperation.remove(ontology, iri);
-      RemoveOperation.removeDescendants(ontology, iri);
-    }
-
-    // Remove entities with annotations
+    // Get a set of relation types, or annotations to select
+    Set<RelationType> relationTypes = new HashSet<>();
     Set<OWLAnnotation> annotations = new HashSet<>();
-    List<String> annotationItems = CommandLineHelper.getOptionValues(line, "annotation");
-    String propertyString = null;
-    String valueString = null;
-    String typeString = null;
-    while (annotationItems.size() > 0) {
-      try {
-        propertyString = annotationItems.remove(0);
-        valueString = annotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        // TODO: Set up exception
-      }
-      OWLAnnotationProperty property =
-          dataFactory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "annotation"));
-      OWLAnnotationValue value = IOHelper.createLiteral(valueString);
-      annotations.add(dataFactory.getOWLAnnotation(property, value));
-    }
-
-    // Add link annotations
-    List<String> linkAnnotationItems = CommandLineHelper.getOptionValues(line, "link-annotation");
-    while (linkAnnotationItems.size() > 0) {
-      try {
-        propertyString = linkAnnotationItems.remove(0);
-        valueString = linkAnnotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        // TODO: Set up exception
-      }
-      OWLAnnotationProperty property =
-          dataFactory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "link-annotation"));
-      OWLAnnotationValue value =
-          CommandLineHelper.maybeCreateIRI(ioHelper, valueString, "link-annotation");
-      annotations.add(dataFactory.getOWLAnnotation(property, value));
-    }
-
-    // Add typed annotations
-    List<String> typedAnnotationItems = CommandLineHelper.getOptionValues(line, "typed-annotation");
-    while (typedAnnotationItems.size() > 0) {
-      try {
-        propertyString = typedAnnotationItems.remove(0);
-        valueString = typedAnnotationItems.remove(0);
-        typeString = typedAnnotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        // TODO
-      }
-      OWLAnnotationProperty property =
-          dataFactory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "typed-annotation"));
-      OWLAnnotationValue value = ioHelper.createTypedLiteral(valueString, typeString);
-      annotations.add(dataFactory.getOWLAnnotation(property, value));
-    }
-
-    // Add language annotations
-    List<String> languageAnnotationItems =
-        CommandLineHelper.getOptionValues(line, "language-annotation");
-    while (languageAnnotationItems.size() > 0) {
-      try {
-        propertyString = languageAnnotationItems.remove(0);
-        valueString = languageAnnotationItems.remove(0);
-        typeString = languageAnnotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        // TODO
-      }
-      OWLAnnotationProperty property =
-          dataFactory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "language-annotation"));
-      OWLAnnotationValue value = ioHelper.createTypedLiteral(valueString, typeString);
-      annotations.add(dataFactory.getOWLAnnotation(property, value));
-    }
-
-    RemoveOperation.removeWithAnnotations(ontology, annotations);
-
-    // Remove imports and their entities
-    String importString = CommandLineHelper.getOptionalValue(line, "import");
-    if (importString != null) {
-      if ("all".equalsIgnoreCase(importString)) {
-        RemoveOperation.removeImports(ontology);
+    List<String> selectStrings = new ArrayList<>();
+    for (String select : CommandLineHelper.getOptionalValues(line, "select")) {
+      if (select.contains("+")) {
+        for (String s : select.split("+")) {
+          selectStrings.add(s);
+        }
       } else {
-        IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, importString, "import");
-        RemoveOperation.removeImports(ontology, iri);
+        selectStrings.add(select);
       }
     }
+    // If the select option wasn't provided, default to self
+    if (selectStrings.isEmpty()) {
+      selectStrings.add("self");
+    }
+
+    for (String select : selectStrings) {
+      if (RelationType.isRelationType(select.toUpperCase())) {
+        relationTypes.add(RelationType.getRelationType(select.toUpperCase()));
+      } else if (select.contains("=")) {
+        IRI propertyIRI =
+            CommandLineHelper.maybeCreateIRI(ioHelper, select.split("=")[0], "select");
+        OWLAnnotationProperty annotationProperty =
+            dataFactory.getOWLAnnotationProperty(propertyIRI);
+        String value = select.split("=")[1];
+        if (value.contains("<") && value.contains(">")) {
+          // IRI provided
+          IRI valueIRI =
+              CommandLineHelper.maybeCreateIRI(
+                  ioHelper, value.substring(1, value.length() - 1), "select");
+          annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+        } else if (value.contains("~'")) {
+          // TODO: Pattern
+        } else if (value.contains("'")) {
+          // Literal provided
+          OWLLiteral literalValue =
+              dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
+          annotations.add(dataFactory.getOWLAnnotation(annotationProperty, literalValue));
+        } else {
+          // Assume it's a CURIE
+          IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "select");
+          annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+        }
+      }
+    }
+    annotations.forEach(a -> System.out.println(a.toString()));
+    // Get a set of axiom types
+    Set<AxiomType<?>> axiomTypes = new HashSet<>();
+    List<String> axiomStrings = new ArrayList<>();
+    for (String axiom : CommandLineHelper.getOptionalValues(line, "axioms")) {
+      if (axiom.contains("+")) {
+        for (String a : axiom.split("+")) {
+          axiomStrings.add(a.replace("-", "_"));
+        }
+      } else {
+        axiomStrings.add(axiom.replace("-", "_"));
+      }
+    }
+    // If the axiom option wasn't provided, default to all
+    if (axiomStrings.isEmpty()) {
+      axiomStrings.add("all");
+    }
+    for (String axiom : axiomStrings) {
+      if (AxiomType.isAxiomType(axiom.toUpperCase())) {
+        axiomTypes.add(AxiomType.getAxiomType(axiom.toUpperCase()));
+      } else if (axiom.equalsIgnoreCase("all")) {
+        axiomTypes.addAll(AxiomType.AXIOM_TYPES);
+      } else {
+        // TODO
+        throw new IllegalArgumentException("");
+      }
+    }
+
+    logger.debug("SELECTING ENTITIES BY RELATIONS:");
+    relationTypes.forEach(rt -> logger.debug(rt.toString()));
+    // Find entities based on relation to specified entity
+    Set<OWLEntity> removeEntities =
+        RelatedEntitiesHelper.getRelated(ontology, entities, relationTypes);
+    // Find entities based on annotations
+    removeEntities.addAll(RelatedEntitiesHelper.getAnnotated(ontology, annotations));
+    // Remove axioms associated with entity
+    RemoveOperation.remove(ontology, removeEntities, axiomTypes);
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);

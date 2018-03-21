@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
 import java.io.IOException;
-import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -38,7 +37,6 @@ public class FilterOperationTest extends CoreTest {
    *
    * @throws IOException
    */
-  @Test
   public void testFilterClass() throws IOException {
     OWLOntology filtered = loadOntology("/simple.owl");
     OWLClass cls = df.getOWLClass(IRI.create(base + "simple.owl#test1"));
@@ -51,7 +49,6 @@ public class FilterOperationTest extends CoreTest {
    *
    * @throws IOException
    */
-  @Test
   public void testFilterProperty() throws IOException {
     OWLOntology filtered = loadOntology("/simple_parts.owl");
     OWLObjectProperty property = df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of"));
