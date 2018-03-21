@@ -194,8 +194,6 @@ public class RemoveCommand implements Command {
         throw new IllegalArgumentException("");
       }
     }
-    AxiomType.
-
     logger.debug("selecting entities based on relations:");
     relationTypes.forEach(rt -> logger.debug(rt.toString()));
     // Find entities based on relation to specified entity
