@@ -139,8 +139,8 @@ public class RemoveCommand implements Command {
     }
 
     for (String select : selectStrings) {
-      if (RelationType.isRelationType(select.toUpperCase())) {
-        relationTypes.add(RelationType.getRelationType(select.toUpperCase()));
+      if (RelationType.isRelationType(select.toLowerCase())) {
+        relationTypes.add(RelationType.getRelationType(select.toLowerCase()));
       } else if (select.contains("=")) {
         IRI propertyIRI =
             CommandLineHelper.maybeCreateIRI(ioHelper, select.split("=")[0], "select");
@@ -194,8 +194,9 @@ public class RemoveCommand implements Command {
         throw new IllegalArgumentException("");
       }
     }
+    AxiomType.
 
-    logger.debug("SELECTING ENTITIES BY RELATIONS:");
+    logger.debug("selecting entities based on relations:");
     relationTypes.forEach(rt -> logger.debug(rt.toString()));
     // Find entities based on relation to specified entity
     Set<OWLEntity> removeEntities =

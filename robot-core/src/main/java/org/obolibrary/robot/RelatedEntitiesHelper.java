@@ -213,7 +213,6 @@ public class RelatedEntitiesHelper {
       for (OWLAnnotationAssertionAxiom axiom :
           ontology.getAnnotationAssertionAxioms(entity.getIRI())) {
         if (annotations.contains(axiom.getAnnotation())) {
-          System.out.println("SUCCESS");
           annotatedEntities.add(entity);
         }
       }
