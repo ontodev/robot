@@ -5,8 +5,6 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -29,10 +27,6 @@ public class RemoveOperation {
   /** Error message when the ontology does not import the provided IRI. Expects: IRI as string. */
   private static final String missingImportError =
       NS + "MISSING IMPORT ERROR ontology does not contain import: %s";
-
-  /** Error message when the entity type for an operation is not valid. */
-  private static final String entityTypeError =
-      NS + "ENTITY TYPE ERROR %s is not a valid type to retrieve %s";
 
   /**
    * @param ontology
@@ -70,65 +64,43 @@ public class RemoveOperation {
   }
 
   /**
-   * Given an OWLOntology, remove ALL anonymous superclasses asserted in the ontology.
+   * Given an ontology, a set of entities, and a set of relation types, remove axioms containing
+   * references to anonymous entities based on their relation to the entities in the set.
    *
-   * @param ontology OWLOntology to remove from
+   * @param ontology the OWLOntology to remove from
+   * @param entities set of entities to search
+   * @param relationTypes set of relation types to search on
    */
-  public static void removeAnonymousClasses(OWLOntology ontology) {
-    Set<OWLClass> classes = ontology.getClassesInSignature();
-    for (OWLClass cls : classes) {
-      removeAnonymousClasses(ontology, cls);
-    }
-  }
-
-  public static void removeAnonymousClasses(OWLOntology ontology, IRI iri) throws Exception {
-    OWLEntity entity = OntologyHelper.getEntity(ontology, iri);
-    if (entity.isOWLClass()) {
-      removeAnonymousClasses(ontology, entity.asOWLClass());
-    } else {
-      throw new Exception(
-          String.format(entityTypeError, entity.getEntityType().toString(), "anonymous classes"));
-    }
-  }
-
-  /**
-   * Given an OWLOntology and an OWLClass, remove any anonymous superclasses of the class from the
-   * ontology.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param cls OWLClass to remove anonymous superclasses of
-   */
-  public static void removeAnonymousClasses(OWLOntology ontology, OWLClass cls) {
-    // Get set of anonymous superclass axioms
-    Set<OWLAxiom> anons = new HashSet<>();
-    for (OWLAxiom ax : ontology.getSubClassAxiomsForSubClass(cls)) {
-      for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
-        if (ex.isAnonymous()) {
-          anons.add(ax);
+  public static void removeAnonymous(
+      OWLOntology ontology,
+      Set<OWLEntity> entities,
+      Set<RelationType> relationTypes,
+      Set<AxiomType<?>> axiomTypes) {
+    Set<OWLAxiom> anonAxioms = new HashSet<>();
+    for (RelationType rt : relationTypes) {
+      if (rt.equals(RelationType.ANCESTORS)) {
+        for (OWLEntity entity : entities) {
+          anonAxioms.addAll(OntologyHelper.getAnonymousAncestorAxioms(ontology, entity));
+        }
+      } else if (rt.equals(RelationType.DESCENDANTS)) {
+        for (OWLEntity entity : entities) {
+          anonAxioms.addAll(OntologyHelper.getAnonymousDescendantAxioms(ontology, entity));
+        }
+      } else if (rt.equals(RelationType.PARENTS)) {
+        for (OWLEntity entity : entities) {
+          anonAxioms.addAll(OntologyHelper.getAnonymousParentAxioms(ontology, entity));
+        }
+      } else if (rt.equals(RelationType.EQUIVALENTS)) {
+        for (OWLEntity entity : entities) {
+          anonAxioms.addAll(OntologyHelper.getAnonymousEquivalentAxioms(ontology, entity));
         }
       }
     }
-    for (OWLAxiom ax : ontology.getEquivalentClassesAxioms(cls)) {
-      for (OWLClassExpression ex : ax.getNestedClassExpressions()) {
-        if (ex.isAnonymous()) {
-          anons.add(ax);
-        }
-      }
-    }
-    // Remove axioms
+    // Remove axioms by type
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    manager.removeAxioms(ontology, anons);
-  }
-
-  public static void removeAxioms(OWLOntology ontology, Set<AxiomType<?>> axiomTypes) {
-    if (axiomTypes.isEmpty()) {
-      return;
-    }
-    logger.debug("REMOVING AXIOMS OF TYPE(S):");
-    axiomTypes.forEach(at -> logger.debug(at.toString()));
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : anonAxioms) {
       if (axiomTypes.contains(axiom.getAxiomType())) {
+        logger.debug("Removing axiom: " + axiom.toString());
         manager.removeAxiom(ontology, axiom);
       }
     }

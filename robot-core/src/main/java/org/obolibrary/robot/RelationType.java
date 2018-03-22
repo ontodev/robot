@@ -17,16 +17,13 @@ public enum RelationType {
   DESCENDANTS("descendants"),
   ANCESTORS("ancestors"),
   EQUIVALENTS("equivalents"),
+  TYPES("types"),
   CLASSES("classes"),
   PROPERTIES("properties"),
   INDIVIDUALS("individuals"),
   OBJECT_PROPERTIES("object-properties"),
   ANNOTATION_PROPERTIES("annotation-properties"),
-  DATA_PROPERTIES("data-properties"),
-  ONTOLOGY("ontology"),
-  ANONYMOUS("anonymous"),
-  NAMED("named"),
-  COMPLEMENT("complement");
+  DATA_PROPERTIES("data-properties");
 
   private static final Set<RelationType> RELATION_TYPES = new HashSet<>();
   private static final Map<String, RelationType> NAME_RELATION_MAP = new HashMap<>();
@@ -38,16 +35,13 @@ public enum RelationType {
     RELATION_TYPES.add(DESCENDANTS);
     RELATION_TYPES.add(ANCESTORS);
     RELATION_TYPES.add(EQUIVALENTS);
+    RELATION_TYPES.add(TYPES);
     RELATION_TYPES.add(CLASSES);
     RELATION_TYPES.add(PROPERTIES);
     RELATION_TYPES.add(INDIVIDUALS);
     RELATION_TYPES.add(OBJECT_PROPERTIES);
     RELATION_TYPES.add(ANNOTATION_PROPERTIES);
     RELATION_TYPES.add(DATA_PROPERTIES);
-    RELATION_TYPES.add(ONTOLOGY);
-    RELATION_TYPES.add(ANONYMOUS);
-    RELATION_TYPES.add(NAMED);
-    RELATION_TYPES.add(COMPLEMENT);
     for (RelationType rt : RELATION_TYPES) {
       NAME_RELATION_MAP.put(rt.toString(), rt);
     }

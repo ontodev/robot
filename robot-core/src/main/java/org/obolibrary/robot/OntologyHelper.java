@@ -17,17 +17,24 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationSubject;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedObject;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 import org.semanticweb.owlapi.model.SetOntologyID;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,6 +244,348 @@ public class OntologyHelper {
       throw new IllegalArgumentException(emptyTermsError);
     }
     return IRIs;
+  }
+
+  /**
+   * Given an ontology, an entity, and an empty set, fill the set with axioms representing any
+   * anonymous superclasses in the line of ancestors.
+   *
+   * @param ontology the ontology to search
+   * @param entity the entity to search ancestors of
+   * @return set of OWLAxioms
+   */
+  public static Set<OWLAxiom> getAnonymousAncestorAxioms(OWLOntology ontology, OWLEntity entity) {
+    Set<OWLAxiom> anons = new HashSet<>();
+    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    if (entity.isOWLClass()) {
+      for (OWLClassExpression e : EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
+        if (e.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubClassOfAxiom(entity.asOWLClass(), e));
+        } else {
+          getAnonymousAncestorAxioms(ontology, dataFactory, e.asOWLClass(), anons);
+        }
+      }
+    } else if (entity.isOWLObjectProperty()) {
+      for (OWLObjectPropertyExpression e :
+          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)) {
+        if (e.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(entity.asOWLObjectProperty(), e));
+        } else {
+          getAnonymousAncestorAxioms(ontology, dataFactory, e.asOWLObjectProperty(), anons);
+        }
+      }
+    } else if (entity.isOWLDataProperty()) {
+      for (OWLDataPropertyExpression e :
+          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)) {
+        if (e.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(entity.asOWLDataProperty(), e));
+        } else {
+          getAnonymousAncestorAxioms(ontology, dataFactory, e.asOWLDataProperty(), anons);
+        }
+      }
+    }
+    return anons;
+  }
+
+  /**
+   * Given an ontology, a data factory, a class, and an empty set, fill the set with axioms
+   * containing any anonymous classes referenced in the ancestor of the class.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory the data factory to create axioms
+   * @param cls the class to search ancestors of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousAncestorAxioms(
+      OWLOntology ontology, OWLDataFactory dataFactory, OWLClass cls, Set<OWLAxiom> anons) {
+    getAnonymousEquivalentAxioms(ontology, dataFactory, cls, anons);
+    for (OWLClassExpression e : EntitySearcher.getSuperClasses(cls, ontology)) {
+      if (e.isAnonymous()) {
+        anons.add(dataFactory.getOWLSubClassOfAxiom(cls, e));
+      } else {
+        getAnonymousAncestorAxioms(ontology, dataFactory, e.asOWLClass(), anons);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology, a data factory, an object property, and an empty set, fill the set with
+   * axioms containing any anonymous classes referenced in the ancestor of the class.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory the data factory to create axioms
+   * @param property the object property to search ancestors of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousAncestorAxioms(
+      OWLOntology ontology,
+      OWLDataFactory dataFactory,
+      OWLObjectProperty property,
+      Set<OWLAxiom> anons) {
+    getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
+    for (OWLObjectPropertyExpression e : EntitySearcher.getSuperProperties(property, ontology)) {
+      if (e.isAnonymous()) {
+        anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(property, e));
+      } else {
+        getAnonymousAncestorAxioms(ontology, dataFactory, e.asOWLObjectProperty(), anons);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology, a data factory, a data property, and an empty set, fill the set with axioms
+   * containing any anonymous classes referenced in the ancestor of the class.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory the data factory to create axioms
+   * @param property the data property to search ancestors of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousAncestorAxioms(
+      OWLOntology ontology,
+      OWLDataFactory dataFactory,
+      OWLDataProperty property,
+      Set<OWLAxiom> anons) {
+    getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
+    for (OWLDataPropertyExpression e : EntitySearcher.getSuperProperties(property, ontology)) {
+      if (e.isAnonymous()) {
+        anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(property, e));
+      } else {
+        getAnonymousAncestorAxioms(ontology, dataFactory, e.asOWLDataProperty(), anons);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology and an entity, return a set of axioms containing any anonymous entities
+   * referenced in the descendants of the entity. Includes supers & equivalents.
+   *
+   * @param ontology the ontology to search
+   * @param entity the entity to search descendants of
+   * @return set of OWLAxioms
+   */
+  public static Set<OWLAxiom> getAnonymousDescendantAxioms(OWLOntology ontology, OWLEntity entity) {
+    Set<OWLAxiom> anons = new HashSet<>();
+    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    if (entity.isOWLClass()) {
+      for (OWLClassExpression e : EntitySearcher.getSubClasses(entity.asOWLClass(), ontology)) {
+        getAnonymousDescendantAxioms(ontology, dataFactory, e.asOWLClass(), anons);
+      }
+    } else if (entity.isOWLObjectProperty()) {
+      for (OWLObjectPropertyExpression e :
+          EntitySearcher.getSubProperties(entity.asOWLObjectProperty(), ontology)) {
+        getAnonymousDescendantAxioms(ontology, dataFactory, e.asOWLObjectProperty(), anons);
+      }
+    } else if (entity.isOWLDataProperty()) {
+      for (OWLDataPropertyExpression e :
+          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), ontology)) {
+        getAnonymousDescendantAxioms(ontology, dataFactory, e.asOWLDataProperty(), anons);
+      }
+    }
+    return anons;
+  }
+
+  /**
+   * Given an ontology, a data factory, a class, and an empty set, fill the set with axioms
+   * containing any anonymous classes referenced in the descendants of the entity. Also includes the
+   * entity itself.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory a data factory to create axioms
+   * @param cls the class to search descendants of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousDescendantAxioms(
+      OWLOntology ontology, OWLDataFactory dataFactory, OWLClass cls, Set<OWLAxiom> anons) {
+    getAnonymousEquivalentAxioms(ontology, dataFactory, cls, anons);
+    for (OWLClassExpression e : EntitySearcher.getSubClasses(cls, ontology)) {
+      OWLClass subclass = e.asOWLClass();
+      for (OWLClassExpression se : EntitySearcher.getSuperClasses(subclass, ontology)) {
+        if (se.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubClassOfAxiom(subclass, se));
+        }
+      }
+      getAnonymousDescendantAxioms(ontology, dataFactory, subclass, anons);
+    }
+  }
+
+  /**
+   * Given an ontology, a data factory, an object property, and an empty set, fill the set with
+   * axioms containing any anonymous classes referenced in the descendants of the entity. Also
+   * includes the entity itself.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory a data factory to create axioms
+   * @param property the object property to search descendants of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousDescendantAxioms(
+      OWLOntology ontology,
+      OWLDataFactory dataFactory,
+      OWLObjectProperty property,
+      Set<OWLAxiom> anons) {
+    getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
+    for (OWLObjectPropertyExpression e : EntitySearcher.getSubProperties(property, ontology)) {
+      OWLObjectProperty subproperty = e.asOWLObjectProperty();
+      for (OWLObjectPropertyExpression se :
+          EntitySearcher.getSuperProperties(subproperty, ontology)) {
+        if (se.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(subproperty, se));
+        }
+      }
+      getAnonymousDescendantAxioms(ontology, dataFactory, subproperty, anons);
+    }
+  }
+
+  /**
+   * Given an ontology, a data factory, a data property, and an empty set, fill the set with axioms
+   * containing any anonymous classes referenced in the descendants of the entity. Also includes the
+   * entity itself.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory a data factory to create axioms
+   * @param property the data property to search descendants of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousDescendantAxioms(
+      OWLOntology ontology,
+      OWLDataFactory dataFactory,
+      OWLDataProperty property,
+      Set<OWLAxiom> anons) {
+    getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
+    for (OWLDataPropertyExpression e : EntitySearcher.getSubProperties(property, ontology)) {
+      OWLDataProperty subproperty = e.asOWLDataProperty();
+      for (OWLDataPropertyExpression se :
+          EntitySearcher.getSuperProperties(subproperty, ontology)) {
+        if (se.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(subproperty, se));
+        }
+      }
+      getAnonymousDescendantAxioms(ontology, dataFactory, subproperty, anons);
+    }
+  }
+
+  /**
+   * Given an ontology and an entity, return a set of axioms containing any anonymous entities
+   * referenced in equivalent entities.
+   *
+   * @param ontology the ontology to search
+   * @param entity the entity to search equivalents of
+   * @return set of OWLAxioms
+   */
+  public static Set<OWLAxiom> getAnonymousEquivalentAxioms(OWLOntology ontology, OWLEntity entity) {
+    Set<OWLAxiom> anons = new HashSet<>();
+    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    if (entity.isOWLClass()) {
+      getAnonymousEquivalentAxioms(ontology, dataFactory, entity.asOWLClass(), anons);
+    } else if (entity.isOWLObjectProperty()) {
+      getAnonymousEquivalentAxioms(ontology, dataFactory, entity.asOWLObjectProperty(), anons);
+    } else if (entity.isOWLDataProperty()) {
+      getAnonymousEquivalentAxioms(ontology, dataFactory, entity.asOWLDataProperty(), anons);
+    }
+    return anons;
+  }
+
+  /**
+   * Given an ontology, a data factory, a class, and an empty set, fill the set with any axioms
+   * containing any anonymous classes referenced in equivalent classes.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory a data factory to create axioms
+   * @param cls the class to search equivalents of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousEquivalentAxioms(
+      OWLOntology ontology, OWLDataFactory dataFactory, OWLClass cls, Set<OWLAxiom> anons) {
+    for (OWLClassExpression e : EntitySearcher.getEquivalentClasses(cls, ontology)) {
+      if (e.isAnonymous()) {
+        anons.add(dataFactory.getOWLEquivalentClassesAxiom(cls, e));
+      } else if (e.asOWLClass() != cls) {
+        getAnonymousEquivalentAxioms(ontology, dataFactory, e.asOWLClass(), anons);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology, a data factory, an object property, and an empty set, fill the set with any
+   * axioms containing any anonymous properties referenced in equivalent properties.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory a data factory to create axioms
+   * @param property the object property to search equivalents of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousEquivalentAxioms(
+      OWLOntology ontology,
+      OWLDataFactory dataFactory,
+      OWLObjectProperty property,
+      Set<OWLAxiom> anons) {
+    for (OWLObjectPropertyExpression e :
+        EntitySearcher.getEquivalentProperties(property, ontology)) {
+      if (e.isAnonymous()) {
+        anons.add(dataFactory.getOWLEquivalentObjectPropertiesAxiom(property, e));
+      } else if (e.asOWLObjectProperty() != property) {
+        getAnonymousEquivalentAxioms(ontology, dataFactory, e.asOWLObjectProperty(), anons);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology, a data factory, a data property, and an empty set, fill the set with any
+   * axioms containing any anonymous properties referenced in equivalent properties.
+   *
+   * @param ontology the ontology to search
+   * @param dataFactory a data factory to create axioms
+   * @param property the data property to search equivalents of
+   * @param anons set of OWLAxioms to fill
+   */
+  private static void getAnonymousEquivalentAxioms(
+      OWLOntology ontology,
+      OWLDataFactory dataFactory,
+      OWLDataProperty property,
+      Set<OWLAxiom> anons) {
+    for (OWLDataPropertyExpression e : EntitySearcher.getEquivalentProperties(property, ontology)) {
+      if (e.isAnonymous()) {
+        anons.add(dataFactory.getOWLEquivalentDataPropertiesAxiom(property, e));
+      } else if (e.asOWLDataProperty() != property) {
+        getAnonymousEquivalentAxioms(ontology, dataFactory, e.asOWLDataProperty(), anons);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology and an entity, return a set of axioms only corresponding to anonymous
+   * parents.
+   *
+   * @param ontology the ontology to search
+   * @param entity the entity to search parents of
+   * @return set of OWLAxioms
+   */
+  public static Set<OWLAxiom> getAnonymousParentAxioms(OWLOntology ontology, OWLEntity entity) {
+    Set<OWLAxiom> anons = new HashSet<>();
+    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    if (entity.isOWLClass()) {
+      for (OWLClassExpression e : EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
+        if (e.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubClassOfAxiom(entity.asOWLClass(), e));
+        }
+      }
+    } else if (entity.isOWLObjectProperty()) {
+      for (OWLObjectPropertyExpression e :
+          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)) {
+        if (e.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(entity.asOWLObjectProperty(), e));
+        }
+      }
+    } else if (entity.isOWLDataProperty()) {
+      for (OWLDataPropertyExpression e :
+          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)) {
+        if (e.isAnonymous()) {
+          anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(entity.asOWLDataProperty(), e));
+        }
+      }
+    }
+    return anons;
   }
 
   /**

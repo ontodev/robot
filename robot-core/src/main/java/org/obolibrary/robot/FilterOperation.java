@@ -116,25 +116,6 @@ public class FilterOperation {
    * @param individuals the set of named individuals to filter on
    */
   public static void filterIndividuals(OWLOntology ontology, Set<OWLNamedIndividual> individuals) {
-    // TODO: change to return a new, copied ontology
-    logger.debug("Filtering ontology for NamedIndividuals matching " + individuals);
-    Set<OWLNamedIndividual> removeIndividuals = ontology.getIndividualsInSignature();
-    Set<OWLClass> removeClasses = ontology.getClassesInSignature();
-    logger.debug("Ontology has {} individuals before filtering", removeIndividuals.size());
-    removeIndividuals.removeAll(individuals);
-    for (OWLNamedIndividual individual : individuals) {
-      for (OWLClassExpression type : RelatedEntitiesHelper.getTypes(ontology, individual)) {
-        if (!type.isAnonymous()) {
-          removeClasses.remove(type.asOWLClass());
-        }
-      }
-    }
-    Set<OWLEntity> remove = new HashSet<>();
-    remove.addAll(removeIndividuals);
-    remove.addAll(removeClasses);
-    // RemoveOperation.remove(ontology, remove);
-    logger.debug(
-        "Ontology has {} individuals after filtering", ontology.getIndividualsInSignature().size());
   }
 
   /**
