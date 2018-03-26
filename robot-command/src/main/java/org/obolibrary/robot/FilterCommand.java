@@ -50,6 +50,7 @@ public class FilterCommand implements Command {
     o.addOption("E", "entities", true, "filter for a of entities");
     o.addOption("s", "select", true, "filter for a of entities using one or more relation options");
     o.addOption("a", "axioms", true, "filter for axioms from a set of entities (default: all)");
+    o.addOption("t", "trim", true, "if true, trim dangling entities (default: false)");
     options = o;
   }
 
@@ -268,6 +269,10 @@ public class FilterCommand implements Command {
       }
       // Reset the input as the product of this set of selects
       inputOntology = outputOntology;
+    }
+    // Maybe trim dangling
+    if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
+    	OntologyHelper.trimDangling(outputOntology);
     }
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     return state;

@@ -46,6 +46,7 @@ public class RemoveCommand implements Command {
     o.addOption("E", "entities", true, "remove a set of entities");
     o.addOption("s", "select", true, "remove a set of entities using one or more relation options");
     o.addOption("a", "axioms", true, "remove axioms from a set of entities (default: all)");
+    o.addOption("t", "trim", true, "if true, trim dangling entities (default: false)");
     options = o;
   }
 
@@ -252,7 +253,10 @@ public class RemoveCommand implements Command {
         }
       }
     }
-
+    // Maybe trim dangling
+    if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
+    	OntologyHelper.trimDangling(ontology);
+    }
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
     return state;
