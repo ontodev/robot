@@ -272,7 +272,7 @@ public class FilterCommand implements Command {
     }
     // Maybe trim dangling
     if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
-    	OntologyHelper.trimDangling(outputOntology);
+      OntologyHelper.trimDangling(outputOntology);
     }
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     return state;

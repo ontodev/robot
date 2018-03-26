@@ -9,6 +9,7 @@ import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.RemoveImport;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +55,12 @@ public class RemoveOperation {
       // Only add the axiom to remove if the entity is in the signature
       // AND it's of a specified axiom type
       if (axiom.getSignature().contains(entity) && axiomTypes.contains(axiom.getAxiomType())) {
-        logger.debug("Removing axiom: " + axiom.toString());
         axioms.add(axiom);
       }
+    }
+    // Entities that are the subject of annotation assertions aren't caught by getSignature()
+    if (axiomTypes.contains(AxiomType.ANNOTATION_ASSERTION)) {
+      axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity, ontology));
     }
     // Remove all
     OWLOntologyManager manager = ontology.getOWLOntologyManager();

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.AxiomType;
@@ -1087,19 +1086,19 @@ public class OntologyHelper {
     SetOntologyID setID = new SetOntologyID(ontology, newID);
     ontology.getOWLOntologyManager().applyChange(setID);
   }
-  
+
   /**
    * Given an ontology, remove any dangling entities and references to those entities. A dangling
    * entity is one that has no axioms about it.
-   * 
+   *
    * @param ontology the ontology to trim
    */
   public static void trimDangling(OWLOntology ontology) {
-	  for (OWLEntity entity : getEntities(ontology)) {
-		  if (InvalidReferenceChecker.isDangling(ontology, entity)) {
-			  logger.debug("Removing dangling entity: " + entity.toStringID());
-			  RemoveOperation.remove(ontology, entity, AxiomType.AXIOM_TYPES);
-		  }
-	  }
+    for (OWLEntity entity : getEntities(ontology)) {
+      if (InvalidReferenceChecker.isDangling(ontology, entity)) {
+        logger.debug("Removing dangling entity: " + entity.toStringID());
+        RemoveOperation.remove(ontology, entity, AxiomType.AXIOM_TYPES);
+      }
+    }
   }
 }

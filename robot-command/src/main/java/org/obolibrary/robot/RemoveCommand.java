@@ -149,7 +149,6 @@ public class RemoveCommand implements Command {
       axiomStrings.add("all");
     }
     for (String axiom : axiomStrings) {
-      System.out.println(AxiomType.isAxiomType("SubClassOf"));
       if (AxiomType.isAxiomType(axiom)) {
         axiomTypes.add(AxiomType.getAxiomType(axiom));
       } else if (axiom.equalsIgnoreCase("all")) {
@@ -255,7 +254,7 @@ public class RemoveCommand implements Command {
     }
     // Maybe trim dangling
     if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
-    	OntologyHelper.trimDangling(ontology);
+      OntologyHelper.trimDangling(ontology);
     }
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
