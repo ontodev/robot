@@ -1,16 +1,19 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,21 +30,11 @@ public class FilterCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "filter#";
 
-  /** Error message when --annotation is not a valid PROP VALUE. */
-  private static final String annotationFormatError =
-      NS + "ANNOTATION FORMAT ERROR each annotation must include PROP VALUE";
+  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
+  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
-  /** Error message when --link-annotation is not a valid PROP LINK. */
-  private static final String linkAnnotationFormatError =
-      NS + "ANNOTATION FORMAT ERROR each link annotation must include PROP LINK";
-
-  /** Error message when --language-annotation is not a valid PROP VALUE LANG. */
-  private static final String langAnnotationFormatError =
-      NS + "ANNOTATION FORMAT ERROR " + "each language annotation must include PROP VALUE LANG";
-
-  /** Error message when --typed-annotation is not a valid PROP VALUE TYPE. */
-  private static final String typedAnnotationFormatError =
-      NS + "ANNOTATION FORMAT ERROR " + "each typed annotation must include PROP VALUE TYPE";
+  /** Error message when --select is not a valid input. Expects: input string. */
+  private static final String selectError = NS + "SELECT ERROR %s is not a valid selection";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -52,38 +45,12 @@ public class FilterCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("e", "entity", true, "filter on an entity");
-    o.addOption("E", "entities", true, "filter on a set of entities");
-    o.addOption("d", "descendants-of-entity", true, "filter for the descendants of an entity");
-    o.addOption(
-        "D", "descendants-of-entities", true, "filter for the descendants of a set of entities");
-    o.addOption("a", "entity-and-descendants", true, "filter for an entity and its descendants");
-    o.addOption(
-        "A",
-        "entities-and-descendants",
-        true,
-        "filter for a set of entities and their descendants");
+    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+    o.addOption("e", "entity", true, "filter for an entity");
+    o.addOption("E", "entities", true, "filter for a of entities");
+    o.addOption("s", "select", true, "filter for a of entities using one or more relation options");
+    o.addOption("a", "axioms", true, "filter for axioms from a set of entities (default: all)");
     options = o;
-
-    Option a;
-
-    // Filter on an annotation (PROP VAL)
-    a = new Option("a", "filter on classes with annotation PROP VAL");
-    a.setLongOpt("annotation");
-    a.setArgs(2);
-    options.addOption(a);
-
-    // Filter on a link annotation (PROP IRI)
-    a = new Option("l", "filter on classes with annotation PROP IRI");
-    a.setLongOpt("link-annotation");
-    a.setArgs(2);
-    options.addOption(a);
-
-    // Filter on a typed annotation (PROP VAL TYPE)
-    a = new Option("t", "filter on classes with annotation PROP VAL TYPE");
-    a.setLongOpt("typed-annotation");
-    a.setArgs(3);
-    options.addOption(a);
   }
 
   /**
@@ -156,102 +123,184 @@ public class FilterCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology ontology = state.getOntology();
-    OWLDataFactory factory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    OWLOntology inputOntology = state.getOntology();
+    OWLOntology outputOntology = null;
 
-    // Get IRIs of entities to filter
-    Set<IRI> entityIRIs =
-        OntologyHelper.filterExistingTerms(
-            ontology, CommandLineHelper.getTerms(ioHelper, line, "entity", "entities"), true);
-    Set<IRI> descendantIRIs =
-        OntologyHelper.filterExistingTerms(
-            ontology,
-            CommandLineHelper.getTerms(
-                ioHelper, line, "descendants-of-entity", "descendants-of-entities"),
-            true);
-    Set<IRI> nodeIRIs =
-        OntologyHelper.filterExistingTerms(
-            ontology,
-            CommandLineHelper.getTerms(
-                ioHelper, line, "entity-and-desendants", "entities-and-descendants"),
-            true);
-    FilterOperation.filter(ontology, entityIRIs, descendantIRIs, nodeIRIs);
-
-    // Check for annotations to filter on
-    Set<OWLAnnotation> annotations = new HashSet<>();
-    List<String> annotationItems = CommandLineHelper.getOptionValues(line, "annotation");
-    String propertyString = null;
-    String valueString = null;
-    String typeString = null;
-    while (annotationItems.size() > 0) {
-      try {
-        propertyString = annotationItems.remove(0);
-        valueString = annotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(annotationFormatError);
-      }
-      OWLAnnotationProperty property =
-          factory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "annotation"));
-      OWLAnnotationValue value =
-          factory.getOWLLiteral(
-              valueString, factory.getOWLDatatype(ioHelper.createIRI("rdf:PlainLiteral")));
-      annotations.add(factory.getOWLAnnotation(property, value));
+    // Get a set of entities
+    Set<OWLEntity> entities = new HashSet<>();
+    for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
+      entities.add(OntologyHelper.getEntity(inputOntology, iri));
+    }
+    // If no entities were provided, add them all
+    if (entities.isEmpty()) {
+      entities.addAll(OntologyHelper.getEntities(inputOntology));
     }
 
-    // Check for link annotations to filter on
-    List<String> linkAnnotationItems = CommandLineHelper.getOptionValues(line, "link-annotation");
-    while (linkAnnotationItems.size() > 0) {
-      try {
-        propertyString = linkAnnotationItems.remove(0);
-        valueString = linkAnnotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(linkAnnotationFormatError);
+    // Get a set of axiom types
+    Set<AxiomType<?>> axiomTypes = new HashSet<>();
+    List<String> axiomStrings = new ArrayList<>();
+    for (String axiom : CommandLineHelper.getOptionalValues(line, "axioms")) {
+      if (axiom.contains("+")) {
+        for (String a : axiom.split("+")) {
+          axiomStrings.add(a.replace("-", ""));
+        }
+      } else {
+        axiomStrings.add(axiom.replace("-", ""));
       }
-      OWLAnnotationProperty property =
-          factory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "link-annotation"));
-      OWLAnnotationValue value =
-          CommandLineHelper.maybeCreateIRI(ioHelper, valueString, "link-annotation");
-      annotations.add(factory.getOWLAnnotation(property, value));
+    }
+    // If the axiom option wasn't provided, default to all
+    if (axiomStrings.isEmpty()) {
+      axiomStrings.add("all");
+    }
+    for (String axiom : axiomStrings) {
+      System.out.println(AxiomType.isAxiomType("SubClassOf"));
+      if (AxiomType.isAxiomType(axiom)) {
+        axiomTypes.add(AxiomType.getAxiomType(axiom));
+      } else if (axiom.equalsIgnoreCase("all")) {
+        axiomTypes.addAll(AxiomType.AXIOM_TYPES);
+      } else if (axiom.equalsIgnoreCase("a_box")) {
+        axiomTypes.addAll(AxiomType.ABoxAxiomTypes);
+      } else if (axiom.equalsIgnoreCase("t_box")) {
+        axiomTypes.addAll(AxiomType.TBoxAxiomTypes);
+      } else if (axiom.equalsIgnoreCase("r_box")) {
+        axiomTypes.addAll(AxiomType.RBoxAxiomTypes);
+      } else {
+        throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+      }
     }
 
-    // Check for typed annotations to filter on
-    List<String> typedAnnotationItems = CommandLineHelper.getOptionValues(line, "typed-annotation");
-    while (typedAnnotationItems.size() > 0) {
-      try {
-        propertyString = typedAnnotationItems.remove(0);
-        valueString = typedAnnotationItems.remove(0);
-        typeString = typedAnnotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(typedAnnotationFormatError);
-      }
-      OWLAnnotationProperty property =
-          factory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "typed-annotation"));
-      OWLAnnotationValue value = ioHelper.createTypedLiteral(valueString, typeString);
-      annotations.add(factory.getOWLAnnotation(property, value));
+    // Get a set of relation types, or annotations to select
+    List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
+    // If the select option wasn't provided, default to self
+    if (selects.isEmpty()) {
+      selects.add("self");
     }
+    // Selects should be processed in order, allowing unions in one --select
+    // Produces a set of Relation Types and a set of annotations, as well as booleans for miscs
+    while (selects.size() > 0) {
+      String select = selects.remove(0);
+      Set<RelationType> relationTypes = new HashSet<>();
+      Set<OWLAnnotation> annotations = new HashSet<>();
+      boolean complement = false;
+      boolean named = false;
+      boolean anonymous = false;
+      // Annotations should be alone
+      if (select.contains("=")) {
+        annotations.add(getAnnotations(ioHelper, select));
+      } else {
+        // Split on space, create a union of these relations
+        for (String s : select.split(" ")) {
+          if (RelationType.isRelationType(s.toLowerCase())) {
+            relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
+            // Misc select options, will combine with relation types
+          } else if (s.equalsIgnoreCase("complement")) {
+            complement = true;
+          } else if (s.equalsIgnoreCase("named")) {
+            named = true;
+          } else if (s.equalsIgnoreCase("anonymous")) {
+            anonymous = true;
+          } else {
+            throw new IllegalArgumentException(String.format(selectError, s));
+          }
+        }
+      }
 
-    // Check for language annotations to filter on
-    List<String> languageAnnotationItems =
-        CommandLineHelper.getOptionValues(line, "language-annotation");
-    while (languageAnnotationItems.size() > 0) {
-      try {
-        propertyString = languageAnnotationItems.remove(0);
-        valueString = languageAnnotationItems.remove(0);
-        typeString = languageAnnotationItems.remove(0);
-      } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(langAnnotationFormatError);
+      // Filter based on provided options
+      if (anonymous && !named) {
+        logger.debug("Filtering for references to related anonymous entities");
+        // Only filter for anonymous entities
+        if (!complement) {
+          FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes);
+        } else {
+          logger.debug("Filtering for complement set");
+          FilterOperation.filterAnonymous(
+              inputOntology,
+              RelatedEntitiesHelper.getComplements(inputOntology, entities),
+              relationTypes,
+              axiomTypes);
+        }
+      } else if (named && !anonymous) {
+        logger.debug("Filtering for references to related named entities");
+        // Only filter for named entities
+        Set<OWLEntity> filteredEntities =
+            RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
+        // Find entities based on annotations
+        filteredEntities.addAll(RelatedEntitiesHelper.getAnnotated(inputOntology, annotations));
+        // Filter for axioms associated with entity
+        if (!complement) {
+          outputOntology = FilterOperation.filter(inputOntology, filteredEntities, axiomTypes);
+        } else {
+          logger.debug("Filtering for complement set");
+          outputOntology =
+              FilterOperation.filter(
+                  inputOntology,
+                  RelatedEntitiesHelper.getComplements(inputOntology, filteredEntities),
+                  axiomTypes);
+        }
+      } else {
+        logger.debug("Filtering for references to all related entities");
+        // Either both anonymous and named were provided, or neither were
+        // In this case, filter for both named and anonymous
+        Set<OWLEntity> filteredEntities =
+            RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
+        filteredEntities.addAll(RelatedEntitiesHelper.getAnnotated(inputOntology, annotations));
+        List<OWLOntology> outputOntologies = new ArrayList<>();
+        if (!complement) {
+          outputOntologies.add(FilterOperation.filter(inputOntology, filteredEntities, axiomTypes));
+          outputOntologies.add(
+              FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes));
+          outputOntology = MergeOperation.merge(outputOntologies);
+        } else {
+          logger.debug("Filtering for complement set");
+          outputOntologies.add(
+              FilterOperation.filter(
+                  inputOntology,
+                  RelatedEntitiesHelper.getComplements(inputOntology, filteredEntities),
+                  axiomTypes));
+          outputOntologies.add(
+              FilterOperation.filterAnonymous(
+                  inputOntology,
+                  RelatedEntitiesHelper.getComplements(inputOntology, entities),
+                  relationTypes,
+                  axiomTypes));
+          outputOntology = MergeOperation.merge(outputOntologies);
+        }
       }
-      OWLAnnotationProperty property =
-          factory.getOWLAnnotationProperty(
-              CommandLineHelper.maybeCreateIRI(ioHelper, propertyString, "language-annotation"));
-      OWLAnnotationValue value = ioHelper.createTypedLiteral(valueString, typeString);
-      annotations.add(factory.getOWLAnnotation(property, value));
+      // Reset the input as the product of this set of selects
+      inputOntology = outputOntology;
     }
-    OWLOntology outputOntology = FilterOperation.filterAnnotations(ontology, annotations);
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     return state;
+  }
+
+  /**
+   * Given an IOHelper and an annotation as CURIE=..., return the OWLAnnotation object.
+   *
+   * @param ioHelper IOHelper to get IRI
+   * @param annotation String input
+   * @return OWLAnnotation
+   */
+  private static OWLAnnotation getAnnotations(IOHelper ioHelper, String annotation) {
+    OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+    IRI propertyIRI =
+        CommandLineHelper.maybeCreateIRI(ioHelper, annotation.split("=")[0], "select");
+    OWLAnnotationProperty annotationProperty = dataFactory.getOWLAnnotationProperty(propertyIRI);
+    String value = annotation.split("=")[1];
+    if (value.contains("<") && value.contains(">")) {
+      IRI valueIRI =
+          CommandLineHelper.maybeCreateIRI(
+              ioHelper, value.substring(1, value.length() - 1), "select");
+      return dataFactory.getOWLAnnotation(annotationProperty, valueIRI);
+    } else if (value.contains("~'")) {
+      // TODO: Pattern
+      throw new IllegalArgumentException("CURIE pattern is not yet implemented");
+    } else if (value.contains("'")) {
+      OWLLiteral literalValue = dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
+      return dataFactory.getOWLAnnotation(annotationProperty, literalValue);
+    } else {
+      // Assume it's a CURIE
+      IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "select");
+      return dataFactory.getOWLAnnotation(annotationProperty, valueIRI);
+    }
   }
 }

@@ -33,7 +33,7 @@ public class RelatedEntitiesHelper {
   /**
    * Given an ontology, a set of entities, and a set of relation types, return entities related to
    * the given set by the relation types.
-   * 
+   *
    * @param ontology the ontology to search
    * @param entities the entities to start with
    * @param relationTypes the relation types to search on
@@ -49,9 +49,9 @@ public class RelatedEntitiesHelper {
   }
 
   /**
-   * Given an ontology, an entity, and a set of relation types, return entities related to the 
-   * given entity by the relation types.
-   * 
+   * Given an ontology, an entity, and a set of relation types, return entities related to the given
+   * entity by the relation types.
+   *
    * @param ontology the ontology to search
    * @param entity the entity to start with
    * @param relationTypes the relation types to search on
@@ -67,9 +67,9 @@ public class RelatedEntitiesHelper {
   }
 
   /**
-   * Given an ontology, an entity, and a relation types, return entities related to the given
-   * entity by the relation type.
-   * 
+   * Given an ontology, an entity, and a relation types, return entities related to the given entity
+   * by the relation type.
+   *
    * @param ontology the ontology to search
    * @param entity the entity to start with
    * @param relationType the relation type to search on
@@ -92,9 +92,9 @@ public class RelatedEntitiesHelper {
       case ANCESTORS:
         return getAncestors(ontology, entity);
       case EQUIVALENTS:
-    	  // TODO
+        // TODO
       case TYPES:
-    	  return getTypes(ontology, entity);
+        return getTypes(ontology, entity);
       case CLASSES:
         return getEntitiesOfType(ontology, EntityType.CLASS);
       case PROPERTIES:
@@ -220,7 +220,7 @@ public class RelatedEntitiesHelper {
   /**
    * Given an ontology and a set of annotations, return entities that are annotated with at least
    * one of the given annotations.
-   * 
+   *
    * @param ontology the ontology to search
    * @param annotations the set of annotations to search on
    * @return set of entities with annotations
@@ -240,7 +240,7 @@ public class RelatedEntitiesHelper {
 
   /**
    * Given an ontology and an entity, get the direct children of the entity.
-   * 
+   *
    * @param ontology the ontology to search
    * @param entity the entity to start with
    * @return set of children to the entity
@@ -263,9 +263,9 @@ public class RelatedEntitiesHelper {
   }
 
   /**
-   * Given an ontology and a set of entities from the ontology, return the complement set of 
+   * Given an ontology and a set of entities from the ontology, return the complement set of
    * entities from the ontology.
-   * 
+   *
    * @param ontology the ontology to search
    * @param entities the entities to start with
    * @return set of complement entities
@@ -382,7 +382,7 @@ public class RelatedEntitiesHelper {
 
   /**
    * Given an ontology and an entity type, return only entities of that type.
-   * 
+   *
    * @param ontology the ontology to search
    * @param entityType the entity type to keep
    * @return set of entities of the entity type
@@ -396,26 +396,26 @@ public class RelatedEntitiesHelper {
     }
     return filteredEntities;
   }
-  
+
   /**
    * Given an ontology and an entity, return all equivalent entities.
-   * 
+   *
    * @param ontology the ontology to search
    * @param entity the entity to start with
    * @return set of equivalent entities
    */
   public static Set<OWLEntity> getEquivalents(OWLOntology ontology, OWLEntity entity) {
-	  Set<OWLEntity> equivalents = new HashSet<>();
-	  if (entity.isOWLClass()) {
-		  getEquivalents(ontology, entity.asOWLClass(), equivalents);
-	  } else if (entity.isOWLDataProperty()) {
-		  getEquivalents(ontology, entity.asOWLDataProperty(), equivalents);
-	  } else if (entity.isOWLObjectProperty()) {
-		  getEquivalents(ontology, entity.asOWLObjectProperty(), equivalents);
-	  }
-	  return equivalents;
+    Set<OWLEntity> equivalents = new HashSet<>();
+    if (entity.isOWLClass()) {
+      getEquivalents(ontology, entity.asOWLClass(), equivalents);
+    } else if (entity.isOWLDataProperty()) {
+      getEquivalents(ontology, entity.asOWLDataProperty(), equivalents);
+    } else if (entity.isOWLObjectProperty()) {
+      getEquivalents(ontology, entity.asOWLObjectProperty(), equivalents);
+    }
+    return equivalents;
   }
-  
+
   /**
    * Given an ontology, a class, and an empty set, fill the set with class expressions representing
    * equivalent classes.
@@ -448,12 +448,12 @@ public class RelatedEntitiesHelper {
       OWLOntology ontology, OWLDataProperty dataProperty, Set<OWLEntity> equivalents) {
     for (OWLDataPropertyExpression propertyExpression :
         EntitySearcher.getEquivalentProperties(dataProperty, ontology)) {
-    	if (!propertyExpression.isAnonymous()) {
-      OWLDataProperty eqProperty = propertyExpression.asOWLDataProperty();
-      equivalents.add(eqProperty);
-      if (eqProperty != dataProperty) {
-        getEquivalents(ontology, eqProperty, equivalents);
-      }
+      if (!propertyExpression.isAnonymous()) {
+        OWLDataProperty eqProperty = propertyExpression.asOWLDataProperty();
+        equivalents.add(eqProperty);
+        if (eqProperty != dataProperty) {
+          getEquivalents(ontology, eqProperty, equivalents);
+        }
       }
     }
   }
@@ -467,9 +467,7 @@ public class RelatedEntitiesHelper {
    * @param equivalents Set of OWLObjectPropertyExpressions representing the equivalents
    */
   public static void getEquivalents(
-      OWLOntology ontology,
-      OWLObjectProperty objectProperty,
-      Set<OWLEntity> equivalents) {
+      OWLOntology ontology, OWLObjectProperty objectProperty, Set<OWLEntity> equivalents) {
     for (OWLObjectPropertyExpression propertyExpression :
         EntitySearcher.getEquivalentProperties(objectProperty, ontology)) {
       if (!propertyExpression.isAnonymous()) {
@@ -483,7 +481,7 @@ public class RelatedEntitiesHelper {
 
   /**
    * Given an ontology and an entity, return the set of direct parent entities.
-   * 
+   *
    * @param ontology the ontology to search
    * @param entity the entity to start with
    * @return set of parent entities
@@ -492,23 +490,25 @@ public class RelatedEntitiesHelper {
     Set<OWLEntity> parents = new HashSet<>();
     if (entity.isOWLClass()) {
       for (OWLClassExpression e : EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
-    	  if (!e.isAnonymous()) {
-    		  parents.add(e.asOWLClass());
-    	  }
+        if (!e.isAnonymous()) {
+          parents.add(e.asOWLClass());
+        }
       }
     } else if (entity.isOWLAnnotationProperty()) {
       parents.addAll(EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), ontology));
     } else if (entity.isOWLDataProperty()) {
-      for (OWLDataPropertyExpression e : EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)) {
-    	  if (!e.isAnonymous()) {
-    		  parents.add(e.asOWLDataProperty());
-    	  }
+      for (OWLDataPropertyExpression e :
+          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)) {
+        if (!e.isAnonymous()) {
+          parents.add(e.asOWLDataProperty());
+        }
       }
     } else if (entity.isOWLObjectProperty()) {
-      for (OWLObjectPropertyExpression e : EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)) {
-    	  if (!e.isAnonymous()) {
-    		  parents.add(e.asOWLObjectProperty());
-    	  }
+      for (OWLObjectPropertyExpression e :
+          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)) {
+        if (!e.isAnonymous()) {
+          parents.add(e.asOWLObjectProperty());
+        }
       }
     }
     return parents;
@@ -522,14 +522,15 @@ public class RelatedEntitiesHelper {
    * @return set of types, or empty if the entity is not an individual
    */
   public static Set<OWLEntity> getTypes(OWLOntology ontology, OWLEntity entity) {
-	  Set<OWLEntity> types = new HashSet<>();
-	  if (entity.isOWLNamedIndividual()) {
-		  for (OWLClassExpression e : EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology)) {
-		    	if (!e.isAnonymous()) {
-		    		types.add(e.asOWLClass());
-		    	}
-		    }
-	  }
+    Set<OWLEntity> types = new HashSet<>();
+    if (entity.isOWLNamedIndividual()) {
+      for (OWLClassExpression e :
+          EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology)) {
+        if (!e.isAnonymous()) {
+          types.add(e.asOWLClass());
+        }
+      }
+    }
     return types;
   }
 }

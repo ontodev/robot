@@ -131,13 +131,6 @@ public class RemoveCommand implements Command {
       entities.addAll(OntologyHelper.getEntities(ontology));
     }
 
-    // Get a set of relation types, or annotations to select
-    List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
-    // If the select option wasn't provided, default to self
-    if (selects.isEmpty()) {
-      selects.add("self");
-    }
-
     // Get a set of axiom types
     Set<AxiomType<?>> axiomTypes = new HashSet<>();
     List<String> axiomStrings = new ArrayList<>();
@@ -169,6 +162,13 @@ public class RemoveCommand implements Command {
       } else {
         throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
       }
+    }
+
+    // Get a set of relation types, or annotations to select
+    List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
+    // If the select option wasn't provided, default to self
+    if (selects.isEmpty()) {
+      selects.add("self");
     }
 
     // Selects should be processed in order, allowing unions in one --select
