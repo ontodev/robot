@@ -92,7 +92,7 @@ public class RelatedEntitiesHelper {
       case ANCESTORS:
         return getAncestors(ontology, entity);
       case EQUIVALENTS:
-        // TODO
+        return getEquivalents(ontology, entity);
       case TYPES:
         return getTypes(ontology, entity);
       case CLASSES:
