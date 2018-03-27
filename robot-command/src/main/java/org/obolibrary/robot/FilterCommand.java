@@ -50,7 +50,7 @@ public class FilterCommand implements Command {
     o.addOption("E", "entities", true, "filter for a of entities");
     o.addOption("s", "select", true, "filter for a of entities using one or more relation options");
     o.addOption("a", "axioms", true, "filter for axioms from a set of entities (default: all)");
-    o.addOption("t", "trim", true, "if true, trim dangling entities (default: false)");
+    o.addOption("t", "trim", true, "if true, trim dangling entities (default: true)");
     options = o;
   }
 
@@ -154,7 +154,6 @@ public class FilterCommand implements Command {
       axiomStrings.add("all");
     }
     for (String axiom : axiomStrings) {
-      System.out.println(AxiomType.isAxiomType("SubClassOf"));
       if (AxiomType.isAxiomType(axiom)) {
         axiomTypes.add(AxiomType.getAxiomType(axiom));
       } else if (axiom.equalsIgnoreCase("all")) {
@@ -233,10 +232,7 @@ public class FilterCommand implements Command {
         } else {
           logger.debug("Filtering for complement set");
           outputOntology =
-              FilterOperation.filter(
-                  inputOntology,
-                  RelatedEntitiesHelper.getComplements(inputOntology, filteredEntities),
-                  axiomTypes);
+              FilterOperation.filterComplement(inputOntology, filteredEntities, axiomTypes);
         }
       } else {
         logger.debug("Filtering for references to all related entities");
@@ -253,25 +249,15 @@ public class FilterCommand implements Command {
           outputOntology = MergeOperation.merge(outputOntologies);
         } else {
           logger.debug("Filtering for complement set");
-          outputOntologies.add(
-              FilterOperation.filter(
-                  inputOntology,
-                  RelatedEntitiesHelper.getComplements(inputOntology, filteredEntities),
-                  axiomTypes));
-          outputOntologies.add(
-              FilterOperation.filterAnonymous(
-                  inputOntology,
-                  RelatedEntitiesHelper.getComplements(inputOntology, entities),
-                  relationTypes,
-                  axiomTypes));
-          outputOntology = MergeOperation.merge(outputOntologies);
+          outputOntology =
+              FilterOperation.filterComplement(inputOntology, filteredEntities, axiomTypes);
         }
       }
       // Reset the input as the product of this set of selects
       inputOntology = outputOntology;
     }
     // Maybe trim dangling
-    if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
+    if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
       OntologyHelper.trimDangling(outputOntology);
     }
     CommandLineHelper.maybeSaveOutput(line, outputOntology);

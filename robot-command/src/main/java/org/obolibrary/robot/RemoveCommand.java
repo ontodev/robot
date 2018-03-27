@@ -46,7 +46,7 @@ public class RemoveCommand implements Command {
     o.addOption("E", "entities", true, "remove a set of entities");
     o.addOption("s", "select", true, "remove a set of entities using one or more relation options");
     o.addOption("a", "axioms", true, "remove axioms from a set of entities (default: all)");
-    o.addOption("t", "trim", true, "if true, trim dangling entities (default: false)");
+    o.addOption("t", "trim", true, "if true, trim dangling entities (default: true)");
     options = o;
   }
 
@@ -227,8 +227,7 @@ public class RemoveCommand implements Command {
           RemoveOperation.remove(ontology, removeEntities, axiomTypes);
         } else {
           logger.debug("Removing complement set");
-          RemoveOperation.remove(
-              ontology, RelatedEntitiesHelper.getComplements(ontology, removeEntities), axiomTypes);
+          RemoveOperation.removeComplement(ontology, removeEntities, axiomTypes);
         }
       } else {
         logger.debug("Removing references to all related entities");
@@ -242,18 +241,12 @@ public class RemoveCommand implements Command {
           RemoveOperation.removeAnonymous(ontology, entities, relationTypes, axiomTypes);
         } else {
           logger.debug("Removing complement set");
-          RemoveOperation.remove(
-              ontology, RelatedEntitiesHelper.getComplements(ontology, removeEntities), axiomTypes);
-          RemoveOperation.removeAnonymous(
-              ontology,
-              RelatedEntitiesHelper.getComplements(ontology, entities),
-              relationTypes,
-              axiomTypes);
+          RemoveOperation.removeComplement(ontology, removeEntities, axiomTypes);
         }
       }
     }
     // Maybe trim dangling
-    if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
+    if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
       OntologyHelper.trimDangling(ontology);
     }
     CommandLineHelper.maybeSaveOutput(line, ontology);

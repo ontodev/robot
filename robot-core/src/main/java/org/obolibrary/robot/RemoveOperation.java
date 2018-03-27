@@ -30,9 +30,12 @@ public class RemoveOperation {
       NS + "MISSING IMPORT ERROR ontology does not contain import: %s";
 
   /**
-   * @param ontology
-   * @param entities
-   * @param axiomTypes
+   * Given an OWLOntology, a set of entities, and a set of axiom types, remove the entities and
+   * associated axioms (of the given types) from the ontology.
+   *
+   * @param ontology OWLOntology to remove from
+   * @param entity OWLEntity to remove
+   * @param axiomTypes types of axioms to remove
    */
   public static void remove(
       OWLOntology ontology, Set<OWLEntity> entities, Set<AxiomType<?>> axiomTypes) {
@@ -42,18 +45,19 @@ public class RemoveOperation {
   }
 
   /**
-   * Given an OWLOntology and an OWLEntity, remove the entity and associated axioms from the
-   * ontology.
+   * Given an OWLOntology, an OWLEntity, and a set of axiom types, remove the entity and
+   * associated axioms (of the given types) from the ontology.
    *
    * @param ontology OWLOntology to remove from
    * @param entity OWLEntity to remove
+   * @param axiomTypes types of axioms to remove
    */
   public static void remove(OWLOntology ontology, OWLEntity entity, Set<AxiomType<?>> axiomTypes) {
     logger.debug("Removing from ontology: " + entity);
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLAxiom axiom : ontology.getAxioms()) {
-      // Only add the axiom to remove if the entity is in the signature
-      // AND it's of a specified axiom type
+      // Add the axiom to remove if the entity is in the signature
+      // and the axiom is of the correct type
       if (axiom.getSignature().contains(entity) && axiomTypes.contains(axiom.getAxiomType())) {
         axioms.add(axiom);
       }
@@ -108,6 +112,48 @@ public class RemoveOperation {
         manager.removeAxiom(ontology, axiom);
       }
     }
+  }
+
+  /**
+   * Given an ontology, a set of entities, and a set of axiom types, remove the complement of that
+   * set.
+   *
+   * @param ontology OWLOntology to remove from
+   * @param entities set of OWLEntities to remove complement of
+   * @param axiomTypes types of axioms to remove
+   */
+  public static void removeComplement(
+      OWLOntology ontology, Set<OWLEntity> entities, Set<AxiomType<?>> axiomTypes) {
+    Set<OWLEntity> complements = RelatedEntitiesHelper.getComplements(ontology, entities);
+    Set<OWLAxiom> axioms = new HashSet<>();
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      // Add the axiom to remove if all entities in the signature are being removed
+      // and it is of the correct axiom type
+      if (complements.containsAll(axiom.getSignature())
+          && axiomTypes.contains(axiom.getAxiomType())) {
+        axioms.add(axiom);
+      }
+    }
+    // Entities that are the subject of annotation assertions aren't caught by getSignature()
+    if (axiomTypes.contains(AxiomType.ANNOTATION_ASSERTION)) {
+      for (OWLEntity entity : entities) {
+        // Make sure we aren't removing annotations on the entity we want to keep
+        for (OWLAxiom axiom : EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
+          axioms.remove(axiom);
+          // Also keep the declarations of those annotation properties
+          for (OWLEntity ap : axiom.getAnnotationPropertiesInSignature()) {
+            for (OWLAxiom ax : EntitySearcher.getReferencingAxioms(ap, ontology)) {
+              if (ax.isOfType(AxiomType.DECLARATION)) {
+                axioms.remove(ax);
+              }
+            }
+          }
+        }
+      }
+    }
+    // Remove all
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    manager.removeAxioms(ontology, axioms);
   }
 
   /**
