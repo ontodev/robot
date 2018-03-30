@@ -38,6 +38,8 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.InferredAxiomGenerator;
+import org.semanticweb.owlapi.util.InferredClassAssertionAxiomGenerator;
+import org.semanticweb.owlapi.util.InferredEquivalentClassAxiomGenerator;
 import org.semanticweb.owlapi.util.InferredOntologyGenerator;
 import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
 import org.slf4j.Logger;
@@ -165,6 +167,8 @@ public class ReasonOperation {
     List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
         new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
     gens.add(new InferredSubClassAxiomGenerator());
+    gens.add(new InferredClassAssertionAxiomGenerator());
+    gens.add(new InferredEquivalentClassAxiomGenerator());
     InferredOntologyGenerator generator = new InferredOntologyGenerator(reasoner, gens);
     logger.info("Using these axiom generators:");
     for (InferredAxiomGenerator<?> inf : generator.getAxiomGenerators()) {
