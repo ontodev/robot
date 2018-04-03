@@ -36,33 +36,34 @@ public class MergeOperation {
   }
 
   /**
-   * Given one or more ontologies, add all their axioms (including their imports closures) into the
-   * first ontology, and return the first ontology.
-   *
-   * <p>Note the imports directives in the first ontology is preserved, but axioms from the imports
-   * closures are also added. This behavior may change, see #84
+   * Given one or more ontologies, add all their axioms first ontology, and return the first
+   * ontology. Option to include ontology annotations and collapse import closure.
    *
    * <p>We use a list instead of a set because OWLAPI judges identity simply by the ontology IRI,
    * even if two ontologies have different axioms.
    *
    * @param ontologies the list of ontologies to merge
-   * @param mergeOptions a map of option strings, or null
+   * @param includeAnnotations if true, ontology annotations should be merged; annotations on
+   *     imports are not merged
+   * @param collapseImportsClosure if true, imports closure from all ontologies included
    * @return the first ontology
    */
-  public static OWLOntology merge(List<OWLOntology> ontologies, Map<String, String> mergeOptions) {
+  public static OWLOntology merge(
+      List<OWLOntology> ontologies, boolean includeAnnotations, boolean collapseImportClosure) {
     OWLOntology ontology = ontologies.get(0);
-
-    // TODO - use options to set these
-    mergeInto(ontologies, ontology, false, true);
+    mergeInto(ontologies, ontology, includeAnnotations, collapseImportClosure);
     return ontology;
   }
 
   /**
+   * Merge one or more ontologies with the default merge options (do not include annotations, do
+   * collapse import closure).
+   *
    * @param ontologies the list of ontologies to merge
    * @return the first ontology
    */
   public static OWLOntology merge(List<OWLOntology> ontologies) {
-    return merge(ontologies, null);
+    return merge(ontologies, false, true);
   }
 
   /**

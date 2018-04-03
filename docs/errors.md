@@ -8,6 +8,10 @@ If you run into any other errors or exceptions not listed, or have any issues wi
 
 ## Command & Option Errors
 
+### Boolean Value Error
+
+The command line option provided only accepts `true` or `false` as input.
+
 ### Chained Input Error
 
 [Chained commands](/chaining) take the output of the last command as the input of the next. Because of this, `--input` should only be used with the first command in the chain. This excludes [merge](/merge) and [unmerge](/unmerge), which allow multiple inputs.

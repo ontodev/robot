@@ -35,6 +35,10 @@ public class CommandLineHelper {
   /** Namespace for general input error messages. */
   private static final String NS = "errors#";
 
+  /** Error message when a boolean value is not "true" or "false". Expects option name. */
+  private static final String booleanValueError =
+      NS + "BOOLEAN VALUE ERROR arg for %s must be true or false";
+
   /** Error message when --input is provided in a chained command. */
   private static final String chainedInputError =
       NS + "CHAINED INPUT ERROR do not use an --input option for chained commands";
@@ -228,6 +232,25 @@ public class CommandLineHelper {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Get the boolean value of a command-line option with the given name.
+   *
+   * @param line the command line to use
+   * @param name the name of the option to find
+   * @param defaultValue the default value to use
+   * @return the option value as boolean, or the default if not found
+   */
+  public static boolean getBooleanValue(CommandLine line, String name, boolean defaultValue) {
+    String val = getDefaultValue(line, name, String.valueOf(defaultValue));
+    if ("true".equals(val)) {
+      return true;
+    } else if ("false".equals(val)) {
+      return false;
+    } else {
+      throw new IllegalArgumentException(String.format(booleanValueError, name));
+    }
   }
 
   /**

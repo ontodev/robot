@@ -58,7 +58,7 @@ no merge (default) | result     | result
 - `merge-before`: the result ontology is merged into the input ontology immediately, so only the merged ontology will be output
 - `merge-after`: any `--output` options apply to the result ontology, then result ontology is merged into the input ontology, and the output of the command is the merged ontology
 
-These three options are particularly useful when chaining commands. For instance, the `merge-after` option lets you save the result ontology separately, then send the merged ontology to the next command.
+These three options are particularly useful when chaining commands. For instance, the `merge-after` option lets you save the result ontology separately, then send the merged ontology to the next command. See [merge](/merge) for more information on merge options, including `--collapse-import-closure` and `--include-annotations`.
 
 ---
 
