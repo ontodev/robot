@@ -1,15 +1,17 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 /** Tests for RemoveOperation. */
 public class RemoveOperationTest extends CoreTest {
@@ -18,16 +20,17 @@ public class RemoveOperationTest extends CoreTest {
 
   private final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
+  private final Set<Class<? extends OWLAxiom>> allAxioms = Sets.newHashSet(OWLAxiom.class);
+
   /**
    * Test removing all entities.
    *
    * @throws IOException on any problem
    */
-  @Test
   public void testRemoveAll() throws IOException {
     OWLOntology ontology = loadOntology("/uberon.owl");
 
-    RemoveOperation.remove(ontology, OntologyHelper.getEntities(ontology), AxiomType.AXIOM_TYPES);
+    RemoveOperation.remove(ontology, OntologyHelper.getEntities(ontology), allAxioms);
     assertIdentical("/empty.owl", ontology);
   }
 
@@ -36,12 +39,11 @@ public class RemoveOperationTest extends CoreTest {
    *
    * @throws IOException on any problem
    */
-  @Test
   public void testRemoveClass() throws IOException {
     OWLOntology ontology = loadOntology("/uberon.owl");
     OWLEntity cls = df.getOWLClass(ioHelper.createIRI("UBERON:0004770"));
 
-    RemoveOperation.remove(ontology, cls, AxiomType.AXIOM_TYPES);
+    RemoveOperation.remove(ontology, cls, allAxioms);
     assertIdentical("/remove_class.owl", ontology);
   }
 
@@ -57,7 +59,7 @@ public class RemoveOperationTest extends CoreTest {
     Set<OWLEntity> entities = new HashSet<>();
     entities.add(df.getOWLClass(ioHelper.createIRI("UBERON:0004770")));
 
-    RemoveOperation.removeComplement(ontology, entities, AxiomType.AXIOM_TYPES);
+    RemoveOperation.removeComplement(ontology, entities, allAxioms);
     OntologyHelper.trimDangling(ontology);
     assertIdentical("/filter_class.owl", ontology);
   }
@@ -76,7 +78,7 @@ public class RemoveOperationTest extends CoreTest {
             df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
             RelationType.DESCENDANTS);
 
-    RemoveOperation.remove(ontology, relatedEntities, AxiomType.AXIOM_TYPES);
+    RemoveOperation.remove(ontology, relatedEntities, allAxioms);
     assertIdentical("/remove_descendants.owl", ontology);
   }
 
@@ -95,7 +97,7 @@ public class RemoveOperationTest extends CoreTest {
             df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
             RelationType.DESCENDANTS);
 
-    RemoveOperation.removeComplement(ontology, relatedEntities, AxiomType.AXIOM_TYPES);
+    RemoveOperation.removeComplement(ontology, relatedEntities, allAxioms);
     OntologyHelper.trimDangling(ontology);
     assertIdentical("/filter_descendants.owl", ontology);
   }
@@ -108,8 +110,8 @@ public class RemoveOperationTest extends CoreTest {
   @Test
   public void testRemoveSubClassOfs() throws IOException {
     OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<AxiomType<?>> axiomTypes = new HashSet<>();
-    axiomTypes.add(AxiomType.SUBCLASS_OF);
+    Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
+    axiomTypes.add(OWLSubClassOfAxiom.class);
 
     RemoveOperation.remove(ontology, OntologyHelper.getEntities(ontology), axiomTypes);
     assertIdentical("/remove_subclass_ofs.owl", ontology);
@@ -130,7 +132,7 @@ public class RemoveOperationTest extends CoreTest {
         RelatedEntitiesHelper.getRelated(
             ontology, OntologyHelper.getEntities(ontology), relationTypes);
 
-    RemoveOperation.remove(ontology, individuals, AxiomType.AXIOM_TYPES);
+    RemoveOperation.remove(ontology, individuals, allAxioms);
     assertIdentical("/remove_individual.owl", ontology);
   }
 
@@ -147,7 +149,7 @@ public class RemoveOperationTest extends CoreTest {
     relationTypes.add(RelationType.EQUIVALENTS);
 
     RemoveOperation.removeAnonymous(
-        ontology, OntologyHelper.getEntities(ontology), relationTypes, AxiomType.AXIOM_TYPES);
+        ontology, OntologyHelper.getEntities(ontology), relationTypes, allAxioms);
     assertIdentical("/remove_anonymous.owl", ontology);
   }
 
@@ -166,7 +168,7 @@ public class RemoveOperationTest extends CoreTest {
             df.getOWLLiteral("articular system")));
     Set<OWLEntity> relatedEntities = RelatedEntitiesHelper.getAnnotated(ontology, annotations);
 
-    RemoveOperation.remove(ontology, relatedEntities, AxiomType.AXIOM_TYPES);
+    RemoveOperation.remove(ontology, relatedEntities, allAxioms);
     assertIdentical("/remove_class.owl", ontology);
   }
 
@@ -186,7 +188,7 @@ public class RemoveOperationTest extends CoreTest {
             df.getOWLLiteral("articular system")));
     Set<OWLEntity> relatedEntities = RelatedEntitiesHelper.getAnnotated(ontology, annotations);
 
-    RemoveOperation.removeComplement(ontology, relatedEntities, AxiomType.AXIOM_TYPES);
+    RemoveOperation.removeComplement(ontology, relatedEntities, allAxioms);
     OntologyHelper.trimDangling(ontology);
     assertIdentical("/filter_class.owl", ontology);
   }

@@ -24,14 +24,17 @@ public class FilterOperation {
   private static final Logger logger = LoggerFactory.getLogger(FilterOperation.class);
 
   /**
-   * @param inputOntology
-   * @param entities
-   * @param axiomTypes
-   * @return
-   * @throws OWLOntologyCreationException
+   * Given an input ontology, a set of entities, and a set of axiom types, return a new ontology
+   * containing only the desired entities and the desired axiom types.
+   *
+   * @param inputOntology ontology to filter
+   * @param entities entities to keep
+   * @param axiomTypes axiom types to keep
+   * @return filtered ontology
+   * @throws OWLOntologyCreationException on issue creating new ontology
    */
   public static OWLOntology filter(
-      OWLOntology inputOntology, Set<OWLEntity> entities, Set<AxiomType<?>> axiomTypes)
+      OWLOntology inputOntology, Set<OWLEntity> entities, Set<Class<? extends OWLAxiom>> axiomTypes)
       throws OWLOntologyCreationException {
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
     // TODO: should this automatically copy the ID?
@@ -39,16 +42,16 @@ public class FilterOperation {
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLEntity entity : entities) {
       for (OWLAxiom axiom : inputOntology.getAxioms()) {
-        if (axiom.getSignature().contains(entity) && axiomTypes.contains(axiom.getAxiomType())) {
+        if (axiom.getSignature().contains(entity)
+            && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
           axioms.add(axiom);
         }
       }
       // Entities that are the subject of annotation assertions aren't caught by getSignature()
-      if (axiomTypes.contains(AxiomType.ANNOTATION_ASSERTION)) {
+      if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
         for (OWLAxiom axiom : EntitySearcher.getAnnotationAssertionAxioms(entity, inputOntology)) {
           axioms.add(axiom);
           // Add declarations for the annotation properties used so they don't get trimmed
-          // TODO: Should this bring over annotations on these as well?
           for (OWLEntity ap : axiom.getAnnotationPropertiesInSignature()) {
             for (OWLAxiom ax : EntitySearcher.getReferencingAxioms(ap, inputOntology)) {
               if (ax.isOfType(AxiomType.DECLARATION)) {
@@ -78,7 +81,7 @@ public class FilterOperation {
       OWLOntology inputOntology,
       Set<OWLEntity> entities,
       Set<RelationType> relationTypes,
-      Set<AxiomType<?>> axiomTypes)
+      Set<Class<? extends OWLAxiom>> axiomTypes)
       throws OWLOntologyCreationException {
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
     // TODO: should this automatically copy the ID?
@@ -105,7 +108,7 @@ public class FilterOperation {
     }
     // Filter axioms by type
     for (OWLAxiom axiom : anonAxioms) {
-      if (axiomTypes.contains(axiom.getAxiomType())) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         logger.debug("Filtering axiom: " + axiom.toString());
         outputManager.addAxiom(outputOntology, axiom);
       }
@@ -124,7 +127,7 @@ public class FilterOperation {
    * @throws OWLOntologyCreationException on issue creating output
    */
   public static OWLOntology filterComplement(
-      OWLOntology inputOntology, Set<OWLEntity> entities, Set<AxiomType<?>> axiomTypes)
+      OWLOntology inputOntology, Set<OWLEntity> entities, Set<Class<? extends OWLAxiom>> axiomTypes)
       throws OWLOntologyCreationException {
     Set<OWLEntity> complements = RelatedEntitiesHelper.getComplements(inputOntology, entities);
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
@@ -135,7 +138,7 @@ public class FilterOperation {
       // Only add the axiom to filter if the entity is in the signature
       // AND it's of a specified axiom type
       if (complements.containsAll(axiom.getSignature())
-          && axiomTypes.contains(axiom.getAxiomType())) {
+          && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Handle erroneous annotations being added
         if (axiom.isOfType(AxiomType.ANNOTATION_ASSERTION)) {
           if (complements.contains(((OWLAnnotationAssertionAxiom) axiom).getSubject())) {
@@ -146,7 +149,7 @@ public class FilterOperation {
         }
       }
       // Entities that are the subject of annotation assertions aren't caught by getSignature()
-      if (axiomTypes.contains(AxiomType.ANNOTATION_ASSERTION)) {
+      if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
         for (OWLEntity entity : complements) {
           axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity, inputOntology));
         }

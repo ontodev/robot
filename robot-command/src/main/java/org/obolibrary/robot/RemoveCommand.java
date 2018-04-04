@@ -1,16 +1,15 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -25,9 +24,6 @@ public class RemoveCommand implements Command {
 
   /** Namespace for error messages. */
   private static final String NS = "remove#";
-
-  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
-  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /** Error message when --select is not a valid input. Expects: input string. */
   private static final String selectError = NS + "SELECT ERROR %s is not a valid selection";
@@ -46,7 +42,7 @@ public class RemoveCommand implements Command {
     o.addOption("E", "entities", true, "remove a set of entities");
     o.addOption("s", "select", true, "remove a set of entities using one or more relation options");
     o.addOption("a", "axioms", true, "remove axioms from a set of entities (default: all)");
-    o.addOption("t", "trim", true, "if true, trim dangling entities (default: true)");
+    o.addOption("t", "trim", true, "if true, trim dangling entities");
     options = o;
   }
 
@@ -133,36 +129,7 @@ public class RemoveCommand implements Command {
     }
 
     // Get a set of axiom types
-    Set<AxiomType<?>> axiomTypes = new HashSet<>();
-    List<String> axiomStrings = new ArrayList<>();
-    for (String axiom : CommandLineHelper.getOptionalValues(line, "axioms")) {
-      if (axiom.contains("+")) {
-        for (String a : axiom.split("+")) {
-          axiomStrings.add(a.replace("-", ""));
-        }
-      } else {
-        axiomStrings.add(axiom.replace("-", ""));
-      }
-    }
-    // If the axiom option wasn't provided, default to all
-    if (axiomStrings.isEmpty()) {
-      axiomStrings.add("all");
-    }
-    for (String axiom : axiomStrings) {
-      if (AxiomType.isAxiomType(axiom)) {
-        axiomTypes.add(AxiomType.getAxiomType(axiom));
-      } else if (axiom.equalsIgnoreCase("all")) {
-        axiomTypes.addAll(AxiomType.AXIOM_TYPES);
-      } else if (axiom.equalsIgnoreCase("a_box")) {
-        axiomTypes.addAll(AxiomType.ABoxAxiomTypes);
-      } else if (axiom.equalsIgnoreCase("t_box")) {
-        axiomTypes.addAll(AxiomType.TBoxAxiomTypes);
-      } else if (axiom.equalsIgnoreCase("r_box")) {
-        axiomTypes.addAll(AxiomType.RBoxAxiomTypes);
-      } else {
-        throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
-      }
-    }
+    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
 
     // Get a set of relation types, or annotations to select
     List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
@@ -246,7 +213,7 @@ public class RemoveCommand implements Command {
       }
     }
     // Maybe trim dangling
-    if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
+    if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
       OntologyHelper.trimDangling(ontology);
     }
     CommandLineHelper.maybeSaveOutput(line, ontology);

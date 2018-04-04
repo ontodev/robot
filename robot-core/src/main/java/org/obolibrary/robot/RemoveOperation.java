@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -38,32 +39,34 @@ public class RemoveOperation {
    * @param axiomTypes types of axioms to remove
    */
   public static void remove(
-      OWLOntology ontology, Set<OWLEntity> entities, Set<AxiomType<?>> axiomTypes) {
+      OWLOntology ontology, Set<OWLEntity> entities, Set<Class<? extends OWLAxiom>> axiomTypes) {
     for (OWLEntity entity : entities) {
       remove(ontology, entity, axiomTypes);
     }
   }
 
   /**
-   * Given an OWLOntology, an OWLEntity, and a set of axiom types, remove the entity and
-   * associated axioms (of the given types) from the ontology.
+   * Given an OWLOntology, an OWLEntity, and a set of axiom types, remove the entity and associated
+   * axioms (of the given types) from the ontology.
    *
    * @param ontology OWLOntology to remove from
    * @param entity OWLEntity to remove
    * @param axiomTypes types of axioms to remove
    */
-  public static void remove(OWLOntology ontology, OWLEntity entity, Set<AxiomType<?>> axiomTypes) {
+  public static void remove(
+      OWLOntology ontology, OWLEntity entity, Set<Class<? extends OWLAxiom>> axiomTypes) {
     logger.debug("Removing from ontology: " + entity);
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLAxiom axiom : ontology.getAxioms()) {
       // Add the axiom to remove if the entity is in the signature
       // and the axiom is of the correct type
-      if (axiom.getSignature().contains(entity) && axiomTypes.contains(axiom.getAxiomType())) {
+      if (axiom.getSignature().contains(entity)
+          && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         axioms.add(axiom);
       }
     }
     // Entities that are the subject of annotation assertions aren't caught by getSignature()
-    if (axiomTypes.contains(AxiomType.ANNOTATION_ASSERTION)) {
+    if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
       axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity, ontology));
     }
     // Remove all
@@ -83,7 +86,7 @@ public class RemoveOperation {
       OWLOntology ontology,
       Set<OWLEntity> entities,
       Set<RelationType> relationTypes,
-      Set<AxiomType<?>> axiomTypes) {
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> anonAxioms = new HashSet<>();
     for (RelationType rt : relationTypes) {
       if (rt.equals(RelationType.ANCESTORS)) {
@@ -107,7 +110,7 @@ public class RemoveOperation {
     // Remove axioms by type
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     for (OWLAxiom axiom : anonAxioms) {
-      if (axiomTypes.contains(axiom.getAxiomType())) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         logger.debug("Removing axiom: " + axiom.toString());
         manager.removeAxiom(ontology, axiom);
       }
@@ -123,19 +126,19 @@ public class RemoveOperation {
    * @param axiomTypes types of axioms to remove
    */
   public static void removeComplement(
-      OWLOntology ontology, Set<OWLEntity> entities, Set<AxiomType<?>> axiomTypes) {
+      OWLOntology ontology, Set<OWLEntity> entities, Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLEntity> complements = RelatedEntitiesHelper.getComplements(ontology, entities);
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLAxiom axiom : ontology.getAxioms()) {
       // Add the axiom to remove if all entities in the signature are being removed
       // and it is of the correct axiom type
       if (complements.containsAll(axiom.getSignature())
-          && axiomTypes.contains(axiom.getAxiomType())) {
+          && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         axioms.add(axiom);
       }
     }
     // Entities that are the subject of annotation assertions aren't caught by getSignature()
-    if (axiomTypes.contains(AxiomType.ANNOTATION_ASSERTION)) {
+    if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
       for (OWLEntity entity : entities) {
         // Make sure we aren't removing annotations on the entity we want to keep
         for (OWLAxiom axiom : EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {

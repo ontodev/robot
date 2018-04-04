@@ -1022,6 +1022,42 @@ public class OntologyHelper {
   }
 
   /**
+   * Given an OWLAxiom and a set of OWLAxiom class, determine if the axiom's class is an extension
+   * of at least one of the given set.
+   *
+   * @param axiom the OWLAxiom to check
+   * @param axiomTypes classes of axioms desired
+   * @return true if axiom is an instantiation of one of the classes in set
+   */
+  public static boolean extendsAxiomTypes(
+      OWLAxiom axiom, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    for (Class<? extends OWLAxiom> axiomType : axiomTypes) {
+      if (axiomType.isAssignableFrom(axiom.getClass())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Given an OWLAxiom class and a set of OWLAxiom classes, determine if the axiom class provided
+   * extends at least one of the classes in the set.
+   *
+   * @param axiom the OWLAxiom class to check
+   * @param axiomTypes classes of axioms desired
+   * @return true if axiom class extends one of the classes in set
+   */
+  public static boolean extendsAxiomTypes(
+      Class<? extends OWLAxiom> axiom, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    for (Class<? extends OWLAxiom> at : axiomTypes) {
+      if (at.isAssignableFrom(axiom)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Remove all annotations on this ontology. Just annotations on the ontology itself, not
    * annotations on its classes, etc.
    *
@@ -1097,7 +1133,9 @@ public class OntologyHelper {
     for (OWLEntity entity : getEntities(ontology)) {
       if (InvalidReferenceChecker.isDangling(ontology, entity)) {
         logger.debug("Removing dangling entity: " + entity.toStringID());
-        RemoveOperation.remove(ontology, entity, AxiomType.AXIOM_TYPES);
+        Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
+        axiomTypes.add(OWLAxiom.class);
+        RemoveOperation.remove(ontology, entity, axiomTypes);
       }
     }
   }

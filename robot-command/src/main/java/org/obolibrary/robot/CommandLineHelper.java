@@ -21,7 +21,22 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLLogicalAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +49,9 @@ public class CommandLineHelper {
 
   /** Namespace for general input error messages. */
   private static final String NS = "errors#";
+
+  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
+  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /** Error message when a boolean value is not "true" or "false". Expects option name. */
   private static final String booleanValueError =
@@ -232,6 +250,46 @@ public class CommandLineHelper {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Given a command line, return the value of --axioms as a set of classes that extend OWLAxiom.
+   *
+   * @param line the command line to use
+   * @return set of OWLAxiom types
+   */
+  public static Set<Class<? extends OWLAxiom>> getAxiomValues(CommandLine line) {
+    // TODO: Should this support multiple --axioms options?
+    Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
+    String axiom = getDefaultValue(line, "axioms", "all");
+    if (axiom.equalsIgnoreCase("all")) {
+      axiomTypes.add(OWLAxiom.class);
+    } else if (axiom.equalsIgnoreCase("logical")) {
+      axiomTypes.add(OWLLogicalAxiom.class);
+    } else if (axiom.equalsIgnoreCase("annotation")) {
+      axiomTypes.add(OWLAnnotationAxiom.class);
+    } else if (axiom.equalsIgnoreCase("subclass")) {
+      axiomTypes.add(OWLSubClassOfAxiom.class);
+    } else if (axiom.equalsIgnoreCase("subproperty")) {
+      axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
+      axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
+      axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
+    } else if (axiom.equalsIgnoreCase("equivalent")) {
+      axiomTypes.add(OWLEquivalentClassesAxiom.class);
+      axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
+      axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
+    } else if (axiom.equalsIgnoreCase("disjoint")) {
+      axiomTypes.add(OWLDisjointClassesAxiom.class);
+      axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
+      axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
+      axiomTypes.add(OWLDisjointUnionAxiom.class);
+    } else if (axiom.equalsIgnoreCase("class-assertion")) {
+      axiomTypes.add(OWLClassAssertionAxiom.class);
+      // TODO: Any others?
+    } else {
+      throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+    }
+    return axiomTypes;
   }
 
   /**

@@ -1,12 +1,13 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -19,6 +20,8 @@ public class FilterOperationTest extends CoreTest {
 
   private final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
+  private final Set<Class<? extends OWLAxiom>> allAxioms = Sets.newHashSet(OWLAxiom.class);
+
   /**
    * Test filtering for all entities. Result should be the same as input.
    *
@@ -29,8 +32,7 @@ public class FilterOperationTest extends CoreTest {
   public void testFilterAll() throws IOException, OWLOntologyCreationException {
     OWLOntology ontology = loadOntology("/uberon.owl");
     OWLOntology filteredOntology =
-        FilterOperation.filter(
-            ontology, OntologyHelper.getEntities(ontology), AxiomType.AXIOM_TYPES);
+        FilterOperation.filter(ontology, OntologyHelper.getEntities(ontology), allAxioms);
     assertIdentical("/uberon.owl", filteredOntology);
   }
 
@@ -50,8 +52,7 @@ public class FilterOperationTest extends CoreTest {
             df.getOWLLiteral("articular system")));
     Set<OWLEntity> entities = RelatedEntitiesHelper.getAnnotated(ontology, annotations);
 
-    OWLOntology filteredOntology =
-        FilterOperation.filter(ontology, entities, AxiomType.AXIOM_TYPES);
+    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms);
     OntologyHelper.trimDangling(filteredOntology);
     assertIdentical("/filter_class.owl", filteredOntology);
   }
@@ -74,9 +75,7 @@ public class FilterOperationTest extends CoreTest {
 
     OWLOntology filteredOntology =
         FilterOperation.filterComplement(
-            ontology,
-            RelatedEntitiesHelper.getAnnotated(ontology, annotations),
-            AxiomType.AXIOM_TYPES);
+            ontology, RelatedEntitiesHelper.getAnnotated(ontology, annotations), allAxioms);
     assertIdentical("/remove_class.owl", filteredOntology);
   }
 
@@ -92,8 +91,7 @@ public class FilterOperationTest extends CoreTest {
     Set<OWLEntity> entities = new HashSet<>();
     entities.add(df.getOWLClass(ioHelper.createIRI("UBERON:0004770")));
 
-    OWLOntology filteredOntology =
-        FilterOperation.filter(ontology, entities, AxiomType.AXIOM_TYPES);
+    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms);
     OntologyHelper.trimDangling(filteredOntology);
     assertIdentical("/filter_class.owl", filteredOntology);
   }
@@ -111,8 +109,7 @@ public class FilterOperationTest extends CoreTest {
     Set<OWLEntity> entities = new HashSet<>();
     entities.add(df.getOWLClass(ioHelper.createIRI("UBERON:0004770")));
 
-    OWLOntology filteredOntology =
-        FilterOperation.filterComplement(ontology, entities, AxiomType.AXIOM_TYPES);
+    OWLOntology filteredOntology = FilterOperation.filterComplement(ontology, entities, allAxioms);
     assertIdentical("/remove_class.owl", filteredOntology);
   }
 
@@ -131,8 +128,7 @@ public class FilterOperationTest extends CoreTest {
             df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
             RelationType.DESCENDANTS);
 
-    OWLOntology filteredOntology =
-        FilterOperation.filter(ontology, entities, AxiomType.AXIOM_TYPES);
+    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms);
     OntologyHelper.trimDangling(filteredOntology);
     assertIdentical("/filter_descendants.owl", filteredOntology);
   }
@@ -153,8 +149,7 @@ public class FilterOperationTest extends CoreTest {
             df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
             RelationType.DESCENDANTS);
 
-    OWLOntology filteredOntology =
-        FilterOperation.filterComplement(ontology, entities, AxiomType.AXIOM_TYPES);
+    OWLOntology filteredOntology = FilterOperation.filterComplement(ontology, entities, allAxioms);
     assertIdentical("/remove_descendants.owl", filteredOntology);
   }
 }
