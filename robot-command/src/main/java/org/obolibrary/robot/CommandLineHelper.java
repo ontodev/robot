@@ -259,35 +259,39 @@ public class CommandLineHelper {
    * @return set of OWLAxiom types
    */
   public static Set<Class<? extends OWLAxiom>> getAxiomValues(CommandLine line) {
-    // TODO: Should this support multiple --axioms options?
     Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
-    String axiom = getDefaultValue(line, "axioms", "all");
-    if (axiom.equalsIgnoreCase("all")) {
-      axiomTypes.add(OWLAxiom.class);
-    } else if (axiom.equalsIgnoreCase("logical")) {
-      axiomTypes.add(OWLLogicalAxiom.class);
-    } else if (axiom.equalsIgnoreCase("annotation")) {
-      axiomTypes.add(OWLAnnotationAxiom.class);
-    } else if (axiom.equalsIgnoreCase("subclass")) {
-      axiomTypes.add(OWLSubClassOfAxiom.class);
-    } else if (axiom.equalsIgnoreCase("subproperty")) {
-      axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
-      axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
-      axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
-    } else if (axiom.equalsIgnoreCase("equivalent")) {
-      axiomTypes.add(OWLEquivalentClassesAxiom.class);
-      axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
-      axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
-    } else if (axiom.equalsIgnoreCase("disjoint")) {
-      axiomTypes.add(OWLDisjointClassesAxiom.class);
-      axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
-      axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
-      axiomTypes.add(OWLDisjointUnionAxiom.class);
-    } else if (axiom.equalsIgnoreCase("class-assertion")) {
-      axiomTypes.add(OWLClassAssertionAxiom.class);
-      // TODO: Any others?
-    } else {
-      throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+    List<String> axiomTypeStrings = getOptionValues(line, "axioms");
+    if (axiomTypeStrings.isEmpty()) {
+    	axiomTypeStrings.add("all");
+    }
+    for (String axiom : axiomTypeStrings) {
+	    if (axiom.equalsIgnoreCase("all")) {
+	      axiomTypes.add(OWLAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("logical")) {
+	      axiomTypes.add(OWLLogicalAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("annotation")) {
+	      axiomTypes.add(OWLAnnotationAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("subclass")) {
+	      axiomTypes.add(OWLSubClassOfAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("subproperty")) {
+	      axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
+	      axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
+	      axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("equivalent")) {
+	      axiomTypes.add(OWLEquivalentClassesAxiom.class);
+	      axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
+	      axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("disjoint")) {
+	      axiomTypes.add(OWLDisjointClassesAxiom.class);
+	      axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
+	      axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
+	      axiomTypes.add(OWLDisjointUnionAxiom.class);
+	    } else if (axiom.equalsIgnoreCase("type")) {
+	      axiomTypes.add(OWLClassAssertionAxiom.class);
+	      // TODO: Make a-box, t-box, r-box
+	    } else {
+	      throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+	    }
     }
     return axiomTypes;
   }
