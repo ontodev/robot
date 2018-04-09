@@ -24,6 +24,7 @@ public class ReportCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save report to a file");
+    o.addOption("p", "profile", true, "reporting rules and levels to use");
     options = o;
   }
 
@@ -86,8 +87,6 @@ public class ReportCommand implements Command {
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-    OWLOntology outputOntology = null;
-
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
       return null;
@@ -95,13 +94,15 @@ public class ReportCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
+    OWLOntology ontology = state.getOntology();
 
     // output is optional - no output means the file will not be written anywhere
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
+    String profilePath = CommandLineHelper.getOptionalValue(line, "profile");
+
     // TODO save results
-    ReportOperation.report(inputOntology, outputPath);
+    ReportOperation.report(ontology, profilePath, outputPath);
     return state;
   }
 }

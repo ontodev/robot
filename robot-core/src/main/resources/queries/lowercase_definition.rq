@@ -1,10 +1,6 @@
-## title: unpunctuated definition violation(s)
-## severity: 5
-## ---
-
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
 SELECT DISTINCT ?entity ?property ?value WHERE 
   {VALUES ?property {obo:IAO_0000115}
    ?entity ?property ?value .
-   FILTER(!STRENDS(str(?value), "."))}
+   FILTER (!regex(?value, "^[A-Z]"))}

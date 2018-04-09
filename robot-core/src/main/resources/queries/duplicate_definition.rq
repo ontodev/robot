@@ -1,7 +1,3 @@
-## title: duplicate definition violation(s)
-## severity: 5
-## ---
-
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
 SELECT DISTINCT ?entity ?property ?value WHERE 

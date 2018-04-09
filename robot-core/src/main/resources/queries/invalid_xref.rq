@@ -1,7 +1,3 @@
-## title: invalid crossreference violation(s)
-## severity: 5
-## ---
-
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE 

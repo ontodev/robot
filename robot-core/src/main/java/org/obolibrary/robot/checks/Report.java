@@ -20,32 +20,40 @@ public class Report {
   /** Line separator */
   private static final String newLine = System.getProperty("line.separator");
 
-  public Map<String, List<Violation>> severity1;
-  public Map<String, List<Violation>> severity2;
-  public Map<String, List<Violation>> severity3;
-  public Map<String, List<Violation>> severity4;
-  public Map<String, List<Violation>> severity5;
+  /** Reporting levels. */
+  private static final String INFO = "INFO";
 
-  private Integer count1;
-  private Integer count2;
-  private Integer count3;
-  private Integer count4;
-  private Integer count5;
+  private static final String WARN = "WARN";
+  private static final String ERROR = "ERROR";
 
+  /** Maps of rules and the violations for each level */
+  public Map<String, List<Violation>> info;
+
+  public Map<String, List<Violation>> warn;
+  public Map<String, List<Violation>> error;
+
+  /** Counts of violations for each level */
+  private Integer infoCount;
+
+  private Integer warnCount;
+  private Integer errorCount;
+
+  /** Labels from the ontology */
   private Map<IRI, String> labels;
 
+  /**
+   * Given an ontology, create a new report on it.
+   *
+   * @param ontology OWLOntology to report on
+   */
   public Report(OWLOntology ontology) {
-    severity1 = new HashMap<>();
-    severity2 = new HashMap<>();
-    severity3 = new HashMap<>();
-    severity4 = new HashMap<>();
-    severity5 = new HashMap<>();
+    info = new HashMap<>();
+    warn = new HashMap<>();
+    error = new HashMap<>();
 
-    count1 = 0;
-    count2 = 0;
-    count3 = 0;
-    count4 = 0;
-    count5 = 0;
+    infoCount = 0;
+    warnCount = 0;
+    errorCount = 0;
 
     // get ontology-specific labels
     labels = OntologyHelper.getLabels(ontology);
@@ -55,66 +63,85 @@ public class Report {
     labels.put(IRI.create("http://www.w3.org/2000/01/rdf-schema#label"), "label");
   }
 
-  public void addViolations(Integer severity, String title, List<Violation> violations) {
-    logger.debug("violation found: " + title);
-    switch (severity) {
-      case 1:
-        severity1.put(title, violations);
-        count1 += violations.size();
-      case 2:
-        severity2.put(title, violations);
-        count2 += violations.size();
-      case 3:
-        severity3.put(title, violations);
-        count3 += violations.size();
-      case 4:
-        severity4.put(title, violations);
-        count4 += violations.size();
-      case 5:
-        severity5.put(title, violations);
-        count5 += violations.size();
+  /**
+   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
+   * the violations to the correct map.
+   *
+   * @param ruleName name of rule
+   * @param level reporting level of rule
+   * @param violations list of violations from this rule
+   */
+  public void addViolations(String ruleName, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, violations);
+      infoCount += violations.size();
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, violations);
+      warnCount += violations.size();
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, violations);
+      errorCount += violations.size();
+    } else {
+      // TODO: error message
     }
   }
 
+  /**
+   * Return the total violations from reporting.
+   *
+   * @return number of violations
+   */
   public Integer getTotalViolations() {
-    return count1 + count2 + count3 + count4 + count5;
+    return infoCount + warnCount + errorCount;
   }
 
-  public Integer getTotalViolations(Integer severity) {
-    switch (severity) {
-      case 1:
-        return count1;
-      case 2:
-        return count2;
-      case 3:
-        return count3;
-      case 4:
-        return count4;
-      case 5:
-        return count5;
-      default:
-        logger.error("Not a valid severity level: " + severity);
-        return 0;
+  /**
+   * Given a reporting level, return the number of violations.
+   *
+   * @param level reporting level
+   * @return number of violations
+   */
+  public Integer getTotalViolations(String level) {
+    if (INFO.equals(level)) {
+      return infoCount;
+    } else if (WARN.equals(level)) {
+      return warnCount;
+    } else if (ERROR.equals(level)) {
+      return errorCount;
+    } else {
+      logger.error("Not a valid report level: " + level);
+      return 0;
     }
   }
 
+  /**
+   * Return the report details in YAML format.
+   *
+   * @return YAML string
+   */
   public String toYaml() {
     StringBuilder sb = new StringBuilder();
-    sb.append(yamlHelper(1, severity1));
-    sb.append(yamlHelper(2, severity2));
-    sb.append(yamlHelper(3, severity3));
-    sb.append(yamlHelper(4, severity4));
-    sb.append(yamlHelper(5, severity5));
+    sb.append(yamlHelper(INFO, info));
+    sb.append(yamlHelper(WARN, warn));
+    sb.append(yamlHelper(ERROR, error));
     return sb.toString();
   }
 
-  private String yamlHelper(Integer severity, Map<String, List<Violation>> violationSets) {
+  /**
+   * Given a reporting level and the violations for that level, return the YAML format.
+   *
+   * @param level reporting level
+   * @param violationSets map of rule name and violations
+   * @return YAML string
+   */
+  private String yamlHelper(String level, Map<String, List<Violation>> violationSets) {
     StringBuilder sb = new StringBuilder();
     // if there are no violations, no need to add anything
     if (violationSets.isEmpty()) {
       return "";
     }
-    sb.append("- severity    : " + severity + newLine);
+    sb.append("- level       : " + level + newLine);
     sb.append("  violations  :" + newLine);
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       // if there are no Violations for a query, no need to add it

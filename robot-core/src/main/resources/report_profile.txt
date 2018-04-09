@@ -1,0 +1,15 @@
+ERROR - definition_cardinality
+ERROR - deprecated_class
+ERROR - duplicate_definition
+ERROR - duplicate_label
+WARN -  duplicate_synonym
+WARN -  equivalent_pair
+WARN -  invalid_xref
+ERROR - label_cardinality
+ERROR - label_formatting
+INFO -  lowercase_definition
+INFO -  missing_superclass
+WARN -  multiple_superclasses
+WARN -  obsolete_label
+ERROR - ontology_metadata
+ERROR - whitespace

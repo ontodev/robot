@@ -1,7 +1,3 @@
-## title: duplicate label violation(s)
-## severity: 5
-## ---
-
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE 
