@@ -23,3 +23,15 @@ And the CSV file `results/equivalent.csv` should have:
 
     first,second,firstLabel,secondLabel
     http://purl.obolibrary.org/obo/TEST_A,http://purl.obolibrary.org/obo/TEST_B,,
+
+---
+
+## Error Messages
+
+### Verification Failed
+
+At least one of the query you specifies returned results. The number of failures for each rule will be printed. A CSV file will be generated with the results that matched the rule.
+
+### Missing Query Error
+
+You must specify a query to execute with `--query` or `--queries`.

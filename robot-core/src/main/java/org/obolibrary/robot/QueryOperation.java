@@ -428,6 +428,56 @@ public class QueryOperation {
   }
 
   /**
+   * Execute a SPARQL query and return true if there are any results, false otherwise. Prints
+   * violations to STDERR.
+   *
+   * @param dsg the graph to query over
+   * @param query the SPARQL query string
+   * @return true if the are results, false otherwise
+   */
+  public static boolean execVerify(DatasetGraph dsg, String ruleName, String query) {
+    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dsg, query));
+    System.out.println("Rule " + ruleName + ": " + results.size() + " violation(s)");
+    if (results.size() == 0) {
+      System.out.println("PASS Rule " + ruleName + ": 0 violation(s)");
+      return false;
+    } else {
+      ResultSetMgr.write(System.err, results, Lang.CSV);
+      System.out.println("FAIL Rule " + ruleName + ": " + results.size() + " violation(s)");
+      return true;
+    }
+  }
+
+  /**
+   * Run a SELECT query and write the result to a file. Prints violations to STDERR.
+   *
+   * @param dsg The graph to query over.
+   * @param query The SPARQL query string.
+   * @param output The file to write to, if there are results
+   * @param outputFormat The file format.
+   * @throws FileNotFoundException if output file is not found
+   * @return true if the are results (so file is written), false otherwise
+   */
+  public static boolean runVerify(
+      DatasetGraph dsg, String ruleName, String query, OutputStream output, Lang outputFormat)
+      throws FileNotFoundException {
+    if (outputFormat == null) {
+      outputFormat = Lang.CSV;
+    }
+    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dsg, query));
+    if (results.size() == 0) {
+      System.out.println("PASS Rule " + ruleName + ": 0 violation(s)");
+      return false;
+    } else {
+      System.out.println("FAIL Rule " + ruleName + ": " + results.size() + " violation(s)");
+      ResultSetMgr.write(System.err, results, Lang.CSV);
+      results.reset();
+      writeResult(results, outputFormat, new FileOutputStream(output));
+      return true;
+    }
+  }
+
+  /**
    * Count results.
    *
    * @param results The result set to count.
