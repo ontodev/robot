@@ -110,7 +110,7 @@ public class ReportOperation {
     DatasetGraph dsg = QueryOperation.loadOntology(ontology);
     for (String queryName : queries.keySet()) {
       report.addViolations(
-          profile.get(queryName), queryName, getViolations(dsg, queries.get(queryName)));
+          queryName, profile.get(queryName), getViolations(dsg, queries.get(queryName)));
     }
     Integer violationCount = report.getTotalViolations();
     if (violationCount != 0) {
