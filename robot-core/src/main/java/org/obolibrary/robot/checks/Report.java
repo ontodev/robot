@@ -115,6 +115,41 @@ public class Report {
     }
   }
 
+  public String toTSV() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(tsvHelper(ERROR, error));
+    sb.append(tsvHelper(WARN, warn));
+    sb.append(tsvHelper(INFO, info));
+    return sb.toString();
+  }
+
+  private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
+    if (violationSets.isEmpty()) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
+      String ruleName = vs.getKey();
+      for (Violation v : vs.getValue()) {
+        String subject = v.subject;
+        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
+          String property = statement.getKey();
+          for (String value : statement.getValue()) {
+            if (value != null) {
+              sb.append(level + "\t");
+              sb.append(ruleName + "\t");
+              sb.append(subject + "\t");
+              sb.append(property + "\t");
+              sb.append(value.replace("\t", " ").replace("\n", " ") + "\t");
+              sb.append("\n");
+            }
+          }
+        }
+      }
+    }
+    return sb.toString();
+  }
+
   /**
    * Return the report details in YAML format.
    *

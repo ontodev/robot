@@ -78,17 +78,18 @@ public class ReportOperation {
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
     Report report = createReport(ontology, profile, queries);
-    String yaml = report.toYaml();
+    // String result = report.toYaml();
+    String result = report.toTSV();
     if (outputPath != null) {
       // If output is provided, write to that file
       try (FileWriter fw = new FileWriter(outputPath);
           BufferedWriter bw = new BufferedWriter(fw)) {
-        logger.debug("Writing YAML report to: " + outputPath);
-        bw.write(yaml);
+        logger.debug("Writing report to: " + outputPath);
+        bw.write(result);
       }
     } else {
       // Otherwise output to terminal
-      System.out.println(yaml);
+      System.out.println(result);
     }
   }
 
