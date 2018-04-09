@@ -2,13 +2,13 @@ package org.obolibrary.robot.checks;
 
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.obolibrary.robot.OntologyHelper;
+import java.util.Set;
 import org.obolibrary.robot.UnmergeOperation;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +41,8 @@ public class Report {
   /** Labels from the ontology */
   private Map<IRI, String> labels;
 
-  /**
-   * Given an ontology, create a new report on it.
-   *
-   * @param ontology OWLOntology to report on
-   */
-  public Report(OWLOntology ontology) {
+  /** Given an ontology, create a new report on it. */
+  public Report() {
     info = new HashMap<>();
     warn = new HashMap<>();
     error = new HashMap<>();
@@ -54,13 +50,49 @@ public class Report {
     infoCount = 0;
     warnCount = 0;
     errorCount = 0;
+  }
 
-    // get ontology-specific labels
-    labels = OntologyHelper.getLabels(ontology);
-    // add RDFS labels (TODO: more?)
-    labels.put(IRI.create("http://www.w3.org/2000/01/rdf-schema#subClassOf"), "superclass");
-    labels.put(IRI.create("http://www.w3.org/2000/01/rdf-schema#comment"), "comment");
-    labels.put(IRI.create("http://www.w3.org/2000/01/rdf-schema#label"), "label");
+  /**
+   * Return all the IRI strings in the current Violations.
+   *
+   * @return a set of IRI strings
+   */
+  public Set<String> getIRIs() {
+    Set<String> iris = new HashSet<String>();
+    iris.addAll(getIRIs(error));
+    iris.addAll(getIRIs(warn));
+    iris.addAll(getIRIs(info));
+    return iris;
+  }
+
+  /**
+   * Return all the IRI strings in the given list of Violations.
+   *
+   * @param violationSets map of rule name and violations
+   * @return a set of IRI strings
+   */
+  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
+    Set<String> iris = new HashSet<String>();
+
+    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
+      for (Violation v : vs.getValue()) {
+        iris.add(v.subject);
+        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
+          iris.add(statement.getKey());
+          for (String value : statement.getValue()) {
+            if (!iris.contains(value)) {
+              try {
+                iris.add(IRI.create(new URL(value)).toString());
+              } catch (Exception e) {
+                // do nothing
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return iris;
   }
 
   /**
@@ -135,14 +167,15 @@ public class Report {
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
           String property = statement.getKey();
           for (String value : statement.getValue()) {
-            if (value != null) {
-              sb.append(level + "\t");
-              sb.append(ruleName + "\t");
-              sb.append(subject + "\t");
-              sb.append(property + "\t");
-              sb.append(value.replace("\t", " ").replace("\n", " ") + "\t");
-              sb.append("\n");
+            if (value == null) {
+              value = "";
             }
+            sb.append(level + "\t");
+            sb.append(ruleName + "\t");
+            sb.append(subject + "\t");
+            sb.append(property + "\t");
+            sb.append(value.replace("\t", " ").replace("\n", " ") + "\t");
+            sb.append("\n");
           }
         }
       }

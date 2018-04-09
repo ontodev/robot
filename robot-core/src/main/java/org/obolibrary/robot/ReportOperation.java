@@ -78,6 +78,7 @@ public class ReportOperation {
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
     Report report = createReport(ontology, profile, queries);
+    // System.out.println(report.getIRIs());
     // String result = report.toYaml();
     String result = report.toTSV();
     if (outputPath != null) {
@@ -107,7 +108,7 @@ public class ReportOperation {
   private static Report createReport(
       OWLOntology ontology, Map<String, String> profile, Map<String, String> queries)
       throws OWLOntologyStorageException {
-    Report report = new Report(ontology);
+    Report report = new Report();
     DatasetGraph dsg = QueryOperation.loadOntology(ontology);
     for (String queryName : queries.keySet()) {
       report.addViolations(
