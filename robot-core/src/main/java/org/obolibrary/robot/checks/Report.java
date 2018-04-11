@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.UnmergeOperation;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.PrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,31 +19,34 @@ public class Report {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(UnmergeOperation.class);
 
-  /** Line separator */
-  private static final String newLine = System.getProperty("line.separator");
-
-  /** Reporting levels. */
+  /** Reporting level INFO. */
   private static final String INFO = "INFO";
 
+  /** Reporting level WARN. */
   private static final String WARN = "WARN";
+
+  /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
 
-  /** Maps of rules and the violations for each level */
+  /** Map of rules and the violations for INFO level. */
   public Map<String, List<Violation>> info;
 
+  /** Map of rules and the violations for WARN level. */
   public Map<String, List<Violation>> warn;
+
+  /** Map of rules and the violations for ERROR level. */
   public Map<String, List<Violation>> error;
 
-  /** Counts of violations for each level */
+  /** Count of violations for INFO. */
   private Integer infoCount;
 
+  /** Count of violations for WARN. */
   private Integer warnCount;
+
+  /** Count of violations for ERROR. */
   private Integer errorCount;
 
-  /** Labels from the ontology */
-  private Map<IRI, String> labels;
-
-  /** Given an ontology, create a new report on it. */
+  /** Create a new report object. */
   public Report() {
     info = new HashMap<>();
     warn = new HashMap<>();
@@ -50,6 +55,29 @@ public class Report {
     infoCount = 0;
     warnCount = 0;
     errorCount = 0;
+  }
+
+  /**
+   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
+   * the violations to the correct map.
+   *
+   * @param ruleName name of rule
+   * @param level reporting level of rule
+   * @param violations list of violations from this rule
+   */
+  public void addViolations(String ruleName, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, violations);
+      infoCount += violations.size();
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, violations);
+      warnCount += violations.size();
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, violations);
+      errorCount += violations.size();
+    }
+    // Otherwise do nothing
   }
 
   /**
@@ -96,30 +124,6 @@ public class Report {
   }
 
   /**
-   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
-   * the violations to the correct map.
-   *
-   * @param ruleName name of rule
-   * @param level reporting level of rule
-   * @param violations list of violations from this rule
-   */
-  public void addViolations(String ruleName, String level, List<Violation> violations) {
-    logger.debug("violation found: " + ruleName);
-    if (INFO.equals(level)) {
-      info.put(ruleName, violations);
-      infoCount += violations.size();
-    } else if (WARN.equals(level)) {
-      warn.put(ruleName, violations);
-      warnCount += violations.size();
-    } else if (ERROR.equals(level)) {
-      error.put(ruleName, violations);
-      errorCount += violations.size();
-    } else {
-      // TODO: error message
-    }
-  }
-
-  /**
    * Return the total violations from reporting.
    *
    * @return number of violations
@@ -147,6 +151,11 @@ public class Report {
     }
   }
 
+  /**
+   * Return the report in TSV format.
+   *
+   * @return TSV string
+   */
   public String toTSV() {
     StringBuilder sb = new StringBuilder();
     sb.append(tsvHelper(ERROR, error));
@@ -155,7 +164,35 @@ public class Report {
     return sb.toString();
   }
 
+  /**
+   * Given a prefix manager and an IRI as a string, return the CURIE if the prefix is available.
+   * Otherwise, return the IRI as string.
+   * 
+   * @param pm Prefix Manager to use
+   * @param iriString IRI to convert to CURIE
+   * @return CURIE or full IRI as string
+   */
+  private static String maybeGetCURIE(PrefixManager pm, String iriString) {
+	  IRI iri = IRI.create(iriString);
+	  if (iri != null) {
+		  String curie = pm.getPrefixIRI(iri);
+		  if (curie != null) {
+			  return curie;
+		  }
+	  }
+	  return iriString;
+  }
+
+/**
+   * Given a reporting level and a map of rules and violations, build a TSV output.
+   *
+   * @param level reporting level
+   * @param violationSets amp of rules and violations
+   * @return TSV string representation of the violations
+   */
   private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
+    // Get a prefix manager for creating CURIEs
+    PrefixManager pm = new IOHelper().getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }
@@ -163,12 +200,14 @@ public class Report {
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = vs.getKey();
       for (Violation v : vs.getValue()) {
-        String subject = v.subject;
+        String subject = maybeGetCURIE(pm, v.subject);
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          String property = statement.getKey();
+          String property = maybeGetCURIE(pm, statement.getKey());
           for (String value : statement.getValue()) {
             if (value == null) {
               value = "";
+            } else {
+              value = maybeGetCURIE(pm, value);
             }
             sb.append(level + "\t");
             sb.append(ruleName + "\t");
@@ -176,93 +215,6 @@ public class Report {
             sb.append(property + "\t");
             sb.append(value.replace("\t", " ").replace("\n", " ") + "\t");
             sb.append("\n");
-          }
-        }
-      }
-    }
-    return sb.toString();
-  }
-
-  /**
-   * Return the report details in YAML format.
-   *
-   * @return YAML string
-   */
-  public String toYaml() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(yamlHelper(INFO, info));
-    sb.append(yamlHelper(WARN, warn));
-    sb.append(yamlHelper(ERROR, error));
-    return sb.toString();
-  }
-
-  /**
-   * Given a reporting level and the violations for that level, return the YAML format.
-   *
-   * @param level reporting level
-   * @param violationSets map of rule name and violations
-   * @return YAML string
-   */
-  private String yamlHelper(String level, Map<String, List<Violation>> violationSets) {
-    StringBuilder sb = new StringBuilder();
-    // if there are no violations, no need to add anything
-    if (violationSets.isEmpty()) {
-      return "";
-    }
-    sb.append("- level       : " + level + newLine);
-    sb.append("  violations  :" + newLine);
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      // if there are no Violations for a query, no need to add it
-      if (vs.getValue().isEmpty()) {
-        continue;
-      }
-      sb.append("  - rule      : " + vs.getKey() + newLine);
-      sb.append("    entities  :" + newLine);
-      for (Violation v : vs.getValue()) {
-        sb.append("    - subject : " + v.subject + newLine);
-        String subjectLabel = labels.get(IRI.create(v.subject));
-        if (subjectLabel != null) {
-          sb.append("      label   : \"" + subjectLabel + "\"" + newLine);
-        }
-        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          String property = statement.getKey();
-          String propertyLabel = labels.get(IRI.create(property));
-          if (propertyLabel != null) {
-            sb.append("      " + propertyLabel + " :" + newLine);
-          } else {
-            sb.append("      " + property + " :" + newLine);
-          }
-          for (String value : statement.getValue()) {
-            if (value == null) {
-              value = "null";
-            }
-            // handle literal values with XML Schema datatypes
-            // quote any strings, found with xsd:string or lang tag
-            String formattedValue = value;
-            if (value.endsWith("/XMLSchema#string")) {
-              formattedValue = "\"" + value.substring(0, value.lastIndexOf("^") - 1) + "\"";
-            } else if (value.endsWith("@en")) {
-              formattedValue = "\"" + value.substring(0, value.lastIndexOf("@")) + "\"";
-            } else if (value.contains("/XMLSchema#")) {
-              formattedValue = value.substring(0, value.lastIndexOf("^") - 1);
-            } else if (value.contains(" ")) {
-              // unknown datatype with spaces, add quotes
-              formattedValue = "\"" + value + "\"";
-            }
-            sb.append("      - value : " + formattedValue + newLine);
-            IRI valueIRI;
-            try {
-              valueIRI = IRI.create(new URL(value));
-            } catch (Exception e) {
-              valueIRI = null;
-            }
-            // if an IRI was created, try and find a label
-            if (valueIRI != null) {
-              String valueLabel = labels.get(IRI.create(value));
-              if (valueLabel != null) {
-                sb.append("        label : \"" + valueLabel + "\"" + newLine);
-              }
-            }
           }
         }
       }

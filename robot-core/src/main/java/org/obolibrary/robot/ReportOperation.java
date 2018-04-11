@@ -32,12 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Report issues with an ontology.
- *
- * <p>Currently this is minimal but we imagine later creating an extensive 'report card' for an
- * ontology, describing ways to make the ontology conform to OBO conventions
- *
- * <p>TODO: decide on report structure. Perhaps JSON-LD? Create vocabulary for report violations?
+ * Report issues with an ontology using a series of QC SPARQL queries.
+ * 
+ * @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a>
+ * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class ReportOperation {
 
@@ -320,7 +318,6 @@ public class ReportOperation {
       // entity should never be null
       String entity = getQueryResultOrNull(qs, "entity");
       // skip RDFS and OWL terms
-      // TODO: should we ignore oboInOwl, FOAF, and DC as well?
       if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
         continue;
       }
