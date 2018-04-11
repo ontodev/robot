@@ -54,10 +54,13 @@ public class ReportOperation {
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
 
-  /** Reporting levels. */
+  /** Reporting level INFO. */
   private static final String INFO = "INFO";
 
+  /** Reporting level WARN. */
   private static final String WARN = "WARN";
+
+  /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
 
   /**
@@ -269,12 +272,13 @@ public class ReportOperation {
     try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
       String line;
       while ((line = br.readLine()) != null) {
-        String[] split = line.split("-");
-        String level = split[0].toUpperCase().trim();
+        String[] split = line.trim().split(" +");
+        String level = split[0].toUpperCase();
+        // The level should be: INFO, WARN, or ERROR
         if (!INFO.equals(level) && !WARN.equals(level) && !ERROR.equals(level)) {
-          throw new IllegalArgumentException(String.format(reportLevelError, split[0].trim()));
+          throw new IllegalArgumentException(String.format(reportLevelError, split[0]));
         }
-        String rule = split[1].trim();
+        String rule = split[1];
         profile.put(rule, level);
       }
     }
