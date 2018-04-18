@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Report issues with an ontology using a series of QC SPARQL queries.
- * 
+ *
  * @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a>
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
@@ -62,26 +62,32 @@ public class ReportOperation {
   private static final String ERROR = "ERROR";
 
   /**
-   * Given an ontology, a profile path (or null), and an output path (or null), report on the
-   * ontology using the rules within the profile and write results to the output path. If profile is
-   * null, use the default profile in resources. If the output path is null, write results to
-   * console.
+   * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
+   * null) report on the ontology using the rules within the profile and write results to the output
+   * path. If profile is null, use the default profile in resources. If the output path is null,
+   * write results to console. If the format is null, write results in TSV format.
    *
    * @param ontology OWLOntology to report on
-   * @param outputPath string path to write report file to, or null
    * @param profilePath user profile file path to use, or null
+   * @param outputPath string path to write report file to, or null
+   * @param format string format for the output report (TSV or YAML), or null
    * @throws Exception on any error
    */
-  public static void report(OWLOntology ontology, String profilePath, String outputPath)
-      throws Exception {
+  public static void report(
+      OWLOntology ontology, String profilePath, String outputPath, String format) throws Exception {
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
     Report report = createReport(ontology, profile, queries);
     // System.out.println(report.getIRIs());
-    // String result = report.toYaml();
-    String result = report.toTSV();
+    String result;
+    if (format != null && format.equalsIgnoreCase("yaml")) {
+      result = report.toYAML();
+    } else {
+      // Default to TSV if nothing was provided, or if it is not YAML
+      result = report.toTSV();
+    }
     if (outputPath != null) {
       // If output is provided, write to that file
       try (FileWriter fw = new FileWriter(outputPath);

@@ -165,29 +165,42 @@ public class Report {
   }
 
   /**
+   * Return the report in YAML format.
+   *
+   * @return YAML string
+   */
+  public String toYAML() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(yamlHelper(ERROR, error));
+    sb.append(yamlHelper(WARN, warn));
+    sb.append(yamlHelper(INFO, info));
+    return sb.toString();
+  }
+
+  /**
    * Given a prefix manager and an IRI as a string, return the CURIE if the prefix is available.
    * Otherwise, return the IRI as string.
-   * 
+   *
    * @param pm Prefix Manager to use
    * @param iriString IRI to convert to CURIE
    * @return CURIE or full IRI as string
    */
   private static String maybeGetCURIE(PrefixManager pm, String iriString) {
-	  IRI iri = IRI.create(iriString);
-	  if (iri != null) {
-		  String curie = pm.getPrefixIRI(iri);
-		  if (curie != null) {
-			  return curie;
-		  }
-	  }
-	  return iriString;
+    IRI iri = IRI.create(iriString);
+    if (iri != null) {
+      String curie = pm.getPrefixIRI(iri);
+      if (curie != null) {
+        return curie;
+      }
+    }
+    return iriString;
   }
 
-/**
+  /**
    * Given a reporting level and a map of rules and violations, build a TSV output.
    *
    * @param level reporting level
-   * @param violationSets amp of rules and violations
+   * @param violationSets map of rules and violations
    * @return TSV string representation of the violations
    */
   private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
@@ -214,6 +227,59 @@ public class Report {
             sb.append(subject + "\t");
             sb.append(property + "\t");
             sb.append(value.replace("\t", " ").replace("\n", " ") + "\t");
+            sb.append("\n");
+          }
+        }
+      }
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Given a reporting level and a map of rules and violations, build a YAML output.
+   *
+   * @param level reporting level
+   * @param violationSets map of rules and violations
+   * @return YAML string representation of the violations
+   */
+  private String yamlHelper(String level, Map<String, List<Violation>> violationSets) {
+    // Get a prefix manager for creating CURIEs
+    PrefixManager pm = new IOHelper().getPrefixManager();
+    if (violationSets.isEmpty()) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append("- level : '" + level + "'");
+    sb.append("\n");
+    sb.append("  violations :");
+    sb.append("\n");
+    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
+      String ruleName = vs.getKey();
+      if (vs.getValue().isEmpty()) {
+        continue;
+      }
+      sb.append("  - rule : '" + ruleName + "'");
+      sb.append("\n");
+      for (Violation v : vs.getValue()) {
+        String subject = maybeGetCURIE(pm, v.subject);
+        sb.append("    - subject : '" + subject + "'");
+        sb.append("\n");
+        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
+          String property = maybeGetCURIE(pm, statement.getKey());
+          sb.append("      property : '" + property + "':");
+          sb.append("\n");
+          if (statement.getValue().isEmpty()) {
+            continue;
+          }
+          sb.append("      values :");
+          sb.append("\n");
+          for (String value : statement.getValue()) {
+            if (value == null) {
+              value = "null";
+            } else {
+              value = maybeGetCURIE(pm, value);
+            }
+            sb.append("        - '" + value + "'");
             sb.append("\n");
           }
         }

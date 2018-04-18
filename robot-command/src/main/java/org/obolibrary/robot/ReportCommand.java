@@ -25,6 +25,7 @@ public class ReportCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save report to a file");
     o.addOption("p", "profile", true, "reporting rules and levels to use");
+    o.addOption("f", "format", true, "save report in a given format (TSV or YAML)");
     options = o;
   }
 
@@ -98,11 +99,13 @@ public class ReportCommand implements Command {
 
     // output is optional - no output means the file will not be written anywhere
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
-
+    // profile is optional - no profile means the default profile will be used
     String profilePath = CommandLineHelper.getOptionalValue(line, "profile");
+    // format is optional - no format means the report will be in TSV
+    String format = CommandLineHelper.getOptionalValue(line, "format");
 
     // TODO save results
-    ReportOperation.report(ontology, profilePath, outputPath);
+    ReportOperation.report(ontology, profilePath, outputPath, format);
     return state;
   }
 }
