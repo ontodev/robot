@@ -41,13 +41,14 @@ public class FilterOperation {
     OWLOntology outputOntology = outputManager.createOntology(inputOntology.getOntologyID());
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLEntity entity : entities) {
-      for (OWLAxiom axiom : inputOntology.getAxioms()) {
-        if (axiom.getSignature().contains(entity)
-            && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+      // Add referencing axioms ONLY if all entities are in the entity set
+      for (OWLAxiom axiom : EntitySearcher.getReferencingAxioms(entity, inputOntology)) {
+        if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)
+            && entities.containsAll(axiom.getSignature())) {
           axioms.add(axiom);
         }
       }
-      // Entities that are the subject of annotation assertions aren't caught by getSignature()
+      // Add annotations for the entities to filter for
       if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
         for (OWLAxiom axiom : EntitySearcher.getAnnotationAssertionAxioms(entity, inputOntology)) {
           axioms.add(axiom);
@@ -62,6 +63,7 @@ public class FilterOperation {
         }
       }
     }
+    // Add these axioms to the new output ontology
     outputManager.addAxioms(outputOntology, axioms);
     return outputOntology;
   }

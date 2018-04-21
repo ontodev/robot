@@ -57,19 +57,17 @@ public class RemoveOperation {
       OWLOntology ontology, OWLEntity entity, Set<Class<? extends OWLAxiom>> axiomTypes) {
     logger.debug("Removing from ontology: " + entity);
     Set<OWLAxiom> axioms = new HashSet<>();
-    for (OWLAxiom axiom : ontology.getAxioms()) {
-      // Add the axiom to remove if the entity is in the signature
-      // and the axiom is of the correct type
-      if (axiom.getSignature().contains(entity)
-          && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+    // Add any referencing axioms of the correct type to the set to be removed
+    for (OWLAxiom axiom : EntitySearcher.getReferencingAxioms(entity, ontology)) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         axioms.add(axiom);
       }
     }
-    // Entities that are the subject of annotation assertions aren't caught by getSignature()
+    // Add entities that are the subject of annotation assertions
     if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
       axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity, ontology));
     }
-    // Remove all
+    // Remove all the axioms in the set
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     manager.removeAxioms(ontology, axioms);
   }
