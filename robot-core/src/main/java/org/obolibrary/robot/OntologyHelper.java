@@ -155,14 +155,15 @@ public class OntologyHelper {
    */
   public static Set<IRI> filterExistingTerms(
       OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty) {
+    Set<IRI> missingIRIs = new HashSet<>();
     for (IRI iri : IRIs) {
       if (!ontology.containsEntityInSignature(iri)) {
         logger.warn("Ontology does not contain term {}", iri.toString());
-        IRIs.remove(iri);
+        missingIRIs.add(iri);
       }
     }
 
-    if (IRIs.isEmpty() && !allowEmpty) {
+    if (missingIRIs.containsAll(IRIs) && !allowEmpty) {
       throw new IllegalArgumentException(emptyTermsError);
     }
     return IRIs;
