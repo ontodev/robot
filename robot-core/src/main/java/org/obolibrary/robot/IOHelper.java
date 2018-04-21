@@ -465,7 +465,7 @@ public class IOHelper {
       // only use this method when ignoring OBO checking, otherwise use native save
       OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
       OBODoc oboOntology = bridge.convert(ontology);
-      File f = new File(ontologyIRI.getShortForm());
+      File f = new File(ontologyIRI.toURI());
       f.createNewFile();
       BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
       OBOFormatWriter oboWriter = new OBOFormatWriter();
