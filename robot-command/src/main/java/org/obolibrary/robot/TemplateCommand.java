@@ -34,8 +34,8 @@ public class TemplateCommand implements Command {
   /** Initialize the command. */
   public TemplateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("i", "input", true, "load ontology from a file");
-    o.addOption("I", "input-iri", true, "load ontology from an IRI");
+    o.addOption("i", "input", true, "load ontology to merge from a file");
+    o.addOption("I", "input-iri", true, "load ontology to merge from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "ontology-iri", true, "set the output ontology IRI");
     o.addOption("V", "version-iri", true, "set the output version IRI");
@@ -43,6 +43,10 @@ public class TemplateCommand implements Command {
     o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
     o.addOption("m", "merge-before", false, "merge into input ontology before any output");
     o.addOption("M", "merge-after", false, "merge into input ontology after any output");
+    o.addOption(
+        "c", "collapse-import-closure", true, "if true, collapse the import closure when merging");
+    o.addOption(
+        "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     options = o;
   }
 
@@ -130,6 +134,11 @@ public class TemplateCommand implements Command {
 
     OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null, ioHelper);
 
+    boolean collapseImports =
+        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
+    boolean includeAnnotations =
+        CommandLineHelper.getBooleanValue(line, "include-annotations", false);
+
     // if the --ancestors option is used,
     // MIREOT in all the ancestors of the outputOntology terms
     // from the inputOntology, with just their labels.
@@ -144,18 +153,18 @@ public class TemplateCommand implements Command {
               inputOntology, null, iris, MireotOperation.getDefaultAnnotationProperties());
       ontologies = new ArrayList<OWLOntology>();
       ontologies.add(ancestors);
-      MergeOperation.mergeInto(ontologies, outputOntology);
+      MergeOperation.mergeInto(ontologies, outputOntology, includeAnnotations, collapseImports);
     }
 
     // Either merge-then-save, save-then-merge, or don't merge
     ontologies = new ArrayList<OWLOntology>();
     ontologies.add(outputOntology);
     if (line.hasOption("merge-before")) {
-      MergeOperation.mergeInto(ontologies, inputOntology);
+      MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
       CommandLineHelper.maybeSaveOutput(line, inputOntology);
     } else if (line.hasOption("merge-after")) {
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
-      MergeOperation.mergeInto(ontologies, inputOntology);
+      MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
     } else {
       // Set ontology and version IRI
       String ontologyIRI = CommandLineHelper.getOptionalValue(line, "ontology-iri");

@@ -15,3 +15,15 @@ This command will merge `edit.owl` and `edit2.owl`:
     robot merge --inputs "edit*.owl" --output results/merged2.owl
 
 A merge can be 'undone' with [unmerge](/unmerge).
+
+### Import Closure
+
+The `--collapse-import-closure` option is, by default, `true`. As shown in the first example above, running `merge` on an ontology with `owl:imports` statements will merge these into a single file. The `owl:imports` statements are also removed from the ontology.
+
+By adding `--collapse-import-closure false`, the imports will not be merged in and the `owl:imports` statements will remain.
+
+### Ontology Annotations
+
+The `--include-annotations` option is, by default, `false`. This refers to the ontology annotations, and when merging, these are typically ignored and the output will only include the ontology annotations from the *first* input. 
+
+If you would like to merge the ontology annotations from several inputs, add `--include-annotations true`.
