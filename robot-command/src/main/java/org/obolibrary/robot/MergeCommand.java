@@ -114,7 +114,7 @@ public class MergeCommand implements Command {
     inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
     boolean collapseImportClosure =
-        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", true);
+        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
     boolean includeAnnotations =
         CommandLineHelper.getBooleanValue(line, "include-annotations", false);
     OWLOntology outputOntology =

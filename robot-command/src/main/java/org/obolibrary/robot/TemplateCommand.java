@@ -40,13 +40,13 @@ public class TemplateCommand implements Command {
     o.addOption("O", "ontology-iri", true, "set the output ontology IRI");
     o.addOption("V", "version-iri", true, "set the output version IRI");
     o.addOption("t", "template", true, "read template from a file");
-    o.addOption("A", "ancestors", false, "MIREOT ancestors into results");
+    o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
     o.addOption("m", "merge-before", false, "merge into input ontology before any output");
     o.addOption("M", "merge-after", false, "merge into input ontology after any output");
     o.addOption(
         "c", "collapse-import-closure", true, "if true, collapse the import closure when merging");
     o.addOption(
-        "a", "include-annotations", true, "if true, include ontology annotations from merge input");
+        "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     options = o;
   }
 
@@ -135,7 +135,7 @@ public class TemplateCommand implements Command {
     OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null, ioHelper);
 
     boolean collapseImports =
-        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", true);
+        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
     boolean includeAnnotations =
         CommandLineHelper.getBooleanValue(line, "include-annotations", false);
 
