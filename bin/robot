@@ -25,7 +25,7 @@ while [ -h "$ROBOT_SCRIPT" ] ; do
 done
 
 # Directory that contains the this script
-DIR="$(dirname $ROBOT_SCRIPT)"
+DIR=$(dirname "$ROBOT_SCRIPT")
 
 if [ $IS_CYGWIN = "TRUE" ]
 then
