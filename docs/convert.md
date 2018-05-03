@@ -13,9 +13,28 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
   - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
   - ttl - [Turtle](https://www.w3.org/TR/turtle/)
 
+By default, the OBO writer strictly enforces [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4). If an ontology violates these, the convert to OBO operation will fail. These checks can be ignored by including `--check false`.
+
+As a document is converted to OBO, you may see `ERROR MASKING ERROR` exceptions. This does not indicate failure, but it should be noted that these axioms will not be translated to OBO format. Rather, they will be included in the ontology header under `owl-axioms`. See [Untranslatable OWL axioms](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.0.4) for more details.
+
+You can choose to keep these in the file, or remove them with:
+```
+grep -v ^owl-axioms
+```
+
 ---
 
 ## Error Messages
+
+### Check Arg Error
+
+`--check` only accepts `true` or `false` (not case sensitive) as arguments. By default, `--check` is true and the OBO document structure checks are performed.
+
+### OBO Structure Error
+
+If `--check` is true (which, by default, it is), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. You may choose to review the exception message by running the command again with `--very-very-verbose`, or run `convert` with the `--check false` option to ignore the errors.
+
+Please note that `--check false` may result in some unintended output. For example, for terms with more than one definition annotation, a defintion will be chosen at random.
 
 ### Output Error
 
@@ -34,3 +53,4 @@ Incorrect:
 ```
 --output release
 ```
+

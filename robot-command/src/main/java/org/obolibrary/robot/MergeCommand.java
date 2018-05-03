@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -29,11 +28,8 @@ public class MergeCommand implements Command {
     o.addOption("p", "inputs", true, "merge ontologies matching wildcard pattern");
     o.addOption("o", "output", true, "save merged ontology to a file");
     o.addOption(
-        "c",
-        "collapse-import-closure",
-        true,
-        "if value=true, then the imports closure will be merged");
-
+        "c", "collapse-import-closure", true, "if true, the imports closure will be merged");
+    o.addOption("a", "include-annotations", true, "if true, ontology annotations will be merged");
     options = o;
   }
 
@@ -117,9 +113,12 @@ public class MergeCommand implements Command {
     }
     inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
-    Map<String, String> mergeOptions = MergeOperation.getDefaultOptions();
-
-    OWLOntology outputOntology = MergeOperation.merge(inputOntologies, mergeOptions);
+    boolean collapseImportClosure =
+        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
+    boolean includeAnnotations =
+        CommandLineHelper.getBooleanValue(line, "include-annotations", false);
+    OWLOntology outputOntology =
+        MergeOperation.merge(inputOntologies, includeAnnotations, collapseImportClosure);
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
