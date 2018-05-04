@@ -1,0 +1,4 @@
+BFO:0000051
+http://purl.obolibrary.org/obo/emr_test#capable_of
+RO:0002007
+RO:0002131
