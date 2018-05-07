@@ -6,6 +6,7 @@ import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
+import com.google.common.collect.Sets;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import java.io.BufferedWriter;
@@ -241,7 +242,7 @@ public class IOHelper {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
 
     if (!ontologyFile.exists()) {
-      throw new IllegalArgumentException("File " + ontologyFile.getName() + " does not exist");
+      throw new IllegalArgumentException("Ontology " + ontologyFile.getName() + " does not exist");
     }
 
     Object jsonObject = null;
@@ -275,7 +276,10 @@ public class IOHelper {
 
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       if (catalogFile != null && catalogFile.isFile()) {
-        manager.addIRIMapper(new CatalogXmlIRIMapper(catalogFile));
+        manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
+      } else {
+        logger.warn(
+            "Catalog {} does not exist. Loading ontology without catalog.", catalogFile.getPath());
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError e) {
@@ -304,16 +308,42 @@ public class IOHelper {
   }
 
   /**
-   * Load an ontology from the web using an IRI.
+   * Given an ontology IRI, load the ontology from the IRI.
    *
    * @param ontologyIRI the ontology IRI to load
-   * @return a new ontology objects, with a new OWLManager
+   * @return a new ontology object, with a new OWLManager
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI) throws IOException {
     OWLOntology ontology = null;
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+      ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
+    } catch (OWLOntologyCreationException e) {
+      throw new IOException(e);
+    }
+    return ontology;
+  }
+
+  /**
+   * Given an IRI and a path to a catalog file, load the ontology from the IRI with the catalog.
+   *
+   * @param ontologyIRI the ontology IRI to load
+   * @param catalogPath the catalog file to use
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(IRI ontologyIRI, String catalogPath) throws IOException {
+    OWLOntology ontology = null;
+    File catalogFile = new File(catalogPath);
+    if (!catalogFile.isFile() || catalogFile == null) {
+      // TODO: should this be an exception?
+      logger.warn(
+          "Catalog {} does not exist. Loading ontology without catalog.", catalogPath);
+    }
+    try {
+      OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+      manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
