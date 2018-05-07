@@ -147,8 +147,8 @@ public class ReasonCommand implements Command {
         reasonerOptions.put(option, line.getOptionValue(option));
       }
     }
-    if (reasonerOptions.containsKey("create-new-ontology-with-annotations")
-        && reasonerOptions.containsKey("create-new-ontology")) {
+    if (reasonerOptions.get("create-new-ontology-with-annotations").equalsIgnoreCase("true")
+        && reasonerOptions.get("create-new-ontology").equalsIgnoreCase("true")) {
       throw new IllegalArgumentException(createOntologyError);
     }
     ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
