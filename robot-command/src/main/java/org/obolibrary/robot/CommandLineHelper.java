@@ -685,7 +685,7 @@ public class CommandLineHelper {
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
     o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
-    o.addOption("g", "catalog", true, "use catalog from provided file");
+    o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");

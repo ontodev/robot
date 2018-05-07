@@ -338,8 +338,7 @@ public class IOHelper {
     File catalogFile = new File(catalogPath);
     if (!catalogFile.isFile() || catalogFile == null) {
       // TODO: should this be an exception?
-      logger.warn(
-          "Catalog {} does not exist. Loading ontology without catalog.", catalogPath);
+      logger.warn("Catalog {} does not exist. Loading ontology without catalog.", catalogPath);
     }
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
