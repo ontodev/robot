@@ -235,6 +235,29 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given a command line, an argument name, the boolean default value, and boolean if the arg is
+   * optional, return the value of the command-line option 'name'.
+   *
+   * @param line the command line to use
+   * @param name the name of the option to find
+   * @param defaultValue the default value to use if the option is not provided
+   * @param optionalArg if true, the option without an arg will return true
+   * @return the option value as boolean, or the default if not found
+   */
+  public static boolean getBooleanValue(
+      CommandLine line, String name, boolean defaultValue, boolean optionalArg) {
+    if (line.hasOption(name)) {
+      if (CommandLineHelper.getOptionalValue(line, name) == null) {
+        return true;
+      } else {
+        return CommandLineHelper.getBooleanValue(line, name, defaultValue);
+      }
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * Get the boolean value of a command-line option with the given name.
    *
    * @param line the command line to use

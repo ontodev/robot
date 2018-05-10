@@ -17,39 +17,50 @@ public class ReasonCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReasonCommand.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "reason#";
+
+  /** Error message when user sets -m true and -n true. */
+  private static final String createOntologyError =
+      NS
+          + "CREATE ONTOLOGY ERROR 'create-new-ontology' and 'create-new-ontology-with-annotations'"
+          + " cannot both be set to true.";
+
   /** Store the command-line options for the command. */
   private Options options;
 
   /** Initialize the command. */
   public ReasonCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("r", "reasoner", true, "reasoner to use: (ELK, HermiT, JFact)");
-    o.addOption("s", "remove-redundant-subclass-axioms", true, "remove redundant subclass axioms");
+    o.addOption("r", "reasoner", true, "reasoner to use: ELK, HermiT, JFact");
+    o.addOption(
+        "s", "remove-redundant-subclass-axioms", true, "if true, remove redundant subclass axioms");
     o.addOption(
         "n",
         "create-new-ontology",
         true,
-        "switch to a new ontology containing only the inferences");
+        "if true, output ontology will only contain the inferences");
     o.addOption(
         "m",
         "create-new-ontology-with-annotations",
         true,
-        "switch to a new ontology containing only the inferences and annotation properties");
+        "if true, output ontology will contain the inferences and their annotation properties");
     o.addOption(
         "a",
         "annotate-inferred-axioms",
         true,
-        "annotate all inferred axioms (only when -n is passed)");
+        "if true, annotate inferred axioms with 'is_inferred true'");
     o.addOption(
-        "x", "exclude-duplicate-axioms", true, "do not add an axiom if it exists in import chain");
+        "x",
+        "exclude-duplicate-axioms",
+        true,
+        "if true, do not add an axiom if it exists in import chain");
     o.addOption(
         "e",
         "equivalent-classes-allowed",
         true,
-        "if none then detecting equivalent classes exits with error, if"
-            + " all then all equivalent classes are allowed, and if "
-            + "asserted-only then only detecting equivalent classes which "
-            + "are already asserted are allowed, otherwise exit");
+        "if 'none', any equivalent class will cause an error, if 'all', all equivalent classes are "
+            + "allowed, and if 'asserted-only', inferred equivalent classes will cause an error.");
     o.addOption("i", "input", true, "reason ontology from a file");
     o.addOption("I", "input-iri", true, "reason ontology from an IRI");
     o.addOption("o", "output", true, "save reasoned ontology to a file");
@@ -135,6 +146,10 @@ public class ReasonCommand implements Command {
       if (line.hasOption(option)) {
         reasonerOptions.put(option, line.getOptionValue(option));
       }
+    }
+    if (reasonerOptions.get("create-new-ontology-with-annotations").equalsIgnoreCase("true")
+        && reasonerOptions.get("create-new-ontology").equalsIgnoreCase("true")) {
+      throw new IllegalArgumentException(createOntologyError);
     }
     ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 

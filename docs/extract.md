@@ -16,7 +16,7 @@ The `--method` options fall into two groups: Minimal Information for Reuse of Ex
 - TOP: use the SLME to extract a top module
 - BOT: use the SLME to extract a bottom module
 
-For MIREOT, both "upper" (ancestor) and "lower" (descendant) limits must be specified, like this:
+For MIREOT, both "upper" (ancestor) and "lower" (descendant) limits can be specified, like this:
 
     robot extract --method MIREOT \
         --input uberon_fragment.owl \
@@ -25,7 +25,7 @@ For MIREOT, both "upper" (ancestor) and "lower" (descendant) limits must be spec
         --lower-term "obo:UBERON_0002369" \
         --output results/uberon_mireot.owl
 
-To specify upper and lower term files, use `--upper-terms` and `--lower-terms`.
+To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. The upper terms are the upper boundaries of what will be extracted. If no upper term is specified, all terms up to the root (`owl:Thing`) will be returned. The lower term (or terms) is required; this is the limit to what will be extracted, e.g. no descendants of the lower term will be included in the result.
 
 NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first [merge](/merge).
 
