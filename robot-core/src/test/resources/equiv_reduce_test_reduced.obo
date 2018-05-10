@@ -1,0 +1,13 @@
+ontology: redundant_expr
+
+[Term]
+id: X:1
+is_a: G:1
+relationship: part_of Y:2
+intersection_of: G:1
+intersection_of: part_of Y:2
+
+[Typedef]
+id: part_of
+xref: BFO:0000050
+is_transitive: true

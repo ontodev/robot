@@ -5,83 +5,75 @@ import org.semanticweb.owlapi.model.OWLEntity;
 
 /**
  * Represents a reference violation
- * 
- * TODO: we may want to make warnings if a class is slated for deprecation in the future:
- * see https://github.com/information-artifact-ontology/ontology-metadata/issues/22
- * 
- * @author cjm
  *
+ * <p>TODO: we may want to make warnings if a class is slated for deprecation in the future: see
+ * https://github.com/information-artifact-ontology/ontology-metadata/issues/22
+ *
+ * @author cjm
  */
 public class InvalidReferenceViolation {
-    
-    final private OWLAxiom axiom;
-    final private OWLEntity referencedObject;
-    final private Category category;
 
-    private InvalidReferenceViolation(OWLAxiom axiom,
-            OWLEntity referencedObject, Category category) {
-        super();
-        this.axiom = axiom;
-        this.referencedObject = referencedObject;
-        this.category = category;
-    }
-    
-    /**
-     * @param axiom the OWLAxiom containing invalid reference
-     * @param referencedObject the OWLEntity that is dangling or deprecated
-     * @param category the Category of violation (deprecated or dangling)
-     * @return new instance
-     */
-    public static InvalidReferenceViolation create(OWLAxiom axiom,
-            OWLEntity referencedObject, Category category) {
-        return new InvalidReferenceViolation(axiom, referencedObject, category);
-    }
+  private final OWLAxiom axiom;
+  private final OWLEntity referencedObject;
+  private final Category category;
 
-    /**
-     * @return the axiom that contains the invalid reference
-     */
-    public OWLAxiom getAxiom() {
-        return axiom;
-    }
+  private InvalidReferenceViolation(OWLAxiom axiom, OWLEntity referencedObject, Category category) {
+    super();
+    this.axiom = axiom;
+    this.referencedObject = referencedObject;
+    this.category = category;
+  }
 
-    /**
-     * @return the referencedObject that is either deprecated or dangling
-     */
-    public OWLEntity getReferencedObject() {
-        return referencedObject;
-    }
+  /**
+   * @param axiom the OWLAxiom containing invalid reference
+   * @param referencedObject the OWLEntity that is dangling or deprecated
+   * @param category the Category of violation (deprecated or dangling)
+   * @return new instance
+   */
+  public static InvalidReferenceViolation create(
+      OWLAxiom axiom, OWLEntity referencedObject, Category category) {
+    return new InvalidReferenceViolation(axiom, referencedObject, category);
+  }
 
-    /**
-     * @return the category of violation (deprecated or dangling)
-     */
-    public Category getCategory() {
-        return category;
-    }
+  /** @return the axiom that contains the invalid reference */
+  public OWLAxiom getAxiom() {
+    return axiom;
+  }
 
-    /**
-     * A reference may be invalid for different reasons
-     * 
-     *  - the referenced object may be deprecated
-     *  - the referenced object may be dangling
-     * 
-     * @author cjm
-     *
-     */
-    public enum Category {
-        DANGLING, DEPRECATED
-    }
+  /** @return the referencedObject that is either deprecated or dangling */
+  public OWLEntity getReferencedObject() {
+    return referencedObject;
+  }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        // TODO: pretty-printer
-        return "InvalidReferenceViolation [axiom=" + axiom
-                + ", referencedObject=" + referencedObject + ", category="
-                + category + "]";
-    }
-    
-    
+  /** @return the category of violation (deprecated or dangling) */
+  public Category getCategory() {
+    return category;
+  }
 
+  /**
+   * A reference may be invalid for different reasons
+   *
+   * <p>- the referenced object may be deprecated - the referenced object may be dangling
+   *
+   * @author cjm
+   */
+  public enum Category {
+    DANGLING,
+    DEPRECATED
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString() {
+    // TODO: pretty-printer
+    return "InvalidReferenceViolation [axiom="
+        + axiom
+        + ", referencedObject="
+        + referencedObject
+        + ", category="
+        + category
+        + "]";
+  }
 }

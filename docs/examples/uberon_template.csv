@@ -1,0 +1,4 @@
+ID,Label,Definition,Definition Source,See Also,Editor,RDF Type,Class Type,Parent IRI
+ID,A rdfs:label,A IAO:0000115,A IAO:0000119,AI rdfs:seeAlso,A IAO:0000117,TYPE,CLASS_TYPE,CI
+UBERON:0000995,brain,The brain is the center of the nervous system in all vertebrate...,UBERON,http://en.wikipedia.org/wiki/Brain,Becky Tauber,owl:Class,subclass,UBERON:0000062
+UBERON:0000211,ligament,Dense regular connective tissue...,UBERON,http://purl.obolibrary.org/obo/go/references/0000034,Becky Tauber,owl:Class,subclass,UBERON:0000062
