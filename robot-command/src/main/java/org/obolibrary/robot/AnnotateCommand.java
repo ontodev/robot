@@ -170,7 +170,7 @@ public class AnnotateCommand implements Command {
 
     boolean hasAnnotation = false;
     boolean removeAnnotations =
-        CommandLineHelper.getBooleanValue(line, "remove-annotations", false, true);
+        CommandLineHelper.getBooleanValue(line, "remove-annotations", false);
     if (removeAnnotations) {
       hasAnnotation = true;
       OntologyHelper.removeOntologyAnnotations(ontology);
