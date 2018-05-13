@@ -18,6 +18,18 @@ WARN:       572
 ERROR:      109
 ```
 
+## Failing
+
+By default, `report` will fail if any `ERROR`-level violations are found. This can be changed by setting the `--fail-on` level to a different logging level. For example, if you want your report to fail if there are any `WARN`-level violations:
+<!-- DO NOT TEST -->
+```
+robot report --input edit.owl \
+  --fail-on WARN \
+  --output report.tsv
+```
+
+If the report fails, the command will exit with a status of `1`, but a report will still be generated and written to the output file. To always pass (even with errors), change the level to `--fail-on none`.
+
 ## Queries
 
 `report` includes a set of 15 QC queries, each with a default logging level.

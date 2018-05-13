@@ -27,7 +27,6 @@ import org.apache.commons.io.FileUtils;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,13 +72,31 @@ public class ReportOperation {
    * @param format string format for the output report (TSV or YAML), or null
    * @throws Exception on any error
    */
-  public static void report(
-      OWLOntology ontology, String profilePath, String outputPath, String format) throws Exception {
+  public static boolean report(
+      OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
+      throws Exception {
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
-    Report report = createReport(ontology, profile, queries);
+
+    Report report = new Report();
+    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
+    for (String queryName : queries.keySet()) {
+      report.addViolations(
+          queryName, profile.get(queryName), getViolations(dsg, queries.get(queryName)));
+    }
+    Integer violationCount = report.getTotalViolations();
+    if (violationCount != 0) {
+      System.out.println("Violations: " + violationCount);
+      System.out.println("-----------------");
+      System.out.println("INFO:       " + report.getTotalViolations(INFO));
+      System.out.println("WARN:       " + report.getTotalViolations(WARN));
+      System.out.println("ERROR:      " + report.getTotalViolations(ERROR));
+    } else {
+      System.out.println("No violations found.");
+    }
+
     // System.out.println(report.getIRIs());
     String result;
     if (format != null && format.equalsIgnoreCase("yaml")) {
@@ -99,39 +116,21 @@ public class ReportOperation {
       // Otherwise output to terminal
       System.out.println(result);
     }
-  }
 
-  /**
-   * Given an ontology and a set of queries, create a report containing all violations. Violations
-   * are added based on the query results. If there are no violations, the Report will pass and no
-   * Report object will be returned.
-   *
-   * @param ontology OWLOntology to report on
-   * @param queries set of CheckerQueries
-   * @return Report (on violations) or null (on no violations)
-   * @throws OWLOntologyStorageException on issue loading ontology as DatasetGraph
-   * @throws Exception
-   */
-  private static Report createReport(
-      OWLOntology ontology, Map<String, String> profile, Map<String, String> queries)
-      throws OWLOntologyStorageException {
-    Report report = new Report();
-    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
-    for (String queryName : queries.keySet()) {
-      report.addViolations(
-          queryName, profile.get(queryName), getViolations(dsg, queries.get(queryName)));
-    }
-    Integer violationCount = report.getTotalViolations();
-    if (violationCount != 0) {
-      System.out.println("Violations: " + violationCount);
-      System.out.println("-----------------");
-      System.out.println("INFO:       " + report.getTotalViolations(INFO));
-      System.out.println("WARN:       " + report.getTotalViolations(WARN));
-      System.out.println("ERROR:      " + report.getTotalViolations(ERROR));
+    // If a fail-on is provided, return false if there are violations of the given level
+    if (failOn.equalsIgnoreCase("none")) {
+      return true;
+    } else if (failOn.equalsIgnoreCase("error") && report.getTotalViolations(ERROR) > 0) {
+      return false;
+    } else if (failOn.equalsIgnoreCase("warn")
+        && (report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) > 0) {
+      return false;
+    } else if (failOn.equalsIgnoreCase("info") && report.getTotalViolations() > 0) {
+      return false;
     } else {
-      System.out.println("No violations found.");
+      throw new IllegalArgumentException();
+      // TODO: throw exception
     }
-    return report;
   }
 
   /**
