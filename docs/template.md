@@ -73,27 +73,34 @@ robot template --merge-before true --input edit.owl \
 ```
 
 Create two outputs - the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):
-
-    robot template --merge-after true \
-      --input edit.owl \
-      --template uberon_template.csv \
-      --output results/uberon_template.owl \
-      annotate --annotation rdfs:comment "UBERON with new terms" \
-      --output results/uberon_v2.owl
+<!-- DO NOT TEST -->
+```
+robot template --merge-after true \
+  --input edit.owl \
+  --template uberon_template.csv \
+  --output results/uberon_template.owl \
+  annotate --annotation rdfs:comment "UBERON with new terms" \
+  --output results/uberon_v2.owl
+```
 
 Create an output ontology that consists of the template terms plus their dependencies ([`uberon_template_2.owl`](/examples/uberon_template_2.owl)):
-
-    robot template --ancestors true --input edit.owl \
-      --template uberon_template.csv \
-      --output results/uberon_template_2.owl
+<!-- DO NOT TEST -->
+```
+robot template --ancestors true --input edit.owl \
+  --template uberon_template.csv \
+  --ontology-iri "https://github.com/ontodev/robot/examples/uberon_template_2.owl" \
+  --output results/uberon_template_2.owl
+```
 
 Create an output ontology that includes the input ontology and the terms defined in the template, but keep the import statements* ([`test_template.owl`](/examples/test_template.owl)):
-
-    robot template --merge-before true \
-      --input test.owl \
-      --collapse-import-closure false \
-      --template uberon_template.csv \
-      --output results/test_template.owl
+<!-- DO NOT TEST -->
+```
+robot template --merge-before true \
+  --input test.owl \
+  --collapse-import-closure false \
+  --template uberon_template.csv \
+  --output results/test_template.owl
+```
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
 
