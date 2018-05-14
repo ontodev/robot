@@ -54,7 +54,6 @@ public class AnnotateCommand implements Command {
   /** Initialize the command. */
   public AnnotateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("R", "remove-annotations", false, "remove all annotations on the ontology");
     o.addOption("A", "annotation-file", true, "add annotation from a file");
     o.addOption("O", "ontology-iri", true, "set the ontology IRI");
     o.addOption("V", "version-iri", true, "set the ontology version IRI");
@@ -63,33 +62,38 @@ public class AnnotateCommand implements Command {
     o.addOption("o", "output", true, "save ontology to a file");
     options = o;
 
-    Option a;
+    // This option should be used with boolean values
+    // Originally, this option had no args, so the arg is optional for backwards compatibility
+    Option a =
+        new Option("R", "remove-annotations", true, "remove all annotations on the ontology");
+    a.setOptionalArg(true);
+    o.addOption(a);
 
-    // Annotate with a property and plain literal
+    // Annotate with a property and plain literal - expects 2 args
     a = new Option("a", "annotate ontology with PROP VALUE");
     a.setLongOpt("annotation");
     a.setArgs(2);
     options.addOption(a);
 
-    // Annotate with a property and plain literal
+    // Annotate with a property and plain literal - expects 2 args
     a = new Option("k", "annotate ontology with PROP IRI");
     a.setLongOpt("link-annotation");
     a.setArgs(2);
     options.addOption(a);
 
-    // Annotate with a property and a plain literal with a language tag
+    // Annotate with a property and a plain literal with a language tag - expects 3 args
     a = new Option("l", "annotate ontology with PROP VALUE LANG");
     a.setLongOpt("language-annotation");
     a.setArgs(3);
     options.addOption(a);
 
-    // Annotate with a property and a typed literal with a language tag
-    a = new Option("t", "annotate ontology with PROP VALUE LANG");
+    // Annotate with a property and a typed literal with a language tag - expects 3 args
+    a = new Option("t", "annotate ontology with PROP VALUE TYPE");
     a.setLongOpt("typed-annotation");
     a.setArgs(3);
     options.addOption(a);
 
-    // Annotate with a property and a typed literal with a language tag
+    // Annotate with a property and a typed literal with a language tag - expects 3 args
     a = new Option("x", "annotate all axioms in the ontology " + "with PROP VALUE");
     a.setLongOpt("axiom-annotation");
     a.setArgs(3);
@@ -163,10 +167,11 @@ public class AnnotateCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
-    boolean hasAnnotation = false;
 
-    // Remove all annotation on the ontology
-    if (line.hasOption("remove-annotations")) {
+    boolean hasAnnotation = false;
+    boolean removeAnnotations =
+        CommandLineHelper.getBooleanValue(line, "remove-annotations", false);
+    if (removeAnnotations) {
       hasAnnotation = true;
       OntologyHelper.removeOntologyAnnotations(ontology);
     }
@@ -263,7 +268,7 @@ public class AnnotateCommand implements Command {
     }
     if (ontologies.size() > 0) {
       hasAnnotation = true;
-      MergeOperation.mergeInto(ontologies, ontology, true);
+      MergeOperation.mergeInto(ontologies, ontology, true, false);
     }
 
     // Set ontology and version IRI
