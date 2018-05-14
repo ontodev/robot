@@ -87,8 +87,8 @@ public class AnnotateCommand implements Command {
     a.setArgs(3);
     options.addOption(a);
 
-    // Annotate with a property and a typed literal with a language tag - expects 3 args
-    a = new Option("t", "annotate ontology with PROP VALUE LANG");
+    // Annotate with a property and a typed literal with a type tag - expects 3 args
+    a = new Option("t", "annotate ontology with PROP VALUE TYPE");
     a.setLongOpt("typed-annotation");
     a.setArgs(3);
     options.addOption(a);
@@ -268,7 +268,7 @@ public class AnnotateCommand implements Command {
     }
     if (ontologies.size() > 0) {
       hasAnnotation = true;
-      MergeOperation.mergeInto(ontologies, ontology, true);
+      MergeOperation.mergeInto(ontologies, ontology, true, false);
     }
 
     // Set ontology and version IRI
