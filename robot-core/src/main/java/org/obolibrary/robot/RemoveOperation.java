@@ -57,9 +57,19 @@ public class RemoveOperation {
       OWLOntology ontology, OWLEntity entity, Set<Class<? extends OWLAxiom>> axiomTypes) {
     logger.debug("Removing from ontology: " + entity);
     Set<OWLAxiom> axioms = new HashSet<>();
+    Set<OWLAxiom> strippedAxioms = new HashSet<>();
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
     // Add any referencing axioms of the correct type to the set to be removed
     for (OWLAxiom axiom : EntitySearcher.getReferencingAxioms(entity, ontology)) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        if (axiom.isAnnotated()) {
+          // If the entity to remove is only in the annotation of the axiom, make sure the
+          // un-annotated axiom gets added back into the ontology
+          OWLAxiom stripped = axiom.getAxiomWithoutAnnotations();
+          if (!stripped.containsEntityInSignature(entity)) {
+            strippedAxioms.add(stripped);
+          }
+        }
         axioms.add(axiom);
       }
     }
@@ -68,8 +78,9 @@ public class RemoveOperation {
       axioms.addAll(EntitySearcher.getAnnotationAssertionAxioms(entity, ontology));
     }
     // Remove all the axioms in the set
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
     manager.removeAxioms(ontology, axioms);
+    // Add in any axioms that have had annotations stripped
+    manager.addAxioms(ontology, strippedAxioms);
   }
 
   /**
