@@ -110,7 +110,6 @@ public class MergeOperation {
    * @param targetOntology the ontology to merge axioms into
    * @param includeAnnotations if true, ontology annotations should be merged; annotations on
    *     imports are not merged
-   * @param collapseImportsClosure if true, imports closure from all ontologies included
    */
   public static void mergeInto(
       List<OWLOntology> ontologies, OWLOntology targetOntology, boolean includeAnnotations) {
