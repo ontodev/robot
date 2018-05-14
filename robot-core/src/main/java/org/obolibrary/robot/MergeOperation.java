@@ -99,11 +99,29 @@ public class MergeOperation {
     // By default, do not include annotations and do not collapse import closure
     mergeInto(ontologies, targetOntology, false, false);
   }
+  
+  /**
+   * Given one or more ontologies and a target ontology, add all the axioms from the listed
+   * ontologies to the target ontology. Optionally, include annotations from the ontologies
+   * in the list. It is recommended to use mergeInto with both includeAnnotations and
+   * collapseImportsClosure options.
+   *
+   * @param ontology the source ontology to merge
+   * @param targetOntology the ontology to merge axioms into
+   * @param includeAnnotations if true, ontology annotations should be merged; annotations on
+   *     imports are not merged
+   * @param collapseImportsClosure if true, imports closure from all ontologies included
+   */
+  public static void mergeInto(
+      List<OWLOntology> ontologies, OWLOntology targetOntology, boolean includeAnnotations) {
+    // By default, do not collapse the imports closure
+    mergeInto(ontologies, targetOntology, includeAnnotations, false);
+  }
 
   /**
-   * Given a source ontology and a target ontology, add all the axioms from the source ontology and
-   * its import closure into the target ontology. The target ontology is not itself merged, so any
-   * of its imports remain distinct.
+   * Given a source ontology and a target ontology, add all the axioms from the source ontology
+   * into the target ontology. Optionally, include annotations from the source and/or collapse
+   * the imports closures.
    *
    * @param ontology the source ontology to merge
    * @param targetOntology the ontology to merge axioms into
