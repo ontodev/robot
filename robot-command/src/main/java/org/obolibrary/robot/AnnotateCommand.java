@@ -88,7 +88,7 @@ public class AnnotateCommand implements Command {
     options.addOption(a);
 
     // Annotate with a property and a typed literal with a language tag - expects 3 args
-    a = new Option("t", "annotate ontology with PROP VALUE LANG");
+    a = new Option("t", "annotate ontology with PROP VALUE TYPE");
     a.setLongOpt("typed-annotation");
     a.setArgs(3);
     options.addOption(a);
