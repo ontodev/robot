@@ -3,6 +3,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE 
   {VALUES ?property {rdfs:label}
-   ?entity owl:deprecated true .
+   ?entity owl:deprecated ?dep .
+   FILTER regex(str(?dep), "true") .
    ?entity ?property ?value .
    FILTER (!regex(?value, "^obsolete|^OBSOLETE"))}

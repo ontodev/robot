@@ -158,6 +158,7 @@ public class Report {
    */
   public String toTSV() {
     StringBuilder sb = new StringBuilder();
+    sb.append("Level\tRule Name\tSubject\tProperty\tValue\n");
     sb.append(tsvHelper(ERROR, error));
     sb.append(tsvHelper(WARN, warn));
     sb.append(tsvHelper(INFO, info));

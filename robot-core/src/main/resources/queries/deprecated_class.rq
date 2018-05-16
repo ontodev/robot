@@ -1,6 +1,0 @@
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
-SELECT DISTINCT ?entity2 ?property ?entity WHERE 
-  {?entity owl:deprecated true .
-   ?entity2 a owl:Class .
-   ?entity2 ?property ?entity }

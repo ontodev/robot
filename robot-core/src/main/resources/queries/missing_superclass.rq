@@ -7,4 +7,5 @@ SELECT DISTINCT ?entity ?property ?value WHERE
    FILTER (!isBlank(?entity)) .
    FILTER NOT EXISTS {?entity ?property ?value} .
    FILTER NOT EXISTS 
-     {FILTER EXISTS {?entity owl:deprecated true}}}
+     {FILTER EXISTS {?entity owl:deprecated ?dep .
+                     FILTER regex(str(?dep), "true")}}}

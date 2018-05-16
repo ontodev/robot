@@ -67,10 +67,10 @@ You can provide your own queries to use in the report (which can be included in 
 
 ## Profiles
 
-Each QC query is given the corresponding logging level shown above in the [default profile](/). The profile is a simple text file with a logging level followed by the query name (separated by whitespace). Each line represents one query configuration:
+Each QC query is given the corresponding logging level shown above in the [default profile](/). The profile is a simple text file with a logging level followed by the query name (separated by a tab). Each line represents one query configuration:
 ```
-ERROR  definition_cardinality
-INFO   deprecated_class
+ERROR	definition_cardinality
+INFO	deprecated_class
 ```
 
 `report` allows the user to define their own profile to configure different logging levels and include their own QC queries with the `--profile` option:
@@ -85,8 +85,8 @@ For all default queries, include the query name shown above. If you do not wish 
 
 This example would create a report with references to deprecated classes as ERROR and the user query violations as INFO:
 ```
-ERROR  deprecated_class
-INFO   file://path/to/other_query.rq
+ERROR	deprecated_class
+INFO	file:///absolute/path/to/other_query.rq
 ```
 
 ---

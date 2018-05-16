@@ -47,6 +47,9 @@ public class ReportOperation {
   /** Namespace for general input error messages. */
   private static final String NS = "report#";
 
+  /** Error message when user profiles an invalid fail-on level. */
+  private static final String failOnError = NS + "FAIL ON ERROR '%s' is not a valid fail-on level.";
+
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
@@ -90,9 +93,9 @@ public class ReportOperation {
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
       System.out.println("-----------------");
-      System.out.println("INFO:       " + report.getTotalViolations(INFO));
-      System.out.println("WARN:       " + report.getTotalViolations(WARN));
       System.out.println("ERROR:      " + report.getTotalViolations(ERROR));
+      System.out.println("WARN:       " + report.getTotalViolations(WARN));
+      System.out.println("INFO:       " + report.getTotalViolations(INFO));
     } else {
       System.out.println("No violations found.");
     }
@@ -120,16 +123,26 @@ public class ReportOperation {
     // If a fail-on is provided, return false if there are violations of the given level
     if (failOn.equalsIgnoreCase("none")) {
       return true;
-    } else if (failOn.equalsIgnoreCase("error") && report.getTotalViolations(ERROR) > 0) {
-      return false;
-    } else if (failOn.equalsIgnoreCase("warn")
-        && (report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) > 0) {
-      return false;
-    } else if (failOn.equalsIgnoreCase("info") && report.getTotalViolations() > 0) {
-      return false;
+    } else if (failOn.equalsIgnoreCase("error")) {
+      if (report.getTotalViolations(ERROR) > 0) {
+        return false;
+      } else {
+        return true;
+      }
+    } else if (failOn.equalsIgnoreCase("warn")) {
+      if ((report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) > 0) {
+        return false;
+      } else {
+        return true;
+      }
+    } else if (failOn.equalsIgnoreCase("info")) {
+      if (report.getTotalViolations() > 0) {
+        return false;
+      } else {
+        return true;
+      }
     } else {
-      throw new IllegalArgumentException();
-      // TODO: throw exception
+      throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
   }
 
@@ -275,7 +288,7 @@ public class ReportOperation {
     try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
       String line;
       while ((line = br.readLine()) != null) {
-        String[] split = line.trim().split(" +");
+        String[] split = line.trim().split("\t");
         String level = split[0].toUpperCase();
         // The level should be: INFO, WARN, or ERROR
         if (!INFO.equals(level) && !WARN.equals(level) && !ERROR.equals(level)) {
