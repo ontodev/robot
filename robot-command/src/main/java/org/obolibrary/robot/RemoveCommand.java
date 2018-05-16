@@ -162,6 +162,8 @@ public class RemoveCommand implements Command {
             named = true;
           } else if (s.equalsIgnoreCase("anonymous")) {
             anonymous = true;
+          } else if (s.equalsIgnoreCase("imports")) {
+            RemoveOperation.removeImports(ontology);
           } else {
             throw new IllegalArgumentException(String.format(selectError, s));
           }

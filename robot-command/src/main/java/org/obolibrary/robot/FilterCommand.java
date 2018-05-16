@@ -229,6 +229,7 @@ public class FilterCommand implements Command {
       OntologyHelper.trimDangling(outputOntology);
     }
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
+    state.setOntology(outputOntology);
     return state;
   }
 

@@ -54,7 +54,7 @@ public class MergeOperation {
     mergeInto(ontologies, ontology, includeAnnotations, collapseImportClosure);
     return ontology;
   }
-  
+
   /**
    * Given one or more ontologies, add all their axioms (including their imports closures) into the
    * first ontology, and return the first ontology. Replaced by with method using explicit options;
