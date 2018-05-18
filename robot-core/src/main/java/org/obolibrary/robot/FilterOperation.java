@@ -25,7 +25,7 @@ public class FilterOperation {
   /**
    * Given an input ontology, a set of entities, and a set of axiom types, return a new ontology
    * containing only the desired entities and the desired axiom types.
-   * 
+   *
    * @param inputOntology ontology to filter
    * @param entities entities to keep
    * @param axiomTypes axiom types to keep
@@ -57,7 +57,6 @@ public class FilterOperation {
       boolean includeAnnotations)
       throws OWLOntologyCreationException {
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
-    // TODO: should this automatically copy the ID?
     OWLOntology outputOntology = outputManager.createOntology(inputOntology.getOntologyID());
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLEntity entity : entities) {
@@ -106,7 +105,6 @@ public class FilterOperation {
       Set<Class<? extends OWLAxiom>> axiomTypes)
       throws OWLOntologyCreationException {
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
-    // TODO: should this automatically copy the ID?
     OWLOntology outputOntology = outputManager.createOntology(inputOntology.getOntologyID());
     Set<OWLAxiom> anonAxioms = new HashSet<>();
     for (RelationType rt : relationTypes) {

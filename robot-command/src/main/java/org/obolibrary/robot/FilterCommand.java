@@ -129,10 +129,6 @@ public class FilterCommand implements Command {
     for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
       entities.add(OntologyHelper.getEntity(inputOntology, iri));
     }
-    // If no entities were provided, add them all
-    if (entities.isEmpty()) {
-      entities.addAll(OntologyHelper.getEntities(inputOntology));
-    }
 
     // Get a set of axiom types
     Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
@@ -153,39 +149,48 @@ public class FilterCommand implements Command {
       boolean named = false;
       boolean anonymous = false;
       boolean includeAnnotations = false;
-      // Annotations should be alone
-      if (select.contains("=")) {
-        annotations.add(getAnnotations(ioHelper, select));
-      } else {
-        // Split on space, create a union of these relations
-        for (String s : select.split(" ")) {
-          if (RelationType.isRelationType(s.toLowerCase())) {
-            relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
-          } else if (s.equalsIgnoreCase("complement")) {
-            complement = true;
-          } else if (s.equalsIgnoreCase("named")) {
-            named = true;
-          } else if (s.equalsIgnoreCase("anonymous")) {
-            anonymous = true;
-          } else if (s.equalsIgnoreCase("annotations")) {
-            // If "annotations" is included, all annotations on the entities will be included,
-            // regardless of if the property is included in entities or not.
-            includeAnnotations = true;
-          } else {
-            throw new IllegalArgumentException(String.format(selectError, s));
-          }
+
+      // Split on space, create a union of these relations
+      for (String s : select.split(" ")) {
+        if (RelationType.isRelationType(s.toLowerCase())) {
+          relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
+        } else if (s.equalsIgnoreCase("complement")) {
+          complement = true;
+        } else if (s.equalsIgnoreCase("named")) {
+          named = true;
+        } else if (s.equalsIgnoreCase("anonymous")) {
+          anonymous = true;
+        } else if (s.equalsIgnoreCase("annotations")) {
+          // If "annotations" is included, all annotations on the entities will be included,
+          // regardless of if the property is included in entities or not.
+          includeAnnotations = true;
+        } else if (s.contains("=")) {
+          // This designates an annotation to find
+          annotations.add(getAnnotation(ioHelper, s));
+        } else {
+          throw new IllegalArgumentException(String.format(selectError, s));
         }
       }
+
+      // Add annotated entities to the set of entities
+      entities.addAll(RelatedEntitiesHelper.getAnnotated(inputOntology, annotations));
+      // If no entities were provided by entity or annotation, add them all
+      if (entities.isEmpty()) {
+        entities.addAll(OntologyHelper.getEntities(inputOntology));
+      }
+
       // If no relation type selections were provided, add in "self"
       if (relationTypes.isEmpty()) {
         relationTypes.add(RelationType.SELF);
       }
-      // (Maybe) get a complement set of the entity/entities provided
+
+      // Maybe get a complement set of the entity/entities provided
       if (complement) {
         Set<OWLEntity> complementSet =
             RelatedEntitiesHelper.getComplements(inputOntology, entities);
         entities = complementSet;
       }
+
       // Filter entities from ontology
       if (anonymous && !named) {
         // Filter only anonymous entities based on relations to given entities
@@ -208,13 +213,17 @@ public class FilterCommand implements Command {
             FilterOperation.filter(inputOntology, relatedEntities, axiomTypes, includeAnnotations));
         outputOntology = MergeOperation.merge(outputOntologies, false, false);
       }
+
       // Reset the input as the product of this set of selects
       inputOntology = outputOntology;
     }
+
     // Maybe trim dangling
     if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
       OntologyHelper.trimDangling(outputOntology);
     }
+
+    // Save output and return the new ontology as the state
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     state.setOntology(outputOntology);
     return state;
@@ -227,7 +236,7 @@ public class FilterCommand implements Command {
    * @param annotation String input
    * @return OWLAnnotation
    */
-  private static OWLAnnotation getAnnotations(IOHelper ioHelper, String annotation) {
+  private static OWLAnnotation getAnnotation(IOHelper ioHelper, String annotation) {
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
     IRI propertyIRI =
         CommandLineHelper.maybeCreateIRI(ioHelper, annotation.split("=")[0], "select");

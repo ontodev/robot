@@ -24,6 +24,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
 import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
@@ -264,7 +265,17 @@ public class CommandLineHelper {
     if (axiomTypeStrings.isEmpty()) {
       axiomTypeStrings.add("all");
     }
+    // Split if it's one arg with spaces
+    List<String> axiomTypeFixedStrings = new ArrayList<>();
     for (String axiom : axiomTypeStrings) {
+      if (axiom.contains(" ")) {
+        axiomTypeFixedStrings.addAll(Arrays.asList(axiom.split(" ")));
+      } else {
+        axiomTypeFixedStrings.add(axiom);
+      }
+    }
+    // Then get the actual types
+    for (String axiom : axiomTypeFixedStrings) {
       if (axiom.equalsIgnoreCase("all")) {
         axiomTypes.add(OWLAxiom.class);
       } else if (axiom.equalsIgnoreCase("logical")) {
@@ -289,6 +300,8 @@ public class CommandLineHelper {
       } else if (axiom.equalsIgnoreCase("type")) {
         axiomTypes.add(OWLClassAssertionAxiom.class);
         // TODO: Make a-box, t-box, r-box
+      } else if (axiom.equalsIgnoreCase("declaration")) {
+        axiomTypes.add(OWLDeclarationAxiom.class);
       } else {
         throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
       }

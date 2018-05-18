@@ -118,23 +118,24 @@ public class RemoveCommand implements Command {
     if (outputIRI == null) {
       outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     }
+
     // Get a set of entities to start with
     Set<OWLEntity> entities = new HashSet<>();
     for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
       entities.add(OntologyHelper.getEntity(ontology, iri));
     }
-    // If no entities were provided, add them all
-    if (entities.isEmpty()) {
-      entities.addAll(OntologyHelper.getEntities(ontology));
-    }
+
     // Get a set of axiom types
     Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
+
     // Get a set of relation types, or annotations to select
     List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
+
     // If the select option wasn't provided, default to self
     if (selects.isEmpty()) {
       selects.add("self");
     }
+
     // Selects should be processed in order, allowing unions in one --select
     // Produces a set of Relation Types and a set of annotations, as well as booleans for miscs
     while (selects.size() > 0) {
@@ -144,37 +145,46 @@ public class RemoveCommand implements Command {
       boolean complement = false;
       boolean named = false;
       boolean anonymous = false;
-      // Process annotation selections
-      if (select.contains("=")) {
-        annotations.add(getAnnotations(ioHelper, select));
-      } else {
-        // Split on space, create a union of these relations
-        for (String s : select.split(" ")) {
-          if (RelationType.isRelationType(s.toLowerCase())) {
-            relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
-          } else if (s.equalsIgnoreCase("complement")) {
-            complement = true;
-          } else if (s.equalsIgnoreCase("named")) {
-            named = true;
-          } else if (s.equalsIgnoreCase("anonymous")) {
-            anonymous = true;
-          } else if (s.equalsIgnoreCase("imports")) {
-            // Remove import statements
-            RemoveOperation.removeImports(ontology);
-          } else {
-            throw new IllegalArgumentException(String.format(selectError, s));
-          }
+
+      // Split on space, create a union of these relations
+      for (String s : select.split(" ")) {
+        if (RelationType.isRelationType(s.toLowerCase())) {
+          relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
+        } else if (s.equalsIgnoreCase("complement")) {
+          complement = true;
+        } else if (s.equalsIgnoreCase("named")) {
+          named = true;
+        } else if (s.equalsIgnoreCase("anonymous")) {
+          anonymous = true;
+        } else if (s.equalsIgnoreCase("imports")) {
+          // Remove import statements
+          RemoveOperation.removeImports(ontology);
+        } else if (s.contains("=")) {
+          // This designates an annotation to find
+          annotations.add(getAnnotation(ioHelper, s));
+        } else {
+          throw new IllegalArgumentException(String.format(selectError, s));
         }
       }
+
+      // Add annotated entities to the set of entities
+      entities.addAll(RelatedEntitiesHelper.getAnnotated(ontology, annotations));
+      // If no entities were provided, add them all
+      if (entities.isEmpty()) {
+        entities.addAll(OntologyHelper.getEntities(ontology));
+      }
+
       // If no relation type selections were provided, add in "self"
       if (relationTypes.isEmpty()) {
         relationTypes.add(RelationType.SELF);
       }
+
       // (Maybe) get a complement set of the entity/entities provided
       if (complement) {
         Set<OWLEntity> complementSet = RelatedEntitiesHelper.getComplements(ontology, entities);
         entities = complementSet;
       }
+
       // Remove entities from ontology
       if (anonymous && !named) {
         // Remove only anonymous entities based on relations to given entities
@@ -189,14 +199,16 @@ public class RemoveCommand implements Command {
         RemoveOperation.removeAnonymous(ontology, entities, relationTypes, axiomTypes);
         Set<OWLEntity> relatedEntities =
             RelatedEntitiesHelper.getRelated(ontology, entities, relationTypes);
-        relatedEntities.forEach(System.out::println);
         RemoveOperation.remove(ontology, relatedEntities, axiomTypes);
       }
     }
+
     // Maybe trim dangling (by default, false)
     if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
       OntologyHelper.trimDangling(ontology);
     }
+
+    // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
     return state;
@@ -209,7 +221,7 @@ public class RemoveCommand implements Command {
    * @param annotation String input
    * @return OWLAnnotation
    */
-  private static OWLAnnotation getAnnotations(IOHelper ioHelper, String annotation) {
+  private static OWLAnnotation getAnnotation(IOHelper ioHelper, String annotation) {
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
     IRI propertyIRI =
         CommandLineHelper.maybeCreateIRI(ioHelper, annotation.split("=")[0], "select");
