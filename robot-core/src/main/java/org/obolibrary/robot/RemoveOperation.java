@@ -34,7 +34,7 @@ public class RemoveOperation {
    * associated axioms (of the given types) from the ontology.
    *
    * @param ontology OWLOntology to remove from
-   * @param entity OWLEntity to remove
+   * @param entities OWLEntities to remove
    * @param axiomTypes types of axioms to remove
    */
   public static void remove(

@@ -22,6 +22,16 @@ public class FilterOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(FilterOperation.class);
 
+  /**
+   * Given an input ontology, a set of entities, and a set of axiom types, return a new ontology
+   * containing only the desired entities and the desired axiom types.
+   * 
+   * @param inputOntology ontology to filter
+   * @param entities entities to keep
+   * @param axiomTypes axiom types to keep
+   * @return filtered ontology
+   * @throws OWLOntologyCreationException on issue creating new ontology
+   */
   public static OWLOntology filter(
       OWLOntology inputOntology, Set<OWLEntity> entities, Set<Class<? extends OWLAxiom>> axiomTypes)
       throws OWLOntologyCreationException {
@@ -36,6 +46,7 @@ public class FilterOperation {
    * @param inputOntology ontology to filter
    * @param entities entities to keep
    * @param axiomTypes axiom types to keep
+   * @param includeAnnotations if true, include annotations of filtered entities
    * @return filtered ontology
    * @throws OWLOntologyCreationException on issue creating new ontology
    */
