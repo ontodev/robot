@@ -152,6 +152,7 @@ public class FilterCommand implements Command {
       boolean complement = false;
       boolean named = false;
       boolean anonymous = false;
+      boolean includeAnnotations = false;
       // Annotations should be alone
       if (select.contains("=")) {
         annotations.add(getAnnotations(ioHelper, select));
@@ -160,66 +161,52 @@ public class FilterCommand implements Command {
         for (String s : select.split(" ")) {
           if (RelationType.isRelationType(s.toLowerCase())) {
             relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
-            // Misc select options, will combine with relation types
           } else if (s.equalsIgnoreCase("complement")) {
             complement = true;
           } else if (s.equalsIgnoreCase("named")) {
             named = true;
           } else if (s.equalsIgnoreCase("anonymous")) {
             anonymous = true;
+          } else if (s.equalsIgnoreCase("annotations")) {
+            // If "annotations" is included, all annotations on the entities will be included,
+            // regardless of if the property is included in entities or not.
+            includeAnnotations = true;
           } else {
             throw new IllegalArgumentException(String.format(selectError, s));
           }
         }
       }
-
-      // Filter based on provided options
+      // If no relation type selections were provided, add in "self"
+      if (relationTypes.isEmpty()) {
+        relationTypes.add(RelationType.SELF);
+      }
+      // (Maybe) get a complement set of the entity/entities provided
+      if (complement) {
+        Set<OWLEntity> complementSet =
+            RelatedEntitiesHelper.getComplements(inputOntology, entities);
+        entities = complementSet;
+      }
+      // Filter entities from ontology
       if (anonymous && !named) {
-        logger.debug("Filtering for references to related anonymous entities");
-        // Only filter for anonymous entities
-        if (!complement) {
-          FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes);
-        } else {
-          logger.debug("Filtering for complement set");
-          FilterOperation.filterAnonymous(
-              inputOntology,
-              RelatedEntitiesHelper.getComplements(inputOntology, entities),
-              relationTypes,
-              axiomTypes);
-        }
+        // Filter only anonymous entities based on relations to given entities
+        outputOntology =
+            FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes);
       } else if (named && !anonymous) {
-        logger.debug("Filtering for references to related named entities");
-        // Only filter for named entities
-        Set<OWLEntity> filteredEntities =
+        // Otherwise get the related entities and proceed
+        Set<OWLEntity> relatedEntities =
             RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
-        // Find entities based on annotations
-        filteredEntities.addAll(RelatedEntitiesHelper.getAnnotated(inputOntology, annotations));
-        // Filter for axioms associated with entity
-        if (!complement) {
-          outputOntology = FilterOperation.filter(inputOntology, filteredEntities, axiomTypes);
-        } else {
-          logger.debug("Filtering for complement set");
-          outputOntology =
-              FilterOperation.filterComplement(inputOntology, filteredEntities, axiomTypes);
-        }
+        outputOntology =
+            FilterOperation.filter(inputOntology, relatedEntities, axiomTypes, includeAnnotations);
       } else {
-        logger.debug("Filtering for references to all related entities");
-        // Either both anonymous and named were provided, or neither were
-        // In this case, filter for both named and anonymous
-        Set<OWLEntity> filteredEntities =
-            RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
-        filteredEntities.addAll(RelatedEntitiesHelper.getAnnotated(inputOntology, annotations));
+        // If both named and anonymous = true OR neither was provided, filter both
         List<OWLOntology> outputOntologies = new ArrayList<>();
-        if (!complement) {
-          outputOntologies.add(FilterOperation.filter(inputOntology, filteredEntities, axiomTypes));
-          outputOntologies.add(
-              FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes));
-          outputOntology = MergeOperation.merge(outputOntologies);
-        } else {
-          logger.debug("Filtering for complement set");
-          outputOntology =
-              FilterOperation.filterComplement(inputOntology, filteredEntities, axiomTypes);
-        }
+        outputOntologies.add(
+            FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes));
+        Set<OWLEntity> relatedEntities =
+            RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
+        outputOntologies.add(
+            FilterOperation.filter(inputOntology, relatedEntities, axiomTypes, includeAnnotations));
+        outputOntology = MergeOperation.merge(outputOntologies, false, false);
       }
       // Reset the input as the product of this set of selects
       inputOntology = outputOntology;

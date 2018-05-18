@@ -16,7 +16,7 @@ robot remove --input obi.owl --entity OBI:0000070 --select descendants
 
 ## Select
 
-`--select` supports multiple options. These can be provided in quotes in one select statement (`--select "1 2 3"`), or in multiple statements (`--select 1 --select 2 --select 3`). When selects are provided in multiple statements, the output of the first will be passed to the second and so on. If multiple options are provided in one statement, all options will be processed at the same time.
+`--select` supports multiple options. These can be provided in quotes in one select statement (`--select "x y z"`), or in multiple statements (`--select x --select y --select z`). When selects are provided in multiple statements, the output of the first will be passed to the second and so on. If multiple options are provided in one statement, all options will be processed at the same time.
 
 The following selection options can be combined in any way.
 
@@ -24,13 +24,16 @@ The following selection options can be combined in any way.
 
 There are three general select options that give control over the types of axioms that are removed. By default, both `named` and `anonymous` axioms are removed. But, for example, if only `--select anonymous` is provided, the named classes will not be removed.
 
-1. `complement`: remove the complement set of the entities (equivalent to `filter`, except that `remove` creates a new ontology whereas `filter` edits the input ontology).
+1. `complement`: remove the complement set of the entities (equivalent to [filter](/filter), except that `remove` creates a new ontology whereas `filter` edits the input ontology).
 2. `named`: remove named entities.
 3. `anonymous`: remove anonymous entities (e.g. anonymous ancestors).
+4. `imports`: remove import statements *
+
+\* The `imports` selection cannot be used with [filter](/filter)
 
 #### Relation Types
 
-Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--entity`/`--entities`. If no `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
+Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--entity`/`--entities`. If no relation type `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
 
 1. `self` (default)
 2. `parents`
@@ -42,7 +45,7 @@ Relation type selections provide the ability to select which entities to remove 
 
 #### Entity Types
 
-If an entity type is provided, only the entities of that type will be included in the removal.
+If an entity type is provided, only the entities of that type will be included in the removal. By default, all types are included.
 
 1. `classes`
 2. `properties`
@@ -71,26 +74,22 @@ Entities can also be selected from the set based on axioms. This can be helpful 
 robot remove --input obi.owl --entity OBI:0000070 --select "self descendants"
 ```
 
-2. Remove everything from OBI except 'assay' and its descendants (`filter` is preferred):
-
-```
-robot remove --input obi.owl --entity OBI:0000070 --select "self descendants" --select complement
-```
-
-3. Remove all individuals from OBI:
+2. Remove all individuals from OBI:
 
 ```
 robot remove --input obi.owl --select individuals
 ```
 
-4. Remove all anonymous classes from OBI:
+3. Remove all anonymous classes from OBI:
 
 ```
 robot remove --input obi.owl --select classes --select anonymous
 ```
 
-5. Remove a subset:
+4. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
 ```
-robot remove --input edit.owl --select "oboInOwl:inSubset='subset name'"
+robot remove --input edit.owl \
+  --entity rdfs:label --entity oboInOwl:id \
+  --select "complement annotation-properties"
 ```

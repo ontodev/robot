@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import java.util.HashSet;
 import java.util.Set;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -124,48 +123,6 @@ public class RemoveOperation {
         manager.removeAxiom(ontology, axiom);
       }
     }
-  }
-
-  /**
-   * Given an ontology, a set of entities, and a set of axiom types, remove the complement of that
-   * set.
-   *
-   * @param ontology OWLOntology to remove from
-   * @param entities set of OWLEntities to remove complement of
-   * @param axiomTypes types of axioms to remove
-   */
-  public static void removeComplement(
-      OWLOntology ontology, Set<OWLEntity> entities, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    Set<OWLEntity> complements = RelatedEntitiesHelper.getComplements(ontology, entities);
-    Set<OWLAxiom> axioms = new HashSet<>();
-    for (OWLAxiom axiom : ontology.getAxioms()) {
-      // Add the axiom to remove if all entities in the signature are being removed
-      // and it is of the correct axiom type
-      if (complements.containsAll(axiom.getSignature())
-          && OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
-        axioms.add(axiom);
-      }
-    }
-    // Entities that are the subject of annotation assertions aren't caught by getSignature()
-    if (OntologyHelper.extendsAxiomTypes(OWLAnnotationAssertionAxiom.class, axiomTypes)) {
-      for (OWLEntity entity : entities) {
-        // Make sure we aren't removing annotations on the entity we want to keep
-        for (OWLAxiom axiom : EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
-          axioms.remove(axiom);
-          // Also keep the declarations of those annotation properties
-          for (OWLEntity ap : axiom.getAnnotationPropertiesInSignature()) {
-            for (OWLAxiom ax : EntitySearcher.getReferencingAxioms(ap, ontology)) {
-              if (ax.isOfType(AxiomType.DECLARATION)) {
-                axioms.remove(ax);
-              }
-            }
-          }
-        }
-      }
-    }
-    // Remove all
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    manager.removeAxioms(ontology, axioms);
   }
 
   /**

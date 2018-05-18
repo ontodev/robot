@@ -32,7 +32,7 @@ public class FilterOperationTest extends CoreTest {
   public void testFilterAll() throws IOException, OWLOntologyCreationException {
     OWLOntology ontology = loadOntology("/uberon.owl");
     OWLOntology filteredOntology =
-        FilterOperation.filter(ontology, OntologyHelper.getEntities(ontology), allAxioms);
+        FilterOperation.filter(ontology, OntologyHelper.getEntities(ontology), allAxioms, true);
     assertIdentical("/uberon.owl", filteredOntology);
   }
 
@@ -52,31 +52,9 @@ public class FilterOperationTest extends CoreTest {
             df.getOWLLiteral("articular system")));
     Set<OWLEntity> entities = RelatedEntitiesHelper.getAnnotated(ontology, annotations);
 
-    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms);
+    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms, true);
     OntologyHelper.trimDangling(filteredOntology);
     assertIdentical("/filter_class.owl", filteredOntology);
-  }
-
-  /**
-   * Test filtering for the complement of a class based on annotation. This should have the same
-   * result as removing the class based on annotation.
-   *
-   * @throws IOException on issue reading or writing
-   * @throws OWLOntologyCreationException on issue creating new ontology
-   */
-  @Test
-  public void testFilterByAnnotationComplement() throws IOException, OWLOntologyCreationException {
-    OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<OWLAnnotation> annotations = new HashSet<>();
-    annotations.add(
-        df.getOWLAnnotation(
-            df.getOWLAnnotationProperty(ioHelper.createIRI("rdfs:label")),
-            df.getOWLLiteral("articular system")));
-
-    OWLOntology filteredOntology =
-        FilterOperation.filterComplement(
-            ontology, RelatedEntitiesHelper.getAnnotated(ontology, annotations), allAxioms);
-    assertIdentical("/remove_class.owl", filteredOntology);
   }
 
   /**
@@ -91,26 +69,9 @@ public class FilterOperationTest extends CoreTest {
     Set<OWLEntity> entities = new HashSet<>();
     entities.add(df.getOWLClass(ioHelper.createIRI("UBERON:0004770")));
 
-    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms);
+    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms, true);
     OntologyHelper.trimDangling(filteredOntology);
     assertIdentical("/filter_class.owl", filteredOntology);
-  }
-
-  /**
-   * Test filtering for the complement of a class. This should have the same result as removing the
-   * class.
-   *
-   * @throws IOException on issue reading or writing
-   * @throws OWLOntologyCreationException on issue creating new ontology
-   */
-  @Test
-  public void testFilterClassComplement() throws IOException, OWLOntologyCreationException {
-    OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<OWLEntity> entities = new HashSet<>();
-    entities.add(df.getOWLClass(ioHelper.createIRI("UBERON:0004770")));
-
-    OWLOntology filteredOntology = FilterOperation.filterComplement(ontology, entities, allAxioms);
-    assertIdentical("/remove_class.owl", filteredOntology);
   }
 
   /**
@@ -125,31 +86,11 @@ public class FilterOperationTest extends CoreTest {
     Set<OWLEntity> entities =
         RelatedEntitiesHelper.getRelated(
             ontology,
-            df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
+            Sets.newHashSet(df.getOWLClass(ioHelper.createIRI("UBERON:0004905"))),
             RelationType.DESCENDANTS);
 
-    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms);
+    OWLOntology filteredOntology = FilterOperation.filter(ontology, entities, allAxioms, true);
     OntologyHelper.trimDangling(filteredOntology);
     assertIdentical("/filter_descendants.owl", filteredOntology);
-  }
-
-  /**
-   * Test filtering for the complement of the descendants of a class. This should have the same
-   * result as removing the descendants of the class.
-   *
-   * @throws IOException on issue reading or writing
-   * @throws OWLOntologyCreationException on issue creating new ontology
-   */
-  @Test
-  public void testFilterDescendantsComplement() throws IOException, OWLOntologyCreationException {
-    OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<OWLEntity> entities =
-        RelatedEntitiesHelper.getRelated(
-            ontology,
-            df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
-            RelationType.DESCENDANTS);
-
-    OWLOntology filteredOntology = FilterOperation.filterComplement(ontology, entities, allAxioms);
-    assertIdentical("/remove_descendants.owl", filteredOntology);
   }
 }

@@ -48,23 +48,6 @@ public class RemoveOperationTest extends CoreTest {
   }
 
   /**
-   * Test removing the complement of the class. Result should be the same as filtering for the
-   * class.
-   *
-   * @throws IOException on any problem
-   */
-  @Test
-  public void testRemoveClassComplement() throws IOException {
-    OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<OWLEntity> entities = new HashSet<>();
-    entities.add(df.getOWLClass(ioHelper.createIRI("UBERON:0004770")));
-
-    RemoveOperation.removeComplement(ontology, entities, allAxioms);
-    OntologyHelper.trimDangling(ontology);
-    assertIdentical("/filter_class.owl", ontology);
-  }
-
-  /**
    * Test removing descendants of a class (without removing the class itself).
    *
    * @throws IOException on any problem
@@ -75,31 +58,11 @@ public class RemoveOperationTest extends CoreTest {
     Set<OWLEntity> relatedEntities =
         RelatedEntitiesHelper.getRelated(
             ontology,
-            df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
+            Sets.newHashSet(df.getOWLClass(ioHelper.createIRI("UBERON:0004905"))),
             RelationType.DESCENDANTS);
 
     RemoveOperation.remove(ontology, relatedEntities, allAxioms);
     assertIdentical("/remove_descendants.owl", ontology);
-  }
-
-  /**
-   * Test removing the complement of descendants of a class. Result should be the same as filtering
-   * for the descendants of the class.
-   *
-   * @throws IOException on any problem
-   */
-  @Test
-  public void testRemoveDescendantsComplement() throws IOException {
-    OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<OWLEntity> relatedEntities =
-        RelatedEntitiesHelper.getRelated(
-            ontology,
-            df.getOWLClass(ioHelper.createIRI("UBERON:0004905")),
-            RelationType.DESCENDANTS);
-
-    RemoveOperation.removeComplement(ontology, relatedEntities, allAxioms);
-    OntologyHelper.trimDangling(ontology);
-    assertIdentical("/filter_descendants.owl", ontology);
   }
 
   /**
@@ -170,26 +133,5 @@ public class RemoveOperationTest extends CoreTest {
 
     RemoveOperation.remove(ontology, relatedEntities, allAxioms);
     assertIdentical("/remove_class.owl", ontology);
-  }
-
-  /**
-   * Test removing the complement of a class based on an annotation. Result should be the same as
-   * filtering by the annotation.
-   *
-   * @throws IOException on any problem
-   */
-  @Test
-  public void testRemoveByAnnotationComplement() throws IOException {
-    OWLOntology ontology = loadOntology("/uberon.owl");
-    Set<OWLAnnotation> annotations = new HashSet<>();
-    annotations.add(
-        df.getOWLAnnotation(
-            df.getOWLAnnotationProperty(ioHelper.createIRI("rdfs:label")),
-            df.getOWLLiteral("articular system")));
-    Set<OWLEntity> relatedEntities = RelatedEntitiesHelper.getAnnotated(ontology, annotations);
-
-    RemoveOperation.removeComplement(ontology, relatedEntities, allAxioms);
-    OntologyHelper.trimDangling(ontology);
-    assertIdentical("/filter_class.owl", ontology);
   }
 }

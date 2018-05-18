@@ -4,7 +4,21 @@ The `filter` command allows you to create a new ontology from a source ontology 
 
 By default, `filter` will remove dangling entities copied as the result of the filtering. To include dangling entities, run with `--trim false`.
 
-Examples:
+## Annotations
+
+The `filter` command also includes a special `--select "annotations"` option. If this is included, all annotations on filtered entities will be included, regardless of if those properties are in the set of entities or not.
+
+The following command will only return `OBI:0000070` with just a label annotation:
+```
+robot filter --input obi.owl --entity OBI:0000070 --entity rdfs:label
+```
+
+Alternatively, if you want `OBI:0000070` with all annotaions:
+```
+robot filter --input obi.owl --entity OBI:0000070 --select annotations
+```
+
+## Examples
 
 1. Copy 'assay' and all its descendants from OBI:
 

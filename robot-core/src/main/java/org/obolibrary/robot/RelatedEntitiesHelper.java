@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.Sets;
 import java.util.HashSet;
 import java.util.Set;
 import org.semanticweb.owlapi.model.EntityType;
@@ -38,30 +37,13 @@ public class RelatedEntitiesHelper {
    * @param entities the entities to start with
    * @param relationTypes the relation types to search on
    * @return set of related entities
+   * @throws Exception
    */
   public static Set<OWLEntity> getRelated(
       OWLOntology ontology, Set<OWLEntity> entities, Set<RelationType> relationTypes) {
     Set<OWLEntity> relatedEntities = new HashSet<>();
-    for (OWLEntity entity : entities) {
-      relatedEntities.addAll(getRelated(ontology, entity, relationTypes));
-    }
-    return relatedEntities;
-  }
-
-  /**
-   * Given an ontology, an entity, and a set of relation types, return entities related to the given
-   * entity by the relation types.
-   *
-   * @param ontology the ontology to search
-   * @param entity the entity to start with
-   * @param relationTypes the relation types to search on
-   * @return set of related entities
-   */
-  public static Set<OWLEntity> getRelated(
-      OWLOntology ontology, OWLEntity entity, Set<RelationType> relationTypes) {
-    Set<OWLEntity> relatedEntities = new HashSet<>();
-    for (RelationType rt : relationTypes) {
-      relatedEntities.addAll(getRelated(ontology, entity, rt));
+    for (RelationType relationType : relationTypes) {
+      relatedEntities.addAll(getRelated(ontology, entities, relationType));
     }
     return relatedEntities;
   }
@@ -71,48 +53,61 @@ public class RelatedEntitiesHelper {
    * by the relation type.
    *
    * @param ontology the ontology to search
-   * @param entity the entity to start with
+   * @param entities the entities to start with
    * @param relationType the relation type to search on
    * @return set of related entities
+   * @throws Exception
    */
   public static Set<OWLEntity> getRelated(
-      OWLOntology ontology, OWLEntity entity, RelationType relationType) {
+      OWLOntology ontology, Set<OWLEntity> entities, RelationType relationType) {
+    // If relationType is not provided, just return the input entities
     if (relationType == null) {
-      return OntologyHelper.getEntities(ontology);
+      return entities;
     }
-    switch (relationType) {
-      case SELF:
-        return Sets.newHashSet(entity);
-      case CHILDREN:
-        return getChildren(ontology, entity);
-      case PARENTS:
-        return getParents(ontology, entity);
-      case DESCENDANTS:
-        return getDescendants(ontology, entity);
-      case ANCESTORS:
-        return getAncestors(ontology, entity);
-      case EQUIVALENTS:
-        return getEquivalents(ontology, entity);
-      case TYPES:
-        return getTypes(ontology, entity);
-      case CLASSES:
-        return getEntitiesOfType(ontology, EntityType.CLASS);
-      case PROPERTIES:
-        Set<OWLEntity> relatedEntities = new HashSet<>();
-        relatedEntities.addAll(getEntitiesOfType(ontology, EntityType.ANNOTATION_PROPERTY));
-        relatedEntities.addAll(getEntitiesOfType(ontology, EntityType.DATA_PROPERTY));
-        relatedEntities.addAll(getEntitiesOfType(ontology, EntityType.OBJECT_PROPERTY));
-        return relatedEntities;
-      case INDIVIDUALS:
-        return getEntitiesOfType(ontology, EntityType.NAMED_INDIVIDUAL);
-      case OBJECT_PROPERTIES:
-        return getEntitiesOfType(ontology, EntityType.OBJECT_PROPERTY);
-      case ANNOTATION_PROPERTIES:
-        return getEntitiesOfType(ontology, EntityType.ANNOTATION_PROPERTY);
-      case DATA_PROPERTIES:
-        return getEntitiesOfType(ontology, EntityType.DATA_PROPERTY);
+    Set<OWLEntity> relatedEntities = new HashSet<>();
+    if (relationType.equals(RelationType.SELF)) {
+      relatedEntities.addAll(entities);
+    } else if (relationType.equals(RelationType.CHILDREN)) {
+      for (OWLEntity entity : entities) {
+        relatedEntities.addAll(getChildren(ontology, entity));
+      }
+    } else if (relationType.equals(RelationType.PARENTS)) {
+      for (OWLEntity entity : entities) {
+        relatedEntities.addAll(getParents(ontology, entity));
+      }
+    } else if (relationType.equals(RelationType.DESCENDANTS)) {
+      for (OWLEntity entity : entities) {
+        relatedEntities.addAll(getDescendants(ontology, entity));
+      }
+    } else if (relationType.equals(RelationType.ANCESTORS)) {
+      for (OWLEntity entity : entities) {
+        relatedEntities.addAll(getAncestors(ontology, entity));
+      }
+    } else if (relationType.equals(RelationType.EQUIVALENTS)) {
+      for (OWLEntity entity : entities) {
+        relatedEntities.addAll(getEquivalents(ontology, entity));
+      }
+    } else if (relationType.equals(RelationType.TYPES)) {
+      for (OWLEntity entity : entities) {
+        relatedEntities.addAll(getTypes(ontology, entity));
+      }
+    } else if (relationType.equals(RelationType.CLASSES)) {
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.CLASS));
+    } else if (relationType.equals(RelationType.PROPERTIES)) {
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.ANNOTATION_PROPERTY));
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.DATA_PROPERTY));
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.OBJECT_PROPERTY));
+      return relatedEntities;
+    } else if (relationType.equals(RelationType.INDIVIDUALS)) {
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.NAMED_INDIVIDUAL));
+    } else if (relationType.equals(RelationType.OBJECT_PROPERTIES)) {
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.OBJECT_PROPERTY));
+    } else if (relationType.equals(RelationType.ANNOTATION_PROPERTIES)) {
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.ANNOTATION_PROPERTY));
+    } else if (relationType.equals(RelationType.DATA_PROPERTIES)) {
+      relatedEntities.addAll(getEntitiesOfType(entities, EntityType.DATA_PROPERTY));
     }
-    return Sets.newHashSet();
+    return relatedEntities;
   }
 
   /**
@@ -386,10 +381,12 @@ public class RelatedEntitiesHelper {
    * @param ontology the ontology to search
    * @param entityType the entity type to keep
    * @return set of entities of the entity type
+   * @throws Exception
    */
-  private static Set<OWLEntity> getEntitiesOfType(OWLOntology ontology, EntityType<?> entityType) {
+  private static Set<OWLEntity> getEntitiesOfType(
+      Set<OWLEntity> entities, EntityType<?> entityType) {
     Set<OWLEntity> filteredEntities = new HashSet<>();
-    for (OWLEntity entity : OntologyHelper.getEntities(ontology)) {
+    for (OWLEntity entity : entities) {
       if (entity.isType(entityType)) {
         filteredEntities.add(entity);
       }

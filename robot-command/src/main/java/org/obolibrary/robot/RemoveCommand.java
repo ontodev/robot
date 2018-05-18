@@ -118,7 +118,7 @@ public class RemoveCommand implements Command {
     if (outputIRI == null) {
       outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     }
-    // Get a set of entities
+    // Get a set of entities to start with
     Set<OWLEntity> entities = new HashSet<>();
     for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
       entities.add(OntologyHelper.getEntity(ontology, iri));
@@ -127,17 +127,14 @@ public class RemoveCommand implements Command {
     if (entities.isEmpty()) {
       entities.addAll(OntologyHelper.getEntities(ontology));
     }
-
     // Get a set of axiom types
     Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
-
     // Get a set of relation types, or annotations to select
     List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
     // If the select option wasn't provided, default to self
     if (selects.isEmpty()) {
       selects.add("self");
     }
-
     // Selects should be processed in order, allowing unions in one --select
     // Produces a set of Relation Types and a set of annotations, as well as booleans for miscs
     while (selects.size() > 0) {
@@ -147,7 +144,7 @@ public class RemoveCommand implements Command {
       boolean complement = false;
       boolean named = false;
       boolean anonymous = false;
-      // Annotations should be alone
+      // Process annotation selections
       if (select.contains("=")) {
         annotations.add(getAnnotations(ioHelper, select));
       } else {
@@ -155,7 +152,6 @@ public class RemoveCommand implements Command {
         for (String s : select.split(" ")) {
           if (RelationType.isRelationType(s.toLowerCase())) {
             relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
-            // Misc select options, will combine with relation types
           } else if (s.equalsIgnoreCase("complement")) {
             complement = true;
           } else if (s.equalsIgnoreCase("named")) {
@@ -163,58 +159,41 @@ public class RemoveCommand implements Command {
           } else if (s.equalsIgnoreCase("anonymous")) {
             anonymous = true;
           } else if (s.equalsIgnoreCase("imports")) {
+            // Remove import statements
             RemoveOperation.removeImports(ontology);
           } else {
             throw new IllegalArgumentException(String.format(selectError, s));
           }
         }
       }
-
-      // Remove based on provided options
+      // If no relation type selections were provided, add in "self"
+      if (relationTypes.isEmpty()) {
+        relationTypes.add(RelationType.SELF);
+      }
+      // (Maybe) get a complement set of the entity/entities provided
+      if (complement) {
+        Set<OWLEntity> complementSet = RelatedEntitiesHelper.getComplements(ontology, entities);
+        entities = complementSet;
+      }
+      // Remove entities from ontology
       if (anonymous && !named) {
-        logger.debug("Removing references to related anonymous entities");
-        // Only remove anonymous entities
-        if (!complement) {
-          RemoveOperation.removeAnonymous(ontology, entities, relationTypes, axiomTypes);
-        } else {
-          logger.debug("Removing complement set");
-          RemoveOperation.removeAnonymous(
-              ontology,
-              RelatedEntitiesHelper.getComplements(ontology, entities),
-              relationTypes,
-              axiomTypes);
-        }
+        // Remove only anonymous entities based on relations to given entities
+        RemoveOperation.removeAnonymous(ontology, entities, relationTypes, axiomTypes);
       } else if (named && !anonymous) {
-        logger.debug("Removing references to related named entities");
-        // Only remove named entities
-        Set<OWLEntity> removeEntities =
+        // Otherwise get the related entities and proceed
+        Set<OWLEntity> relatedEntities =
             RelatedEntitiesHelper.getRelated(ontology, entities, relationTypes);
-        // Find entities based on annotations
-        removeEntities.addAll(RelatedEntitiesHelper.getAnnotated(ontology, annotations));
-        // Remove axioms associated with entity
-        if (!complement) {
-          RemoveOperation.remove(ontology, removeEntities, axiomTypes);
-        } else {
-          logger.debug("Removing complement set");
-          RemoveOperation.removeComplement(ontology, removeEntities, axiomTypes);
-        }
+        RemoveOperation.remove(ontology, relatedEntities, axiomTypes);
       } else {
-        logger.debug("Removing references to all related entities");
-        // Either both anonymous and named were provided, or neither were
-        // In this case, remove named and anonymous
-        Set<OWLEntity> removeEntities =
+        // If both named and anonymous = true OR neither was provided, remove all
+        RemoveOperation.removeAnonymous(ontology, entities, relationTypes, axiomTypes);
+        Set<OWLEntity> relatedEntities =
             RelatedEntitiesHelper.getRelated(ontology, entities, relationTypes);
-        removeEntities.addAll(RelatedEntitiesHelper.getAnnotated(ontology, annotations));
-        if (!complement) {
-          RemoveOperation.remove(ontology, removeEntities, axiomTypes);
-          RemoveOperation.removeAnonymous(ontology, entities, relationTypes, axiomTypes);
-        } else {
-          logger.debug("Removing complement set");
-          RemoveOperation.removeComplement(ontology, removeEntities, axiomTypes);
-        }
+        relatedEntities.forEach(System.out::println);
+        RemoveOperation.remove(ontology, relatedEntities, axiomTypes);
       }
     }
-    // Maybe trim dangling
+    // Maybe trim dangling (by default, false)
     if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
       OntologyHelper.trimDangling(ontology);
     }
