@@ -36,6 +36,11 @@ public class ReasonCommand implements Command {
     o.addOption(
         "s", "remove-redundant-subclass-axioms", true, "if true, remove redundant subclass axioms");
     o.addOption(
+        "p",
+        "preserve-annotated-axioms",
+        true,
+        "preserve annotated axioms when removing redundant subclass axioms");
+    o.addOption(
         "n",
         "create-new-ontology",
         true,

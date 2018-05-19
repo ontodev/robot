@@ -66,6 +66,7 @@ public class ReasonOperation {
     options.put("exclude-duplicate-axioms", "false");
     options.put("equivalent-classes-allowed", ALL.written());
     options.put("prevent-invalid-references", "false");
+    options.put("preserve-annotated-axioms", "false");
 
     return options;
   }
@@ -266,7 +267,7 @@ public class ReasonOperation {
     }
 
     if (OptionsHelper.optionIsTrue(options, "remove-redundant-subclass-axioms")) {
-      removeRedundantSubClassAxioms(reasoner);
+      removeRedundantSubClassAxioms(reasoner, options);
     }
     logger.info("Ontology has {} axioms after all reasoning steps.", ontology.getAxioms().size());
 
@@ -285,8 +286,10 @@ public class ReasonOperation {
    *
    * @param reasoner an OWL reasoner, initialized with a root ontology; the ontology will be
    *     modified
+   * @param options
    */
-  public static void removeRedundantSubClassAxioms(OWLReasoner reasoner) {
+  public static void removeRedundantSubClassAxioms(
+      OWLReasoner reasoner, Map<String, String> options) {
     logger.info("Removing redundant subclass axioms...");
     OWLOntology ontology = reasoner.getRootOntology();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
@@ -312,8 +315,12 @@ public class ReasonOperation {
       // and the superclass is not in the set of inferred super classes,
       // then remove that axiom.
       for (OWLSubClassOfAxiom subClassAxiom : ontology.getSubClassAxiomsForSubClass(thisClass)) {
-        if (subClassAxiom.getAnnotations().size() > 0) {
-          continue;
+        if (OptionsHelper.optionIsTrue(options, "preserve-annotated-axioms")) {
+
+          if (subClassAxiom.getAnnotations().size() > 0) {
+            // TODO make this configurable
+            continue;
+          }
         }
         if (subClassAxiom.getSuperClass().isAnonymous()) {
           continue;
