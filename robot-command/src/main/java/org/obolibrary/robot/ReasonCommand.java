@@ -61,6 +61,11 @@ public class ReasonCommand implements Command {
         true,
         "if true, do not add an axiom if it exists in import chain");
     o.addOption(
+        "X",
+        "exclude-external-entities",
+        true,
+        "if true, do not add an axiom if it is about classes in external ontologies");
+    o.addOption(
         "e",
         "equivalent-classes-allowed",
         true,

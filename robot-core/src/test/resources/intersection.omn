@@ -1,0 +1,18 @@
+Prefix: : <http://x.org/>
+
+Ontology: <http://x.org>
+
+##
+
+Class: A
+  SubClassOf: B
+
+Class: B
+
+Class: X
+Class: XA
+  EquivalentTo: X and A
+Class: XB
+  EquivalentTo: X and B
+
+        
