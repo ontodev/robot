@@ -65,6 +65,7 @@ public class ReasonCommand implements Command {
         "exclude-external-entities",
         true,
         "if true, do not add an axiom if it is about classes in external ontologies");
+    o.addOption("T", "exclude-owl-thing", true, "if true, exclude inferences to owl:Thing");
     o.addOption(
         "e",
         "equivalent-classes-allowed",

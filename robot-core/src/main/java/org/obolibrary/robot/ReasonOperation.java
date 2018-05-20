@@ -68,6 +68,7 @@ public class ReasonOperation {
     options.put("annotate-inferred-axioms", "false");
     options.put("exclude-duplicate-axioms", "false");
     options.put("exclude-external-entities", "false");
+    options.put("exclude-owl-thing", "false");
     options.put("equivalent-classes-allowed", ALL.written());
     options.put("prevent-invalid-references", "false");
     options.put("preserve-annotated-axioms", "false");
