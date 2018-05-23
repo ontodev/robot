@@ -237,7 +237,7 @@ public class OntologyHelper {
     Set<IRI> missingIRIs = new HashSet<>();
     for (IRI iri : IRIs) {
       if (!ontology.containsEntityInSignature(iri)) {
-        logger.warn("Ontology does not contain term {}", iri.toString());
+        logger.warn("Ontology does not contain {}", iri.toQuotedString());
         missingIRIs.add(iri);
       }
     }
@@ -774,18 +774,40 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology and an IRI, get the OWLEntity object represented by the IRI.
+   * Given an ontology and an IRI, get the OWLEntity object represented by the IRI. If it does not
+   * exist in the ontology, throw an exception.
    *
    * @param ontology OWLOntology to retrieve from
    * @param iri IRI to get type of
    * @return OWLEntity
+   * @throws Exception if IRI is not in ontology
    */
   public static OWLEntity getEntity(OWLOntology ontology, IRI iri) throws Exception {
+    return getEntity(ontology, iri, false);
+  }
+
+  /**
+   * Given an ontology, an IRI, and a boolean specifying if a null return value is allowed, get the
+   * OWLEntity object represented by the IRI.
+   *
+   * @param ontology OWLOntology to retrieve from
+   * @param iri IRI to get type of
+   * @param allowNull if true, do not throw exception if IRI does not exist in ontology
+   * @return OWLEntity
+   * @throws Exception if allowNull is false and IRI is not in ontology
+   */
+  public static OWLEntity getEntity(OWLOntology ontology, IRI iri, boolean allowNull)
+      throws Exception {
     // Get the OWLEntity for the IRI
     Set<OWLEntity> owlEntities = ontology.getEntitiesInSignature(iri);
     // Check that there is exactly one entity, throw exception if not
     if (owlEntities.size() == 0) {
-      throw new Exception(String.format(missingEntityError, iri.toString()));
+      if (allowNull) {
+        logger.warn("{} does not exist.", iri.toQuotedString());
+        return null;
+      } else {
+        throw new Exception(String.format(missingEntityError, iri.toString()));
+      }
     } else if (owlEntities.size() > 1) {
       throw new Exception(String.format(multipleEntitiesError, iri.toString()));
     }
@@ -799,15 +821,23 @@ public class OntologyHelper {
    * @param ontology the ontology to search
    * @param iris the IRIs of the entities to find
    * @return a set of OWLEntities with the given IRIs
-   * @throws Exception
+   * @throws Exception if none of the entities are in the ontology
    */
   public static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> iris) throws Exception {
-    Set<OWLEntity> entities = new HashSet<OWLEntity>();
+    Set<OWLEntity> entities = new HashSet<>();
     if (iris == null) {
       return entities;
     }
     for (IRI iri : iris) {
-      entities.add(getEntity(ontology, iri));
+      OWLEntity entity = getEntity(ontology, iri, true);
+      if (entity != null) {
+        // Do not add null entries
+        entities.add(entity);
+      }
+    }
+    // If there are no terms in the return set, none of the entities are in the ontology
+    if (entities.size() == 0) {
+      throw new Exception(emptyTermsError);
     }
     return entities;
   }
@@ -819,7 +849,7 @@ public class OntologyHelper {
    * @return a set of all entities in the ontology
    */
   public static Set<OWLEntity> getEntities(OWLOntology ontology) {
-    Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+    Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
     ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
     return resp.getEntities();

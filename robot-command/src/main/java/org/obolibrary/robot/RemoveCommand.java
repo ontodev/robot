@@ -114,16 +114,9 @@ public class RemoveCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-    if (outputIRI == null) {
-      outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
-    }
-
     // Get a set of entities to start with
-    Set<OWLEntity> entities = new HashSet<>();
-    for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
-      entities.add(OntologyHelper.getEntity(ontology, iri));
-    }
+    Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "entity", "entities");
+    Set<OWLEntity> entities = OntologyHelper.getEntities(ontology, entityIRIs);
 
     // Get a set of axiom types
     Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
