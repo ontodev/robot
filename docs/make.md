@@ -20,8 +20,8 @@ mk:
     mkdir -p build
 
 build/robot.jar: | mk
-    curl -L -o build/robot.jar \
-    https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar
+   curl -L -o build/robot.jar \
+   https://build.berkeleybop.org/job/robot/lastSuccessfulBuild/artifact/bin/robot.jar
 
 ROBOT := java -jar build/robot.jar
 ```
@@ -44,11 +44,11 @@ MODULES = new_terms logical_axioms
 modules: $(MODULES)
 
 $(MODULES):
-    robot template --input ont-edit.owl\
-     --template templates/$@.csv\
-     annotate\
-     --ontology-iri "http://purl.obolibrary.org/obo/ont/modules/$@.owl"\
-     --output modules/$@.owl
+   robot template --input ont-edit.owl \
+   --template templates/$@.csv \
+   annotate \
+   --ontology-iri "http://purl.obolibrary.org/obo/ont/modules/$@.owl" \
+   --output modules/$@.owl
 ```
 
 The `modules` rule will generate all modules specified by the `MODULES` variable (in this example, the modules are `new_terms` and `logical_axioms`). It expects the templates as CSV files in the `templates/` directory. Adding the `--input` option allows entities to be found by label from the given ontology, otherwise the entities should be specified by CURIE. The new modules are then generated in the `modules/` directory, annotated with an ontology IRI. Import statements should be added into the -edit ontology, and their paths specified in `catalog-v001.xml`:
