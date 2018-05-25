@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -141,7 +142,7 @@ public class RemoveCommand implements Command {
       boolean anonymous = false;
 
       // Split on space, create a union of these relations
-      for (String s : select.split(" ")) {
+      for (String s : splitSelects(select)) {
         if (RelationType.isRelationType(s.toLowerCase())) {
           relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
         } else if (s.equalsIgnoreCase("complement")) {
@@ -238,6 +239,7 @@ public class RemoveCommand implements Command {
           if (a.getProperty().equals(annotationProperty)) {
             OWLAnnotationValue av = a.getValue();
             String annotationValue = "";
+            // The annotation value expects a plain or a literal
             try {
               OWLLiteralImplPlain plain = (OWLLiteralImplPlain) av;
               annotationValue = plain.getLiteral();
@@ -248,7 +250,6 @@ public class RemoveCommand implements Command {
               annotationValue = str.getLiteral();
             } catch (Exception ex) {
             }
-            // TODO: other types??
             Matcher matcher = pattern.matcher(annotationValue);
             if (matcher.matches()) {
               annotations.add(a);
@@ -267,5 +268,29 @@ public class RemoveCommand implements Command {
       annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
       return annotations;
     }
+  }
+
+  /**
+   * Given an input string, return a list of the string split on whitespace, while ignoring any
+   * whitespace in parentheses.
+   *
+   * @param selects String of select options to split
+   * @return List of split strings
+   */
+  protected static List<String> splitSelects(String selects) {
+    List<String> split = new ArrayList<>();
+    Matcher matcher = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'").matcher(selects);
+    String last = "";
+    while (matcher.find()) {
+      String str = matcher.group();
+      if (str.contains("'")) {
+        str = last + str;
+        split.remove(last);
+      } else {
+        last = str;
+      }
+      split.add(str);
+    }
+    return split;
   }
 }

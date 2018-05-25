@@ -321,7 +321,7 @@ public class RelatedEntitiesHelper {
    * the annotation property.
    *
    * @param ontology OWLOntology to retrieve from
-   * @param dataProperty OWLDataProperty to get descendants of
+   * @param annotationProperty OWLAnnotationProperty to get derscendants of
    * @param descendants Set of OWLEntities representing the descendants
    */
   private static void getDescendants(
@@ -378,7 +378,7 @@ public class RelatedEntitiesHelper {
   /**
    * Given an ontology and an entity type, return only entities of that type.
    *
-   * @param ontology the ontology to search
+   * @param entities set of OWLEntities to get types of
    * @param entityType the entity type to keep
    * @return set of entities of the entity type
    * @throws Exception

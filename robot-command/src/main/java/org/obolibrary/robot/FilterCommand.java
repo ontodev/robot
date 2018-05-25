@@ -6,14 +6,10 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,7 +147,7 @@ public class FilterCommand implements Command {
       boolean includeAnnotations = false;
 
       // Split on space, create a union of these relations
-      for (String s : select.split(" ")) {
+      for (String s : RemoveCommand.splitSelects(select)) {
         if (RelationType.isRelationType(s.toLowerCase())) {
           relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
         } else if (s.equalsIgnoreCase("complement")) {
