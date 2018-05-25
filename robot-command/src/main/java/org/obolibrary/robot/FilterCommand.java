@@ -166,7 +166,7 @@ public class FilterCommand implements Command {
           includeAnnotations = true;
         } else if (s.contains("=")) {
           // This designates an annotation to find
-          annotations.add(getAnnotation(ioHelper, s));
+          annotations.addAll(RemoveCommand.getAnnotations(inputOntology, ioHelper, s));
         } else {
           throw new IllegalArgumentException(String.format(selectError, s));
         }
@@ -227,36 +227,5 @@ public class FilterCommand implements Command {
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     state.setOntology(outputOntology);
     return state;
-  }
-
-  /**
-   * Given an IOHelper and an annotation as CURIE=..., return the OWLAnnotation object.
-   *
-   * @param ioHelper IOHelper to get IRI
-   * @param annotation String input
-   * @return OWLAnnotation
-   */
-  private static OWLAnnotation getAnnotation(IOHelper ioHelper, String annotation) {
-    OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
-    IRI propertyIRI =
-        CommandLineHelper.maybeCreateIRI(ioHelper, annotation.split("=")[0], "select");
-    OWLAnnotationProperty annotationProperty = dataFactory.getOWLAnnotationProperty(propertyIRI);
-    String value = annotation.split("=")[1];
-    if (value.contains("<") && value.contains(">")) {
-      IRI valueIRI =
-          CommandLineHelper.maybeCreateIRI(
-              ioHelper, value.substring(1, value.length() - 1), "select");
-      return dataFactory.getOWLAnnotation(annotationProperty, valueIRI);
-    } else if (value.contains("~'")) {
-      // TODO: Pattern
-      throw new IllegalArgumentException("CURIE pattern is not yet implemented");
-    } else if (value.contains("'")) {
-      OWLLiteral literalValue = dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
-      return dataFactory.getOWLAnnotation(annotationProperty, literalValue);
-    } else {
-      // Assume it's a CURIE
-      IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "select");
-      return dataFactory.getOWLAnnotation(annotationProperty, valueIRI);
-    }
   }
 }

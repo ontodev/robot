@@ -3,19 +3,17 @@ package org.obolibrary.robot;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplPlain;
+import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
 
 public class RemoveCommand implements Command {
 
@@ -115,8 +113,11 @@ public class RemoveCommand implements Command {
     OWLOntology ontology = state.getOntology();
 
     // Get a set of entities to start with
-    Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "entity", "entities");
-    Set<OWLEntity> entities = OntologyHelper.getEntities(ontology, entityIRIs);
+    Set<OWLEntity> entities = new HashSet<>();
+    if (line.hasOption("entity") || line.hasOption("entities")) {
+      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "entity", "entities");
+      entities = OntologyHelper.getEntities(ontology, entityIRIs);
+    }
 
     // Get a set of axiom types
     Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
@@ -154,7 +155,7 @@ public class RemoveCommand implements Command {
           RemoveOperation.removeImports(ontology);
         } else if (s.contains("=")) {
           // This designates an annotation to find
-          annotations.add(getAnnotation(ioHelper, s));
+          annotations.addAll(getAnnotations(ontology, ioHelper, s));
         } else {
           throw new IllegalArgumentException(String.format(selectError, s));
         }
@@ -208,13 +209,16 @@ public class RemoveCommand implements Command {
   }
 
   /**
-   * Given an IOHelper and an annotation as CURIE=..., return the OWLAnnotation object.
+   * Given an IOHelper and an annotation as CURIE=..., return the OWLAnnotation object(s).
    *
+   * @param ontology OWLOntology to get annotations from
    * @param ioHelper IOHelper to get IRI
    * @param annotation String input
-   * @return OWLAnnotation
+   * @return set of OWLAnnotations
    */
-  private static OWLAnnotation getAnnotation(IOHelper ioHelper, String annotation) {
+  protected static Set<OWLAnnotation> getAnnotations(
+      OWLOntology ontology, IOHelper ioHelper, String annotation) {
+    Set<OWLAnnotation> annotations = new HashSet<>();
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
     IRI propertyIRI =
         CommandLineHelper.maybeCreateIRI(ioHelper, annotation.split("=")[0], "select");
@@ -224,17 +228,44 @@ public class RemoveCommand implements Command {
       IRI valueIRI =
           CommandLineHelper.maybeCreateIRI(
               ioHelper, value.substring(1, value.length() - 1), "select");
-      return dataFactory.getOWLAnnotation(annotationProperty, valueIRI);
+      annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+      return annotations;
     } else if (value.contains("~'")) {
-      // TODO: Pattern
-      throw new IllegalArgumentException("CURIE pattern is not yet implemented");
+      String patternString = value.split("\'")[1];
+      Pattern pattern = Pattern.compile(patternString);
+      for (OWLEntity e : OntologyHelper.getEntities(ontology)) {
+        for (OWLAnnotation a : EntitySearcher.getAnnotations(e, ontology)) {
+          if (a.getProperty().equals(annotationProperty)) {
+            OWLAnnotationValue av = a.getValue();
+            String annotationValue = "";
+            try {
+              OWLLiteralImplPlain plain = (OWLLiteralImplPlain) av;
+              annotationValue = plain.getLiteral();
+            } catch (Exception ex) {
+            }
+            try {
+              OWLLiteralImplString str = (OWLLiteralImplString) av;
+              annotationValue = str.getLiteral();
+            } catch (Exception ex) {
+            }
+            // TODO: other types??
+            Matcher matcher = pattern.matcher(annotationValue);
+            if (matcher.matches()) {
+              annotations.add(a);
+            }
+          }
+        }
+      }
+      return annotations;
     } else if (value.contains("'")) {
       OWLLiteral literalValue = dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
-      return dataFactory.getOWLAnnotation(annotationProperty, literalValue);
+      annotations.add(dataFactory.getOWLAnnotation(annotationProperty, literalValue));
+      return annotations;
     } else {
       // Assume it's a CURIE
       IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "select");
-      return dataFactory.getOWLAnnotation(annotationProperty, valueIRI);
+      annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+      return annotations;
     }
   }
 }
