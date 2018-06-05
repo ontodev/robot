@@ -152,7 +152,6 @@ public class RemoveCommand implements Command {
 
       // Split on space, create a union of these relations
       for (String s : splitSelects(select)) {
-        System.out.println(s);
         if (RelationType.isRelationType(s.toLowerCase())) {
           relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
         } else if (s.equalsIgnoreCase("complement")) {
@@ -266,7 +265,9 @@ public class RemoveCommand implements Command {
   protected static List<String> splitSelects(String selects) {
     List<String> split = new ArrayList<>();
     String last = "";
-    for (String s : selects.split(" (?=')|(?<=') ")) {
+    Matcher m = Pattern.compile("([^\']\\S*|\'.+?\')\\s*").matcher(selects);
+    while (m.find()) {
+      String s = m.group(1);
       if (s.contains("'")) {
         s = last + s;
         split.remove(last);
@@ -288,7 +289,8 @@ public class RemoveCommand implements Command {
    * @return set of matching OWLAnnotations
    */
   private static Set<OWLAnnotation> getPatternAnnotations(
-      OWLOntology ontology, OWLAnnotationProperty annotationProperty, String value) throws Exception {
+      OWLOntology ontology, OWLAnnotationProperty annotationProperty, String value)
+      throws Exception {
     Set<OWLAnnotation> annotations = new HashSet<>();
     String patternString = value.split("\'")[1];
     Pattern pattern = Pattern.compile(patternString);
