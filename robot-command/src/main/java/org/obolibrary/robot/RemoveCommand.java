@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +14,7 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplPlain;
-import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
+import uk.ac.manchester.cs.owl.owlapi.*;
 
 public class RemoveCommand implements Command {
 
@@ -23,6 +23,15 @@ public class RemoveCommand implements Command {
 
   /** Namespace for error messages. */
   private static final String NS = "remove#";
+
+  /** Error message when an invalid datatype is provided. */
+  private static final String dataTypeError = NS + "DATATYPE ERROR %s is not a valid datatype";
+
+  /**
+   * Error message when a datatype is given for an annotation, but the annotation value does not
+   * match the datatype.
+   */
+  private static final String literalValueError = NS + "LITERAL VALUE ERROR %s is not a %s value";
 
   /** Error message when --select is not a valid input. Expects: input string. */
   private static final String selectError = NS + "SELECT ERROR %s is not a valid selection";
@@ -143,6 +152,7 @@ public class RemoveCommand implements Command {
 
       // Split on space, create a union of these relations
       for (String s : splitSelects(select)) {
+        System.out.println(s);
         if (RelationType.isRelationType(s.toLowerCase())) {
           relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
         } else if (s.equalsIgnoreCase("complement")) {
@@ -218,79 +228,153 @@ public class RemoveCommand implements Command {
    * @return set of OWLAnnotations
    */
   protected static Set<OWLAnnotation> getAnnotations(
-      OWLOntology ontology, IOHelper ioHelper, String annotation) {
-    Set<OWLAnnotation> annotations = new HashSet<>();
+      OWLOntology ontology, IOHelper ioHelper, String annotation) throws Exception {
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+    // Create an IRI from the CURIE
     IRI propertyIRI =
         CommandLineHelper.maybeCreateIRI(ioHelper, annotation.split("=")[0], "select");
+    // Get the annotation property and string representation of value
     OWLAnnotationProperty annotationProperty = dataFactory.getOWLAnnotationProperty(propertyIRI);
     String value = annotation.split("=")[1];
+    // Based on the value, determine the type of annotation
     if (value.contains("<") && value.contains(">")) {
+      // Return an IRI annotation
       IRI valueIRI =
           CommandLineHelper.maybeCreateIRI(
               ioHelper, value.substring(1, value.length() - 1), "select");
-      annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
-      return annotations;
+      return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
     } else if (value.contains("~'")) {
-      String patternString = value.split("\'")[1];
-      Pattern pattern = Pattern.compile(patternString);
-      for (OWLEntity e : OntologyHelper.getEntities(ontology)) {
-        for (OWLAnnotation a : EntitySearcher.getAnnotations(e, ontology)) {
-          if (a.getProperty().equals(annotationProperty)) {
-            OWLAnnotationValue av = a.getValue();
-            String annotationValue = "";
-            // The annotation value expects a plain or a literal
-            try {
-              OWLLiteralImplPlain plain = (OWLLiteralImplPlain) av;
-              annotationValue = plain.getLiteral();
-            } catch (Exception ex) {
-            }
-            try {
-              OWLLiteralImplString str = (OWLLiteralImplString) av;
-              annotationValue = str.getLiteral();
-            } catch (Exception ex) {
-            }
-            Matcher matcher = pattern.matcher(annotationValue);
-            if (matcher.matches()) {
-              annotations.add(a);
-            }
-          }
-        }
-      }
-      return annotations;
+      // Return a set of annotations in the ontology that match a regex pattern
+      return getPatternAnnotations(ontology, annotationProperty, value);
     } else if (value.contains("'")) {
-      OWLLiteral literalValue = dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
-      annotations.add(dataFactory.getOWLAnnotation(annotationProperty, literalValue));
-      return annotations;
+      // Return a literal (string, boolean, double, integer, float) annotation
+      return Sets.newHashSet(getLiteralAnnotation(dataFactory, annotationProperty, value));
     } else {
-      // Assume it's a CURIE
+      // Return an IRI annotation based on a CURIE
       IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "select");
-      annotations.add(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
-      return annotations;
+      return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
     }
   }
 
   /**
    * Given an input string, return a list of the string split on whitespace, while ignoring any
-   * whitespace in parentheses.
+   * whitespace in single string quotes.
    *
    * @param selects String of select options to split
    * @return List of split strings
    */
   protected static List<String> splitSelects(String selects) {
     List<String> split = new ArrayList<>();
-    Matcher matcher = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'").matcher(selects);
     String last = "";
-    while (matcher.find()) {
-      String str = matcher.group();
-      if (str.contains("'")) {
-        str = last + str;
+    for (String s : selects.split(" (?=')|(?<=') ")) {
+      if (s.contains("'")) {
+        s = last + s;
         split.remove(last);
       } else {
-        last = str;
+        last = s;
       }
-      split.add(str);
+      split.add(s);
     }
     return split;
+  }
+
+  /**
+   * Given an OWL ontology, an annotation property, and an annotation value (in regex pattern form),
+   * return a set of OWLAnnotations that have values matching the regex value.
+   *
+   * @param ontology OWLOntology to retrieve annotations from
+   * @param annotationProperty OWLAnnotationProperty
+   * @param value regex pattern to match values to
+   * @return set of matching OWLAnnotations
+   */
+  private static Set<OWLAnnotation> getPatternAnnotations(
+      OWLOntology ontology, OWLAnnotationProperty annotationProperty, String value) throws Exception {
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    String patternString = value.split("\'")[1];
+    Pattern pattern = Pattern.compile(patternString);
+    for (OWLEntity e : OntologyHelper.getEntities(ontology)) {
+      for (OWLAnnotation a : EntitySearcher.getAnnotations(e, ontology)) {
+        if (a.getProperty().equals(annotationProperty)) {
+          OWLAnnotationValue av = a.getValue();
+          String annotationValue;
+          // The annotation value ONLY expects a plain or string
+          try {
+            OWLLiteralImplPlain plain = (OWLLiteralImplPlain) av;
+            annotationValue = plain.getLiteral();
+          } catch (Exception e1) {
+            try {
+              OWLLiteralImplString str = (OWLLiteralImplString) av;
+              annotationValue = str.getLiteral();
+            } catch (Exception e2) {
+              throw e2;
+              // TODO: does this block actually get hit?
+              // The pattern should only match a string anyway
+            }
+          }
+          Matcher matcher = pattern.matcher(annotationValue);
+          if (matcher.matches()) {
+            annotations.add(a);
+          }
+        }
+      }
+    }
+    return annotations;
+  }
+
+  /**
+   * Given an OWL data factory, an annotation property, and a literal value, return the
+   * OWLAnnotation object.
+   *
+   * @param dataFactory OWLDataFactory to create entities
+   * @param annotationProperty OWLAnnotationProperty
+   * @param value annotation value as string
+   * @return OWLAnnotation object
+   * @throws Exception on issue parsing to datatype
+   */
+  private static OWLAnnotation getLiteralAnnotation(
+      OWLDataFactory dataFactory, OWLAnnotationProperty annotationProperty, String value)
+      throws Exception {
+    OWLAnnotationValue annotationVal;
+    if (value.contains("^^")) {
+      // A datatype is given
+      String quoted = value.split("\\^\\^")[0];
+      String content = quoted.substring(1, quoted.length() - 1);
+      String dataType = value.split("\\^\\^")[1];
+      if (dataType.equalsIgnoreCase("boolean")) {
+        boolean bool;
+        if (content.equalsIgnoreCase("true")) {
+          bool = true;
+        } else if (content.equalsIgnoreCase("false")) {
+          bool = false;
+        } else {
+          throw new Exception(String.format(literalValueError, content, "boolean"));
+        }
+        annotationVal = dataFactory.getOWLLiteral(bool);
+      } else if (dataType.equalsIgnoreCase("double")) {
+        try {
+          annotationVal = dataFactory.getOWLLiteral(Double.parseDouble(content));
+        } catch (Exception e) {
+          throw new Exception(String.format(literalValueError, content, "double"));
+        }
+      } else if (dataType.equalsIgnoreCase("integer")) {
+        try {
+          annotationVal = dataFactory.getOWLLiteral(Integer.parseInt(content));
+        } catch (Exception e) {
+          throw new Exception(String.format(literalValueError, content, "integer"));
+        }
+      } else if (dataType.equalsIgnoreCase("float")) {
+        try {
+          annotationVal = dataFactory.getOWLLiteral(Float.parseFloat(content));
+        } catch (Exception e) {
+          throw new Exception(String.format(literalValueError, content, "float"));
+        }
+      } else {
+        throw new Exception(String.format(dataTypeError, dataType));
+      }
+    } else {
+      // If a datatype isn't provided, default to string literal
+      annotationVal = dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
+    }
+    return dataFactory.getOWLAnnotation(annotationProperty, annotationVal);
   }
 }

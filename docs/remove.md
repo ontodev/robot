@@ -61,6 +61,9 @@ Entities can also be selected from the set based on axioms. This can be helpful 
 1. `CURIE=CURIE`
 2. `CURIE=<IRI>`
 3. `CURIE='literal'`
+4. `CURIE='literal'^^datatype`*
+
+\* accepted datatypes are: `boolean`, `double`, `integer`, and `float`. For a string literal, just provide the quoted value without a datatype.
 
 ## Axioms
 
@@ -86,10 +89,32 @@ robot remove --input obi.owl --select individuals
 robot remove --input obi.owl --select classes --select anonymous
 ```
 
-4. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
+4. Remove all deprecated classes from OBI:
+
+```
+robot remove --input obi.owl --select "owl:deprecated='true'^^boolean"
+```
+
+5. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
 ```
 robot remove --input edit.owl \
   --entity rdfs:label --entity oboInOwl:id \
   --select "complement annotation-properties"
 ```
+
+---
+
+## Error Messages
+
+### DataType Error
+
+This error message occurs if something other than `boolean`, `integer`, `double`, or `float` is provided as a datatype on an annotation value in `--select`.
+
+### Literal Value Error
+
+This error message occurs when the value provided does not match a given datatype. For example, if you specify the `boolean` datatype, but provide an integer, it will fail.
+
+### Select Error
+
+This error message occurs when an unsupported argument is provided for `--select`. Review the documentation above for valid `--select` statements.
