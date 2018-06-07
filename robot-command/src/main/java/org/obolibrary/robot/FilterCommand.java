@@ -135,6 +135,7 @@ public class FilterCommand implements Command {
     if (selects.isEmpty()) {
       selects.add("self");
     }
+
     // Selects should be processed in order, allowing unions in one --select
     // Produces a set of Relation Types and a set of annotations, as well as booleans for miscs
     while (selects.size() > 0) {
@@ -205,6 +206,7 @@ public class FilterCommand implements Command {
             FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes));
         Set<OWLEntity> relatedEntities =
             RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
+
         outputOntologies.add(
             FilterOperation.filter(inputOntology, relatedEntities, axiomTypes, includeAnnotations));
         outputOntology = MergeOperation.merge(outputOntologies, false, false);

@@ -1,10 +1,7 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.cli.CommandLine;
@@ -247,7 +244,8 @@ public class RemoveCommand implements Command {
       return getPatternAnnotations(ontology, annotationProperty, value);
     } else if (value.contains("'")) {
       // Return a literal (string, boolean, double, integer, float) annotation
-      return Sets.newHashSet(getLiteralAnnotation(dataFactory, annotationProperty, value));
+      return Sets.newHashSet(
+          getLiteralAnnotation(ioHelper, dataFactory, annotationProperty, value));
     } else {
       // Return an IRI annotation based on a CURIE
       IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "select");
@@ -264,16 +262,9 @@ public class RemoveCommand implements Command {
    */
   protected static List<String> splitSelects(String selects) {
     List<String> split = new ArrayList<>();
-    String last = "";
     Matcher m = Pattern.compile("([^\']\\S*|\'.+?\')\\s*").matcher(selects);
     while (m.find()) {
       String s = m.group(1);
-      if (s.contains("'")) {
-        s = last + s;
-        split.remove(last);
-      } else {
-        last = s;
-      }
       split.add(s);
     }
     return split;
@@ -327,6 +318,7 @@ public class RemoveCommand implements Command {
    * Given an OWL data factory, an annotation property, and a literal value, return the
    * OWLAnnotation object.
    *
+   * @param ioHelper IOHelper to retrieve prefix manager
    * @param dataFactory OWLDataFactory to create entities
    * @param annotationProperty OWLAnnotationProperty
    * @param value annotation value as string
@@ -334,49 +326,55 @@ public class RemoveCommand implements Command {
    * @throws Exception on issue parsing to datatype
    */
   private static OWLAnnotation getLiteralAnnotation(
-      OWLDataFactory dataFactory, OWLAnnotationProperty annotationProperty, String value)
+      IOHelper ioHelper,
+      OWLDataFactory dataFactory,
+      OWLAnnotationProperty annotationProperty,
+      String value)
       throws Exception {
-    OWLAnnotationValue annotationVal;
+    // ioHelper.addPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
+    OWLAnnotationValue annotationValue;
     if (value.contains("^^")) {
       // A datatype is given
-      String quoted = value.split("\\^\\^")[0];
-      String content = quoted.substring(1, quoted.length() - 1);
-      String dataType = value.split("\\^\\^")[1];
-      if (dataType.equalsIgnoreCase("boolean")) {
-        boolean bool;
+      String content = value.split("\\^\\^")[0].replace("'", "");
+      String dataTypeID = value.split("\\^\\^")[1];
+      IRI dataTypeIRI = CommandLineHelper.maybeCreateIRI(ioHelper, dataTypeID, "datatype");
+      System.out.println(dataTypeIRI.toString());
+      OWLDatatype dt = dataFactory.getOWLDatatype(dataTypeIRI);
+      if (dt.isBoolean()) {
         if (content.equalsIgnoreCase("true")) {
-          bool = true;
+          annotationValue = dataFactory.getOWLLiteral(true);
         } else if (content.equalsIgnoreCase("false")) {
-          bool = false;
+          annotationValue = dataFactory.getOWLLiteral(false);
         } else {
-          throw new Exception(String.format(literalValueError, content, "boolean"));
+          throw new Exception(String.format(literalValueError, dataTypeID, "boolean"));
         }
-        annotationVal = dataFactory.getOWLLiteral(bool);
-      } else if (dataType.equalsIgnoreCase("double")) {
+      } else if (dt.isDouble()) {
         try {
-          annotationVal = dataFactory.getOWLLiteral(Double.parseDouble(content));
+          annotationValue = dataFactory.getOWLLiteral(Double.parseDouble(content));
         } catch (Exception e) {
-          throw new Exception(String.format(literalValueError, content, "double"));
+          throw new Exception(String.format(literalValueError, dataTypeID, "double"));
         }
-      } else if (dataType.equalsIgnoreCase("integer")) {
+      } else if (dt.isFloat()) {
         try {
-          annotationVal = dataFactory.getOWLLiteral(Integer.parseInt(content));
+          annotationValue = dataFactory.getOWLLiteral(Float.parseFloat(content));
         } catch (Exception e) {
-          throw new Exception(String.format(literalValueError, content, "integer"));
+          throw new Exception(String.format(literalValueError, dataTypeID, "float"));
         }
-      } else if (dataType.equalsIgnoreCase("float")) {
+      } else if (dt.isInteger()) {
         try {
-          annotationVal = dataFactory.getOWLLiteral(Float.parseFloat(content));
+          annotationValue = dataFactory.getOWLLiteral(Integer.parseInt(content));
         } catch (Exception e) {
-          throw new Exception(String.format(literalValueError, content, "float"));
+          throw new Exception(String.format(literalValueError, dataTypeID, "integer"));
         }
+      } else if (dt.isString()) {
+        annotationValue = dataFactory.getOWLLiteral(content);
       } else {
-        throw new Exception(String.format(dataTypeError, dataType));
+        annotationValue = dataFactory.getOWLLiteral(content, dt);
       }
     } else {
       // If a datatype isn't provided, default to string literal
-      annotationVal = dataFactory.getOWLLiteral(value.substring(1, value.length() - 1));
+      annotationValue = dataFactory.getOWLLiteral(value.replace("'", ""));
     }
-    return dataFactory.getOWLAnnotation(annotationProperty, annotationVal);
+    return dataFactory.getOWLAnnotation(annotationProperty, annotationValue);
   }
 }

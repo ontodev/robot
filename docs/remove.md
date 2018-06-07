@@ -61,9 +61,8 @@ Entities can also be selected from the set based on axioms. This can be helpful 
 1. `CURIE=CURIE`
 2. `CURIE=<IRI>`
 3. `CURIE='literal'`
-4. `CURIE='literal'^^datatype`*
-
-\* accepted datatypes are: `boolean`, `double`, `integer`, and `float`. For a string literal, just provide the quoted value without a datatype.
+4. `CURIE='literal'^^datatype`
+5. `CURIE=~'regex pattern'`
 
 ## Axioms
 
