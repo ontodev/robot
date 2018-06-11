@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
 import java.io.File;
-import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
@@ -34,10 +33,6 @@ public class ConvertCommand implements Command {
 
   /** Error message when a --format is not specified and the --output does not have an extension. */
   private static final String missingFormatError = NS + "FORMAT ERROR an output format is required";
-
-  /** Error message when --check is true and the document is not in valid OBO structure */
-  private static final String oboStructureError =
-      NS + "OBO STRUCTURE ERROR the ontology does not conform to OBO structure rules";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -163,17 +158,7 @@ public class ConvertCommand implements Command {
       throw new IllegalArgumentException(checkArgError);
     }
 
-    try {
-      ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
-    } catch (IOException e) {
-      // specific feedback for writing to OBO
-      if (e.getMessage().contains("FrameStructureException")) {
-        logger.debug(e.getMessage());
-        throw new Exception(oboStructureError);
-      } else {
-        throw e;
-      }
-    }
+    ConvertOperation.convert(ontology, formatName, outputFile, checkOBO);
 
     return state;
   }

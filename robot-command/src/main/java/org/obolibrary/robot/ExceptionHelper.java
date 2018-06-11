@@ -22,11 +22,6 @@ public class ExceptionHelper {
    */
   public static void handleException(Exception exception) {
     String msg = trimExceptionClass(exception);
-    if (msg != null) {
-      String exceptionID = getExceptionID(msg);
-      System.out.println(trimExceptionID(msg));
-      System.out.println("For details see: http://robot.obolibrary.org/" + exceptionID + "\n");
-    }
     // Will only print with --very-very-verbose (DEBUG level)
     if (logger.isDebugEnabled()) {
       StackTraceElement[] trace = exception.getStackTrace();
@@ -34,6 +29,12 @@ public class ExceptionHelper {
         logger.debug(t.toString());
       }
       System.out.println();
+    }
+    // Print the message
+    if (msg != null) {
+      String exceptionID = getExceptionID(msg);
+      System.out.println(trimExceptionID(msg));
+      System.out.println("For details see: http://robot.obolibrary.org/" + exceptionID + "\n");
     }
   }
 

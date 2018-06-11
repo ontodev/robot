@@ -99,11 +99,11 @@ public class MergeOperation {
     // By default, do not include annotations and do not collapse import closure
     mergeInto(ontologies, targetOntology, false, false);
   }
-  
+
   /**
    * Given one or more ontologies and a target ontology, add all the axioms from the listed
-   * ontologies to the target ontology. Optionally, include annotations from the ontologies
-   * in the list. It is recommended to use mergeInto with both includeAnnotations and
+   * ontologies to the target ontology. Optionally, include annotations from the ontologies in the
+   * list. It is recommended to use mergeInto with both includeAnnotations and
    * collapseImportsClosure options.
    *
    * @param ontology the source ontology to merge
@@ -118,9 +118,9 @@ public class MergeOperation {
   }
 
   /**
-   * Given a source ontology and a target ontology, add all the axioms from the source ontology
-   * into the target ontology. Optionally, include annotations from the source and/or collapse
-   * the imports closures.
+   * Given a source ontology and a target ontology, add all the axioms from the source ontology into
+   * the target ontology. Optionally, include annotations from the source and/or collapse the
+   * imports closures.
    *
    * @param ontology the source ontology to merge
    * @param targetOntology the ontology to merge axioms into

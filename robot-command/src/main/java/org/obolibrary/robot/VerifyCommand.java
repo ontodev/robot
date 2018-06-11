@@ -68,8 +68,7 @@ public class VerifyCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "Runs a sparql query on an ontology. "
-        + "Any results of the query are violations, counted, and reported";
+    return "run a SPARQL query where results are violations";
   }
 
   /**
