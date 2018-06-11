@@ -735,7 +735,10 @@ public class CommandLineHelper {
     }
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
     root.setLevel(org.apache.log4j.Level.toLevel(level));
-
+    if (hasFlagOrCommand(line, "help")) {
+      printHelp(usage, options);
+      return null;
+    }
     if (hasFlagOrCommand(line, "version")) {
       printVersion();
       return null;
