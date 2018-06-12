@@ -1,14 +1,8 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.RemoveImport;
+import java.util.*;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +39,7 @@ public class MergeOperation {
    * @param ontologies the list of ontologies to merge
    * @param includeAnnotations if true, ontology annotations should be merged; annotations on
    *     imports are not merged
-   * @param collapseImportsClosure if true, imports closure from all ontologies included
+   * @param collapseImportClosure if true, imports closure from all ontologies included
    * @return the first ontology
    */
   public static OWLOntology merge(
@@ -147,28 +141,43 @@ public class MergeOperation {
       OWLOntology targetOntology,
       boolean includeAnnotations,
       boolean collapseImportsClosure) {
-
-    List<OWLOntology> combinedOntologies = new ArrayList<>();
-    combinedOntologies.addAll(ontologies);
-    if (collapseImportsClosure) {
-      for (OWLOntology ontology : ontologies) {
-        combinedOntologies.addAll(ontology.getImportsClosure());
-        removeImports(ontology);
+    for (OWLOntology ontology : ontologies) {
+      if (collapseImportsClosure) {
+        // Merge the ontologies with imports included
+        targetOntology
+            .getOWLOntologyManager()
+            .addAxioms(targetOntology, ontology.getAxioms(Imports.INCLUDED));
+      } else {
+        // Merge the ontologies with imports excluded
+        Set<OWLOntology> imports = targetOntology.getImports();
+        try {
+          RemoveOperation.removeImports(targetOntology);
+        } catch (Exception e) {
+          // Continue without removing imports
+          continue;
+        }
+        targetOntology
+            .getOWLOntologyManager()
+            .addAxioms(targetOntology, ontology.getAxioms(Imports.EXCLUDED));
+        OWLOntologyManager manager = targetOntology.getOWLOntologyManager();
+        OWLDataFactory dataFactory = manager.getOWLDataFactory();
+        // Re-add the imports
+        for (OWLOntology imp : imports) {
+          OWLImportsDeclaration dec =
+              dataFactory.getOWLImportsDeclaration(imp.getOntologyID().getOntologyIRI().orNull());
+          manager.applyChange(new AddImport(targetOntology, dec));
+        }
       }
-      combinedOntologies.addAll(targetOntology.getImportsClosure());
-      removeImports(targetOntology);
-    }
-
-    for (OWLOntology ontology : combinedOntologies) {
-      targetOntology.getOWLOntologyManager().addAxioms(targetOntology, ontology.getAxioms());
       if (includeAnnotations) {
         for (OWLAnnotation annotation : ontology.getAnnotations()) {
+          // Add each set of ontology annotations to the target ontology
           OntologyHelper.addOntologyAnnotation(targetOntology, annotation);
         }
       }
-      for (OWLOntology imported : ontology.getImportsClosure()) {
-        targetOntology.getOWLOntologyManager().addAxioms(targetOntology, imported.getAxioms());
-      }
+    }
+    if (collapseImportsClosure) {
+      // Remove import statements, as they've been merged in
+      removeImports(targetOntology);
     }
   }
 
