@@ -776,7 +776,8 @@ public class CommandLineHelper {
    */
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
-    if (exception.getStackTrace()[0].toString().contains("Command")) {
+    String msg = exception.getStackTrace()[0].toString();
+    if (msg.contains("Command") && !msg.contains("updateInputOntology")) {
       printHelp(usage, options);
     }
     System.exit(1);
