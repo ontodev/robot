@@ -145,10 +145,10 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param ontology the ontology to add mappings for
    */
   public void addAll(OWLOntology ontology) {
-    Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+    Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
+    ontologies.addAll(ontology.getImports());
     ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
-    OntologyHelper.getEntities(ontology);
     for (OWLEntity entity : resp.getEntities()) {
       add(ontology, entity);
     }

@@ -8,10 +8,10 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <owl:Ontology rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Classes
@@ -19,7 +19,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1 -->
@@ -28,7 +28,7 @@
         <rdfs:label>test one</rdfs:label>
         <rdfs:label>Test 1</rdfs:label>
     </owl:Class>
-    
+
 
 
     <!-- https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2 -->

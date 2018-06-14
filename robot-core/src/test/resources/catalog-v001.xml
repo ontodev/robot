@@ -18,4 +18,5 @@
     <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/top.owl" uri="./top.owl"/>
     <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/without_redundant_subclasses.owl" uri="./without_redundant_subclasses.owl"/>
     <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/non-reasoned.owl" uri="./non-reasoned.owl"/>
+    <uri id="User Entered Import Resolution" name="https://github.com/ontodev/robot/robot-core/src/test/resources/import_test.owl" uri="./import_test.owl"/>
 </catalog>
