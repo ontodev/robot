@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,16 +9,18 @@ import java.util.Map;
 import java.util.Set;
 import org.semanticweb.owlapi.expression.OWLEntityChecker;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
@@ -37,7 +40,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
   /** Shared IOHelper. */
-  private static IOHelper ioHelper = null;
+  private IOHelper ioHelper = null;
 
   /** Optional short form providers for additional names. */
   private List<ShortFormProvider> providers = new ArrayList<ShortFormProvider>();
@@ -142,8 +145,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param ontology the ontology to add mappings for
    */
   public void addAll(OWLOntology ontology) {
-    Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+    Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
+    ontologies.addAll(ontology.getImports());
     ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
     for (OWLEntity entity : resp.getEntities()) {
       add(ontology, entity);
@@ -207,14 +211,16 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     }
 
     if (parentOntology != null && properties != null) {
+      // Get a set of the parent ontology and its imports
+      Set<OWLOntology> ontologies = Sets.newHashSet(parentOntology);
+      ontologies.addAll(parentOntology.getImports());
       for (OWLAnnotationProperty property : properties) {
-        for (OWLAnnotationAssertionAxiom ax :
-            parentOntology.getAnnotationAssertionAxioms(entity.getIRI())) {
-          if (ax.getProperty().equals(property)) {
-            String value = OntologyHelper.getValue(ax.getValue());
-            if (value != null) {
-              map.put(value, entity.getIRI());
-            }
+        // Get the labels for all entities
+        for (OWLAnnotation ann : EntitySearcher.getAnnotations(entity, ontologies, property)) {
+          OWLLiteral value = ann.getValue().asLiteral().orNull();
+          // If it has a label, add it to the map (will replace short form)
+          if (value != null) {
+            map.put(value.getLiteral(), entity.getIRI());
           }
         }
       }
