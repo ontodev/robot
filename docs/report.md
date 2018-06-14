@@ -13,9 +13,9 @@ By default, the output is a TSV file. You can also get a YAML output by includin
 ```
 Violations: 710
 -----------------
-INFO:       29
-WARN:       572
 ERROR:      109
+WARN:       572
+INFO:       29
 ```
 
 ## Failing
@@ -32,31 +32,13 @@ If the report fails, the command will exit with a status of `1`, but a report wi
 
 ## Queries
 
-`report` includes a set of 15 QC queries, each with a default logging level.
-
-| Query Name               | Level | Violation                           |
-|--------------------------|-------|-------------------------------------|
-| `definition_cardinality` | ERROR | Entity doesn't have ONE definition  |
-| `deprecated_class`       | ERROR | Deprecated class used in axiom      |
-| `duplicate_definition`   | ERROR | Entities have the same definition   |
-| `duplicate_label`        | ERROR | Entities have the same label        |
-| `label_cardinality`      | ERROR | Entity doesn't have ONE label       |
-| `label_formatting`       | ERROR | Formatting used in label            |
-| `ontology_metadata`      | ERROR | Ontology missing required metadata  |
-| `whitespace`             | ERROR | Leading or trailing whitespace      |
-| `duplicate_synonym`      | WARN  | Label is the same as synonym        |
-| `equivalent_pair`        | WARN  | Inferred equivalent to named class  |
-| `invalid_xref`           | WARN  | XREF is not a valid CURIE           |
-| `multiple_superclasses`  | WARN  | Class has multiple asserted parents |
-| `obsolete_label`         | WARN  | Label doesn't begin with 'obsolete' |
-| `lowercase_definition`   | INFO  | Definition starts with lowercase    |
-| `missing_superclass`     | INFO  | Class doesn't have asserted parent  |
+`report` runs a number of queries, each with a default logging level. [See the full list](report/).
 
 Each query retrieves a triple in the form of `?entity ?property ?value`. The `?entity` is the violating entity, the `?property` is the property that is being violated, and `?value` is what is causing the violation (which could be empty).
 
 For example, the query to retrieve references to deprecatd classes:
 ```
-SELECT DISTINCT ?entity ?property ?value WHERE 
+SELECT DISTINCT ?entity ?property ?value WHERE
   {?value owl:deprecated true .
    ?entity a owl:Class .
    ?entity ?property ?value }
