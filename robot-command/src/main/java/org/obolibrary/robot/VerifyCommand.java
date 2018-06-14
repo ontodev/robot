@@ -68,7 +68,8 @@ public class VerifyCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "run a SPARQL query where results are violations";
+    return "Runs a sparql query on an ontology. "
+        + "Any results of the query are violations, counted, and reported";
   }
 
   /**
@@ -132,11 +133,7 @@ public class VerifyCommand implements Command {
       ResultSetRewindable resultsCopy = ResultSetFactory.copyResults(results);
       String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
       File resultCsv = outputDir.toPath().resolve(csvPath).toFile();
-      if (resultsCopy.size() > 0) {
-        resultMap.put(query, new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
-      } else {
-        System.out.println("Rule " + resultCsv.getCanonicalPath() + ": 0 violations");
-      }
+      resultMap.put(query, new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
     }
 
     boolean violationsExist = QueryOperation.execVerify(resultMap);

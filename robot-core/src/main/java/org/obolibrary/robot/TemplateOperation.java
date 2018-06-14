@@ -652,7 +652,7 @@ public class TemplateOperation {
     Set<OWLAxiom> axioms =
         TemplateHelper.getLogicalAxioms(cls, classType, classExpressions, annotatedExpressions);
     if (axioms == null) {
-      throw new Exception(String.format(unknownTypeError, tableName, row + 1, id, classType));
+      throw new Exception(String.format(unknownTypeError, tableName, row + 1, id));
     } else {
       ontology.getOWLOntologyManager().addAxioms(ontology, axioms);
     }
