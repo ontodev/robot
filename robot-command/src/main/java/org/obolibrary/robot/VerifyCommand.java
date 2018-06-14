@@ -133,7 +133,11 @@ public class VerifyCommand implements Command {
       ResultSetRewindable resultsCopy = ResultSetFactory.copyResults(results);
       String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
       File resultCsv = outputDir.toPath().resolve(csvPath).toFile();
-      resultMap.put(query, new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
+      if (resultsCopy.size() > 0) {
+        resultMap.put(query, new Tuple<>(resultsCopy, new FileOutputStream(resultCsv)));
+      } else {
+        System.out.println("Rule " + resultCsv.getCanonicalPath() + ": 0 violations");
+      }
     }
 
     boolean violationsExist = QueryOperation.execVerify(resultMap);
