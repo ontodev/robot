@@ -136,6 +136,7 @@ public class RemoveCommand implements Command {
     if (selects.isEmpty()) {
       selects.add("self");
     }
+    boolean noEntities = false;
 
     // Selects should be processed in order, allowing unions in one --select
     // Produces a set of Relation Types and a set of annotations, as well as booleans for miscs
@@ -160,6 +161,7 @@ public class RemoveCommand implements Command {
         } else if (s.equalsIgnoreCase("imports")) {
           // Remove import statements
           RemoveOperation.removeImports(ontology);
+          noEntities = true;
         } else if (s.contains("=")) {
           // This designates an annotation to find
           annotations.addAll(getAnnotations(ontology, ioHelper, s));
@@ -171,7 +173,9 @@ public class RemoveCommand implements Command {
       // Add annotated entities to the set of entities
       entities.addAll(RelatedEntitiesHelper.getAnnotated(ontology, annotations));
       // If no entities were provided, add them all
-      if (entities.isEmpty()) {
+      if (noEntities && entities.isEmpty()) {
+        return state;
+      } else if (entities.isEmpty()) {
         entities.addAll(OntologyHelper.getEntities(ontology));
       }
 
