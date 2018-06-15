@@ -1,7 +1,6 @@
 # Duplicate Label
 
-Problem: Two different subjects have been assigned the same label.
-This causes ambiguity.
+Problem: Two different subjects have been assigned the same label. This causes ambiguity.
 
 Solution: Avoid ambiguity by assigning distinct labels to each subject.
 

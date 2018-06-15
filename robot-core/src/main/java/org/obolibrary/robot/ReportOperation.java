@@ -86,9 +86,17 @@ public class ReportOperation {
     Report report = new Report();
     DatasetGraph dsg = QueryOperation.loadOntology(ontology);
     for (String queryName : queries.keySet()) {
-      report.addViolations(
-          queryName, profile.get(queryName), getViolations(dsg, queries.get(queryName)));
+      String fullQueryString = queries.get(queryName);
+      String queryString;
+      // Remove the headers
+      if (fullQueryString.startsWith("#")) {
+        queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
+      } else {
+        queryString = fullQueryString;
+      }
+      report.addViolations(queryName, profile.get(queryName), getViolations(dsg, queryString));
     }
+
     Integer violationCount = report.getTotalViolations();
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
@@ -126,24 +134,19 @@ public class ReportOperation {
     } else if (failOn.equalsIgnoreCase("error")) {
       if (report.getTotalViolations(ERROR) > 0) {
         return false;
-      } else {
-        return true;
       }
     } else if (failOn.equalsIgnoreCase("warn")) {
       if ((report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) > 0) {
         return false;
-      } else {
-        return true;
       }
     } else if (failOn.equalsIgnoreCase("info")) {
       if (report.getTotalViolations() > 0) {
         return false;
-      } else {
-        return true;
       }
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
+    return true;
   }
 
   /**
@@ -207,8 +210,8 @@ public class ReportOperation {
     // Handle simple file path, probably accessed during testing
     if (dirURL != null && dirURL.getProtocol().equals("file")) {
       String[] queryFilePaths = new File(dirURL.toURI()).list();
-      if (queryFilePaths.length == 0) {
-        throw new IOException("Cannot access report query files.");
+      if (queryFilePaths == null || queryFilePaths.length == 0) {
+        throw new IOException("Cannot access report query files. There are no files in the directory.");
       }
       for (String qPath : queryFilePaths) {
         String ruleName = qPath.substring(qPath.lastIndexOf("/")).split(".")[0];
@@ -226,14 +229,20 @@ public class ReportOperation {
       String cls = ReportOperation.class.getName().replace(".", "/") + ".class";
       dirURL = ReportOperation.class.getClassLoader().getResource(cls);
     }
-    if (dirURL.getProtocol().equals("jar")) {
+    String protocol;
+    try {
+      protocol = dirURL.getProtocol();
+    } catch (NullPointerException e) {
+      throw new IOException("Cannot access report query files in JAR. The directory address has no protocol.");
+    }
+    if (protocol.equals("jar")) {
       String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!"));
       // Get all entries in jar
-      Enumeration<JarEntry> entries = null;
+      Enumeration<JarEntry> entries;
       try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
         entries = jar.entries();
         if (!entries.hasMoreElements()) {
-          throw new IOException("Cannot access entries in JAR.");
+          throw new IOException("Cannot access report query files in JAR. There are no entries in the JAR.");
         }
         // Track rules that have successfully been retrieved
         while (entries.hasMoreElements()) {
@@ -273,10 +282,8 @@ public class ReportOperation {
    * @param path path to profile, or null
    * @return map of rule name and its reporting level
    * @throws IOException on any issue reading the profile file
-   * @throws URISyntaxException on issue converting URL to URI
    */
-  private static Map<String, String> getProfile(String path)
-      throws IOException, URISyntaxException {
+  private static Map<String, String> getProfile(String path) throws IOException {
     Map<String, String> profile = new HashMap<>();
     InputStream is;
     // If the file was not provided, get the default
@@ -329,7 +336,7 @@ public class ReportOperation {
     ResultSet violationSet = QueryOperation.execQuery(dsg, query);
 
     Map<String, Violation> violations = new HashMap<>();
-    Violation violation = null;
+    Violation violation;
 
     while (violationSet.hasNext()) {
       QuerySolution qs = violationSet.next();
