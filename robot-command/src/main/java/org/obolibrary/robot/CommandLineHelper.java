@@ -764,7 +764,6 @@ public class CommandLineHelper {
    */
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
-    printHelp(usage, options);
     System.exit(1);
   }
 }
