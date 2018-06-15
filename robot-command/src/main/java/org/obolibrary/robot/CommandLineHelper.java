@@ -613,7 +613,7 @@ public class CommandLineHelper {
    */
   public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line, String singles, String paths)
       throws IllegalArgumentException, IOException {
-    Set<String> termStrings = new HashSet<String>();
+    Set<String> termStrings = new HashSet<>();
     if (singles != null) {
       termStrings.addAll(getOptionValues(line, singles));
     }
@@ -623,7 +623,7 @@ public class CommandLineHelper {
       }
     }
 
-    Set<IRI> terms = new HashSet<IRI>();
+    Set<IRI> terms = new HashSet<>();
     for (String termString : termStrings) {
       terms.addAll(ioHelper.parseTerms(termString));
     }
@@ -735,7 +735,6 @@ public class CommandLineHelper {
     }
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
     root.setLevel(org.apache.log4j.Level.toLevel(level));
-
     if (hasFlagOrCommand(line, "help")) {
       printHelp(usage, options);
       return null;
@@ -777,7 +776,10 @@ public class CommandLineHelper {
    */
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
-    printHelp(usage, options);
+    String msg = exception.getStackTrace()[0].toString();
+    if (msg.contains("Command") && !msg.contains("updateInputOntology")) {
+      printHelp(usage, options);
+    }
     System.exit(1);
   }
 }

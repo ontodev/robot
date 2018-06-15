@@ -139,7 +139,6 @@ public class CommandManager implements Command {
       execute(null, args);
     } catch (Exception e) {
       ExceptionHelper.handleException(e);
-      printHelp();
       System.exit(1);
     }
   }
@@ -163,7 +162,7 @@ public class CommandManager implements Command {
       state = new CommandState();
     }
 
-    List<String> arguments = new ArrayList<String>(Arrays.asList(args));
+    List<String> arguments = new ArrayList<>(Arrays.asList(args));
     if (arguments.size() == 0) {
       throw new IllegalArgumentException(missingCommandError);
     }
@@ -202,9 +201,12 @@ public class CommandManager implements Command {
     commandName = commandName.trim().toLowerCase();
     if (commandName.equals("help")) {
       if (arguments.size() == 0) {
+        // Print list of commands
         printHelp();
       } else {
-        globalOptionArgs.add("--help");
+        // Print specific command help
+        Command command = commands.get(arguments.remove(0));
+        CommandLineHelper.printHelp(command.getUsage(), command.getOptions());
       }
       return state;
     }
@@ -253,7 +255,7 @@ public class CommandManager implements Command {
 
   /** Print general help plus a list of available commands. */
   public void printHelp() {
-    CommandLineHelper.printHelp(getUsage(), getOptions());
+    // CommandLineHelper.printHelp(getUsage(), getOptions());
     System.out.println("commands:");
     printHelpEntry("help", "print help for command");
     for (Map.Entry<String, Command> entry : commands.entrySet()) {

@@ -8,21 +8,8 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -245,9 +232,10 @@ public class IOHelper {
     }
 
     Object jsonObject = null;
+    String extension;
 
     try {
-      String extension = FilenameUtils.getExtension(ontologyFile.getName());
+      extension = FilenameUtils.getExtension(ontologyFile.getName());
       extension = extension.trim().toLowerCase();
       if (extension.equals("yml") || extension.equals("yaml")) {
         logger.debug("Converting from YAML to JSON");
@@ -281,7 +269,10 @@ public class IOHelper {
     } catch (JsonLdError e) {
       throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
+      e.printStackTrace();
+      throw new IOException(
+          String.format(
+              "\nUnable to parse %s see details in stack trace above.", ontologyFile.getName()));
     }
   }
 
