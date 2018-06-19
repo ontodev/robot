@@ -188,7 +188,7 @@ public class AnnotateCommand implements Command {
         property = annotationItems.remove(0);
         value = annotationItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(annotationFormatError);
+        throw new IllegalArgumentException(annotationFormatError, e);
       }
       IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       OntologyHelper.addOntologyAnnotation(ontology, iri, IOHelper.createLiteral(value));
@@ -203,7 +203,7 @@ public class AnnotateCommand implements Command {
         property = linkItems.remove(0);
         value = linkItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(linkAnnotationFormatError);
+        throw new IllegalArgumentException(linkAnnotationFormatError, e);
       }
       IRI propIRI = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "value");
@@ -221,7 +221,7 @@ public class AnnotateCommand implements Command {
         value = langItems.remove(0);
         lang = langItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(langAnnotationFormatError);
+        throw new IllegalArgumentException(langAnnotationFormatError, e);
       }
       IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       OntologyHelper.addOntologyAnnotation(
@@ -239,7 +239,7 @@ public class AnnotateCommand implements Command {
         value = typedItems.remove(0);
         type = typedItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(typedAnnotationFormatError);
+        throw new IllegalArgumentException(typedAnnotationFormatError, e);
       }
       IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       OntologyHelper.addOntologyAnnotation(ontology, iri, ioHelper.createTypedLiteral(value, type));
@@ -254,7 +254,7 @@ public class AnnotateCommand implements Command {
         property = axiomItems.remove(0);
         value = axiomItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(axiomAnnotationFormatError);
+        throw new IllegalArgumentException(axiomAnnotationFormatError, e);
       }
       IRI iri = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       OntologyHelper.addAxiomAnnotations(ontology, iri, IOHelper.createLiteral(value));

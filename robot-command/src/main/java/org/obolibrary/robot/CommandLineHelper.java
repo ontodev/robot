@@ -43,22 +43,9 @@ public class CommandLineHelper {
   private static final String chainedInputError =
       NS + "CHAINED INPUT ERROR do not use an --input option for chained commands";
 
-  /**
-   * Error message when an invalid extension is provided (file format). Expects file format. This
-   * message is duplicated in IOHelper without the NS and ID.
-   */
-  private static final String invalidFormatError = NS + "INVALID FORMAT ERROR unknown format: %s";
-
   /** Error message when an invalid IRI is provided. Expects the entry field and term. */
   private static final String invalidIRIError =
       NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
-
-  /**
-   * Error message when an invalid prefix is provided. Expects the combined prefix. This message is
-   * duplicated in IOHelper without the NS and ID.
-   */
-  private static final String invalidPrefixError =
-      NS + "INVALID PREFIX ERROR invalid prefix string: %s";
 
   /** Error message when user provides an invalid reasoner. Expects reasonerName in formatting. */
   private static final String invalidReasonerError =
@@ -336,7 +323,7 @@ public class CommandLineHelper {
       try {
         ioHelper.addPrefix(prefix);
       } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format(invalidPrefixError, prefix));
+        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
       }
     }
 
@@ -542,7 +529,8 @@ public class CommandLineHelper {
       } catch (IllegalArgumentException e) {
         // Exception from getFormat -- invalid format
         throw new IllegalArgumentException(
-            String.format(invalidFormatError, path.substring(path.lastIndexOf(".") + 1)));
+            String.format(IOHelper.invalidFormatError, path.substring(path.lastIndexOf(".") + 1)),
+            e);
       }
     }
   }
@@ -777,7 +765,6 @@ public class CommandLineHelper {
    */
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
-    printHelp(usage, options);
     System.exit(1);
   }
 }

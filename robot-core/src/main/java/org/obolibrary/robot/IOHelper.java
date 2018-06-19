@@ -65,6 +65,43 @@ public class IOHelper {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(IOHelper.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "errors#";
+
+  /** Error message when the specified file does not exist. Expects file name. */
+  private static final String fileDoesNotExistError =
+      NS + "FILE DOES NOT EXIST ERROR File does not exist: %s";
+
+  /** Error message when an invalid extension is provided (file format). Expects the file format. */
+  static final String invalidFormatError = NS + "INVALID FORMAT ERROR unknown format: %s";
+
+  /** Error message when the specified file cannot be loaded. Expects the file name. */
+  private static final String invalidOntologyFileError =
+      NS + "INVALID ONTOLOGY FILE ERROR Could not load a valid ontology from file: %s";
+
+  /** Error message when the specified IRI cannot be loaded. Expects the IRI string. */
+  private static final String invalidOntologyIRIError =
+      NS + "INVALID ONTOLOGY IRI ERROR Could not load a valid ontology from IRI: %s";
+
+  /** Error message when the specified input stream cannot be loaded. */
+  private static final String invalidOntologyStreamError =
+      NS + "INVALID ONTOLOGY STREAM ERROR Could not load a valid ontology from InputStream.";
+
+  /** Error message when an invalid prefix is provided. Expects the combined prefix. */
+  static final String invalidPrefixError = NS + "INVALID PREFIX ERROR Invalid prefix string: %s";
+
+  /** Error message when a JSON-LD context cannot be created, for any reason. */
+  private static final String jsonldContextCreationError =
+      NS + "JSONLD CONTEXT CREATION ERROR Could not create the JSON-LD context.";
+
+  /** Error message when a JSON-LD context cannot be read, for any reason. */
+  private static final String jsonldContextParseError =
+      NS + "JSONLD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+
+  /** Error message when the ontology cannot be saved. Expects the IRI string. */
+  private static final String ontologyStorageError =
+      NS + "ONTOLOGY STORAGE ERROR Could not save ontology to IRI: %s";
+
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
 
@@ -241,7 +278,8 @@ public class IOHelper {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
 
     if (!ontologyFile.exists()) {
-      throw new IllegalArgumentException("File " + ontologyFile.getName() + " does not exist");
+      throw new IllegalArgumentException(
+          String.format(fileDoesNotExistError, ontologyFile.getName()));
     }
 
     Object jsonObject = null;
@@ -279,9 +317,9 @@ public class IOHelper {
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError e) {
-      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
+      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException("File " + ontologyFile.getName() + " is not a valid ontology", e);
+      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
   }
 
@@ -298,7 +336,7 @@ public class IOHelper {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(e);
+      throw new IOException(invalidOntologyStreamError, e);
     }
     return ontology;
   }
@@ -316,7 +354,7 @@ public class IOHelper {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(e);
+      throw new IOException(String.format(invalidOntologyIRIError, ontologyIRI.toString()), e);
     }
     return ontology;
   }
@@ -356,7 +394,7 @@ public class IOHelper {
     } else if (formatName.equals("json")) {
       return new OboGraphJsonDocumentFormat();
     } else {
-      throw new IllegalArgumentException("Invalid ontology format: " + formatName);
+      throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
     }
   }
 
@@ -397,8 +435,8 @@ public class IOHelper {
       String formatName = FilenameUtils.getExtension(ontologyIRI.toString());
       OWLDocumentFormat format = getFormat(formatName);
       return saveOntology(ontology, format, ontologyIRI, true);
-    } catch (IllegalArgumentException e) {
-      throw new IOException(e);
+    } catch (Exception e) {
+      throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
     }
   }
 
@@ -476,7 +514,7 @@ public class IOHelper {
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
       } catch (OWLOntologyStorageException e) {
-        throw new IOException(e);
+        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }
     }
     return ontology;
@@ -640,7 +678,7 @@ public class IOHelper {
       Object jsonContext = jsonMap.get("@context");
       return new Context().parse(jsonContext);
     } catch (Exception e) {
-      throw new IOException(e);
+      throw new IOException(jsonldContextParseError, e);
     }
   }
 
@@ -766,7 +804,7 @@ public class IOHelper {
   public void addPrefix(String combined) throws IllegalArgumentException {
     String[] results = combined.split(":", 2);
     if (results.length < 2) {
-      throw new IllegalArgumentException("Invalid prefix string: " + combined);
+      throw new IllegalArgumentException(String.format(invalidPrefixError, combined));
     }
     addPrefix(results[0], results[1]);
   }
@@ -820,7 +858,7 @@ public class IOHelper {
               JsonUtils.fromString("{}"), context.getPrefixes(false), new JsonLdOptions());
       return JsonUtils.toPrettyString(compact);
     } catch (Exception e) {
-      throw new IOException(e);
+      throw new IOException(jsonldContextCreationError, e);
     }
   }
 
