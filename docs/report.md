@@ -32,7 +32,7 @@ If the report fails, the command will exit with a status of `1`, but a report wi
 
 ## Queries
 
-`report` runs a number of queries, each with a default logging level. [See the full list](report/).
+`report` runs a number of queries, each with a default logging level. [See the full list](report_queries/).
 
 Each query retrieves a triple in the form of `?entity ?property ?value`. The `?entity` is the violating entity, the `?property` is the property that is being violated, and `?value` is what is causing the violation (which could be empty).
 
