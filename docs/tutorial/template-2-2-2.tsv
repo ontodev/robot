@@ -1,0 +1,4 @@
+ID	OBO ID	Label	Class Type	Parent	Part Of	Definition	Definition Source
+ID	A id	A label	CLASS_TYPE	C %	C 'part of' some %	A definition	>A oboInOwl:hasDbXref SPLIT=|
+UBERON:0005172	UBERON:0005172	abdomen element	equivalent	organ	abdomen	"An organ or element that is in the abdomen. Examples: spleen, intestine, kidney, abdominal mammary gland."	url:http://orcid.org/0000-0002-6601-2165
+UBERON:0002107	UBERON:0002107	liver	subclass	abdomen element	endocrine system	"An exocrine gland which secretes bile and functions in metabolism of protein and carbohydrate and fat, synthesizes substances involved in the clotting of the blood, synthesizes vitamin A, detoxifies poisonous substances, stores glycogen, and breaks down worn-out erythrocytes."	url:http://en.wikipedia.org/wiki/Liver|BTO:0000759
