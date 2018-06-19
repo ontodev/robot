@@ -678,7 +678,7 @@ public class IOHelper {
       Object jsonContext = jsonMap.get("@context");
       return new Context().parse(jsonContext);
     } catch (Exception e) {
-      throw new IOException(jsonldContextParseError);
+      throw new IOException(jsonldContextParseError, e);
     }
   }
 
@@ -858,7 +858,7 @@ public class IOHelper {
               JsonUtils.fromString("{}"), context.getPrefixes(false), new JsonLdOptions());
       return JsonUtils.toPrettyString(compact);
     } catch (Exception e) {
-      throw new IOException(jsonldContextCreationError);
+      throw new IOException(jsonldContextCreationError, e);
     }
   }
 

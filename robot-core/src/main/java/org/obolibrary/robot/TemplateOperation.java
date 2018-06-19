@@ -593,7 +593,7 @@ public class TemplateOperation {
         } catch (ParserException e) {
           throw new Exception(
               String.format(
-                  parseError, tableName, row + 1, id, column + 1, header, sub, e.getMessage()));
+                  parseError, tableName, row + 1, id, column + 1, header, sub, e.getMessage()), e);
         }
         classExpressions.add(lastExpression);
       } else if (template.startsWith("CI")) {
