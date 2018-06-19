@@ -169,7 +169,7 @@ public class ConvertCommand implements Command {
       // specific feedback for writing to OBO
       if (e.getMessage().contains("FrameStructureException")) {
         logger.debug(e.getMessage());
-        throw new Exception(oboStructureError);
+        throw new Exception(oboStructureError, e);
       } else {
         throw e;
       }
