@@ -203,7 +203,7 @@ public class AnnotateCommand implements Command {
         property = linkItems.remove(0);
         value = linkItems.remove(0);
       } catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException(linkAnnotationFormatError,e );
+        throw new IllegalArgumentException(linkAnnotationFormatError, e);
       }
       IRI propIRI = CommandLineHelper.maybeCreateIRI(ioHelper, property, "property");
       IRI valueIRI = CommandLineHelper.maybeCreateIRI(ioHelper, value, "value");

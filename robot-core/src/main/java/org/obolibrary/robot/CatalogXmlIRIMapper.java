@@ -151,7 +151,7 @@ public class CatalogXmlIRIMapper implements OWLOntologyIRIMapper {
       SAXParser saxParser = factory.newSAXParser();
       saxParser.parse(inputStream, new CatalogElementHandler(parentFolder, mappings));
       return mappings;
-    } catch (ParserConfigurationException|SAXException e) {
+    } catch (ParserConfigurationException | SAXException e) {
       throw new IOException(e);
     } finally {
       inputStream.close();

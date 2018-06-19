@@ -323,7 +323,7 @@ public class CommandLineHelper {
       try {
         ioHelper.addPrefix(prefix);
       } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix));
+        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
       }
     }
 
@@ -529,7 +529,8 @@ public class CommandLineHelper {
       } catch (IllegalArgumentException e) {
         // Exception from getFormat -- invalid format
         throw new IllegalArgumentException(
-            String.format(IOHelper.invalidFormatError, path.substring(path.lastIndexOf(".") + 1)));
+            String.format(IOHelper.invalidFormatError, path.substring(path.lastIndexOf(".") + 1)),
+            e);
       }
     }
   }

@@ -317,9 +317,9 @@ public class IOHelper {
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError e) {
-      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()));
+      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()));
+      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
   }
 
@@ -336,7 +336,7 @@ public class IOHelper {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(invalidOntologyStreamError);
+      throw new IOException(invalidOntologyStreamError, e);
     }
     return ontology;
   }
@@ -354,7 +354,7 @@ public class IOHelper {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
     } catch (OWLOntologyCreationException e) {
-      throw new IOException(String.format(invalidOntologyIRIError, ontologyIRI.toString()));
+      throw new IOException(String.format(invalidOntologyIRIError, ontologyIRI.toString()), e);
     }
     return ontology;
   }
@@ -436,7 +436,7 @@ public class IOHelper {
       OWLDocumentFormat format = getFormat(formatName);
       return saveOntology(ontology, format, ontologyIRI, true);
     } catch (Exception e) {
-      throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()));
+      throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
     }
   }
 
@@ -514,7 +514,7 @@ public class IOHelper {
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
       } catch (OWLOntologyStorageException e) {
-        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()));
+        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }
     }
     return ontology;
