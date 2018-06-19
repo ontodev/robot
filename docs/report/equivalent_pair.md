@@ -7,8 +7,10 @@ Solution: Ensure the reasoner is not incorrectly inferring equivalency. If so, u
 ```sparql
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT ?entity ?property ?value WHERE
- {VALUES ?property {owl:equivalentClass}
-  ?entity ?property ?value .
-  FILTER (!isBlank(?value))}
+SELECT DISTINCT ?entity ?property ?value
+WHERE {
+ VALUES ?property {owl:equivalentClass}
+ ?entity ?property ?value .
+ FILTER (!isBlank(?value))
+}
 ```

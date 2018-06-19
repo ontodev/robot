@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class ReportOperation {
 
   /** Directory for queries. */
-  private static final String queryDir = "queries";
+  private static final String queryDir = "report_queries";
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReportOperation.class);
@@ -211,7 +211,8 @@ public class ReportOperation {
     if (dirURL != null && dirURL.getProtocol().equals("file")) {
       String[] queryFilePaths = new File(dirURL.toURI()).list();
       if (queryFilePaths == null || queryFilePaths.length == 0) {
-        throw new IOException("Cannot access report query files. There are no files in the directory.");
+        throw new IOException(
+            "Cannot access report query files. There are no files in the directory.");
       }
       for (String qPath : queryFilePaths) {
         String ruleName = qPath.substring(qPath.lastIndexOf("/")).split(".")[0];
@@ -233,7 +234,8 @@ public class ReportOperation {
     try {
       protocol = dirURL.getProtocol();
     } catch (NullPointerException e) {
-      throw new IOException("Cannot access report query files in JAR. The directory address has no protocol.");
+      throw new IOException(
+          "Cannot access report query files in JAR. The directory address has no protocol.");
     }
     if (protocol.equals("jar")) {
       String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!"));
@@ -242,7 +244,8 @@ public class ReportOperation {
       try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
         entries = jar.entries();
         if (!entries.hasMoreElements()) {
-          throw new IOException("Cannot access report query files in JAR. There are no entries in the JAR.");
+          throw new IOException(
+              "Cannot access report query files in JAR. There are no entries in the JAR.");
         }
         // Track rules that have successfully been retrieved
         while (entries.hasMoreElements()) {

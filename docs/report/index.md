@@ -1,21 +1,29 @@
-- WARN [annotation_whitespace](annotation_whitespace.html)
-- ERROR [deprecated_class_reference](deprecated_class_reference.html)
-- ERROR [duplicate_definition](duplicate_definition.html)
-- WARN [duplicate_exact_synonym](duplicate_exact_synonym.html)
-- WARN [duplicate_label_synonym](duplicate_label_synonym.html)
-- ERROR [duplicate_label](duplicate_label.html)
-- WARN [duplicate_scoped_synonym](duplicate_scoped_synonym.html)
-- WARN [equivalent_inferred_pair](equivalent_inferred_pair.html)
-- WARN [invalid_xref](invalid_xref.html)
-- ERROR [label_formatting](label_formatting.html)
-- ERROR [label_whitespace](label_whitespace.html)
-- INFO [lowercase_definition](lowercase_definition.html)
-- WARN [missing_definition](missing_definition.html)
-- ERROR [missing_label](missing_label.html)
-- WARN [missing_obsolete_label](missing_obsolete_label.html)
-- INFO [missing_superclass](missing_superclass.html)
-- ERROR [misused_obsolete_label](misused_obsolete_label.html)
-- WARN [multiple_asserted_superclasses](multiple_asserted_superclasses.html)
-- ERROR [multiple_definitions](multiple_definitions.html)
-- ERROR [multiple_labels](multiple_labels.html)
-- ERROR [ontology_metadata](ontology_metadata.html)
+# Report Queries
+
+The table below lists all the queries run by the `report` command,
+with their default severity levels.
+See [`report`](../report) for more details.
+
+| Name  | Default Severity  
+|-------|-------------------
+| [annotation whitespace](annotation_whitespace)  | WARN
+| [deprecated class reference](deprecated_class_reference)  | ERROR
+| [duplicate definition](duplicate_definition)  | ERROR
+| [duplicate exact synonym](duplicate_exact_synonym)  | WARN
+| [duplicate label synonym](duplicate_label_synonym)  | WARN
+| [duplicate label](duplicate_label)  | ERROR
+| [duplicate scoped synonym](duplicate_scoped_synonym)  | WARN
+| [equivalent pair](equivalent_pair)  | WARN
+| [invalid xref](invalid_xref)  | WARN
+| [label formatting](label_formatting)  | ERROR
+| [label whitespace](label_whitespace)  | ERROR
+| [lowercase definition](lowercase_definition)  | INFO
+| [missing definition](missing_definition)  | WARN
+| [missing label](missing_label)  | ERROR
+| [missing obsolete label](missing_obsolete_label)  | WARN
+| [missing superclass](missing_superclass)  | INFO
+| [misused obsolete label](misused_obsolete_label)  | ERROR
+| [multiple asserted superclasses](multiple_asserted_superclasses)  | WARN
+| [multiple definitions](multiple_definitions)  | ERROR
+| [multiple labels](multiple_labels)  | ERROR
+| [ontology metadata](ontology_metadata)  | ERROR

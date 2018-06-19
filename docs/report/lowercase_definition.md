@@ -7,8 +7,10 @@ Solution: Capitalize the first letter of the definition, or disregard this INFO.
 ```sparql
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
-SELECT DISTINCT ?entity ?property ?value WHERE
- {VALUES ?property {obo:IAO_0000115}
-  ?entity ?property ?value .
-  FILTER (!regex(?value, "^[A-Z]"))}
+SELECT DISTINCT ?entity ?property ?value
+WHERE {
+ VALUES ?property {obo:IAO_0000115}
+ ?entity ?property ?value .
+ FILTER (!regex(?value, "^[A-Z]"))
+}
 ```

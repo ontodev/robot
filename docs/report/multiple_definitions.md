@@ -8,13 +8,17 @@ Solution: Remove extra definitions.
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT ?entity ?property ?value WHERE
- {VALUES ?property {obo:IAO_0000115}
-  ?entity ?property ?value .
-  ?entity ?property ?value2 .
-  FILTER (?value != ?value2)
-  FILTER NOT EXISTS {?entity owl:deprecated ?dep .
-                     FILTER regex(str(?dep), "true")}
-  FILTER (!isBlank(?entity))}
+SELECT DISTINCT ?entity ?property ?value
+WHERE {
+ VALUES ?property {obo:IAO_0000115}
+ ?entity ?property ?value .
+ ?entity ?property ?value2 .
+ FILTER (?value != ?value2)
+ FILTER NOT EXISTS {
+   ?entity owl:deprecated ?dep .
+   FILTER regex(str(?dep), "true")
+ }
+ FILTER (!isBlank(?entity))
+}
 ORDER BY ?entity
 ```
