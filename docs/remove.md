@@ -91,7 +91,7 @@ robot remove --input obi.owl --select classes --select anonymous
 4. Remove all deprecated classes from OBI:
 
 ```
-robot remove --input obi.owl --select "owl:deprecated='true'^^boolean"
+robot remove --input obi.owl --select "owl:deprecated='true'^^xsd:boolean"
 ```
 
 5. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
