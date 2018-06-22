@@ -67,7 +67,7 @@ public class ReduceOperation {
    */
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<String, String>();
-    // options.put("remove-redundant-subclass-axioms", "true");
+    options.put("preserve-annotated-axioms", "false");
     return options;
   }
 
@@ -165,10 +165,11 @@ public class ReduceOperation {
 
     Set<OWLSubClassOfAxiom> rmAxioms = new HashSet<>();
     for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
-      // TO DO: make configurable
-      if (ax.getAnnotations().size() > 0) {
-        logger.debug("Protecting axiom with annotations: " + ax);
-        continue;
+      if (OptionsHelper.optionIsTrue(options, "preserve-annotated-axioms")) {
+        if (ax.getAnnotations().size() > 0) {
+          logger.debug("Protecting axiom with annotations: " + ax);
+          continue;
+        }
       }
 
       logger.debug("Testing: " + ax);

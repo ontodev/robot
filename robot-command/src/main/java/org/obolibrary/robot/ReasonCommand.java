@@ -36,6 +36,11 @@ public class ReasonCommand implements Command {
     o.addOption(
         "s", "remove-redundant-subclass-axioms", true, "if true, remove redundant subclass axioms");
     o.addOption(
+        "p",
+        "preserve-annotated-axioms",
+        true,
+        "preserve annotated axioms when removing redundant subclass axioms");
+    o.addOption(
         "n",
         "create-new-ontology",
         true,
@@ -55,6 +60,12 @@ public class ReasonCommand implements Command {
         "exclude-duplicate-axioms",
         true,
         "if true, do not add an axiom if it exists in import chain");
+    o.addOption(
+        "X",
+        "exclude-external-entities",
+        true,
+        "if true, do not add an axiom if it is about classes in external ontologies");
+    o.addOption("T", "exclude-owl-thing", true, "if true, exclude inferences to owl:Thing");
     o.addOption(
         "e",
         "equivalent-classes-allowed",

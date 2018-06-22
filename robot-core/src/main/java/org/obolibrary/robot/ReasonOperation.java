@@ -18,13 +18,16 @@ import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -64,8 +67,11 @@ public class ReasonOperation {
     options.put("create-new-ontology-with-annotations", "false");
     options.put("annotate-inferred-axioms", "false");
     options.put("exclude-duplicate-axioms", "false");
+    options.put("exclude-external-entities", "false");
+    options.put("exclude-owl-thing", "false");
     options.put("equivalent-classes-allowed", ALL.written());
     options.put("prevent-invalid-references", "false");
+    options.put("preserve-annotated-axioms", "false");
 
     return options;
   }
@@ -237,7 +243,32 @@ public class ReasonOperation {
       propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
       value = dataFactory.getOWLLiteral("true");
     }
+
+    // get all entities that 'belong' to the main ontology
+    // see: https://github.com/ontodev/robot/issues/296
+    Set<OWLEntity> ontologyEntities =
+        ontology
+            .getAxioms(AxiomType.DECLARATION)
+            .stream()
+            .map(a -> a.getEntity())
+            .collect(Collectors.toSet());
     for (OWLAxiom a : newAxiomOntology.getAxioms()) {
+      if (OptionsHelper.optionIsTrue(options, "exclude-external-entities")) {
+        if (a instanceof OWLClassAxiom) {
+          boolean overlapsSignature = false;
+          for (OWLClass c : a.getClassesInSignature()) {
+            if (ontologyEntities.contains(c)) {
+              overlapsSignature = true;
+              break;
+            }
+          }
+          if (!overlapsSignature) {
+            logger.debug("Excluding axiom as class signatures do not overlap: " + a);
+            continue;
+          }
+        }
+      }
+
       if (OptionsHelper.optionIsTrue(options, "exclude-duplicate-axioms")) {
         // if this option is passed, do not add any axioms that are
         // duplicates of existing axioms present at initial state.
@@ -266,7 +297,7 @@ public class ReasonOperation {
     }
 
     if (OptionsHelper.optionIsTrue(options, "remove-redundant-subclass-axioms")) {
-      removeRedundantSubClassAxioms(reasoner);
+      removeRedundantSubClassAxioms(reasoner, options);
     }
     logger.info("Ontology has {} axioms after all reasoning steps.", ontology.getAxioms().size());
 
@@ -285,8 +316,10 @@ public class ReasonOperation {
    *
    * @param reasoner an OWL reasoner, initialized with a root ontology; the ontology will be
    *     modified
+   * @param options
    */
-  public static void removeRedundantSubClassAxioms(OWLReasoner reasoner) {
+  public static void removeRedundantSubClassAxioms(
+      OWLReasoner reasoner, Map<String, String> options) {
     logger.info("Removing redundant subclass axioms...");
     OWLOntology ontology = reasoner.getRootOntology();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
@@ -312,8 +345,12 @@ public class ReasonOperation {
       // and the superclass is not in the set of inferred super classes,
       // then remove that axiom.
       for (OWLSubClassOfAxiom subClassAxiom : ontology.getSubClassAxiomsForSubClass(thisClass)) {
-        if (subClassAxiom.getAnnotations().size() > 0) {
-          continue;
+        if (OptionsHelper.optionIsTrue(options, "preserve-annotated-axioms")) {
+
+          if (subClassAxiom.getAnnotations().size() > 0) {
+            // TODO make this configurable
+            continue;
+          }
         }
         if (subClassAxiom.getSuperClass().isAnonymous()) {
           continue;

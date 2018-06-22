@@ -18,15 +18,31 @@ public class ReduceOperationTest extends CoreTest {
    * @throws OWLOntologyCreationException
    */
   @Test
-  public void testRemoveRedundantSubClassAxioms() throws IOException, OWLOntologyCreationException {
+  public void testRemoveRedundantSubClassAxiomsPreserveAnnotated()
+      throws IOException, OWLOntologyCreationException {
     OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
 
     Map<String, String> options = new HashMap<String, String>();
     options.put("remove-redundant-subclass-axioms", "true");
+    options.put("preserve-annotated-axioms", "true");
 
     ReduceOperation.reduce(reasoned, reasonerFactory, options);
     assertIdentical("/without_redundant_subclasses.owl", reasoned);
+  }
+
+  @Test
+  public void testRemoveRedundantSubClassAxiomsComplete()
+      throws IOException, OWLOntologyCreationException {
+    OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("remove-redundant-subclass-axioms", "true");
+    options.put("preserve-annotated-axioms", "false");
+
+    ReduceOperation.reduce(reasoned, reasonerFactory, options);
+    assertIdentical("/without_redundant_subclasses2.owl", reasoned);
   }
 
   /**
