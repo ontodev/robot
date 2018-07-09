@@ -30,10 +30,10 @@ Finally, `reason` includes two more options to help clean the reasoned output (b
 
 If no `--reasoner` is provided, ROBOT will default to ELK. The following other reasoner options are supported:
   
-  * `hermit` - <a href="http://www.hermit-reasoner.com/" target="_blank">HermiT</a>
-  * `jfact` - <a href="http://jfact.sourceforge.net/" target="_blank">JFact</a>
-  * `emr` - <a href="http://static.javadoc.io/org.geneontology/expression-materializing-reasoner/0.1.3/org/geneontology/reasoner/ExpressionMaterializingReasoner.html" target="_blank">Expression Materializing Reasoner</a>
-  * `structural` - <a href="http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/reasoner/structural/StructuralReasoner.html" target="_blank">Structural Reasoner</a>
+  * `hermit` - [HermiT](http://www.hermit-reasoner.com/)
+  * `jfact` - [JFact](http://jfact.sourceforge.net/)
+  * `emr` - [Expression Materializing Reasoner](http://static.javadoc.io/org.geneontology/expression-materializing-reasoner/0.1.3/org/geneontology/reasoner/ExpressionMaterializingReasoner.html)
+  * `structural` - [Structural Reasoner](http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/reasoner/structural/StructuralReasoner.html)
 
 ---
 

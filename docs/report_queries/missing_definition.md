@@ -1,0 +1,22 @@
+# Missing Definition
+
+Problem: An entity does not have a definition. This may cause confusion or misuse of the entity.
+
+Solution: Add a definition.
+
+```sparql
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?entity ?property ?value
+WHERE {
+ ?entity ?any ?o
+ FILTER NOT EXISTS {?entity obo:IAO_0000115 ?value}
+ FILTER NOT EXISTS {?entity a owl:Ontology}
+ FILTER NOT EXISTS {
+   ?entity owl:deprecated ?dep .
+   FILTER regex(str(?dep), "true")
+ }
+ FILTER (!isBlank(?entity))
+}
+```

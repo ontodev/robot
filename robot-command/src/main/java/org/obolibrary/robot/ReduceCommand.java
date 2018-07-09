@@ -24,7 +24,11 @@ public class ReduceCommand implements Command {
   public ReduceCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("r", "reasoner", true, "reasoner to use: (ELK, HermiT)");
-    o.addOption("s", "remove-redundant-subclass-axioms", true, "remove redundant subclass axioms");
+    o.addOption(
+        "p",
+        "preserve-annotated-axioms",
+        true,
+        "preserve annotated axioms when removing redundant subclass axioms");
     o.addOption("i", "input", true, "reduce ontology from a file");
     o.addOption("I", "input-iri", true, "reduce ontology from an IRI");
     o.addOption("o", "output", true, "save reduceed ontology to a file");

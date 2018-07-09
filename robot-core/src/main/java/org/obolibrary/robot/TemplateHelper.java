@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -77,6 +79,30 @@ public class TemplateHelper {
 
   /** OWL Namespace. */
   private static String owl = "http://www.w3.org/2002/07/owl#";
+
+  /**
+   * Given a set of rows, the row number, and the column number, get the content in the column for
+   * the row. If there are any issues, return an empty string. If the cell is empty, return null.
+   *
+   * @param rows list of rows (lists of strings)
+   * @param row row number to get ID of
+   * @param column column number
+   * @return content, null, or empty string.
+   */
+  public static String getCellContent(List<List<String>> rows, int row, Integer column) {
+    String id = null;
+    if (column != null && column != -1) {
+      try {
+        id = rows.get(row).get(column);
+      } catch (IndexOutOfBoundsException e) {
+        return "";
+      }
+      if (id == null || id.trim().isEmpty()) {
+        return "";
+      }
+    }
+    return id;
+  }
 
   /**
    * Create an OWLAnnotation based on the template string and cell value.
@@ -547,5 +573,31 @@ public class TemplateHelper {
     }
     csv.close();
     return rows;
+  }
+
+  /**
+   * Given a template string, a cell value, and an empty list, fill the list with any number of
+   * values based on a SPLIT character, then return the template string without SPLIT. If there are
+   * no SPLITs, only add the original cell to the values.
+   *
+   * @param template template string
+   * @param cell cell contents
+   * @param values empty list to fill
+   * @return template string without SPLIT
+   */
+  public static String processSplit(String template, String cell, List<String> values) {
+    // If the template contains SPLIT=X,
+    // then split the cell value
+    // and remove that string from the template.
+    Pattern splitter = Pattern.compile("SPLIT=(\\S+)");
+    Matcher matcher = splitter.matcher(template);
+    if (matcher.find()) {
+      Pattern split = Pattern.compile(Pattern.quote(matcher.group(1)));
+      values.addAll(Arrays.asList(split.split(cell)));
+      template = matcher.replaceAll("").trim();
+    } else {
+      values.add(cell);
+    }
+    return template;
   }
 }

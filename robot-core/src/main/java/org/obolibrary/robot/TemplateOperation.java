@@ -1,15 +1,7 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ParserException;
@@ -390,19 +382,8 @@ public class TemplateOperation {
         continue;
       }
 
-      // If the template contains SPLIT=X,
-      // then split the cell value
-      // and remove that string from the template.
-      List<String> values = new ArrayList<String>();
-      Pattern splitter = Pattern.compile("SPLIT=(\\S+)");
-      Matcher matcher = splitter.matcher(template);
-      if (matcher.find()) {
-        Pattern split = Pattern.compile(Pattern.quote(matcher.group(1)));
-        values = new ArrayList<String>(Arrays.asList(split.split(cell)));
-        template = matcher.replaceAll("").trim();
-      } else {
-        values.add(cell);
-      }
+      List<String> values = new ArrayList<>();
+      template = TemplateHelper.processSplit(template, cell, values);
 
       // Create OWLAnnotation objects
       // Link any axiom annotations in a map
@@ -582,49 +563,54 @@ public class TemplateOperation {
       if (cell.trim().isEmpty()) {
         continue;
       }
-      String content = QuotedEntityChecker.wrap(cell);
 
-      if (template.equals("CLASS_TYPE")) {
-        classType = cell.trim().toLowerCase();
-      } else if (template.startsWith("C ")) {
-        String sub = template.substring(2).trim().replaceAll("%", content);
-        try {
-          lastExpression = parser.parse(sub);
-        } catch (ParserException e) {
-          throw new Exception(
-              String.format(
-                  parseError, tableName, row + 1, id, column + 1, header, sub, e.getMessage()));
-        }
-        classExpressions.add(lastExpression);
-      } else if (template.startsWith("CI")) {
-        IRI iri = ioHelper.createIRI(cell);
-        lastExpression = dataFactory.getOWLClass(iri);
-        classExpressions.add(lastExpression);
-      } else if (template.startsWith(">C ")) {
-        if (lastExpression == null) {
-          throw new Exception(
-              String.format(
-                  axiomAnnotationError,
-                  tableName,
-                  row + 1,
-                  id,
-                  column + 1,
-                  template,
-                  cell,
-                  "a class expression"));
-        }
-        Set<OWLAnnotation> annotations;
-        if (annotatedExpressions.containsKey(lastExpression)) {
-          annotations = annotatedExpressions.get(lastExpression);
-        } else {
-          annotations = new HashSet<>();
-        }
-        annotations.add(
-            TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
-        annotatedExpressions.put(lastExpression, annotations);
-        // Remove to prevent duplication
-        if (classExpressions.contains(lastExpression)) {
-          classExpressions.remove(lastExpression);
+      List<String> values = new ArrayList<>();
+      template = TemplateHelper.processSplit(template, cell, values);
+
+      for (String value : values) {
+        String content = QuotedEntityChecker.wrap(value);
+        if (template.equals("CLASS_TYPE")) {
+          classType = cell.trim().toLowerCase();
+        } else if (template.startsWith("C ")) {
+          String sub = template.substring(2).trim().replaceAll("%", content);
+          try {
+            lastExpression = parser.parse(sub);
+          } catch (ParserException e) {
+            throw new Exception(
+                String.format(
+                    parseError, tableName, row + 1, id, column + 1, header, sub, e.getMessage()));
+          }
+          classExpressions.add(lastExpression);
+        } else if (template.startsWith("CI")) {
+          IRI iri = ioHelper.createIRI(cell);
+          lastExpression = dataFactory.getOWLClass(iri);
+          classExpressions.add(lastExpression);
+        } else if (template.startsWith(">C ")) {
+          if (lastExpression == null) {
+            throw new Exception(
+                String.format(
+                    axiomAnnotationError,
+                    tableName,
+                    row + 1,
+                    id,
+                    column + 1,
+                    template,
+                    cell,
+                    "a class expression"));
+          }
+          Set<OWLAnnotation> annotations;
+          if (annotatedExpressions.containsKey(lastExpression)) {
+            annotations = annotatedExpressions.get(lastExpression);
+          } else {
+            annotations = new HashSet<>();
+          }
+          annotations.add(
+              TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
+          annotatedExpressions.put(lastExpression, annotations);
+          // Remove to prevent duplication
+          if (classExpressions.contains(lastExpression)) {
+            classExpressions.remove(lastExpression);
+          }
         }
       }
     }

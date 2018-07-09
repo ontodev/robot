@@ -16,9 +16,25 @@ The command line option provided only accepts `true` or `false` as input.
 
 [Chained commands](/chaining) take the output of the last command as the input of the next. Because of this, `--input` should only be used with the first command in the chain. This excludes [merge](/merge) and [unmerge](/unmerge), which allow multiple inputs.
 
+### File Does Not Exist Error
+
+One of the required files (often `--input`) could not be found. This is often caused by a typo.
+
 ### Invalid Format Error
 
 When specifying the `--output` (or `--format` for converting), make sure the file has a valid extension. See [convert](/convert) for a current list of ontology formats.
+
+### Invalid Ontology File Error
+
+ROBOT was expecting an ontology file, and the file exists, but is not in a recognized format. Adding the `-vvv` option will print a stack trace that shows how the underlying OWLAPI library tried to parse the ontology file. This will include details and line numbers that can help isolate the problem.
+
+### Invalid Ontology IRI Error
+
+Either the ontology could not be loaded from the provided IRI, or the file at that IRI was in an unrecognized format. Adding the `-vvv` option may provide helpful details.
+
+### Invalid Ontology Stream Error
+
+Either the ontology could not be loaded from the provided input stream, or the input stream was in an unrecognized format. Adding the `-vvv` option may provide helpful details.
 
 ### Invalid IRI Error
 
@@ -33,6 +49,14 @@ Prefixes (added with `--prefix`) should be strings in the following format: `"fo
 ### Invalid Reasoner Error
 
 [Reason](/reason), [materialize](/materialize), and [reduce](/reduce) all expect `--reasoner` options. All three commands support `structural`, `hermit`, `jfact`, and `elk`. Only the reason command supports `emr`. Click on the command for more details
+
+### JSON-LD Context Creation Error
+
+There was an error creating a JSON-LD context. This could be caused by a bad prefix.
+
+### JSON-LD Context Parsing Error
+
+There was an error parsing a JSON-LD context. Add the `-vvv` option to see more details, and refer to <https://json-ld.org> for information about that format.
 
 ### Missing Command Error
 
@@ -53,6 +77,10 @@ Some commands ([extract](/extract) and [filter](/filter)) require terms as input
 ### Multiple Inputs Error
 
 For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `--input` may be specified.
+
+### Ontology Storage Error
+
+The ontology could not be saved to the specified IRI. The most common reasons are: the IRI is not a valid file path; ROBOT does not have write permissions; there is not enough space on the storage device.
 
 ### Options Error
 
