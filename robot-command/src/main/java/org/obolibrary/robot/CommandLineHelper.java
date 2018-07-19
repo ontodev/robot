@@ -854,7 +854,7 @@ public class CommandLineHelper {
    */
   protected static List<String> splitSelects(String selects) {
     List<String> split = new ArrayList<>();
-    Matcher m = Pattern.compile("([^\\s]+=.*'[^']+'|[^\\s']+)").matcher(selects);
+    Matcher m = Pattern.compile("([^\\s]+=.*'[^']+'[^\\s']*|[^\\s']+)").matcher(selects);
     while (m.find()) {
       String s = m.group(1).trim();
       split.add(s);

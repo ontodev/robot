@@ -628,7 +628,6 @@ public class RelatedObjectsHelper {
       if (dataTypeIRI == null) {
         throw new IllegalArgumentException(String.format(invalidIRIError, "datatype", dataTypeID));
       }
-      System.out.println(dataTypeIRI.toString());
       OWLDatatype dt = dataFactory.getOWLDatatype(dataTypeIRI);
       if (dt.isBoolean()) {
         if (content.equalsIgnoreCase("true")) {
