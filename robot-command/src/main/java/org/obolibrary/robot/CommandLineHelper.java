@@ -759,7 +759,7 @@ public class CommandLineHelper {
    * @param pattern wildcard pattern to match
    * @return array of files
    */
-  private static File[] getFileByPattern(String pattern) {
+  private static File[] getFilesByPattern(String pattern) {
     if (!pattern.contains("*") && !pattern.contains("?")) {
       throw new IllegalArgumentException(wildcardError);
     }
@@ -797,7 +797,7 @@ public class CommandLineHelper {
     // Check for input patterns (wildcard)
     String pattern = getOptionalValue(line, "inputs");
     if (pattern != null) {
-      for (File inputOntologyFile : getFileByPattern(pattern)) {
+      for (File inputOntologyFile : getFilesByPattern(pattern)) {
         inputOntologies.add(ioHelper.loadOntology(inputOntologyFile));
       }
     }
@@ -831,7 +831,7 @@ public class CommandLineHelper {
     String pattern = getOptionalValue(line, "inputs");
     if (pattern != null) {
       File catalogFile = new File(catalogPath);
-      for (File inputOntologyFile : getFileByPattern(pattern)) {
+      for (File inputOntologyFile : getFilesByPattern(pattern)) {
         inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, catalogFile));
       }
     }

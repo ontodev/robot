@@ -2,9 +2,9 @@
 
 ## Prefixes
 
-Terms in OBO and OWL are identified using <a href="https://en.wikipedia.org/wiki/Internationalized_resource_identifier" target="_blank">IRIs</a> (Internationalized Resource Identifiers), which generalize the familiar addresses for web pages. IRIs have many advantages, but one of their disadvantages is that they can be pretty long. So we have standard ways to abbreviate IRIs in a particular context by specifying **prefixes**. For example, Turtle files start with `@prefix` statements, SPARQL queries start with `PREFIX` statements, and JSON-LD data includes a `@context` with prefixes.
+Terms in OBO and OWL are identified using [IRIs](https://en.wikipedia.org/wiki/Internationalized_resource_identifier) (Internationalized Resource Identifiers), which generalize the familiar addresses for web pages. IRIs have many advantages, but one of their disadvantages is that they can be pretty long. So we have standard ways to abbreviate IRIs in a particular context by specifying **prefixes**. For example, Turtle files start with `@prefix` statements, SPARQL queries start with `PREFIX` statements, and JSON-LD data includes a `@context` with prefixes.
 
-For robot we use the JSON-LD format. See <a href="https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld" target="_blank">`obo_context.jsonld`</a> for the JSON-LD context that is used by default. It includes common, general linked-data prefixes, and prefixes for all the OBO library projects.
+For robot we use the JSON-LD format. See [`obo_context.jsonld`](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld) for the JSON-LD context that is used by default. It includes common, general linked-data prefixes, and prefixes for all the OBO library projects.
 
 If you do not want to use the defaults, you can use the `--noprefixes` option. If you want to replace the defaults, use the `--prefixes` option and specify your JSON-LD file. Whatever your choice, you can add more prefixes using the `--prefix` option, as many times as you like. Finally, you can print or save the current prefixes using the `export-prefixes` command. Here are some examples:
 
@@ -22,7 +22,7 @@ The various prefix options can be used with any command. When chaining commands,
 
 ## XML Catalogs
 
-OWLAPI, Protègè, and ROBOT use XML catalogs to specify where import files are located when loading an ontology. By default, this catalog is called `catalog-v001.xml`. ROBOT assumes that a `catalog-v001.xml` file exists in the working directory and attempts to resolve imports based on that. Because Protègè also predicts that catalog, we recommend sticking to this standard. For more details, see <a href="https://protegewiki.stanford.edu/wiki/Importing_Ontologies_in_P41" target="_blank">Importing Ontologies in Protègè and OWL 2</a>.
+OWLAPI, Protégé, and ROBOT use XML catalogs to specify where import files are located when loading an ontology. By default, this catalog is called `catalog-v001.xml`. ROBOT assumes that a `catalog-v001.xml` file exists in the working directory and attempts to resolve imports based on that. Because Protègè also predicts that catalog, we recommend sticking to this standard. For more details, see [Importing Ontologies in Protègè and OWL 2](https://protegewiki.stanford.edu/wiki/Importing_Ontologies_in_P41).
 
 That said, occasionally, you may want to use different catalog files for different purposes. This is especially useful for automated releases with [Makefiles](/makefile). ROBOT provides an option to specify the catalog location with `--catalog`. 
 
@@ -33,7 +33,7 @@ robot merge --catalog my-catalog.xml \
   --input edit.owl --output merged.owl
 ```
 
-If a catalog file is provided and cannot be located, the ontology will be loaded without a catalog file. Similarly, if you do not provide a `--catalog` and the `catalog-v001.xml` file does not exist in your working directory, the ontology will be loaded without a catalog file. Finally, if the catalog specifies an import file that does not exist, the command will fail.
+If a catalog file is specified and cannot be located, the ontology will be loaded without a catalog file. Similarly, if you do not provide a `--catalog` and the `catalog-v001.xml` file does not exist in your working directory, the ontology will be loaded without a catalog file. Finally, if the catalog specifies an import file that does not exist, the command will fail.
 
 ## Verbose
 
@@ -65,6 +65,6 @@ xml:base="&obo;obi.owl"
 
 ## Error Messages
 
-### JDON-LD Error
+### JSON-LD Error
 
-ROBOT encounterd a problem while writing the given prefixes to JSON-LD.
+ROBOT encountered a problem while writing the given prefixes to JSON-LD.
