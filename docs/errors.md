@@ -112,10 +112,14 @@ Any pattern specified with `--inputs` for [merge](/merge) and [unmerge](/unmerge
 ### Axiom Type Error
 
 Currently, ROBOT can only annotate subClassOf axioms.<br>
-See <a href="" target="_blank">GitHub issue #67</a> for more details.
+See [GitHub issue #67](https://github.com/ontodev/robot/issues/67) for more details.
 
 ### Empty Terms Error
 
 For commands that take input terms, ROBOT will check the ontology to ensure those terms exist before proceeding. If the terms do not exist, then there are no tasks to complete so an error message is returned.
 
 If at least one term exists in the ontology, the task can still proceed, but the results may not be as expected. If you run into problems, run these types of commands with the `--verbose` flag, as warnings will be issued when the ontology does not contain a term.
+
+### Null IRI Error
+
+Occurs when an import ontology does not have a valid IRI.

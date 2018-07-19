@@ -20,11 +20,11 @@ robot filter --input obi.owl --entity OBI:0000070 --select annotations
 
 ## Examples
 
-1. Copy a class ('organ') and all its descendants, with just their labels:
+1. Copy a class ('organ') and all its descendants, with all annotations:
 
     robot filter --input uberon_module.owl\
-     --term UBERON:0000062 --term rdfs:label\
-     --select "self descendants"\
+     --term UBERON:0000062\
+     --select "annotations self descendants"\
      --output results/filter_class.owl
 
 2. Copy all of OBI except descendants of 'assay' (`remove` is preferred):
