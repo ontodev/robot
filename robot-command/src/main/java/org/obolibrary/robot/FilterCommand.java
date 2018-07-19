@@ -6,28 +6,19 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles inputs and outputs for the {@link FilterOperation}.
+ * Create a subset of an ontology based on a series of inputs.
  *
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class FilterCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(FilterCommand.class);
-
-  /** Namespace for error messages. */
-  private static final String NS = "filter#";
-
-  /** Error message when --select is not a valid input. Expects: input string. */
-  private static final String selectError = NS + "SELECT ERROR %s is not a valid selection";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -39,11 +30,11 @@ public class FilterCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "output-iri", true, "set OntologyIRI for output");
-    o.addOption("e", "entity", true, "filter for an entity");
-    o.addOption("E", "entities", true, "filter for a of entities");
+    o.addOption("t", "term", true, "filter for an entity");
+    o.addOption("T", "terms", true, "filter for a of entities");
     o.addOption("s", "select", true, "filter for a of entities using one or more relation options");
     o.addOption("a", "axioms", true, "filter for axioms from a set of entities (default: all)");
-    o.addOption("t", "trim", true, "if true, trim dangling entities (default: true)");
+    o.addOption("r", "trim", true, "if true, trim dangling entities (default: true)");
     options = o;
   }
 
@@ -84,7 +75,7 @@ public class FilterCommand implements Command {
   }
 
   /**
-   * Handle the command-line and file operations for the FilterOperation.
+   * Handle the command-line and file operations.
    *
    * @param args strings to use as arguments
    */
@@ -111,19 +102,16 @@ public class FilterCommand implements Command {
       return null;
     }
 
-    if (state == null) {
-      state = new CommandState();
-    }
-
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
-    OWLOntology outputOntology = null;
+    OWLOntology ontology = state.getOntology();
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
-    // Get a set of entities
-    Set<OWLEntity> entities = new HashSet<>();
-    for (IRI iri : CommandLineHelper.getTerms(ioHelper, line, "entity", "entities")) {
-      entities.add(OntologyHelper.getEntity(inputOntology, iri));
+    // Get a set of entities to start with
+    Set<OWLObject> objects = new HashSet<>();
+    if (line.hasOption("term") || line.hasOption("terms")) {
+      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "terms");
+      objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
     }
 
     // Get a set of axiom types
@@ -131,97 +119,68 @@ public class FilterCommand implements Command {
 
     // Get a set of relation types, or annotations to select
     List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
+
     // If the select option wasn't provided, default to self
     if (selects.isEmpty()) {
       selects.add("self");
     }
 
     // Selects should be processed in order, allowing unions in one --select
-    // Produces a set of Relation Types and a set of annotations, as well as booleans for miscs
-    while (selects.size() > 0) {
-      String select = selects.remove(0);
-      Set<RelationType> relationTypes = new HashSet<>();
-      Set<OWLAnnotation> annotations = new HashSet<>();
-      boolean complement = false;
-      boolean named = false;
-      boolean anonymous = false;
-      boolean includeAnnotations = false;
-
-      // Split on space, create a union of these relations
-      for (String s : RemoveCommand.splitSelects(select)) {
-        if (RelationType.isRelationType(s.toLowerCase())) {
-          relationTypes.add(RelationType.getRelationType(s.toLowerCase()));
-        } else if (s.equalsIgnoreCase("complement")) {
-          complement = true;
-        } else if (s.equalsIgnoreCase("named")) {
-          named = true;
-        } else if (s.equalsIgnoreCase("anonymous")) {
-          anonymous = true;
-        } else if (s.equalsIgnoreCase("annotations")) {
-          // If "annotations" is included, all annotations on the entities will be included,
-          // regardless of if the property is included in entities or not.
-          includeAnnotations = true;
-        } else if (s.contains("=")) {
-          // This designates an annotation to find
-          annotations.addAll(RemoveCommand.getAnnotations(inputOntology, ioHelper, s));
-        } else {
-          throw new IllegalArgumentException(String.format(selectError, s));
-        }
+    List<List<String>> selectGroups = new ArrayList<>();
+    boolean includeAllAnnotations = false;
+    for (String select : selects) {
+      // The single group is a split of the one --select
+      List<String> selectGroup = CommandLineHelper.splitSelects(select);
+      if (selectGroup.contains("annotations")) {
+        includeAllAnnotations = true;
+        selectGroup.remove("annotations");
       }
-
-      // Add annotated entities to the set of entities
-      entities.addAll(RelatedEntitiesHelper.getAnnotated(inputOntology, annotations));
-      // If no entities were provided by entity or annotation, add them all
-      if (entities.isEmpty()) {
-        entities.addAll(OntologyHelper.getEntities(inputOntology));
-      }
-
-      // If no relation type selections were provided, add in "self"
-      if (relationTypes.isEmpty()) {
-        relationTypes.add(RelationType.SELF);
-      }
-
-      // Maybe get a complement set of the entity/entities provided
-      if (complement) {
-        Set<OWLEntity> complementSet =
-            RelatedEntitiesHelper.getComplements(inputOntology, entities);
-        entities = complementSet;
-      }
-
-      // Filter entities from ontology
-      if (anonymous && !named) {
-        // Filter only anonymous entities based on relations to given entities
-        outputOntology =
-            FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes);
-      } else if (named && !anonymous) {
-        // Otherwise get the related entities and proceed
-        Set<OWLEntity> relatedEntities =
-            RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
-        outputOntology =
-            FilterOperation.filter(inputOntology, relatedEntities, axiomTypes, includeAnnotations);
-      } else {
-        // If both named and anonymous = true OR neither was provided, filter both
-        List<OWLOntology> outputOntologies = new ArrayList<>();
-        outputOntologies.add(
-            FilterOperation.filterAnonymous(inputOntology, entities, relationTypes, axiomTypes));
-        Set<OWLEntity> relatedEntities =
-            RelatedEntitiesHelper.getRelated(inputOntology, entities, relationTypes);
-
-        outputOntologies.add(
-            FilterOperation.filter(inputOntology, relatedEntities, axiomTypes, includeAnnotations));
-        outputOntology = MergeOperation.merge(outputOntologies, false, false);
-      }
-
-      // Reset the input as the product of this set of selects
-      inputOntology = outputOntology;
+      selectGroups.add(selectGroup);
     }
 
-    // Maybe trim dangling
+    // If there are no objects, add all the objects from the ontology
+    if (objects.isEmpty()) {
+      for (OWLAxiom axiom : ontology.getAxioms()) {
+        objects.addAll(OntologyHelper.getObjects(axiom));
+      }
+    }
+
+    IRI outputIRI;
+    String outputIRIString = CommandLineHelper.getOptionalValue(line, "output-iri");
+    if (outputIRIString != null) {
+      outputIRI = IRI.create(outputIRIString);
+    } else {
+      outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
+    }
+
+    // Get a set of axioms to copy over
+    Set<OWLObject> relatedObjects =
+        RelatedObjectsHelper.selectGroups(ontology, objects, selectGroups);
+    // Add the annotation properties if included
+    if (includeAllAnnotations) {
+      for (OWLEntity entity : OntologyHelper.getEntities(ontology)) {
+        if (entity.isOWLAnnotationProperty()) {
+          relatedObjects.add(entity);
+        }
+      }
+    }
+    Set<OWLAxiom> axiomsToCopy =
+        RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
+
+    // Create a new ontology from that set of axioms
+    OWLOntology outputOntology;
+    if (outputIRI != null) {
+      outputOntology = manager.createOntology(axiomsToCopy, outputIRI);
+    } else {
+      outputOntology = manager.createOntology(axiomsToCopy);
+    }
+
+    // Maybe trim dangling (by default, true)
     if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
       OntologyHelper.trimDangling(outputOntology);
     }
 
-    // Save output and return the new ontology as the state
+    // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     state.setOntology(outputOntology);
     return state;

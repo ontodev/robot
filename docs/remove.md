@@ -2,14 +2,14 @@
 
 The `remove` command allows you to remove selected axioms from an ontology. The [`filter`](/filter) command is the opposite of `remove`, allowing you to keep only selected axioms. `remove` works in three steps:
 
-1. `--entity`: specify a set of entities (default: all entities)
+1. `--term`: specify a set of entities (default: all entities, use `--terms` for a term file with terms line by line)
 2. `--select`: select a new set of entities using one or more relations (zero or more)
 3. `--axioms`: specify the axiom types to remove from those entities (default: all axioms)
 
 For example, to remove all descendants of 'assay' from OBI:
 
 ```
-robot remove --input obi.owl --entity OBI:0000070 --select descendants
+robot remove --input obi.owl --term OBI:0000070 --select descendants
 ```
 
 `remove` also includes a `--trim` option, set to false by default. If `--trim true` is included, ROBOT will remove any dangling entites left behind by removals. By contrast, in `filter`, `--trim` defaults to true.
@@ -33,7 +33,7 @@ There are three general select options that give control over the types of axiom
 
 #### Relation Types
 
-Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--entity`/`--entities`. If no relation type `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
+Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--term`/`--terms`. If no relation type `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
 
 1. `self` (default)
 2. `parents`
@@ -70,11 +70,13 @@ Entities can also be selected from the set based on axioms. This can be helpful 
 
 ## Examples
 
-1. Remove 'assay' and all its descendants from OBI:
+1. Remove a class ('organ') and and all its descendants:
 
-```
-robot remove --input obi.owl --entity OBI:0000070 --select "self descendants"
-```
+    robot remove --input uberon_module.owl\
+     --term UBERON:0000062\
+     --select "self descendants"\
+     --output results/remove_class.owl
+
 
 2. Remove all individuals from OBI:
 
@@ -82,11 +84,11 @@ robot remove --input obi.owl --entity OBI:0000070 --select "self descendants"
 robot remove --input obi.owl --select individuals
 ```
 
-3. Remove all anonymous classes from OBI:
+3. Remove all anonymous entities from the UBERON module:
 
-```
-robot remove --input obi.owl --select classes --select anonymous
-```
+    robot remove --input uberon_module.owl\
+     --select anonymous\
+     --output results/remove_anonymous.owl
 
 4. Remove all deprecated classes from OBI:
 
@@ -96,11 +98,10 @@ robot remove --input obi.owl --select "owl:deprecated='true'^^xsd:boolean"
 
 5. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
-```
-robot remove --input edit.owl \
-  --entity rdfs:label --entity oboInOwl:id \
-  --select "complement annotation-properties"
-```
+    robot remove --input uberon_module.owl\
+      --term rdfs:label --term oboInOwl:id\
+      --select complement --select annotation-properties\
+      --output results/filter_annotations.owl
 
 ---
 

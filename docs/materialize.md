@@ -13,7 +13,7 @@ This can be [chained](/chaining) with [remove](/remove) and [reduce](/reduce) to
 
     robot materialize --reasoner ELK \
       --input emr_example.obo \
-      remove --entities emr_properties.txt \
+      remove --terms emr_properties.txt \
       reduce --output results/emr_reduced.obo
 
 See [reason](/reason) for details on supported reasoners (EMR is not supported in `materialize`).

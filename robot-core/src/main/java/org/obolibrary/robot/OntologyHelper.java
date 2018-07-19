@@ -9,32 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
-import org.semanticweb.owlapi.model.AddOntologyAnnotation;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAnnotationSubject;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLNamedObject;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyID;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
-import org.semanticweb.owlapi.model.SetOntologyID;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.slf4j.Logger;
@@ -67,6 +42,10 @@ public class OntologyHelper {
   /** Error message when one IRI represents more than one entity. */
   private static final String multipleEntitiesError =
       NS + "MULTIPLE ENTITIES ERROR multiple entities represented by: %s";
+
+  /** Error message when an import ontology does not have an IRI. */
+  private static final String nullIRIError =
+      NS + "NULL IRI ERROR import ontology does not have an IRI";
 
   /**
    * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
@@ -246,6 +225,94 @@ public class OntologyHelper {
       throw new IllegalArgumentException(emptyTermsError);
     }
     return IRIs;
+  }
+
+  /**
+   * Get all OWLObjects associated with an axiom. This is builds on getSignature() by including
+   * anonymous objects.
+   *
+   * @param axiom The axiom to check
+   * @return The set of objects
+   */
+  public static Set<OWLObject> getObjects(OWLAxiom axiom) {
+    Set<OWLObject> objects = new HashSet<>();
+    objects.addAll(axiom.getSignature());
+
+    // The following are special cases
+    // where there might be something anonymous that we want to include
+    // in addition to the (named) entities in the signature.
+    if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+      objects.add(a.getSubject());
+    } else if (axiom instanceof OWLClassAssertionAxiom) {
+      OWLClassAssertionAxiom a = (OWLClassAssertionAxiom) axiom;
+      objects.add(a.getClassExpression());
+    } else if (axiom instanceof OWLDisjointUnionAxiom) {
+      OWLDisjointUnionAxiom a = (OWLDisjointUnionAxiom) axiom;
+      objects.addAll(a.getClassExpressions());
+    } else if (axiom instanceof OWLEquivalentDataPropertiesAxiom) {
+      OWLEquivalentDataPropertiesAxiom a = (OWLEquivalentDataPropertiesAxiom) axiom;
+      objects.addAll(a.asSubDataPropertyOfAxioms());
+    } else if (axiom instanceof OWLNaryClassAxiom) {
+      OWLNaryClassAxiom a = (OWLNaryClassAxiom) axiom;
+      objects.addAll(a.getClassExpressions());
+    } else if (axiom instanceof OWLNaryIndividualAxiom) {
+      OWLNaryIndividualAxiom a = (OWLNaryIndividualAxiom) axiom;
+      objects.addAll(a.getIndividuals());
+    } else if (axiom instanceof OWLNaryPropertyAxiom) {
+      OWLNaryPropertyAxiom a = (OWLNaryPropertyAxiom) axiom;
+      objects.addAll(a.getProperties());
+    } else if (axiom instanceof OWLNegativeObjectPropertyAssertionAxiom) {
+      OWLNegativeObjectPropertyAssertionAxiom a = (OWLNegativeObjectPropertyAssertionAxiom) axiom;
+      objects.addAll(a.getAnonymousIndividuals());
+    } else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
+      OWLObjectPropertyAssertionAxiom a = (OWLObjectPropertyAssertionAxiom) axiom;
+      objects.addAll(a.getAnonymousIndividuals());
+    } else if (axiom instanceof OWLObjectPropertyAxiom) {
+      OWLObjectPropertyAxiom a = (OWLObjectPropertyAxiom) axiom;
+      objects.addAll(a.getNestedClassExpressions());
+    } else if (axiom instanceof OWLSameIndividualAxiom) {
+      OWLSameIndividualAxiom a = (OWLSameIndividualAxiom) axiom;
+      objects.addAll(a.getAnonymousIndividuals());
+    } else if (axiom instanceof OWLSubClassOfAxiom) {
+      OWLSubClassOfAxiom a = (OWLSubClassOfAxiom) axiom;
+      objects.add(a.getSuperClass());
+      objects.add(a.getSubClass());
+    } else if (axiom instanceof OWLUnaryPropertyAxiom) {
+      OWLUnaryPropertyAxiom a = (OWLUnaryPropertyAxiom) axiom;
+      objects.add(a.getProperty());
+    } else if (axiom instanceof OWLHasKeyAxiom) {
+      OWLHasKeyAxiom a = (OWLHasKeyAxiom) axiom;
+      objects.add(a.getClassExpression());
+      objects.addAll(a.getPropertyExpressions());
+    }
+
+    // TODO - cannot have anonymous components?
+    // OWLNegativeDataPropertyAssertionAxiom
+    // OWLDataPropertyAssertionAxiom
+    // OWLSubDataPropertyOfAxiom
+    // OWLSubAnnotationPropertyOfAxiom
+
+    // TODO - covered by OWLObjectPropertyAxiom
+    // OWLObjectPropertyDomainAxiom
+    // OWLObjectPropertyRangeAxiom
+    // OWLObjectPropertyCharacteristicAxiom
+    // OWLReflexiveObjectPropertyAxiom
+    // OWLSubObjectPropertyOfAxiom
+    // OWLSymmetricObjectPropertyAxiom
+    // OWLTransitiveObjectPropertyAxiom
+    // OWLEquivalentObjectPropertiesAxiom
+    // OWLInverseObjectPropertiesAxiom
+
+    // TODO - only need OWLObjectProperty...
+    // OWLPropertyAssertionAxiom<P,O>
+    // OWLPropertyAxiom
+    // OWLPropertyDomainAxiom<P>
+    // OWLPropertyRangeAxiom<P,R>
+    // OWLSubPropertyAxiom<P>
+    // OWLSubPropertyChainOfAxiom
+
+    return objects;
   }
 
   /**
@@ -1088,6 +1155,18 @@ public class OntologyHelper {
     return false;
   }
 
+  public static void removeImports(OWLOntology ontology) throws Exception {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    for (OWLOntology i : ontology.getImports()) {
+      IRI iri = i.getOntologyID().getOntologyIRI().orNull();
+      if (iri == null) {
+        throw new Exception(nullIRIError);
+      }
+      manager.applyChange(
+          new RemoveImport(ontology, manager.getOWLDataFactory().getOWLImportsDeclaration(iri)));
+    }
+  }
+
   /**
    * Remove all annotations on this ontology. Just annotations on the ontology itself, not
    * annotations on its classes, etc.
@@ -1161,12 +1240,15 @@ public class OntologyHelper {
    * @param ontology the ontology to trim
    */
   public static void trimDangling(OWLOntology ontology) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
     for (OWLEntity entity : getEntities(ontology)) {
       if (InvalidReferenceChecker.isDangling(ontology, entity)) {
         logger.debug("Removing dangling entity: " + entity.toStringID());
         Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
         axiomTypes.add(OWLAxiom.class);
-        RemoveOperation.remove(ontology, entity, axiomTypes);
+        for (OWLAxiom axiom : EntitySearcher.getReferencingAxioms(entity, ontology)) {
+          manager.removeAxiom(ontology, axiom);
+        }
       }
     }
   }

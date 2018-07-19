@@ -13,30 +13,28 @@ The following command will only return `OBI:0000070` with just a label annotatio
 robot filter --input obi.owl --entity OBI:0000070 --entity rdfs:label
 ```
 
-Alternatively, if you want `OBI:0000070` with all annotaions:
+Alternatively, if you want `OBI:0000070` with all annotations:
 ```
 robot filter --input obi.owl --entity OBI:0000070 --select annotations
 ```
 
 ## Examples
 
-1. Copy 'assay' and all its descendants from OBI:
+1. Copy a class ('organ') and all its descendants, with just their labels:
 
-```
-robot filter --input obi.owl --entity OBI:0000070 --select "self descendants"
-```
+    robot filter --input uberon_module.owl\
+     --term UBERON:0000062 --term rdfs:label\
+     --select "self descendants"\
+     --output results/filter_class.owl
 
-2. Copy the 'assay' branch from OBI and all the annotations on the ontology itself:
+2. Copy all of OBI except descendants of 'assay' (`remove` is preferred):
 
-```
-robot filter --input obi.owl --entity OBI:0000070 --select "self descendants ontology"
-```
-
-3. Copy all of OBI except descendants of 'assay' (`remove` is preferred):
-
-```
-robot filter --input obi.owl --entity OBI:0000070 --select descendants --select complement
-```
+    robot filter --input uberon_module.owl\
+     --term UBERON:0000062\
+     --select annotations\
+     --select descendants\
+     --select complement\
+     --output results/remove_class.owl
 
 4. Copy a subset of classes based on an annotation property:
 

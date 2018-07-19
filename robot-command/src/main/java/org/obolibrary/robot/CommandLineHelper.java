@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -841,5 +843,22 @@ public class CommandLineHelper {
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
     System.exit(1);
+  }
+
+  /**
+   * Given an input string, return a list of the string split on whitespace, while ignoring any
+   * whitespace in single string quotes.
+   *
+   * @param selects String of select options to split
+   * @return List of split strings
+   */
+  protected static List<String> splitSelects(String selects) {
+    List<String> split = new ArrayList<>();
+    Matcher m = Pattern.compile("([^\\s]+=.*'[^']+'|[^\\s']+)").matcher(selects);
+    while (m.find()) {
+      String s = m.group(1).trim();
+      split.add(s);
+    }
+    return split;
   }
 }

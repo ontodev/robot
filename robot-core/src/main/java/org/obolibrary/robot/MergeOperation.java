@@ -170,7 +170,7 @@ public class MergeOperation {
         // Merge the ontologies with imports excluded
         Set<OWLOntology> imports = targetOntology.getImports();
         try {
-          RemoveOperation.removeImports(targetOntology);
+          OntologyHelper.removeImports(targetOntology);
         } catch (Exception e) {
           // Continue without removing imports
           continue;
