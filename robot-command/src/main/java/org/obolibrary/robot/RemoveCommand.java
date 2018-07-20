@@ -122,6 +122,7 @@ public class RemoveCommand implements Command {
       selects.add("self");
     }
     boolean removeImports = false;
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", false);
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
@@ -139,6 +140,9 @@ public class RemoveCommand implements Command {
 
     // If removing imports, and there are no objects, save and return
     if (removeImports && objects.isEmpty()) {
+      if (trim) {
+        OntologyHelper.trimOntology(ontology);
+      }
       CommandLineHelper.maybeSaveOutput(line, ontology);
       state.setOntology(ontology);
       return state;
@@ -156,8 +160,8 @@ public class RemoveCommand implements Command {
     manager.removeAxioms(ontology, axiomsToRemove);
 
     // Maybe trim dangling (by default, false)
-    if (CommandLineHelper.getBooleanValue(line, "trim", false)) {
-      OntologyHelper.trimDangling(ontology);
+    if (trim) {
+      OntologyHelper.trimOntology(ontology);
     }
 
     // Save the changed ontology and return the state

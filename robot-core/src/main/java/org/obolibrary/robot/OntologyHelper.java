@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1234,22 +1235,29 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, remove any dangling entities and references to those entities. A dangling
-   * entity is one that has no axioms about it.
+   * Given an ontology, remove any dangling entities.
    *
    * @param ontology the ontology to trim
    */
-  public static void trimDangling(OWLOntology ontology) {
+  public static void trimOntology(OWLOntology ontology) {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    for (OWLEntity entity : getEntities(ontology)) {
-      if (InvalidReferenceChecker.isDangling(ontology, entity)) {
-        logger.debug("Removing dangling entity: " + entity.toStringID());
-        Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
-        axiomTypes.add(OWLAxiom.class);
-        for (OWLAxiom axiom : EntitySearcher.getReferencingAxioms(entity, ontology)) {
-          manager.removeAxiom(ontology, axiom);
+    Set<OWLObject> objects = new HashSet<>();
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      objects.addAll(getObjects(axiom));
+    }
+    Set<OWLObject> trimObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLEntity) {
+        OWLEntity entity = (OWLEntity) object;
+        if (InvalidReferenceChecker.isDangling(ontology, entity)) {
+          logger.debug("Trimming %s", entity.getIRI());
+          trimObjects.add(object);
         }
       }
     }
+    Set<OWLAxiom> axioms =
+        RelatedObjectsHelper.getPartialAxioms(
+            ontology, trimObjects, Sets.newHashSet(OWLAxiom.class));
+    manager.removeAxioms(ontology, axioms);
   }
 }

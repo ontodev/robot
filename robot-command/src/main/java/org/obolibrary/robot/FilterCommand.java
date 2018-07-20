@@ -177,7 +177,7 @@ public class FilterCommand implements Command {
 
     // Maybe trim dangling (by default, true)
     if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
-      OntologyHelper.trimDangling(outputOntology);
+      OntologyHelper.trimOntology(outputOntology);
     }
 
     // Save the changed ontology and return the state
