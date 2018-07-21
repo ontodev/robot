@@ -104,7 +104,7 @@ public class MergeCommand implements Command {
       state = new CommandState();
     }
 
-    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> inputOntologies = new ArrayList<>();
     // inputOntologies should not be empty
     boolean notEmpty = false;
     if (state != null && state.getOntology() != null) {
@@ -114,7 +114,7 @@ public class MergeCommand implements Command {
     inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
 
     boolean collapseImportClosure =
-        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
+        CommandLineHelper.getBooleanValue(line, "collapse-import-closure", true);
     boolean includeAnnotations =
         CommandLineHelper.getBooleanValue(line, "include-annotations", false);
     OWLOntology outputOntology =
