@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -123,8 +122,9 @@ public class VerifyCommand implements Command {
       File queryFile = new File(filePath);
       String queryString = FileUtils.readFileToString(queryFile);
       String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
-      FileOutputStream csvFile = new FileOutputStream(outputDir.toPath().resolve(csvPath).toFile());
-      boolean result = QueryOperation.runVerify(graph, filePath, queryString, csvFile, null);
+      boolean result =
+          QueryOperation.runVerify(
+              graph, filePath, queryString, outputDir.toPath().resolve(csvPath), null);
       if (result) {
         passing = false;
       }
