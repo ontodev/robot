@@ -348,15 +348,25 @@ public class CommandLineHelper {
     // Check for multiple inputs
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    String catalogPath = getOptionalValue(line, "catalog");
+
     Integer check = inputOntologyPaths.size() + inputOntologyIRIs.size();
     if (check > 1) {
       throw new IllegalArgumentException(multipleInputsError);
     }
 
     if (!inputOntologyPaths.isEmpty()) {
-      inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0));
+      if (catalogPath != null) {
+        inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
+      } else {
+        inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0));
+      }
     } else if (!inputOntologyIRIs.isEmpty()) {
-      inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
+      if (catalogPath != null) {
+        inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
+      } else {
+        inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
+      }
     } else {
       // Both input options are empty
       throw new IllegalArgumentException(missingInputError);
@@ -381,38 +391,12 @@ public class CommandLineHelper {
       IOHelper ioHelper, CommandLine line, boolean allowEmpty)
       throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    String catalogPath = getOptionalValue(line, "catalog");
 
-    // Check for input files
-    List<String> inputOntologyPaths = getOptionalValues(line, "input");
-    for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
-    }
-
-    // Check for input IRIs
-    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
-    for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
-    }
-
-    // Check for input patterns (wildcard)
-    List<String> inputOntologyPatterns = getOptionalValues(line, "inputs");
-    for (String inputOntologyPattern : inputOntologyPatterns) {
-      if (!inputOntologyPattern.contains("*") && !inputOntologyPattern.contains("?")) {
-        throw new IllegalArgumentException(wildcardError);
-      }
-      FileFilter fileFilter = new WildcardFileFilter(inputOntologyPattern);
-      File[] inputOntologyFiles = new File(".").listFiles(fileFilter);
-      if (inputOntologyFiles.length < 1) {
-        // Warn user, but continue (empty input checked later)
-        logger.error("No files match pattern: {}", inputOntologyPattern);
-      }
-      System.out.println("Loading matches to \"" + inputOntologyPattern + "\":");
-      int counter = 0;
-      for (File inputOntologyFile : inputOntologyFiles) {
-        counter++;
-        System.out.println(counter + ". " + inputOntologyFile.getName());
-        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile));
-      }
+    if (catalogPath != null) {
+      inputOntologies.addAll(getInputOntologies(ioHelper, line, catalogPath));
+    } else {
+      inputOntologies.addAll(getInputOntologies(ioHelper, line));
     }
 
     if (inputOntologies.isEmpty() && !allowEmpty) {
@@ -646,7 +630,7 @@ public class CommandLineHelper {
     if (reasonerName.equals("structural")) {
       return new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
     } else if (reasonerName.equals("hermit")) {
-      return new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+      return new org.semanticweb.HermiT.ReasonerFactory();
     } else if (reasonerName.equals("jfact")) {
       return new JFactFactory();
       // Reason must change behavior with EMR, so not all commands can use it
@@ -689,6 +673,7 @@ public class CommandLineHelper {
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
     o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
+    o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
@@ -766,5 +751,90 @@ public class CommandLineHelper {
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
     System.exit(1);
+  }
+
+  /**
+   * Given a wildcard pattern as string, return an array of files matching that pattern.
+   *
+   * @param pattern wildcard pattern to match
+   * @return array of files
+   */
+  private static File[] getFilesByPattern(String pattern) {
+    if (!pattern.contains("*") && !pattern.contains("?")) {
+      throw new IllegalArgumentException(wildcardError);
+    }
+    FileFilter fileFilter = new WildcardFileFilter(pattern);
+    File[] files = new File(".").listFiles(fileFilter);
+    if (files.length < 1) {
+      // Warn user, but continue (empty input checked later)
+      logger.error("No files match pattern: {}", pattern);
+    }
+    return files;
+  }
+
+  /**
+   * Given an IOHelper and a command line, check input options and return a list of loaded input
+   * ontologies.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @return the list of input ontologies
+   * @throws IOException if the ontology cannot be loaded
+   */
+  private static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
+      throws IOException {
+    List<OWLOntology> inputOntologies = new ArrayList<>();
+    // Check for input files
+    List<String> inputOntologyPaths = getOptionalValues(line, "input");
+    for (String inputOntologyPath : inputOntologyPaths) {
+      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+    }
+    // Check for input IRIs
+    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    for (String inputOntologyIRI : inputOntologyIRIs) {
+      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
+    }
+    // Check for input patterns (wildcard)
+    String pattern = getOptionalValue(line, "inputs");
+    if (pattern != null) {
+      for (File inputOntologyFile : getFilesByPattern(pattern)) {
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile));
+      }
+    }
+    return inputOntologies;
+  }
+
+  /**
+   * Given an IOHelper, a command line, and the path to a catalog file, check input options and
+   * return a list of loaded input ontologies with the catalog file.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @param catalogPath the catalog file to use
+   * @return the list of input ontologies
+   * @throws IOException if the ontology cannot be loaded
+   */
+  private static List<OWLOntology> getInputOntologies(
+      IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
+    List<OWLOntology> inputOntologies = new ArrayList<>();
+    // Check for input files
+    List<String> inputOntologyPaths = getOptionalValues(line, "input");
+    for (String inputOntologyPath : inputOntologyPaths) {
+      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, catalogPath));
+    }
+    // Check for input IRIs
+    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    for (String inputOntologyIRI : inputOntologyIRIs) {
+      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI), catalogPath));
+    }
+    // Check for input patterns (wildcard)
+    String pattern = getOptionalValue(line, "inputs");
+    if (pattern != null) {
+      File catalogFile = new File(catalogPath);
+      for (File inputOntologyFile : getFilesByPattern(pattern)) {
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, catalogFile));
+      }
+    }
+    return inputOntologies;
   }
 }

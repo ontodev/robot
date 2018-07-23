@@ -1,8 +1,10 @@
 # Merge
 
-OWL ontologies are often divided into several `.owl` files, with `owl:imports` statements to bring them together. Sometimes you want to take all those imports and merge them into a single ontology with a single `.owl` file.
+OWL ontologies are often divided into several `.owl` files, with `owl:imports` statements to bring them together. Sometimes you want to take all those imports and merge them into a single ontology with a single `.owl` file. This can be chained with [`annotate`](/annotate) to specify an IRI for the output ontology.
 
-    robot merge --input edit.owl --output results/merged.owl
+    robot merge --input edit.owl \
+    annotate --ontology-iri https://github.com/ontodev/robot/examples/merged.owl\
+     --output results/merged.owl
 
 You don't need `owl:import` statements: you can merge any number of ontologies by using multiple `--input` arguments. All the ontologies and their imports are merged into the first ontology.
 
