@@ -472,7 +472,7 @@ public class QueryOperation {
       System.out.println("FAIL Rule " + ruleName + ": " + results.size() + " violation(s)");
       ResultSetMgr.write(System.err, results, Lang.CSV);
       results.reset();
-      writeResult(results, outputFormat, new FileOutputStream(output));
+      writeResult(results, outputFormat, output);
       return true;
     }
   }
