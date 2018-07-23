@@ -26,7 +26,6 @@ public class RemoveCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
     o.addOption("t", "term", true, "remove an entity");
     o.addOption("T", "terms", true, "remove a set of entities");
     o.addOption("s", "select", true, "remove a set of entities using one or more relation options");
@@ -59,7 +58,7 @@ public class RemoveCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot remove --input <file> " + "--output <file> " + "--output-iri <iri>";
+    return "robot remove --input <file> " + "--output <file>";
   }
 
   /**

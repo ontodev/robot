@@ -29,7 +29,7 @@ public class FilterCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+    o.addOption("O", "ontology-iri", true, "set OntologyIRI for output");
     o.addOption("t", "term", true, "filter for an entity");
     o.addOption("T", "terms", true, "filter for a of entities");
     o.addOption("s", "select", true, "filter for a of entities using one or more relation options");
@@ -146,7 +146,7 @@ public class FilterCommand implements Command {
     }
 
     IRI outputIRI;
-    String outputIRIString = CommandLineHelper.getOptionalValue(line, "output-iri");
+    String outputIRIString = CommandLineHelper.getOptionalValue(line, "ontology-iri");
     if (outputIRIString != null) {
       outputIRI = IRI.create(outputIRIString);
     } else {
