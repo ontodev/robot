@@ -110,7 +110,7 @@ public class CommandManager implements Command {
   /**
    * Given some Options and some arguments, collect all the options until the first non-option
    * argument, then remove those used argument strings from the arguments list and return the used
-   * arguments as a new list.
+   * arguments as a new list. WARN: Mutates the `arguments` list.
    *
    * @param options the options to collect
    * @param arguments a list of remaining command-line arguments; used option strings are removed
@@ -164,11 +164,11 @@ public class CommandManager implements Command {
     }
 
     List<String> arguments = new ArrayList<String>(Arrays.asList(args));
+    List<String> globalOptionArgs = getOptionArgs(globalOptions, arguments);
+
     if (arguments.size() == 0) {
       throw new IllegalArgumentException(missingCommandError);
     }
-
-    List<String> globalOptionArgs = getOptionArgs(globalOptions, arguments);
 
     while (arguments.size() > 0) {
       state = executeCommand(state, globalOptionArgs, arguments);
