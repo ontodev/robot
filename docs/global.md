@@ -26,10 +26,12 @@ OWLAPI, Protégé, and ROBOT use XML catalogs to specify where import files are 
 
 That said, occasionally, you may want to use different catalog files for different purposes. This is especially useful for automated releases with [Makefiles](/makefile). ROBOT provides an option to specify the catalog location with `--catalog`. 
 
-For example, you may want to merge a set of edited import ontologies to create a module. You may have one set of imports for one module, and another set of imports for another module:
+For example, you may want to [`merge`](/merge) a set of edited import ontologies to create a module. You may have one set of imports for one module, and another set of imports for another module. You can also chain this command with [`annotate`](/annotate) to specify the output ontology's IRI.
 
     robot merge --catalog catalog.xml\
-     --input imports.owl --output results/merged.owl
+     --input imports.owl \
+    annotate --ontology-iri https://github.com/ontodev/robot/examples/merged.owl\
+     --output results/merged.owl
 
 If a catalog file is specified and cannot be located, the ontology will be loaded without a catalog file. Similarly, if you do not provide a `--catalog` and the `catalog-v001.xml` file does not exist in your working directory, the ontology will be loaded without a catalog file. Finally, if the catalog specifies an import file that does not exist, the command will fail.
 
