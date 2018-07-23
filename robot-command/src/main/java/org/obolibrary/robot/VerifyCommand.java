@@ -3,8 +3,6 @@ package org.obolibrary.robot;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -120,20 +118,20 @@ public class VerifyCommand implements Command {
     File outputDir = new File(CommandLineHelper.getDefaultValue(line, "output-dir", "."));
 
     String[] queryFilePaths = line.getOptionValues("queries");
-    List<Boolean> results = new ArrayList<Boolean>();
+    boolean passing = true;
     for (String filePath : queryFilePaths) {
       File queryFile = new File(filePath);
       String queryString = FileUtils.readFileToString(queryFile);
       String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
       FileOutputStream csvFile = new FileOutputStream(outputDir.toPath().resolve(csvPath).toFile());
       boolean result = QueryOperation.runVerify(graph, filePath, queryString, csvFile, null);
-      results.add(result);
+      if (result) {
+        passing = false;
+      }
     }
 
-    for (boolean result : results) {
-      if (!result) {
-        throw new Exception(verificationFailed);
-      }
+    if (!passing) {
+      throw new Exception(verificationFailed);
     }
 
     return state;
