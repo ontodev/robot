@@ -7,8 +7,6 @@ import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,6 +25,8 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
@@ -474,7 +474,7 @@ public class IOHelper {
    *
    * @param ontology the ontology to save
    * @param format the ontology format to use
-   * @param ontologyIRI the IRI to save the ontology to
+   * @param ontologyFile the file to save the ontology to
    * @return the saved ontology
    * @throws IOException on any problem
    */

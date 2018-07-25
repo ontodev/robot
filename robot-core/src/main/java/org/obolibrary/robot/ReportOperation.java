@@ -1,8 +1,5 @@
 package org.obolibrary.robot;
 
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,6 +21,9 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -84,7 +84,7 @@ public class ReportOperation {
     Map<String, String> queries = getQueryStrings(profile.keySet());
 
     Report report = new Report();
-    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
+    Dataset dataset = QueryOperation.loadOntology(ontology);
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
       String queryString;
@@ -94,7 +94,7 @@ public class ReportOperation {
       } else {
         queryString = fullQueryString;
       }
-      report.addViolations(queryName, profile.get(queryName), getViolations(dsg, queryString));
+      report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
     }
 
     Integer violationCount = report.getTotalViolations();
@@ -331,12 +331,12 @@ public class ReportOperation {
    * Given an ontology as a DatasetGraph and a query as a CheckerQuery, return the violations found
    * by that query.
    *
-   * @param dsg the ontology
+   * @param dataset the ontology/ontologies as a dataset
    * @param query the query
    * @return List of Violations
    */
-  private static List<Violation> getViolations(DatasetGraph dsg, String query) {
-    ResultSet violationSet = QueryOperation.execQuery(dsg, query);
+  private static List<Violation> getViolations(Dataset dataset, String query) {
+    ResultSet violationSet = QueryOperation.execQuery(dataset.getUnionModel(), query);
 
     Map<String, Violation> violations = new HashMap<>();
     Violation violation;

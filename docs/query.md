@@ -28,6 +28,16 @@ Instead of specifying one or more pairs (query file, output file), you can speci
       --queries cell_part_ask.sparql \
       --output-dir results/
 
+## Imports
+
+By default, `query` ignores import statements (`--imports ignore`). To query over the union of all imports, simply include `--imports union`. `query` also supports imports as named graphs. To load imports as named graphs, include `--imports graphs`. The graphs will be loaded with the respective ontology IRI as their names. For example, to find all the classes from an import (graph specified in [`named_graph.sparql`](/examples/named_graph.sparql)):
+
+    robot query --input imports.owl \
+      --imports graphs --catalog catalog.xml \
+      --query named_graph.sparql results/named_graph.csv
+      
+The example above also uses the [global](/global)  `--catalog` option to specify the catalog file for the import mapping.
+
 ---
 
 ## Error Messages

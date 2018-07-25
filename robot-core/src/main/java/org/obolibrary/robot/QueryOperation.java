@@ -1,18 +1,19 @@
 package org.obolibrary.robot;
 
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.ResultSetMgr;
+import java.util.Set;
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.*;
 import org.apache.jena.riot.resultset.ResultSetLang;
+import org.apache.jena.tdb.TDBFactory;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,20 +34,49 @@ public class QueryOperation {
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
 
   /**
-   * Load an ontology into a DatasetGraph. The ontology is not changed. NOTE: This is not elegant!
-   * It basically pipes Turtle output from OWLAPI to Jena Arq.
+   * Given an ontology, return a dataset containing that ontology as the only graph.
    *
-   * @param ontology The ontology to load into the graph.
-   * @return A new DatasetGraph with the ontology loaded into the default graph.
-   * @throws OWLOntologyStorageException rarely
+   * @param ontology ontology to query
+   * @return dataset to query
+   * @throws IOException on issue creating temp files
+   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
-  public static DatasetGraph loadOntology(OWLOntology ontology) throws OWLOntologyStorageException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), out);
-    DatasetGraph dsg = DatasetGraphFactory.createMem();
-    RDFDataMgr.read(
-        dsg.getDefaultGraph(), new ByteArrayInputStream(out.toByteArray()), Lang.TURTLE);
-    return dsg;
+  public static Dataset loadOntology(OWLOntology ontology)
+      throws IOException, OWLOntologyStorageException {
+    return loadOntology(ontology, false);
+  }
+
+  /**
+   * Given an ontology and a boolean indicating if imports should be included as graphs, return a
+   * dataset either with just the ontology, or the ontology and its imports as separate graphs.
+   *
+   * @param ontology ontology to query
+   * @param includeImports if true, include imports as separate graphs
+   * @return dataset to query
+   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   */
+  public static Dataset loadOntology(OWLOntology ontology, boolean includeImports)
+      throws OWLOntologyStorageException, UnsupportedEncodingException {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    Set<OWLOntology> ontologies = new HashSet<>();
+    ontologies.add(ontology);
+    if (includeImports) {
+      ontologies.addAll(ontology.getImports());
+    }
+    // Instantiate an empty dataset
+    Dataset dataset = TDBFactory.createDataset();
+    // Load each ontology in the set as a named model
+    for (OWLOntology ont : ontologies) {
+      Model m = ModelFactory.createDefaultModel();
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      manager.saveOntology(ont, new TurtleDocumentFormat(), os);
+      String content = new String(os.toByteArray(), "UTF-8");
+      RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(m);
+      String name = ont.getOntologyID().getOntologyIRI().orNull().toString();
+      dataset.addNamedModel(name, m);
+      logger.debug("Named graph added: " + name);
+    }
+    return dataset;
   }
 
   /**
@@ -55,38 +85,7 @@ public class QueryOperation {
    * @return an empty dataset
    */
   public static Dataset createEmptyDataset() {
-    return DatasetFactory.create(DatasetGraphFactory.createMem());
-  }
-
-  /**
-   * Given a SPARQL query, return its type as a string: ASK, CONSTRUCT, DESCRIBE, SELECT.
-   *
-   * @param queryString the SPARQL query string
-   * @return the query type string or null
-   * @throws IllegalArgumentException on bad query
-   */
-  public static String getQueryTypeName(String queryString) throws IllegalArgumentException {
-    // TODO: This method is unused
-    QueryExecution qexec = QueryExecutionFactory.create(queryString, createEmptyDataset());
-    Query query = qexec.getQuery();
-    String queryType = null;
-    switch (query.getQueryType()) {
-      case Query.QueryTypeAsk:
-        queryType = "ASK";
-        break;
-      case Query.QueryTypeConstruct:
-        queryType = "CONSTRUCT";
-        break;
-      case Query.QueryTypeDescribe:
-        queryType = "DESCRIBE";
-        break;
-      case Query.QueryTypeSelect:
-        queryType = "SELECT";
-        break;
-      default:
-        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
-    }
-    return queryType;
+    return DatasetFactory.create();
   }
 
   /**
@@ -96,8 +95,8 @@ public class QueryOperation {
    * @return the format name
    */
   public static String getDefaultFormatName(String query) {
-    QueryExecution qexec = QueryExecutionFactory.create(query, createEmptyDataset());
-    return getDefaultFormatName(qexec.getQuery());
+    QueryExecution qExec = QueryExecutionFactory.create(query, createEmptyDataset());
+    return getDefaultFormatName(qExec.getQuery());
   }
 
   /**
@@ -108,7 +107,7 @@ public class QueryOperation {
    * @throws IllegalArgumentException on bad query
    */
   public static String getDefaultFormatName(Query query) throws IllegalArgumentException {
-    String formatName = null;
+    String formatName;
     switch (query.getQueryType()) {
       case Query.QueryTypeAsk:
         formatName = "txt";
@@ -169,58 +168,27 @@ public class QueryOperation {
   }
 
   /**
-   * Run a SPARQL query (ASK, CONSTRUCT, DESCRIBE, SELECT) and return true if there were results,
-   * false otherwise.
+   * Given a dataset, a query string, a boolean indiciating to use named graphs or not, an output
+   * format name, and an output stream, run the query and write to output.
    *
-   * @param qexec the SPARQL QueryExecution to run
-   * @param formatName the name of the output format
-   * @param output the OutputStream to write to
-   * @return true if there are any results, false otherwise
-   * @throws IllegalArgumentException on bad query
-   */
-  public static boolean runSparqlQuery(QueryExecution qexec, String formatName, OutputStream output)
-      throws IllegalArgumentException {
-    boolean result;
-    Query query = qexec.getQuery();
-    if (formatName == null) {
-      formatName = getDefaultFormatName(query);
-    }
-
-    switch (query.getQueryType()) {
-      case Query.QueryTypeAsk:
-        result = true;
-        writeResult(qexec.execAsk(), output);
-        break;
-      case Query.QueryTypeConstruct:
-        result = maybeWriteResult(qexec.execConstruct(), formatName, output);
-        break;
-      case Query.QueryTypeDescribe:
-        result = maybeWriteResult(qexec.execDescribe(), formatName, output);
-        break;
-      case Query.QueryTypeSelect:
-        result = maybeWriteResult(qexec.execSelect(), formatName, output);
-        break;
-      default:
-        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
-    }
-
-    return result;
-  }
-
-  /**
-   * Run a SPARQL query (ASK, CONSTRUCT, DESCRIBE, SELECT) and return true if there were results,
-   * false otherwise.
-   *
-   * @param dsg the graph to query over
-   * @param query the SPARQL query string
-   * @param formatName the name of the output format
-   * @param output the OutputStream to write to
-   * @return true if there are any results, false otherwise
+   * @param dataset Dataset to query over
+   * @param queryString query to run
+   * @param withGraphs if true, use named graphs, otherwise run the query on the union of all graphs
+   * @param formatName format of output
+   * @param output output stream to write to
+   * @return
    */
   public static boolean runSparqlQuery(
-      DatasetGraph dsg, String query, String formatName, OutputStream output) {
-    QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
-    return runSparqlQuery(qexec, formatName, output);
+      Dataset dataset,
+      String queryString,
+      boolean withGraphs,
+      String formatName,
+      OutputStream output) {
+    if (!withGraphs) {
+      return runSparqlQueryOnUnion(dataset, queryString, formatName, output);
+    } else {
+      return runSparqlQueryWithGraphs(dataset, queryString, formatName, output);
+    }
   }
 
   /**
@@ -350,56 +318,57 @@ public class QueryOperation {
   /**
    * Execute a SPARQL SELECT query and return a result set.
    *
-   * @param dsg the graph to query over
+   * @param model the model to query over
    * @param query the SPARQL query string
    * @return the result set
    */
-  public static ResultSet execQuery(DatasetGraph dsg, String query) {
-    QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
-    return qexec.execSelect();
+  public static ResultSet execQuery(Model model, String query) {
+    QueryExecution qExec = QueryExecutionFactory.create(query, model);
+    return qExec.execSelect();
   }
 
   /**
    * Execute a SPARQL CONSTRUCT query and return a model.
    *
-   * @param dsg The graph to construct in.
-   * @param query The SPARQL construct query string.
+   * @param model The model to construct in
+   * @param query The SPARQL construct query string
    * @return The result model
    */
-  public static Model execConstruct(DatasetGraph dsg, String query) {
-    QueryExecution qexec = QueryExecutionFactory.create(query, DatasetFactory.create(dsg));
-    return qexec.execConstruct();
+  public static Model execConstruct(Model model, String query) {
+    QueryExecution qExec = QueryExecutionFactory.create(query, model);
+    return qExec.execConstruct();
   }
 
   /**
    * Run a SELECT query and write the result to a file.
    *
-   * @param dsg The graph to query over.
+   * @param dataset The dataset to query over.
    * @param query The SPARQL query string.
    * @param output The file to write to.
    * @param outputFormat The file format.
    * @throws FileNotFoundException if output file is not found
    */
-  public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
+  public static void runQuery(Dataset dataset, String query, File output, Lang outputFormat)
       throws FileNotFoundException {
     if (outputFormat == null) {
       outputFormat = Lang.CSV;
     }
-    writeResult(execQuery(dsg, query), outputFormat, new FileOutputStream(output));
+    writeResult(
+        execQuery(dataset.getUnionModel(), query), outputFormat, new FileOutputStream(output));
   }
 
   /**
    * Run a CONSTRUCT query and write the result to a file.
    *
-   * @param dsg The graph to construct in.
+   * @param model the Model to construct in.
    * @param query The SPARQL construct query string.
    * @param output The file to write to.
    * @param outputFormat The file format.
    * @throws FileNotFoundException if output file is not found
    */
-  public static void runConstruct(DatasetGraph dsg, String query, File output, Lang outputFormat)
+  public static void runConstruct(Model model, String query, File output, Lang outputFormat)
       throws FileNotFoundException {
-    writeResult(execConstruct(dsg, query), outputFormat, new FileOutputStream(output));
+    writeResult(execConstruct(model, query), outputFormat, new FileOutputStream(output));
   }
 
   /**
@@ -432,12 +401,12 @@ public class QueryOperation {
    * Execute a SPARQL query and return true if there are any results, false otherwise. Prints
    * violations to STDERR.
    *
-   * @param dsg the graph to query over
+   * @param model the graph to query over
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
    */
-  public static boolean execVerify(DatasetGraph dsg, String ruleName, String query) {
-    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dsg, query));
+  public static boolean execVerify(Model model, String ruleName, String query) {
+    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(model, query));
     System.out.println("Rule " + ruleName + ": " + results.size() + " violation(s)");
     if (results.size() == 0) {
       System.out.println("PASS Rule " + ruleName + ": 0 violation(s)");
@@ -450,9 +419,9 @@ public class QueryOperation {
   }
 
   /**
-   * Run a SELECT query and write the result to a file. Prints violations to STDERR.
+   * Run a SELECT query over the union of named graphs in a dataset and write the result to a file. Prints violations to STDERR.
    *
-   * @param dsg The graph to query over.
+   * @param dataset The graph to query over.
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.
@@ -460,12 +429,13 @@ public class QueryOperation {
    * @return true if the are results (so file is written), false otherwise
    */
   public static boolean runVerify(
-      DatasetGraph dsg, String ruleName, String query, Path outputPath, Lang outputFormat)
+      Dataset dataset, String ruleName, String query, Path outputPath, Lang outputFormat)
       throws FileNotFoundException {
     if (outputFormat == null) {
       outputFormat = Lang.CSV;
     }
-    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dsg, query));
+    ResultSetRewindable results =
+        ResultSetFactory.copyResults(execQuery(dataset.getUnionModel(), query));
     if (results.size() == 0) {
       System.out.println("PASS Rule " + ruleName + ": 0 violation(s)");
       return false;
@@ -492,5 +462,80 @@ public class QueryOperation {
       i++;
     }
     return i;
+  }
+
+  /**
+   * Given a query execution, a format name, and an output stream, run the query and write to
+   * output.
+   *
+   * @param qExec QueryExecution to run
+   * @param formatName format of output
+   * @param output output stream to write to
+   * @return true if successful
+   */
+  private static boolean runSparqlQuery(
+      QueryExecution qExec, String formatName, OutputStream output) {
+    Query query = qExec.getQuery();
+    if (formatName == null) {
+      formatName = getDefaultFormatName(query);
+    }
+    switch (query.getQueryType()) {
+      case Query.QueryTypeAsk:
+        writeResult(qExec.execAsk(), output);
+        return true;
+      case Query.QueryTypeConstruct:
+        return maybeWriteResult(qExec.execConstruct(), formatName, output);
+      case Query.QueryTypeDescribe:
+        return maybeWriteResult(qExec.execDescribe(), formatName, output);
+      case Query.QueryTypeSelect:
+        return maybeWriteResult(qExec.execSelect(), formatName, output);
+      default:
+        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
+    }
+  }
+
+  /**
+   * Given a dataset, a query string, a format name, and an output stream, run the SPARQL query over
+   * the named graphs and write the output to the stream.
+   *
+   * @param dataset Dataset to query over
+   * @param queryString query to run
+   * @param formatName format of output
+   * @param output output stream to write to
+   * @return true if successful
+   */
+  private static boolean runSparqlQueryWithGraphs(
+      Dataset dataset, String queryString, String formatName, OutputStream output) {
+    dataset.begin(ReadWrite.READ);
+    boolean result;
+    try (QueryExecution qExec = QueryExecutionFactory.create(queryString, dataset)) {
+      result = runSparqlQuery(qExec, formatName, output);
+    } finally {
+      dataset.end();
+    }
+    return result;
+  }
+
+  /**
+   * Given a dataset, a query string, a format name, and an output stream, run the SPARQL query on
+   * the union of all named graphs in the dataset and write the output to the output stream.
+   *
+   * @param dataset Dataset to query over
+   * @param queryString query to run
+   * @param formatName format of output
+   * @param output output stream to write to
+   * @return true if successful
+   */
+  private static boolean runSparqlQueryOnUnion(
+      Dataset dataset, String queryString, String formatName, OutputStream output) {
+    dataset.begin(ReadWrite.READ);
+    Model model = dataset.getUnionModel();
+    boolean result;
+    try (QueryExecution qExec = QueryExecutionFactory.create(queryString, model)) {
+      result = runSparqlQuery(qExec, formatName, output);
+    } finally {
+      dataset.end();
+    }
+    return result;
   }
 }
