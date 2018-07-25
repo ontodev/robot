@@ -187,6 +187,8 @@ public class RelatedObjectsHelper {
       return selectEquivalents(ontology, objects);
     } else if (selector.equals("individuals")) {
       return selectIndividuals(objects);
+    } else if (selector.equals("instances")) {
+      return selectInstances(ontology, objects);
     } else if (selector.equals("named")) {
       return selectNamed(objects);
     } else if (selector.equals("object-properties")) {
@@ -396,6 +398,16 @@ public class RelatedObjectsHelper {
     for (OWLObject object : objects) {
       if (object instanceof OWLIndividual) {
         relatedObjects.add(object);
+      }
+    }
+    return relatedObjects;
+  }
+
+  public static Set<OWLObject> selectInstances(OWLOntology ontology, Set<OWLObject> objects) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLClass) {
+        relatedObjects.addAll(EntitySearcher.getIndividuals((OWLClass) object, ontology));
       }
     }
     return relatedObjects;

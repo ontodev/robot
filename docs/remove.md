@@ -42,6 +42,7 @@ Relation type selections provide the ability to select which entities to remove 
 5. `descendants`
 6. `equivalents`
 7. `types`
+8. `instances`
 
 #### Entity Types
 
