@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -11,8 +11,13 @@ import org.junit.Test;
 import org.obolibrary.robot.exceptions.InvalidReferenceException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
 
@@ -237,5 +242,66 @@ public class ReasonOperationTest extends CoreTest {
     opts.put("exclude-owl-thing", "true");
     ReasonOperation.reason(reasoned, reasonerFactory, opts);
     assertIdentical("/relax_equivalence_axioms_expressions_materialized.obo", reasoned);
+  }
+
+  /**
+   * Test reasoning with intersection axioms
+   *
+   * @throws IOException on file problem
+   * @throws OWLOntologyCreationException on ontology problem
+   * @throws OntologyLogicException on logic error
+   * @throws InvalidReferenceException
+   */
+  @Test
+  public void testIntersection()
+      throws IOException, OWLOntologyCreationException, OntologyLogicException,
+          InvalidReferenceException {
+    OWLOntology reasoned = loadOntology("/intersection.omn");
+    OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
+    ReasonOperation.reason(reasoned, reasonerFactory);
+    assertTrue(checkContains(reasoned, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
+  }
+
+  /**
+   * Test reasoning with external ontologies.
+   *
+   * <p>Depending on user option, inferred axioms that refer solely to external ontology classes
+   * (i.e. those in the import chain) should not be asserted
+   *
+   * @throws IOException on file problem
+   * @throws OWLOntologyCreationException on ontology problem
+   * @throws OntologyLogicException on logic error
+   * @throws InvalidReferenceException
+   */
+  @Test
+  public void testExternal()
+      throws IOException, OWLOntologyCreationException, OntologyLogicException,
+          InvalidReferenceException {
+    OWLOntology importOnt1 = loadOntology("/intersection.omn");
+    IRI oiri = importOnt1.getOntologyID().getOntologyIRI().get();
+    OWLOntology mainOnt = loadOntology("/simple.owl");
+    OWLOntologyManager mgr = mainOnt.getOWLOntologyManager();
+    OWLOntology importOnt = mgr.createOntology(oiri);
+    mgr.addAxioms(importOnt, importOnt1.getAxioms());
+
+    OWLImportsDeclaration importsDecl = mgr.getOWLDataFactory().getOWLImportsDeclaration(oiri);
+    AddImport ch = new AddImport(mainOnt, importsDecl);
+    mgr.applyChange(ch);
+    OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
+
+    Map<String, String> opts = new HashMap<>();
+    opts.put("exclude-external-entities", "true");
+    ReasonOperation.reason(mainOnt, reasonerFactory, opts);
+    assertFalse(checkContains(mainOnt, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
+    opts.put("exclude-external-entities", "false");
+    ReasonOperation.reason(mainOnt, reasonerFactory, opts);
+    assertTrue(checkContains(mainOnt, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
+  }
+
+  private boolean checkContains(OWLOntology reasoned, String axStr) {
+    for (OWLAxiom a : reasoned.getLogicalAxioms()) {
+      if (a.toString().equals(axStr)) return true;
+    }
+    return false;
   }
 }

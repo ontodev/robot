@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,10 @@ public class ReportCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
-    o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+    o.addOption("o", "output", true, "save report to a file");
+    o.addOption("p", "profile", true, "reporting rules and levels to use");
+    o.addOption("f", "format", true, "save report in a given format (TSV or YAML)");
+    o.addOption("F", "fail-on", true, "logging level to fail on");
     options = o;
   }
 
@@ -53,7 +54,7 @@ public class ReportCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot report --input <file> " + "--output <file> " + "--output-iri <iri>";
+    return "robot report --input <file> " + "--output <file> ";
   }
 
   /**
@@ -88,8 +89,6 @@ public class ReportCommand implements Command {
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-    OWLOntology outputOntology = null;
-
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
       return null;
@@ -97,15 +96,25 @@ public class ReportCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
+    OWLOntology ontology = state.getOntology();
 
-    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-    if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    // output is optional - no output means the file will not be written anywhere
+    String outputPath = CommandLineHelper.getOptionalValue(line, "output");
+    // profile is optional - no profile means the default profile will be used
+    String profilePath = CommandLineHelper.getOptionalValue(line, "profile");
+    // format is optional - no format means the report will be in TSV
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    // fail-on is optional - if null, will always exit with 0
+    String failOn = CommandLineHelper.getDefaultValue(line, "fail-on", "error");
+
+    // Success is based on failOn
+    // If any violations are found of the fail-on level, this will be false
+    // If failOn is "none" or if no violations are found, this will be true
+    boolean success = ReportOperation.report(ontology, profilePath, outputPath, format, failOn);
+    if (!success) {
+      logger.error("Report failed!");
+      System.exit(1);
     }
-
-    // TODO save results
-    ReportOperation.report(inputOntology, ioHelper);
     return state;
   }
 }

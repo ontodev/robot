@@ -1,0 +1,20 @@
+# Duplicate Definition
+
+Problem: An entity shares an exact definition with another entity.
+
+Solution: Update the definition to reflect the entities, or determine if the entities are the same.
+
+```sparql
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?entity ?property ?value
+WHERE {
+ VALUES ?property {obo:IAO_0000115}
+ ?entity obo:IAO_0000115 ?value .
+ ?entity2 obo:IAO_0000115 ?value .
+ FILTER (?entity != ?entity2) .
+ FILTER (!isBlank(?entity))
+}
+ORDER BY ?value
+```

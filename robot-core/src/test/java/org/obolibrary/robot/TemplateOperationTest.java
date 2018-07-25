@@ -116,7 +116,7 @@ public class TemplateOperationTest extends CoreTest {
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
     OWLOntology template = TemplateOperation.template(tables, simpleParts);
     assertEquals("Count classes", 4, template.getClassesInSignature().size());
-    assertEquals("Count logical axioms", 3, template.getLogicalAxiomCount());
-    assertEquals("Count all axioms", 9, template.getAxiomCount());
+    assertEquals("Count logical axioms", 4, template.getLogicalAxiomCount());
+    assertEquals("Count all axioms", 10, template.getAxiomCount());
   }
 }

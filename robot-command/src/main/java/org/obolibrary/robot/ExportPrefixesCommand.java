@@ -17,7 +17,7 @@ public class ExportPrefixesCommand implements Command {
   private static final Logger logger = LoggerFactory.getLogger(ExportPrefixesCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "prefixes#";
+  private static final String NS = "global#";
 
   /** Error message when JSON-LD context cannot be generated. */
   private static final String jsonLDError = NS + "JSON-LD ERROR the JSON-LD could not be generated";

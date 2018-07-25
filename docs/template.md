@@ -35,7 +35,7 @@ The `template` command accepts an optional input ontology, either using the `--i
     - `>A` annotation on annotation: Annotates the annotation axiom created from the cell to the left with the cell value. The column to the left must be an `A*` template string.
     - `>C` annotation on class expression: Annotates the class expression axiom created from the cell to the left with the cell value. The column to the left must be a `C` template string.
 
-Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations. If an annotation template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of non-whitespace characters of your choice to split on.
+Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have seperate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice - other than pure whitespace - to split on (e.g. `SPLIT=, `).
 
 
 ## Merging
