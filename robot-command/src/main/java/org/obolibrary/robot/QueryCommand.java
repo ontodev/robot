@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -45,6 +44,7 @@ public class QueryCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("f", "format", true, "the query result format: CSV, TSV," + " TTL, JSONLD, etc.");
     o.addOption("O", "output-dir", true, "Directory for output");
+    o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
 
     Option opt;
 
@@ -62,13 +62,6 @@ public class QueryCommand implements Command {
 
     opt = new Option("Q", "queries", true, "verify one or more SPARQL queries");
     opt.setArgs(Option.UNLIMITED_VALUES);
-    o.addOption(opt);
-
-    opt =
-        OptionBuilder.withLongOpt("imports")
-            .hasArg()
-            .withDescription("how to handle imports: union, graphs, or ignore")
-            .create();
     o.addOption(opt);
 
     options = o;
@@ -133,7 +126,6 @@ public class QueryCommand implements Command {
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
       return null;
@@ -145,14 +137,12 @@ public class QueryCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
 
     // Determine what to do with the imports and create a new dataset
-    String imports = CommandLineHelper.getDefaultValue(line, "imports", "ignore");
+    boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset;
-    if ("graphs".equalsIgnoreCase(imports) || "union".equalsIgnoreCase(imports)) {
+    if (useGraphs) {
       dataset = QueryOperation.loadOntology(state.getOntology(), true);
-    } else if ("ignore".equalsIgnoreCase(imports)) {
-      dataset = QueryOperation.loadOntology(state.getOntology());
     } else {
-      throw new Exception(importsOptionError);
+      dataset = QueryOperation.loadOntology(state.getOntology(), false);
     }
 
     // Collect all queries as (queryPath, outputPath) pairs.
@@ -203,11 +193,7 @@ public class QueryCommand implements Command {
       }
 
       OutputStream output = new FileOutputStream(outputPath);
-      if ("graphs".equalsIgnoreCase(imports)) {
-        QueryOperation.runSparqlQuery(dataset, query, true, formatName, output);
-      } else {
-        QueryOperation.runSparqlQuery(dataset, query, false, formatName, output);
-      }
+      QueryOperation.runSparqlQuery(dataset, query, formatName, output);
     }
     return state;
   }

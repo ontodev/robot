@@ -30,13 +30,13 @@ Instead of specifying one or more pairs (query file, output file), you can speci
 
 ## Imports
 
-By default, `query` ignores import statements (`--imports ignore`). To query over the union of all imports, simply include `--imports union`. `query` also supports imports as named graphs. To load imports as named graphs, include `--imports graphs`. The graphs will be loaded with the respective ontology IRI as their names. For example, to find all the classes from an import (graph specified in [`named_graph.sparql`](/examples/named_graph.sparql)):
+By default, `query` ignores import statements. To include all imports as named graphs, add `--use-graphs true`. 
 
     robot query --input imports.owl \
-      --imports graphs --catalog catalog.xml \
+      --use-graphs true --catalog catalog.xml \
       --query named_graph.sparql results/named_graph.csv
       
-The example above also uses the [global](/global)  `--catalog` option to specify the catalog file for the import mapping.
+The example above also uses the [global](/global)  `--catalog` option to specify the catalog file for the import mapping. The default graph is the union of all graphs, which allows querying over an ontology and all its imports.
 
 ---
 

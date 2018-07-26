@@ -31,30 +31,48 @@ public class QueryOperationTest extends CoreTest {
    * @throws OWLOntologyStorageException on ontology error
    */
   @Test
-  public void testQueryWithUnionModel() throws IOException, OWLOntologyStorageException {
+  public void testQuery() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntology("/simple.owl");
     Dataset dataset = QueryOperation.loadOntology(ontology);
     String query = "SELECT * WHERE { ?s ?p ?o }";
-    ResultSet results = QueryOperation.execQuery(dataset.getUnionModel(), query);
+    ResultSet results = QueryOperation.execQuery(dataset, query);
     assertEquals(6, QueryOperation.countResults(results));
   }
 
   /**
-   * Tests a simple query on an import (as a named graph).
+   * Tests a simple query with imports loaded.
    *
    * @throws IOException on IO error
    * @throws OWLOntologyStorageException on ontology error
    */
   @Test
-  public void testQueryWithNamedModel() throws IOException, OWLOntologyStorageException {
+  public void testQueryWithDefaultGraph() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntologyWithCatalog("/import_test.owl");
     Dataset dataset = QueryOperation.loadOntology(ontology, true);
-    String query = "SELECT * WHERE { ?s ?p ?o }";
-    ResultSet results =
-        QueryOperation.execQuery(
-            dataset.getNamedModel(
-                "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl"),
-            query);
+    String query =
+        "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n"
+            + "SELECT * WHERE {\n"
+            + "  ?s ?p ?o .\n"
+            + "  FILTER NOT EXISTS { ?s ?p owl:Ontology }\n"
+            + "}";
+    ResultSet results = QueryOperation.execQuery(dataset, query);
+    assertEquals(6, QueryOperation.countResults(results));
+  }
+
+  /**
+   * Tests a simple query on a named graph.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyStorageException on ontology error
+   */
+  @Test
+  public void testQueryWithNamedGraph() throws IOException, OWLOntologyStorageException {
+    OWLOntology ontology = loadOntologyWithCatalog("/import_test.owl");
+    Dataset dataset = QueryOperation.loadOntology(ontology, true);
+    String query =
+        "PREFIX robot: <https://github.com/ontodev/robot/robot-core/src/test/resources/>\n"
+            + "SELECT * FROM NAMED robot:simple.owl WHERE {?s ?p ?o}";
+    ResultSet results = QueryOperation.execQuery(dataset, query);
     assertEquals(6, QueryOperation.countResults(results));
   }
 
@@ -81,7 +99,7 @@ public class QueryOperationTest extends CoreTest {
             + "\t\t\t\t\t\towl:onProperty part_of: ;\n"
             + "\t\t\t\t\t\towl:someValuesFrom ?whole ]\n"
             + "}";
-    Model model = QueryOperation.execConstruct(dataset.getUnionModel(), query);
+    Model model = QueryOperation.execConstruct(dataset, query);
     Resource s = ResourceFactory.createResource("http://purl.obolibrary.org/obo/UBERON_0000062");
     Property p = ResourceFactory.createProperty("http://purl.obolibrary.org/obo/BFO_0000050");
     RDFNode o = ResourceFactory.createResource("http://purl.obolibrary.org/obo/UBERON_0000467");
@@ -101,7 +119,7 @@ public class QueryOperationTest extends CoreTest {
     Dataset dataset = QueryOperation.loadOntology(ontology);
     String allViolations =
         "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    ?s ?p ?o .\n" + "}\n" + "LIMIT 10";
-    ResultSet resultSet = QueryOperation.execQuery(dataset.getUnionModel(), allViolations);
+    ResultSet resultSet = QueryOperation.execQuery(dataset, allViolations);
     ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);
     Map<File, Tuple<ResultSetRewindable, OutputStream>> testResults = new HashMap<>();
     ByteArrayOutputStream testOut = new ByteArrayOutputStream();
@@ -123,7 +141,7 @@ public class QueryOperationTest extends CoreTest {
     OWLOntology ontology = loadOntology("/simple.owl");
     Dataset dataset = QueryOperation.loadOntology(ontology);
     String allViolations = "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    \n" + "}\n" + "LIMIT 0";
-    ResultSet resultSet = QueryOperation.execQuery(dataset.getUnionModel(), allViolations);
+    ResultSet resultSet = QueryOperation.execQuery(dataset, allViolations);
     ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);
     Map<File, Tuple<ResultSetRewindable, OutputStream>> testResults = new HashMap<>();
     ByteArrayOutputStream testOut = new ByteArrayOutputStream();

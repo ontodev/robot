@@ -112,7 +112,8 @@ public class VerifyCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    Dataset dataset = QueryOperation.loadOntology(state.getOntology());
+    // Load into dataset without imports
+    Dataset dataset = QueryOperation.loadOntology(state.getOntology(), false);
 
     File outputDir = new File(CommandLineHelper.getDefaultValue(line, "output-dir", "."));
 

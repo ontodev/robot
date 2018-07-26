@@ -84,7 +84,8 @@ public class ReportOperation {
     Map<String, String> queries = getQueryStrings(profile.keySet());
 
     Report report = new Report();
-    Dataset dataset = QueryOperation.loadOntology(ontology);
+    // Load into dataset without imports
+    Dataset dataset = QueryOperation.loadOntology(ontology, false);
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
       String queryString;
@@ -336,7 +337,7 @@ public class ReportOperation {
    * @return List of Violations
    */
   private static List<Violation> getViolations(Dataset dataset, String query) {
-    ResultSet violationSet = QueryOperation.execQuery(dataset.getUnionModel(), query);
+    ResultSet violationSet = QueryOperation.execQuery(dataset, query);
 
     Map<String, Violation> violations = new HashMap<>();
     Violation violation;
