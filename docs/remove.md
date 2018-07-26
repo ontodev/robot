@@ -2,7 +2,7 @@
 
 The `remove` command allows you to remove selected axioms from an ontology. The [`filter`](/filter) command is the opposite of `remove`, allowing you to keep only selected axioms. `remove` works in three steps:
 
-1. `--term`: specify a set of entities (default: all entities, use `--terms` for a term file with terms line by line)
+1. `--term`: specify a set of entities (default: all entities, use `--term-file` for a file with terms line by line)
 2. `--select`: select a new set of entities using one or more relations (zero or more)
 3. `--axioms`: specify the axiom types to remove from those entities (default: all axioms)
 
@@ -12,7 +12,7 @@ For example, to remove all descendants of 'assay' from OBI:
 robot remove --input obi.owl --term OBI:0000070 --select descendants
 ```
 
-`remove` also includes a `--trim` option, set to false by default. If `--trim true` is included, ROBOT will remove any dangling entites left behind by removals. By contrast, in `filter`, `--trim` defaults to true.
+`remove` also includes a `--trim` option, set to false by default. If `--trim true` is included, ROBOT will remove any dangling entities left behind by removals. By contrast, in `filter`, the default is `--trim true`.
 
 ## Select
 
@@ -24,7 +24,7 @@ The following selection options can be combined in any way.
 
 There are three general select options that give control over the types of axioms that are removed. By default, both `named` and `anonymous` axioms are removed. But, for example, if only `--select anonymous` is provided, the named classes will not be removed.
 
-1. `complement`: remove the complement set of the entities (equivalent to [filter](/filter), except that `remove` creates a new ontology whereas `filter` edits the input ontology).
+1. `complement`: remove the complement set of the terms (equivalent to [filter](/filter), except that `remove` creates a new ontology whereas `filter` edits the input ontology).
 2. `named`: remove named entities.
 3. `anonymous`: remove anonymous entities (e.g. anonymous ancestors).
 4. `imports`: remove import statements *
@@ -33,7 +33,7 @@ There are three general select options that give control over the types of axiom
 
 #### Relation Types
 
-Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--term`/`--terms`. If no relation type `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
+Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--term`/`--term-file`. If no relation type `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
 
 1. `self` (default)
 2. `parents`
@@ -73,10 +73,10 @@ Entities can also be selected from the set based on axioms. This can be helpful 
 
 1. Remove a class ('organ') and and all its descendants:
 
-    robot remove --input uberon_module.owl\
-     --term UBERON:0000062\
-     --select "self descendants"\
-     --output results/remove_class.owl
+    robot remove --input uberon_module.owl \
+      --term UBERON:0000062 \
+      --select "self descendants" \
+      --output results/remove_class.owl
 
 
 2. Remove all individuals from OBI:
@@ -87,19 +87,20 @@ robot remove --input obi.owl --select individuals
 
 3. Remove all anonymous entities from the UBERON module:
 
-    robot remove --input uberon_module.owl\
-     --select anonymous\
-     --output results/remove_anonymous.owl
+    robot remove --input uberon_module.owl \
+      --select anonymous \
+      --output results/remove_anonymous.owl
 
 4. Remove all deprecated classes from OBI:
 
 ```
-robot remove --input obi.owl --select "owl:deprecated='true'^^xsd:boolean"
+robot remove --input obi.owl \
+  --select "owl:deprecated='true'^^xsd:boolean"
 ```
 
 5. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
-    robot remove --input uberon_module.owl\
-      --term rdfs:label --term oboInOwl:id\
-      --select complement --select annotation-properties\
+    robot remove --input uberon_module.owl \
+      --term rdfs:label --term oboInOwl:id \
+      --select complement --select annotation-properties \
       --output results/filter_annotations.owl

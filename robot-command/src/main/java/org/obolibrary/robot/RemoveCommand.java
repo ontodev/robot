@@ -26,10 +26,10 @@ public class RemoveCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("t", "term", true, "remove an entity");
-    o.addOption("T", "terms", true, "remove a set of entities");
-    o.addOption("s", "select", true, "remove a set of entities using one or more relation options");
-    o.addOption("a", "axioms", true, "remove axioms from a set of entities (default: all)");
+    o.addOption("t", "term", true, "term to remove");
+    o.addOption("T", "term-file", true, "load terms from a file");
+    o.addOption("s", "select", true, "select a set of terms based on relations");
+    o.addOption("a", "axioms", true, "filter only for given axiom types");
     o.addOption("r", "trim", true, "if true, trim dangling entities");
     options = o;
   }

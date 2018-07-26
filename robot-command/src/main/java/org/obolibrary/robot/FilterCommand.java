@@ -30,11 +30,11 @@ public class FilterCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "ontology-iri", true, "set OntologyIRI for output");
-    o.addOption("t", "term", true, "filter for an entity");
-    o.addOption("T", "terms", true, "filter for a of entities");
-    o.addOption("s", "select", true, "filter for a of entities using one or more relation options");
-    o.addOption("a", "axioms", true, "filter for axioms from a set of entities (default: all)");
-    o.addOption("r", "trim", true, "if true, trim dangling entities (default: true)");
+    o.addOption("t", "term", true, "term to filter");
+    o.addOption("T", "term-file", true, "load terms from a file");
+    o.addOption("s", "select", true, "select a set of terms based on relations");
+    o.addOption("a", "axioms", true, "filter only for given axiom types");
+    o.addOption("r", "trim", true, "if true, trim dangling entities");
     options = o;
   }
 
