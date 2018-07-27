@@ -52,16 +52,16 @@ public class QueryOperation {
    * dataset either with just the ontology, or the ontology and its imports as separate graphs.
    *
    * @param ontology ontology to query
-   * @param includeImports if true, include imports as separate graphs
+   * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
-  public static Dataset loadOntology(OWLOntology ontology, boolean includeImports)
+  public static Dataset loadOntology(OWLOntology ontology, boolean useGraphs)
       throws OWLOntologyStorageException, UnsupportedEncodingException {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
-    if (includeImports) {
+    if (useGraphs) {
       ontologies.addAll(ontology.getImports());
     }
     // Instantiate an empty dataset
