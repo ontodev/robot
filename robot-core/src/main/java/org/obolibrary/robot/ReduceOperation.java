@@ -16,10 +16,12 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyCharacteristicAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -99,10 +101,10 @@ public class ReduceOperation {
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
     // we treat an axiom as redundant if its is redundant within the
-    // subClassOf graph, excluding equivalence axioms
+    // subClassOf graph, including OP characteristic axioms (e.g. transitivity)
     OWLOntology subOntology = manager.createOntology();
     for (OWLAxiom a : ontology.getAxioms(Imports.INCLUDED)) {
-      if (!(a instanceof OWLEquivalentClassesAxiom)) {
+      if (a instanceof OWLSubClassOfAxiom || a instanceof OWLObjectPropertyCharacteristicAxiom) {
         manager.addAxiom(subOntology, a);
       }
     }
