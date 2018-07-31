@@ -3,11 +3,17 @@ package org.obolibrary.robot;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Set;
 import org.junit.Test;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
@@ -66,6 +72,44 @@ public class ReasonerHelperTest extends CoreTest {
 
     } catch (IncoherentTBoxException e) {
       isCaughtException = true;
+    }
+    assertTrue(isCaughtException);
+  }
+
+  /**
+   * Test creating an unsatisfiable module
+   *
+   * @throws IOException if file error
+   * @throws IncoherentTBoxException if has unsatisfiable classes
+   * @throws InconsistentOntologyException if has inconsistencies
+   * @throws IncoherentRBoxException if has unsatisfiable properties
+   * @throws OWLOntologyCreationException
+   */
+  @Test
+  public void testCreateUnsatisfiableModule()
+      throws IOException, IncoherentTBoxException, InconsistentOntologyException,
+          IncoherentRBoxException, OWLOntologyCreationException {
+    OWLOntology ontologyMain = loadOntology("/incoherent-tbox.owl");
+    IRI iri = ontologyMain.getOntologyID().getOntologyIRI().get();
+    OWLOntology ontology = ontologyMain.getOWLOntologyManager().createOntology();
+    AddImport ai =
+        new AddImport(
+            ontology,
+            ontology.getOWLOntologyManager().getOWLDataFactory().getOWLImportsDeclaration(iri));
+    ontology.getOWLOntologyManager().applyChange(ai);
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+    boolean isCaughtException = false;
+    IOHelper ioHelper = new IOHelper();
+    String PATH = "target/unsat.owl";
+    try {
+      ReasonerHelper.validate(reasoner, PATH, ioHelper);
+    } catch (IncoherentTBoxException e) {
+      isCaughtException = true;
+      IOHelper ioh = new IOHelper();
+      OWLOntology unsatisfiableOntology = ioh.loadOntology(PATH);
+      Set<OWLSubClassOfAxiom> scas = unsatisfiableOntology.getAxioms(AxiomType.SUBCLASS_OF);
+      assertTrue(scas.size() == 2);
     }
     assertTrue(isCaughtException);
   }
