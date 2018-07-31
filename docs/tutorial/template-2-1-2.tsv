@@ -1,4 +1,0 @@
-ID	Label	Deprecation Status
-ID		AT owl:deprecated^^xsd:boolean
-UBERON:0013702	body proper	true
-UBERON:0013701	main body axis	true

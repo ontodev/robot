@@ -1,3 +1,0 @@
-ID	OBO ID	Label	Parent	Definition	Definition Source
-ID	A id	A label	C %	A definition	>A oboInOwl:hasDbXref SPLIT=|
-UBERON:0002107	UBERON:0002107	liver		"An exocrine gland which secretes bile and functions in metabolism of protein and carbohydrate and fat, synthesizes substances involved in the clotting of the blood, synthesizes vitamin A, detoxifies poisonous substances, stores glycogen, and breaks down worn-out erythrocytes."	url:http://en.wikipedia.org/wiki/Liver|BTO:0000759
