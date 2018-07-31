@@ -72,6 +72,14 @@ public class ReasonerHelper {
 
     logger.info("Checking for inconsistencies");
     if (!reasoner.isConsistent()) {
+      logger.error(
+          "The ontology is inconsistent. TIP: use a tool like Protege to find explanations");
+      if (unsatisfiableModulePath != null) {
+        logger.error(
+            "Unfortunately, robot is not able to generate an unsatisfiable "
+                + "minimal model for inconsistent ontologies at this time.\n");
+        logger.error("TIP: remove individuals from ontology and try again");
+      }
       throw new InconsistentOntologyException();
     }
 
