@@ -205,7 +205,7 @@ public class CommandManager implements Command {
    * @return the state that results from this command
    * @throws Exception on any problems
    */
-  private CommandState executeCommand(
+  public CommandState executeCommand(
       CommandState state, List<String> globalOptionArgs, List<String> arguments) throws Exception {
     String commandName = null;
     if (arguments.size() > 0) {
@@ -255,7 +255,7 @@ public class CommandManager implements Command {
   }
 
   /** Print general help plus a list of available commands. */
-  private void printHelp() {
+  public void printHelp() {
     CommandLineHelper.printHelp(getUsage(), getOptions());
     System.out.println("commands:");
     printHelpEntry("help", "print help for command");
@@ -269,7 +269,7 @@ public class CommandManager implements Command {
    *
    * @param entry an entry from the map of commands
    */
-  private void printHelpEntry(Map.Entry<String, Command> entry) {
+  public void printHelpEntry(Map.Entry<String, Command> entry) {
     printHelpEntry(entry.getKey(), entry.getValue().getDescription());
   }
 
@@ -279,7 +279,7 @@ public class CommandManager implements Command {
    * @param name the name of the command
    * @param description a brief description of the command
    */
-  private void printHelpEntry(String name, String description) {
+  public void printHelpEntry(String name, String description) {
     System.out.println(String.format(" %-16s %s", name, description));
   }
 }
