@@ -31,9 +31,17 @@ NOTE: The `extract` command works on the input ontology, not its imports. To ext
 
 For more details see:
 
-- <a href="http://dx.doi.org/10.3233/AO-2011-0087" target="_blank">MIREOT</a>
-- <a href="http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html" target="_blank">SLME</a>
-- <a href="http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html" target="_blank">ModuleType</a>
+- [MIREOT](http://dx.doi.org/10.3233/AO-2011-0087)
+- [SLME](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
+- [ModuleType](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
+
+You can also include ontology annotations from the input ontology with `--copy-ontology-annotations true`. By default, this is false.
+
+    robot extract --method BOT \
+      --input annotated.owl \
+      --term UBERON:0000916 \
+      --copy-ontology-annotations true \
+      --output results/annotated_module.owl
 
 ---
 
