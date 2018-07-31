@@ -172,15 +172,16 @@ public class ReasonerHelper {
 
     if (ontology.getImportsClosure().size() > 1) {
       logger.info("Tagging axioms in unsatisfiable module with their source");
-      // create an index of where each axiom comes from -
-      // this will be useful for debugging
       OWLOntologyManager manager = ontology.getOWLOntologyManager();
       OWLDataFactory dataFactory = manager.getOWLDataFactory();
       OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
+
+      // create an index of where each axiom comes from -
+      // this will be useful for debugging
       Map<OWLAxiom, Set<OWLOntologyID>> axiomToOntologyMap = new HashMap<>();
       for (OWLOntology subont : ontology.getImportsClosure()) {
         OWLOntologyID ontid = subont.getOntologyID();
-        for (OWLAxiom axiom : module.getAxioms()) {
+        for (OWLAxiom axiom : subont.getAxioms()) {
           OWLAxiom axiomWithoutAnns = axiom.getAxiomWithoutAnnotations();
           if (!axiomToOntologyMap.containsKey(axiomWithoutAnns)) {
             axiomToOntologyMap.put(axiomWithoutAnns, new HashSet<>());
