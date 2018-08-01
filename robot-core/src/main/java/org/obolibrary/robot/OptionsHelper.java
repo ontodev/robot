@@ -12,7 +12,7 @@ public class OptionsHelper {
    * @param key the name of the option to get
    * @return the value, if set, otherwise null
    */
-  private static String getOption(Map<String, String> options, String key) {
+  public static String getOption(Map<String, String> options, String key) {
     return getOption(options, key, null);
   }
 
@@ -25,7 +25,7 @@ public class OptionsHelper {
    * @param defaultValue the value to return if the key is not set
    * @return the value, if set, otherwise the default value
    */
-  private static String getOption(Map<String, String> options, String key, String defaultValue) {
+  public static String getOption(Map<String, String> options, String key, String defaultValue) {
     if (options == null) {
       return defaultValue;
     }
