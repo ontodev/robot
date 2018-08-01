@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Set;
@@ -11,6 +11,8 @@ import org.obolibrary.robot.exceptions.InconsistentOntologyException;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
@@ -92,10 +94,8 @@ public class ReasonerHelperTest extends CoreTest {
     OWLOntology ontologyMain = loadOntology("/incoherent-tbox.owl");
     IRI iri = ontologyMain.getOntologyID().getOntologyIRI().get();
     OWLOntology ontology = ontologyMain.getOWLOntologyManager().createOntology();
-    AddImport ai =
-        new AddImport(
-            ontology,
-            ontology.getOWLOntologyManager().getOWLDataFactory().getOWLImportsDeclaration(iri));
+    OWLDataFactory factory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    AddImport ai = new AddImport(ontology, factory.getOWLImportsDeclaration(iri));
     ontology.getOWLOntologyManager().applyChange(ai);
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
@@ -109,6 +109,17 @@ public class ReasonerHelperTest extends CoreTest {
       IOHelper ioh = new IOHelper();
       OWLOntology unsatisfiableOntology = ioh.loadOntology(PATH);
       Set<OWLSubClassOfAxiom> scas = unsatisfiableOntology.getAxioms(AxiomType.SUBCLASS_OF);
+
+      // we expect each axiom to have exactly one annotation, which is an rdfs:isDefinedBy
+      // pointing at the ontology in which the axiom came from
+      for (OWLSubClassOfAxiom sca : scas) {
+        assertTrue(sca.getAnnotations().size() == 1);
+        OWLAnnotation ann = sca.getAnnotations().iterator().next();
+        assertEquals(factory.getRDFSIsDefinedBy(), ann.getProperty());
+        String v = ann.getValue().asLiteral().get().getLiteral();
+        String originalOntIdVal = ontologyMain.getOntologyID().toString();
+        assertEquals(originalOntIdVal, v);
+      }
       assertTrue(scas.size() == 2);
     }
     assertTrue(isCaughtException);
