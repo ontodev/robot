@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -13,6 +14,7 @@ import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.tdb.TDB;
 import org.apache.jena.tdb.TDBFactory;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -74,9 +76,17 @@ public class QueryOperation {
       manager.saveOntology(ont, new TurtleDocumentFormat(), os);
       String content = new String(os.toByteArray(), "UTF-8");
       RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(m);
-      String name = ont.getOntologyID().getOntologyIRI().orNull().toString();
+      // Get the name of the graph as the ontology IRI
+      IRI iri = ont.getOntologyID().getOntologyIRI().orNull();
+      String name;
+      if (iri != null) {
+        name = iri.toString();
+      } else {
+        // If there is no IRI, generate a random ID
+        name = UUID.randomUUID().toString();
+      }
       dataset.addNamedModel(name, m);
-      logger.debug("Named graph added: " + name);
+      logger.info("Named graph added: " + name);
     }
     return dataset;
   }

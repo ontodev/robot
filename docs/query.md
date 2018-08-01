@@ -38,6 +38,8 @@ By default, `query` ignores import statements. To include all imports as named g
       
 The example above also uses the [global](/global)  `--catalog` option to specify the catalog file for the import mapping. The default graph is the union of all graphs, which allows querying over an ontology and all its imports.
 
+The names of the graphs correspond to the ontology IRIs of the imports. If the import does not have an ontology IRI, one will be automatically generated. Running `query` with the `-vv` flag will print the names of all graphs as they are added.
+
 ---
 
 ## Error Messages
