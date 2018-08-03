@@ -29,7 +29,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testStructural()
@@ -48,7 +48,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testELK()
@@ -66,7 +66,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testHermit()
@@ -85,7 +85,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testJFact()
@@ -104,7 +104,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testInferIntoNewOntology()
@@ -128,7 +128,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testInferIntoNewOntologyNonTrivial()
@@ -156,7 +156,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testInferIntoNewOntologyNoDupes()
@@ -179,7 +179,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testRemoveRedundantSubClassAxioms()
@@ -206,7 +206,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testEMRBasic()
@@ -228,7 +228,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testEMRRelax()
@@ -250,7 +250,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testIntersection()
@@ -271,7 +271,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws IOException on file problem
    * @throws OWLOntologyCreationException on ontology problem
    * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException
+   * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
   public void testExternal()

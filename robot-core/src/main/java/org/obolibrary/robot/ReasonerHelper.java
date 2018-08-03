@@ -53,12 +53,12 @@ public class ReasonerHelper {
   /**
    * Validates ontology, writes unsatisfiable module
    *
-   * @param reasoner
-   * @param unsatisfiableModulePath
-   * @param ioHelper
-   * @throws IncoherentTBoxException
-   * @throws InconsistentOntologyException
-   * @throws IncoherentRBoxException
+   * @param reasoner OWLReasoner being used
+   * @param unsatisfiableModulePath path to unsatisfiable module as string
+   * @param ioHelper IOHelper to use
+   * @throws IncoherentTBoxException on unsatisfiable classes
+   * @throws InconsistentOntologyException on logical inconsistencies
+   * @throws IncoherentRBoxException on unsatisfiable properties
    */
   public static void validate(
       OWLReasoner reasoner, String unsatisfiableModulePath, IOHelper ioHelper)
@@ -147,10 +147,10 @@ public class ReasonerHelper {
   }
 
   /**
-   * @param reasoner
-   * @param outputIRI
+   * @param reasoner OWLReasoner being used
+   * @param outputIRI IRI of output
    * @return minimal incoherent module
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException on issue creating incoherent module
    */
   public static OWLOntology createIncoherentModule(OWLReasoner reasoner, IRI outputIRI)
       throws OWLOntologyCreationException {

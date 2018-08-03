@@ -106,7 +106,7 @@ public class MergeOperation {
    * list. It is recommended to use mergeInto with both includeAnnotations and
    * collapseImportsClosure options.
    *
-   * @param ontology the source ontology to merge
+   * @param ontologies the ontologies to merge
    * @param targetOntology the ontology to merge axioms into
    * @param includeAnnotations if true, ontology annotations should be merged; annotations on
    *     imports are not merged

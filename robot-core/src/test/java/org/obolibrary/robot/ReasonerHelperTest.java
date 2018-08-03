@@ -85,7 +85,7 @@ public class ReasonerHelperTest extends CoreTest {
    * @throws IncoherentTBoxException if has unsatisfiable classes
    * @throws InconsistentOntologyException if has inconsistencies
    * @throws IncoherentRBoxException if has unsatisfiable properties
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testCreateUnsatisfiableModule()

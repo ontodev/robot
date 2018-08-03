@@ -407,6 +407,7 @@ public class QueryOperation {
    *
    * @param queriesResults a map from files to query results and output streams
    * @return true if there are any violations
+   * @throws IOException on issue getting file path
    */
   public static boolean execVerify(
       Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
@@ -433,6 +434,7 @@ public class QueryOperation {
    * violations to STDERR.
    *
    * @param dsg the graph to query over
+   * @param ruleName name of the rule
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
    */
@@ -453,6 +455,7 @@ public class QueryOperation {
    * Run a SELECT query and write the result to a file. Prints violations to STDERR.
    *
    * @param dsg The graph to query over.
+   * @param ruleName name of the rule
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.
