@@ -21,12 +21,14 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)):
     - on Unix, Linux, and Mac OS X this could be `/usr/local/bin/`
     - on Windows this could be `C:\Windows\`
-    - or update your PATH to include your chosen directory
+    - or [update your PATH](https://docs.oracle.com/javase/tutorial/essential/environment/paths.html) to include your chosen directory
     - NOTE: both files must be in the same directory
-4. Now you should be able to run ROBOT from a command line:
+4. Make sure `robot` is executable:
+    - Mac: run the command `chmod u+x robot` (may require `sudo`)
+    - Windows: run the command `icacls robot /grant Users:RX /T`
+5. Now you should be able to run ROBOT from a command line:
 
         robot help
-
 
 ## 2. Library
 

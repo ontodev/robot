@@ -1,0 +1,12 @@
+Prefix: : <http://x.org/>
+Ontology: <http://x.org/>
+
+ObjectProperty: supplies Domain: artery
+        
+Class: brain_artery
+    EquivalentTo: artery and supplies some brain
+    SubClassOf: artery
+    SubClassOf: supplies some brain
+
+Class: artery
+Class: brain

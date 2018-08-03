@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -24,6 +25,10 @@ public class TemplateCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "template#";
 
+  /** Error message when user provides --merge-before and --merge-after as true. */
+  private static final String mergeError =
+      NS + "MERGE ERROR merge-before and merge-after cannot be combined";
+
   /** Error message when a template is not provided. */
   private static final String missingTemplateError =
       NS + "MISSING TEMPLATE ERROR at least one template is required";
@@ -40,13 +45,24 @@ public class TemplateCommand implements Command {
     o.addOption("O", "ontology-iri", true, "set the output ontology IRI");
     o.addOption("V", "version-iri", true, "set the output version IRI");
     o.addOption("t", "template", true, "read template from a file");
-    o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
-    o.addOption("m", "merge-before", false, "merge into input ontology before any output");
-    o.addOption("M", "merge-after", false, "merge into input ontology after any output");
     o.addOption(
         "c", "collapse-import-closure", true, "if true, collapse the import closure when merging");
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
+
+    // The following options should be used with boolean values
+    // Originally, these options had no args, so the arg is optional for backwards compatibility
+    Option a;
+    a = new Option("a", "ancestors", true, "MIREOT ancestors into results");
+    a.setOptionalArg(true);
+    o.addOption(a);
+    a = new Option("m", "merge-before", true, "merge into input ontology before any output");
+    a.setOptionalArg(true);
+    o.addOption(a);
+    a = new Option("M", "merge-after", true, "merge into input ontology after any output");
+    a.setOptionalArg(true);
+    o.addOption(a);
+
     options = o;
   }
 
@@ -95,7 +111,7 @@ public class TemplateCommand implements Command {
     try {
       execute(null, args);
     } catch (Exception e) {
-      CommandLineHelper.handleException(getUsage(), getOptions(), e);
+      CommandLineHelper.handleException(e);
     }
   }
 
@@ -145,7 +161,8 @@ public class TemplateCommand implements Command {
     // Do not MIREOT the terms defined in the template,
     // just their dependencies!
     List<OWLOntology> ontologies;
-    if (line.hasOption("ancestors") && inputOntology != null) {
+    boolean hasAncestors = CommandLineHelper.getBooleanValue(line, "ancestors", false, true);
+    if (hasAncestors && inputOntology != null) {
       Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
       iris.removeAll(TemplateHelper.getIRIs(tables, ioHelper));
       OWLOntology ancestors =
@@ -159,10 +176,15 @@ public class TemplateCommand implements Command {
     // Either merge-then-save, save-then-merge, or don't merge
     ontologies = new ArrayList<OWLOntology>();
     ontologies.add(outputOntology);
-    if (line.hasOption("merge-before")) {
+    boolean mergeBefore = CommandLineHelper.getBooleanValue(line, "merge-before", false, true);
+    boolean mergeAfter = CommandLineHelper.getBooleanValue(line, "merge-after", false, true);
+    if (mergeBefore && mergeAfter) {
+      throw new IllegalArgumentException(mergeError);
+    }
+    if (mergeBefore) {
       MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
       CommandLineHelper.maybeSaveOutput(line, inputOntology);
-    } else if (line.hasOption("merge-after")) {
+    } else if (mergeAfter) {
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
     } else {

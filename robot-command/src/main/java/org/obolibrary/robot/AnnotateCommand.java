@@ -87,7 +87,7 @@ public class AnnotateCommand implements Command {
     a.setArgs(3);
     options.addOption(a);
 
-    // Annotate with a property and a typed literal with a language tag - expects 3 args
+    // Annotate with a property and a typed literal with a type tag - expects 3 args
     a = new Option("t", "annotate ontology with PROP VALUE TYPE");
     a.setLongOpt("typed-annotation");
     a.setArgs(3);
@@ -145,7 +145,7 @@ public class AnnotateCommand implements Command {
     try {
       execute(null, args);
     } catch (Exception e) {
-      CommandLineHelper.handleException(getUsage(), getOptions(), e);
+      CommandLineHelper.handleException(e);
     }
   }
 
@@ -170,7 +170,7 @@ public class AnnotateCommand implements Command {
 
     boolean hasAnnotation = false;
     boolean removeAnnotations =
-        CommandLineHelper.getBooleanValue(line, "remove-annotations", false);
+        CommandLineHelper.getBooleanValue(line, "remove-annotations", false, true);
     if (removeAnnotations) {
       hasAnnotation = true;
       OntologyHelper.removeOntologyAnnotations(ontology);

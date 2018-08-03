@@ -139,4 +139,21 @@ public class ReduceOperationTest extends CoreTest {
     ReduceOperation.reduce(reasoned, reasonerFactory, options);
     assertIdentical("/reduce-edgecase-cnd-reduced.obo", reasoned);
   }
+
+  /**
+   * Domain case, see https://github.com/ontodev/robot/issues/321
+   *
+   * @throws IOException
+   * @throws OWLOntologyCreationException
+   */
+  @Test
+  public void testReduceDomainCase() throws IOException, OWLOntologyCreationException {
+    OWLOntology reasoned = loadOntology("/reduce-domain-test.owl");
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+
+    Map<String, String> options = new HashMap<String, String>();
+
+    ReduceOperation.reduce(reasoned, reasonerFactory, options);
+    assertIdentical("/reduce-domain-test.owl", reasoned);
+  }
 }
