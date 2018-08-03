@@ -22,8 +22,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -329,8 +331,18 @@ public class ReportOperation {
   }
 
   /**
-   * Given an ontology as a DatasetGraph and a query as a CheckerQuery, return the violations found
-   * by that query.
+   * Given an ontology as a DatasetGraph and a query, return the violations found by that query.
+   *
+   * @param dsg the ontology as a graph
+   * @param query the query
+   * @return List of Violations
+   */
+  private static List<Violation> getViolations(DatasetGraph dsg, String query) {
+    return getViolations(DatasetFactory.create(dsg), query);
+  }
+
+  /**
+   * Given an ontology as a Dataset and a query, return the violations found by that query.
    *
    * @param dataset the ontology/ontologies as a dataset
    * @param query the query
