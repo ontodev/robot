@@ -790,6 +790,19 @@ public class CommandLineHelper {
   }
 
   /**
+   * Shared method for dealing with exceptions, printing help, and exiting. Currently prints the
+   * error message, stack trace (DEBUG), usage, and then exits.
+   *
+   * @param usage the usage string for this command; WARN: not used
+   * @param options the command-line options for this command; WARN: not used
+   * @param exception the exception to handle
+   */
+  public static void handleException(String usage, Options options, Exception exception) {
+    ExceptionHelper.handleException(exception);
+    System.exit(1);
+  }
+
+  /**
    * Given a wildcard pattern as string, return an array of files matching that pattern.
    *
    * @param pattern wildcard pattern to match
