@@ -319,6 +319,21 @@ public class ReasonOperation {
    *
    * @param reasoner an OWL reasoner, initialized with a root ontology; the ontology will be
    *     modified
+   */
+  public static void removeRedundantSubClassAxioms(OWLReasoner reasoner) {
+    removeRedundantSubClassAxioms(reasoner, null);
+  }
+
+  /**
+   * Remove subClassAxioms where there is a more direct axiom, and the subClassAxiom does not have
+   * any annotations.
+   *
+   * <p>Example: genotyping assay - asserted in dev: assay - inferred by reasoner: analyte assay -
+   * asserted after fill: assay, analyte assay - asserted after removeRedundantSubClassAxioms:
+   * analyte assay
+   *
+   * @param reasoner an OWL reasoner, initialized with a root ontology; the ontology will be
+   *     modified
    * @param options map of options for reasoning
    */
   public static void removeRedundantSubClassAxioms(
