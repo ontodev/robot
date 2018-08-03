@@ -837,8 +837,9 @@ public class CommandLineHelper {
    *
    * @param pattern wildcard pattern to match
    * @return array of files
+   * @throws IllegalArgumentException on bad pattern
    */
-  private static File[] getFilesByPattern(String pattern) {
+  private static File[] getFilesByPattern(String pattern) throws IllegalArgumentException {
     if (!pattern.contains("*") && !pattern.contains("?")) {
       throw new IllegalArgumentException(wildcardError);
     }
@@ -858,10 +859,11 @@ public class CommandLineHelper {
    * @param ioHelper the IOHelper to load the ontology with
    * @param line the command line to use
    * @return the list of input ontologies
+   * @throws IllegalArgumentException on bad pattern
    * @throws IOException if the ontology cannot be loaded
    */
-  private static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
-      throws IOException {
+  public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
+      throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
@@ -893,7 +895,7 @@ public class CommandLineHelper {
    * @return the list of input ontologies
    * @throws IOException if the ontology cannot be loaded
    */
-  private static List<OWLOntology> getInputOntologies(
+  public static List<OWLOntology> getInputOntologies(
       IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // Check for input files
