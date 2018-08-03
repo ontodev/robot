@@ -9,20 +9,16 @@ import com.github.jsonldjava.utils.JsonUtils;
 import com.google.common.collect.Sets;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.opencsv.CSVReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -940,7 +936,7 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(String path) throws IOException {
-    return readCSV(new FileReader(path));
+    return TemplateHelper.readCSV(path);
   }
 
   /**
@@ -951,7 +947,7 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(InputStream stream) throws IOException {
-    return readCSV(new InputStreamReader(stream));
+    return TemplateHelper.readCSV(stream);
   }
 
   /**
@@ -962,14 +958,7 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader);
-    List<List<String>> rows = new ArrayList<List<String>>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
+    return TemplateHelper.readCSV(reader);
   }
 
   /**
@@ -980,7 +969,7 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(String path) throws IOException {
-    return readTSV(new FileReader(path));
+    return TemplateHelper.readTSV(path);
   }
 
   /**
@@ -991,7 +980,7 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(InputStream stream) throws IOException {
-    return readTSV(new InputStreamReader(stream));
+    return TemplateHelper.readTSV(stream);
   }
 
   /**
@@ -1002,14 +991,7 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader, '\t');
-    List<List<String>> rows = new ArrayList<List<String>>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
+    return TemplateHelper.readTSV(reader);
   }
 
   /**
@@ -1020,15 +1002,6 @@ public class IOHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTable(String path) throws IOException {
-    File file = new File(path);
-    String extension = FilenameUtils.getExtension(file.getName());
-    extension = extension.trim().toLowerCase();
-    if (extension.equals("csv")) {
-      return readCSV(new FileReader(path));
-    } else if (extension.equals("tsv") || extension.equals("tab")) {
-      return readTSV(new FileReader(path));
-    } else {
-      throw new IOException("Unrecognized file type for: " + path);
-    }
+    return TemplateHelper.readTable(path);
   }
 }
