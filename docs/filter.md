@@ -6,16 +6,16 @@ By default, `filter` will remove dangling entities copied as the result of the f
 
 ## Annotations
 
-The `filter` command also includes a special `--select "annotations"` option. If this is included, all annotations on filtered entities will be included, regardless of if those properties are in the set of entities or not.
+The `filter` command also includes a special `--select "annotations"` option. If this is included, all annotations on filtered terms will be included, regardless of if those properties are in the set of terms or not.
 
 The following command will only return `OBI:0000070` with just a label annotation:
 ```
-robot filter --input obi.owl --entity OBI:0000070 --entity rdfs:label
+robot filter --input obi.owl --term OBI:0000070 --term rdfs:label
 ```
 
 Alternatively, if you want `OBI:0000070` with all annotations:
 ```
-robot filter --input obi.owl --entity OBI:0000070 --select annotations
+robot filter --input obi.owl --term OBI:0000070 --select annotations
 ```
 
 ## Examples

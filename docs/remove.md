@@ -2,9 +2,9 @@
 
 The `remove` command allows you to remove selected axioms from an ontology. The [`filter`](/filter) command is the opposite of `remove`, allowing you to keep only selected axioms. `remove` works in three steps:
 
-1. `--term`: specify a set of entities (default: all entities, use `--term-file` for a file with terms line by line)
-2. `--select`: select a new set of entities using one or more relations (zero or more)
-3. `--axioms`: specify the axiom types to remove from those entities (default: all axioms)
+1. `--term`: specify a set of terms (default: all terms, use `--term-file` for a file with terms line by line)
+2. `--select`: select a new set of terms using one or more relations (zero or more)
+3. `--axioms`: specify the axiom types to remove from those terms (default: all axioms)
 
 For example, to remove all descendants of 'assay' from OBI:
 
@@ -33,7 +33,7 @@ There are three general select options that give control over the types of axiom
 
 #### Relation Types
 
-Relation type selections provide the ability to select which entities to remove based on their relationship to the entity (or entities) specified by `--term`/`--term-file`. If no relation type `--select` is provided, the default is `self`. This means that the entity set itself will be removed.
+Relation type selections provide the ability to select which terms to remove based on their relationship to the term (or terms) specified by `--term`/`--term-file`. If no relation type `--select` is provided, the default is `self`. This means that the term set itself will be removed.
 
 1. `self` (default)
 2. `parents`
@@ -46,7 +46,7 @@ Relation type selections provide the ability to select which entities to remove 
 
 #### Entity Types
 
-If an entity type is provided, only the entities of that type will be included in the removal. By default, all types are included.
+If an entity type is provided, only the terms of that type will be included in the removal. By default, all types are included.
 
 1. `classes`
 2. `properties`
@@ -57,7 +57,7 @@ If an entity type is provided, only the entities of that type will be included i
 
 ### Patterns
 
-Entities can also be selected from the set based on axioms. This can be helpful if you want to remove only entities with a specific annotation. When selecting with axioms, the `--select` option must always be quoted.
+Terms can also be selected from the set based on axioms. This can be helpful if you want to remove only terms with a specific annotation. When selecting with axioms, the `--select` option must always be quoted.
 
 1. `CURIE=CURIE`
 2. `CURIE=<IRI>`
@@ -67,7 +67,7 @@ Entities can also be selected from the set based on axioms. This can be helpful 
 
 ## Axioms
 
-`--axioms` can be the name of any OWLAPI interface that implements OWLAxiom. Aliases are provided for convenience: `all`, `annotation`, `logical`, `class`, `equivalent-classes`, etc. The default is `all`, e.g. OWLAxiom. More than one type can be provided and order is not significant. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified interfaces AND *any* of the selected entities is in the axiom's signature, then the axiom is removed from the ontology.
+`--axioms` can be the name of any OWLAPI interface that implements OWLAxiom. Aliases are provided for convenience: `all`, `annotation`, `logical`, `class`, `equivalent-classes`, etc. The default is `all`, e.g. OWLAxiom. More than one type can be provided and order is not significant. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified interfaces AND *any* of the selected terms is in the axiom's signature, then the axiom is removed from the ontology.
 
 ## Examples
 
