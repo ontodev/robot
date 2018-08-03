@@ -73,6 +73,8 @@ public class ReportOperation {
    * @param profilePath user profile file path to use, or null
    * @param outputPath string path to write report file to, or null
    * @param format string format for the output report (TSV or YAML), or null
+   * @param failOn logging level to fail execution
+   * @return true if successful, false if failed
    * @throws Exception on any error
    */
   public static boolean report(

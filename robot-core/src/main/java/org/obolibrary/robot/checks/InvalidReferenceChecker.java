@@ -78,6 +78,7 @@ public class InvalidReferenceChecker {
    *
    * @param ontology the OWLOntology to check
    * @param axioms set of OWLAxioms to check
+   * @param ignoreDangling if true, ignore dangling entities
    * @return all violations
    */
   public static Set<InvalidReferenceViolation> getInvalidReferenceViolations(

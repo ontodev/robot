@@ -474,7 +474,7 @@ public class IOHelper {
    *
    * @param ontology the ontology to save
    * @param format the ontology format to use
-   * @param ontologyIRI the IRI to save the ontology to
+   * @param ontologyFile the file to save the ontology to
    * @return the saved ontology
    * @throws IOException on any problem
    */
