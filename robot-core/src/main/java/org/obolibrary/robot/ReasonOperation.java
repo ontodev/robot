@@ -319,7 +319,7 @@ public class ReasonOperation {
    *
    * @param reasoner an OWL reasoner, initialized with a root ontology; the ontology will be
    *     modified
-   * @param options
+   * @param options map of options for reasoning
    */
   public static void removeRedundantSubClassAxioms(
       OWLReasoner reasoner, Map<String, String> options) {
