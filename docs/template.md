@@ -1,3 +1,4 @@
+
 # Template
 
 ROBOT can convert tables to OWL format using templates. See <a href="/examples/template.csv" target="_blank">`template.csv`</a> for an example. The approach extends the QTT method described in <a href="http://dx.doi.org/10.3233/AO-2011-0086" target="_blank">Overcoming the ontology enrichment bottleneck with Quick Term Templates</a>.
@@ -48,17 +49,60 @@ The `template` command has three options for merging, which are especially usefu
 
 The three options can differ in which ontology is saved for the `--output` option and which is sent to the next command in the chain:
 
-option             | `--output` | output
--------------------|------------|-------
-no merge (default) | result     | result
-`--merge-before`   | merged     | merged
-`--merge-after`    | result     | merged
+option       | `--output` | output
+-------------|------------|-------
+no merge     | result     | result
+merge before | merged     | merged
+merge after  | result     | merged
 
 - no merge (default behaviour): only the result ontology will be output
-- `merge-before`: the result ontology is merged into the input ontology immediately, so only the merged ontology will be output
-- `merge-after`: any `--output` options apply to the result ontology, then result ontology is merged into the input ontology, and the output of the command is the merged ontology
+- `merge-before true`: the result ontology is merged into the input ontology immediately, so only the merged ontology will be output
+- `merge-after true`: any `--output` options apply to the result ontology, then result ontology is merged into the input ontology, and the output of the command is the merged ontology
 
-These three options are particularly useful when chaining commands. For instance, the `merge-after` option lets you save the result ontology separately, then send the merged ontology to the next command. See [merge](/merge) for more information on merge options, including `--collapse-import-closure` and `--include-annotations`.
+These three options are particularly useful when chaining commands. For instance, the `merge-after true` option lets you save the result ontology separately, then send the merged ontology to the next command. See [merge](/merge) for more information on merge options, including `--collapse-import-closure` and `--include-annotations`.
+
+If the command inclues `--ancestors true`, the result ontology will include the ancestors (from the input ontology) of the result ontology terms. Only the labels of the ancestors will be included.
+
+## Examples
+
+Create an output ontology that includes the input ontology and the terms defined in the template:
+<!-- DO NOT TEST-->
+```
+robot template --merge-before true --input edit.owl \
+  --template template.csv --output results/template.owl
+```
+
+Create two outputs - the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):
+<!-- DO NOT TEST -->
+```
+robot template --merge-after true \
+  --input edit.owl \
+  --template uberon_template.csv \
+  --output results/uberon_template.owl \
+  annotate --annotation rdfs:comment "UBERON with new terms" \
+  --output results/uberon_v2.owl
+```
+
+Create an output ontology that consists of the template terms plus their dependencies ([`uberon_template_2.owl`](/examples/uberon_template_2.owl)):
+<!-- DO NOT TEST -->
+```
+robot template --ancestors true --input edit.owl \
+  --template uberon_template.csv \
+  --ontology-iri "https://github.com/ontodev/robot/examples/uberon_template_2.owl" \
+  --output results/uberon_template_2.owl
+```
+
+Create an output ontology that includes the input ontology and the terms defined in the template, but keep the import statements* ([`test_template.owl`](/examples/test_template.owl)):
+<!-- DO NOT TEST -->
+```
+robot template --merge-before true \
+  --input test.owl \
+  --collapse-import-closure false \
+  --template uberon_template.csv \
+  --output results/test_template.owl
+```
+
+\* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
 
 ---
 
@@ -67,6 +111,10 @@ These three options are particularly useful when chaining commands. For instance
 ### Missing Template Error
 
 You must specify at least one template with `--template` to proceed.
+
+### Merge Error
+
+`--merge-before true` and `--merge-after true` cannot be used simultaneously.
 
 ### Annotation Property Error
 
