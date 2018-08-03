@@ -140,9 +140,9 @@ public class QueryCommand implements Command {
     boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset;
     if (useGraphs) {
-      dataset = QueryOperation.loadOntology(state.getOntology(), true);
+      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), true);
     } else {
-      dataset = QueryOperation.loadOntology(state.getOntology(), false);
+      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), false);
     }
 
     // Collect all queries as (queryPath, outputPath) pairs.

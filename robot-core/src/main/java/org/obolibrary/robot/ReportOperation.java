@@ -87,7 +87,7 @@ public class ReportOperation {
 
     Report report = new Report();
     // Load into dataset without imports
-    Dataset dataset = QueryOperation.loadOntology(ontology, false);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
       String queryString;

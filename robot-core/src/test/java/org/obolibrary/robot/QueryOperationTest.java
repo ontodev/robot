@@ -33,7 +33,7 @@ public class QueryOperationTest extends CoreTest {
   @Test
   public void testQuery() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntology("/simple.owl");
-    Dataset dataset = QueryOperation.loadOntology(ontology);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology);
     String query = "SELECT * WHERE { ?s ?p ?o }";
     ResultSet results = QueryOperation.execQuery(dataset, query);
     assertEquals(6, QueryOperation.countResults(results));
@@ -48,7 +48,7 @@ public class QueryOperationTest extends CoreTest {
   @Test
   public void testQueryWithDefaultGraph() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntologyWithCatalog("/import_test.owl");
-    Dataset dataset = QueryOperation.loadOntology(ontology, true);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, true);
     String query =
         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n"
             + "SELECT * WHERE {\n"
@@ -68,7 +68,7 @@ public class QueryOperationTest extends CoreTest {
   @Test
   public void testQueryWithNamedGraph() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntologyWithCatalog("/import_test.owl");
-    Dataset dataset = QueryOperation.loadOntology(ontology, true);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, true);
     String query =
         "PREFIX robot: <https://github.com/ontodev/robot/robot-core/src/test/resources/>\n"
             + "SELECT * FROM NAMED robot:simple.owl WHERE {?s ?p ?o}";
@@ -85,7 +85,7 @@ public class QueryOperationTest extends CoreTest {
   @Test
   public void testConstruct() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntology("/bot.owl");
-    Dataset dataset = QueryOperation.loadOntology(ontology);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology);
     String query =
         "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
             + "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n"
@@ -116,7 +116,7 @@ public class QueryOperationTest extends CoreTest {
   public void testExecVerifyWithViolations() throws IOException, OWLOntologyStorageException {
 
     OWLOntology ontology = loadOntology("/simple.owl");
-    Dataset dataset = QueryOperation.loadOntology(ontology);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology);
     String allViolations =
         "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    ?s ?p ?o .\n" + "}\n" + "LIMIT 10";
     ResultSet resultSet = QueryOperation.execQuery(dataset, allViolations);
@@ -139,7 +139,7 @@ public class QueryOperationTest extends CoreTest {
   @Test
   public void testExecVerifyNoViolations() throws IOException, OWLOntologyStorageException {
     OWLOntology ontology = loadOntology("/simple.owl");
-    Dataset dataset = QueryOperation.loadOntology(ontology);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology);
     String allViolations = "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    \n" + "}\n" + "LIMIT 0";
     ResultSet resultSet = QueryOperation.execQuery(dataset, allViolations);
     ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);

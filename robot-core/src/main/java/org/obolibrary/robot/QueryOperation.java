@@ -39,6 +39,21 @@ public class QueryOperation {
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
 
   /**
+   * Load an ontology into a DatasetGraph. The ontology is not changed.
+   *
+   * @param ontology The ontology to load into the graph
+   * @return A new DatasetGraph with the ontology loaded into the default graph
+   * @throws OWLOntologyStorageException rarely
+   */
+  public static DatasetGraph loadOntology(OWLOntology ontology) throws OWLOntologyStorageException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
+    DatasetGraph dsg = DatasetGraphFactory.create();
+    RDFDataMgr.read(dsg.getDefaultGraph(), new ByteArrayInputStream(os.toByteArray()), Lang.TURTLE);
+    return dsg;
+  }
+
+  /**
    * Given an ontology, return a dataset containing that ontology as the only graph.
    *
    * @param ontology ontology to query
@@ -46,9 +61,9 @@ public class QueryOperation {
    * @throws IOException on issue creating temp files
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
-  public static Dataset loadOntology(OWLOntology ontology)
+  public static Dataset loadOntologyAsDataset(OWLOntology ontology)
       throws IOException, OWLOntologyStorageException {
-    return loadOntology(ontology, false);
+    return loadOntologyAsDataset(ontology, false);
   }
 
   /**
@@ -60,7 +75,7 @@ public class QueryOperation {
    * @return dataset to query
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
-  public static Dataset loadOntology(OWLOntology ontology, boolean useGraphs)
+  public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
       throws OWLOntologyStorageException, UnsupportedEncodingException {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     Set<OWLOntology> ontologies = new HashSet<>();
@@ -109,7 +124,7 @@ public class QueryOperation {
   }
 
   public static Dataset createEmptyDataset() {
-    return DatasetFactory.create(DatasetGraphFactory.createMem());
+    return DatasetFactory.create(DatasetGraphFactory.create());
   }
 
   /**
@@ -212,7 +227,7 @@ public class QueryOperation {
    * @return the format name
    */
   public static String getDefaultFormatName(String query) {
-    QueryExecution qExec = QueryExecutionFactory.create(query, DatasetFactory.create());
+    QueryExecution qExec = QueryExecutionFactory.create(query, createEmptyDataset());
     return getDefaultFormatName(qExec.getQuery());
   }
 
