@@ -1,13 +1,9 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
@@ -65,6 +61,7 @@ public class ExtractCommand implements Command {
     o.addOption("L", "lower-terms", true, "lower level terms to extract");
     o.addOption("b", "branch-from-term", true, "root term of branch to extract");
     o.addOption("B", "branch-from-terms", true, "root terms of branches to extract");
+    o.addOption("c", "copy-ontology-annotations", true, "if true, include ontology annotations");
     options = o;
   }
 
@@ -116,7 +113,7 @@ public class ExtractCommand implements Command {
     try {
       execute(null, args);
     } catch (Exception e) {
-      CommandLineHelper.handleException(getUsage(), getOptions(), e);
+      CommandLineHelper.handleException(e);
     }
   }
 
@@ -130,7 +127,7 @@ public class ExtractCommand implements Command {
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-    OWLOntology outputOntology = null;
+    OWLOntology outputOntology;
 
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
@@ -162,7 +159,7 @@ public class ExtractCommand implements Command {
     }
 
     if (method.equals("mireot")) {
-      List<OWLOntology> outputOntologies = new ArrayList<OWLOntology>();
+      List<OWLOntology> outputOntologies = new ArrayList<>();
       // Get terms from input (ensuring that they are in the input ontology)
       // It's okay for any of these to return empty (allowEmpty = true)
       // Checks for empty sets later
@@ -231,6 +228,15 @@ public class ExtractCommand implements Command {
       outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, moduleType);
     } else {
       throw new Exception(invalidMethodError);
+    }
+
+    // Maybe copy ontology annotations
+    boolean copyOntologyAnnotations =
+        CommandLineHelper.getBooleanValue(line, "copy-ontology-annotations", false);
+    if (copyOntologyAnnotations) {
+      for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
+        OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
+      }
     }
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);

@@ -62,8 +62,7 @@ public class VerifyCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "Runs a sparql query on an ontology. "
-        + "Any results of the query are violations, counted, and reported";
+    return "verify an ontology does not violate rules (as queries)";
   }
 
   /**
@@ -93,7 +92,7 @@ public class VerifyCommand implements Command {
     try {
       execute(null, args);
     } catch (Exception e) {
-      CommandLineHelper.handleException(getUsage(), getOptions(), e);
+      CommandLineHelper.handleException(e);
     }
   }
 

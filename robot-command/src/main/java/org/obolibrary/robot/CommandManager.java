@@ -44,7 +44,7 @@ public class CommandManager implements Command {
   private Options globalOptions;
 
   /** Store a map from command names to Command objects. */
-  private Map<String, Command> commands = new LinkedHashMap<String, Command>();
+  private Map<String, Command> commands = new LinkedHashMap<>();
 
   /** Initialze the command. */
   public CommandManager() {
@@ -124,7 +124,7 @@ public class CommandManager implements Command {
     CommandLine line = parser.parse(options, asArgs(arguments), true);
 
     int index = arguments.size() - line.getArgList().size();
-    List<String> used = new ArrayList<String>(arguments.subList(0, index));
+    List<String> used = new ArrayList<>(arguments.subList(0, index));
     arguments.subList(0, index).clear();
     return used;
   }
@@ -153,6 +153,22 @@ public class CommandManager implements Command {
    * @throws Exception on any problems
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
+    // Maybe print general help or version info
+    String commandName = args[0];
+    if ("help".equals(commandName) && (args.length == 1)) {
+      printHelp();
+      return state;
+    } else if ("help".equals(commandName)) {
+      commandName = args[1];
+      Command cmd = commands.get(commandName);
+      CommandLineHelper.printHelp(cmd.getUsage(), cmd.getOptions());
+      return state;
+    } else if ("version".equals(commandName)) {
+      CommandLineHelper.printVersion();
+      return state;
+    }
+
+    // Then get the command line
     CommandLine line = CommandLineHelper.maybeGetCommandLine(getUsage(), getOptions(), args, true);
 
     if (line == null) {
@@ -163,7 +179,7 @@ public class CommandManager implements Command {
       state = new CommandState();
     }
 
-    List<String> arguments = new ArrayList<String>(Arrays.asList(args));
+    List<String> arguments = new ArrayList<>(Arrays.asList(args));
     List<String> globalOptionArgs = getOptionArgs(globalOptions, arguments);
 
     if (arguments.size() == 0) {
@@ -200,18 +216,6 @@ public class CommandManager implements Command {
     }
 
     commandName = commandName.trim().toLowerCase();
-    if (commandName.equals("help")) {
-      if (arguments.size() == 0) {
-        printHelp();
-      } else {
-        globalOptionArgs.add("--help");
-      }
-      return state;
-    }
-    if (commandName.equals("version")) {
-      CommandLineHelper.printVersion();
-      return state;
-    }
     if (!commands.containsKey(commandName)) {
       throw new IllegalArgumentException(String.format(unknownArgError, commandName));
     }
@@ -225,7 +229,7 @@ public class CommandManager implements Command {
     }
 
     List<String> localOptionArgs = getOptionArgs(command.getOptions(), arguments);
-    List<String> optionArgs = new ArrayList<String>();
+    List<String> optionArgs = new ArrayList<>();
     optionArgs.addAll(globalOptionArgs);
     optionArgs.addAll(localOptionArgs);
 
@@ -241,8 +245,7 @@ public class CommandManager implements Command {
     try {
       state = command.execute(state, asArgs(optionArgs));
     } catch (Exception e) {
-      // Ensure command-specific usage info is returned
-      CommandLineHelper.handleException(command.getUsage(), command.getOptions(), e);
+      CommandLineHelper.handleException(e);
     } finally {
       double duration = (System.currentTimeMillis() - start) / 1000.0;
       logger.warn("Subcommand Timing: " + commandName + " took " + duration + " seconds");

@@ -499,6 +499,7 @@ public class QueryOperation {
    * Run a SELECT query over the graph and write the result to a file. Prints violations to STDERR.
    *
    * @param dsg The graph to query over.
+   * @param ruleName name of the rule
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.

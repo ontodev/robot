@@ -72,6 +72,7 @@ public class ReasonOperation {
     options.put("equivalent-classes-allowed", ALL.written());
     options.put("prevent-invalid-references", "false");
     options.put("preserve-annotated-axioms", "false");
+    options.put("dump-unsatisfiable", null);
 
     return options;
   }
@@ -146,7 +147,9 @@ public class ReasonOperation {
 
     logger.info("Starting reasoning...");
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-    ReasonerHelper.validate(reasoner);
+
+    String dumpFilePath = OptionsHelper.getOption(options, "dump-unsatisfiable", null);
+    ReasonerHelper.validate(reasoner, dumpFilePath, new IOHelper());
 
     logger.info("Precomputing class hierarchy...");
     reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
@@ -316,7 +319,7 @@ public class ReasonOperation {
    *
    * @param reasoner an OWL reasoner, initialized with a root ontology; the ontology will be
    *     modified
-   * @param options
+   * @param options map of options for reasoning
    */
   public static void removeRedundantSubClassAxioms(
       OWLReasoner reasoner, Map<String, String> options) {

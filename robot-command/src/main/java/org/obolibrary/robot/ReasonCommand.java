@@ -34,6 +34,11 @@ public class ReasonCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("r", "reasoner", true, "reasoner to use: ELK, HermiT, JFact");
     o.addOption(
+        "D",
+        "dump-unsatisfiable",
+        true,
+        "if specified and ontology is incoherent, dump minimal explanatory module here");
+    o.addOption(
         "s", "remove-redundant-subclass-axioms", true, "if true, remove redundant subclass axioms");
     o.addOption(
         "p",
@@ -123,7 +128,7 @@ public class ReasonCommand implements Command {
     try {
       execute(null, args);
     } catch (Exception e) {
-      CommandLineHelper.handleException(getUsage(), getOptions(), e);
+      CommandLineHelper.handleException(e);
     }
   }
 

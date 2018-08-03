@@ -20,7 +20,7 @@ If `--output` is provided then a report will be written with any differences bet
       --right release.owl \
       --output results/release-diff.txt
 
-See <a href="/examples/release-diff.txt" target="_blank">`release-diff.txt`</a> for an example.
+See <a href="/examples/release-diff.txt" target="_blank">`release-diff.txt`</a> for an example. In the output, 'Ontology 1' corresponds to your `--left` input and 'Ontology 2' corresponds to your `--right` input.
 
 You can also compare ontologies by IRI with `--left-iri` and `--right-iri`. You may want to compare a local file to a release, in which case:
 <!-- DO NOT TEST -->

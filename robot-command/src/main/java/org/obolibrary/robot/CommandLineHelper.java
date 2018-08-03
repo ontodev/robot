@@ -1,15 +1,13 @@
 package org.obolibrary.robot;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.*;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -17,6 +15,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -82,7 +81,7 @@ public class CommandLineHelper {
    * @throws Exception on parsing problems
    */
   public static List<String> parseArgList(String toProcess) throws Exception {
-    return new ArrayList<String>(Arrays.asList(parseArgs(toProcess)));
+    return new ArrayList<>(Arrays.asList(parseArgs(toProcess)));
   }
 
   /**
@@ -104,7 +103,7 @@ public class CommandLineHelper {
     final int inDoubleQuote = 2;
     int state = normal;
     StringTokenizer tok = new StringTokenizer(toProcess, "\"\' ", true);
-    Vector<String> v = new Vector<String>();
+    Vector<String> v = new Vector<>();
     StringBuffer current = new StringBuffer();
     boolean lastTokenHasBeenQuoted = false;
 
@@ -167,10 +166,10 @@ public class CommandLineHelper {
    * @return the option values as a list of strings, maybe empty
    */
   public static List<String> getOptionValues(CommandLine line, String name) {
-    List<String> valueList = new ArrayList<String>();
+    List<String> valueList = new ArrayList<>();
     String[] valueArray = line.getOptionValues(name);
     if (valueArray != null) {
-      valueList = new ArrayList<String>(Arrays.asList(valueArray));
+      valueList = new ArrayList<>(Arrays.asList(valueArray));
     }
     return valueList;
   }
@@ -215,10 +214,30 @@ public class CommandLineHelper {
       return true;
     }
     String command = getCommand(line);
-    if (command != null && command.equals(name)) {
-      return true;
+    return command != null && command.equals(name);
+  }
+
+  /**
+   * Given a command line, an argument name, the boolean default value, and boolean if the arg is
+   * optional, return the value of the command-line option 'name'.
+   *
+   * @param line the command line to use
+   * @param name the name of the option to find
+   * @param defaultValue the default value to use if the option is not provided
+   * @param optionalArg if true, the option without an arg will return true
+   * @return the option value as boolean, or the default if not found
+   */
+  public static boolean getBooleanValue(
+      CommandLine line, String name, boolean defaultValue, boolean optionalArg) {
+    if (line.hasOption(name)) {
+      if (CommandLineHelper.getOptionalValue(line, name) == null) {
+        return true;
+      } else {
+        return CommandLineHelper.getBooleanValue(line, name, defaultValue);
+      }
+    } else {
+      return false;
     }
-    return false;
   }
 
   /**
@@ -260,9 +279,9 @@ public class CommandLineHelper {
    */
   public static List<String> getOptionalValues(CommandLine line, String name) {
     if (line.hasOption(name)) {
-      return new ArrayList<String>(Arrays.asList(line.getOptionValues(name)));
+      return new ArrayList<>(Arrays.asList(line.getOptionValues(name)));
     } else {
-      return new ArrayList<String>();
+      return new ArrayList<>();
     }
   }
 
@@ -344,7 +363,7 @@ public class CommandLineHelper {
    */
   public static OWLOntology getInputOntology(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
-    OWLOntology inputOntology = null;
+    OWLOntology inputOntology;
     // Check for multiple inputs
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
@@ -390,7 +409,7 @@ public class CommandLineHelper {
   public static List<OWLOntology> getInputOntologies(
       IOHelper ioHelper, CommandLine line, boolean allowEmpty)
       throws IllegalArgumentException, IOException {
-    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> inputOntologies = new ArrayList<>();
     String catalogPath = getOptionalValue(line, "catalog");
 
     if (catalogPath != null) {
@@ -414,11 +433,9 @@ public class CommandLineHelper {
    * @param line the command line to use
    * @return the updated state
    * @throws IllegalArgumentException if requires options are missing
-   * @throws IOException if the ontology cannot be loaded
    */
   public static CommandState updateInputOntology(
-      IOHelper ioHelper, CommandState state, CommandLine line)
-      throws IllegalArgumentException, IOException {
+      IOHelper ioHelper, CommandState state, CommandLine line) throws IllegalArgumentException {
     return updateInputOntology(ioHelper, state, line, true);
   }
 
@@ -435,11 +452,10 @@ public class CommandLineHelper {
    * @param required when true, throw an exception if ontology is not found
    * @return the updated state
    * @throws IllegalArgumentException if requires options are missing
-   * @throws IOException if the ontology cannot be loaded
    */
   public static CommandState updateInputOntology(
       IOHelper ioHelper, CommandState state, CommandLine line, boolean required)
-      throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException {
     if (state != null && state.getOntology() != null) {
       if (line.hasOption("input") || line.hasOption("input-IRI")) {
         throw new IllegalArgumentException(chainedInputError);
@@ -523,6 +539,7 @@ public class CommandLineHelper {
    * Try to create an IRI from a string input. If the term is not in a valid format (null), an
    * IllegalArgumentException is thrown to prevent null from being passed into other methods.
    *
+   * @param ioHelper IOHelper to use
    * @param term the term to convert to an IRI
    * @param field the field in which the term was entered, for reporting
    * @return the new IRI if successful
@@ -585,7 +602,7 @@ public class CommandLineHelper {
    */
   public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line, String singles, String paths)
       throws IllegalArgumentException, IOException {
-    Set<String> termStrings = new HashSet<String>();
+    Set<String> termStrings = new HashSet<>();
     if (singles != null) {
       termStrings.addAll(getOptionValues(line, singles));
     }
@@ -595,7 +612,7 @@ public class CommandLineHelper {
       }
     }
 
-    Set<IRI> terms = new HashSet<IRI>();
+    Set<IRI> terms = new HashSet<>();
     for (String termString : termStrings) {
       terms.addAll(ioHelper.parseTerms(termString));
     }
@@ -655,9 +672,57 @@ public class CommandLineHelper {
     formatter.printHelp(usage, options);
   }
 
-  /** Print the ROBOT version. */
-  public static void printVersion() {
-    String version = CommandLineHelper.class.getPackage().getImplementationVersion();
+  /**
+   * Print the ROBOT version
+   *
+   * @throws IOException on issue getting info from JAR
+   */
+  public static void printVersion() throws IOException {
+    Properties p = new Properties();
+    // The resource can be accessed from the class, except when running as a JAR
+    URL resource =
+        CommandLineHelper.class
+            .getClassLoader()
+            .getResource("/META-INF/maven/org.obolibrary.robot/robot-command/pom.properties");
+    if (resource != null) {
+      URI uri;
+      try {
+        uri = resource.toURI();
+      } catch (URISyntaxException e) {
+        throw new IOExceptionWithCause(e);
+      }
+      File f = new File(uri);
+      InputStream is = new FileInputStream(f);
+      p.load(is);
+    } else {
+      // Brute-force to get properties file from JAR
+      // This will be used any time `robot --version` is entered on command line
+      String cls = CommandLineHelper.class.getName().replace(".", "/") + ".class";
+      resource = CommandLineHelper.class.getClassLoader().getResource(cls);
+      String protocol;
+      try {
+        protocol = resource.getProtocol();
+      } catch (NullPointerException e) {
+        throw new IOException(
+            "Cannot access version information from JAR. The directory address has no protocol.");
+      }
+      if (protocol.equals("jar")) {
+        // Get the JAR path and open as JAR file
+        String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
+        try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
+          ZipEntry entry =
+              jar.getEntry("META-INF/maven/org.obolibrary.robot/robot-command/pom.properties");
+          if (entry != null) {
+            InputStream is = jar.getInputStream(entry);
+            p.load(is);
+          } else {
+            throw new IOException(
+                "Cannot access version information from JAR. The properties file does not exist.");
+          }
+        }
+      }
+    }
+    String version = p.getProperty("version");
     System.out.println("ROBOT version " + version);
   }
 
@@ -690,9 +755,11 @@ public class CommandLineHelper {
    * @param stopAtNonOption same as CommandLineParser
    * @return a new CommandLine object or null
    * @throws ParseException if the arguments cannot be parsed
+   * @throws IOException on issue printing version
    */
   public static CommandLine maybeGetCommandLine(
-      String usage, Options options, String[] args, boolean stopAtNonOption) throws ParseException {
+      String usage, Options options, String[] args, boolean stopAtNonOption)
+      throws ParseException, IOException {
     CommandLineParser parser = new PosixParser();
     CommandLine line = parser.parse(options, args, stopAtNonOption);
 
@@ -730,9 +797,10 @@ public class CommandLineHelper {
    * @param args the command-line arguments provided
    * @return a new CommandLine object or exit(0)
    * @throws ParseException if the arguments cannot be parsed
+   * @throws IOException on issue printing version
    */
   public static CommandLine getCommandLine(String usage, Options options, String[] args)
-      throws ParseException {
+      throws ParseException, IOException {
     CommandLine line = maybeGetCommandLine(usage, options, args, false);
     if (line == null) {
       System.exit(0);
@@ -744,8 +812,19 @@ public class CommandLineHelper {
    * Shared method for dealing with exceptions, printing help, and exiting. Currently prints the
    * error message, stack trace (DEBUG), usage, and then exits.
    *
-   * @param usage the usage string for this command
-   * @param options the command-line options for this command
+   * @param exception the exception to handle
+   */
+  public static void handleException(Exception exception) {
+    ExceptionHelper.handleException(exception);
+    System.exit(1);
+  }
+
+  /**
+   * Shared method for dealing with exceptions, printing help, and exiting. Currently prints the
+   * error message, stack trace (DEBUG), usage, and then exits.
+   *
+   * @param usage the usage string for this command; WARN: not used
+   * @param options the command-line options for this command; WARN: not used
    * @param exception the exception to handle
    */
   public static void handleException(String usage, Options options, Exception exception) {
@@ -765,7 +844,7 @@ public class CommandLineHelper {
     }
     FileFilter fileFilter = new WildcardFileFilter(pattern);
     File[] files = new File(".").listFiles(fileFilter);
-    if (files.length < 1) {
+    if (files == null || files.length < 1) {
       // Warn user, but continue (empty input checked later)
       logger.error("No files match pattern: {}", pattern);
     }

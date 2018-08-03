@@ -35,6 +35,22 @@ If no `--reasoner` is provided, ROBOT will default to ELK. The following other r
   * `emr` - [Expression Materializing Reasoner](http://static.javadoc.io/org.geneontology/expression-materializing-reasoner/0.1.3/org/geneontology/reasoner/ExpressionMaterializingReasoner.html)
   * `structural` - [Structural Reasoner](http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/reasoner/structural/StructuralReasoner.html)
 
+## Logical Validation
+
+ROBOT will always perform a logical validation check prior to reasoning. Formally, this is known as testing for *incoherency*, i.e. the presence of either a logical inconsistency or unsatisfiable classes. If either of these hold true, the reason operation will fail and robot will exit with a non-zero code, after reporting the problematic classes.
+
+You can perform detailed debugging using an environment like Protege - load the ontology, switch on the reasoner and use the explain feature. For example, if you have unsatisfiable classes, find one of them (they should show up red) and click on the `?` where it says `EquivalentTo Nothing`.
+
+If you are working on a large complex ontology with multiple imports and you encounter unsatisfiable classes during the release, you can make a minimal ontology for debugging purposes using the `-D` (`--dump-unsatisfiable`) option folled by an output file path. This will find all unsatisfiable classes and use the [extract](extract) operation to create a debug module.
+
+```
+robot reason --reasoner ELK \
+  --input incoherent-tbox.owl \
+  -D results/debug.owl
+```
+
+If the input module contains at least one import, axioms in the debug module will be tagged with the source ontology, to assist in debugging.
+
 ---
 
 ## Error Messages
