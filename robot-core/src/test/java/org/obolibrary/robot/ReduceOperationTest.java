@@ -15,7 +15,7 @@ public class ReduceOperationTest extends CoreTest {
    * Test removing redundant subclass axioms.
    *
    * @throws IOException on file problem
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testRemoveRedundantSubClassAxiomsPreserveAnnotated()
@@ -49,7 +49,7 @@ public class ReduceOperationTest extends CoreTest {
    * Test removing redundant subclass expression (existential restriction) axioms.
    *
    * @throws IOException on file problem
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testRemoveRedundantSubClassExpressionAxioms()
@@ -69,7 +69,7 @@ public class ReduceOperationTest extends CoreTest {
    * becomes redundant.
    *
    * @throws IOException on file problem
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testReduceWithReflexivity() throws IOException, OWLOntologyCreationException {
@@ -87,7 +87,7 @@ public class ReduceOperationTest extends CoreTest {
    * Test removing GCIs.
    *
    * @throws IOException on file problem
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testReduceGci() throws IOException, OWLOntologyCreationException {
@@ -105,8 +105,8 @@ public class ReduceOperationTest extends CoreTest {
    * This test ensures that subClassOf axioms are never removed if they lead to loss of information
    * in the subClassOf graph
    *
-   * @throws IOException
-   * @throws OWLOntologyCreationException
+   * @throws IOException on file problem
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testReduceWithEquiv() throws IOException, OWLOntologyCreationException {
@@ -125,8 +125,8 @@ public class ReduceOperationTest extends CoreTest {
    *
    * <p>See: 'central nervous system development' in the test file
    *
-   * @throws IOException
-   * @throws OWLOntologyCreationException
+   * @throws IOException on file problem
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testReduceEdgeCase() throws IOException, OWLOntologyCreationException {
@@ -143,8 +143,8 @@ public class ReduceOperationTest extends CoreTest {
   /**
    * Domain case, see https://github.com/ontodev/robot/issues/321
    *
-   * @throws IOException
-   * @throws OWLOntologyCreationException
+   * @throws IOException on file problem
+   * @throws OWLOntologyCreationException if ontology cannot be created
    */
   @Test
   public void testReduceDomainCase() throws IOException, OWLOntologyCreationException {

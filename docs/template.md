@@ -56,26 +56,26 @@ merge before | merged     | merged
 merge after  | result     | merged
 
 - no merge (default behaviour): only the result ontology will be output
-- `merge-before true`: the result ontology is merged into the input ontology immediately, so only the merged ontology will be output
-- `merge-after true`: any `--output` options apply to the result ontology, then result ontology is merged into the input ontology, and the output of the command is the merged ontology
+- `merge-before`: the result ontology is merged into the input ontology immediately, so only the merged ontology will be output
+- `merge-after`: any `--output` options apply to the result ontology, then result ontology is merged into the input ontology, and the output of the command is the merged ontology
 
-These three options are particularly useful when chaining commands. For instance, the `merge-after true` option lets you save the result ontology separately, then send the merged ontology to the next command. See [merge](/merge) for more information on merge options, including `--collapse-import-closure` and `--include-annotations`.
+These three options are particularly useful when chaining commands. For instance, the `merge-after` option lets you save the result ontology separately, then send the merged ontology to the next command. See [merge](/merge) for more information on merge options, including `--collapse-import-closure` and `--include-annotations`.
 
-If the command inclues `--ancestors true`, the result ontology will include the ancestors (from the input ontology) of the result ontology terms. Only the labels of the ancestors will be included.
+If the command inclues `--ancestors`, the result ontology will include the ancestors (from the input ontology) of the result ontology terms. Only the labels of the ancestors will be included.
 
 ## Examples
 
 Create an output ontology that includes the input ontology and the terms defined in the template:
 <!-- DO NOT TEST-->
 ```
-robot template --merge-before true --input edit.owl \
+robot template --merge-before --input edit.owl \
   --template template.csv --output results/template.owl
 ```
 
 Create two outputs - the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):
 <!-- DO NOT TEST -->
 ```
-robot template --merge-after true \
+robot template --merge-after \
   --input edit.owl \
   --template uberon_template.csv \
   --output results/uberon_template.owl \
@@ -86,7 +86,7 @@ robot template --merge-after true \
 Create an output ontology that consists of the template terms plus their dependencies ([`uberon_template_2.owl`](/examples/uberon_template_2.owl)):
 <!-- DO NOT TEST -->
 ```
-robot template --ancestors true --input edit.owl \
+robot template --ancestors --input edit.owl \
   --template uberon_template.csv \
   --ontology-iri "https://github.com/ontodev/robot/examples/uberon_template_2.owl" \
   --output results/uberon_template_2.owl
@@ -95,7 +95,7 @@ robot template --ancestors true --input edit.owl \
 Create an output ontology that includes the input ontology and the terms defined in the template, but keep the import statements* ([`test_template.owl`](/examples/test_template.owl)):
 <!-- DO NOT TEST -->
 ```
-robot template --merge-before true \
+robot template --merge-before \
   --input test.owl \
   --collapse-import-closure false \
   --template uberon_template.csv \
@@ -114,7 +114,7 @@ You must specify at least one template with `--template` to proceed.
 
 ### Merge Error
 
-`--merge-before true` and `--merge-after true` cannot be used simultaneously.
+`--merge-before` and `--merge-after` cannot be used simultaneously.
 
 ### Annotation Property Error
 

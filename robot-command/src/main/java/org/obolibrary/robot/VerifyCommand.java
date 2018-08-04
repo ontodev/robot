@@ -1,12 +1,12 @@
 package org.obolibrary.robot;
 
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.File;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,11 +111,15 @@ public class VerifyCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    DatasetGraph graph = QueryOperation.loadOntology(state.getOntology());
+    // Load into dataset without imports
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), false);
 
     File outputDir = new File(CommandLineHelper.getDefaultValue(line, "output-dir", "."));
 
     String[] queryFilePaths = line.getOptionValues("queries");
+    if (queryFilePaths.length == 0) {
+      throw new Exception(missingQueryError);
+    }
     boolean passing = true;
     for (String filePath : queryFilePaths) {
       File queryFile = new File(filePath);
@@ -123,7 +127,7 @@ public class VerifyCommand implements Command {
       String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
       boolean result =
           QueryOperation.runVerify(
-              graph, filePath, queryString, outputDir.toPath().resolve(csvPath), null);
+              dataset, filePath, queryString, outputDir.toPath().resolve(csvPath), null);
       if (result) {
         passing = false;
       }

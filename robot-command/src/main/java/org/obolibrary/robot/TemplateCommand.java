@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -45,23 +44,13 @@ public class TemplateCommand implements Command {
     o.addOption("O", "ontology-iri", true, "set the output ontology IRI");
     o.addOption("V", "version-iri", true, "set the output version IRI");
     o.addOption("t", "template", true, "read template from a file");
+    o.addOption("a", "ancestors", false, "MIREOT ancestors into results");
+    o.addOption("m", "merge-before", false, "merge into input ontology before any output");
+    o.addOption("M", "merge-after", false, "merge into input ontology after any output");
     o.addOption(
         "c", "collapse-import-closure", true, "if true, collapse the import closure when merging");
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
-
-    // The following options should be used with boolean values
-    // Originally, these options had no args, so the arg is optional for backwards compatibility
-    Option a;
-    a = new Option("a", "ancestors", true, "MIREOT ancestors into results");
-    a.setOptionalArg(true);
-    o.addOption(a);
-    a = new Option("m", "merge-before", true, "merge into input ontology before any output");
-    a.setOptionalArg(true);
-    o.addOption(a);
-    a = new Option("M", "merge-after", true, "merge into input ontology after any output");
-    a.setOptionalArg(true);
-    o.addOption(a);
 
     options = o;
   }

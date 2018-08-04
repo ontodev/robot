@@ -616,6 +616,7 @@ public class CommandLineHelper {
    * Try to create an IRI from a string input. If the term is not in a valid format (null), an
    * IllegalArgumentException is thrown to prevent null from being passed into other methods.
    *
+   * @param ioHelper IOHelper to use
    * @param term the term to convert to an IRI
    * @param field the field in which the term was entered, for reporting
    * @return the new IRI if successful
@@ -748,7 +749,11 @@ public class CommandLineHelper {
     formatter.printHelp(usage, options);
   }
 
-  /** Print the ROBOT version. */
+  /**
+   * Print the ROBOT version
+   *
+   * @throws IOException on issue getting info from JAR
+   */
   public static void printVersion() throws IOException {
     Properties p = new Properties();
     // The resource can be accessed from the class, except when running as a JAR
@@ -827,6 +832,7 @@ public class CommandLineHelper {
    * @param stopAtNonOption same as CommandLineParser
    * @return a new CommandLine object or null
    * @throws ParseException if the arguments cannot be parsed
+   * @throws IOException on issue printing version
    */
   public static CommandLine maybeGetCommandLine(
       String usage, Options options, String[] args, boolean stopAtNonOption)
@@ -868,6 +874,7 @@ public class CommandLineHelper {
    * @param args the command-line arguments provided
    * @return a new CommandLine object or exit(0)
    * @throws ParseException if the arguments cannot be parsed
+   * @throws IOException on issue printing version
    */
   public static CommandLine getCommandLine(String usage, Options options, String[] args)
       throws ParseException, IOException {
@@ -924,8 +931,9 @@ public class CommandLineHelper {
    *
    * @param pattern wildcard pattern to match
    * @return array of files
+   * @throws IllegalArgumentException on bad pattern
    */
-  private static File[] getFilesByPattern(String pattern) {
+  private static File[] getFilesByPattern(String pattern) throws IllegalArgumentException {
     if (!pattern.contains("*") && !pattern.contains("?")) {
       throw new IllegalArgumentException(wildcardError);
     }
@@ -945,10 +953,11 @@ public class CommandLineHelper {
    * @param ioHelper the IOHelper to load the ontology with
    * @param line the command line to use
    * @return the list of input ontologies
+   * @throws IllegalArgumentException on bad pattern
    * @throws IOException if the ontology cannot be loaded
    */
-  private static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
-      throws IOException {
+  public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
+      throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
@@ -980,7 +989,7 @@ public class CommandLineHelper {
    * @return the list of input ontologies
    * @throws IOException if the ontology cannot be loaded
    */
-  private static List<OWLOntology> getInputOntologies(
+  public static List<OWLOntology> getInputOntologies(
       IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // Check for input files

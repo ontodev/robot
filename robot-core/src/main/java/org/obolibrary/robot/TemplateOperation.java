@@ -13,6 +13,7 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -108,6 +109,133 @@ public class TemplateOperation {
    */
   private static String unknownTypeError =
       NS + "UNKNOWN TYPE ERROR \"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
+
+  /**
+   * Find an annotation property with the given name or create one.
+   *
+   * @param checker used to search by rdfs:label (for example)
+   * @param name the name to search for
+   * @return an annotation property
+   * @throws Exception if the name cannot be resolved
+   */
+  public static OWLAnnotationProperty getAnnotationProperty(
+      QuotedEntityChecker checker, String name) throws Exception {
+    return TemplateHelper.getAnnotationProperty(checker, name);
+  }
+
+  /**
+   * Find a datatype with the given name or create one.
+   *
+   * @param checker used to search by rdfs:label (for example)
+   * @param name the name to search for
+   * @return a datatype
+   * @throws Exception if the name cannot be resolved
+   */
+  public static OWLDatatype getDatatype(QuotedEntityChecker checker, String name) throws Exception {
+    return TemplateHelper.getDatatype(checker, name);
+  }
+
+  /**
+   * Return a string annotation for the given template string and value.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation with property and string literal value
+   * @throws Exception if the annotation property cannot be found
+   */
+  public static OWLAnnotation getStringAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    return TemplateHelper.getStringAnnotation(checker, template, value);
+  }
+
+  /**
+   * Return a typed annotation for the given template string and value. The template string format
+   * is "AT [name]^^[datatype]" and the value is any string.
+   *
+   * @param checker used to resolve the annotation property and datatype
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation axiom with property and typed literal value
+   * @throws Exception if the annotation property cannot be found
+   */
+  public static OWLAnnotation getTypedAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    return TemplateHelper.getTypedAnnotation(checker, template, value);
+  }
+
+  /**
+   * Return a language tagged annotation for the given template and value. The template string
+   * format is "AL [name]@[lang]" and the value is any string.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation axiom with property and language tagged literal
+   * @throws Exception if the annotation property cannot be found
+   */
+  public static OWLAnnotation getLanguageAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    return TemplateHelper.getLanguageAnnotation(checker, template, value);
+  }
+
+  /**
+   * Return an IRI annotation for the given template string and value. The template string format is
+   * "AI [name]" and the value is a string that can be interpreted as an IRI.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the IRI value for the annotation
+   * @return a new annotation axiom with property and an IRI value
+   * @throws Exception if the annotation property cannot be found
+   */
+  public static OWLAnnotation getIRIAnnotation(
+      QuotedEntityChecker checker, String template, IRI value) throws Exception {
+    return TemplateHelper.getIRIAnnotation(checker, template, value);
+  }
+
+  /**
+   * Use type, id, and label information to get an entity from the data in a row. Requires either:
+   * an id (default type is owl:Class); an id and type; or a label.
+   *
+   * @param checker for looking up labels
+   * @param type the IRI of the type for this entity, or null
+   * @param id the ID for this entity, or null
+   * @param label the label for this entity, or null
+   * @return the entity
+   * @throws Exception if the entity cannot be created
+   */
+  public static OWLEntity getEntity(QuotedEntityChecker checker, IRI type, String id, String label)
+      throws Exception {
+    return TemplateHelper.getEntity(checker, type, id, label);
+  }
+
+  /**
+   * Get a list of the IRIs defined in a set of template tables.
+   *
+   * @param tables a map from table names to tables
+   * @param ioHelper used to find entities by name
+   * @return a list of IRIs
+   * @throws Exception when names or templates cannot be handled
+   */
+  public static List<IRI> getIRIs(Map<String, List<List<String>>> tables, IOHelper ioHelper)
+      throws Exception {
+    return TemplateHelper.getIRIs(tables, ioHelper);
+  }
+
+  /**
+   * Get a list of the IRIs defined in a template table.
+   *
+   * @param tableName the name of the table
+   * @param rows the table of data
+   * @param ioHelper used to find entities by name
+   * @return a list of IRIs
+   * @throws Exception when names or templates cannot be handled
+   */
+  public static List<IRI> getIRIs(String tableName, List<List<String>> rows, IOHelper ioHelper)
+      throws Exception {
+    return TemplateHelper.getIRIs(tableName, rows, ioHelper);
+  }
 
   /**
    * Return true if the template string is valid, false otherwise.

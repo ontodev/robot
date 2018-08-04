@@ -31,10 +31,10 @@ Including at least the following annotations is recommended:
   * Description (<a href="http://purl.org/dc/terms/description" target="_blank">`dcterms:description`</a>)
   * License (<a href="http://purl.org/dc/terms/license" target="_blank">`dcterms:license`</a>)
 
-This command can also remove all ontology annotations from your file with `--remove-annotations true`. You can combine this with options to add new annotations:
+This command can also remove all ontology annotations from your file with `--remove-annotations`. You can combine this with options to add new annotations:
 
     robot annotate --input annotated.owl \
-      --remove-annotations true \
+      --remove-annotations \
       --annotation-file annotations.ttl \
       --output results/annotated_2.owl
 

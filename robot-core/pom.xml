@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.obolibrary.robot</groupId>
     <artifactId>robot</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
   </parent>
   <artifactId>robot-core</artifactId>
   <name>robot-core</name>
@@ -27,6 +27,45 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Ensure backward compatibility -->
+      <plugin>
+        <groupId>com.github.siom79.japicmp</groupId>
+        <artifactId>japicmp-maven-plugin</artifactId>
+        <version>0.12.0</version>
+        <configuration>
+          <oldVersion>
+            <dependency>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>${project.artifactId}</artifactId>
+              <version>1.0.0</version>
+              <type>jar</type>
+            </dependency>
+          </oldVersion>
+          <newVersion>
+            <file>
+              <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
+            </file>
+          </newVersion>
+          <parameter>
+            <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
+            <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+            <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+            <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
+            <excludes>
+              <exclude>org.obolibrary.robot.QueryOperation</exclude>
+            </excludes>
+          </parameter>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>cmp</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -34,7 +73,12 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-arq</artifactId>
-      <version>2.13.0</version>
+      <version>3.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-tdb</artifactId>
+      <version>3.8.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.jsonld-java</groupId>

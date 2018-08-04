@@ -1,8 +1,5 @@
 package org.obolibrary.robot;
 
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,6 +21,11 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -64,6 +66,48 @@ public class ReportOperation {
   private static final String ERROR = "ERROR";
 
   /**
+   * Return a map from option name to default option value, for all the available report options.
+   *
+   * @return a map with default values for all available options
+   */
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> options = new HashMap<String, String>();
+
+    return options;
+  }
+
+  /**
+   * Report on the ontology using the rules within the profile and print results. Prefer
+   * report(OWLOntology ontology, String profilePath, String outputPath, String format, String
+   * failOn).
+   *
+   * @param ontology the OWLOntology to report
+   * @param iohelper IOHelper to work with ontology
+   */
+  public static void report(OWLOntology ontology, IOHelper iohelper) {
+    try {
+      report(ontology, null, null, null, null);
+    } catch (Exception e) {
+    }
+  }
+
+  /**
+   * Report on the ontology using the rules within the profile and print results. Prefer
+   * report(OWLOntology ontology, String profilePath, String outputPath, String format, String
+   * failOn).
+   *
+   * @param ontology the OWLOntology to report
+   * @param iohelper IOHelper to work with ontology
+   * @param options map of report options
+   */
+  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
+    try {
+      report(ontology, null, null, null, null);
+    } catch (Exception e) {
+    }
+  }
+
+  /**
    * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
    * null) report on the ontology using the rules within the profile and write results to the output
    * path. If profile is null, use the default profile in resources. If the output path is null,
@@ -73,6 +117,8 @@ public class ReportOperation {
    * @param profilePath user profile file path to use, or null
    * @param outputPath string path to write report file to, or null
    * @param format string format for the output report (TSV or YAML), or null
+   * @param failOn logging level to fail execution
+   * @return true if successful, false if failed
    * @throws Exception on any error
    */
   public static boolean report(
@@ -84,7 +130,8 @@ public class ReportOperation {
     Map<String, String> queries = getQueryStrings(profile.keySet());
 
     Report report = new Report();
-    DatasetGraph dsg = QueryOperation.loadOntology(ontology);
+    // Load into dataset without imports
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
       String queryString;
@@ -94,7 +141,7 @@ public class ReportOperation {
       } else {
         queryString = fullQueryString;
       }
-      report.addViolations(queryName, profile.get(queryName), getViolations(dsg, queryString));
+      report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
     }
 
     Integer violationCount = report.getTotalViolations();
@@ -328,15 +375,25 @@ public class ReportOperation {
   }
 
   /**
-   * Given an ontology as a DatasetGraph and a query as a CheckerQuery, return the violations found
-   * by that query.
+   * Given an ontology as a DatasetGraph and a query, return the violations found by that query.
    *
-   * @param dsg the ontology
+   * @param dsg the ontology as a graph
    * @param query the query
    * @return List of Violations
    */
   private static List<Violation> getViolations(DatasetGraph dsg, String query) {
-    ResultSet violationSet = QueryOperation.execQuery(dsg, query);
+    return getViolations(DatasetFactory.create(dsg), query);
+  }
+
+  /**
+   * Given an ontology as a Dataset and a query, return the violations found by that query.
+   *
+   * @param dataset the ontology/ontologies as a dataset
+   * @param query the query
+   * @return List of Violations
+   */
+  private static List<Violation> getViolations(Dataset dataset, String query) {
+    ResultSet violationSet = QueryOperation.execQuery(dataset, query);
 
     Map<String, Violation> violations = new HashMap<>();
     Violation violation;
