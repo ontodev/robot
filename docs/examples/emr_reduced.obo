@@ -18,7 +18,6 @@ name: acrosomal membrane
 namespace: cellular_component
 def: "The membrane that surrounds the acrosomal lumen. The acrosome is a special type of lysosome in the head of a spermatozoon that contains acid hydrolases and is concerned with the breakdown of the outer membrane of the ovum during fertilization." [GOC:dph]
 is_a: GO:0030667 ! secretory granule membrane
-relationship: part_of GO:0001669 ! acrosomal vesicle
 
 [Term]
 id: GO:0030141
@@ -37,7 +36,6 @@ namespace: cellular_component
 def: "The lipid bilayer surrounding a secretory granule." [GOC:mah]
 synonym: "secretory vesicle membrane" BROAD []
 is_a: GO:0098805
-relationship: part_of GO:0030141 ! secretory granule
 
 [Typedef]
 id: part_of

@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Filter the axioms of an ontology by given criteria.
+ * Filter the axioms of an ontology by given criteria. This implementation has been replaced by
+ * methods in OntologyHelper and RelatedObjectsHelper. See the remove & filter documentation for
+ * more details.
  *
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */

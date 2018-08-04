@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.Set;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 /**
  * Tests MIREOT extraction.
@@ -22,11 +20,10 @@ public class MireotOperationTest extends CoreTest {
   /**
    * Test MIREOT.
    *
-   * @throws IOException on IO problems
-   * @throws OWLOntologyCreationException on ontology problems
+   * @throws Exception
    */
   @Test
-  public void testMireot() throws IOException, OWLOntologyCreationException {
+  public void testMireot() throws Exception {
     testMireot("/mireot.owl");
   }
 
@@ -34,10 +31,9 @@ public class MireotOperationTest extends CoreTest {
    * Test MIREOT.
    *
    * @param expectedPath the path to a known-good file for comparison
-   * @throws IOException on IO problems
-   * @throws OWLOntologyCreationException on ontology problems
+   * @throws Exception
    */
-  public void testMireot(String expectedPath) throws IOException, OWLOntologyCreationException {
+  public void testMireot(String expectedPath) throws Exception {
     OWLOntology inputOntology = loadOntology("/filtered.owl");
 
     IRI outputIRI = IRI.create("http://purl.obolibrary.org/obo/uberon.owl");

@@ -7,6 +7,8 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -20,7 +22,23 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLLogicalAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +51,9 @@ public class CommandLineHelper {
 
   /** Namespace for general input error messages. */
   private static final String NS = "errors#";
+
+  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
+  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /** Error message when a boolean value is not "true" or "false". Expects option name. */
   private static final String booleanValueError =
@@ -238,6 +259,62 @@ public class CommandLineHelper {
     } else {
       return false;
     }
+  }
+
+  /**
+   * Given a command line, return the value of --axioms as a set of classes that extend OWLAxiom.
+   *
+   * @param line the command line to use
+   * @return set of OWLAxiom types
+   */
+  public static Set<Class<? extends OWLAxiom>> getAxiomValues(CommandLine line) {
+    Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
+    List<String> axiomTypeStrings = getOptionValues(line, "axioms");
+    if (axiomTypeStrings.isEmpty()) {
+      axiomTypeStrings.add("all");
+    }
+    // Split if it's one arg with spaces
+    List<String> axiomTypeFixedStrings = new ArrayList<>();
+    for (String axiom : axiomTypeStrings) {
+      if (axiom.contains(" ")) {
+        axiomTypeFixedStrings.addAll(Arrays.asList(axiom.split(" ")));
+      } else {
+        axiomTypeFixedStrings.add(axiom);
+      }
+    }
+    // Then get the actual types
+    for (String axiom : axiomTypeFixedStrings) {
+      if (axiom.equalsIgnoreCase("all")) {
+        axiomTypes.add(OWLAxiom.class);
+      } else if (axiom.equalsIgnoreCase("logical")) {
+        axiomTypes.add(OWLLogicalAxiom.class);
+      } else if (axiom.equalsIgnoreCase("annotation")) {
+        axiomTypes.add(OWLAnnotationAxiom.class);
+      } else if (axiom.equalsIgnoreCase("subclass")) {
+        axiomTypes.add(OWLSubClassOfAxiom.class);
+      } else if (axiom.equalsIgnoreCase("subproperty")) {
+        axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
+        axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
+        axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
+      } else if (axiom.equalsIgnoreCase("equivalent")) {
+        axiomTypes.add(OWLEquivalentClassesAxiom.class);
+        axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
+        axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
+      } else if (axiom.equalsIgnoreCase("disjoint")) {
+        axiomTypes.add(OWLDisjointClassesAxiom.class);
+        axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
+        axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
+        axiomTypes.add(OWLDisjointUnionAxiom.class);
+      } else if (axiom.equalsIgnoreCase("type")) {
+        axiomTypes.add(OWLClassAssertionAxiom.class);
+        // TODO: Make a-box, t-box, r-box
+      } else if (axiom.equalsIgnoreCase("declaration")) {
+        axiomTypes.add(OWLDeclarationAxiom.class);
+      } else {
+        throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+      }
+    }
+    return axiomTypes;
   }
 
   /**
@@ -830,6 +907,23 @@ public class CommandLineHelper {
   public static void handleException(String usage, Options options, Exception exception) {
     ExceptionHelper.handleException(exception);
     System.exit(1);
+  }
+
+  /**
+   * Given an input string, return a list of the string split on whitespace, while ignoring any
+   * whitespace in single string quotes.
+   *
+   * @param selects String of select options to split
+   * @return List of split strings
+   */
+  protected static List<String> splitSelects(String selects) {
+    List<String> split = new ArrayList<>();
+    Matcher m = Pattern.compile("([^\\s]+=.*'[^']+'[^\\s']*|[^\\s']+)").matcher(selects);
+    while (m.find()) {
+      String s = m.group(1).trim();
+      split.add(s);
+    }
+    return split;
   }
 
   /**
