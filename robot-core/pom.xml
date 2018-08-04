@@ -51,6 +51,10 @@
             <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
             <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
             <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+            <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
+            <excludes>
+              <exclude>org.obolibrary.robot.QueryOperation</exclude>
+            </excludes>
           </parameter>
         </configuration>
         <executions>
