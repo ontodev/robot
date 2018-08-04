@@ -54,6 +54,7 @@ public class AnnotateCommand implements Command {
   /** Initialize the command. */
   public AnnotateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
+    o.addOption("R", "remove-annotations", false, "remove all annotations on the ontology");
     o.addOption("A", "annotation-file", true, "add annotation from a file");
     o.addOption("O", "ontology-iri", true, "set the ontology IRI");
     o.addOption("V", "version-iri", true, "set the ontology version IRI");
@@ -62,15 +63,8 @@ public class AnnotateCommand implements Command {
     o.addOption("o", "output", true, "save ontology to a file");
     options = o;
 
-    // This option should be used with boolean values
-    // Originally, this option had no args, so the arg is optional for backwards compatibility
-    Option a =
-        new Option("R", "remove-annotations", true, "remove all annotations on the ontology");
-    a.setOptionalArg(true);
-    o.addOption(a);
-
     // Annotate with a property and plain literal - expects 2 args
-    a = new Option("a", "annotate ontology with PROP VALUE");
+    Option a = new Option("a", "annotate ontology with PROP VALUE");
     a.setLongOpt("annotation");
     a.setArgs(2);
     options.addOption(a);
