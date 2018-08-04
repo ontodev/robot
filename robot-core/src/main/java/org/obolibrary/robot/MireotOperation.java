@@ -13,6 +13,7 @@ import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -57,14 +58,14 @@ public class MireotOperation {
    * @param lowerIRIs copy these terms and their superclasses
    * @param annotationProperties the annotation properties to copy; if null, all will be copied
    * @return a new ontology with the target terms and their named ancestors
-   * @throws Exception
+   * @throws OWLOntologyCreationException on problems creating new ontology
    */
   public static OWLOntology getAncestors(
       OWLOntology inputOntology,
       Set<IRI> upperIRIs,
       Set<IRI> lowerIRIs,
       Set<OWLAnnotationProperty> annotationProperties)
-      throws Exception {
+      throws OWLOntologyCreationException {
     logger.debug("Extract with MIREOT ...");
 
     OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
@@ -200,13 +201,13 @@ public class MireotOperation {
    * @param upperIRIs these terms and their descendants will be copied
    * @param annotationProperties the annotation properties to copy; if null, all will be copied
    * @return a new ontology with the target terms and their named ancestors
-   * @throws Exception
+   * @throws OWLOntologyCreationException on problems creating new ontology
    */
   public static OWLOntology getDescendants(
       OWLOntology inputOntology,
       Set<IRI> upperIRIs,
       Set<OWLAnnotationProperty> annotationProperties)
-      throws Exception {
+      throws OWLOntologyCreationException {
     logger.debug("Extract with MIREOT ...");
 
     OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();

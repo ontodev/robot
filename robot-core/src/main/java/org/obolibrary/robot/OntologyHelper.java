@@ -889,23 +889,21 @@ public class OntologyHelper {
    * @param ontology the ontology to search
    * @param iris the IRIs of the entities to find
    * @return a set of OWLEntities with the given IRIs
-   * @throws Exception if none of the entities are in the ontology
    */
-  public static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> iris) throws Exception {
+  public static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> iris) {
     Set<OWLEntity> entities = new HashSet<>();
     if (iris == null) {
       return entities;
     }
     for (IRI iri : iris) {
-      OWLEntity entity = getEntity(ontology, iri, true);
-      if (entity != null) {
-        // Do not add null entries
-        entities.add(entity);
+      try {
+        OWLEntity entity = getEntity(ontology, iri, true);
+        if (entity != null) {
+          // Do not add null entries
+          entities.add(entity);
+        }
+      } catch (Exception e) {
       }
-    }
-    // If there are no terms in the return set, none of the entities are in the ontology
-    if (entities.size() == 0) {
-      throw new Exception(emptyTermsError);
     }
     return entities;
   }
