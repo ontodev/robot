@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -500,6 +501,20 @@ public class IOHelper {
   }
 
   /**
+   * Save an ontology in the given format to an IRI.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyIRI the IRI to save the ontology to
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
+    return saveOntology(ontology, format, ontologyIRI, true);
+  }
+
+  /**
    * Save an ontology in the given format to an IRI, with the option to ignore OBO document checks.
    *
    * @param ontology the ontology to save
@@ -911,5 +926,82 @@ public class IOHelper {
     FileWriter writer = new FileWriter(file);
     writer.write(getContextString());
     writer.close();
+  }
+
+  /**
+   * Read comma-separated values from a path to a list of lists of strings.
+   *
+   * @param path file path to the CSV file
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readCSV(String path) throws IOException {
+    return TemplateHelper.readCSV(path);
+  }
+
+  /**
+   * Read comma-separated values from a stream to a list of lists of strings.
+   *
+   * @param stream the stream to read from
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readCSV(InputStream stream) throws IOException {
+    return TemplateHelper.readCSV(stream);
+  }
+
+  /**
+   * Read comma-separated values from a reader to a list of lists of strings.
+   *
+   * @param reader a reader to read data from
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readCSV(Reader reader) throws IOException {
+    return TemplateHelper.readCSV(reader);
+  }
+
+  /**
+   * Read tab-separated values from a path to a list of lists of strings.
+   *
+   * @param path file path to the CSV file
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readTSV(String path) throws IOException {
+    return TemplateHelper.readTSV(path);
+  }
+
+  /**
+   * Read tab-separated values from a stream to a list of lists of strings.
+   *
+   * @param stream the stream to read from
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readTSV(InputStream stream) throws IOException {
+    return TemplateHelper.readTSV(stream);
+  }
+
+  /**
+   * Read tab-separated values from a reader to a list of lists of strings.
+   *
+   * @param reader a reader to read data from
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readTSV(Reader reader) throws IOException {
+    return TemplateHelper.readTSV(reader);
+  }
+
+  /**
+   * Read a table from a path to a list of lists of strings.
+   *
+   * @param path file path to the CSV file
+   * @return a list of lists of strings
+   * @throws IOException on file or reading problems
+   */
+  public static List<List<String>> readTable(String path) throws IOException {
+    return TemplateHelper.readTable(path);
   }
 }

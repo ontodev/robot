@@ -66,6 +66,48 @@ public class ReportOperation {
   private static final String ERROR = "ERROR";
 
   /**
+   * Return a map from option name to default option value, for all the available report options.
+   *
+   * @return a map with default values for all available options
+   */
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> options = new HashMap<String, String>();
+
+    return options;
+  }
+
+  /**
+   * Report on the ontology using the rules within the profile and print results. Prefer
+   * report(OWLOntology ontology, String profilePath, String outputPath, String format, String
+   * failOn).
+   *
+   * @param ontology the OWLOntology to report
+   * @param iohelper IOHelper to work with ontology
+   */
+  public static void report(OWLOntology ontology, IOHelper iohelper) {
+    try {
+      report(ontology, null, null, null, null);
+    } catch (Exception e) {
+    }
+  }
+
+  /**
+   * Report on the ontology using the rules within the profile and print results. Prefer
+   * report(OWLOntology ontology, String profilePath, String outputPath, String format, String
+   * failOn).
+   *
+   * @param ontology the OWLOntology to report
+   * @param iohelper IOHelper to work with ontology
+   * @param options map of report options
+   */
+  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
+    try {
+      report(ontology, null, null, null, null);
+    } catch (Exception e) {
+    }
+  }
+
+  /**
    * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
    * null) report on the ontology using the rules within the profile and write results to the output
    * path. If profile is null, use the default profile in resources. If the output path is null,
