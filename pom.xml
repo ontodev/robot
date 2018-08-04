@@ -5,7 +5,7 @@
 
   <groupId>org.obolibrary.robot</groupId>
   <artifactId>robot</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.1.0</version>
   <packaging>pom</packaging>
 
   <name>robot</name>
