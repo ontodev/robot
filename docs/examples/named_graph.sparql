@@ -1,0 +1,11 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT ?s 
+FROM NAMED <https://github.com/ontodev/robot/examples/edit.owl> 
+WHERE { 
+	GRAPH ?g { 
+		?s a owl:Class .
+		FILTER (!isBlank(?s))
+	}
+}
+ORDER BY ?s

@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -11,6 +10,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +26,13 @@ public class QueryCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "query#";
 
+  /** Error message when a query is not provided */
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR at least one query must be provided";
+
+  /** Error message when an invalid --imports option is provided */
+  private static final String importsOptionError =
+      NS + "IMPORTS OPTION ERROR --imports must be union, graphs, or ignore.";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -38,25 +43,26 @@ public class QueryCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("f", "format", true, "the query result format: CSV, TSV," + " TTL, JSONLD, etc.");
-
     o.addOption("O", "output-dir", true, "Directory for output");
+    o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
 
-    Option select = new Option("s", "select", true, "run a SPARQL SELECT query (deprecated)");
-    select.setArgs(2);
-    o.addOption(select);
+    Option opt;
 
-    Option construct =
-        new Option("c", "construct", true, "run a SPARQL CONSTRUCT query (deprecated)");
-    construct.setArgs(2);
-    o.addOption(construct);
+    opt = new Option("s", "select", true, "run a SPARQL SELECT query (deprecated)");
+    opt.setArgs(2);
+    o.addOption(opt);
 
-    Option query = new Option("q", "query", true, "run a SPARQL query");
-    query.setArgs(2);
-    o.addOption(query);
+    opt = new Option("c", "construct", true, "run a SPARQL CONSTRUCT query (deprecated)");
+    opt.setArgs(2);
+    o.addOption(opt);
 
-    Option queries = new Option("Q", "queries", true, "verify one or more SPARQL queries");
-    queries.setArgs(Option.UNLIMITED_VALUES);
-    o.addOption(queries);
+    opt = new Option("q", "query", true, "run a SPARQL query");
+    opt.setArgs(2);
+    o.addOption(opt);
+
+    opt = new Option("Q", "queries", true, "verify one or more SPARQL queries");
+    opt.setArgs(Option.UNLIMITED_VALUES);
+    o.addOption(opt);
 
     options = o;
   }
@@ -120,7 +126,6 @@ public class QueryCommand implements Command {
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
       return null;
@@ -130,10 +135,18 @@ public class QueryCommand implements Command {
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    DatasetGraph dsg = QueryOperation.loadOntology(state.getOntology());
+
+    // Determine what to do with the imports and create a new dataset
+    boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
+    Dataset dataset;
+    if (useGraphs) {
+      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), true);
+    } else {
+      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), false);
+    }
 
     // Collect all queries as (queryPath, outputPath) pairs.
-    List<List<String>> queries = new ArrayList<List<String>>();
+    List<List<String>> queries = new ArrayList<>();
     List<String> qs = CommandLineHelper.getOptionalValues(line, "query");
     for (int i = 0; i < qs.size(); i += 2) {
       queries.add(qs.subList(i, i + 2));
@@ -148,7 +161,7 @@ public class QueryCommand implements Command {
     }
     qs = CommandLineHelper.getOptionalValues(line, "queries");
     for (String q : qs) {
-      List<String> xs = new ArrayList<String>();
+      List<String> xs = new ArrayList<>();
       xs.add(q);
       xs.add(null);
       queries.add(xs);
@@ -180,9 +193,8 @@ public class QueryCommand implements Command {
       }
 
       OutputStream output = new FileOutputStream(outputPath);
-      QueryOperation.runSparqlQuery(dsg, query, formatName, output);
+      QueryOperation.runSparqlQuery(dataset, query, formatName, output);
     }
-
     return state;
   }
 }

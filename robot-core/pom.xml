@@ -51,6 +51,10 @@
             <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
             <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
             <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+            <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
+            <excludes>
+              <exclude>org.obolibrary.robot.QueryOperation</exclude>
+            </excludes>
           </parameter>
         </configuration>
         <executions>
@@ -69,7 +73,12 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-arq</artifactId>
-      <version>2.13.0</version>
+      <version>3.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-tdb</artifactId>
+      <version>3.8.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.jsonld-java</groupId>
