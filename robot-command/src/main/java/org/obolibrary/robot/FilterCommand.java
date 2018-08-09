@@ -109,8 +109,8 @@ public class FilterCommand implements Command {
 
     // Get a set of entities to start with
     Set<OWLObject> objects = new HashSet<>();
-    if (line.hasOption("term") || line.hasOption("terms")) {
-      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "terms");
+    if (line.hasOption("term") || line.hasOption("term-file")) {
+      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
       objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
     }
 
@@ -124,6 +124,7 @@ public class FilterCommand implements Command {
     if (selects.isEmpty()) {
       selects.add("self");
     }
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
@@ -164,8 +165,13 @@ public class FilterCommand implements Command {
         }
       }
     }
-    Set<OWLAxiom> axiomsToCopy =
-        RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
+
+    Set<OWLAxiom> axiomsToCopy;
+    if (trim) {
+      axiomsToCopy = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
+    } else {
+      axiomsToCopy = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
+    }
 
     // Create a new ontology from that set of axioms
     OWLOntology outputOntology;
@@ -173,11 +179,6 @@ public class FilterCommand implements Command {
       outputOntology = manager.createOntology(axiomsToCopy, outputIRI);
     } else {
       outputOntology = manager.createOntology(axiomsToCopy);
-    }
-
-    // Maybe trim dangling (by default, true)
-    if (CommandLineHelper.getBooleanValue(line, "trim", true)) {
-      OntologyHelper.trimOntology(outputOntology);
     }
 
     // Save the changed ontology and return the state

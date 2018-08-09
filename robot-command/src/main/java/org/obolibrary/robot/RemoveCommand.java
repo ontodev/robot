@@ -105,8 +105,8 @@ public class RemoveCommand implements Command {
 
     // Get a set of entities to start with
     Set<OWLObject> objects = new HashSet<>();
-    if (line.hasOption("term") || line.hasOption("terms")) {
-      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "terms");
+    if (line.hasOption("term") || line.hasOption("term-file")) {
+      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
       objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
     }
 
@@ -154,8 +154,12 @@ public class RemoveCommand implements Command {
 
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(ontology, objects, selectGroups);
-    Set<OWLAxiom> axiomsToRemove =
-        RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
+    Set<OWLAxiom> axiomsToRemove;
+    if (trim) {
+      axiomsToRemove = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
+    } else {
+      axiomsToRemove = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
+    }
     manager.removeAxioms(ontology, axiomsToRemove);
 
     // Maybe trim dangling (by default, false)
