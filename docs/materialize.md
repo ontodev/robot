@@ -13,7 +13,7 @@ This can be [chained](/chaining) with [remove](/remove) (by specifying a set of 
 
     robot materialize --reasoner ELK \
       --input emr_example.obo \
-      remove --term BFO:0000050 \
+      remove --term BFO:0000050 --trim true \
       --select complement --select object-properties \
       reduce --output results/emr_reduced.obo
 
