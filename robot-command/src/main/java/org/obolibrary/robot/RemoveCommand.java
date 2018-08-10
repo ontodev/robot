@@ -162,11 +162,6 @@ public class RemoveCommand implements Command {
     }
     manager.removeAxioms(ontology, axiomsToRemove);
 
-    // Maybe trim dangling (by default, false)
-    if (trim) {
-      OntologyHelper.trimOntology(ontology);
-    }
-
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
