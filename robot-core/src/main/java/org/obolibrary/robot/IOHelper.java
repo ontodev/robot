@@ -513,6 +513,22 @@ public class IOHelper {
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
     return saveOntology(ontology, format, ontologyIRI, true);
   }
+  
+  /**
+   * Save an ontology in the given format to a path, with the option to ignore OBO document checks.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyPath the path to save the ontology to
+   * @param checkOBO if false, ignore OBO document checks
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology, OWLDocumentFormat format, String ontologyPath, boolean checkOBO)
+      throws IOException {
+    return saveOntology(ontology, format, IRI.create(new File(ontologyPath)), checkOBO);
+  }
 
   /**
    * Save an ontology in the given format to an IRI, with the option to ignore OBO document checks.
