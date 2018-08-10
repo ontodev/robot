@@ -2,10 +2,7 @@ package org.obolibrary.robot;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -15,11 +12,10 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.tdb.TDB;
 import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.update.UpdateAction;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,6 +167,25 @@ public class QueryOperation {
   public static ResultSet execQuery(Dataset dataset, String query) {
     QueryExecution qExec = QueryExecutionFactory.create(query, dataset);
     return qExec.execSelect();
+  }
+
+  /**
+   * Given a dataset and an update, update the dataset and return the resulting OWLOntology.
+   *
+   * @param dataset the Dataset to update
+   * @param updateString the SPARQL UPDATE string
+   * @return updated OWLOntology
+   * @throws OWLOntologyCreationException on issue creating ontology from dataset
+   */
+  public static OWLOntology execUpdate(Dataset dataset, String updateString)
+      throws OWLOntologyCreationException {
+    UpdateAction.parseExecute(updateString, dataset);
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    Model m = ModelFactory.createUnion(dataset.getDefaultModel(), dataset.getUnionModel());
+    RDFDataMgr.write(os, m, Lang.TTL);
+
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    return manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(os.toByteArray()));
   }
 
   /**

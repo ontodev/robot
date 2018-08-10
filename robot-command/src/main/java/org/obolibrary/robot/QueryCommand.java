@@ -11,6 +11,10 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +47,10 @@ public class QueryCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("f", "format", true, "the query result format: CSV, TSV," + " TTL, JSONLD, etc.");
+    o.addOption("o", "output", true, "save updated ontology to a file");
     o.addOption("O", "output-dir", true, "Directory for output");
     o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
+    o.addOption("u", "update", true, "run a SPARQL UPDATE");
 
     Option opt;
 
@@ -135,14 +141,34 @@ public class QueryCommand implements Command {
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology inputOntology = state.getOntology();
 
     // Determine what to do with the imports and create a new dataset
     boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset;
     if (useGraphs) {
-      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), true);
+      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, true);
     } else {
-      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), false);
+      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, false);
+    }
+
+    // If an update is provided, run the update then return the OWLOntology
+    String updateFilePath = CommandLineHelper.getOptionalValue(line, "update");
+    if (updateFilePath != null) {
+      String updateString = FileUtils.readFileToString(new File(updateFilePath));
+      OWLOntology outputOntology = QueryOperation.execUpdate(dataset, updateString);
+
+      // If the input ontology had imports, maintain them
+      if (inputOntology.getImports().size() > 0) {
+        OWLOntologyManager manager = inputOntology.getOWLOntologyManager();
+        for (OWLImportsDeclaration importsDeclaration : inputOntology.getImportsDeclarations()) {
+          manager.applyChange(new AddImport(outputOntology, importsDeclaration));
+        }
+      }
+
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
     }
 
     // Collect all queries as (queryPath, outputPath) pairs.
