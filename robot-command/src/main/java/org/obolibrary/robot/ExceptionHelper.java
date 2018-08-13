@@ -24,8 +24,10 @@ public class ExceptionHelper {
     String msg = trimExceptionClass(exception);
     if (msg != null) {
       String exceptionID = getExceptionID(msg);
-      System.out.println(trimExceptionID(msg));
-      System.out.println("For details see: http://robot.obolibrary.org/" + exceptionID);
+      if (exceptionID != null) {
+        System.out.println(trimExceptionID(msg));
+        System.out.println("For details see: http://robot.obolibrary.org/" + exceptionID);
+      }
     }
     // Will only print with --very-very-verbose (DEBUG level)
     if (logger.isDebugEnabled()) {
@@ -44,16 +46,17 @@ public class ExceptionHelper {
    * @return exception ID or empty string
    */
   private static String getExceptionID(String msg) {
-    String exceptionID = "";
+    String exceptionID;
     try {
       exceptionID =
           msg.substring(0, msg.indexOf("ERROR") + 5).trim().toLowerCase().replace(" ", "-");
-    } catch (NullPointerException e) {
+    } catch (Exception e) {
       logger.debug("Malformed exception message: {}", msg);
+      return null;
     }
     if (!exceptionID.contains("#")) {
       logger.debug("Missing exception ID: {}", msg);
-      exceptionID = "";
+      return null;
     }
     return exceptionID;
   }
