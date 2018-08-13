@@ -33,6 +33,8 @@ public class FilterCommand implements Command {
     o.addOption("t", "term", true, "term to filter");
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("s", "select", true, "select a set of terms based on relations");
+    o.addOption(
+        "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
     o.addOption("r", "trim", true, "if true, trim dangling entities");
     options = o;
@@ -146,11 +148,13 @@ public class FilterCommand implements Command {
       }
     }
 
+    // Get the output IRI for the new ontology
     IRI outputIRI;
     String outputIRIString = CommandLineHelper.getOptionalValue(line, "ontology-iri");
     if (outputIRIString != null) {
       outputIRI = IRI.create(outputIRIString);
     } else {
+      // If it is not provided, copy the input IRI
       outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     }
 
@@ -165,12 +169,17 @@ public class FilterCommand implements Command {
         }
       }
     }
-
     Set<OWLAxiom> axiomsToCopy;
     if (trim) {
       axiomsToCopy = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
     } else {
       axiomsToCopy = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
+    }
+
+    // Handle gaps
+    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
+    if (preserveStructure) {
+      axiomsToCopy.addAll(RelatedObjectsHelper.spanGaps(ontology, relatedObjects));
     }
 
     // Create a new ontology from that set of axioms

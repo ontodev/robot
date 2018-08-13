@@ -31,6 +31,8 @@ public class RemoveCommand implements Command {
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
     o.addOption("r", "trim", true, "if true, trim dangling entities");
+    o.addOption(
+        "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     options = o;
   }
 
@@ -161,6 +163,12 @@ public class RemoveCommand implements Command {
       axiomsToRemove = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
     }
     manager.removeAxioms(ontology, axiomsToRemove);
+
+    // Handle gaps
+    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
+    if (preserveStructure) {
+      manager.addAxioms(ontology, RelatedObjectsHelper.spanGaps(ontology, relatedObjects));
+    }
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);

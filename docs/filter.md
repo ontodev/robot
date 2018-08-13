@@ -4,6 +4,8 @@ The `filter` command allows you to create a new ontology from a source ontology 
 
 By default, `filter` will remove dangling entities copied as the result of the filtering. To include dangling entities, run with `--trim false`.
 
+This operation maintains structural integrity; lineage is maintained, and gaps will be filled where classes have been excluded. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
+
 ## Annotations
 
 The `filter` command also includes a special `--select "annotations"` option. If this is included, all annotations on filtered terms will be included, regardless of if those properties are in the set of terms or not.
@@ -41,4 +43,3 @@ robot filter --input obi.owl --term OBI:0000070 --select annotations
 ```
 robot filter --input foo.owl --select classes --select "oboInOwl:inSubset='bar'"
 ```
-

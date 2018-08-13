@@ -1,0 +1,13 @@
+diff --git a/robot-core/src/main/java/org/obolibrary/robot/IOHelper.java b/robot-core/src/main/java/org/obolibrary/robot/IOHelper.java
+index 3e19dec..c1dfe57 100644
+--- a/robot-core/src/main/java/org/obolibrary/robot/IOHelper.java
++++ b/robot-core/src/main/java/org/obolibrary/robot/IOHelper.java
+@@ -513,7 +513,7 @@ public class IOHelper {
+       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
+     return saveOntology(ontology, format, ontologyIRI, true);
+   }
+-  
++
+   /**
+    * Save an ontology in the given format to a path, with the option to ignore OBO document checks.
+    *

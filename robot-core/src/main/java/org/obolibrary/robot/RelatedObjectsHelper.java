@@ -1,9 +1,7 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -37,6 +35,11 @@ public class RelatedObjectsHelper {
   /** Error message when an invalid IRI is provided. Expects the entry field and term. */
   private static final String invalidIRIError =
       NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
+
+  /** String for subclass/property mapping */
+  private static final String SUB = "sub";
+  /** String for superclass/property mapping */
+  private static final String SUPER = "super";
 
   /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
@@ -479,7 +482,7 @@ public class RelatedObjectsHelper {
    * @param objects Set of OWLObjects to filter
    * @param annotationPattern annotation to filter OWLObjects on
    * @return subset of OWLObjects matching the annotation pattern
-   * @throws Exception
+   * @throws Exception on issue parsing literal datatype
    */
   public static Set<OWLObject> selectPattern(
       OWLOntology ontology, Set<OWLObject> objects, String annotationPattern) throws Exception {
@@ -522,12 +525,75 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an ontology and a set of objects, construct a set of subClassOf axioms that span the gaps
+   * between classes to maintain a hierarchy.
+   *
+   * @param ontology input OWLOntology
+   * @param objects set of Objects to build hierarchy
+   * @return set of OWLAxioms to maintain hierarchy
+   */
+  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+    List<Map<String, OWLAnnotationProperty>> aPropPairs = new ArrayList<>();
+    List<Map<String, OWLClassExpression>> classPairs = new ArrayList<>();
+    List<Map<String, OWLDataPropertyExpression>> dPropPairs = new ArrayList<>();
+    List<Map<String, OWLObjectPropertyExpression>> oPropPairs = new ArrayList<>();
+    Set<OWLAxiom> axioms = new HashSet<>();
+    OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+
+    // Iterate through objects to generate sub-super pairs
+    for (OWLObject object : objects) {
+      if (object instanceof OWLAnnotationProperty) {
+        OWLAnnotationProperty p = (OWLAnnotationProperty) object;
+        spanGapsHelper(
+            ontology, objects, aPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
+      } else if (object instanceof OWLClass) {
+        OWLClass cls = (OWLClass) object;
+        spanGapsHelper(
+            ontology, objects, classPairs, cls, EntitySearcher.getSuperClasses(cls, ontology));
+      } else if (object instanceof OWLDataProperty) {
+        OWLDataProperty p = (OWLDataProperty) object;
+        spanGapsHelper(
+            ontology, objects, dPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
+      } else if (object instanceof OWLObjectProperty) {
+        OWLObjectProperty p = (OWLObjectProperty) object;
+        spanGapsHelper(
+            ontology, objects, oPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
+      }
+    }
+
+    // Generate axioms based on the sub-super pairs
+    for (Map<String, OWLAnnotationProperty> propPair : aPropPairs) {
+      OWLAnnotationProperty subProperty = propPair.get(SUB);
+      OWLAnnotationProperty superProperty = propPair.get(SUPER);
+      axioms.add(dataFactory.getOWLSubAnnotationPropertyOfAxiom(subProperty, superProperty));
+    }
+    for (Map<String, OWLClassExpression> classPair : classPairs) {
+      OWLClass subClass = classPair.get(SUB).asOWLClass();
+      OWLClassExpression superClass = classPair.get(SUPER);
+      axioms.add(dataFactory.getOWLSubClassOfAxiom(subClass, superClass));
+    }
+    for (Map<String, OWLDataPropertyExpression> propPair : dPropPairs) {
+      OWLDataProperty subProperty = propPair.get(SUB).asOWLDataProperty();
+      OWLDataPropertyExpression superProperty = propPair.get(SUPER);
+      axioms.add(dataFactory.getOWLSubDataPropertyOfAxiom(subProperty, superProperty));
+    }
+    for (Map<String, OWLObjectPropertyExpression> propPair : oPropPairs) {
+      OWLObjectProperty subProperty = propPair.get(SUB).asOWLObjectProperty();
+      OWLObjectPropertyExpression superProperty = propPair.get(SUPER);
+      axioms.add(dataFactory.getOWLSubObjectPropertyOfAxiom(subProperty, superProperty));
+    }
+
+    return axioms;
+  }
+
+  /**
    * Given an IOHelper and an annotation as CURIE=..., return the OWLAnnotation object(s).
    *
    * @param ontology OWLOntology to get annotations from
    * @param ioHelper IOHelper to get IRI
    * @param annotation String input
    * @return set of OWLAnnotations
+   * @throws Exception on issue parsing literal datatype
    */
   protected static Set<OWLAnnotation> getAnnotations(
       OWLOntology ontology, IOHelper ioHelper, String annotation) throws Exception {
@@ -882,6 +948,183 @@ public class RelatedObjectsHelper {
         }
       } else {
         descendants.add(propertyExpression);
+      }
+    }
+  }
+
+  /**
+   * Helper method to create subPropertyOf axioms that span gaps. This method fills in a list of
+   * maps, each containing a sub-property/super-property pair. This list is used to generate the
+   * appropriate subPropertyOf axioms.
+   *
+   * @param ontology OWLOntology to get ancestors from
+   * @param objects set of OWLObjects to include
+   * @param propPairs list of sub-super pairs
+   * @param property OWLAnnotationProperty in set to act as sub-property
+   * @param superProperties Collection of super-properties
+   */
+  private static void spanGapsHelper(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      List<Map<String, OWLAnnotationProperty>> propPairs,
+      OWLAnnotationProperty property,
+      Collection<OWLAnnotationProperty> superProperties) {
+    for (OWLAnnotationProperty sp : superProperties) {
+      if (objects.contains(sp)) {
+        if (objects.containsAll(sp.getSignature())) {
+          Map<String, OWLAnnotationProperty> propertyPair = new HashMap<>();
+          propertyPair.put(SUB, property);
+          propertyPair.put(SUPER, sp);
+          propPairs.add(propertyPair);
+          property = sp;
+          spanGapsHelper(
+              ontology,
+              objects,
+              propPairs,
+              property,
+              EntitySearcher.getSuperProperties(property, ontology));
+        }
+      } else if (!sp.isAnonymous()) {
+        spanGapsHelper(
+            ontology,
+            objects,
+            propPairs,
+            property,
+            EntitySearcher.getSuperProperties(sp, ontology));
+      }
+    }
+  }
+
+  /**
+   * Helper method to create subClassOf axioms that span gaps. This method fills in a list of maps,
+   * each containing a subclass/superclass pair. This list is used to generate the appropriate
+   * subClassOf axioms.
+   *
+   * @param ontology OWLOntology to get ancestors from
+   * @param objects set of OWLObjects to include
+   * @param classPairs list of sub-super pairs
+   * @param cls OWLClass in set to act as subclass
+   * @param superClasses Collection of superclass OWLClassExpressions
+   */
+  private static void spanGapsHelper(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      List<Map<String, OWLClassExpression>> classPairs,
+      OWLClass cls,
+      Collection<OWLClassExpression> superClasses) {
+    for (OWLClassExpression sc : superClasses) {
+      if (objects.contains(sc)) {
+        if (objects.containsAll(sc.getSignature())) {
+          Map<String, OWLClassExpression> classPair = new HashMap<>();
+          classPair.put(SUB, cls);
+          classPair.put(SUPER, sc);
+          classPairs.add(classPair);
+          if (!sc.isAnonymous()) {
+            spanGapsHelper(
+                ontology,
+                objects,
+                classPairs,
+                sc.asOWLClass(),
+                EntitySearcher.getSuperClasses(sc.asOWLClass(), ontology));
+          }
+        }
+      } else if (!sc.isAnonymous()) {
+        spanGapsHelper(
+            ontology,
+            objects,
+            classPairs,
+            cls,
+            EntitySearcher.getSuperClasses(sc.asOWLClass(), ontology));
+      }
+    }
+  }
+
+  /**
+   * Helper method to create subPropertyOf axioms that span gaps (for data properties). This method
+   * fills in a list of maps, each containing a sub-property/super-property pair. This list is used
+   * to generate the appropriate subPropertyOf axioms.
+   *
+   * @param ontology OWLOntology to get ancestors from
+   * @param objects set of OWLObjects to include
+   * @param propPairs list of sub-super pairs
+   * @param property OWLDataProperty in set to act as sub-property
+   * @param superProperties Collection of super-properties OWLDataPropertyExpressions
+   */
+  private static void spanGapsHelper(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      List<Map<String, OWLDataPropertyExpression>> propPairs,
+      OWLDataProperty property,
+      Collection<OWLDataPropertyExpression> superProperties) {
+    for (OWLDataPropertyExpression sp : superProperties) {
+      if (objects.contains(sp)) {
+        if (objects.containsAll(sp.getSignature())) {
+          Map<String, OWLDataPropertyExpression> propertyPair = new HashMap<>();
+          propertyPair.put(SUB, property);
+          propertyPair.put(SUPER, sp);
+          propPairs.add(propertyPair);
+          if (!sp.isAnonymous()) {
+            property = (OWLDataProperty) sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
+        }
+      } else if (!sp.isAnonymous()) {
+        spanGapsHelper(
+            ontology,
+            objects,
+            propPairs,
+            property,
+            EntitySearcher.getSuperProperties(sp, ontology));
+      }
+    }
+  }
+
+  /**
+   * Helper method to create subPropertyOf axioms that span gaps (for object properties). This
+   * method fills in a list of maps, each containing a sub-property/super-property pair. This list
+   * is used to generate the appropriate subPropertyOf axioms.
+   *
+   * @param ontology OWLOntology to get ancestors from
+   * @param objects set of OWLObjects to include
+   * @param propPairs list of sub-super pairs
+   * @param property OWLObjectProperty in set to act as sub-property
+   * @param superProperties Collection of super-properties OWLObjectPropertyExpressions
+   */
+  private static void spanGapsHelper(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      List<Map<String, OWLObjectPropertyExpression>> propPairs,
+      OWLObjectProperty property,
+      Collection<OWLObjectPropertyExpression> superProperties) {
+    for (OWLObjectPropertyExpression sp : superProperties) {
+      if (objects.contains(sp)) {
+        if (objects.containsAll(sp.getSignature())) {
+          Map<String, OWLObjectPropertyExpression> propertyPair = new HashMap<>();
+          propertyPair.put(SUB, property);
+          propertyPair.put(SUPER, sp);
+          propPairs.add(propertyPair);
+          if (!sp.isAnonymous()) {
+            property = (OWLObjectProperty) sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
+        }
+      } else if (!sp.isAnonymous()) {
+        spanGapsHelper(
+            ontology,
+            objects,
+            propPairs,
+            property,
+            EntitySearcher.getSuperProperties(sp, ontology));
       }
     }
   }

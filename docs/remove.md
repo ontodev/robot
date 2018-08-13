@@ -6,6 +6,8 @@ The `remove` command allows you to remove selected axioms from an ontology. The 
 2. `--select`: select a new set of terms using one or more relations (zero or more)
 3. `--axioms`: specify the axiom types to remove from those terms (default: all axioms)
 
+This operation maintains structural integrity; lineage is maintained, and gaps will be filled where classes have been removed. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
+
 For example, to remove all descendants of 'assay' from OBI:
 
 ```
