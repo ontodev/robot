@@ -1013,20 +1013,18 @@ public class RelatedObjectsHelper {
       OWLClass cls,
       Collection<OWLClassExpression> superClasses) {
     for (OWLClassExpression sc : superClasses) {
-      if (objects.contains(sc)) {
-        if (objects.containsAll(sc.getSignature())) {
-          Map<String, OWLClassExpression> classPair = new HashMap<>();
-          classPair.put(SUB, cls);
-          classPair.put(SUPER, sc);
-          classPairs.add(classPair);
-          if (!sc.isAnonymous()) {
-            spanGapsHelper(
-                ontology,
-                objects,
-                classPairs,
-                sc.asOWLClass(),
-                EntitySearcher.getSuperClasses(sc.asOWLClass(), ontology));
-          }
+      if (objects.containsAll(sc.getSignature())) {
+        Map<String, OWLClassExpression> classPair = new HashMap<>();
+        classPair.put(SUB, cls);
+        classPair.put(SUPER, sc);
+        classPairs.add(classPair);
+        if (!sc.isAnonymous()) {
+          spanGapsHelper(
+              ontology,
+              objects,
+              classPairs,
+              sc.asOWLClass(),
+              EntitySearcher.getSuperClasses(sc.asOWLClass(), ontology));
         }
       } else if (!sc.isAnonymous()) {
         spanGapsHelper(
@@ -1057,21 +1055,19 @@ public class RelatedObjectsHelper {
       OWLDataProperty property,
       Collection<OWLDataPropertyExpression> superProperties) {
     for (OWLDataPropertyExpression sp : superProperties) {
-      if (objects.contains(sp)) {
-        if (objects.containsAll(sp.getSignature())) {
-          Map<String, OWLDataPropertyExpression> propertyPair = new HashMap<>();
-          propertyPair.put(SUB, property);
-          propertyPair.put(SUPER, sp);
-          propPairs.add(propertyPair);
-          if (!sp.isAnonymous()) {
-            property = (OWLDataProperty) sp;
-            spanGapsHelper(
-                ontology,
-                objects,
-                propPairs,
-                property,
-                EntitySearcher.getSuperProperties(property, ontology));
-          }
+      if (objects.containsAll(sp.getSignature())) {
+        Map<String, OWLDataPropertyExpression> propertyPair = new HashMap<>();
+        propertyPair.put(SUB, property);
+        propertyPair.put(SUPER, sp);
+        propPairs.add(propertyPair);
+        if (!sp.isAnonymous()) {
+          property = (OWLDataProperty) sp;
+          spanGapsHelper(
+              ontology,
+              objects,
+              propPairs,
+              property,
+              EntitySearcher.getSuperProperties(property, ontology));
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
@@ -1102,21 +1098,19 @@ public class RelatedObjectsHelper {
       OWLObjectProperty property,
       Collection<OWLObjectPropertyExpression> superProperties) {
     for (OWLObjectPropertyExpression sp : superProperties) {
-      if (objects.contains(sp)) {
-        if (objects.containsAll(sp.getSignature())) {
-          Map<String, OWLObjectPropertyExpression> propertyPair = new HashMap<>();
-          propertyPair.put(SUB, property);
-          propertyPair.put(SUPER, sp);
-          propPairs.add(propertyPair);
-          if (!sp.isAnonymous()) {
-            property = (OWLObjectProperty) sp;
-            spanGapsHelper(
-                ontology,
-                objects,
-                propPairs,
-                property,
-                EntitySearcher.getSuperProperties(property, ontology));
-          }
+      if (objects.containsAll(sp.getSignature())) {
+        Map<String, OWLObjectPropertyExpression> propertyPair = new HashMap<>();
+        propertyPair.put(SUB, property);
+        propertyPair.put(SUPER, sp);
+        propPairs.add(propertyPair);
+        if (!sp.isAnonymous()) {
+          property = (OWLObjectProperty) sp;
+          spanGapsHelper(
+              ontology,
+              objects,
+              propPairs,
+              property,
+              EntitySearcher.getSuperProperties(property, ontology));
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
