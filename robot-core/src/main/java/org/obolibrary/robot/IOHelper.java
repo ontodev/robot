@@ -94,11 +94,11 @@ public class IOHelper {
 
   /** Error message when a JSON-LD context cannot be created, for any reason. */
   private static final String jsonldContextCreationError =
-      NS + "JSONLD CONTEXT CREATION ERROR Could not create the JSON-LD context.";
+      NS + "JSON-LD CONTEXT CREATION ERROR Could not create the JSON-LD context.";
 
   /** Error message when a JSON-LD context cannot be read, for any reason. */
   private static final String jsonldContextParseError =
-      NS + "JSONLD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+      NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
 
   /** Error message when the ontology cannot be saved. Expects the IRI string. */
   private static final String ontologyStorageError =
@@ -145,8 +145,9 @@ public class IOHelper {
    * Create a new IOHelper with the specified prefixes.
    *
    * @param map the prefixes to use
+   * @throws IOException on issue parsing map
    */
-  public IOHelper(Map<String, Object> map) {
+  public IOHelper(Map<String, Object> map) throws IOException {
     setContext(map);
   }
 
@@ -154,15 +155,11 @@ public class IOHelper {
    * Create a new IOHelper with prefixes from a file path.
    *
    * @param path to a JSON-LD file with a @context
+   * @throws IOException on issue parsing JSON-LD file as context
    */
-  public IOHelper(String path) {
-    try {
-      String jsonString = FileUtils.readFileToString(new File(path));
-      setContext(jsonString);
-    } catch (IOException e) {
-      logger.warn("Could not load prefixes from " + path);
-      logger.warn(e.getMessage());
-    }
+  public IOHelper(String path) throws IOException {
+    String jsonString = FileUtils.readFileToString(new File(path));
+    setContext(jsonString);
   }
 
   /**
@@ -317,13 +314,16 @@ public class IOHelper {
       if (catalogFile != null && catalogFile.isFile()) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       } else {
-        logger.warn(
-            "Catalog {} does not exist. Loading ontology without catalog.", catalogFile.getPath());
+        String path;
+        try {
+          path = catalogFile.getPath();
+        } catch (NullPointerException e) {
+          path = "null";
+        }
+        logger.warn("Catalog ({}) does not exist. Loading ontology without catalog.", path);
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
-    } catch (JsonLdError e) {
-      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
-    } catch (OWLOntologyCreationException e) {
+    } catch (JsonLdError | OWLOntologyCreationException e) {
       throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
   }
@@ -513,7 +513,7 @@ public class IOHelper {
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
     return saveOntology(ontology, format, ontologyIRI, true);
   }
-  
+
   /**
    * Save an ontology in the given format to a path, with the option to ignore OBO document checks.
    *
@@ -786,13 +786,8 @@ public class IOHelper {
    *
    * @param jsonString the new JSON-LD context as a JSON string
    */
-  public void setContext(String jsonString) {
-    try {
-      this.context = parseContext(jsonString);
-    } catch (Exception e) {
-      logger.warn("Could not set context from JSON");
-      logger.warn(e.getMessage());
-    }
+  public void setContext(String jsonString) throws IOException {
+    this.context = parseContext(jsonString);
   }
 
   /**
@@ -800,12 +795,11 @@ public class IOHelper {
    *
    * @param map a map of strings for the new JSON-LD context
    */
-  public void setContext(Map<String, Object> map) {
+  public void setContext(Map<String, Object> map) throws IOException {
     try {
       this.context = new Context().parse(map);
-    } catch (Exception e) {
-      logger.warn("Could not set context {}", map);
-      logger.warn(e.getMessage());
+    } catch (JsonLdError e) {
+      throw new IOException(jsonldContextParseError, e);
     }
   }
 
@@ -901,7 +895,7 @@ public class IOHelper {
    *
    * @param map the new map of prefixes to use
    */
-  public void setPrefixes(Map<String, Object> map) {
+  public void setPrefixes(Map<String, Object> map) throws IOException {
     setContext(map);
   }
 

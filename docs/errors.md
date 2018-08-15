@@ -54,7 +54,7 @@ Prefixes (added with `--prefix`) should be strings in the following format: `"fo
 
 There was an error creating a JSON-LD context. This could be caused by a bad prefix.
 
-### JSON-LD Context Parsing Error
+### JSON-LD Context Parse Error
 
 There was an error parsing a JSON-LD context. Add the `-vvv` option to see more details, and refer to <https://json-ld.org> for information about that format.
 
