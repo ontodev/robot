@@ -158,6 +158,7 @@ public class CommandManager implements Command {
       printHelp();
       return state;
     }
+
     String commandName = args[0];
     if ("help".equals(commandName)) {
       commandName = args[1];

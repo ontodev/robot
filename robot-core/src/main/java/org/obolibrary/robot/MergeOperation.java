@@ -185,7 +185,7 @@ public class MergeOperation {
             .addAxioms(targetOntology, ontology.getAxioms(Imports.INCLUDED));
       } else {
         // Merge the ontologies with imports excluded
-        Set<OWLOntology> imports = targetOntology.getImports();
+        Set<OWLOntology> imports = targetOntology.getDirectImports();
         try {
           OntologyHelper.removeImports(targetOntology);
         } catch (Exception e) {
