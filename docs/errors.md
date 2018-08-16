@@ -86,6 +86,13 @@ The ontology could not be saved to the specified IRI. The most common reasons ar
 
 Each command requires a set of options, although it is more common to get a `MISSING INPUT ERROR`. See the command-specific documentation for more details.
 
+### Prefix Load Error
+
+If a prefix is incorrectly formatted, or if the prefix target does not point to an absolute IRI, the prefix cannot be loaded. Prefixes should be formatted as follows:
+```
+robot -p "robot: http://purl.obolibrary.org/robot/"
+```
+
 ### Unknown Arg Error
 
 This error message may appear for one of two common reasons:

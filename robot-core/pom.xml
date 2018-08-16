@@ -54,6 +54,7 @@
             <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
             <excludes>
               <exclude>org.obolibrary.robot.QueryOperation</exclude>
+              <exclude>org.obolibrary.robot.IOHelper</exclude>
             </excludes>
           </parameter>
         </configuration>

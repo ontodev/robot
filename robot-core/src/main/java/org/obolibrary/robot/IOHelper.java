@@ -104,6 +104,10 @@ public class IOHelper {
   private static final String ontologyStorageError =
       NS + "ONTOLOGY STORAGE ERROR Could not save ontology to IRI: %s";
 
+  /** Error message when a prefix cannot be loaded. Expects the prefix and target. */
+  private static final String prefixLoadError =
+      NS + "PREFIX LOAD ERROR Could not load prefix '%s' for '%s'";
+
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
 
@@ -113,31 +117,26 @@ public class IOHelper {
   /** Store xml entities flag. */
   private Boolean useXMLEntities = false;
 
-  /** Create a new IOHelper with the default prefixes. */
-  public IOHelper() {
-    try {
-      setContext(getDefaultContext());
-    } catch (IOException e) {
-      logger.warn("Could not load default prefixes.");
-      logger.warn(e.getMessage());
-    }
+  /**
+   * Create a new IOHelper with the default prefixes.
+   *
+   * @throws IOException on problem getting default context
+   */
+  public IOHelper() throws IOException {
+    setContext(getDefaultContext());
   }
 
   /**
    * Create a new IOHelper with or without the default prefixes.
    *
    * @param defaults false if defaults should not be used
+   * @throws IOException on problem getting default context
    */
-  public IOHelper(boolean defaults) {
-    try {
-      if (defaults) {
-        setContext(getDefaultContext());
-      } else {
-        setContext();
-      }
-    } catch (IOException e) {
-      logger.warn("Could not load default prefixes.");
-      logger.warn(e.getMessage());
+  public IOHelper(boolean defaults) throws IOException {
+    if (defaults) {
+      setContext(getDefaultContext());
+    } else {
+      setContext();
     }
   }
 
@@ -166,15 +165,11 @@ public class IOHelper {
    * Create a new IOHelper with prefixes from a file.
    *
    * @param file a JSON-LD file with a @context
+   * @throws IOException on issue reading file or setting context from file
    */
-  public IOHelper(File file) {
-    try {
-      String jsonString = FileUtils.readFileToString(file);
-      setContext(jsonString);
-    } catch (IOException e) {
-      logger.warn("Could not load prefixes from " + file);
-      logger.warn(e.getMessage());
-    }
+  public IOHelper(File file) throws IOException {
+    String jsonString = FileUtils.readFileToString(file);
+    setContext(jsonString);
   }
 
   /**
@@ -729,11 +724,11 @@ public class IOHelper {
     try {
       Object jsonObject = JsonUtils.fromString(jsonString);
       if (!(jsonObject instanceof Map)) {
-        return null;
+        throw new IOException(jsonldContextParseError);
       }
       Map<String, Object> jsonMap = (Map<String, Object>) jsonObject;
       if (!jsonMap.containsKey("@context")) {
-        return null;
+        throw new IOException(jsonldContextParseError);
       }
       Object jsonContext = jsonMap.get("@context");
       return new Context().parse(jsonContext);
@@ -854,8 +849,9 @@ public class IOHelper {
    *
    * @param combined both prefix and target
    * @throws IllegalArgumentException on malformed input
+   * @throws IOException if prefix cannot be parsed
    */
-  public void addPrefix(String combined) throws IllegalArgumentException {
+  public void addPrefix(String combined) throws IllegalArgumentException, IOException {
     String[] results = combined.split(":", 2);
     if (results.length < 2) {
       throw new IllegalArgumentException(String.format(invalidPrefixError, combined));
@@ -869,15 +865,15 @@ public class IOHelper {
    *
    * @param prefix the short prefix to add; should not include ":"
    * @param target the IRI string that is the target of the prefix
+   * @throws IOException if prefix cannot be parsed
    */
-  public void addPrefix(String prefix, String target) {
+  public void addPrefix(String prefix, String target) throws IOException {
     try {
       context.put(prefix.trim(), target.trim());
       context.remove("@base");
       setContext((Map<String, Object>) context);
     } catch (Exception e) {
-      logger.warn("Could not load add prefix \"{}\" \"{}\"", prefix, target);
-      logger.warn(e.getMessage());
+      throw new IOException(String.format(prefixLoadError, prefix, target), e);
     }
   }
 

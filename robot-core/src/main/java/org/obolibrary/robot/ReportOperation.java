@@ -124,12 +124,45 @@ public class ReportOperation {
   public static boolean report(
       OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
       throws Exception {
+    return report(ontology, null, profilePath, outputPath, format, failOn);
+  }
+
+  /**
+   * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
+   * null) report on the ontology using the rules within the profile and write results to the output
+   * path. If profile is null, use the default profile in resources. If the output path is null,
+   * write results to console. If the format is null, write results in TSV format.
+   *
+   * @param ontology OWLOntology to report on
+   * @param ioHelper IOHelper to use
+   * @param profilePath user profile file path to use, or null
+   * @param outputPath string path to write report file to, or null
+   * @param format string format for the output report (TSV or YAML), or null
+   * @param failOn logging level to fail execution
+   * @return true if successful, false if failed
+   * @throws Exception on any error
+   */
+  public static boolean report(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn)
+      throws Exception {
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
 
-    Report report = new Report();
+    // Create the report object
+    Report report;
+    if (ioHelper != null) {
+      report = new Report(ioHelper);
+    } else {
+      report = new Report();
+    }
+
     // Load into dataset without imports
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
