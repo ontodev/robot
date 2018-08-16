@@ -71,7 +71,7 @@ Terms can also be selected from the set based on axioms. This can be helpful if 
 
 ## Examples
 
-1. Remove a class ('organ') and and all its descendants:
+Remove a class ('organ') and and all its descendants:
 
     robot remove --input uberon_module.owl \
       --term UBERON:0000062 \
@@ -79,27 +79,26 @@ Terms can also be selected from the set based on axioms. This can be helpful if 
       --trim true \
       --output results/remove_class.owl
 
-
-2. Remove all individuals from OBI:
+Remove all individuals from OBI:
 
 ```
 robot remove --input obi.owl --select individuals --trim true
 ```
 
-3. Remove all anonymous entities from the UBERON module:
+Remove all anonymous entities from the UBERON module:
 
     robot remove --input uberon_module.owl \
       --select anonymous --trim true \
       --output results/remove_anonymous.owl
 
-4. Remove all deprecated classes from OBI:
+Remove all deprecated classes from OBI:
 
 ```
 robot remove --input obi.owl \
   --select "owl:deprecated='true'^^xsd:boolean" --trim true
 ```
 
-5. *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
+*Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
     robot remove --input uberon_module.owl \
       --term rdfs:label --term oboInOwl:id --trim true \
