@@ -11,7 +11,7 @@ See <a href="/examples/uberon_module.txt" target="_blank">`uberon_module.txt`</a
 
 NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first [merge](/merge).
 
-The `--method` options fall into two groups: Syntactic Locality Module Extractor (SLME) and Minimal Information for Reuse of External Ontology Term (MIREOT).
+The `--method` options fall into two groups: Syntactic Locality Module Extractor (SLME) and Minimum Information to Reference an External Ontology Term (MIREOT).
 
 - STAR: use the SLME to extract a fixpoint-nested module
 - TOP: use the SLME to extract a top module
