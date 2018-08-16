@@ -7,7 +7,9 @@ title: ROBOT is an OBO Tool
 
 ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org). It can be used as a command-line tool or as a library for any language on the Java Virtual Machine.
 
-See our homepage <http://robot.obolibrary.org> for documentation and examples of commands, and our JavaDocs for [`robot-core`](http://www.javadoc.io/doc/org.obolibrary.robot/robot-core/) and [`robot-command`](http://www.javadoc.io/doc/org.obolibrary.robot/robot-command/).
+Click on the command names in the sidebar for documentation and examples, and visit our JavaDocs for [`robot-core`](http://www.javadoc.io/doc/org.obolibrary.robot/robot-core/) and [`robot-command`](http://www.javadoc.io/doc/org.obolibrary.robot/robot-command/) for technical details.
+
+For a "how-to" covering the major commands and features of ROBOT, visit our tutorial [located here](https://github.com/rctauber/robot-tutorial).
 
 
 ## 1. Getting Started
