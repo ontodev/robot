@@ -405,8 +405,9 @@ public class CommandLineHelper {
    *
    * @param line the command line to use
    * @return an initialized IOHelper
+   * @throws IOException on issue creating IOHelper with given context
    */
-  public static IOHelper getIOHelper(CommandLine line) {
+  public static IOHelper getIOHelper(CommandLine line) throws IOException {
     IOHelper ioHelper;
     String prefixes = getOptionalValue(line, "prefixes");
     if (prefixes != null) {

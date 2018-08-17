@@ -154,14 +154,12 @@ public class CommandManager implements Command {
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
     // Maybe print general help or version info
-
     if ((args.length == 0) || "help".equals(args[0]) && (args.length == 1)) {
       printHelp();
       return state;
     }
 
     String commandName = args[0];
-
     if ("help".equals(commandName)) {
       commandName = args[1];
       Command cmd = commands.get(commandName);

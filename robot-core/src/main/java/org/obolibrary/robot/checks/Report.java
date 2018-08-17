@@ -1,5 +1,6 @@
 package org.obolibrary.robot.checks;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,8 +47,25 @@ public class Report {
   /** Count of violations for ERROR. */
   private Integer errorCount;
 
-  /** Create a new report object. */
-  public Report() {
+  /** IOHelper to use. */
+  private IOHelper ioHelper;
+
+  /**
+   * Create a new report object without a predefined IOHelper.
+   *
+   * @throws IOException on problem creating IOHelper
+   */
+  public Report() throws IOException {
+    new Report(new IOHelper());
+  }
+
+  /**
+   * Create a new report object with a defined IOHelper.
+   *
+   * @param ioHelper IOHelper to use
+   */
+  public Report(IOHelper ioHelper) {
+    this.ioHelper = ioHelper;
     info = new HashMap<>();
     warn = new HashMap<>();
     error = new HashMap<>();
@@ -86,7 +104,7 @@ public class Report {
    * @return a set of IRI strings
    */
   public Set<String> getIRIs() {
-    Set<String> iris = new HashSet<String>();
+    Set<String> iris = new HashSet<>();
     iris.addAll(getIRIs(error));
     iris.addAll(getIRIs(warn));
     iris.addAll(getIRIs(info));
@@ -100,7 +118,7 @@ public class Report {
    * @return a set of IRI strings
    */
   public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
-    Set<String> iris = new HashSet<String>();
+    Set<String> iris = new HashSet<>();
 
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       for (Violation v : vs.getValue()) {
@@ -206,7 +224,7 @@ public class Report {
    */
   private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
     // Get a prefix manager for creating CURIEs
-    PrefixManager pm = new IOHelper().getPrefixManager();
+    PrefixManager pm = ioHelper.getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }
@@ -245,7 +263,7 @@ public class Report {
    */
   private String yamlHelper(String level, Map<String, List<Violation>> violationSets) {
     // Get a prefix manager for creating CURIEs
-    PrefixManager pm = new IOHelper().getPrefixManager();
+    PrefixManager pm = ioHelper.getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }

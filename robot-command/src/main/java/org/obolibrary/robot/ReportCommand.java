@@ -110,7 +110,8 @@ public class ReportCommand implements Command {
     // Success is based on failOn
     // If any violations are found of the fail-on level, this will be false
     // If failOn is "none" or if no violations are found, this will be true
-    boolean success = ReportOperation.report(ontology, profilePath, outputPath, format, failOn);
+    boolean success =
+        ReportOperation.report(ontology, ioHelper, profilePath, outputPath, format, failOn);
     if (!success) {
       logger.error("Report failed!");
       System.exit(1);
