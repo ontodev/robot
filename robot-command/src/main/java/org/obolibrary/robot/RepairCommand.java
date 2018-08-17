@@ -26,6 +26,11 @@ public class RepairCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "output-iri", true, "set OntologyIRI for output");
+    o.addOption(
+        "m",
+        "merge-axiom-annotations",
+        true,
+        "if true, merge axiom annotations on duplicate axioms");
     options = o;
   }
 
@@ -88,7 +93,7 @@ public class RepairCommand implements Command {
    * @throws Exception on any problem
    */
   public CommandState execute(CommandState state, String[] args) throws Exception {
-    OWLOntology outputOntology = null;
+    OWLOntology outputOntology;
 
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
@@ -104,8 +109,14 @@ public class RepairCommand implements Command {
       outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
     }
 
-    RepairOperation.repair(inputOntology, ioHelper);
+    boolean mergeAxiomAnnotations =
+        CommandLineHelper.getBooleanValue(line, "merge-axiom-annotations", false);
+
+    RepairOperation.repair(inputOntology, ioHelper, mergeAxiomAnnotations);
     outputOntology = inputOntology;
+    if (outputIRI != null) {
+      outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
+    }
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
 
