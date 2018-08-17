@@ -149,7 +149,7 @@ public class ReasonOperation {
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
 
     String dumpFilePath = OptionsHelper.getOption(options, "dump-unsatisfiable", null);
-    ReasonerHelper.validate(reasoner, dumpFilePath, new IOHelper());
+    ReasonerHelper.validate(reasoner, dumpFilePath);
 
     logger.info("Precomputing class hierarchy...");
     reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);

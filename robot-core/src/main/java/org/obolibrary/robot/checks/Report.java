@@ -1,5 +1,6 @@
 package org.obolibrary.robot.checks;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,9 +9,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.obolibrary.robot.IOHelper;
+import org.obolibrary.robot.QuotedEntityChecker;
 import org.obolibrary.robot.UnmergeOperation;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +53,47 @@ public class Report {
   /** Count of violations for ERROR. */
   private Integer errorCount;
 
-  /** Create a new report object. */
-  public Report() {
+  /** IOHelper to use. */
+  private IOHelper ioHelper;
+
+  /** QuotedEntityChecker to use. */
+  private QuotedEntityChecker checker;
+
+  /**
+   * Create a new report object without an ontology or predefined IOHelper.
+   *
+   * @throws IOException on problem creating IOHelper
+   */
+  public Report() throws IOException {
+    new Report(null, new IOHelper());
+  }
+
+  /**
+   * Create a new report object with an ontology and a new IOHelper.
+   *
+   * @param ontology OWLOntology to get labels from
+   * @throws IOException on problem creating IOHelper
+   */
+  public Report(OWLOntology ontology) throws IOException {
+    new Report(ontology, new IOHelper());
+  }
+
+  /**
+   * Create a new report object with an ontology to get labels from and a defined IOHelper.
+   *
+   * @param ontology OWLOntology to get labels from
+   * @param ioHelper IOHelper to use
+   */
+  public Report(OWLOntology ontology, IOHelper ioHelper) {
+    this.ioHelper = ioHelper;
+    checker = new QuotedEntityChecker();
+    checker.setIOHelper(this.ioHelper);
+    checker.addProvider(new SimpleShortFormProvider());
+    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
+    if (ontology != null) {
+      checker.addAll(ontology);
+    }
+
     info = new HashMap<>();
     warn = new HashMap<>();
     error = new HashMap<>();
@@ -195,25 +239,52 @@ public class Report {
    * @param violationSets map of rules and violations
    * @return CSV string representation of the violations
    */
-  private static String csvHelper(String level, Map<String, List<Violation>> violationSets) {
+  private String csvHelper(String level, Map<String, List<Violation>> violationSets) {
     return tableHelper(level, violationSets, ",", "\"", "'");
   }
 
   /**
-   * Given a prefix manager and an IRI as a string, return the CURIE if the prefix is available.
-   * Otherwise, return the IRI as string.
+   * Given a PrefixManager and an IRI as a string, return the label or CURIE if possible. Otherwise,
+   * return the IRI as a string.
    *
-   * @param pm Prefix Manager to use
+   * @param pm PrefixManager to use to create CURIEs
+   * @param iriString IRI to find label or convert to CURIE
+   * @return display name as label, CURIE, or full IRI
+   */
+  private String getDisplayName(PrefixManager pm, String iriString) {
+    String display = maybeGetLabel(iriString);
+    if (display == null) {
+      display = maybeGetCURIE(pm, iriString);
+      if (display == null) {
+        return iriString;
+      }
+    }
+    return display;
+  }
+
+  /**
+   * Given a prefix manager and an IRI as a string, return the CURIE if the prefix is available.
+   * Otherwise, return null.
+   *
+   * @param pm PrefixManager to use
    * @param iriString IRI to convert to CURIE
-   * @return CURIE or full IRI as string
+   * @return CURIE, or null
    */
   private static String maybeGetCURIE(PrefixManager pm, String iriString) {
     IRI iri = IRI.create(iriString);
-    String curie = pm.getPrefixIRI(iri);
-    if (curie != null) {
-      return curie;
-    }
-    return iriString;
+    return pm.getPrefixIRI(iri);
+  }
+
+  /**
+   * Given an IRI as a string, return the label if it exists in the QuotedEntityChecker. Otherwise,
+   * return null.
+   *
+   * @param iriString IRI to find label
+   * @return label of IRI, or null
+   */
+  private String maybeGetLabel(String iriString) {
+    IRI iri = IRI.create(iriString);
+    return checker.getLabel(iri);
   }
 
   /**
@@ -226,14 +297,14 @@ public class Report {
    * @param replacement text replacement for qualifier in literal values
    * @return table string representation of the violations
    */
-  private static String tableHelper(
+  private String tableHelper(
       String level,
       Map<String, List<Violation>> violationSets,
       String separator,
       String qualifier,
       String replacement) {
     // Get a prefix manager for creating CURIEs
-    PrefixManager pm = new IOHelper().getPrefixManager();
+    PrefixManager pm = ioHelper.getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }
@@ -242,16 +313,16 @@ public class Report {
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = vs.getKey();
       for (Violation v : vs.getValue()) {
-        String subject = maybeGetCURIE(pm, v.subject);
+        String subject = getDisplayName(pm, v.subject);
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          String property = maybeGetCURIE(pm, statement.getKey());
+          String property = getDisplayName(pm, statement.getKey());
           for (String value : statement.getValue()) {
             if (value == null) {
               value = "";
             } else {
-              String curie = maybeGetCURIE(pm, value);
-              if (!curie.equals("")) {
-                value = curie;
+              String display = getDisplayName(pm, value);
+              if (!display.equals("")) {
+                value = display;
               }
             }
             // Replace qualifiers, newlines, and tabs in literals
@@ -294,7 +365,7 @@ public class Report {
    */
   private String yamlHelper(String level, Map<String, List<Violation>> violationSets) {
     // Get a prefix manager for creating CURIEs
-    PrefixManager pm = new IOHelper().getPrefixManager();
+    PrefixManager pm = ioHelper.getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }
@@ -311,11 +382,11 @@ public class Report {
       sb.append("  - rule : '").append(ruleName).append("'");
       sb.append(NEW_LINE);
       for (Violation v : vs.getValue()) {
-        String subject = maybeGetCURIE(pm, v.subject);
+        String subject = getDisplayName(pm, v.subject);
         sb.append("    - subject : '").append(subject).append("'");
         sb.append(NEW_LINE);
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          String property = maybeGetCURIE(pm, statement.getKey());
+          String property = getDisplayName(pm, statement.getKey());
           sb.append("      property : '").append(property).append("':");
           sb.append(NEW_LINE);
           if (statement.getValue().isEmpty()) {
@@ -325,9 +396,12 @@ public class Report {
           sb.append(NEW_LINE);
           for (String value : statement.getValue()) {
             if (value == null) {
-              value = "null";
+              value = "";
             } else {
-              value = maybeGetCURIE(pm, value);
+              String display = getDisplayName(pm, value);
+              if (!display.equals("")) {
+                value = display;
+              }
             }
             sb.append("        - '").append(value).append("'");
             sb.append(NEW_LINE);

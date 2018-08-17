@@ -54,7 +54,7 @@ Prefixes (added with `--prefix`) should be strings in the following format: `"fo
 
 There was an error creating a JSON-LD context. This could be caused by a bad prefix.
 
-### JSON-LD Context Parsing Error
+### JSON-LD Context Parse Error
 
 There was an error parsing a JSON-LD context. Add the `-vvv` option to see more details, and refer to <https://json-ld.org> for information about that format.
 
@@ -85,6 +85,13 @@ The ontology could not be saved to the specified IRI. The most common reasons ar
 ### Options Error
 
 Each command requires a set of options, although it is more common to get a `MISSING INPUT ERROR`. See the command-specific documentation for more details.
+
+### Prefix Load Error
+
+If a prefix is incorrectly formatted, or if the prefix target does not point to an absolute IRI, the prefix cannot be loaded. Prefixes should be formatted as follows:
+```
+robot -p "robot: http://purl.obolibrary.org/robot/"
+```
 
 ### Unknown Arg Error
 
