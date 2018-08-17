@@ -7,8 +7,7 @@
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT ?entity ?property ?value
-WHERE {
+SELECT DISTINCT ?entity ?property ?value WHERE {
   ?entity ?any ?o
   FILTER NOT EXISTS {?entity obo:IAO_0000115 ?value}
   FILTER NOT EXISTS {?entity a owl:Ontology}
@@ -18,3 +17,4 @@ WHERE {
   }
   FILTER (!isBlank(?entity))
 }
+ORDER BY ?entity

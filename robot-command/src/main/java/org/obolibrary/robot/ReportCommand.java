@@ -102,8 +102,12 @@ public class ReportCommand implements Command {
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
     // profile is optional - no profile means the default profile will be used
     String profilePath = CommandLineHelper.getOptionalValue(line, "profile");
-    // format is optional - no format means the report will be in TSV
+    // format is optional - default is TSV, but if the prefix of file is 'csv' or 'yaml',
+    // that will be automatically detected
     String format = CommandLineHelper.getOptionalValue(line, "format");
+    if (format == null) {
+      format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
+    }
     // fail-on is optional - if null, will always exit with 0
     String failOn = CommandLineHelper.getDefaultValue(line, "fail-on", "error");
 

@@ -28,6 +28,8 @@ public class Report {
   /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
 
+  private static final String NEW_LINE = System.getProperty("line.separator");
+
   /** Map of rules and the violations for INFO level. */
   public Map<String, List<Violation>> info;
 
@@ -86,7 +88,7 @@ public class Report {
    * @return a set of IRI strings
    */
   public Set<String> getIRIs() {
-    Set<String> iris = new HashSet<String>();
+    Set<String> iris = new HashSet<>();
     iris.addAll(getIRIs(error));
     iris.addAll(getIRIs(warn));
     iris.addAll(getIRIs(info));
@@ -100,7 +102,7 @@ public class Report {
    * @return a set of IRI strings
    */
   public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
-    Set<String> iris = new HashSet<String>();
+    Set<String> iris = new HashSet<>();
 
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       for (Violation v : vs.getValue()) {
@@ -152,17 +154,29 @@ public class Report {
   }
 
   /**
+   * Return the report in CSV format.
+   *
+   * @return CSV string
+   */
+  public String toCSV() {
+    return "Level,Rule Name,Subject,Property,Value"
+        + NEW_LINE
+        + csvHelper(ERROR, error)
+        + csvHelper(WARN, warn)
+        + csvHelper(INFO, info);
+  }
+
+  /**
    * Return the report in TSV format.
    *
    * @return TSV string
    */
   public String toTSV() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Level\tRule Name\tSubject\tProperty\tValue\n");
-    sb.append(tsvHelper(ERROR, error));
-    sb.append(tsvHelper(WARN, warn));
-    sb.append(tsvHelper(INFO, info));
-    return sb.toString();
+    return "Level\tRule Name\tSubject\tProperty\tValue"
+        + NEW_LINE
+        + tsvHelper(ERROR, error)
+        + tsvHelper(WARN, warn)
+        + tsvHelper(INFO, info);
   }
 
   /**
@@ -171,11 +185,18 @@ public class Report {
    * @return YAML string
    */
   public String toYAML() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(yamlHelper(ERROR, error));
-    sb.append(yamlHelper(WARN, warn));
-    sb.append(yamlHelper(INFO, info));
-    return sb.toString();
+    return yamlHelper(ERROR, error) + yamlHelper(WARN, warn) + yamlHelper(INFO, info);
+  }
+
+  /**
+   * Given a reporting level and a map of rules and violations, build a CSV output.
+   *
+   * @param level reporting level
+   * @param violationSets map of rules and violations
+   * @return CSV string representation of the violations
+   */
+  private static String csvHelper(String level, Map<String, List<Violation>> violationSets) {
+    return tableHelper(level, violationSets, ",", "\"", "'");
   }
 
   /**
@@ -188,29 +209,36 @@ public class Report {
    */
   private static String maybeGetCURIE(PrefixManager pm, String iriString) {
     IRI iri = IRI.create(iriString);
-    if (iri != null) {
-      String curie = pm.getPrefixIRI(iri);
-      if (curie != null) {
-        return curie;
-      }
+    String curie = pm.getPrefixIRI(iri);
+    if (curie != null) {
+      return curie;
     }
     return iriString;
   }
 
   /**
-   * Given a reporting level and a map of rules and violations, build a TSV output.
+   * Given a reporting level and a map of rules and violations, build a table output.
    *
    * @param level reporting level
    * @param violationSets map of rules and violations
-   * @return TSV string representation of the violations
+   * @param separator cell separator (e.g. comma)
+   * @param qualifier text qualifier (e.g. double quote)
+   * @param replacement text replacement for qualifier in literal values
+   * @return table string representation of the violations
    */
-  private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
+  private static String tableHelper(
+      String level,
+      Map<String, List<Violation>> violationSets,
+      String separator,
+      String qualifier,
+      String replacement) {
     // Get a prefix manager for creating CURIEs
     PrefixManager pm = new IOHelper().getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }
     StringBuilder sb = new StringBuilder();
+    // Map of rule names and their violations
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = vs.getKey();
       for (Violation v : vs.getValue()) {
@@ -221,19 +249,40 @@ public class Report {
             if (value == null) {
               value = "";
             } else {
-              value = maybeGetCURIE(pm, value);
+              String curie = maybeGetCURIE(pm, value);
+              if (!curie.equals("")) {
+                value = curie;
+              }
             }
-            sb.append(level + "\t");
-            sb.append(ruleName + "\t");
-            sb.append(subject + "\t");
-            sb.append(property + "\t");
-            sb.append(value.replace("\t", " ").replace("\n", " ") + "\t");
-            sb.append("\n");
+            // Replace qualifiers, newlines, and tabs in literals
+            value =
+                value
+                    .replace(qualifier, replacement)
+                    .replace(NEW_LINE, "    ")
+                    .replace("\t", "    ");
+            // Build table row
+            sb.append(qualifier).append(level).append(qualifier).append(separator);
+            sb.append(qualifier).append(ruleName).append(qualifier).append(separator);
+            sb.append(qualifier).append(subject).append(qualifier).append(separator);
+            sb.append(qualifier).append(property).append(qualifier).append(separator);
+            sb.append(qualifier).append(value).append(qualifier).append(separator);
+            sb.append(NEW_LINE);
           }
         }
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Given a reporting level and a map of rules and violations, build a TSV output.
+   *
+   * @param level reporting level
+   * @param violationSets map of rules and violations
+   * @return TSV string representation of the violations
+   */
+  private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
+    return tableHelper(level, violationSets, "\t", "", "");
   }
 
   /**
@@ -250,38 +299,38 @@ public class Report {
       return "";
     }
     StringBuilder sb = new StringBuilder();
-    sb.append("- level : '" + level + "'");
-    sb.append("\n");
+    sb.append("- level : '").append(level).append("'");
+    sb.append(NEW_LINE);
     sb.append("  violations :");
-    sb.append("\n");
+    sb.append(NEW_LINE);
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = vs.getKey();
       if (vs.getValue().isEmpty()) {
         continue;
       }
-      sb.append("  - rule : '" + ruleName + "'");
-      sb.append("\n");
+      sb.append("  - rule : '").append(ruleName).append("'");
+      sb.append(NEW_LINE);
       for (Violation v : vs.getValue()) {
         String subject = maybeGetCURIE(pm, v.subject);
-        sb.append("    - subject : '" + subject + "'");
-        sb.append("\n");
+        sb.append("    - subject : '").append(subject).append("'");
+        sb.append(NEW_LINE);
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
           String property = maybeGetCURIE(pm, statement.getKey());
-          sb.append("      property : '" + property + "':");
-          sb.append("\n");
+          sb.append("      property : '").append(property).append("':");
+          sb.append(NEW_LINE);
           if (statement.getValue().isEmpty()) {
             continue;
           }
           sb.append("      values :");
-          sb.append("\n");
+          sb.append(NEW_LINE);
           for (String value : statement.getValue()) {
             if (value == null) {
               value = "null";
             } else {
               value = maybeGetCURIE(pm, value);
             }
-            sb.append("        - '" + value + "'");
-            sb.append("\n");
+            sb.append("        - '").append(value).append("'");
+            sb.append(NEW_LINE);
           }
         }
       }

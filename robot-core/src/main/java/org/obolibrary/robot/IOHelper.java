@@ -513,7 +513,7 @@ public class IOHelper {
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI) throws IOException {
     return saveOntology(ontology, format, ontologyIRI, true);
   }
-  
+
   /**
    * Save an ontology in the given format to a path, with the option to ignore OBO document checks.
    *
