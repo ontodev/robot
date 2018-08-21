@@ -185,7 +185,7 @@ public class MergeOperation {
             .addAxioms(targetOntology, ontology.getAxioms(Imports.INCLUDED));
       } else {
         // Merge the ontologies with imports excluded
-        Set<OWLOntology> imports = targetOntology.getDirectImports();
+        Set<OWLImportsDeclaration> imports = targetOntology.getImportsDeclarations();
         try {
           OntologyHelper.removeImports(targetOntology);
         } catch (Exception e) {
@@ -198,14 +198,8 @@ public class MergeOperation {
         OWLOntologyManager manager = targetOntology.getOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
         // Re-add the imports
-        for (OWLOntology imp : imports) {
-          IRI importIRI = imp.getOntologyID().getOntologyIRI().orNull();
-          if (importIRI != null) {
-            OWLImportsDeclaration dec = dataFactory.getOWLImportsDeclaration(importIRI);
-            manager.applyChange(new AddImport(targetOntology, dec));
-          } else {
-            logger.error("Failed to add import %s - IRI is null.", imp.getOntologyID());
-          }
+        for (OWLImportsDeclaration dec : imports) {
+          manager.applyChange(new AddImport(targetOntology, dec));
         }
       }
       if (includeAnnotations) {
