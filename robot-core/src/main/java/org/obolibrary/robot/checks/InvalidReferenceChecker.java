@@ -3,13 +3,7 @@ package org.obolibrary.robot.checks;
 import java.util.HashSet;
 import java.util.Set;
 import org.obolibrary.robot.checks.InvalidReferenceViolation.Category;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 
 /**
@@ -36,14 +30,12 @@ public class InvalidReferenceChecker {
     if (entity instanceof OWLClass) {
       OWLClass owlClass = (OWLClass) entity;
       if (ontology.getAxioms(owlClass, Imports.INCLUDED).size() > 0) return false;
-      if (ontology.getAnnotationAssertionAxioms(owlClass.getIRI()).size() > 0) return false;
-      return true;
+      return ontology.getAnnotationAssertionAxioms(owlClass.getIRI()).size() <= 0;
     }
     if (entity instanceof OWLObjectProperty) {
       OWLObjectProperty owlProperty = (OWLObjectProperty) entity;
       if (ontology.getAxioms(owlProperty, Imports.INCLUDED).size() > 0) return false;
-      if (ontology.getAnnotationAssertionAxioms(owlProperty.getIRI()).size() > 0) return false;
-      return true;
+      return ontology.getAnnotationAssertionAxioms(owlProperty.getIRI()).size() <= 0;
     }
     return false;
   }
@@ -59,7 +51,8 @@ public class InvalidReferenceChecker {
     for (OWLOntology o : ontology.getImportsClosure()) {
       for (OWLAnnotationAssertionAxiom a : o.getAnnotationAssertionAxioms(entity.getIRI())) {
         if (a.isDeprecatedIRIAssertion()) {
-          if (a.getValue().asLiteral().get().parseBoolean()) {
+          OWLLiteral value = a.getValue().asLiteral().orNull();
+          if (value != null && value.parseBoolean()) {
             return true;
           }
         }

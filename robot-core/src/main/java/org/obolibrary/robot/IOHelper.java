@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -271,11 +270,6 @@ public class IOHelper {
   public OWLOntology loadOntology(File ontologyFile, File catalogFile) throws IOException {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
 
-    if (!ontologyFile.exists()) {
-      throw new IllegalArgumentException(
-          String.format(fileDoesNotExistError, ontologyFile.getName()));
-    }
-
     Object jsonObject = null;
 
     try {
@@ -308,14 +302,6 @@ public class IOHelper {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       if (catalogFile != null && catalogFile.isFile()) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
-      } else {
-        String path;
-        try {
-          path = catalogFile.getPath();
-        } catch (NullPointerException e) {
-          path = "null";
-        }
-        logger.warn("Catalog ({}) does not exist. Loading ontology without catalog.", path);
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError | OWLOntologyCreationException e) {
@@ -331,7 +317,7 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(InputStream ontologyStream) throws IOException {
-    OWLOntology ontology = null;
+    OWLOntology ontology;
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
@@ -349,7 +335,7 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI) throws IOException {
-    OWLOntology ontology = null;
+    OWLOntology ontology;
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
@@ -368,11 +354,10 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI, String catalogPath) throws IOException {
-    OWLOntology ontology = null;
+    OWLOntology ontology;
     File catalogFile = new File(catalogPath);
-    if (!catalogFile.isFile() || catalogFile == null) {
-      // TODO: should this be an exception?
-      logger.warn("Catalog {} does not exist. Loading ontology without catalog.", catalogPath);
+    if (!catalogFile.isFile()) {
+      throw new IOException(String.format(fileDoesNotExistError, catalogPath));
     }
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -584,8 +569,8 @@ public class IOHelper {
    * @return a set of term identifier strings
    */
   public Set<String> extractTerms(String input) {
-    Set<String> results = new HashSet<String>();
-    List<String> lines = Arrays.asList(input.replaceAll("\\r", "").split("\\n"));
+    Set<String> results = new HashSet<>();
+    String[] lines = input.replaceAll("\\r", "").split("\\n");
     for (String line : lines) {
       if (line.trim().startsWith("#")) {
         continue;
@@ -616,7 +601,7 @@ public class IOHelper {
       // Then we run the JsonLdApi to expand the JSON map
       // in the current context, and just grab the first key.
       // If everything worked, that key will be our expanded iri.
-      Map<String, Object> jsonMap = new HashMap<String, Object>();
+      Map<String, Object> jsonMap = new HashMap<>();
       jsonMap.put(term, "ignore this string");
       Object expanded = new JsonLdApi().expand(context, jsonMap);
       String result = ((Map<String, Object>) expanded).keySet().iterator().next();
@@ -638,7 +623,7 @@ public class IOHelper {
    * @throws IllegalArgumentException if term identifier is not a valid IRI
    */
   public Set<IRI> createIRIs(Set<String> terms) throws IllegalArgumentException {
-    Set<IRI> iris = new HashSet<IRI>();
+    Set<IRI> iris = new HashSet<>();
     for (String term : terms) {
       IRI iri = createIRI(term);
       if (iri != null) {

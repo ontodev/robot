@@ -52,6 +52,10 @@ public class ReportOperation {
   /** Error message when user profiles an invalid fail-on level. */
   private static final String failOnError = NS + "FAIL ON ERROR '%s' is not a valid fail-on level.";
 
+  /** Error message when the query does not have ?entity. */
+  private static final String missingEntityBinding =
+      NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
+
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
@@ -71,9 +75,7 @@ public class ReportOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
-
-    return options;
+    return new HashMap<>();
   }
 
   /**
@@ -83,12 +85,10 @@ public class ReportOperation {
    *
    * @param ontology the OWLOntology to report
    * @param iohelper IOHelper to work with ontology
+   * @throws Exception on any reporting error
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper) {
-    try {
-      report(ontology, null, null, null, null);
-    } catch (Exception e) {
-    }
+  public static void report(OWLOntology ontology, IOHelper iohelper) throws Exception {
+    report(ontology, null, null, null, null);
   }
 
   /**
@@ -99,12 +99,11 @@ public class ReportOperation {
    * @param ontology the OWLOntology to report
    * @param iohelper IOHelper to work with ontology
    * @param options map of report options
+   * @throws Exception on any reporting error
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
-    try {
-      report(ontology, null, null, null, null);
-    } catch (Exception e) {
-    }
+  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options)
+      throws Exception {
+    report(ontology, null, null, null, null);
   }
 
   /**
@@ -174,6 +173,11 @@ public class ReportOperation {
       } else {
         queryString = fullQueryString;
       }
+      List<Violation> violations = getViolations(dataset, queryString);
+      // If violations is not returned properly, the query did not have the correct format
+      if (violations == null) {
+        throw new Exception(String.format(missingEntityBinding, queryName));
+      }
       report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
     }
 
@@ -212,21 +216,14 @@ public class ReportOperation {
     if (failOn.equalsIgnoreCase("none")) {
       return true;
     } else if (failOn.equalsIgnoreCase("error")) {
-      if (report.getTotalViolations(ERROR) > 0) {
-        return false;
-      }
+      return report.getTotalViolations(ERROR) <= 0;
     } else if (failOn.equalsIgnoreCase("warn")) {
-      if ((report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) > 0) {
-        return false;
-      }
+      return (report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) <= 0;
     } else if (failOn.equalsIgnoreCase("info")) {
-      if (report.getTotalViolations() > 0) {
-        return false;
-      }
+      return report.getTotalViolations() <= 0;
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
-    return true;
   }
 
   /**
@@ -310,13 +307,11 @@ public class ReportOperation {
       String cls = ReportOperation.class.getName().replace(".", "/") + ".class";
       dirURL = ReportOperation.class.getClassLoader().getResource(cls);
     }
-    String protocol;
-    try {
-      protocol = dirURL.getProtocol();
-    } catch (NullPointerException e) {
+    if (dirURL == null) {
       throw new IOException(
-          "Cannot access report query files in JAR. The directory address has no protocol.");
+          "Cannot access report query files in JAR. The resource does not exist.");
     }
+    String protocol = dirURL.getProtocol();
     if (protocol.equals("jar")) {
       String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!"));
       // Get all entries in jar
@@ -413,8 +408,9 @@ public class ReportOperation {
    * @param dsg the ontology as a graph
    * @param query the query
    * @return List of Violations
+   * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(DatasetGraph dsg, String query) {
+  private static List<Violation> getViolations(DatasetGraph dsg, String query) throws IOException {
     return getViolations(DatasetFactory.create(dsg), query);
   }
 
@@ -424,8 +420,9 @@ public class ReportOperation {
    * @param dataset the ontology/ontologies as a dataset
    * @param query the query
    * @return List of Violations
+   * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(Dataset dataset, String query) {
+  private static List<Violation> getViolations(Dataset dataset, String query) throws IOException {
     ResultSet violationSet = QueryOperation.execQuery(dataset, query);
 
     Map<String, Violation> violations = new HashMap<>();
@@ -435,6 +432,9 @@ public class ReportOperation {
       QuerySolution qs = violationSet.next();
       // entity should never be null
       String entity = getQueryResultOrNull(qs, "entity");
+      if (entity == null) {
+        return null;
+      }
       // skip RDFS and OWL terms
       if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
         continue;

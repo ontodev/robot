@@ -101,9 +101,9 @@ public class UnmergeCommand implements Command {
       state = new CommandState();
     }
 
-    List<OWLOntology> inputOntologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> inputOntologies = new ArrayList<>();
     boolean notEmpty = false;
-    if (state != null && state.getOntology() != null) {
+    if (state.getOntology() != null) {
       notEmpty = true;
       inputOntologies.add(state.getOntology());
     }

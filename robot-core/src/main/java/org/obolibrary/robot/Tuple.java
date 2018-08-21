@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.Iterator;
+import javax.annotation.Nonnull;
 
 /**
  * Created by edouglass on 8/14/17.
@@ -43,11 +44,13 @@ public class Tuple<A, B> implements Collection {
     return o.equals(left) || o.equals(right);
   }
 
+  @Nonnull
   @Override
   public Iterator iterator() {
     return Lists.newArrayList(left, right).iterator();
   }
 
+  @Nonnull
   @Override
   public Object[] toArray() {
     return new Object[] {left, right};
@@ -64,7 +67,7 @@ public class Tuple<A, B> implements Collection {
   }
 
   @Override
-  public boolean addAll(Collection c) {
+  public boolean addAll(@Nonnull Collection c) {
     return false;
   }
 
@@ -75,22 +78,22 @@ public class Tuple<A, B> implements Collection {
   }
 
   @Override
-  public boolean retainAll(Collection c) {
+  public boolean retainAll(@Nonnull Collection c) {
     return Lists.newArrayList(left, right).retainAll(c);
   }
 
   @Override
-  public boolean removeAll(Collection c) {
+  public boolean removeAll(@Nonnull Collection c) {
     return Lists.newArrayList(left, right).removeAll(c);
   }
 
   @Override
-  public boolean containsAll(Collection c) {
+  public boolean containsAll(@Nonnull Collection c) {
     return Lists.newArrayList(left, right).containsAll(c);
   }
 
   @Override
-  public Object[] toArray(Object[] a) {
+  public Object[] toArray(@Nonnull Object[] a) {
     if (a.length < 2) {
       return new Object[] {left, right};
     } else {

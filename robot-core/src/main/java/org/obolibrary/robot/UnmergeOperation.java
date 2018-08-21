@@ -41,7 +41,7 @@ public class UnmergeOperation {
    * @param targetOntology the ontology to remove axioms from
    */
   public static void unmergeFrom(OWLOntology ontology, OWLOntology targetOntology) {
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(ontology);
     unmergeFrom(ontologies, targetOntology, false);
   }
@@ -68,7 +68,7 @@ public class UnmergeOperation {
    */
   public static void unmergeFrom(
       OWLOntology ontology, OWLOntology targetOntology, boolean includeAnnotations) {
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(ontology);
     unmergeFrom(ontologies, targetOntology, includeAnnotations);
   }

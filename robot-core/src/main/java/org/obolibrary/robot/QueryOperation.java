@@ -35,6 +35,10 @@ public class QueryOperation {
   /** Namespace for error messages. */
   private static final String NS = "query#";
 
+  /** Error message when query parsing fails. Expects: error message from parse. */
+  private static final String queryParseError =
+      NS + "QUERY PARSE ERROR query cannot be parsed:\n%s";
+
   /** Error message when query type is illegal. Expects: query type. */
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
 
@@ -156,8 +160,9 @@ public class QueryOperation {
    * @param dsg the graph to query
    * @param query the SPARQL query string
    * @return the result set
+   * @throws IOException on query parse error
    */
-  public static ResultSet execQuery(DatasetGraph dsg, String query) {
+  public static ResultSet execQuery(DatasetGraph dsg, String query) throws IOException {
     return execQuery(DatasetFactory.create(dsg), query);
   }
 
@@ -167,9 +172,15 @@ public class QueryOperation {
    * @param dataset the Dataset to query over
    * @param query the SPARQL query string
    * @return the result set
+   * @throws IOException on query parse error
    */
-  public static ResultSet execQuery(Dataset dataset, String query) {
-    QueryExecution qExec = QueryExecutionFactory.create(query, dataset);
+  public static ResultSet execQuery(Dataset dataset, String query) throws IOException {
+    QueryExecution qExec;
+    try {
+      qExec = QueryExecutionFactory.create(query, dataset);
+    } catch (QueryParseException e) {
+      throw new IOException(String.format(queryParseError, e.getMessage()));
+    }
     return qExec.execSelect();
   }
 
@@ -206,8 +217,10 @@ public class QueryOperation {
    * @param dsg the graph to query over
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
+   * @throws IOException on query parse error
    */
-  public static boolean execVerify(DatasetGraph dsg, String ruleName, String query) {
+  public static boolean execVerify(DatasetGraph dsg, String ruleName, String query)
+      throws IOException {
     ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dsg, query));
     System.out.println("Rule " + ruleName + ": " + results.size() + " violation(s)");
     if (results.size() == 0) {
@@ -405,10 +418,10 @@ public class QueryOperation {
    * @param query The SPARQL query string.
    * @param output The file to write to.
    * @param outputFormat The file format.
-   * @throws FileNotFoundException if output file is not found
+   * @throws IOException if output file is not found or query cannot be parsed
    */
   public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
-      throws FileNotFoundException {
+      throws IOException {
     runQuery(DatasetFactory.create(dsg), query, output, outputFormat);
   }
 
@@ -419,10 +432,10 @@ public class QueryOperation {
    * @param query The SPARQL query string.
    * @param output The file to write to.
    * @param outputFormat The file format.
-   * @throws FileNotFoundException if output file is not found
+   * @throws IOException if output file is not found or query cannot be parsed
    */
   public static void runQuery(Dataset dataset, String query, File output, Lang outputFormat)
-      throws FileNotFoundException {
+      throws IOException {
     if (outputFormat == null) {
       outputFormat = Lang.CSV;
     }
@@ -437,9 +450,10 @@ public class QueryOperation {
    * @param formatName the name of the output format
    * @param output the OutputStream to write to
    * @return true if results, false if otherwise
+   * @throws IOException on issue parsing query
    */
   public static boolean runSparqlQuery(
-      DatasetGraph dsg, String query, String formatName, OutputStream output) {
+      DatasetGraph dsg, String query, String formatName, OutputStream output) throws IOException {
     return runSparqlQuery(DatasetFactory.create(dsg), query, formatName, output);
   }
 
@@ -452,13 +466,17 @@ public class QueryOperation {
    * @param formatName format of output
    * @param output output stream to write to
    * @return true if successful
+   * @throws IOException on issue parsing query
    */
   public static boolean runSparqlQuery(
-      Dataset dataset, String queryString, String formatName, OutputStream output) {
+      Dataset dataset, String queryString, String formatName, OutputStream output)
+      throws IOException {
     dataset.begin(ReadWrite.READ);
     boolean result;
     try (QueryExecution qExec = QueryExecutionFactory.create(queryString, dataset)) {
       result = runSparqlQuery(qExec, formatName, output);
+    } catch (QueryParseException e) {
+      throw new IOException(String.format(queryParseError, e.getMessage()));
     } finally {
       dataset.end();
     }
@@ -503,12 +521,12 @@ public class QueryOperation {
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.
-   * @throws FileNotFoundException if output file is not found
+   * @throws IOException if output file is not found or query cannot be parsed
    * @return true if the are results (so file is written), false otherwise
    */
   public static boolean runVerify(
       DatasetGraph dsg, String ruleName, String query, Path outputPath, Lang outputFormat)
-      throws FileNotFoundException {
+      throws IOException {
     return runVerify(DatasetFactory.create(dsg), ruleName, query, outputPath, outputFormat);
   }
 
@@ -520,12 +538,12 @@ public class QueryOperation {
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.
-   * @throws FileNotFoundException if output file is not found
+   * @throws IOException if output file is not found or query cannot be parsed
    * @return true if the are results (so file is written), false otherwise
    */
   public static boolean runVerify(
       Dataset dataset, String ruleName, String query, Path outputPath, Lang outputFormat)
-      throws FileNotFoundException {
+      throws IOException {
     if (outputFormat == null) {
       outputFormat = Lang.CSV;
     }

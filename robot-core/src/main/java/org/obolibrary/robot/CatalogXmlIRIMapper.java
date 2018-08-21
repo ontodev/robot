@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -121,7 +122,7 @@ public class CatalogXmlIRIMapper implements OWLOntologyIRIMapper {
    * @return the mapped IRI, usually to a local file
    */
   @Override
-  public IRI getDocumentIRI(IRI ontologyIRI) {
+  public IRI getDocumentIRI(@Nonnull IRI ontologyIRI) {
     return mappings.get(ontologyIRI);
   }
 
@@ -147,7 +148,7 @@ public class CatalogXmlIRIMapper implements OWLOntologyIRIMapper {
     factory.setValidating(false);
 
     try {
-      final Map<IRI, IRI> mappings = new HashMap<IRI, IRI>();
+      final Map<IRI, IRI> mappings = new HashMap<>();
       SAXParser saxParser = factory.newSAXParser();
       saxParser.parse(inputStream, new CatalogElementHandler(parentFolder, mappings));
       return mappings;

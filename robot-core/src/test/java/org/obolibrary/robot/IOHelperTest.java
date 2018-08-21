@@ -80,10 +80,10 @@ public class IOHelperTest extends CoreTest {
             + "}";
 
     IOHelper ioh = new IOHelper();
-    Context context = ioh.parseContext(json);
+    Context context = IOHelper.parseContext(json);
     ioh.setContext(context);
 
-    Map<String, String> expected = new HashMap<String, String>();
+    Map<String, String> expected = new HashMap<>();
     expected.put("foo", "http://example.com#");
     expected.put("bar", "http://example.com#");
     assertEquals("Check JSON prefixes", expected, ioh.getPrefixes());
@@ -97,7 +97,7 @@ public class IOHelperTest extends CoreTest {
   @Test
   public void testPrefixHandling() throws IOException {
     IOHelper ioh = new IOHelper(false);
-    Map<String, String> expected = new HashMap<String, String>();
+    Map<String, String> expected = new HashMap<>();
     assertEquals("Check no prefixes", expected, ioh.getPrefixes());
 
     ioh.addPrefix("foo", "http://example.com#");
@@ -149,7 +149,7 @@ public class IOHelperTest extends CoreTest {
             + "foo:4\n"
             + "definition\n";
 
-    Set<String> terms = new HashSet<String>();
+    Set<String> terms = new HashSet<>();
     terms.add("http://purl.obolibrary.org/obo/GO_1");
     terms.add("obo:GO_2");
     terms.add("GO:3");
@@ -159,7 +159,7 @@ public class IOHelperTest extends CoreTest {
     Set<String> actualTerms = ioh.extractTerms(input);
     assertEquals("Check terms", terms, actualTerms);
 
-    Set<IRI> iris = new HashSet<IRI>();
+    Set<IRI> iris = new HashSet<>();
     iris.add(IRI.create("http://purl.obolibrary.org/obo/GO_1"));
     iris.add(IRI.create("http://purl.obolibrary.org/obo/GO_2"));
     iris.add(IRI.create("http://purl.obolibrary.org/obo/GO_3"));
@@ -182,14 +182,14 @@ public class IOHelperTest extends CoreTest {
 
     assertEquals(IRI.create(base), ioh.createIRI(base));
 
-    literal = ioh.createLiteral("FOO");
+    literal = IOHelper.createLiteral("FOO");
     assertEquals("FOO", OntologyHelper.getValue(literal));
 
     literal = ioh.createTypedLiteral("100", "xsd:integer");
     assertEquals("100", literal.getLiteral());
     assertEquals(ioh.createIRI("xsd:integer"), literal.getDatatype().getIRI());
 
-    literal = ioh.createTaggedLiteral("100", "en");
+    literal = IOHelper.createTaggedLiteral("100", "en");
     assertEquals("100", literal.getLiteral());
     assertEquals("en", literal.getLang());
   }
