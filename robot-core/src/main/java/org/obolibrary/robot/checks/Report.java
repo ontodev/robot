@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.QuotedEntityChecker;
-import org.obolibrary.robot.UnmergeOperation;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -22,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class Report {
 
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(UnmergeOperation.class);
+  private static final Logger logger = LoggerFactory.getLogger(Report.class);
 
   /** Reporting level INFO. */
   private static final String INFO = "INFO";
