@@ -40,6 +40,16 @@ The example above also uses the [global](/global)  `--catalog` option to specify
 
 The names of the graphs correspond to the ontology IRIs of the imports. If the import does not have an ontology IRI, one will be automatically generated. Running `query` with the `-vv` flag will print the names of all graphs as they are added.
 
+## Update
+
+The `query` command also supports [SPARQL Update](https://www.w3.org/TR/sparql11-update/) to insert and delete triples.
+
+    robot query --input nucleus.owl \
+      --update update.ru \
+      --output results/nucleus_update.owl
+
+When using SPARQL update, you can either provide an `--output` for the updated ontology, or [chain](/chaining) it into another command.
+
 ---
 
 ## Error Messages

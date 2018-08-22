@@ -108,7 +108,7 @@ public class QueryOperationTest extends CoreTest {
   }
 
   /**
-   * Tests an update statement that removes all triples.
+   * Tests an update statement that adds a label.
    *
    * @throws IOException on IO error
    * @throws OWLOntologyStorageException on ontology error
