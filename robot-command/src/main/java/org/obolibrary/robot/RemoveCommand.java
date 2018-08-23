@@ -134,19 +134,21 @@ public class RemoveCommand implements Command {
         removeImports = true;
         selectGroup.remove("imports");
       }
-      selectGroups.add(selectGroup);
+      if (!selectGroup.isEmpty()) {
+        selectGroups.add(selectGroup);
+      }
     }
 
-    // If removing imports, and there are no objects, save and return
-    if (removeImports && objects.isEmpty()) {
+    // If removing imports, and there are no other selects, save and return
+    if (removeImports && selectGroups.isEmpty()) {
       if (trim) {
         OntologyHelper.trimOntology(ontology);
       }
       CommandLineHelper.maybeSaveOutput(line, ontology);
       state.setOntology(ontology);
       return state;
-      // Otherwise, proceed, and if objects is empty, add all objects
     } else if (objects.isEmpty()) {
+      // Otherwise, proceed, and if objects is empty, add all objects
       for (OWLAxiom axiom : ontology.getAxioms()) {
         objects.addAll(OntologyHelper.getObjects(axiom));
       }

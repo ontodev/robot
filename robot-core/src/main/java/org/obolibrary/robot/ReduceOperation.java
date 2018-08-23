@@ -66,7 +66,7 @@ public class ReduceOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("preserve-annotated-axioms", "false");
     return options;
   }
@@ -109,6 +109,7 @@ public class ReduceOperation {
 
     Map<OWLClass, Set<OWLClass>> assertedSubClassMap = new HashMap<>();
     Set<OWLSubClassOfAxiom> assertedSubClassAxioms = ontology.getAxioms(AxiomType.SUBCLASS_OF);
+    // TODO - exprs is updated but never used
     Set<OWLClassExpression> exprs = new HashSet<>();
     Map<OWLClassExpression, OWLClass> exprToNamedClassMap = new HashMap<>();
 
@@ -117,7 +118,7 @@ public class ReduceOperation {
       OWLClass superClass = mapClass(dataFactory, exprToNamedClassMap, ax.getSuperClass());
 
       if (!assertedSubClassMap.containsKey(subClass)) {
-        assertedSubClassMap.put(subClass, new HashSet<OWLClass>());
+        assertedSubClassMap.put(subClass, new HashSet<>());
       }
 
       assertedSubClassMap.get(subClass).add(superClass);

@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class CoreTest {
    */
   public OWLOntology loadOntologyWithCatalog(String path) throws IOException {
     IOHelper ioh = new IOHelper();
-    String fullpath = this.getClass().getResource(path).getFile().toString();
+    String fullpath = this.getClass().getResource(path).getFile();
     return ioh.loadOntology(fullpath);
   }
 
@@ -95,7 +96,7 @@ public class CoreTest {
     StringWriter writer = new StringWriter();
     boolean actual = DiffOperation.compare(left, right, writer);
     System.out.println(writer.toString());
-    assertEquals(true, actual);
+    assertTrue(actual);
     assertEquals("Ontologies are identical\n", writer.toString());
   }
 

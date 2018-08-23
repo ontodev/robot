@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -36,7 +37,7 @@ public class DiffOperationTest extends CoreTest {
   @Test
   public void testCompareModified() throws IOException, OWLOntologyCreationException {
     OWLOntology simple = loadOntology("/simple.owl");
-    Set<OWLOntology> onts = new HashSet<OWLOntology>();
+    Set<OWLOntology> onts = new HashSet<>();
     onts.add(simple);
     OWLOntologyManager manager = simple.getOWLOntologyManager();
     OWLDataFactory df = manager.getOWLDataFactory();
@@ -49,7 +50,7 @@ public class DiffOperationTest extends CoreTest {
     StringWriter writer = new StringWriter();
     boolean actual = DiffOperation.compare(simple, simple1, writer);
     System.out.println(writer.toString());
-    assertEquals(false, actual);
+    assertFalse(actual);
     String expected = IOUtils.toString(this.getClass().getResourceAsStream("/simple1.diff"));
     assertEquals(expected, writer.toString());
   }

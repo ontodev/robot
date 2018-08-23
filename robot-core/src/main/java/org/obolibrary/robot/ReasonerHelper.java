@@ -10,17 +10,7 @@ import java.util.stream.Collectors;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyID;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.slf4j.Logger;
@@ -112,9 +102,7 @@ public class ReasonerHelper {
         // we want to ensure this is thrown
         try {
           saveIncoherentModule(ont, unsatisfiableClasses, unsatisfiableModulePath, ioHelper);
-        } catch (OWLOntologyCreationException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
+        } catch (OWLOntologyCreationException | IOException e) {
           e.printStackTrace();
         }
       }
@@ -190,7 +178,8 @@ public class ReasonerHelper {
     if (outputIRI == null) {
       outputIRI = IRI.generateDocumentIRI();
     }
-    Set<IRI> terms = unsatisfiableClasses.stream().map(x -> x.getIRI()).collect(Collectors.toSet());
+    Set<IRI> terms =
+        unsatisfiableClasses.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
     OWLOntology module = ExtractOperation.extract(ontology, terms, outputIRI, ModuleType.BOT);
 
     if (ontology.getImportsClosure().size() > 1) {

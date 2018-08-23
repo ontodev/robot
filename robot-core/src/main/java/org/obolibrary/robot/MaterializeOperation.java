@@ -40,7 +40,7 @@ public class MaterializeOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("create-new-ontology", "false");
     return options;
   }
@@ -109,8 +109,6 @@ public class MaterializeOperation {
         new ExpressionMaterializingReasonerFactory(reasonerFactory);
     ExpressionMaterializingReasoner emr = merf.createReasoner(ontology);
     ReasonerHelper.validate(emr);
-
-    startTime = System.currentTimeMillis();
 
     Set<OWLAxiom> newAxioms = new HashSet<>();
 

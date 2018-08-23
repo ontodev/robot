@@ -48,6 +48,10 @@ The names of the graphs correspond to the ontology IRIs of the imports. If the i
 
 You must specify a query to execute with `--query` or `--queries`.
 
+### Query Parse Error
+
+The query was not able to be parsed. Often, this is as a result of an undefined prefix in the query. See the error message for more details.
+
 ### Query Type Error
 
 Each SPARQL query should be a SELECT, ASK, DESCRIBE, or CONSTRUCT.

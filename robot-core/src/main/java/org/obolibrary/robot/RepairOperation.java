@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import com.google.common.base.Optional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,10 +26,8 @@ public class RepairOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<>();
     // options.put("remove-redundant-subclass-axioms", "true");
-
-    return options;
+    return new HashMap<>();
   }
 
   /**
@@ -162,15 +159,15 @@ public class RepairOperation {
                 .getIRI()
                 .equals(IRI.create("http://purl.obolibrary.org/obo/IAO_0100001"))) {
               OWLAnnotationValue val = aaa.getValue();
-              Optional<IRI> valIRI = val.asIRI();
-              if (valIRI.isPresent()) {
+              IRI valIRI = val.asIRI().orNull();
+              if (valIRI != null) {
                 logger.info("Using URI replacement: " + valIRI);
-                replacedBy = valIRI.get();
+                replacedBy = valIRI;
               } else {
-                Optional<OWLLiteral> valLit = val.asLiteral();
-                if (valLit.isPresent()) {
+                OWLLiteral valLit = val.asLiteral().orNull();
+                if (valLit != null) {
                   logger.info("Using CURIE replacement: " + valLit);
-                  replacedBy = iohelper.createIRI(valLit.get().getLiteral());
+                  replacedBy = iohelper.createIRI(valLit.getLiteral());
                 }
               }
             }
