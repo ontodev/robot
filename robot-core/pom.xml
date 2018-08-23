@@ -49,12 +49,19 @@
           </newVersion>
           <parameter>
             <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
-            <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
-            <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
-            <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
+            <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+            <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
             <excludes>
+              <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
               <exclude>org.obolibrary.robot.QueryOperation</exclude>
+              <!-- Exceptions added -->
               <exclude>org.obolibrary.robot.IOHelper</exclude>
+              <exclude>org.obolibrary.robot.OntologyHelper</exclude>
+              <exclude>org.obolibrary.robot.ReportOperation</exclude>
+              <exclude>org.obolibrary.robot.ReasonerHelper</exclude>
+              <!-- Exceptions removed -->
+              <exclude>org.obolibrary.robot.CatalogElementHandler</exclude>
+              <exclude>org.obolibrary.robot.TemplateOperation</exclude>
             </excludes>
           </parameter>
         </configuration>
