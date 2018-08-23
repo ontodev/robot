@@ -243,22 +243,25 @@ public class Report {
   }
 
   /**
-   * Given a PrefixManager and an IRI as a string, return the label or CURIE if possible. Otherwise,
-   * return the IRI as a string.
+   * Given a PrefixManager and a value as a string, return the label or CURIE of the value if
+   * possible. Otherwise, return the value.
    *
    * @param pm PrefixManager to use to create CURIEs
-   * @param iriString IRI to find label or convert to CURIE
-   * @return display name as label, CURIE, or full IRI
+   * @param value value of cell - may be IRI or literal value
+   * @return display name as label, CURIE, or the original value
    */
-  private String getDisplayName(PrefixManager pm, String iriString) {
-    String display = maybeGetLabel(iriString);
-    if (display == null) {
-      display = maybeGetCURIE(pm, iriString);
-      if (display == null) {
-        return iriString;
-      }
+  private String getDisplayName(PrefixManager pm, String value) {
+    String label = maybeGetLabel(value);
+    String curie = maybeGetCURIE(pm, value);
+    if (label != null && curie != null) {
+      return label + " [" + curie + "]";
+    } else if (label != null) {
+      return label + " <" + value + ">";
+    } else if (curie != null) {
+      return curie;
+    } else {
+      return value;
     }
-    return display;
   }
 
   /**
@@ -271,7 +274,12 @@ public class Report {
    */
   private static String maybeGetCURIE(PrefixManager pm, String iriString) {
     IRI iri = IRI.create(iriString);
-    return pm.getPrefixIRI(iri);
+    String prefix = pm.getPrefixIRI(iri);
+    // Strip the default OBO prefix to have ontology-specific prefixes
+    if (prefix != null && prefix.startsWith("obo:")) {
+      return prefix.substring(4).replace("_", ":");
+    }
+    return prefix;
   }
 
   /**
@@ -283,7 +291,16 @@ public class Report {
    */
   private String maybeGetLabel(String iriString) {
     IRI iri = IRI.create(iriString);
-    return checker.getLabel(iri);
+    String label = checker.getLabel(iri);
+    if (label == null || label.equals("")) {
+      if (iriString.matches("[a-z0-9]{32}")) {
+        // Label blank nodes
+        return "blank node";
+      } else {
+        return null;
+      }
+    }
+    return label;
   }
 
   /**
