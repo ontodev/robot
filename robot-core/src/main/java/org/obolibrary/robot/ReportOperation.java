@@ -124,7 +124,18 @@ public class ReportOperation {
   public static boolean report(
       OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
       throws Exception {
-    return report(ontology, null, profilePath, outputPath, format, failOn);
+    return report(ontology, null, profilePath, outputPath, format, failOn, false);
+  }
+
+  public static boolean report(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn)
+      throws Exception {
+    return report(ontology, ioHelper, profilePath, outputPath, format, failOn, false);
   }
 
   /**
@@ -139,6 +150,7 @@ public class ReportOperation {
    * @param outputPath string path to write report file to, or null
    * @param format string format for the output report (TSV or YAML), or null
    * @param failOn logging level to fail execution
+   * @param useLabels if true, use labels for output
    * @return true if successful, false if failed
    * @throws Exception on any error
    */
@@ -148,7 +160,8 @@ public class ReportOperation {
       String profilePath,
       String outputPath,
       String format,
-      String failOn)
+      String failOn,
+      boolean useLabels)
       throws Exception {
     // Set failOn if null to default
     if (failOn == null) {
@@ -162,9 +175,9 @@ public class ReportOperation {
     // Create the report object
     Report report;
     if (ioHelper != null) {
-      report = new Report(ontology, ioHelper);
+      report = new Report(ontology, ioHelper, useLabels);
     } else {
-      report = new Report(ontology);
+      report = new Report(ontology, useLabels);
     }
 
     // Load into dataset without imports

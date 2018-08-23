@@ -27,6 +27,7 @@ public class ReportCommand implements Command {
     o.addOption("p", "profile", true, "reporting rules and levels to use");
     o.addOption("f", "format", true, "save report in a given format (TSV or YAML)");
     o.addOption("F", "fail-on", true, "logging level to fail on");
+    o.addOption("l", "labels", true, "if true, use labels for output");
     options = o;
   }
 
@@ -110,12 +111,14 @@ public class ReportCommand implements Command {
     }
     // fail-on is optional - if null, will always exit with 0
     String failOn = CommandLineHelper.getDefaultValue(line, "fail-on", "error");
+    boolean useLabels = CommandLineHelper.getBooleanValue(line, "labels", false);
 
     // Success is based on failOn
     // If any violations are found of the fail-on level, this will be false
     // If failOn is "none" or if no violations are found, this will be true
     boolean success =
-        ReportOperation.report(ontology, ioHelper, profilePath, outputPath, format, failOn);
+        ReportOperation.report(
+            ontology, ioHelper, profilePath, outputPath, format, failOn, useLabels);
     if (!success) {
       logger.error("Report failed!");
       System.exit(1);

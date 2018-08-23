@@ -32,6 +32,7 @@ public class Report {
   /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
 
+  /** New line separator. */
   private static final String NEW_LINE = System.getProperty("line.separator");
 
   /** Map of rules and the violations for INFO level. */
@@ -42,6 +43,9 @@ public class Report {
 
   /** Map of rules and the violations for ERROR level. */
   public Map<String, List<Violation>> error;
+
+  /** Boolean to use labels for output - defaults to false. */
+  private boolean useLabels = false;
 
   /** Count of violations for INFO. */
   private Integer infoCount;
@@ -64,7 +68,7 @@ public class Report {
    * @throws IOException on problem creating IOHelper
    */
   public Report() throws IOException {
-    new Report(null, new IOHelper());
+    new Report(null, new IOHelper(), false);
   }
 
   /**
@@ -74,7 +78,28 @@ public class Report {
    * @throws IOException on problem creating IOHelper
    */
   public Report(OWLOntology ontology) throws IOException {
-    new Report(ontology, new IOHelper());
+    new Report(ontology, new IOHelper(), false);
+  }
+
+  /**
+   * Create a new report object with an ontology using labels for output.
+   *
+   * @param ontology OWLOntology to get labels from
+   * @param useLabels if true, use labels for output
+   * @throws IOException on problem creating IOHelper
+   */
+  public Report(OWLOntology ontology, boolean useLabels) throws IOException {
+    new Report(ontology, new IOHelper(), false);
+  }
+
+  /**
+   * Create a new report object with an ontology and an IOHelper.
+   *
+   * @param ontology OWLOntology to get labels from
+   * @param ioHelper IOHelper to use
+   */
+  public Report(OWLOntology ontology, IOHelper ioHelper) {
+    new Report(ontology, ioHelper, false);
   }
 
   /**
@@ -82,16 +107,21 @@ public class Report {
    *
    * @param ontology OWLOntology to get labels from
    * @param ioHelper IOHelper to use
+   * @param useLabels if true, use labels for output
    */
-  public Report(OWLOntology ontology, IOHelper ioHelper) {
+  public Report(OWLOntology ontology, IOHelper ioHelper, boolean useLabels) {
     this.ioHelper = ioHelper;
-    checker = new QuotedEntityChecker();
-    checker.setIOHelper(this.ioHelper);
-    checker.addProvider(new SimpleShortFormProvider());
-    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
-    if (ontology != null) {
-      checker.addAll(ontology);
+    if (useLabels) {
+      checker = new QuotedEntityChecker();
+      checker.setIOHelper(this.ioHelper);
+      checker.addProvider(new SimpleShortFormProvider());
+      checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
+      if (ontology != null) {
+        checker.addAll(ontology);
+      }
     }
+
+    this.useLabels = useLabels;
 
     info = new HashMap<>();
     warn = new HashMap<>();
@@ -251,7 +281,10 @@ public class Report {
    * @return display name as label, CURIE, or the original value
    */
   private String getDisplayName(PrefixManager pm, String value) {
-    String label = maybeGetLabel(value);
+    String label = null;
+    if (useLabels) {
+      label = maybeGetLabel(value);
+    }
     String curie = maybeGetCURIE(pm, value);
     if (label != null && curie != null) {
       return label + " [" + curie + "]";
@@ -272,7 +305,7 @@ public class Report {
    * @param iriString IRI to convert to CURIE
    * @return CURIE, or null
    */
-  private static String maybeGetCURIE(PrefixManager pm, String iriString) {
+  private String maybeGetCURIE(PrefixManager pm, String iriString) {
     IRI iri = IRI.create(iriString);
     String prefix = pm.getPrefixIRI(iri);
     // Strip the default OBO prefix to have ontology-specific prefixes
