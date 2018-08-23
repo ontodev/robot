@@ -170,8 +170,8 @@ public class AnnotateCommand implements Command {
       OntologyHelper.removeOntologyAnnotations(ontology);
     }
 
-    String property = null;
-    String value = null;
+    String property;
+    String value;
 
     // Add annotations with PROP VALUE
     List<String> annotationItems = CommandLineHelper.getOptionValues(line, "annotation");
@@ -209,7 +209,7 @@ public class AnnotateCommand implements Command {
     while (langItems.size() > 0) {
       hasAnnotation = true;
       // Check for valid input
-      String lang = null;
+      String lang;
       try {
         property = langItems.remove(0);
         value = langItems.remove(0);
@@ -227,7 +227,7 @@ public class AnnotateCommand implements Command {
     while (typedItems.size() > 0) {
       hasAnnotation = true;
       // Check for valid input
-      String type = null;
+      String type;
       try {
         property = typedItems.remove(0);
         value = typedItems.remove(0);
@@ -255,7 +255,7 @@ public class AnnotateCommand implements Command {
     }
 
     // Load any annotation files as ontologies and merge them in
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     List<String> paths = CommandLineHelper.getOptionValues(line, "annotation-file");
     for (String path : paths) {
       ontologies.add(ioHelper.loadOntology(path));

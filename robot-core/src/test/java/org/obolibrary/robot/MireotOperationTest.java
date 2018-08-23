@@ -20,7 +20,7 @@ public class MireotOperationTest extends CoreTest {
   /**
    * Test MIREOT.
    *
-   * @throws Exception
+   * @throws Exception on any problem
    */
   @Test
   public void testMireot() throws Exception {
@@ -31,7 +31,7 @@ public class MireotOperationTest extends CoreTest {
    * Test MIREOT.
    *
    * @param expectedPath the path to a known-good file for comparison
-   * @throws Exception
+   * @throws Exception on any problem
    */
   public void testMireot(String expectedPath) throws Exception {
     OWLOntology inputOntology = loadOntology("/filtered.owl");
@@ -40,12 +40,11 @@ public class MireotOperationTest extends CoreTest {
 
     Set<IRI> upperIRIs =
         Collections.singleton(IRI.create("http://purl.obolibrary.org/obo/UBERON_0001235"));
-    Set<IRI> lowerIRIs = upperIRIs;
     // Set<IRI> branchIRIs = upperIRIs;
 
-    List<OWLOntology> outputOntologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> outputOntologies = new ArrayList<>();
 
-    outputOntologies.add(MireotOperation.getAncestors(inputOntology, upperIRIs, lowerIRIs, null));
+    outputOntologies.add(MireotOperation.getAncestors(inputOntology, upperIRIs, upperIRIs, null));
 
     /*
     outputOntologies.add(

@@ -47,6 +47,10 @@ public class TemplateHelper {
   private static final String annotationPropertyError =
       NS + "ANNOTATION PROPERTY ERROR could not handle annotation property: %s";
 
+  /** Error message when the CLASS_TYPE is not subclass or equivalent. */
+  private static final String classTypeError =
+      NS + "CLASS TYPE ERROR '%s' is not a valid CLASS_TYPE";
+
   /** Error message when datatype cannot be resolved. Expects: datatype name. */
   private static final String datatypeError = NS + "DATATYPE ERROR could not find datatype: %s";
 
@@ -120,13 +124,13 @@ public class TemplateHelper {
     if (template.startsWith("A ")) {
       return getStringAnnotation(checker, template, value);
     } else if (template.startsWith("AT ")) {
-      if (template.indexOf("^^") > -1) {
+      if (template.contains("^^")) {
         return getTypedAnnotation(checker, template, value);
       } else {
         throw new Exception(String.format(typedFormatError, template));
       }
     } else if (template.startsWith("AL ")) {
-      if (template.indexOf("@") > -1) {
+      if (template.contains("@")) {
         return getLanguageAnnotation(checker, template, value);
       } else {
         throw new Exception(String.format(languageFormatError, template));
@@ -234,7 +238,7 @@ public class TemplateHelper {
       }
       return Sets.newHashSet(axiom);
     } else {
-      return null;
+      throw new Exception(String.format(classTypeError, classType));
     }
   }
 
@@ -351,11 +355,10 @@ public class TemplateHelper {
    * @param type the IRI of the type for this entity, or null
    * @param id the ID for this entity, or null
    * @param label the label for this entity, or null
-   * @return the entity
-   * @throws Exception if the entity cannot be created
+   * @return the entity or null
    */
-  public static OWLEntity getEntity(QuotedEntityChecker checker, IRI type, String id, String label)
-      throws Exception {
+  public static OWLEntity getEntity(
+      QuotedEntityChecker checker, IRI type, String id, String label) {
 
     IOHelper ioHelper = checker.getIOHelper();
 
@@ -414,7 +417,7 @@ public class TemplateHelper {
    */
   public static List<IRI> getIRIs(Map<String, List<List<String>>> tables, IOHelper ioHelper)
       throws Exception {
-    List<IRI> iris = new ArrayList<IRI>();
+    List<IRI> iris = new ArrayList<>();
     for (Map.Entry<String, List<List<String>>> table : tables.entrySet()) {
       String tableName = table.getKey();
       List<List<String>> rows = table.getValue();
@@ -451,9 +454,9 @@ public class TemplateHelper {
       throw new Exception(String.format(idError, tableName));
     }
 
-    List<IRI> iris = new ArrayList<IRI>();
+    List<IRI> iris = new ArrayList<>();
     for (int row = 2; row < rows.size(); row++) {
-      String id = null;
+      String id;
       try {
         id = rows.get(row).get(idColumn);
       } catch (IndexOutOfBoundsException e) {
@@ -503,10 +506,10 @@ public class TemplateHelper {
    */
   public static List<List<String>> readCSV(Reader reader) throws IOException {
     CSVReader csv = new CSVReader(reader);
-    List<List<String>> rows = new ArrayList<List<String>>();
+    List<List<String>> rows = new ArrayList<>();
     String[] nextLine;
     while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
+      rows.add(new ArrayList<>(Arrays.asList(nextLine)));
     }
     csv.close();
     return rows;
@@ -566,10 +569,10 @@ public class TemplateHelper {
    */
   public static List<List<String>> readTSV(Reader reader) throws IOException {
     CSVReader csv = new CSVReader(reader, '\t');
-    List<List<String>> rows = new ArrayList<List<String>>();
+    List<List<String>> rows = new ArrayList<>();
     String[] nextLine;
     while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<String>(Arrays.asList(nextLine)));
+      rows.add(new ArrayList<>(Arrays.asList(nextLine)));
     }
     csv.close();
     return rows;

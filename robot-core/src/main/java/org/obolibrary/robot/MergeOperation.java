@@ -23,7 +23,7 @@ public class MergeOperation {
    * @return the new ontology
    */
   public static OWLOntology merge(OWLOntology ontology) {
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(ontology);
     // One ontology will always collapse the import closure
     mergeInto(ontologies, ontology, false, true);
@@ -51,7 +51,7 @@ public class MergeOperation {
    * @param ontologies the list of ontologies to merge
    * @param includeAnnotations if true, ontology annotations should be merged; annotations on
    *     imports are not merged
-   * @param collapseImportClosure if true, imports closure from all ontologies included
+   * @param collapseImportsClosure if true, imports closure from all ontologies included
    * @return the first ontology
    */
   public static OWLOntology merge(
@@ -87,7 +87,7 @@ public class MergeOperation {
    * @param targetOntology the ontology to merge axioms into
    */
   public static void mergeInto(OWLOntology ontology, OWLOntology targetOntology) {
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(ontology);
     // By default, do not include annotations and do not collapse import closure
     mergeInto(ontologies, targetOntology, false, false);
@@ -122,7 +122,7 @@ public class MergeOperation {
    */
   public static void mergeInto(
       OWLOntology ontology, OWLOntology targetOntology, boolean includeAnnotations) {
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(ontology);
     mergeInto(ontologies, targetOntology, includeAnnotations);
   }
@@ -143,7 +143,7 @@ public class MergeOperation {
       OWLOntology targetOntology,
       boolean includeAnnotations,
       boolean collapseImportsClosure) {
-    List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+    List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(ontology);
     mergeInto(ontologies, targetOntology, includeAnnotations, collapseImportsClosure);
   }
@@ -185,7 +185,7 @@ public class MergeOperation {
             .addAxioms(targetOntology, ontology.getAxioms(Imports.INCLUDED));
       } else {
         // Merge the ontologies with imports excluded
-        Set<OWLOntology> imports = targetOntology.getDirectImports();
+        Set<OWLImportsDeclaration> imports = targetOntology.getImportsDeclarations();
         try {
           OntologyHelper.removeImports(targetOntology);
         } catch (Exception e) {
@@ -198,9 +198,7 @@ public class MergeOperation {
         OWLOntologyManager manager = targetOntology.getOWLOntologyManager();
         OWLDataFactory dataFactory = manager.getOWLDataFactory();
         // Re-add the imports
-        for (OWLOntology imp : imports) {
-          OWLImportsDeclaration dec =
-              dataFactory.getOWLImportsDeclaration(imp.getOntologyID().getOntologyIRI().orNull());
+        for (OWLImportsDeclaration dec : imports) {
           manager.applyChange(new AddImport(targetOntology, dec));
         }
       }
@@ -236,7 +234,7 @@ public class MergeOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("collapse-imports-closure", "false");
 
     return options;

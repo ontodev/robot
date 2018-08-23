@@ -43,7 +43,7 @@ public class MireotOperation {
    * @return a set of annotation properties
    */
   public static Set<OWLAnnotationProperty> getDefaultAnnotationProperties() {
-    Set<OWLAnnotationProperty> annotationProperties = new HashSet<OWLAnnotationProperty>();
+    Set<OWLAnnotationProperty> annotationProperties = new HashSet<>();
     annotationProperties.add(dataFactory.getRDFSLabel());
     return annotationProperties;
   }
@@ -261,9 +261,6 @@ public class MireotOperation {
       Collection<OWLAnnotationProperty> subproperies =
           EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(), inputOntology, true);
       for (OWLAnnotationProperty subproperty : subproperies) {
-        if (subproperty == dataFactory.getOWLNothing()) {
-          continue;
-        }
         OntologyHelper.copy(inputOntology, outputOntology, subproperty, annotationProperties);
         outputManager.addAxiom(
             outputOntology,
@@ -289,9 +286,6 @@ public class MireotOperation {
       Set<OWLDataProperty> subproperies =
           reasoner.getSubDataProperties(entity.asOWLDataProperty(), true).getFlattened();
       for (OWLDataProperty subproperty : subproperies) {
-        if (subproperty == dataFactory.getOWLNothing()) {
-          continue;
-        }
         OntologyHelper.copy(inputOntology, outputOntology, subproperty, annotationProperties);
         outputManager.addAxiom(
             outputOntology,

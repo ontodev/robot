@@ -20,7 +20,7 @@ public class FilterOperationTest extends CoreTest {
    */
   @Test
   public void testFilterNothing() throws IOException {
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+    Set<OWLObjectProperty> properties = new HashSet<>();
     OWLOntology filtered = loadOntology("/simple.owl");
     FilterOperation.filter(filtered, properties);
     assertIdentical("/simple.owl", filtered);
@@ -34,7 +34,7 @@ public class FilterOperationTest extends CoreTest {
    */
   @Test
   public void testRemoveParts() throws IOException {
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+    Set<OWLObjectProperty> properties = new HashSet<>();
     OWLOntology filtered = loadOntology("/simple_parts.owl");
     FilterOperation.filter(filtered, properties);
     assertIdentical("/simple.owl", filtered);
@@ -52,7 +52,7 @@ public class FilterOperationTest extends CoreTest {
 
     OWLOntologyManager manager = simpleParts.getOWLOntologyManager();
     OWLDataFactory df = manager.getOWLDataFactory();
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+    Set<OWLObjectProperty> properties = new HashSet<>();
     properties.add(df.getOWLObjectProperty(IRI.create(base + "simple.owl#part_of")));
 
     OWLOntology filtered = loadOntology("/simple_parts.owl");

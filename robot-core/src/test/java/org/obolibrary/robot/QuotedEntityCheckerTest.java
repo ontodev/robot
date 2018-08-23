@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.assertEquals;
 
 import org.junit.Test;
 import org.semanticweb.owlapi.model.*;
@@ -28,8 +28,12 @@ public class QuotedEntityCheckerTest extends CoreTest {
     checker.addAll(ontology);
 
     OWLEntity cls = checker.getOWLClass("test one");
-    assertTrue(
-        "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"
-            .equals(cls.getIRI().toString()));
+    if (cls != null) {
+      assertEquals(
+          "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1",
+          cls.getIRI().toString());
+    } else {
+      throw new Exception("Class 'test one' does not exist.");
+    }
   }
 }

@@ -38,7 +38,7 @@ public class ExtractOperation {
       throws OWLOntologyCreationException {
     logger.debug("Extracting...");
 
-    Set<OWLEntity> entities = new HashSet<OWLEntity>();
+    Set<OWLEntity> entities = new HashSet<>();
     for (IRI term : terms) {
       entities.addAll(inputOntology.getEntitiesInSignature(term, true));
     }

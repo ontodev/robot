@@ -59,16 +59,16 @@ public class DiffOperation {
   public static boolean compare(OWLOntology ontology1, OWLOntology ontology2, Writer writer)
       throws IOException {
 
-    Map<IRI, String> labels = OntologyHelper.getLabels(ontology1);
-    labels.putAll(OntologyHelper.getLabels(ontology2));
+    // Map<IRI, String> labels = OntologyHelper.getLabels(ontology1);
+    // labels.putAll(OntologyHelper.getLabels(ontology2));
 
     Set<String> strings1 = getAxiomStrings(ontology1);
     Set<String> strings2 = getAxiomStrings(ontology2);
     Set<String> sorted;
 
-    Set<String> strings1minus2 = new HashSet<String>(strings1);
+    Set<String> strings1minus2 = new HashSet<>(strings1);
     strings1minus2.removeAll(strings2);
-    Set<String> strings2minus1 = new HashSet<String>(strings2);
+    Set<String> strings2minus1 = new HashSet<>(strings2);
     strings2minus1.removeAll(strings1);
 
     if (strings1minus2.size() == 0 && strings2minus1.size() == 0) {
@@ -83,9 +83,9 @@ public class DiffOperation {
     }
 
     writer.write(strings1minus2.size() + " axioms in Ontology 1 but not in Ontology 2:\n");
-    sorted = new TreeSet<String>();
+    sorted = new TreeSet<>();
     for (String axiom : strings1minus2) {
-      sorted.add("- " + addLabels(labels, axiom) + "\n");
+      sorted.add("- " + axiom + "\n");
     }
     for (String axiom : sorted) {
       writer.write(axiom);
@@ -94,9 +94,9 @@ public class DiffOperation {
     writer.write("\n");
 
     writer.write(strings2minus1.size() + " axioms in Ontology 2 but not in Ontology 1:\n");
-    sorted = new TreeSet<String>();
+    sorted = new TreeSet<>();
     for (String axiom : strings2minus1) {
-      sorted.add("+ " + addLabels(labels, axiom) + "\n");
+      sorted.add("+ " + axiom + "\n");
     }
     for (String axiom : sorted) {
       writer.write(axiom);
@@ -117,8 +117,8 @@ public class DiffOperation {
     Matcher matcher = iriPattern.matcher(axiom);
     StringBuffer sb = new StringBuffer();
     while (matcher.find()) {
-      String iri = matcher.group(1);
-      String id = iri;
+      IRI iri = IRI.create(matcher.group(1));
+      String id = iri.toString();
       if (id.startsWith(oboBase)) {
         id = id.substring(oboBase.length());
       }
@@ -139,7 +139,7 @@ public class DiffOperation {
    * @return a set of strings, one for each axiom in the ontology
    */
   public static Set<String> getAxiomStrings(OWLOntology ontology) {
-    Set<String> strings = new HashSet<String>();
+    Set<String> strings = new HashSet<>();
     strings.add(ontology.getOntologyID().toString());
     for (OWLAxiom axiom : ontology.getAxioms()) {
       strings.add(axiom.toString().replaceAll("\\n", "\\n"));
