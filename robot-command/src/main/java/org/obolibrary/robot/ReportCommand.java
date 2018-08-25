@@ -106,7 +106,7 @@ public class ReportCommand implements Command {
     // format is optional - default is TSV, but if the prefix of file is 'csv' or 'yaml',
     // that will be automatically detected
     String format = CommandLineHelper.getOptionalValue(line, "format");
-    if (format == null) {
+    if (format == null && outputPath != null) {
       format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
     }
     // fail-on is optional - if null, will always exit with 0
