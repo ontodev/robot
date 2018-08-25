@@ -132,7 +132,7 @@ public class MaterializeCommand implements Command {
     }
 
     Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, true);
-    Set<OWLObjectProperty> properties = new HashSet<OWLObjectProperty>();
+    Set<OWLObjectProperty> properties = new HashSet<>();
     for (IRI term : terms) {
       properties.add(
           ontology.getOWLOntologyManager().getOWLDataFactory().getOWLObjectProperty(term));

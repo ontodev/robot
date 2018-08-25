@@ -145,14 +145,14 @@ public class EquivalentClassReasoning {
   }
 
   private static String equivAxiomToString(OWLEquivalentClassesAxiom axiom) {
-    String equivalentClassesString = "Equivalence: ";
+    StringBuilder equivalentClassesString = new StringBuilder("Equivalence: ");
     Iterator<OWLClass> classIterator = axiom.getNamedClasses().iterator();
     while (classIterator.hasNext()) {
-      equivalentClassesString += classIterator.next().toString();
+      equivalentClassesString.append(classIterator.next().toString());
       if (classIterator.hasNext()) {
-        equivalentClassesString += " == ";
+        equivalentClassesString.append(" == ");
       }
     }
-    return equivalentClassesString;
+    return equivalentClassesString.toString();
   }
 }

@@ -132,7 +132,7 @@ public class TemplateCommand implements Command {
     if (templatePaths.size() == 0) {
       throw new IllegalArgumentException(missingTemplateError);
     }
-    Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
+    Map<String, List<List<String>>> tables = new LinkedHashMap<>();
     for (String templatePath : templatePaths) {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
@@ -157,13 +157,13 @@ public class TemplateCommand implements Command {
       OWLOntology ancestors =
           MireotOperation.getAncestors(
               inputOntology, null, iris, MireotOperation.getDefaultAnnotationProperties());
-      ontologies = new ArrayList<OWLOntology>();
+      ontologies = new ArrayList<>();
       ontologies.add(ancestors);
       MergeOperation.mergeInto(ontologies, outputOntology, includeAnnotations, collapseImports);
     }
 
     // Either merge-then-save, save-then-merge, or don't merge
-    ontologies = new ArrayList<OWLOntology>();
+    ontologies = new ArrayList<>();
     ontologies.add(outputOntology);
     boolean mergeBefore = CommandLineHelper.getBooleanValue(line, "merge-before", false, true);
     boolean mergeAfter = CommandLineHelper.getBooleanValue(line, "merge-after", false, true);

@@ -79,6 +79,14 @@ INFO	file:///absolute/path/to/other_query.rq
 
 ## Error Messages
 
+### Fail On Error
+
+Only `info`, `warn`, and `error` are valid inputs for `--fail-on`.
+
+### Missing Entity Binding
+
+All queries must bind `?entity ?property ?value` for correct formatting. If `?entity` is ever `null`, the query cannot be reported on.
+
 ### Report Level Error
 
 The logging level defined in a profile must be `ERROR`, `WARN`, or `INFO`.
