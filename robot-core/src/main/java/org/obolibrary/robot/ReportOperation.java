@@ -123,7 +123,18 @@ public class ReportOperation {
   public static boolean report(
       OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
       throws Exception {
-    return report(ontology, null, profilePath, outputPath, format, failOn);
+    return report(ontology, null, profilePath, outputPath, format, failOn, false);
+  }
+
+  public static boolean report(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn)
+      throws Exception {
+    return report(ontology, ioHelper, profilePath, outputPath, format, failOn, false);
   }
 
   /**
@@ -138,6 +149,7 @@ public class ReportOperation {
    * @param outputPath string path to write report file to, or null
    * @param format string format for the output report (TSV or YAML), or null
    * @param failOn logging level to fail execution
+   * @param useLabels if true, use labels for output
    * @return true if successful, false if failed
    * @throws Exception on any error
    */
@@ -147,8 +159,13 @@ public class ReportOperation {
       String profilePath,
       String outputPath,
       String format,
-      String failOn)
+      String failOn,
+      boolean useLabels)
       throws Exception {
+    // Set failOn if null to default
+    if (failOn == null) {
+      failOn = ERROR;
+    }
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
@@ -157,9 +174,9 @@ public class ReportOperation {
     // Create the report object
     Report report;
     if (ioHelper != null) {
-      report = new Report(ioHelper);
+      report = new Report(ontology, ioHelper, useLabels);
     } else {
-      report = new Report();
+      report = new Report(ontology, useLabels);
     }
 
     // Load into dataset without imports
@@ -185,9 +202,9 @@ public class ReportOperation {
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
       System.out.println("-----------------");
-      System.out.println("ERROR:      " + report.getTotalViolations(ERROR));
-      System.out.println("WARN:       " + report.getTotalViolations(WARN));
-      System.out.println("INFO:       " + report.getTotalViolations(INFO));
+      System.out.println(ERROR + ":      " + report.getTotalViolations(ERROR));
+      System.out.println(WARN + ":       " + report.getTotalViolations(WARN));
+      System.out.println(INFO + ":       " + report.getTotalViolations(INFO));
     } else {
       System.out.println("No violations found.");
     }
@@ -196,8 +213,9 @@ public class ReportOperation {
     String result;
     if (format != null && format.equalsIgnoreCase("yaml")) {
       result = report.toYAML();
+    } else if (format != null && format.equalsIgnoreCase("csv")) {
+      result = report.toCSV();
     } else {
-      // Default to TSV if nothing was provided, or if it is not YAML
       result = report.toTSV();
     }
     if (outputPath != null) {
@@ -215,11 +233,11 @@ public class ReportOperation {
     // If a fail-on is provided, return false if there are violations of the given level
     if (failOn.equalsIgnoreCase("none")) {
       return true;
-    } else if (failOn.equalsIgnoreCase("error")) {
+    } else if (failOn.equalsIgnoreCase(ERROR)) {
       return report.getTotalViolations(ERROR) <= 0;
-    } else if (failOn.equalsIgnoreCase("warn")) {
+    } else if (failOn.equalsIgnoreCase(WARN)) {
       return (report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) <= 0;
-    } else if (failOn.equalsIgnoreCase("info")) {
+    } else if (failOn.equalsIgnoreCase(INFO)) {
       return report.getTotalViolations() <= 0;
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
@@ -425,8 +443,7 @@ public class ReportOperation {
   private static List<Violation> getViolations(Dataset dataset, String query) throws IOException {
     ResultSet violationSet = QueryOperation.execQuery(dataset, query);
 
-    Map<String, Violation> violations = new HashMap<>();
-    Violation violation;
+    List<Violation> violations = new ArrayList<>();
 
     while (violationSet.hasNext()) {
       QuerySolution qs = violationSet.next();
@@ -436,15 +453,10 @@ public class ReportOperation {
         return null;
       }
       // skip RDFS and OWL terms
-      if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
+      if (entity != null && (entity.contains("/rdf-schema#") || entity.contains("/owl#"))) {
         continue;
       }
-      // find out if a this Violation already exists for this entity
-      violation = violations.get(entity);
-      // if the entity hasn't been added, create a new Violation
-      if (violation == null) {
-        violation = new Violation(entity);
-      }
+      Violation violation = new Violation(entity);
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
       String value = getQueryResultOrNull(qs, "value");
@@ -452,8 +464,8 @@ public class ReportOperation {
       if (property != null) {
         violation.addStatement(property, value);
       }
-      violations.put(entity, violation);
+      violations.add(violation);
     }
-    return new ArrayList<>(violations.values());
+    return violations;
   }
 }

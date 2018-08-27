@@ -67,6 +67,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   /** Map from names to IRIs of object properties. */
   private Map<String, IRI> objectProperties = new HashMap<>();
 
+  /** Map from IRIs to names of entities. */
+  private Map<IRI, String> labels = new HashMap<>();
+
   /**
    * Add an IOHelper for resolving names to IRIs.
    *
@@ -207,6 +210,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
 
     if (providers != null) {
       for (ShortFormProvider provider : providers) {
+        labels.put(entity.getIRI(), provider.getShortForm(entity));
         map.put(provider.getShortForm(entity), entity.getIRI());
       }
     }
@@ -221,6 +225,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
           OWLLiteral value = ann.getValue().asLiteral().orNull();
           // If it has a label, add it to the map (will replace short form)
           if (value != null) {
+            labels.put(entity.getIRI(), value.getLiteral());
             map.put(value.getLiteral(), entity.getIRI());
           }
         }
@@ -245,6 +250,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return;
     }
 
+    labels.put(entity.getIRI(), name);
     map.put(name, entity.getIRI());
   }
 
@@ -266,6 +272,19 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     name = name.trim().replaceAll("^\"|\"$", "");
     if (map.containsKey(name)) {
       return map.get(name);
+    }
+    return null;
+  }
+
+  /**
+   * Get the label for the given IRI. Quotation marks will be removed if necessary.
+   *
+   * @param iri IRI to get label of
+   * @return the label of the entity, or null if none is found
+   */
+  public String getLabel(IRI iri) {
+    if (labels.containsKey(iri)) {
+      return escape(labels.get(iri));
     }
     return null;
   }
