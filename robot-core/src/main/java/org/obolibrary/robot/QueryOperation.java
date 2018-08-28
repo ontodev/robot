@@ -531,7 +531,8 @@ public class QueryOperation {
   }
 
   /**
-   * Given a Model, a SPARQL update string, an output stream, and the output format, update the model and write it to the output.
+   * Given a Model, a SPARQL update string, an output stream, and the output format, update the
+   * model and write it to the output.
    *
    * @param model Model to update
    * @param updateString SPARQL update
