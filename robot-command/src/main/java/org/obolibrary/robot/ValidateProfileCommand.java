@@ -29,7 +29,7 @@ public class ValidateProfileCommand implements Command {
 
   /** Error message when the ontology validates provided profile. Expects ontology IRI, profile. */
   private static final String profileViolationError =
-      NS + "PROFILE VIOLATION ERROR %1 violates profile %2";
+      NS + "PROFILE VIOLATION ERROR %s violates profile %s";
 
   /** Initialize the command. */
   public ValidateProfileCommand() {

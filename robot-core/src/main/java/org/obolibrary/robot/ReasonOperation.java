@@ -18,23 +18,7 @@ import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLNamedObject;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.RemoveImport;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
@@ -61,7 +45,7 @@ public class ReasonOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("remove-redundant-subclass-axioms", "true");
     options.put("create-new-ontology", "false");
     options.put("create-new-ontology-with-annotations", "false");
@@ -149,7 +133,7 @@ public class ReasonOperation {
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
 
     String dumpFilePath = OptionsHelper.getOption(options, "dump-unsatisfiable", null);
-    ReasonerHelper.validate(reasoner, dumpFilePath, new IOHelper());
+    ReasonerHelper.validate(reasoner, dumpFilePath);
 
     logger.info("Precomputing class hierarchy...");
     reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
@@ -171,8 +155,7 @@ public class ReasonOperation {
     Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
 
     // Make sure to add the axiom generators in this way!!!
-    List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
-        new ArrayList<InferredAxiomGenerator<? extends OWLAxiom>>();
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
     gens.add(new InferredSubClassAxiomGenerator());
     InferredOntologyGenerator generator = new InferredOntologyGenerator(reasoner, gens);
     logger.info("Using these axiom generators:");
@@ -253,7 +236,7 @@ public class ReasonOperation {
         ontology
             .getAxioms(AxiomType.DECLARATION)
             .stream()
-            .map(a -> a.getEntity())
+            .map(OWLDeclarationAxiom::getEntity)
             .collect(Collectors.toSet());
     for (OWLAxiom a : newAxiomOntology.getAxioms()) {
       if (OptionsHelper.optionIsTrue(options, "exclude-external-entities")) {
@@ -350,7 +333,7 @@ public class ReasonOperation {
 
       // Use the reasoner to get all
       // the direct superclasses of this class.
-      Set<OWLClass> inferredSuperClasses = new HashSet<OWLClass>();
+      Set<OWLClass> inferredSuperClasses = new HashSet<>();
       for (Node<OWLClass> node : reasoner.getSuperClasses(thisClass, true)) {
         for (OWLClass inferredSuperClass : node) {
           inferredSuperClasses.add(inferredSuperClass);

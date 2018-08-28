@@ -52,6 +52,10 @@ public class ReportOperation {
   /** Error message when user profiles an invalid fail-on level. */
   private static final String failOnError = NS + "FAIL ON ERROR '%s' is not a valid fail-on level.";
 
+  /** Error message when the query does not have ?entity. */
+  private static final String missingEntityBinding =
+      NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
+
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
@@ -71,9 +75,7 @@ public class ReportOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
-
-    return options;
+    return new HashMap<>();
   }
 
   /**
@@ -83,12 +85,10 @@ public class ReportOperation {
    *
    * @param ontology the OWLOntology to report
    * @param iohelper IOHelper to work with ontology
+   * @throws Exception on any reporting error
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper) {
-    try {
-      report(ontology, null, null, null, null);
-    } catch (Exception e) {
-    }
+  public static void report(OWLOntology ontology, IOHelper iohelper) throws Exception {
+    report(ontology, null, null, null, null);
   }
 
   /**
@@ -99,12 +99,11 @@ public class ReportOperation {
    * @param ontology the OWLOntology to report
    * @param iohelper IOHelper to work with ontology
    * @param options map of report options
+   * @throws Exception on any reporting error
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
-    try {
-      report(ontology, null, null, null, null);
-    } catch (Exception e) {
-    }
+  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options)
+      throws Exception {
+    report(ontology, null, null, null, null);
   }
 
   /**
@@ -124,12 +123,62 @@ public class ReportOperation {
   public static boolean report(
       OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
       throws Exception {
+    return report(ontology, null, profilePath, outputPath, format, failOn, false);
+  }
+
+  public static boolean report(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn)
+      throws Exception {
+    return report(ontology, ioHelper, profilePath, outputPath, format, failOn, false);
+  }
+
+  /**
+   * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
+   * null) report on the ontology using the rules within the profile and write results to the output
+   * path. If profile is null, use the default profile in resources. If the output path is null,
+   * write results to console. If the format is null, write results in TSV format.
+   *
+   * @param ontology OWLOntology to report on
+   * @param ioHelper IOHelper to use
+   * @param profilePath user profile file path to use, or null
+   * @param outputPath string path to write report file to, or null
+   * @param format string format for the output report (TSV or YAML), or null
+   * @param failOn logging level to fail execution
+   * @param useLabels if true, use labels for output
+   * @return true if successful, false if failed
+   * @throws Exception on any error
+   */
+  public static boolean report(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn,
+      boolean useLabels)
+      throws Exception {
+    // Set failOn if null to default
+    if (failOn == null) {
+      failOn = ERROR;
+    }
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
 
-    Report report = new Report();
+    // Create the report object
+    Report report;
+    if (ioHelper != null) {
+      report = new Report(ontology, ioHelper, useLabels);
+    } else {
+      report = new Report(ontology, useLabels);
+    }
+
     // Load into dataset without imports
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
@@ -141,6 +190,11 @@ public class ReportOperation {
       } else {
         queryString = fullQueryString;
       }
+      List<Violation> violations = getViolations(dataset, queryString);
+      // If violations is not returned properly, the query did not have the correct format
+      if (violations == null) {
+        throw new Exception(String.format(missingEntityBinding, queryName));
+      }
       report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
     }
 
@@ -148,9 +202,9 @@ public class ReportOperation {
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
       System.out.println("-----------------");
-      System.out.println("ERROR:      " + report.getTotalViolations(ERROR));
-      System.out.println("WARN:       " + report.getTotalViolations(WARN));
-      System.out.println("INFO:       " + report.getTotalViolations(INFO));
+      System.out.println(ERROR + ":      " + report.getTotalViolations(ERROR));
+      System.out.println(WARN + ":       " + report.getTotalViolations(WARN));
+      System.out.println(INFO + ":       " + report.getTotalViolations(INFO));
     } else {
       System.out.println("No violations found.");
     }
@@ -159,8 +213,9 @@ public class ReportOperation {
     String result;
     if (format != null && format.equalsIgnoreCase("yaml")) {
       result = report.toYAML();
+    } else if (format != null && format.equalsIgnoreCase("csv")) {
+      result = report.toCSV();
     } else {
-      // Default to TSV if nothing was provided, or if it is not YAML
       result = report.toTSV();
     }
     if (outputPath != null) {
@@ -178,22 +233,15 @@ public class ReportOperation {
     // If a fail-on is provided, return false if there are violations of the given level
     if (failOn.equalsIgnoreCase("none")) {
       return true;
-    } else if (failOn.equalsIgnoreCase("error")) {
-      if (report.getTotalViolations(ERROR) > 0) {
-        return false;
-      }
-    } else if (failOn.equalsIgnoreCase("warn")) {
-      if ((report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) > 0) {
-        return false;
-      }
-    } else if (failOn.equalsIgnoreCase("info")) {
-      if (report.getTotalViolations() > 0) {
-        return false;
-      }
+    } else if (failOn.equalsIgnoreCase(ERROR)) {
+      return report.getTotalViolations(ERROR) <= 0;
+    } else if (failOn.equalsIgnoreCase(WARN)) {
+      return (report.getTotalViolations(ERROR) + report.getTotalViolations(WARN)) <= 0;
+    } else if (failOn.equalsIgnoreCase(INFO)) {
+      return report.getTotalViolations() <= 0;
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
-    return true;
   }
 
   /**
@@ -277,13 +325,11 @@ public class ReportOperation {
       String cls = ReportOperation.class.getName().replace(".", "/") + ".class";
       dirURL = ReportOperation.class.getClassLoader().getResource(cls);
     }
-    String protocol;
-    try {
-      protocol = dirURL.getProtocol();
-    } catch (NullPointerException e) {
+    if (dirURL == null) {
       throw new IOException(
-          "Cannot access report query files in JAR. The directory address has no protocol.");
+          "Cannot access report query files in JAR. The resource does not exist.");
     }
+    String protocol = dirURL.getProtocol();
     if (protocol.equals("jar")) {
       String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!"));
       // Get all entries in jar
@@ -380,8 +426,9 @@ public class ReportOperation {
    * @param dsg the ontology as a graph
    * @param query the query
    * @return List of Violations
+   * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(DatasetGraph dsg, String query) {
+  private static List<Violation> getViolations(DatasetGraph dsg, String query) throws IOException {
     return getViolations(DatasetFactory.create(dsg), query);
   }
 
@@ -391,27 +438,25 @@ public class ReportOperation {
    * @param dataset the ontology/ontologies as a dataset
    * @param query the query
    * @return List of Violations
+   * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(Dataset dataset, String query) {
+  private static List<Violation> getViolations(Dataset dataset, String query) throws IOException {
     ResultSet violationSet = QueryOperation.execQuery(dataset, query);
 
-    Map<String, Violation> violations = new HashMap<>();
-    Violation violation;
+    List<Violation> violations = new ArrayList<>();
 
     while (violationSet.hasNext()) {
       QuerySolution qs = violationSet.next();
       // entity should never be null
       String entity = getQueryResultOrNull(qs, "entity");
+      if (entity == null) {
+        return null;
+      }
       // skip RDFS and OWL terms
-      if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
+      if (entity != null && (entity.contains("/rdf-schema#") || entity.contains("/owl#"))) {
         continue;
       }
-      // find out if a this Violation already exists for this entity
-      violation = violations.get(entity);
-      // if the entity hasn't been added, create a new Violation
-      if (violation == null) {
-        violation = new Violation(entity);
-      }
+      Violation violation = new Violation(entity);
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
       String value = getQueryResultOrNull(qs, "value");
@@ -419,8 +464,8 @@ public class ReportOperation {
       if (property != null) {
         violation.addStatement(property, value);
       }
-      violations.put(entity, violation);
+      violations.add(violation);
     }
-    return new ArrayList<>(violations.values());
+    return violations;
   }
 }

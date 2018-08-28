@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import com.google.common.base.Optional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,17 +9,7 @@ import java.util.Set;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.obolibrary.robot.checks.InvalidReferenceViolation.Category;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyChange;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.util.OWLEntityRenamer;
 import org.slf4j.Logger;
@@ -37,33 +26,106 @@ public class RepairOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
     // options.put("remove-redundant-subclass-axioms", "true");
-
-    return options;
+    return new HashMap<>();
   }
 
   /**
    * Repairs ontology
    *
    * @param ontology the OWLOntology to repair
-   * @param iohelper IOHelper to work with the ontology
+   * @param ioHelper IOHelper to work with the ontology
    */
-  public static void repair(OWLOntology ontology, IOHelper iohelper) {
-    repair(ontology, iohelper, getDefaultOptions());
+  public static void repair(OWLOntology ontology, IOHelper ioHelper) {
+    repair(ontology, ioHelper, getDefaultOptions());
   }
+
   /**
    * Repairs ontology
    *
    * @param ontology the OWLOntology to repair
-   * @param iohelper IOHelper to work with the ontology
+   * @param ioHelper IOHelper to work with the ontology
+   * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
+   */
+  public static void repair(
+      OWLOntology ontology, IOHelper ioHelper, boolean mergeAxiomAnnotations) {
+    repair(ontology, ioHelper, getDefaultOptions(), mergeAxiomAnnotations);
+  }
+
+  /**
+   * Repairs ontology
+   *
+   * @param ontology the OWLOntology to repair
+   * @param ioHelper IOHelper to work with the ontology
    * @param options map of repair options
    */
-  public static void repair(OWLOntology ontology, IOHelper iohelper, Map<String, String> options) {
+  public static void repair(OWLOntology ontology, IOHelper ioHelper, Map<String, String> options) {
+    repair(ontology, ioHelper, options, false);
+  }
 
+  /**
+   * Repairs ontology
+   *
+   * @param ontology the OWLOntology to reapir
+   * @param ioHelper IOHelper to work with the ontology
+   * @param options map of repair options
+   * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
+   */
+  public static void repair(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      Map<String, String> options,
+      boolean mergeAxiomAnnotations) {
     Set<InvalidReferenceViolation> violations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, true);
-    repairInvalidReferences(iohelper, ontology, violations);
+    repairInvalidReferences(ioHelper, ontology, violations);
+    mergeAxiomAnnotations(ontology);
+  }
+
+  /**
+   * Given an ontology, merge the annotations of duplicate axioms to create one axiom with all
+   * annotations.
+   *
+   * @param ontology the OWLOntology to repair
+   */
+  public static void mergeAxiomAnnotations(OWLOntology ontology) {
+    Map<OWLAxiom, Set<OWLAnnotation>> mergedAxioms = new HashMap<>();
+    Set<OWLAxiom> axiomsToMerge = new HashSet<>();
+
+    // Find duplicated axioms and collect their annotations
+    // OWLAPI should already merge non-annotated duplicates
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      if (axiom.isAnnotated()) {
+        axiomsToMerge.add(axiom);
+        OWLAxiom strippedAxiom = axiom.getAxiomWithoutAnnotations();
+        Set<OWLAnnotation> annotations = axiom.getAnnotations();
+        if (mergedAxioms.containsKey(strippedAxiom)) {
+          logger.info("Merging annotations on axiom: {}", strippedAxiom.toString());
+          Set<OWLAnnotation> mergeAnnotations = new HashSet<>();
+          mergeAnnotations.addAll(mergedAxioms.get(strippedAxiom));
+          mergeAnnotations.addAll(annotations);
+          mergedAxioms.put(strippedAxiom, mergeAnnotations);
+        } else {
+          mergedAxioms.put(strippedAxiom, annotations);
+        }
+      }
+    }
+
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+    // Remove the duplicated axioms
+    manager.removeAxioms(ontology, axiomsToMerge);
+
+    // Create the axioms with new set of annotations
+    Set<OWLAxiom> newAxioms = new HashSet<>();
+    for (Map.Entry<OWLAxiom, Set<OWLAnnotation>> mergedAxiom : mergedAxioms.entrySet()) {
+      OWLAxiom axiom = mergedAxiom.getKey();
+      if (axiom.isAnnotationAxiom()) {
+        OWLAxiom newAxiom = axiom.getAnnotatedAxiom(mergedAxiom.getValue());
+        newAxioms.add(newAxiom);
+      }
+    }
+    manager.addAxioms(ontology, newAxioms);
   }
 
   /**
@@ -97,15 +159,15 @@ public class RepairOperation {
                 .getIRI()
                 .equals(IRI.create("http://purl.obolibrary.org/obo/IAO_0100001"))) {
               OWLAnnotationValue val = aaa.getValue();
-              Optional<IRI> valIRI = val.asIRI();
-              if (valIRI.isPresent()) {
+              IRI valIRI = val.asIRI().orNull();
+              if (valIRI != null) {
                 logger.info("Using URI replacement: " + valIRI);
-                replacedBy = valIRI.get();
+                replacedBy = valIRI;
               } else {
-                Optional<OWLLiteral> valLit = val.asLiteral();
-                if (valLit.isPresent()) {
+                OWLLiteral valLit = val.asLiteral().orNull();
+                if (valLit != null) {
                   logger.info("Using CURIE replacement: " + valLit);
-                  replacedBy = iohelper.createIRI(valLit.get().getLiteral());
+                  replacedBy = iohelper.createIRI(valLit.getLiteral());
                 }
               }
             }
@@ -132,8 +194,7 @@ public class RepairOperation {
 
     logger.info("PRESERVE: " + axiomsToPreserve);
     manager.removeAxioms(ontology, axiomsToPreserve);
-    List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
-    changes.addAll(renamer.changeIRI(renameMap));
+    List<OWLOntologyChange> changes = new ArrayList<>(renamer.changeIRI(renameMap));
     manager.applyChanges(changes);
     manager.addAxioms(ontology, axiomsToPreserve);
   }

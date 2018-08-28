@@ -54,7 +54,7 @@ public enum RelationType {
    *
    * @param name command line name option
    */
-  private RelationType(String name) {
+  RelationType(String name) {
     this.name = name;
   }
 
@@ -68,7 +68,7 @@ public enum RelationType {
     return name;
   }
 
-  public static final RelationType getRelationType(String name) {
+  public static RelationType getRelationType(String name) {
     RelationType rt = NAME_RELATION_MAP.get(name);
     if (rt == null) {
       // TODO
@@ -78,10 +78,6 @@ public enum RelationType {
   }
 
   public static boolean isRelationType(String name) {
-    if (NAME_RELATION_MAP.get(name) == null) {
-      return false;
-    } else {
-      return true;
-    }
+    return NAME_RELATION_MAP.get(name) != null;
   }
 }

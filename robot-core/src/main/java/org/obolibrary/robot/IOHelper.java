@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -94,15 +93,19 @@ public class IOHelper {
 
   /** Error message when a JSON-LD context cannot be created, for any reason. */
   private static final String jsonldContextCreationError =
-      NS + "JSONLD CONTEXT CREATION ERROR Could not create the JSON-LD context.";
+      NS + "JSON-LD CONTEXT CREATION ERROR Could not create the JSON-LD context.";
 
   /** Error message when a JSON-LD context cannot be read, for any reason. */
   private static final String jsonldContextParseError =
-      NS + "JSONLD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+      NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
 
   /** Error message when the ontology cannot be saved. Expects the IRI string. */
   private static final String ontologyStorageError =
       NS + "ONTOLOGY STORAGE ERROR Could not save ontology to IRI: %s";
+
+  /** Error message when a prefix cannot be loaded. Expects the prefix and target. */
+  private static final String prefixLoadError =
+      NS + "PREFIX LOAD ERROR Could not load prefix '%s' for '%s'";
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -113,31 +116,26 @@ public class IOHelper {
   /** Store xml entities flag. */
   private Boolean useXMLEntities = false;
 
-  /** Create a new IOHelper with the default prefixes. */
-  public IOHelper() {
-    try {
-      setContext(getDefaultContext());
-    } catch (IOException e) {
-      logger.warn("Could not load default prefixes.");
-      logger.warn(e.getMessage());
-    }
+  /**
+   * Create a new IOHelper with the default prefixes.
+   *
+   * @throws IOException on problem getting default context
+   */
+  public IOHelper() throws IOException {
+    setContext(getDefaultContext());
   }
 
   /**
    * Create a new IOHelper with or without the default prefixes.
    *
    * @param defaults false if defaults should not be used
+   * @throws IOException on problem getting default context
    */
-  public IOHelper(boolean defaults) {
-    try {
-      if (defaults) {
-        setContext(getDefaultContext());
-      } else {
-        setContext();
-      }
-    } catch (IOException e) {
-      logger.warn("Could not load default prefixes.");
-      logger.warn(e.getMessage());
+  public IOHelper(boolean defaults) throws IOException {
+    if (defaults) {
+      setContext(getDefaultContext());
+    } else {
+      setContext();
     }
   }
 
@@ -145,8 +143,9 @@ public class IOHelper {
    * Create a new IOHelper with the specified prefixes.
    *
    * @param map the prefixes to use
+   * @throws IOException on issue parsing map
    */
-  public IOHelper(Map<String, Object> map) {
+  public IOHelper(Map<String, Object> map) throws IOException {
     setContext(map);
   }
 
@@ -154,30 +153,22 @@ public class IOHelper {
    * Create a new IOHelper with prefixes from a file path.
    *
    * @param path to a JSON-LD file with a @context
+   * @throws IOException on issue parsing JSON-LD file as context
    */
-  public IOHelper(String path) {
-    try {
-      String jsonString = FileUtils.readFileToString(new File(path));
-      setContext(jsonString);
-    } catch (IOException e) {
-      logger.warn("Could not load prefixes from " + path);
-      logger.warn(e.getMessage());
-    }
+  public IOHelper(String path) throws IOException {
+    String jsonString = FileUtils.readFileToString(new File(path));
+    setContext(jsonString);
   }
 
   /**
    * Create a new IOHelper with prefixes from a file.
    *
    * @param file a JSON-LD file with a @context
+   * @throws IOException on issue reading file or setting context from file
    */
-  public IOHelper(File file) {
-    try {
-      String jsonString = FileUtils.readFileToString(file);
-      setContext(jsonString);
-    } catch (IOException e) {
-      logger.warn("Could not load prefixes from " + file);
-      logger.warn(e.getMessage());
-    }
+  public IOHelper(File file) throws IOException {
+    String jsonString = FileUtils.readFileToString(file);
+    setContext(jsonString);
   }
 
   /**
@@ -279,11 +270,6 @@ public class IOHelper {
   public OWLOntology loadOntology(File ontologyFile, File catalogFile) throws IOException {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
 
-    if (!ontologyFile.exists()) {
-      throw new IllegalArgumentException(
-          String.format(fileDoesNotExistError, ontologyFile.getName()));
-    }
-
     Object jsonObject = null;
 
     try {
@@ -316,14 +302,9 @@ public class IOHelper {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       if (catalogFile != null && catalogFile.isFile()) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
-      } else {
-        logger.warn(
-            "Catalog {} does not exist. Loading ontology without catalog.", catalogFile.getPath());
       }
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
-    } catch (JsonLdError e) {
-      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
-    } catch (OWLOntologyCreationException e) {
+    } catch (JsonLdError | OWLOntologyCreationException e) {
       throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
   }
@@ -336,7 +317,7 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(InputStream ontologyStream) throws IOException {
-    OWLOntology ontology = null;
+    OWLOntology ontology;
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
@@ -354,7 +335,7 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI) throws IOException {
-    OWLOntology ontology = null;
+    OWLOntology ontology;
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
       ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
@@ -373,11 +354,10 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI, String catalogPath) throws IOException {
-    OWLOntology ontology = null;
+    OWLOntology ontology;
     File catalogFile = new File(catalogPath);
-    if (!catalogFile.isFile() || catalogFile == null) {
-      // TODO: should this be an exception?
-      logger.warn("Catalog {} does not exist. Loading ontology without catalog.", catalogPath);
+    if (!catalogFile.isFile()) {
+      throw new IOException(String.format(fileDoesNotExistError, catalogPath));
     }
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -589,8 +569,8 @@ public class IOHelper {
    * @return a set of term identifier strings
    */
   public Set<String> extractTerms(String input) {
-    Set<String> results = new HashSet<String>();
-    List<String> lines = Arrays.asList(input.replaceAll("\\r", "").split("\\n"));
+    Set<String> results = new HashSet<>();
+    String[] lines = input.replaceAll("\\r", "").split("\\n");
     for (String line : lines) {
       if (line.trim().startsWith("#")) {
         continue;
@@ -621,7 +601,7 @@ public class IOHelper {
       // Then we run the JsonLdApi to expand the JSON map
       // in the current context, and just grab the first key.
       // If everything worked, that key will be our expanded iri.
-      Map<String, Object> jsonMap = new HashMap<String, Object>();
+      Map<String, Object> jsonMap = new HashMap<>();
       jsonMap.put(term, "ignore this string");
       Object expanded = new JsonLdApi().expand(context, jsonMap);
       String result = ((Map<String, Object>) expanded).keySet().iterator().next();
@@ -643,7 +623,7 @@ public class IOHelper {
    * @throws IllegalArgumentException if term identifier is not a valid IRI
    */
   public Set<IRI> createIRIs(Set<String> terms) throws IllegalArgumentException {
-    Set<IRI> iris = new HashSet<IRI>();
+    Set<IRI> iris = new HashSet<>();
     for (String term : terms) {
       IRI iri = createIRI(term);
       if (iri != null) {
@@ -729,11 +709,11 @@ public class IOHelper {
     try {
       Object jsonObject = JsonUtils.fromString(jsonString);
       if (!(jsonObject instanceof Map)) {
-        return null;
+        throw new IOException(jsonldContextParseError);
       }
       Map<String, Object> jsonMap = (Map<String, Object>) jsonObject;
       if (!jsonMap.containsKey("@context")) {
-        return null;
+        throw new IOException(jsonldContextParseError);
       }
       Object jsonContext = jsonMap.get("@context");
       return new Context().parse(jsonContext);
@@ -786,13 +766,8 @@ public class IOHelper {
    *
    * @param jsonString the new JSON-LD context as a JSON string
    */
-  public void setContext(String jsonString) {
-    try {
-      this.context = parseContext(jsonString);
-    } catch (Exception e) {
-      logger.warn("Could not set context from JSON");
-      logger.warn(e.getMessage());
-    }
+  public void setContext(String jsonString) throws IOException {
+    this.context = parseContext(jsonString);
   }
 
   /**
@@ -800,12 +775,11 @@ public class IOHelper {
    *
    * @param map a map of strings for the new JSON-LD context
    */
-  public void setContext(Map<String, Object> map) {
+  public void setContext(Map<String, Object> map) throws IOException {
     try {
       this.context = new Context().parse(map);
-    } catch (Exception e) {
-      logger.warn("Could not set context {}", map);
-      logger.warn(e.getMessage());
+    } catch (JsonLdError e) {
+      throw new IOException(jsonldContextParseError, e);
     }
   }
 
@@ -860,8 +834,9 @@ public class IOHelper {
    *
    * @param combined both prefix and target
    * @throws IllegalArgumentException on malformed input
+   * @throws IOException if prefix cannot be parsed
    */
-  public void addPrefix(String combined) throws IllegalArgumentException {
+  public void addPrefix(String combined) throws IllegalArgumentException, IOException {
     String[] results = combined.split(":", 2);
     if (results.length < 2) {
       throw new IllegalArgumentException(String.format(invalidPrefixError, combined));
@@ -875,15 +850,15 @@ public class IOHelper {
    *
    * @param prefix the short prefix to add; should not include ":"
    * @param target the IRI string that is the target of the prefix
+   * @throws IOException if prefix cannot be parsed
    */
-  public void addPrefix(String prefix, String target) {
+  public void addPrefix(String prefix, String target) throws IOException {
     try {
       context.put(prefix.trim(), target.trim());
       context.remove("@base");
       setContext((Map<String, Object>) context);
     } catch (Exception e) {
-      logger.warn("Could not load add prefix \"{}\" \"{}\"", prefix, target);
-      logger.warn(e.getMessage());
+      throw new IOException(String.format(prefixLoadError, prefix, target), e);
     }
   }
 
@@ -901,7 +876,7 @@ public class IOHelper {
    *
    * @param map the new map of prefixes to use
    */
-  public void setPrefixes(Map<String, Object> map) {
+  public void setPrefixes(Map<String, Object> map) throws IOException {
     setContext(map);
   }
 

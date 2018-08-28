@@ -78,9 +78,8 @@ public class RelaxOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    Map<String, String> options = new HashMap<String, String>();
     // options.put("remove-redundant-subclass-axioms", "true");
-    return options;
+    return new HashMap<>();
   }
 
   /**

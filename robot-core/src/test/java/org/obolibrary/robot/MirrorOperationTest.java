@@ -4,11 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import org.junit.Test;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 /**
  * Tests creating local cache.
@@ -18,15 +16,12 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 public class MirrorOperationTest extends CoreTest {
 
   /**
-   * Test MIREOT.
+   * Test mirroring.
    *
-   * @throws IOException on IO problems
-   * @throws OWLOntologyCreationException on ontology problems
-   * @throws OWLOntologyStorageException if error in saving ontology
+   * @throws Exception on any problem
    */
   @Test
-  public void testMirror()
-      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
+  public void testMirror() throws Exception {
     testMirror("/import_test.owl");
   }
 
@@ -35,19 +30,21 @@ public class MirrorOperationTest extends CoreTest {
    * loaded.
    *
    * @param expectedPath resource path for the ontology.
-   * @throws IOException for reading/writing errors.
-   * @throws OWLOntologyCreationException if ontology cannot be loaded.
-   * @throws OWLOntologyStorageException if ontology cannot be saved.
+   * @throws Exception on any problem
    */
-  public void testMirror(String expectedPath)
-      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
+  public void testMirror(String expectedPath) throws Exception {
     OWLOntology inputOntology = loadOntologyWithCatalog(expectedPath);
 
     File catalogFile = new File("target/mirror-catalog.xml");
     MirrorOperation.mirror(inputOntology, new File("target"), catalogFile);
 
-    OWLOntology loadedOntology =
-        loadOntologyWithCatalog(inputOntology.getOntologyID().getOntologyIRI().get(), catalogFile);
+    IRI iri = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    OWLOntology loadedOntology;
+    if (iri != null) {
+      loadedOntology = loadOntologyWithCatalog(iri, catalogFile);
+    } else {
+      throw new Exception(String.format("Test ontology %s does not have an IRI", expectedPath));
+    }
     assertIdentical(loadedOntology, inputOntology);
     int n = 0;
     for (OWLOntology importedOntology : inputOntology.getImportsClosure()) {

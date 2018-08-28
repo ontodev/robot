@@ -107,7 +107,7 @@ public class MergeCommand implements Command {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // inputOntologies should not be empty
     boolean notEmpty = false;
-    if (state != null && state.getOntology() != null) {
+    if (state.getOntology() != null) {
       notEmpty = true;
       inputOntologies.add(state.getOntology());
     }

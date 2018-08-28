@@ -405,8 +405,9 @@ public class CommandLineHelper {
    *
    * @param line the command line to use
    * @return an initialized IOHelper
+   * @throws IOException on issue creating IOHelper with given context
    */
-  public static IOHelper getIOHelper(CommandLine line) {
+  public static IOHelper getIOHelper(CommandLine line) throws IOException {
     IOHelper ioHelper;
     String prefixes = getOptionalValue(line, "prefixes");
     if (prefixes != null) {
@@ -776,14 +777,11 @@ public class CommandLineHelper {
       // This will be used any time `robot --version` is entered on command line
       String cls = CommandLineHelper.class.getName().replace(".", "/") + ".class";
       resource = CommandLineHelper.class.getClassLoader().getResource(cls);
-      String protocol;
-      try {
-        protocol = resource.getProtocol();
-      } catch (NullPointerException e) {
+      if (resource == null) {
         throw new IOException(
-            "Cannot access version information from JAR. The directory address has no protocol.");
+            "Cannot access version information from JAR. The resource does not exist.");
       }
-      if (protocol.equals("jar")) {
+      if (resource.getProtocol().equals("jar")) {
         // Get the JAR path and open as JAR file
         String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
         try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {

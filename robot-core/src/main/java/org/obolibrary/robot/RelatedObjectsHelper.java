@@ -482,7 +482,7 @@ public class RelatedObjectsHelper {
    * @param objects Set of OWLObjects to filter
    * @param annotationPattern annotation to filter OWLObjects on
    * @return subset of OWLObjects matching the annotation pattern
-   * @throws Exception on issue parsing literal datatype
+   * @throws Exception on issue getting literal annotations
    */
   public static Set<OWLObject> selectPattern(
       OWLOntology ontology, Set<OWLObject> objects, String annotationPattern) throws Exception {
@@ -593,7 +593,7 @@ public class RelatedObjectsHelper {
    * @param ioHelper IOHelper to get IRI
    * @param annotation String input
    * @return set of OWLAnnotations
-   * @throws Exception on issue parsing literal datatype
+   * @throws Exception on issue getting literal annotation
    */
   protected static Set<OWLAnnotation> getAnnotations(
       OWLOntology ontology, IOHelper ioHelper, String annotation) throws Exception {
@@ -659,14 +659,12 @@ public class RelatedObjectsHelper {
           try {
             OWLLiteralImplPlain plain = (OWLLiteralImplPlain) av;
             annotationValue = plain.getLiteral();
-          } catch (Exception e1) {
+          } catch (ClassCastException ex) {
             try {
               OWLLiteralImplString str = (OWLLiteralImplString) av;
               annotationValue = str.getLiteral();
-            } catch (Exception e2) {
-              throw e2;
-              // TODO: does this block actually get hit?
-              // The pattern should only match a string anyway
+            } catch (ClassCastException ex2) {
+              continue;
             }
           }
           Matcher matcher = pattern.matcher(annotationValue);
