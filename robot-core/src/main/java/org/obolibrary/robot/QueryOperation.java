@@ -70,6 +70,7 @@ public class QueryOperation {
    * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   * @throws UnsupportedEncodingException on issue parsing byte array to string
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
       throws OWLOntologyStorageException, UnsupportedEncodingException {
@@ -84,11 +85,7 @@ public class QueryOperation {
     TDB.getContext().set(TDB.symUnionDefaultGraph, true);
     // Load each ontology in the set as a named model
     for (OWLOntology ont : ontologies) {
-      Model m = ModelFactory.createDefaultModel();
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      manager.saveOntology(ont, new TurtleDocumentFormat(), os);
-      String content = new String(os.toByteArray(), "UTF-8");
-      RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(m);
+      Model m = loadOntologyAsModel(ont);
       // Get the name of the graph as the ontology IRI
       IRI iri = ont.getOntologyID().getOntologyIRI().orNull();
       String name;
@@ -98,10 +95,42 @@ public class QueryOperation {
         // If there is no IRI, generate a random ID
         name = UUID.randomUUID().toString();
       }
-      dataset.addNamedModel(name, m);
       logger.info("Named graph added: " + name);
+      dataset.addNamedModel(name, m);
     }
     return dataset;
+  }
+
+  /**
+   * Given an OWLOntology, return the Model representation of the axioms.
+   *
+   * @param ontology OWLOntology to convert to Model
+   * @return Model of axioms (imports ignored)
+   * @throws UnsupportedEncodingException on issue parsing byte array to string
+   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   */
+  public static Model loadOntologyAsModel(OWLOntology ontology)
+      throws UnsupportedEncodingException, OWLOntologyStorageException {
+    Model model = ModelFactory.createDefaultModel();
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
+    String content = new String(os.toByteArray(), "UTF-8");
+    RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(model);
+    return model;
+  }
+
+  /**
+   * Given a Model, return the OWLOntology representation of the axioms.
+   *
+   * @param model Model to convert to OWLOntology
+   * @return OWLOntology of axioms
+   * @throws OWLOntologyCreationException on issue loading ontology from byte array
+   */
+  public static OWLOntology convertModel(Model model) throws OWLOntologyCreationException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    RDFDataMgr.write(os, model, Lang.TTL);
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    return manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(os.toByteArray()));
   }
 
   /**
@@ -170,22 +199,13 @@ public class QueryOperation {
   }
 
   /**
-   * Given a dataset and an update, update the dataset and return the resulting OWLOntology.
+   * Given a Model and a SPARQL update (as string), update the model.
    *
-   * @param dataset the Dataset to update
-   * @param updateString the SPARQL UPDATE string
-   * @return updated OWLOntology
-   * @throws OWLOntologyCreationException on issue creating ontology from dataset
+   * @param model Model to update
+   * @param updateString SPARQL update
    */
-  public static OWLOntology execUpdate(Dataset dataset, String updateString)
-      throws OWLOntologyCreationException {
-    UpdateAction.parseExecute(updateString, dataset);
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    Model m = ModelFactory.createUnion(dataset.getDefaultModel(), dataset.getUnionModel());
-    RDFDataMgr.write(os, m, Lang.TTL);
-
-    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    return manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(os.toByteArray()));
+  public static void execUpdate(Model model, String updateString) {
+    UpdateAction.parseExecute(updateString, model);
   }
 
   /**
@@ -508,6 +528,23 @@ public class QueryOperation {
       default:
         throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
     }
+  }
+
+  /**
+   * Given a Model, a SPARQL update string, an output stream, and the output format, update the model and write it to the output.
+   *
+   * @param model Model to update
+   * @param updateString SPARQL update
+   * @param output output stream to write to
+   * @param outputFormat the file format
+   */
+  public static void runUpdate(Model model, String updateString, File output, Lang outputFormat)
+      throws FileNotFoundException {
+    if (outputFormat == null) {
+      outputFormat = Lang.TTL;
+    }
+    execUpdate(model, updateString);
+    writeResult(model, outputFormat, new FileOutputStream(output));
   }
 
   /**

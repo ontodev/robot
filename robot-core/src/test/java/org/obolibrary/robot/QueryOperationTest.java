@@ -118,14 +118,15 @@ public class QueryOperationTest extends CoreTest {
   public void testExecUpdate()
       throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
     OWLOntology inputOntology = loadOntology("/simple.owl");
-    Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology);
+    Model model = QueryOperation.loadOntologyAsModel(inputOntology);
     String updateString =
         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
             + "PREFIX s: <https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#>"
             + "INSERT { "
             + "s:test2 rdfs:label \"test 2\" ."
             + " } WHERE {}";
-    OWLOntology outputOntology = QueryOperation.execUpdate(dataset, updateString);
+    QueryOperation.execUpdate(model, updateString);
+    OWLOntology outputOntology = QueryOperation.convertModel(model);
     assertIdentical("/simple_update.owl", outputOntology);
   }
 

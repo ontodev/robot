@@ -50,6 +50,8 @@ The `query` command also supports [SPARQL Update](https://www.w3.org/TR/sparql11
 
 When using SPARQL update, you can either provide an `--output` for the updated ontology, or [chain](/chaining) it into another command.
 
+The `--update` option only updates the ontology itself, not any of the imports.
+
 ---
 
 ## Error Messages

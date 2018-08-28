@@ -11,6 +11,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -143,20 +144,15 @@ public class QueryCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
-    // Determine what to do with the imports and create a new dataset
-    boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
-    Dataset dataset;
-    if (useGraphs) {
-      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, true);
-    } else {
-      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, false);
-    }
-
     // If an update is provided, run the update then return the OWLOntology
     String updateFilePath = CommandLineHelper.getOptionalValue(line, "update");
     if (updateFilePath != null) {
       String updateString = FileUtils.readFileToString(new File(updateFilePath));
-      OWLOntology outputOntology = QueryOperation.execUpdate(dataset, updateString);
+      // Load the ontology as a model, ignoring imports
+      Model model = QueryOperation.loadOntologyAsModel(inputOntology);
+
+      QueryOperation.execUpdate(model, updateString);
+      OWLOntology outputOntology = QueryOperation.convertModel(model);
 
       // If the input ontology had imports, maintain them
       if (inputOntology.getImports().size() > 0) {
@@ -169,6 +165,15 @@ public class QueryCommand implements Command {
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
+    }
+
+    // Determine what to do with the imports and create a new dataset
+    boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
+    Dataset dataset;
+    if (useGraphs) {
+      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, true);
+    } else {
+      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, false);
     }
 
     // Collect all queries as (queryPath, outputPath) pairs.
