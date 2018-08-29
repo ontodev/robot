@@ -43,7 +43,6 @@ public class ExplainOperation {
 
   public static String renderExplanationAsMarkdown(
       Explanation<OWLAxiom> explanation, OWLOntologyManager manager) {
-    // ExplanationOrderer orderer = new ExplanationOrdererImpl(manager);
     ExplanationOrderer orderer = new ProtegeExplanationOrderer(manager);
     ExplanationTree tree =
         orderer.getOrderedExplanation(explanation.getEntailment(), explanation.getAxioms());

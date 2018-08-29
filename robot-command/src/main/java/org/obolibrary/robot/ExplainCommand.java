@@ -63,7 +63,7 @@ public class ExplainCommand implements Command {
   }
 
   /**
-   * Handle the command-line and file operations for the relaxOperation.
+   * Handle the command-line and file operations for the ExplainOperation.
    *
    * @param args strings to use as arguments
    */
