@@ -34,6 +34,13 @@ For more details see:
 - [SLME source code](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
 - [ModuleType source code](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
+### Instances
+
+When using the SLME method of extraction, all instances (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--instances` option to specify what (if any) instances are included in the output ontology:
+* `--instances include`: all instances in the input ontology and their class types (default)
+* `--instances minimal`: only the instances that are a type of a class in the extracted module
+* `--instances exclude`: no instances
+
 ## MIREOT
 
 The MIREOT method preserves the hierarchy of the input ontology (subclass and subproperty relationships), but does not try to preserve the full set of logical entailments. Both "upper" (ancestor) and "lower" (descendant) limits can be specified, like this:
