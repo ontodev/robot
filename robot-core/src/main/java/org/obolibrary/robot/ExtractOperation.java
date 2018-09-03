@@ -92,7 +92,7 @@ public class ExtractOperation {
     OWLOntology outputOntology =
         OWLManager.createOWLOntologyManager()
             .createOntology(extractor.extract(entities), outputIRI);
-
+    
     // Maybe add the ABox axioms belonging to included individuals
     if (assertions.equalsIgnoreCase("minimal")) {
       Set<OWLNamedIndividual> individuals = outputOntology.getIndividualsInSignature(true);
