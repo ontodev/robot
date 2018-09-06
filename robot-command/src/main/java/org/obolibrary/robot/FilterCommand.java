@@ -160,7 +160,7 @@ public class FilterCommand implements Command {
 
     // Get a set of axioms to copy over
     Set<OWLObject> relatedObjects =
-        RelatedObjectsHelper.selectGroups(ontology, objects, selectGroups);
+        RelatedObjectsHelper.selectGroups(ontology, ioHelper, objects, selectGroups);
     // Add the annotation properties if included
     if (includeAllAnnotations) {
       for (OWLEntity entity : OntologyHelper.getEntities(ontology)) {

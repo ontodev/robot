@@ -157,7 +157,7 @@ public class RemoveCommand implements Command {
     }
 
     Set<OWLObject> relatedObjects =
-        RelatedObjectsHelper.selectGroups(ontology, objects, selectGroups);
+        RelatedObjectsHelper.selectGroups(ontology, ioHelper, objects, selectGroups);
     Set<OWLAxiom> axiomsToRemove;
     if (trim) {
       axiomsToRemove = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);

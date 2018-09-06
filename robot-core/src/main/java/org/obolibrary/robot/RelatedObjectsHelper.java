@@ -128,15 +128,19 @@ public class RelatedObjectsHelper {
    * on the previous group.
    *
    * @param ontology OWLOntology to get related objects from
+   * @param ioHelper IOHelper to use for prefixes
    * @param objects Set of objects to start with
    * @param selectorGroups types of related objects to return
    * @return Set of related objects
    */
   public static Set<OWLObject> selectGroups(
-      OWLOntology ontology, Set<OWLObject> objects, List<List<String>> selectorGroups)
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      Set<OWLObject> objects,
+      List<List<String>> selectorGroups)
       throws Exception {
     for (List<String> selectors : selectorGroups) {
-      objects = select(ontology, objects, selectors);
+      objects = select(ontology, ioHelper, objects, selectors);
     }
     return objects;
   }
@@ -146,15 +150,21 @@ public class RelatedObjectsHelper {
    * to the set of OWLObjects based on the set of selectors.
    *
    * @param ontology OWLOntology to get related objects from
+   * @param ioHelper IOHelper to use for prefixes
    * @param objects Set of objects to start with
    * @param selectors types of related objects to return
    * @return Set of related objects
    */
   public static Set<OWLObject> select(
-      OWLOntology ontology, Set<OWLObject> objects, List<String> selectors) throws Exception {
+      OWLOntology ontology, IOHelper ioHelper, Set<OWLObject> objects, List<String> selectors)
+      throws Exception {
+    // An empty list is essentially "self"
+    if (selectors.isEmpty()) {
+      return objects;
+    }
     Set<OWLObject> union = new HashSet<>();
     for (String selector : selectors) {
-      union.addAll(select(ontology, objects, selector));
+      union.addAll(select(ontology, ioHelper, objects, selector));
     }
     return union;
   }
@@ -164,11 +174,13 @@ public class RelatedObjectsHelper {
    * set of OWL objects based on the selector.
    *
    * @param ontology OWLOntology to get related objects from
+   * @param ioHelper IOHelper to use for prefixes
    * @param objects Set of objects to start with
    * @param selector type of related objects to return
    * @return Set of related objects
    */
-  public static Set<OWLObject> select(OWLOntology ontology, Set<OWLObject> objects, String selector)
+  public static Set<OWLObject> select(
+      OWLOntology ontology, IOHelper ioHelper, Set<OWLObject> objects, String selector)
       throws Exception {
     if (selector.equals("ancestors")) {
       return selectAncestors(ontology, objects);
@@ -205,7 +217,7 @@ public class RelatedObjectsHelper {
     } else if (selector.equals("types")) {
       return selectTypes(ontology, objects);
     } else if (selector.contains("=")) {
-      return selectPattern(ontology, objects, selector);
+      return selectPattern(ontology, ioHelper, objects, selector);
     } else {
       logger.error(String.format("%s is not a valid selector and will be ignored", selector));
       return new HashSet<>();
@@ -479,14 +491,16 @@ public class RelatedObjectsHelper {
    * objects that are annotated with the matching annotation.
    *
    * @param ontology OWLOntology to get annotations from
+   * @param ioHelper IOHelper to use for prefixes
    * @param objects Set of OWLObjects to filter
    * @param annotationPattern annotation to filter OWLObjects on
    * @return subset of OWLObjects matching the annotation pattern
    * @throws Exception on issue getting literal annotations
    */
   public static Set<OWLObject> selectPattern(
-      OWLOntology ontology, Set<OWLObject> objects, String annotationPattern) throws Exception {
-    Set<OWLAnnotation> annotations = getAnnotations(ontology, new IOHelper(), annotationPattern);
+      OWLOntology ontology, IOHelper ioHelper, Set<OWLObject> objects, String annotationPattern)
+      throws Exception {
+    Set<OWLAnnotation> annotations = getAnnotations(ontology, ioHelper, annotationPattern);
     return selectAnnotated(ontology, objects, annotations);
   }
 
