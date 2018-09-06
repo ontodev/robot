@@ -38,8 +38,10 @@ Copy all of OBI except descendants of 'assay' (`remove` is preferred):
      --select complement\
      --output results/remove_class.owl
 
-Copy a subset of classes based on an annotation property:
+Copy a subset of classes based on an annotation property (maintains hierarchy):
 
-```
-robot filter --input foo.owl --select classes --select "oboInOwl:inSubset='bar'"
-```
+    robot filter --input uberon_module.owl\
+     --prefix "core: http://purl.obolibrary.org/obo/uberon/core#"\
+     --select "oboInOwl:inSubset=core:uberon_slim"\
+     --select annotations\
+     --output results/uberon_slim.owl
