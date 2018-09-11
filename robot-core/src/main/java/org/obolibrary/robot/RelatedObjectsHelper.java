@@ -50,17 +50,26 @@ public class RelatedObjectsHelper {
    * @return set of OWLAxioms
    */
   public static Set<OWLAxiom> getAnnotationAxioms(OWLOntology ontology, Set<OWLObject> objects) {
-    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLObject object : objects) {
-      if (object instanceof OWLEntity) {
-        OWLEntity entity = (OWLEntity) object;
-        for (OWLAnnotation annotation :
-            EntitySearcher.getAnnotations((OWLEntity) object, ontology)) {
-          OWLAnnotationAxiom axiom =
-              dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation);
-          axioms.add(axiom);
-        }
+      if (object instanceof OWLClass) {
+        OWLClass cls = (OWLClass) object;
+        axioms.addAll(ontology.getAnnotationAssertionAxioms(cls.getIRI()));
+      } else if (object instanceof OWLObjectProperty) {
+        OWLObjectProperty prop = (OWLObjectProperty) object;
+        axioms.addAll(ontology.getAnnotationAssertionAxioms(prop.getIRI()));
+      } else if (object instanceof OWLDataProperty) {
+        OWLDataProperty prop = (OWLDataProperty) object;
+        axioms.addAll(ontology.getAnnotationAssertionAxioms(prop.getIRI()));
+      } else if (object instanceof OWLAnnotationProperty) {
+        OWLAnnotationProperty prop = (OWLAnnotationProperty) object;
+        axioms.addAll(ontology.getAnnotationAssertionAxioms(prop.getIRI()));
+      } else if (object instanceof OWLDatatype) {
+        OWLDatatype dt = (OWLDatatype) object;
+        axioms.addAll(ontology.getAnnotationAssertionAxioms(dt.getIRI()));
+      } else if (object instanceof OWLNamedIndividual) {
+        OWLNamedIndividual indiv = (OWLNamedIndividual) object;
+        axioms.addAll(ontology.getAnnotationAssertionAxioms(indiv.getIRI()));
       }
     }
     return axioms;
