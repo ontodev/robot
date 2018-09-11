@@ -130,12 +130,12 @@ public class FilterCommand implements Command {
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
-    boolean includeAllAnnotations = false;
+    boolean includeAnnotations = false;
     for (String select : selects) {
       // The single group is a split of the one --select
       List<String> selectGroup = CommandLineHelper.splitSelects(select);
       if (selectGroup.contains("annotations")) {
-        includeAllAnnotations = true;
+        includeAnnotations = true;
         selectGroup.remove("annotations");
       }
       selectGroups.add(selectGroup);
@@ -143,9 +143,7 @@ public class FilterCommand implements Command {
 
     // If there are no objects, add all the objects from the ontology
     if (objects.isEmpty()) {
-      for (OWLAxiom axiom : ontology.getAxioms()) {
-        objects.addAll(OntologyHelper.getObjects(axiom));
-      }
+      objects.addAll(OntologyHelper.getObjects(ontology));
     }
 
     // Get the output IRI for the new ontology
@@ -161,33 +159,35 @@ public class FilterCommand implements Command {
     // Get a set of axioms to copy over
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(ontology, ioHelper, objects, selectGroups);
-    // Add the annotation properties if included
-    if (includeAllAnnotations) {
-      for (OWLEntity entity : OntologyHelper.getEntities(ontology)) {
-        if (entity.isOWLAnnotationProperty()) {
-          relatedObjects.add(entity);
-        }
-      }
-    }
-    Set<OWLAxiom> axiomsToCopy;
+
+    Set<OWLAxiom> axiomsToAdd;
     if (trim) {
-      axiomsToCopy = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
+      axiomsToAdd = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
     } else {
-      axiomsToCopy = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
+      axiomsToAdd = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
     }
 
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
     if (preserveStructure) {
-      axiomsToCopy.addAll(RelatedObjectsHelper.spanGaps(ontology, relatedObjects));
+      axiomsToAdd.addAll(RelatedObjectsHelper.spanGaps(ontology, relatedObjects));
+    }
+
+    // Handle annotations for any referenced object
+    if (includeAnnotations) {
+      Set<OWLObject> referencedObjects = new HashSet<>();
+      for (OWLAxiom axiom : axiomsToAdd) {
+        referencedObjects.addAll(OntologyHelper.getObjects(axiom));
+      }
+      axiomsToAdd.addAll(RelatedObjectsHelper.getAnnotationAxioms(ontology, referencedObjects));
     }
 
     // Create a new ontology from that set of axioms
     OWLOntology outputOntology;
     if (outputIRI != null) {
-      outputOntology = manager.createOntology(axiomsToCopy, outputIRI);
+      outputOntology = manager.createOntology(axiomsToAdd, outputIRI);
     } else {
-      outputOntology = manager.createOntology(axiomsToCopy);
+      outputOntology = manager.createOntology(axiomsToAdd);
     }
 
     // Save the changed ontology and return the state

@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,30 @@ public class RelatedObjectsHelper {
   private static final String SUPER = "super";
 
   /**
+   * Given an ontology and a set of objects, return the annotation axioms for all objects.
+   *
+   * @param ontology OWLOntology to get annotations from
+   * @param objects OWLObjects to get annotations of
+   * @return set of OWLAxioms
+   */
+  public static Set<OWLAxiom> getAnnotationAxioms(OWLOntology ontology, Set<OWLObject> objects) {
+    OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    Set<OWLAxiom> axioms = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLEntity) {
+        OWLEntity entity = (OWLEntity) object;
+        for (OWLAnnotation annotation :
+            EntitySearcher.getAnnotations((OWLEntity) object, ontology)) {
+          OWLAnnotationAxiom axiom =
+              dataFactory.getOWLAnnotationAssertionAxiom(entity.getIRI(), annotation);
+          axioms.add(axiom);
+        }
+      }
+    }
+    return axioms;
+  }
+
+  /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
    * the objects in those axioms are in the set of objects.
    *
@@ -64,7 +89,12 @@ public class RelatedObjectsHelper {
 
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        // Check both the full annotated axiom and axiom without annotations (if annotated)
         Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+        Set<OWLObject> partialAxiomObjects = null;
+        if (axiom.isAnnotated()) {
+          partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+        }
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
           if (iris.contains(a.getSubject()) && objects.contains(a.getProperty())) {
@@ -72,6 +102,10 @@ public class RelatedObjectsHelper {
           }
         } else if (objects.containsAll(axiomObjects)) {
           axioms.add(axiom);
+        } else if (partialAxiomObjects != null && objects.containsAll(partialAxiomObjects)) {
+          // If all objects of the axiom are included, but not the annotation
+          // add the un-annotated axiom
+          axioms.add(axiom.getAxiomWithoutAnnotations());
         }
       }
     }
@@ -774,6 +808,80 @@ public class RelatedObjectsHelper {
             EntitySearcher.getAnnotationAssertionAxioms((OWLEntity) object, ontology)) {
           if (annotations.contains(axiom.getAnnotation())) {
             relatedObjects.add(object);
+          }
+        }
+        // Handle annotated axioms as well
+        if (object instanceof OWLClass) {
+          for (OWLAxiom axiom : ontology.getAxioms((OWLClass) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
+          }
+        } else if (object instanceof OWLObjectProperty) {
+          for (OWLAxiom axiom : ontology.getAxioms((OWLObjectProperty) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
+          }
+        } else if (object instanceof OWLDataProperty) {
+          for (OWLAxiom axiom : ontology.getAxioms((OWLDataProperty) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
+          }
+        } else if (object instanceof OWLAnnotationProperty) {
+          for (OWLAxiom axiom :
+              ontology.getAxioms((OWLAnnotationProperty) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
+          }
+        } else if (object instanceof OWLDatatype) {
+          for (OWLAxiom axiom : ontology.getAxioms((OWLDatatype) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
+          }
+        } else if (object instanceof OWLIndividual) {
+          for (OWLAxiom axiom : ontology.getAxioms((OWLIndividual) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
+          }
+        } else if (object instanceof OWLObjectPropertyExpression) {
+          for (OWLAxiom axiom :
+              ontology.getAxioms((OWLObjectPropertyExpression) object, Imports.EXCLUDED)) {
+            if (axiom.isAnnotated()) {
+              for (OWLAnnotation annotation : axiom.getAnnotations()) {
+                if (annotations.contains(annotation)) {
+                  relatedObjects.add(object);
+                }
+              }
+            }
           }
         }
       }

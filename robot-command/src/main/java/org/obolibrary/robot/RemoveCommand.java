@@ -151,9 +151,7 @@ public class RemoveCommand implements Command {
       return state;
     } else if (objects.isEmpty()) {
       // Otherwise, proceed, and if objects is empty, add all objects
-      for (OWLAxiom axiom : ontology.getAxioms()) {
-        objects.addAll(OntologyHelper.getObjects(axiom));
-      }
+      objects.addAll(OntologyHelper.getObjects(ontology));
     }
 
     Set<OWLObject> relatedObjects =

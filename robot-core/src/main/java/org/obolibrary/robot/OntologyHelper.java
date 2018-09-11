@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.slf4j.Logger;
@@ -219,6 +220,21 @@ public class OntologyHelper {
       throw new IllegalArgumentException(emptyTermsError);
     }
     return IRIs;
+  }
+
+  /**
+   * Get all OWLObjects from an input ontology.
+   *
+   * @param ontology OWLOntology to retrieve objects from
+   * @return set of objects
+   */
+  public static Set<OWLObject> getObjects(OWLOntology ontology) {
+    Set<OWLObject> objects = new HashSet<>();
+    // TODO - include or exclude imports?
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      objects.addAll(getObjects(axiom));
+    }
+    return objects;
   }
 
   /**
