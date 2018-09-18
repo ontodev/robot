@@ -67,12 +67,13 @@ robot report --input edit.owl \
   --output my-report.tsv
 ```
 
-For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the path.
+For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the absolute or relative path.
 
 This example would create a report with references to deprecated classes as ERROR and the user query violations as INFO:
 ```
-ERROR	deprecated_class
-INFO	file:///absolute/path/to/other_query.rq
+ERROR   deprecated_class
+INFO    file:///absolute/path/to/other_query.rq
+INFO    file:./relative/path/to/other_query.rq
 ```
 
 ---

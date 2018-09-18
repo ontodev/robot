@@ -361,6 +361,14 @@ public class Report {
     // Map of rule names and their violations
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = vs.getKey();
+      // Strip user rule file paths
+      if (ruleName.contains("file:")) {
+        try {
+          ruleName = ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
+        } catch (Exception e) {
+          // Do nothing
+        }
+      }
       for (Violation v : vs.getValue()) {
         String subject = getDisplayName(pm, v.subject);
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
@@ -425,6 +433,14 @@ public class Report {
     sb.append(NEW_LINE);
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = vs.getKey();
+      // Strip user rule file paths
+      if (ruleName.contains("file:")) {
+        try {
+          ruleName = ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
+        } catch (Exception e) {
+          // Do nothing
+        }
+      }
       if (vs.getValue().isEmpty()) {
         continue;
       }
