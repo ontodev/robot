@@ -12,7 +12,7 @@ For example, to remove all descendants of 'assay' from OBI:
 robot remove --input obi.owl --term OBI:0000070 --select descendants
 ```
 
-`remove` also includes a `--trim` option, set to false by default. All entities in axioms to removed must be in the set specified by the combination of the terms and the select statements. If `--trim true` is included, any axiom containing *one or more* entity in the set will be removed.
+`remove` also includes a `--trim` option, set to `false` by default. For an axiom to be removed, *all* entities in the axiom must be in the selected set of terms. If `--trim true` is specified, any axiom containing *one or more* entity in the set will be removed.
 
 ## Select
 
@@ -22,7 +22,7 @@ The following selection options can be combined in any way.
 
 #### General
 
-There are three general select options that give control over the types of axioms that are removed. By default, both `named` and `anonymous` axioms are removed. But, for example, if only `--select anonymous` is provided, the named classes will not be removed.
+There are three general select options that give control over the types of axioms that are removed. By default, both `named` and `anonymous` entities are removed. But, for example, if only `--select anonymous` is provided, the named classes will not be removed.
 
 1. `complement`: remove the complement set of the terms (equivalent to [filter](/filter), except that `remove` creates a new ontology whereas `filter` edits the input ontology).
 2. `named`: remove named entities.
