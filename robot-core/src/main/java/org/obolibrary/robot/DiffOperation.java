@@ -32,7 +32,7 @@ public class DiffOperation {
    */
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
-    options.put("use-labels", "false");
+    options.put("labels", "false");
     return options;
   }
 
@@ -87,7 +87,7 @@ public class DiffOperation {
       Map<String, String> options)
       throws IOException {
 
-    boolean useLabels = OptionsHelper.optionIsTrue(options, "use-labels");
+    boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
 
     Map<IRI, String> labels = OntologyHelper.getLabels(ontology1);
     labels.putAll(OntologyHelper.getLabels(ontology2));
@@ -160,7 +160,7 @@ public class DiffOperation {
       if (id.startsWith(oboBase)) {
         id = id.substring(oboBase.length()).replace("_", ":");
       }
-      String replacement = "<" + iri + ">";
+      String replacement = "<" + id + ">";
       if (labels.containsKey(iri)) {
         replacement = "<" + id + ">[" + labels.get(iri) + "]";
       }
@@ -189,9 +189,12 @@ public class DiffOperation {
       if (id.startsWith("obo:")) {
         id = id.substring(4).replace("_", ":");
       }
-      String replacement = "<" + iri + ">";
+      if (!id.startsWith("<") && !id.endsWith(">")) {
+        id = "<" + id + ">";
+      }
+      String replacement = id;
       if (labels.containsKey(iri)) {
-        replacement = "<" + id + ">[" + labels.get(iri) + "]";
+        replacement = id + "[" + labels.get(iri) + "]";
       }
       matcher.appendReplacement(sb, replacement);
     }
