@@ -298,6 +298,23 @@ public class Report {
   }
 
   /**
+   * Given a rule name, return a rule name. If the string starts with "file", the name is the path and should be stripped to just the name. Otherwise, the input is returned.
+   *
+   * @param ruleName string to (maybe) format
+   * @return rule name
+   */
+  private String getRuleName(String ruleName) {
+    if (ruleName.contains("file:")) {
+      try {
+        return ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
+      } catch (Exception e) {
+        return ruleName;
+      }
+    }
+    return ruleName;
+  }
+
+  /**
    * Given a prefix manager and an IRI as a string, return the CURIE if the prefix is available.
    * Otherwise, return null.
    *
@@ -360,15 +377,7 @@ public class Report {
     StringBuilder sb = new StringBuilder();
     // Map of rule names and their violations
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      String ruleName = vs.getKey();
-      // Strip user rule file paths
-      if (ruleName.contains("file:")) {
-        try {
-          ruleName = ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
-        } catch (Exception e) {
-          // Do nothing
-        }
-      }
+      String ruleName = getRuleName(vs.getKey());
       for (Violation v : vs.getValue()) {
         String subject = getDisplayName(pm, v.subject);
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
@@ -432,15 +441,7 @@ public class Report {
     sb.append("  violations :");
     sb.append(NEW_LINE);
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      String ruleName = vs.getKey();
-      // Strip user rule file paths
-      if (ruleName.contains("file:")) {
-        try {
-          ruleName = ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
-        } catch (Exception e) {
-          // Do nothing
-        }
-      }
+      String ruleName = getRuleName(vs.getKey());
       if (vs.getValue().isEmpty()) {
         continue;
       }
