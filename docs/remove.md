@@ -12,7 +12,7 @@ For example, to remove all descendants of 'assay' from OBI:
 robot remove --input obi.owl --term OBI:0000070 --select descendants
 ```
 
-`remove` also includes a `--trim` option, set to false by default. If `--trim true` is included, ROBOT will remove any dangling entities left behind by removals. By contrast, in `filter`, the default is `--trim true`.
+`remove` also includes a `--trim` option, set to false by default. All entities in axioms to removed must be in the set specified by the combination of the terms and the select statements. If `--trim true` is included, any axiom containing *one or more* entity in the set will be removed.
 
 ## Select
 
