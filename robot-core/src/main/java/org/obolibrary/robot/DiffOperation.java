@@ -2,16 +2,11 @@ package org.obolibrary.robot;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +24,17 @@ public class DiffOperation {
 
   /** A pattern for matching IRI strings. */
   private static Pattern iriPattern = Pattern.compile("<(http\\S+)>");
+
+  /**
+   * Return default diff options.
+   *
+   * @return diff options
+   */
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> options = new HashMap<>();
+    options.put("labels", "false");
+    return options;
+  }
 
   /**
    * Given two ontologies, compare their sets of axiom strings, returning true if they are identical
@@ -58,9 +64,33 @@ public class DiffOperation {
    */
   public static boolean compare(OWLOntology ontology1, OWLOntology ontology2, Writer writer)
       throws IOException {
+    return compare(ontology1, ontology2, new IOHelper(), writer, getDefaultOptions());
+  }
 
-    // Map<IRI, String> labels = OntologyHelper.getLabels(ontology1);
-    // labels.putAll(OntologyHelper.getLabels(ontology2));
+  /**
+   * Given two ontologies, a Writer, and a set of diff options, get the differences between axiom
+   * strings and write then to the writer. The ontologies are not changed.
+   *
+   * @param ontology1 the first ontology
+   * @param ontology2 the second ontology
+   * @param ioHelper IOHelper to use for prefixes
+   * @param writer the Writer for the report, or null
+   * @param options diff options
+   * @return true if the ontologies are the same, false otherwise
+   * @throws IOException on writer failure
+   */
+  public static boolean compare(
+      OWLOntology ontology1,
+      OWLOntology ontology2,
+      IOHelper ioHelper,
+      Writer writer,
+      Map<String, String> options)
+      throws IOException {
+
+    boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+
+    Map<IRI, String> labels = OntologyHelper.getLabels(ontology1);
+    labels.putAll(OntologyHelper.getLabels(ontology2));
 
     Set<String> strings1 = getAxiomStrings(ontology1);
     Set<String> strings2 = getAxiomStrings(ontology2);
@@ -85,7 +115,11 @@ public class DiffOperation {
     writer.write(strings1minus2.size() + " axioms in Ontology 1 but not in Ontology 2:\n");
     sorted = new TreeSet<>();
     for (String axiom : strings1minus2) {
-      sorted.add("- " + axiom + "\n");
+      if (useLabels) {
+        sorted.add("- " + addLabels(ioHelper, labels, axiom) + "\n");
+      } else {
+        sorted.add("- " + axiom + "\n");
+      }
     }
     for (String axiom : sorted) {
       writer.write(axiom);
@@ -96,7 +130,11 @@ public class DiffOperation {
     writer.write(strings2minus1.size() + " axioms in Ontology 2 but not in Ontology 1:\n");
     sorted = new TreeSet<>();
     for (String axiom : strings2minus1) {
-      sorted.add("+ " + axiom + "\n");
+      if (useLabels) {
+        sorted.add("+ " + addLabels(ioHelper, labels, axiom) + "\n");
+      } else {
+        sorted.add("+ " + axiom + "\n");
+      }
     }
     for (String axiom : sorted) {
       writer.write(axiom);
@@ -120,11 +158,43 @@ public class DiffOperation {
       IRI iri = IRI.create(matcher.group(1));
       String id = iri.toString();
       if (id.startsWith(oboBase)) {
-        id = id.substring(oboBase.length());
+        id = id.substring(oboBase.length()).replace("_", ":");
       }
-      String replacement = "<" + iri + ">";
+      String replacement = "<" + id + ">";
       if (labels.containsKey(iri)) {
         replacement = "<" + id + ">[" + labels.get(iri) + "]";
+      }
+      matcher.appendReplacement(sb, replacement);
+    }
+    matcher.appendTail(sb);
+    return sb.toString();
+  }
+
+  /**
+   * Given an IOHelper to get short form of IRIs, a map from IRIs to labels, and an axiom string,
+   * add labels next to any IRIs in the string, shorten OBO IRIs, and return the updated string.
+   *
+   * @param ioHelper IOHelper to use for prefixes
+   * @param labels a map from IRIs to label strings
+   * @param axiom a string representation of an OWLAxiom
+   * @return a string with labels inserted next to CURIEs
+   */
+  public static String addLabels(IOHelper ioHelper, Map<IRI, String> labels, String axiom) {
+    DefaultPrefixManager pm = ioHelper.getPrefixManager();
+    Matcher matcher = iriPattern.matcher(axiom);
+    StringBuffer sb = new StringBuffer();
+    while (matcher.find()) {
+      IRI iri = IRI.create(matcher.group(1));
+      String id = pm.getShortForm(iri);
+      if (id.startsWith("obo:")) {
+        id = id.substring(4).replace("_", ":");
+      }
+      if (!id.startsWith("<") && !id.endsWith(">")) {
+        id = "<" + id + ">";
+      }
+      String replacement = id;
+      if (labels.containsKey(iri)) {
+        replacement = id + "[" + labels.get(iri) + "]";
       }
       matcher.appendReplacement(sb, replacement);
     }
