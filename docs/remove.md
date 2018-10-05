@@ -67,7 +67,16 @@ Terms can also be selected from the set based on axioms. This can be helpful if 
 
 ## Axioms
 
-`--axioms` can be the name of any OWLAPI interface that implements OWLAxiom. Aliases are provided for convenience: `all`, `annotation`, `logical`, `class`, `equivalent-classes`, etc. The default is `all`, e.g. OWLAxiom. More than one type can be provided and order is not significant. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified interfaces AND *any* of the selected terms is in the axiom's signature, then the axiom is removed from the ontology.
+The `--axioms` option allows you to specify the type of OWLAxiom to remove. More than one type can be provided and the order is not significant. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
+
+1. `all` (default)
+2. `logical`
+3. `annotation`
+4. `subclass`
+5. `subproperty`
+6. `equivalent` (classes and properties)
+7. `disjoint` (classes and properties)
+8. `type` (class assertions)
 
 ## Examples
 
