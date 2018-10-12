@@ -41,19 +41,19 @@ public class CommandLineHelper {
 
   /** Error message when a boolean value is not "true" or "false". Expects option name. */
   private static final String booleanValueError =
-    NS + "BOOLEAN VALUE ERROR arg for %s must be true or false";
+      NS + "BOOLEAN VALUE ERROR arg for %s must be true or false";
 
   /** Error message when --input is provided in a chained command. */
   private static final String chainedInputError =
-    NS + "CHAINED INPUT ERROR do not use an --input option for chained commands";
+      NS + "CHAINED INPUT ERROR do not use an --input option for chained commands";
 
   /** Error message when an invalid IRI is provided. Expects the entry field and term. */
   private static final String invalidIRIError =
-    NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
+      NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
 
   /** Error message when user provides an invalid reasoner. Expects reasonerName in formatting. */
   private static final String invalidReasonerError =
-    NS + "INVALID REASONER ERROR unknown reasoner: %s";
+      NS + "INVALID REASONER ERROR unknown reasoner: %s";
 
   /** Error message when no input ontology is provided for methods that accept multiple inputs. */
   private static final String missingRequirementError = NS + "MISSING REQUIREMENT ERROR %s";
@@ -63,19 +63,19 @@ public class CommandLineHelper {
 
   /** Error message when no input ontology is provided for methods that accept multiple inputs. */
   private static final String missingInputsError =
-    NS + "MISSING INPUT ERROR at least one --input is required";
+      NS + "MISSING INPUT ERROR at least one --input is required";
 
   /** Error message when input terms are not provided. */
   private static final String missingTermsError =
-    NS + "MISSING TERMS ERROR term(s) are required with --term or --term-file";
+      NS + "MISSING TERMS ERROR term(s) are required with --term or --term-file";
 
   /** Error message when more than one --input is specified, excluding merge and unmerge. */
   private static final String multipleInputsError =
-    NS + "MULITPLE INPUTS ERROR only one --input is allowed";
+      NS + "MULITPLE INPUTS ERROR only one --input is allowed";
 
   /** Error message when the --inputs pattern does not include * or ?, or is not quoted */
   private static final String wildcardError =
-    NS + "WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
+      NS + "WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
 
   /**
    * Given a single string, return a list of strings split at whitespace but allowing for quoted
@@ -233,7 +233,7 @@ public class CommandLineHelper {
    * @return the option value as boolean, or the default if not found
    */
   public static boolean getBooleanValue(
-    CommandLine line, String name, boolean defaultValue, boolean optionalArg) {
+      CommandLine line, String name, boolean defaultValue, boolean optionalArg) {
     if (line.hasOption(name)) {
       if (CommandLineHelper.getOptionalValue(line, name) == null) {
         return true;
@@ -291,12 +291,21 @@ public class CommandLineHelper {
         axiomTypes.add(OWLDisjointUnionAxiom.class);
       } else if (axiom.equalsIgnoreCase("type")) {
         axiomTypes.add(OWLClassAssertionAxiom.class);
-      } else if(axiom.equalsIgnoreCase("abox")) {
-        axiomTypes.addAll(AxiomType.ABoxAxiomTypes.stream().map(AxiomType::getActualClass).collect(Collectors.toSet()));
-      } else if(axiom.equalsIgnoreCase("tbox")) {
-        axiomTypes.addAll(AxiomType.TBoxAxiomTypes.stream().map(AxiomType::getActualClass).collect(Collectors.toSet()));
-      } else if(axiom.equalsIgnoreCase("rbox")) {
-        axiomTypes.addAll(AxiomType.RBoxAxiomTypes.stream().map(AxiomType::getActualClass).collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("abox")) {
+        axiomTypes.addAll(
+            AxiomType.ABoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("tbox")) {
+        axiomTypes.addAll(
+            AxiomType.TBoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("rbox")) {
+        axiomTypes.addAll(
+            AxiomType.RBoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
       } else if (axiom.equalsIgnoreCase("declaration")) {
         axiomTypes.add(OWLDeclarationAxiom.class);
       } else {
@@ -380,7 +389,7 @@ public class CommandLineHelper {
    * @throws IllegalArgumentException if the option is not found
    */
   public static String getRequiredValue(CommandLine line, String name, String message)
-    throws IllegalArgumentException {
+      throws IllegalArgumentException {
     String result = getOptionalValue(line, name);
     if (result == null) {
       throw new IllegalArgumentException(String.format(missingRequirementError, message));
@@ -429,7 +438,7 @@ public class CommandLineHelper {
    * @throws IOException if the ontology cannot be loaded
    */
   public static OWLOntology getInputOntology(IOHelper ioHelper, CommandLine line)
-    throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException, IOException {
     OWLOntology inputOntology;
     // Check for multiple inputs
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
@@ -474,8 +483,8 @@ public class CommandLineHelper {
    * @throws IOException if the ontology cannot be loaded
    */
   public static List<OWLOntology> getInputOntologies(
-    IOHelper ioHelper, CommandLine line, boolean allowEmpty)
-    throws IllegalArgumentException, IOException {
+      IOHelper ioHelper, CommandLine line, boolean allowEmpty)
+      throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     String catalogPath = getOptionalValue(line, "catalog");
 
@@ -502,7 +511,7 @@ public class CommandLineHelper {
    * @throws IllegalArgumentException if requires options are missing
    */
   public static CommandState updateInputOntology(
-    IOHelper ioHelper, CommandState state, CommandLine line) throws IllegalArgumentException {
+      IOHelper ioHelper, CommandState state, CommandLine line) throws IllegalArgumentException {
     return updateInputOntology(ioHelper, state, line, true);
   }
 
@@ -521,8 +530,8 @@ public class CommandLineHelper {
    * @throws IllegalArgumentException if requires options are missing
    */
   public static CommandState updateInputOntology(
-    IOHelper ioHelper, CommandState state, CommandLine line, boolean required)
-    throws IllegalArgumentException {
+      IOHelper ioHelper, CommandState state, CommandLine line, boolean required)
+      throws IllegalArgumentException {
     if (state != null && state.getOntology() != null) {
       if (line.hasOption("input") || line.hasOption("input-IRI")) {
         throw new IllegalArgumentException(chainedInputError);
@@ -596,8 +605,8 @@ public class CommandLineHelper {
       } catch (IllegalArgumentException e) {
         // Exception from getFormat -- invalid format
         throw new IllegalArgumentException(
-          String.format(IOHelper.invalidFormatError, path.substring(path.lastIndexOf(".") + 1)),
-          e);
+            String.format(IOHelper.invalidFormatError, path.substring(path.lastIndexOf(".") + 1)),
+            e);
       }
     }
   }
@@ -630,7 +639,7 @@ public class CommandLineHelper {
    * @throws IOException if the term file cannot be loaded
    */
   public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line)
-    throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException, IOException {
     return getTerms(ioHelper, line, false);
   }
 
@@ -645,7 +654,7 @@ public class CommandLineHelper {
    * @throws IOException if the term file cannot be loaded
    */
   public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line, boolean allowEmpty)
-    throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException, IOException {
     Set<IRI> terms = getTerms(ioHelper, line, "term", "term-file");
 
     if (terms.size() == 0 && !allowEmpty) {
@@ -668,7 +677,7 @@ public class CommandLineHelper {
    * @throws IOException if the term file cannot be loaded
    */
   public static Set<IRI> getTerms(IOHelper ioHelper, CommandLine line, String singles, String paths)
-    throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException, IOException {
     Set<String> termStrings = new HashSet<>();
     if (singles != null) {
       termStrings.addAll(getOptionValues(line, singles));
@@ -748,9 +757,9 @@ public class CommandLineHelper {
     Properties p = new Properties();
     // The resource can be accessed from the class, except when running as a JAR
     URL resource =
-      CommandLineHelper.class
-        .getClassLoader()
-        .getResource("/META-INF/maven/org.obolibrary.robot/robot-command/pom.properties");
+        CommandLineHelper.class
+            .getClassLoader()
+            .getResource("/META-INF/maven/org.obolibrary.robot/robot-command/pom.properties");
     if (resource != null) {
       URI uri;
       try {
@@ -768,20 +777,20 @@ public class CommandLineHelper {
       resource = CommandLineHelper.class.getClassLoader().getResource(cls);
       if (resource == null) {
         throw new IOException(
-          "Cannot access version information from JAR. The resource does not exist.");
+            "Cannot access version information from JAR. The resource does not exist.");
       }
       if (resource.getProtocol().equals("jar")) {
         // Get the JAR path and open as JAR file
         String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
         try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
           ZipEntry entry =
-            jar.getEntry("META-INF/maven/org.obolibrary.robot/robot-command/pom.properties");
+              jar.getEntry("META-INF/maven/org.obolibrary.robot/robot-command/pom.properties");
           if (entry != null) {
             InputStream is = jar.getInputStream(entry);
             p.load(is);
           } else {
             throw new IOException(
-              "Cannot access version information from JAR. The properties file does not exist.");
+                "Cannot access version information from JAR. The properties file does not exist.");
           }
         }
       }
@@ -822,8 +831,8 @@ public class CommandLineHelper {
    * @throws IOException on issue printing version
    */
   public static CommandLine maybeGetCommandLine(
-    String usage, Options options, String[] args, boolean stopAtNonOption)
-    throws ParseException, IOException {
+      String usage, Options options, String[] args, boolean stopAtNonOption)
+      throws ParseException, IOException {
     CommandLineParser parser = new PosixParser();
     CommandLine line = parser.parse(options, args, stopAtNonOption);
 
@@ -864,7 +873,7 @@ public class CommandLineHelper {
    * @throws IOException on issue printing version
    */
   public static CommandLine getCommandLine(String usage, Options options, String[] args)
-    throws ParseException, IOException {
+      throws ParseException, IOException {
     CommandLine line = maybeGetCommandLine(usage, options, args, false);
     if (line == null) {
       System.exit(0);
@@ -944,7 +953,7 @@ public class CommandLineHelper {
    * @throws IOException if the ontology cannot be loaded
    */
   public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
-    throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
@@ -977,7 +986,7 @@ public class CommandLineHelper {
    * @throws IOException if the ontology cannot be loaded
    */
   public static List<OWLOntology> getInputOntologies(
-    IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
+      IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
