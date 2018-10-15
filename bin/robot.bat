@@ -1,1 +1,1 @@
-java -jar %~dp0robot.jar %*
+java %ROBOT_JAVA_ARGS% -jar %~dp0robot.jar %*
