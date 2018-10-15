@@ -39,6 +39,7 @@ Copy all of OBI except descendants of 'assay' (`remove` is preferred):
 Copy a subset of classes based on an annotation property:
 
 ```
-robot filter --input foo.owl --select classes --select "oboInOwl:inSubset='bar'"
+robot filter --input foo.owl --select "annotations classes"\
+ --select "oboInOwl:inSubset='bar'" --output bar.owl
 ```
 
