@@ -77,7 +77,9 @@ The `--axioms` option allows you to specify the type of OWLAxiom to remove. More
 6. `equivalent` (classes and properties)
 7. `disjoint` (classes and properties)
 8. `type` (class assertions)
-
+9. `abox`
+10. `tbox`
+11. `rbox`
 ## Examples
 
 Remove a class ('organ') and and all its descendants:
