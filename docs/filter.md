@@ -2,7 +2,7 @@
 
 The `filter` command allows you to create a new ontology from a source ontology by copying only the selected axioms. The `remove` command is the opposite of `filter`, allowing you to remove selected axioms. `filter` accepts the same options as `remove` and processes them in the same order. See [`remove`](/remove) for details on configuring the options.
 
-By default, `filter` will remove dangling entities copied as the result of the filtering. To include dangling entities, run with `--trim false`.
+By default, `filter` will include all axioms from the input ontology that contain *one or more* entities from the specified set. To be more strict and only include axioms in which *all* entities in the axiom are in the specified set, use `--trim false`.
 
 ## Annotations
 
@@ -39,6 +39,7 @@ Copy all of OBI except descendants of 'assay' (`remove` is preferred):
 Copy a subset of classes based on an annotation property:
 
 ```
-robot filter --input foo.owl --select classes --select "oboInOwl:inSubset='bar'"
+robot filter --input foo.owl --select "annotations classes"\
+ --select "oboInOwl:inSubset='bar'" --output bar.owl
 ```
 
