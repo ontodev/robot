@@ -77,9 +77,9 @@ The `--axioms` option allows you to specify the type of OWLAxiom to remove. More
 6. `equivalent` (classes and properties)
 7. `disjoint` (classes and properties)
 8. `type` (class assertions)
-9. `tbox` (classes and properties)
+9. `tbox` (classes)
 10. `abox` (individuals)
-11. `rbox` (properties)
+11. `rbox` (object properties)
 
 ## Examples
 
