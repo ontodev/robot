@@ -166,7 +166,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-distribution</artifactId>
-      <version>4.2.6</version>
+      <version>4.5.6</version>
     </dependency>
     <dependency>
       <groupId>org.semanticweb.elk</groupId>
