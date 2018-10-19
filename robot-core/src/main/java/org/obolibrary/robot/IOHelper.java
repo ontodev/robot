@@ -190,6 +190,10 @@ public class IOHelper {
   public OWLOntology loadOntology(String ontologyPath) throws IOException {
     File ontologyFile = new File(ontologyPath);
     File catalogFile = guessCatalogFile(ontologyFile);
+    if (!catalogFile.isFile()) {
+      // If the catalog file does not exist, do not use catalog
+      catalogFile = null;
+    }
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -233,6 +237,10 @@ public class IOHelper {
    */
   public OWLOntology loadOntology(File ontologyFile) throws IOException {
     File catalogFile = guessCatalogFile(ontologyFile);
+    if (!catalogFile.isFile()) {
+      // If the catalog file does not exist, do not use catalog
+      catalogFile = null;
+    }
     return loadOntology(ontologyFile, catalogFile);
   }
 

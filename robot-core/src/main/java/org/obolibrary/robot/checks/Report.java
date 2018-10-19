@@ -298,7 +298,8 @@ public class Report {
   }
 
   /**
-   * Given a rule name, return a rule name. If the string starts with "file", the name is the path and should be stripped to just the name. Otherwise, the input is returned.
+   * Given a rule name, return a rule name. If the string starts with "file", the name is the path
+   * and should be stripped to just the name. Otherwise, the input is returned.
    *
    * @param ruleName string to (maybe) format
    * @return rule name
