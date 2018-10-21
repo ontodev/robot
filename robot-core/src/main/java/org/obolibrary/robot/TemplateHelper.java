@@ -1,7 +1,9 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -483,7 +485,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(String path) throws IOException {
-    return readCSV(new FileReader(path));
+    return readXSV(new FileReader(path), ',');
   }
 
   /**
@@ -494,7 +496,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(InputStream stream) throws IOException {
-    return readCSV(new InputStreamReader(stream));
+    return readXSV(new InputStreamReader(stream), ',');
   }
 
   /**
@@ -505,14 +507,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader);
-    List<List<String>> rows = new ArrayList<>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
+    return readXSV(reader, ',');
   }
 
   /**
@@ -546,7 +541,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(String path) throws IOException {
-    return readTSV(new FileReader(path));
+    return readXSV(new FileReader(path), '\t');
   }
 
   /**
@@ -557,7 +552,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(InputStream stream) throws IOException {
-    return readTSV(new InputStreamReader(stream));
+    return readXSV(new InputStreamReader(stream), '\t');
   }
 
   /**
@@ -568,10 +563,16 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader, '\t');
+    return readXSV(reader, '\t');
+  }
+
+  private static List<List<String>> readXSV(Reader reader, char separator) throws IOException {
+    CSVReader csv =
+        new CSVReaderBuilder(reader)
+            .withCSVParser(new CSVParserBuilder().withSeparator(separator).build())
+            .build();
     List<List<String>> rows = new ArrayList<>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
+    for (String[] nextLine : csv) {
       rows.add(new ArrayList<>(Arrays.asList(nextLine)));
     }
     csv.close();
