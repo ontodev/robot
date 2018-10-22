@@ -101,7 +101,7 @@
     <dependency>
       <groupId>com.opencsv</groupId>
       <artifactId>opencsv</artifactId>
-      <version>3.3</version>
+      <version>4.3.2</version>
     </dependency>
     <dependency>
       <groupId>org.geneontology</groupId>
