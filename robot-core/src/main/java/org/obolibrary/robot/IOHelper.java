@@ -304,7 +304,7 @@ public class IOHelper {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       }
       // Maybe unzip
-      if (ontologyFile.getPath().endsWith("gz")) {
+      if (ontologyFile.getPath().endsWith(".gz")) {
         if (catalogFile == null) {
           return loadCompressedOntology(ontologyFile, null);
         } else {
@@ -396,7 +396,7 @@ public class IOHelper {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       }
       // Maybe load a zipped ontology
-      if (ontologyIRI.toString().endsWith("gz")) {
+      if (ontologyIRI.toString().endsWith(".gz")) {
         ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
       } else {
         // Otherwise load ontology as normal
@@ -573,7 +573,7 @@ public class IOHelper {
     // }
     XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
     // If saving in compressed format, get byte data then save to gzip
-    if (ontologyIRI.toString().endsWith("gz")) {
+    if (ontologyIRI.toString().endsWith(".gz")) {
       byte[] data = getOntologyFileData(ontology, format, checkOBO);
       saveCompressedOntology(data, ontologyIRI);
       return ontology;
