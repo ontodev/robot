@@ -233,4 +233,23 @@ public class IOHelperTest extends CoreTest {
     IOHelper ioHelper = new IOHelper();
     ioHelper.saveOntology(ontology, new OboGraphJsonDocumentFormat(), tempFile);
   }
+
+  /**
+   * Tests compressed file saving. Ensures that the file is loaded correctly and is the same as the
+   * original file.
+   *
+   * @throws IOException on any error
+   */
+  @Test
+  public void testSaveCompressedOntology() throws IOException {
+    OWLOntology ontology = loadOntology("/simple.owl");
+    File tempFile = File.createTempFile("simple-compressed", ".owl.gz");
+    tempFile.deleteOnExit();
+
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.saveOntology(ontology, new RDFXMLDocumentFormat(), tempFile);
+
+    OWLOntology ontology2 = ioHelper.loadOntology(tempFile.getPath());
+    assertIdentical(ontology, ontology2);
+  }
 }

@@ -18,6 +18,10 @@ WARN:       572
 INFO:       29
 ```
 
+## Labels
+
+The report output contains a series of CURIEs and/or IRIs. If you wish to include the entity labels, simply add `--labels true`. For large ontologies, this may take a bit longer to complete.
+
 ## Failing
 
 By default, `report` will fail if any `ERROR`-level violations are found. This can be changed by setting the `--fail-on` level to a different logging level. For example, if you want your report to fail if there are any `WARN`-level violations:
@@ -63,12 +67,13 @@ robot report --input edit.owl \
   --output my-report.tsv
 ```
 
-For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the path.
+For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the absolute or relative path.
 
 This example would create a report with references to deprecated classes as ERROR and the user query violations as INFO:
 ```
-ERROR	deprecated_class
-INFO	file:///absolute/path/to/other_query.rq
+ERROR   deprecated_class
+INFO    file:///absolute/path/to/other_query.rq
+INFO    file:./relative/path/to/other_query.rq
 ```
 
 ---

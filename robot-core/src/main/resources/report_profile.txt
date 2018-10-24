@@ -13,9 +13,11 @@ INFO	lowercase_definition
 WARN	missing_definition
 ERROR	missing_label
 WARN	missing_obsolete_label
+ERROR	missing_ontology_description
+ERROR	missing_ontology_license
+ERROR	missing_ontology_title
 INFO	missing_superclass
 ERROR	misused_obsolete_label
 WARN	multiple_asserted_superclasses
 ERROR	multiple_definitions
 ERROR	multiple_labels
-ERROR	ontology_metadata

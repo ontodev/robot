@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,24 +22,7 @@ import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLLogicalAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -307,7 +291,21 @@ public class CommandLineHelper {
         axiomTypes.add(OWLDisjointUnionAxiom.class);
       } else if (axiom.equalsIgnoreCase("type")) {
         axiomTypes.add(OWLClassAssertionAxiom.class);
-        // TODO: Make a-box, t-box, r-box
+      } else if (axiom.equalsIgnoreCase("abox")) {
+        axiomTypes.addAll(
+            AxiomType.ABoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("tbox")) {
+        axiomTypes.addAll(
+            AxiomType.TBoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("rbox")) {
+        axiomTypes.addAll(
+            AxiomType.RBoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
       } else if (axiom.equalsIgnoreCase("declaration")) {
         axiomTypes.add(OWLDeclarationAxiom.class);
       } else {
