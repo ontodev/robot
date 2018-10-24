@@ -247,6 +247,14 @@ public class OntologyHelper {
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
     Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
 
+    // Add annotations if the axiom is annotated
+    if (axiom.isAnnotated()) {
+      for (OWLAnnotation annotation : axiom.getAnnotations()) {
+        objects.add(annotation.getProperty());
+        objects.add(annotation.getValue());
+      }
+    }
+
     // The following are special cases
     // where there might be something anonymous that we want to include
     // in addition to the (named) entities in the signature.

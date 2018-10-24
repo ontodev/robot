@@ -106,8 +106,20 @@ public class RelatedObjectsHelper {
         }
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+          // Again, check full annotated axiom and axiom without annotations
+          if (a.isAnnotated()) {
+            OWLAnnotation annotation = a.getAnnotation();
+            if (iris.contains(annotation.getProperty().getIRI())
+                && objects.contains(a.getValue())) {
+              if (iris.contains(a.getSubject()) && objects.contains(a.getProperty())) {
+                // If the set contains all components, add the annotated axiom
+                axioms.add(axiom);
+              }
+            }
+          }
           if (iris.contains(a.getSubject()) && objects.contains(a.getProperty())) {
-            axioms.add(axiom);
+            // If the set only contains the un-annotated axiom, add that
+            axioms.add(axiom.getAxiomWithoutAnnotations());
           }
         } else if (objects.containsAll(axiomObjects)) {
           axioms.add(axiom);
@@ -147,6 +159,16 @@ public class RelatedObjectsHelper {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+          // Check if axiom is annotated
+          if (a.isAnnotated()) {
+            for (OWLAnnotation annotation : a.getAnnotations()) {
+              // If any part of the annotation is in the set, add the axiom
+              if (iris.contains(annotation.getProperty().getIRI())
+                  || objects.contains(a.getValue())) {
+                axioms.add(axiom);
+              }
+            }
+          }
           if (iris.contains(a.getSubject()) || objects.contains(a.getProperty())) {
             axioms.add(axiom);
           }
