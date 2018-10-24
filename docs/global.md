@@ -1,5 +1,28 @@
 # Global Options
 
+## Java Options
+
+Java options can be used to configure the JVM that ROBOT runs on. A full list of the Java command line options can be found by entering `java` on the command line. Non-standard options can be found by entering `java -X`.
+
+Sometimes when working with very large ontologies, the JVM will run out of memory (`OutOfMemoryError`). You can increase the max heap size using the Java option `-Xmx4G`, which increases the heap to 4G. Any size can be specified here, e.g. `-Xmx8G`.
+
+#### Linux & MacOS
+
+The Java options for ROBOT can be set by running `export ROBOT_JAVA_ARGS=<options>` prior to running a ROBOT command. This will only save the Java options in the current process space. 
+
+To set the Java options for ROBOT permanently, you will need to edit your `.bash_profile` and add the line `export ROBOT_JAVA_ARGS=<options>`. This is the same file you edited to add ROBOT to your system PATH, usually located in your root directory. You can verify that the variable is set by running `echo $ROBOT_JAVA_ARGS`.
+
+#### Windows
+
+The Java options for ROBOT can be set by running `set ROBOT_JAVA_ARGS=<options>` prior to running a ROBOT command. This will only save the Java options in the current process space. To set the Java options for ROBOT permanently, run `setx ROBOT_JAVA_ARGS <options>`.
+
+#### Platform Independent
+
+Alternatively, if you are running ROBOT directly from the jar, these can be specified in the command itself:
+```
+java <java options> -jar robot.jar <command> <robot options>
+```
+
 ## Prefixes
 
 Terms in OBO and OWL are identified using [IRIs](https://en.wikipedia.org/wiki/Internationalized_resource_identifier) (Internationalized Resource Identifiers), which generalize the familiar addresses for web pages. IRIs have many advantages, but one of their disadvantages is that they can be pretty long. So we have standard ways to abbreviate IRIs in a particular context by specifying **prefixes**. For example, Turtle files start with `@prefix` statements, SPARQL queries start with `PREFIX` statements, and JSON-LD data includes a `@context` with prefixes.

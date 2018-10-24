@@ -4,6 +4,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
@@ -45,6 +47,7 @@ public class DiffCommand implements Command {
     o.addOption("r", "right", true, "load right ontology from file");
     o.addOption("R", "right-iri", true, "load right ontology from IRI");
     o.addOption("o", "output", true, "save results to file");
+    o.addOption(null, "labels", true, "if true, use labels in place of entity IRIs");
     options = o;
   }
 
@@ -145,7 +148,10 @@ public class DiffCommand implements Command {
       writer = new PrintWriter(System.out);
     }
 
-    DiffOperation.compare(leftOntology, rightOntology, writer);
+    Map<String, String> options = new HashMap<>();
+    options.put("labels", CommandLineHelper.getDefaultValue(line, "labels", "false"));
+
+    DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
     writer.flush();
     writer.close();
 
