@@ -58,12 +58,17 @@ public class TemplateOperationTest extends CoreTest {
     checker.addProperty(dataFactory.getRDFSLabel());
     checker.addAll(simpleParts);
 
+    // Test getting classes by label without IOHelper
     IRI iri = IRI.create(base + "simple.owl#test1");
     OWLClass cls = dataFactory.getOWLClass(iri);
     assertEquals(cls, checker.getOWLClass("test one"));
     assertEquals(cls, checker.getOWLClass("'test one'"));
     assertEquals(cls, checker.getOWLClass("Test 1"));
 
+    // Test getting IRI by label
+    assertEquals(checker.getIRI("test one", false), cls.getIRI());
+
+    // Test getting class by label with IOHelper
     IOHelper ioHelper = new IOHelper();
     iri = ioHelper.createIRI("GO:XXXX");
     cls = dataFactory.getOWLClass(iri);
@@ -92,10 +97,15 @@ public class TemplateOperationTest extends CoreTest {
    */
   @Test
   public void testTemplateCSV() throws Exception {
-    Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
+    Map<String, List<List<String>>> tables = new LinkedHashMap<>();
     String path = "/template.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
+
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.addProperty(dataFactory.getRDFSLabel());
+    checker.addAll(simpleParts);
+
     OWLOntology template = TemplateOperation.template(tables, simpleParts);
     OntologyHelper.setOntologyIRI(template, IRI.create("http://test.com/template.owl"), null);
     assertIdentical("/template.owl", template);
