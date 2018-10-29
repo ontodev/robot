@@ -3,8 +3,7 @@ package org.obolibrary.robot;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -30,6 +29,9 @@ public class QueryCommand implements Command {
 
   /** Namespace for error messages. */
   private static final String NS = "query#";
+
+  /** Error message when update file provided does not exist. */
+  private static final String missingFileError = NS + "MISSING FILE ERROR file '%s' does not exist";
 
   /** Error message when a query is not provided */
   private static final String missingQueryError =
@@ -144,14 +146,27 @@ public class QueryCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
-    // If an update is provided, run the update then return the OWLOntology
-    String updateFilePath = CommandLineHelper.getOptionalValue(line, "update");
-    if (updateFilePath != null) {
-      String updateString = FileUtils.readFileToString(new File(updateFilePath));
+    // If an update(s) are provided, run then return the OWLOntology
+    List<String> updatePaths = CommandLineHelper.getOptionalValues(line, "update");
+    if (!updatePaths.isEmpty()) {
+      Map<String, String> updates = new LinkedHashMap<>();
+      for (String updatePath : updatePaths) {
+        File f = new File(updatePath);
+        if (!f.exists()) {
+          throw new Exception(String.format(missingFileError, updatePath));
+        }
+        updates.put(f.getPath(), FileUtils.readFileToString(f));
+      }
+
       // Load the ontology as a model, ignoring imports
       Model model = QueryOperation.loadOntologyAsModel(inputOntology);
 
-      QueryOperation.execUpdate(model, updateString);
+      // Execute the updates
+      for (Map.Entry<String, String> update : updates.entrySet()) {
+        logger.debug(String.format("Running update '%s'", update.getKey()));
+        QueryOperation.execUpdate(model, update.getValue());
+      }
+
       OWLOntology outputOntology = QueryOperation.convertModel(model);
 
       // If the input ontology had imports, maintain them

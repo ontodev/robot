@@ -50,11 +50,22 @@ The `query` command also supports [SPARQL Update](https://www.w3.org/TR/sparql11
 
 When using SPARQL update, you can either provide an `--output` for the updated ontology, or [chain](/chaining) it into another command.
 
+You can perform multiple updates in one command to reduce time spent loading and saving the ontology. Updates are processed in the order that they are input.
+
+    robot query --input nucleus.owl \
+     --update update.ru \
+     --update revert.ru \
+     --output results/nucleus.owl
+
 The `--update` option only updates the ontology itself, not any of the imports.
 
 ---
 
 ## Error Messages
+
+### Missing File Error
+
+The file provided for `--update` does not exist. Check the path and try again.
 
 ### Missing Query Error
 
