@@ -87,7 +87,13 @@ public class ExtractOperation {
     if (annotateSource) {
       Set<OWLAnnotationAxiom> sourceAxioms = new HashSet<>();
       for (OWLEntity entity : OntologyHelper.getEntities(outputOntology)) {
-        sourceAxioms.add(getIsDefinedBy(entity, sourceMap));
+        // Check if rdfs:isDefinedBy already exists
+        Set<OWLAnnotationValue> existingValues =
+            OntologyHelper.getAnnotationValues(outputOntology, isDefinedBy, entity.getIRI());
+        if (existingValues == null || existingValues.size() == 0) {
+          // If not, add it
+          sourceAxioms.add(getIsDefinedBy(entity, sourceMap));
+        }
       }
       manager.addAxioms(outputOntology, sourceAxioms);
     }

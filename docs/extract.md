@@ -61,7 +61,7 @@ You can also include ontology annotations from the input ontology with `--copy-o
       
 ## Source Annotations
 
-`extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`.
+`extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`. If the term already has an annotation using this property, the existing annotation will be copied and no new annotation will be added.
 
     robot extract --method BOT \
       --input annotated.owl \

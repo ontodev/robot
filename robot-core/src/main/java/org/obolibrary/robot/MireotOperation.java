@@ -28,6 +28,9 @@ public class MireotOperation {
   /** Shared data factory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
+  /** RDFS isDefinedBy annotation property. */
+  private static OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
+
   /**
    * Get a set of default annotation properties. Currenly includes only RDFS label.
    *
@@ -97,7 +100,7 @@ public class MireotOperation {
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if (annotateSource) {
-        outputManager.addAxiom(outputOntology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
       }
     }
 
@@ -105,7 +108,7 @@ public class MireotOperation {
     for (OWLEntity entity : lowerEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if (annotateSource) {
-        outputManager.addAxiom(outputOntology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
       }
       copyAncestors(
           reasoner,
@@ -159,10 +162,6 @@ public class MireotOperation {
         OntologyHelper.copy(inputOntology, outputOntology, superclass, annotationProperties);
         outputManager.addAxiom(
             outputOntology, dataFactory.getOWLSubClassOfAxiom(entity.asOWLClass(), superclass));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(superclass, sourceMap));
-        }
         copyAncestors(
             reasoner,
             inputOntology,
@@ -182,10 +181,6 @@ public class MireotOperation {
             outputOntology,
             dataFactory.getOWLSubAnnotationPropertyOfAxiom(
                 entity.asOWLAnnotationProperty(), superproperty));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(superproperty, sourceMap));
-        }
         copyAncestors(
             reasoner,
             inputOntology,
@@ -209,10 +204,6 @@ public class MireotOperation {
             outputOntology,
             dataFactory.getOWLSubObjectPropertyOfAxiom(
                 entity.asOWLObjectProperty(), superproperty));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(superproperty, sourceMap));
-        }
         copyAncestors(
             reasoner,
             inputOntology,
@@ -231,10 +222,6 @@ public class MireotOperation {
         outputManager.addAxiom(
             outputOntology,
             dataFactory.getOWLSubDataPropertyOfAxiom(entity.asOWLDataProperty(), superproperty));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(superproperty, sourceMap));
-        }
         copyAncestors(
             reasoner,
             inputOntology,
@@ -245,6 +232,11 @@ public class MireotOperation {
             annotateSource,
             sourceMap);
       }
+    }
+
+    // Annotate with rdfs:isDefinedBy (maybe)
+    if (annotateSource) {
+      maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
     }
   }
 
@@ -299,7 +291,7 @@ public class MireotOperation {
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if (annotateSource) {
-        outputManager.addAxiom(outputOntology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
       }
       copyDescendants(
           reasoner,
@@ -346,10 +338,6 @@ public class MireotOperation {
         OntologyHelper.copy(inputOntology, outputOntology, subclass, annotationProperties);
         outputManager.addAxiom(
             outputOntology, dataFactory.getOWLSubClassOfAxiom(subclass, entity.asOWLClass()));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(subclass, sourceMap));
-        }
         copyDescendants(
             reasoner,
             inputOntology,
@@ -368,10 +356,6 @@ public class MireotOperation {
             outputOntology,
             dataFactory.getOWLSubAnnotationPropertyOfAxiom(
                 subproperty, entity.asOWLAnnotationProperty()));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(subproperty, sourceMap));
-        }
         copyDescendants(
             reasoner,
             inputOntology,
@@ -393,10 +377,6 @@ public class MireotOperation {
         outputManager.addAxiom(
             outputOntology,
             dataFactory.getOWLSubObjectPropertyOfAxiom(subproperty, entity.asOWLObjectProperty()));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(subproperty, sourceMap));
-        }
         copyDescendants(
             reasoner,
             inputOntology,
@@ -414,10 +394,6 @@ public class MireotOperation {
         outputManager.addAxiom(
             outputOntology,
             dataFactory.getOWLSubDataPropertyOfAxiom(subproperty, entity.asOWLDataProperty()));
-        if (annotateSource) {
-          outputManager.addAxiom(
-              outputOntology, ExtractOperation.getIsDefinedBy(subproperty, sourceMap));
-        }
         copyDescendants(
             reasoner,
             inputOntology,
@@ -427,6 +403,29 @@ public class MireotOperation {
             annotateSource,
             sourceMap);
       }
+    }
+
+    // Annotate with rdfs:isDefinedBy (maybe)
+    if (annotateSource) {
+      maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+    }
+  }
+
+  /**
+   * Given an ontology, a manager for that ontology, an entity to annotate, and a map of source
+   * replacements, add the rdfs:isDefinedBy annotation to the entity.
+   *
+   * @param ontology OWLOntology to add annotation in
+   * @param manager OWLManager for the ontology
+   * @param entity OWLEntity to add annotation on
+   * @param sourceMap term-to-source map
+   */
+  private static void maybeAnnotateSource(
+      OWLOntology ontology, OWLOntologyManager manager, OWLEntity entity, Map<IRI, IRI> sourceMap) {
+    Set<OWLAnnotationValue> existingValues =
+        OntologyHelper.getAnnotationValues(ontology, isDefinedBy, entity.getIRI());
+    if (existingValues == null || existingValues.size() == 0) {
+      manager.addAxiom(ontology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
     }
   }
 }
