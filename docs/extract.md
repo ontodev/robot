@@ -58,6 +58,39 @@ You can also include ontology annotations from the input ontology with `--copy-o
       --term UBERON:0000916 \
       --copy-ontology-annotations true \
       --output results/annotated_module.owl
+      
+## Source Annotations
+
+`extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`.
+
+    robot extract --method BOT \
+      --input annotated.owl \
+      --term UBERON:0000916 \
+      --annotate-with-source true \
+      --output results/annotated_source.owl 
+
+The object of the property is, by default, the base name of the term's IRI. For example, the IRI for `GO:0000001` (`http://purl.obolibrary.org/obo/GO_0000001`) would receive the source `http://purl.obolibrary.org/obo/go.owl`. 
+
+Sometimes classes are adopted by other ontologies, but retain their original IRI. In this case, you can provide the path to a [term-to-source mapping file](/examples/source-map.tsv) as CSV or TSV.
+
+    robot --prefix 'GO: http://purl.obolibrary.org/obo/GO_' extract --method BOT \
+      --input annotated.owl \
+      --term UBERON:0000916 \
+      --annotate-with-source true \
+      --sources source-map.tsv \
+      --output results/changed_source.owl
+
+The mapping file can either use full IRIs:
+
+```
+http://purl.obolibrary.org/obo/BFO_0000001,http://purl.obolibrary.org/obo/ro.owl
+```
+
+Or prefixes, as long as the [prefix is valid](/global#prefixes):
+
+```
+BFO:0000001,RO
+```
 
 ---
 
@@ -81,3 +114,7 @@ The following flags *should not* be used with STAR, TOP, or BOT methods:
 * `--upper-term` & `--upper-terms`
 * `--lower-term` & `--lower-terms`
 * `--branch-from-term` & `--branch-from-terms`
+
+### Invalid Source Map Error
+
+The input for `--sources` must be either CSV or TSV format.

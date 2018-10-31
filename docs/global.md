@@ -91,3 +91,7 @@ xml:base="&obo;obi.owl"
 ### JSON-LD Error
 
 ROBOT encountered a problem while writing the given prefixes to JSON-LD.
+
+### Missing File Error
+
+The file provided for an input does not exist. Check the path and try again.
