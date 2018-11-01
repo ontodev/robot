@@ -212,35 +212,36 @@ public class TemplateHelper {
       Map<OWLClassExpression, Set<OWLAnnotation>> annotatedExpressions)
       throws Exception {
     Set<OWLAxiom> axioms = new HashSet<>();
-    if (classType.equals("subclass")) {
-      for (OWLClassExpression expression : classExpressions) {
-        axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expression));
-      }
-      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
-          annotatedExpressions.entrySet()) {
-        axioms.add(
-            dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
-      }
-      return axioms;
-    } else if (classType.equals("equivalent")) {
-      // Since it's an intersection, all annotations will be added to the same axiom
-      Set<OWLAnnotation> annotations = new HashSet<>();
-      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
-          annotatedExpressions.entrySet()) {
-        classExpressions.add(annotatedEx.getKey());
-        annotations.addAll(annotatedEx.getValue());
-      }
-      OWLObjectIntersectionOf intersection =
-          dataFactory.getOWLObjectIntersectionOf(classExpressions);
-      OWLAxiom axiom;
-      if (!annotations.isEmpty()) {
-        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, annotations);
-      } else {
-        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
-      }
-      return Sets.newHashSet(axiom);
-    } else {
-      throw new Exception(String.format(classTypeError, classType));
+    switch (classType) {
+      case "subclass":
+        for (OWLClassExpression expression : classExpressions) {
+          axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expression));
+        }
+        for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
+            annotatedExpressions.entrySet()) {
+          axioms.add(
+              dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
+        }
+        return axioms;
+      case "equivalent":
+        // Since it's an intersection, all annotations will be added to the same axiom
+        Set<OWLAnnotation> annotations = new HashSet<>();
+        for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
+            annotatedExpressions.entrySet()) {
+          classExpressions.add(annotatedEx.getKey());
+          annotations.addAll(annotatedEx.getValue());
+        }
+        OWLObjectIntersectionOf intersection =
+            dataFactory.getOWLObjectIntersectionOf(classExpressions);
+        OWLAxiom axiom;
+        if (!annotations.isEmpty()) {
+          axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, annotations);
+        } else {
+          axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
+        }
+        return Sets.newHashSet(axiom);
+      default:
+        throw new Exception(String.format(classTypeError, classType));
     }
   }
 
@@ -524,12 +525,14 @@ public class TemplateHelper {
     }
     String extension = FilenameUtils.getExtension(file.getName());
     extension = extension.trim().toLowerCase();
-    if (extension.equals("csv")) {
-      return readCSV(new FileReader(path));
-    } else if (extension.equals("tsv") || extension.equals("tab")) {
-      return readTSV(new FileReader(path));
-    } else {
-      throw new IOException(String.format(fileTypeError, path));
+    switch (extension) {
+      case "csv":
+        return readCSV(new FileReader(path));
+      case "tsv":
+      case "tab":
+        return readTSV(new FileReader(path));
+      default:
+        throw new IOException(String.format(fileTypeError, path));
     }
   }
 

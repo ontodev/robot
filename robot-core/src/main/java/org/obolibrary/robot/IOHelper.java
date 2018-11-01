@@ -428,22 +428,23 @@ public class IOHelper {
    */
   public static OWLDocumentFormat getFormat(String formatName) throws IllegalArgumentException {
     formatName = formatName.trim().toLowerCase();
-    if (formatName.equals("obo")) {
-      return new OBODocumentFormat();
-    } else if (formatName.equals("owl")) {
-      return new RDFXMLDocumentFormat();
-    } else if (formatName.equals("ttl")) {
-      return new TurtleDocumentFormat();
-    } else if (formatName.equals("owx")) {
-      return new OWLXMLDocumentFormat();
-    } else if (formatName.equals("omn")) {
-      return new ManchesterSyntaxDocumentFormat();
-    } else if (formatName.equals("ofn")) {
-      return new FunctionalSyntaxDocumentFormat();
-    } else if (formatName.equals("json")) {
-      return new OboGraphJsonDocumentFormat();
-    } else {
-      throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
+    switch (formatName) {
+      case "obo":
+        return new OBODocumentFormat();
+      case "owl":
+        return new RDFXMLDocumentFormat();
+      case "ttl":
+        return new TurtleDocumentFormat();
+      case "owx":
+        return new OWLXMLDocumentFormat();
+      case "omn":
+        return new ManchesterSyntaxDocumentFormat();
+      case "ofn":
+        return new FunctionalSyntaxDocumentFormat();
+      case "json":
+        return new OboGraphJsonDocumentFormat();
+      default:
+        throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
     }
   }
 
@@ -1047,9 +1048,6 @@ public class IOHelper {
         OBOFormatWriter oboWriter = new OBOFormatWriter();
         oboWriter.setCheckStructure(checkOBO);
         oboWriter.write(oboOntology, bw);
-      } catch (IOException e) {
-        // TODO
-        throw e;
       }
       data = baos.toByteArray();
     } else {
