@@ -2,6 +2,7 @@ package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
 import java.util.*;
+import org.obolibrary.robot.template.TemplateHelper;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ParserException;
@@ -29,6 +30,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
  *
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
+@Deprecated
 public class TemplateOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(TemplateOperation.class);
@@ -144,9 +146,9 @@ public class TemplateOperation {
    * @return a new annotation with property and string literal value
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotation getStringAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    return TemplateHelper.getStringAnnotation(checker, template, value);
+  public static void getStringAnnotation(QuotedEntityChecker checker, String template, String value)
+      throws Exception {
+    // return TemplateHelper.getStringAnnotation(checker, template, value);
   }
 
   /**
@@ -159,9 +161,9 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and typed literal value
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotation getTypedAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    return TemplateHelper.getTypedAnnotation(checker, template, value);
+  public static void getTypedAnnotation(QuotedEntityChecker checker, String template, String value)
+      throws Exception {
+    // return TemplateHelper.getTypedAnnotation(checker, template, value);
   }
 
   /**
@@ -174,9 +176,9 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and language tagged literal
    * @throws Exception if the annotation property cannot be found
    */
-  public static OWLAnnotation getLanguageAnnotation(
+  public static void getLanguageAnnotation(
       QuotedEntityChecker checker, String template, String value) throws Exception {
-    return TemplateHelper.getLanguageAnnotation(checker, template, value);
+    // return TemplateHelper.getLanguageAnnotation(checker, template, value);
   }
 
   /**
@@ -233,33 +235,7 @@ public class TemplateOperation {
    */
   public static List<IRI> getIRIs(String tableName, List<List<String>> rows, IOHelper ioHelper)
       throws Exception {
-    return TemplateHelper.getIRIs(tableName, rows, ioHelper);
-  }
-
-  /**
-   * Return true if the template string is valid, false otherwise.
-   *
-   * @param template the template string to check
-   * @return true if valid, false otherwise
-   */
-  public static boolean validateTemplateString(String template) {
-    template = template.trim();
-    if (template.equals("ID")) {
-      return true;
-    }
-    if (template.equals("LABEL")) {
-      return true;
-    }
-    if (template.equals("TYPE")) {
-      return true;
-    }
-    if (template.equals("CLASS_TYPE")) {
-      return true;
-    }
-    if (template.matches("^(>?C|>{0,2}A[LTI]?) .*")) {
-      return true;
-    }
-    return template.equals("CI");
+    return TemplateHelper.getTemplateIRIs(tableName, rows, ioHelper);
   }
 
   /**
@@ -365,11 +341,11 @@ public class TemplateOperation {
         if (template.isEmpty()) {
           continue;
         }
-        if (!validateTemplateString(template)) {
-          throw new Exception(
-              String.format(
-                  unknownTemplateError, tableName, column + 1, headers.get(column), template));
-        }
+        // if (!validateTemplateString(template)) {
+        // throw new Exception(
+        //  String.format(
+        //    unknownTemplateError, tableName, column + 1, headers.get(column), template));
+        // }
         if (template.equals("ID")) {
           idColumn = column;
         }
@@ -515,7 +491,7 @@ public class TemplateOperation {
         if (template.equals("LABEL")) {
           label = value;
           lastAxiomAnnotation = null;
-          lastAnnotation = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", value);
+          // lastAnnotation = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
         } else if (template.equals("TYPE")) {
           OWLEntity entity = checker.getOWLEntity(value);
@@ -528,7 +504,7 @@ public class TemplateOperation {
           annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
         } else if (template.startsWith("A")) {
           lastAxiomAnnotation = null;
-          lastAnnotation = TemplateHelper.getAnnotation(checker, ioHelper, template, value);
+          // lastAnnotation = TemplateHelper.getAnnotation(checker, ioHelper, template, value);
           annotations.add(lastAnnotation);
         } else if (template.startsWith(">A")) {
           if (lastAnnotation == null) {
@@ -545,8 +521,8 @@ public class TemplateOperation {
                     "an annotation"));
           }
           // Get annotation based on annotation type
-          lastAxiomAnnotation =
-              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(1), value);
+          // lastAxiomAnnotation =
+          // TemplateHelper.getAnnotation(checker, ioHelper, template.substring(1), value);
           // If the last annotation is already in the map, get it's existing annotations
           if (nested.containsKey(lastAnnotation)) {
             axiomAnnotations = nested.get(lastAnnotation);
@@ -579,8 +555,8 @@ public class TemplateOperation {
           axiomAnnotations = nested.get(lastAnnotation);
           axiomAnnotationAnnotations = axiomAnnotations.get(lastAxiomAnnotation);
           // Add this iteration of annotation and put into the nested map
-          axiomAnnotationAnnotations.add(
-              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(2), value));
+          // axiomAnnotationAnnotations.add(
+          // TemplateHelper.getAnnotation(checker, ioHelper, template.substring(2), value));
           axiomAnnotations.put(lastAxiomAnnotation, axiomAnnotationAnnotations);
           nested.put(lastAnnotation, axiomAnnotations);
         }
@@ -726,8 +702,8 @@ public class TemplateOperation {
           } else {
             annotations = new HashSet<>();
           }
-          annotations.add(
-              TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
+          // annotations.add(
+          // TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
           annotatedExpressions.put(lastExpression, annotations);
           // Remove to prevent duplication
           classExpressions.remove(lastExpression);

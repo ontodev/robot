@@ -1,12 +1,10 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.obolibrary.robot.template.Template;
+import org.obolibrary.robot.template.TemplateHelper;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
@@ -137,7 +135,16 @@ public class TemplateCommand implements Command {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
 
-    OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null, ioHelper);
+    // Process the templates
+    List<OWLOntology> ontologies = new ArrayList<>();
+    for (String table : tables.keySet()) {
+      Template template = new Template(table, tables.get(table), inputOntology, ioHelper);
+      OWLOntology ont = template.generateOutputOntology();
+      ontologies.add(ont);
+    }
+    OWLOntology outputOntology = MergeOperation.merge(ontologies);
+    // OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null,
+    // ioHelper);
 
     boolean collapseImports =
         CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
@@ -149,7 +156,6 @@ public class TemplateCommand implements Command {
     // from the inputOntology, with just their labels.
     // Do not MIREOT the terms defined in the template,
     // just their dependencies!
-    List<OWLOntology> ontologies;
     boolean hasAncestors = CommandLineHelper.getBooleanValue(line, "ancestors", false, true);
     if (hasAncestors && inputOntology != null) {
       Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
@@ -178,8 +184,8 @@ public class TemplateCommand implements Command {
       MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
     } else {
       // Set ontology and version IRI
-      String ontologyIRI = CommandLineHelper.getOptionalValue(line, "ontology-iri");
       String versionIRI = CommandLineHelper.getOptionalValue(line, "version-iri");
+      String ontologyIRI = CommandLineHelper.getOptionalValue(line, "ontology-iri");
       if (ontologyIRI != null || versionIRI != null) {
         OntologyHelper.setOntologyIRI(outputOntology, ontologyIRI, versionIRI);
       }

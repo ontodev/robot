@@ -248,10 +248,7 @@
 
     <!-- http://purl.obolibrary.org/obo/GO_1990904 -->
 
-    <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_1990904">
-        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/GO_0032991"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ribonucleoprotein complex</rdfs:label>
-    </owl:Class>
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_1990904"/>
 </rdf:RDF>
 
 

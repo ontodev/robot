@@ -2,15 +2,12 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.junit.Test;
+import org.obolibrary.robot.template.Template;
+import org.obolibrary.robot.template.TemplateHelper;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 
 /** Tests for TemplateOperation. */
 public class TemplateOperationTest extends CoreTest {
@@ -29,17 +26,27 @@ public class TemplateOperationTest extends CoreTest {
    */
   @Test
   public void testTemplateStrings() throws Exception {
-    OWLAnnotation ann;
+    Set<OWLAnnotation> anns;
+    OWLAnnotation ann = null;
     QuotedEntityChecker checker = new QuotedEntityChecker();
     checker.setIOHelper(new IOHelper());
 
-    ann = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", "bar");
+    anns = TemplateHelper.getStringAnnotations(checker, "A rdfs:label", null, "bar");
+    for (OWLAnnotation a : anns) {
+      ann = a;
+    }
     assertEquals("Annotation(rdfs:label \"bar\"^^xsd:string)", ann.toString());
 
-    ann = TemplateHelper.getTypedAnnotation(checker, "AT rdfs:label^^xsd:integer", "1");
+    anns = TemplateHelper.getTypedAnnotations(checker, "AT rdfs:label^^xsd:integer", null, "1");
+    for (OWLAnnotation a : anns) {
+      ann = a;
+    }
     assertEquals("Annotation(rdfs:label \"1\"^^xsd:integer)", ann.toString());
 
-    ann = TemplateHelper.getLanguageAnnotation(checker, "AL rdfs:label@en", "bar");
+    anns = TemplateHelper.getLanguageAnnotations(checker, "AL rdfs:label@en", null, "bar");
+    for (OWLAnnotation a : anns) {
+      ann = a;
+    }
     assertEquals("Annotation(rdfs:label \"bar\"@en)", ann.toString());
 
     ann = TemplateHelper.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"));
@@ -92,12 +99,12 @@ public class TemplateOperationTest extends CoreTest {
    */
   @Test
   public void testTemplateCSV() throws Exception {
-    Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
     String path = "/template.csv";
-    tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
+    List<List<String>> rows = TemplateHelper.readCSV(this.getClass().getResourceAsStream(path));
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
-    OWLOntology template = TemplateOperation.template(tables, simpleParts);
-    OntologyHelper.setOntologyIRI(template, IRI.create("http://test.com/template.owl"), null);
+
+    Template t = new Template(path, rows, simpleParts);
+    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl");
     assertIdentical("/template.owl", template);
   }
 
@@ -108,15 +115,27 @@ public class TemplateOperationTest extends CoreTest {
    */
   @Test
   public void testTemplates() throws Exception {
-    Map<String, List<List<String>>> tables = new LinkedHashMap<String, List<List<String>>>();
+    Map<String, List<List<String>>> tables = new LinkedHashMap<>();
     String path = "/template-ids.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     path = "/template-labels.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
+    path = "/template.csv";
+    tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
-    OWLOntology template = TemplateOperation.template(tables, simpleParts);
+
+    List<OWLOntology> ontologies = new ArrayList<>();
+    for (String table : tables.keySet()) {
+      Template t = new Template(table, tables.get(table), simpleParts);
+      ontologies.add(t.generateOutputOntology());
+    }
+
+    OWLOntology template = MergeOperation.merge(ontologies);
+    for (OWLAxiom cls : template.getAxioms()) {
+      System.out.println(cls);
+    }
     assertEquals("Count classes", 4, template.getClassesInSignature().size());
     assertEquals("Count logical axioms", 4, template.getLogicalAxiomCount());
-    assertEquals("Count all axioms", 10, template.getAxiomCount());
+    assertEquals("Count all axioms", 12, template.getAxiomCount());
   }
 }

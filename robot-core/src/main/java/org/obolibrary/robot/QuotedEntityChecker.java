@@ -70,6 +70,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   /** Map from IRIs to names of entities. */
   private Map<IRI, String> labels = new HashMap<>();
 
+  /** Map from names to IRIs of entities. */
+  private Map<String, IRI> iris = new HashMap<>();
+
   /**
    * Add an IOHelper for resolving names to IRIs.
    *
@@ -211,6 +214,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (providers != null) {
       for (ShortFormProvider provider : providers) {
         labels.put(entity.getIRI(), provider.getShortForm(entity));
+        iris.put(provider.getShortForm(entity), entity.getIRI());
         map.put(provider.getShortForm(entity), entity.getIRI());
       }
     }
@@ -226,6 +230,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
           // If it has a label, add it to the map (will replace short form)
           if (value != null) {
             labels.put(entity.getIRI(), value.getLiteral());
+            iris.put(value.getLiteral(), entity.getIRI());
             map.put(value.getLiteral(), entity.getIRI());
           }
         }
@@ -251,6 +256,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     }
 
     labels.put(entity.getIRI(), name);
+    iris.put(name, entity.getIRI());
     map.put(name, entity.getIRI());
   }
 
@@ -276,6 +282,14 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     return null;
   }
 
+  public IRI getIRI(String name, boolean create) {
+    IRI iri = iris.getOrDefault(name, null);
+    if (iri == null && ioHelper != null) {
+      iri = ioHelper.createIRI(name);
+    }
+    return iri;
+  }
+
   /**
    * Get the label for the given IRI. Quotation marks will be removed if necessary.
    *
@@ -295,18 +309,8 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param name the name of the entity to find
    * @return an annotation property, or null
    */
+  @Override
   public OWLAnnotationProperty getOWLAnnotationProperty(@Nonnull String name) {
-    return getOWLAnnotationProperty(name, false);
-  }
-
-  /**
-   * Find an annotation property with the given name. Quotation marks will be removed if necessary.
-   *
-   * @param name the name of the entity to find
-   * @param create when true and an IOHelper is defined, create the property
-   * @return an annotation property, or null
-   */
-  public OWLAnnotationProperty getOWLAnnotationProperty(String name, boolean create) {
     IRI iri = getIRI(annotationProperties, name);
     if (iri != null) {
       return dataFactory.getOWLAnnotationProperty(iri);
@@ -326,6 +330,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param name the name of the entity to find
    * @return a class, or null
    */
+  @Override
   public OWLClass getOWLClass(@Nonnull String name) {
     IRI iri = getIRI(classes, name);
     if (iri != null) {
@@ -346,22 +351,19 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param name the name of the entity to find
    * @return a data property, or null
    */
+  @Override
   public OWLDataProperty getOWLDataProperty(@Nonnull String name) {
     IRI iri = getIRI(dataProperties, name);
     if (iri != null) {
       return dataFactory.getOWLDataProperty(iri);
     }
+    if (ioHelper != null) {
+      iri = ioHelper.createIRI(name);
+      if (iri != null) {
+        return dataFactory.getOWLDataProperty(iri);
+      }
+    }
     return null;
-  }
-
-  /**
-   * Find a datatype with the given name. Quotation marks will be removed if necessary.
-   *
-   * @param name the name of the entity to find
-   * @return a datatype, or null
-   */
-  public OWLDatatype getOWLDatatype(@Nonnull String name) {
-    return getOWLDatatype(name, false);
   }
 
   /**
@@ -369,15 +371,15 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * necessary.
    *
    * @param name the name of the entity to find
-   * @param create when true and an IOHelper is defined, create the type
    * @return a datatype, or null
    */
-  public OWLDatatype getOWLDatatype(@Nonnull String name, boolean create) {
+  @Override
+  public OWLDatatype getOWLDatatype(@Nonnull String name) {
     IRI iri = getIRI(datatypes, name);
     if (iri != null) {
       return dataFactory.getOWLDatatype(iri);
     }
-    if (create && ioHelper != null) {
+    if (ioHelper != null) {
       iri = ioHelper.createIRI(name);
       if (iri != null) {
         return dataFactory.getOWLDatatype(iri);
@@ -392,10 +394,17 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param name the name of the entity to find
    * @return a named individual, or null
    */
+  @Override
   public OWLNamedIndividual getOWLIndividual(@Nonnull String name) {
     IRI iri = getIRI(namedIndividuals, name);
     if (iri != null) {
       return dataFactory.getOWLNamedIndividual(iri);
+    }
+    if (ioHelper != null) {
+      iri = ioHelper.createIRI(name);
+      if (iri != null) {
+        return dataFactory.getOWLNamedIndividual(iri);
+      }
     }
     return null;
   }
@@ -406,10 +415,17 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    * @param name the name of the entity to find
    * @return an object property, or null
    */
+  @Override
   public OWLObjectProperty getOWLObjectProperty(@Nonnull String name) {
     IRI iri = getIRI(objectProperties, name);
     if (iri != null) {
       return dataFactory.getOWLObjectProperty(iri);
+    }
+    if (ioHelper != null) {
+      iri = ioHelper.createIRI(name);
+      if (iri != null) {
+        return dataFactory.getOWLObjectProperty(iri);
+      }
     }
     return null;
   }

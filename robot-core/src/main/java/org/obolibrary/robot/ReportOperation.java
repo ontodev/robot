@@ -213,7 +213,7 @@ public class ReportOperation {
       System.out.println("No violations found.");
     }
 
-    // System.out.println(report.getIRIs());
+    // System.out.println(report.getValueIRIs());
     String result;
     if (format != null && format.equalsIgnoreCase("yaml")) {
       result = report.toYAML();

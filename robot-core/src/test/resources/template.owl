@@ -8,10 +8,10 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:obo="http://purl.obolibrary.org/obo/">
     <owl:Ontology rdf:about="http://test.com/template.owl"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Classes
@@ -19,7 +19,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://purl.obolibrary.org/obo/GO_1234 -->
@@ -38,70 +38,34 @@
     </owl:Class>
     <owl:Axiom>
         <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/GO_1234"/>
-        <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#subClassOf"/>
-        <owl:annotatedTarget>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of"/>
-                <owl:someValuesFrom rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"/>
-            </owl:Restriction>
-        </owl:annotatedTarget>
-        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test one comment</rdfs:comment>
-    </owl:Axiom>
-    <owl:Axiom>
-        <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/GO_1234"/>
         <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#label"/>
         <owl:annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test 3</owl:annotatedTarget>
         <rdfs:comment xml:lang="en">test 3 comment</rdfs:comment>
     </owl:Axiom>
-    
+
 
 
     <!-- http://purl.obolibrary.org/obo/GO_1235 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/GO_1235">
         <owl:equivalentClass>
-            <owl:Class>
-                <owl:intersectionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"/>
-                    <owl:Restriction>
-                        <owl:onProperty rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of"/>
-                        <owl:someValuesFrom>
-                            <owl:Class>
-                                <owl:intersectionOf rdf:parseType="Collection">
-                                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/GO_1234"/>
-                                    <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2"/>
-                                </owl:intersectionOf>
-                            </owl:Class>
-                        </owl:someValuesFrom>
-                    </owl:Restriction>
-                </owl:intersectionOf>
-            </owl:Class>
+            <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"/>
+        </owl:equivalentClass>
+        <owl:equivalentClass>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of"/>
+                <owl:someValuesFrom>
+                    <owl:Class>
+                        <owl:intersectionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/GO_1234"/>
+                            <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2"/>
+                        </owl:intersectionOf>
+                    </owl:Class>
+                </owl:someValuesFrom>
+            </owl:Restriction>
         </owl:equivalentClass>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test 4</rdfs:label>
     </owl:Class>
-    <owl:Axiom>
-        <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/GO_1235"/>
-        <owl:annotatedProperty rdf:resource="http://www.w3.org/2002/07/owl#equivalentClass"/>
-        <owl:annotatedTarget>
-            <owl:Class>
-                <owl:intersectionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"/>
-                    <owl:Restriction>
-                        <owl:onProperty rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of"/>
-                        <owl:someValuesFrom>
-                            <owl:Class>
-                                <owl:intersectionOf rdf:parseType="Collection">
-                                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/GO_1234"/>
-                                    <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2"/>
-                                </owl:intersectionOf>
-                            </owl:Class>
-                        </owl:someValuesFrom>
-                    </owl:Restriction>
-                </owl:intersectionOf>
-            </owl:Class>
-        </owl:annotatedTarget>
-        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test2 and test 3 comment</rdfs:comment>
-    </owl:Axiom>
     <owl:Axiom>
         <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/GO_1235"/>
         <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#label"/>
