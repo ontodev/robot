@@ -30,7 +30,7 @@ public class RemoveCommand implements Command {
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
-    o.addOption("r", "trim", true, "if true, trim dangling entities");
+    o.addOption("r", "trim", true, "if false, do not trim dangling entities");
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     options = o;
@@ -123,7 +123,7 @@ public class RemoveCommand implements Command {
       selects.add("self");
     }
     boolean removeImports = false;
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", false);
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
