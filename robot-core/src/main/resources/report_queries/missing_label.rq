@@ -18,8 +18,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
     FILTER regex(str(?dep), "true")
   }
   FILTER EXISTS {
-    ?entity ?property ?object .
-    FILTER (?property != rdf:type)
+    ?entity ?prop2 ?object .
+    FILTER (?prop2 != rdf:type)
   }
   FILTER (!isBlank(?entity))
 }
