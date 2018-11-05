@@ -5,6 +5,7 @@
 # Solution: Add a label.
 
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
@@ -15,6 +16,10 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   FILTER NOT EXISTS {
     ?entity owl:deprecated ?dep .
     FILTER regex(str(?dep), "true")
+  }
+  FILTER EXISTS {
+    ?entity ?property ?object .
+    FILTER (?property != rdf:type)
   }
   FILTER (!isBlank(?entity))
 }
