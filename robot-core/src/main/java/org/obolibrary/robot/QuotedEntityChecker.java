@@ -277,6 +277,48 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   }
 
   /**
+   * Get the IRI for the given name by checking all maps. If not found, create as a new IRI if
+   * create is true.
+   *
+   * @param name the name of the entity to find the IRI for
+   * @param create when true and an IOHelper is defined, create the IRI
+   * @return the IRI of the entity or null if not found or created
+   */
+  public IRI getIRI(String name, boolean create) {
+    IRI iri = getIRI(classes, name);
+    if (iri != null) {
+      return iri;
+    }
+    iri = getIRI(annotationProperties, name);
+    if (iri != null) {
+      return iri;
+    }
+    iri = getIRI(dataProperties, name);
+    if (iri != null) {
+      return iri;
+    }
+    iri = getIRI(objectProperties, name);
+    if (iri != null) {
+      return iri;
+    }
+    iri = getIRI(namedIndividuals, name);
+    if (iri != null) {
+      return iri;
+    }
+    iri = getIRI(datatypes, name);
+    if (iri != null) {
+      return iri;
+    }
+    if (create && ioHelper != null) {
+      iri = ioHelper.createIRI(name);
+      if (iri != null) {
+        return iri;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Get the label for the given IRI. Quotation marks will be removed if necessary.
    *
    * @param iri IRI to get label of
