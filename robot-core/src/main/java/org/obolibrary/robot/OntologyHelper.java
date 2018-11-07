@@ -421,7 +421,7 @@ public class OntologyHelper {
 
   /**
    * Given an ontology and an entity, return a set of axioms containing any anonymous entities
-   * referenced in the descendants of the entity. Includes supers & equivalents.
+   * referenced in the descendants of the entity. Includes supers and equivalents.
    *
    * @param ontology the ontology to search
    * @param entity the entity to search descendants of
