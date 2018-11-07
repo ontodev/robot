@@ -15,6 +15,11 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+/**
+ * Tests template convenience methods.
+ *
+ * @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a>
+ */
 public class TemplateHelperTest extends CoreTest {
 
   private QuotedEntityChecker checker;
@@ -199,5 +204,39 @@ public class TemplateHelperTest extends CoreTest {
     for (OWLObjectPropertyExpression expr : expressions) {
       assertEquals(exprMatch.toString(), expr.toString());
     }
+  }
+
+  /**
+   * Test annotation templates.
+   *
+   * @throws Exception if annotation properties cannot be found
+   */
+  @Test
+  public void testTemplateStrings() throws Exception {
+    Set<OWLAnnotation> anns;
+    OWLAnnotation ann = null;
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.setIOHelper(new IOHelper());
+
+    anns = TemplateHelper.getStringAnnotations(checker, "A rdfs:label", null, "bar");
+    for (OWLAnnotation a : anns) {
+      ann = a;
+    }
+    assertEquals("Annotation(rdfs:label \"bar\"^^xsd:string)", ann.toString());
+
+    anns = TemplateHelper.getTypedAnnotations(checker, "AT rdfs:label^^xsd:integer", null, "1");
+    for (OWLAnnotation a : anns) {
+      ann = a;
+    }
+    assertEquals("Annotation(rdfs:label \"1\"^^xsd:integer)", ann.toString());
+
+    anns = TemplateHelper.getLanguageAnnotations(checker, "AL rdfs:label@en", null, "bar");
+    for (OWLAnnotation a : anns) {
+      ann = a;
+    }
+    assertEquals("Annotation(rdfs:label \"bar\"@en)", ann.toString());
+
+    ann = TemplateHelper.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"));
+    assertEquals("Annotation(rdfs:label <http://bar.com>)", ann.toString());
   }
 }
