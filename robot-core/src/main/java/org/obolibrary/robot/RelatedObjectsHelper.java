@@ -128,6 +128,7 @@ public class RelatedObjectsHelper {
    * @param objects Set of objects to start with
    * @param selectorGroups types of related objects to return
    * @return Set of related objects
+   * @throws Exception on annotation pattern issue
    */
   public static Set<OWLObject> selectGroups(
       OWLOntology ontology, Set<OWLObject> objects, List<List<String>> selectorGroups)
@@ -146,6 +147,7 @@ public class RelatedObjectsHelper {
    * @param objects Set of objects to start with
    * @param selectors types of related objects to return
    * @return Set of related objects
+   * @throws Exception on annotation pattern issue
    */
   public static Set<OWLObject> select(
       OWLOntology ontology, Set<OWLObject> objects, List<String> selectors) throws Exception {
@@ -164,6 +166,7 @@ public class RelatedObjectsHelper {
    * @param objects Set of objects to start with
    * @param selector type of related objects to return
    * @return Set of related objects
+   * @throws Exception on annotation pattern issue
    */
   public static Set<OWLObject> select(OWLOntology ontology, Set<OWLObject> objects, String selector)
       throws Exception {
