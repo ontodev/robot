@@ -17,14 +17,15 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
    ?entity owl:deprecated ?dep .
    FILTER regex(str(?dep), "true") .
    ?value ?property ?entity .
-   FILTER (!STRENDS(str(?property), "owl#deprecated"))
+   FILTER (?property != owl:deprecated) .
   }
   UNION
   {
    ?entity owl:deprecated ?dep .
    FILTER regex(str(?dep), "true") .
    ?entity ?property ?value .
-   FILTER (!STRENDS(str(?property), "owl#deprecated")) .
+   FILTER (?property != owl:deprecated) .
+   FILTER (?property != obo:IAO_0000231) .
    FILTER NOT EXISTS { ?property a owl:AnnotationProperty }
    FILTER NOT EXISTS {
      ?entity rdfs:subClassOf ?value .
