@@ -179,11 +179,10 @@ public class RemoveCommand implements Command {
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
     if (preserveStructure) {
       // Since we are preserving the structure between the objects that were NOT removed, we need to
-      // get the the objects from the output ontology instead of using the set of related objects
-      Set<OWLObject> remainingObjects = OntologyHelper.getObjects(outputOntology);
-      // Use the original input ontology to get the hierarchy correct
+      // get the complement of the removed object set and build relationships between those objects.
+      relatedObjects = RelatedObjectsHelper.select(outputOntology, ioHelper, objects, "complement");
       manager.addAxioms(
-          outputOntology, RelatedObjectsHelper.spanGaps(inputOntology, remainingObjects));
+          outputOntology, RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
     }
 
     // Save the changed ontology and return the state
