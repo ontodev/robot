@@ -78,6 +78,7 @@ public class QueryOperation {
    * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   * @throws UnsupportedEncodingException on parsing TTL string
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
       throws OWLOntologyStorageException, UnsupportedEncodingException {
@@ -189,6 +190,7 @@ public class QueryOperation {
    *
    * @param queriesResults a map from files to query results and output streams
    * @return true if there are any violations
+   * @throws IOException on file issues
    */
   public static boolean execVerify(
       Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
@@ -215,6 +217,7 @@ public class QueryOperation {
    * violations to STDERR.
    *
    * @param dsg the graph to query over
+   * @param ruleName name of rule to verify
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
    * @throws IOException on query parse error
