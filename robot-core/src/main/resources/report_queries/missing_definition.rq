@@ -14,6 +14,13 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   FILTER NOT EXISTS { ?entity a owl:Ontology }
   FILTER NOT EXISTS { ?entity a owl:NamedIndividual }
   FILTER NOT EXISTS { ?entity owl:deprecated true }
+  FILTER NOT EXISTS {
+    ?entity rdfs:subPropertyOf oboInOwl:SubsetProperty .
+  }
+  FILTER EXISTS {
+    ?entity ?prop2 ?object .
+    FILTER (?prop2 != rdf:type)
+  }
   FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity
