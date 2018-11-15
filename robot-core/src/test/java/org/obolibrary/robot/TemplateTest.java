@@ -1,17 +1,16 @@
 package org.obolibrary.robot;
 
-import org.junit.Test;
-import org.obolibrary.robot.template.Template;
-import org.obolibrary.robot.template.TemplateHelper;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+import org.obolibrary.robot.template.Template;
+import org.obolibrary.robot.template.TemplateHelper;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * Tests Template class and class methods.

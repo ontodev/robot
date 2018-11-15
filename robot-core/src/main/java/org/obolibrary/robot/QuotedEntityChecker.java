@@ -282,6 +282,13 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     return null;
   }
 
+  /**
+   * Get the IRI for the given name, or create a new IRI from the name.
+   *
+   * @param name entity to get IRI of, or to create
+   * @param create if true, create a new IRI
+   * @return the IRI of the entity, or null
+   */
   public IRI getIRI(String name, boolean create) {
     IRI iri = iris.getOrDefault(name, null);
     if (iri == null && ioHelper != null) {
@@ -304,18 +311,31 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   }
 
   /**
-   * Find an annotation property with the given name. Quotation marks will be removed if necessary.
+   * Find an annotation property with the given name, or create one. Quotation marks will be removed
+   * if necessary.
    *
    * @param name the name of the entity to find
    * @return an annotation property, or null
    */
   @Override
   public OWLAnnotationProperty getOWLAnnotationProperty(@Nonnull String name) {
+    return getOWLAnnotationProperty(name, true);
+  }
+
+  /**
+   * Find an annotation property with the given name, or create one. Quotation marks will be removed
+   * if necessary.
+   *
+   * @param name the name of the entity to find
+   * @param create if false, do not create a new annotation property
+   * @return an annotation property, or null
+   */
+  public OWLAnnotationProperty getOWLAnnotationProperty(@Nonnull String name, boolean create) {
     IRI iri = getIRI(annotationProperties, name);
     if (iri != null) {
       return dataFactory.getOWLAnnotationProperty(iri);
     }
-    if (ioHelper != null) {
+    if (create && ioHelper != null) {
       iri = ioHelper.createIRI(name);
       if (iri != null) {
         return dataFactory.getOWLAnnotationProperty(iri);
@@ -375,11 +395,23 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    */
   @Override
   public OWLDatatype getOWLDatatype(@Nonnull String name) {
+    return getOWLDatatype(name, true);
+  }
+
+  /**
+   * Find a datatype with the given name, or create one. Quotation marks will be removed if
+   * necessary.
+   *
+   * @param name the name of the entity to find
+   * @param create if false, do not create a new datatype
+   * @return a datatype, or null
+   */
+  public OWLDatatype getOWLDatatype(@Nonnull String name, boolean create) {
     IRI iri = getIRI(datatypes, name);
     if (iri != null) {
       return dataFactory.getOWLDatatype(iri);
     }
-    if (ioHelper != null) {
+    if (create && ioHelper != null) {
       iri = ioHelper.createIRI(name);
       if (iri != null) {
         return dataFactory.getOWLDatatype(iri);

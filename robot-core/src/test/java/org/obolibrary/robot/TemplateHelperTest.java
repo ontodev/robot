@@ -1,6 +1,11 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import com.google.common.collect.Sets;
+import java.io.IOException;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.robot.template.TemplateHelper;
@@ -8,12 +13,6 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
-
-import java.io.IOException;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Tests template convenience methods.
@@ -27,6 +26,7 @@ public class TemplateHelperTest extends CoreTest {
 
   /**
    * Set up the checker loaded with the input ontology
+   *
    * @throws IOException on issue loading ontology
    */
   @Before
@@ -44,13 +44,15 @@ public class TemplateHelperTest extends CoreTest {
 
   /**
    * Tests getting a set of annotation properties from template values.
+   *
    * @throws Exception on issue getting annotation properties
    */
   @Test
   public void testGetAnnotationProperties() throws Exception {
     String value = "oboInOwl:inSubset|oboInOwl:id";
     String split = "|";
-    Set<OWLAnnotationProperty> properties = TemplateHelper.getAnnotationProperties(checker, value, split);
+    Set<OWLAnnotationProperty> properties =
+        TemplateHelper.getAnnotationProperties(checker, value, split);
 
     OWLAnnotationProperty p1 = checker.getOWLAnnotationProperty("oboInOwl:inSubset");
     OWLAnnotationProperty p2 = checker.getOWLAnnotationProperty("oboInOwl:id");
@@ -61,6 +63,7 @@ public class TemplateHelperTest extends CoreTest {
 
   /**
    * Tests getting various types of OWLAnnotations from strings.
+   *
    * @throws Exception on issue getting annotations
    */
   @Test
@@ -69,7 +72,8 @@ public class TemplateHelperTest extends CoreTest {
     // String
     String template = "A rdfs:label";
     String value = "anatomical cluster";
-    Set<OWLAnnotation> annotations = TemplateHelper.getAnnotations(checker, ioHelper, template, value);
+    Set<OWLAnnotation> annotations =
+        TemplateHelper.getAnnotations(checker, ioHelper, template, value);
 
     OWLAnnotationProperty p = checker.getOWLAnnotationProperty("rdfs:label");
     OWLLiteral lit = dataFactory.getOWLLiteral(value);
@@ -116,16 +120,16 @@ public class TemplateHelperTest extends CoreTest {
     }
   }
 
-  /**
-   * Tests getting a class expression from a template string and value.
-   */
+  /** Tests getting a class expression from a template string and value. */
   @Test
   public void testGetClassExpressions() {
-    ManchesterOWLSyntaxClassExpressionParser parser = new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
+    ManchesterOWLSyntaxClassExpressionParser parser =
+        new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
 
     String template = "C part_of some %";
     String value = "obo:UBERON_0000467";
-    Set<OWLClassExpression> expressions = TemplateHelper.getClassExpressions(parser, template, value);
+    Set<OWLClassExpression> expressions =
+        TemplateHelper.getClassExpressions(parser, template, value);
     OWLObjectProperty p = checker.getOWLObjectProperty("part_of");
     if (p == null) {
       fail("'part_of' property not found by checker");
@@ -144,14 +148,13 @@ public class TemplateHelperTest extends CoreTest {
     }
   }
 
-  /**
-   * Tests getting a data property expression from a template string and value.
-   */
+  /** Tests getting a data property expression from a template string and value. */
   @Test
   public void testGetDataPropertyExpressions() {
     String template = "P %";
     String value = "UBERON:8888888";
-    Set<OWLDataPropertyExpression> expressions = TemplateHelper.getDataPropertyExpressions(checker, template, value);
+    Set<OWLDataPropertyExpression> expressions =
+        TemplateHelper.getDataPropertyExpressions(checker, template, value);
 
     OWLDataProperty p = checker.getOWLDataProperty("height");
     if (p == null) {
@@ -168,6 +171,7 @@ public class TemplateHelperTest extends CoreTest {
 
   /**
    * Tests getting a set of datatypes from template values.
+   *
    * @throws Exception on issue getting datatypes
    */
   @Test
@@ -183,14 +187,13 @@ public class TemplateHelperTest extends CoreTest {
     assertEquals(dtMatch, datatypes);
   }
 
-  /**
-   * Tests getting an object property expression from a template string and value.
-   */
+  /** Tests getting an object property expression from a template string and value. */
   @Test
   public void testGetObjectPropertyExpressions() {
     String template = "P inverse %";
     String value = "obo:BFO_0000050";
-    Set<OWLObjectPropertyExpression> expressions = TemplateHelper.getObjectPropertyExpressions(checker, template, value);
+    Set<OWLObjectPropertyExpression> expressions =
+        TemplateHelper.getObjectPropertyExpressions(checker, template, value);
 
     OWLObjectProperty p = checker.getOWLObjectProperty("part_of");
     if (p == null) {

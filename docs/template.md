@@ -20,24 +20,68 @@ The `template` command accepts an optional input ontology, either using the `--i
 
 ## Template Strings
 
+### Generic Template Strings
+
 - `ID`: Every term must have an IRI to identify it. This can be specified with an `ID` column. Usually this will be a prefixed ID like `GO:12345`. See the `--prefix` options for details. Rows with an empty ID cell will be skipped.
-- `LABEL`: If a term exists in an ontology, or its ID has been defined elsewhere (perhaps in a previous template), then the `LABEL` column can specify an `rdfs:label` that uniquely identifies the target term. This can be easier the numeric IDs for human readers.
+- `LABEL`: If a term exists in an ontology, or its ID has been defined elsewhere (perhaps in a previous template), then the `LABEL` column can specify an `rdfs:label` that uniquely identifies the target term. This can be easier the numeric IDs for human readers. The `LABEL` column DOES NOT create an `rdfs:label` annotation for an entity.
 - `TYPE`: this is the `rdf:type` for the row. Because ROBOT is focused on ontology development, the default value is `owl:Class` and this column is optional. When creating an OWLIndividual, specify the class to which it belongs in this column.
-- `CLASS_TYPE`: ROBOT creates a class for each row of data. You must specify a CLASS_TYPE, which can be either:
-    - `subclass`: the created class will be asserted to be a subclass of each templated class expression
-    - `equivalent`: the created class will be asserted to be equivalent to the intersection of all the templated class expressions
+    - `class` or `owl:Class`
+    - `object property` or `owl:ObjectProperty`
+    - `data property` or `owl:DataProperty`
+    - `annotation property` or `owl:AnnotationProperty`
+    - `datatype` or `owl:Datatype`
 - **annotations**: ROBOT can attach annotations to your class. There are four options:
     - `A` string annotation: If the template string starts with an `A` and a space then it will be interpreted as a string annotation. The rest of the template string should be the label or compact IRI of an annotation property, e.g. `label` or `rdfs:label`. The cell value will be the literal value of the annotation with type `xsd:string`.
     - `AT` typed annotation: If the template string starts with an `AT` and a space then it will be interpreted as a typed annotation. The `^^` characters must be used to separate the annotation property from the datatype, e.g. `rdfs:comment^^xsd:integer`. The cell value will be the typed literal value of the annotation.
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.
     - `AI` annotation IRI: If the template string starts with an `AI` and a space, then the annotation will be made as with a string annotation, except that the cell value will be interpreted as an IRI.
-- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
 - **axiom annotations**: ROBOT can also annotate logical and annotation axioms.
     - `>A` annotation on annotation: Annotates the annotation axiom created from the cell to the left with the cell value. The column to the left must be an `A*` template string.
     - `>C` annotation on class expression: Annotates the class expression axiom created from the cell to the left with the cell value. The column to the left must be a `C` template string.
+    - `>P` annotation on property expression: Annotates the property expression axiom created fromt eh cell to the left with the cell value. The column to the left must be a `P` template string.
 
 Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have seperate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice - other than pure whitespace - to split on (e.g. `SPLIT=, `).
 
+### Class Template Strings
+
+- `CLASS_TYPE`: ROBOT creates a class for each row of data with a that has a `TYPE` of `class` or `owl:Class`. The class type can be:
+    - `subclass`: the created class will be asserted to be a subclass of each templated class expression (default)
+    - `disjoint`: the created class will be disjoint from each templated class expression, meaning the classes cannot share subclasses
+    - `equivalent`: the created class will be asserted to be equivalent to the intersection of all the templated class expressions
+- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to a class by its IRI (or CURIE - compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
+
+### Property Template Strings
+
+- `PROPERTY_TYPE`: ROBOT creates a property for each row of data that has a `TYPE` of either an object or data property. The property type can be (any type followed by a \* can ONLY be used for object properties):
+    - `subproperty`: the created property will be a subproperty of each templated property expression (default)
+    - `equivalent`: the created property will be equivalent to all of the templated property expressions
+    - `disjoint`: the created property will be disjoint from each templated property expression and the values cannot be the same
+    - `inverse`\*: the created object property will be the inverse of each templated property expression
+    - `functional`: the created property will be functional, meaning each entity (subject) can have at most one value
+    - `inverse functional`\*: the created object property will be inverse functional, meaning each value can have at most one subject
+    - `irreflexive`\*: the created object property will be irreflexive, meaning the subject cannot also be the value
+    - `reflexive`\*: the created object property will be reflexive, meaning each subject is also a value
+    - `symmetric`\*: the created object property will be symmetric, meaning the subject and value can be reversed
+    - `asymmetric`\*: the created object property will be asymmetric, meaning the subject and value cannot be reversed
+    - `transitive`\*: the created object property will be transitive, meaning the property can be chained
+- `P` **property expression**: If the template string starts with a `P` and a space then it will be interpreted as a property expression. The value of the current cell will be substituted into the template, replacing all occurrences of the `%` character. Then the result will be parsed into an OWL property expression. ROBOT uses the same syntax for property expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to an entity by its IRI or CURIE. This can lead to unexpected behavior, but it allows you to refer to entities without loading them into the input ontology.
+    - **object properties**: the only supported object property expression is the inverse object property expression. The template string is `P inverse(%)`. A single object property for a value can be specified by `P %`.
+    - **data properties**: data property expressions are not yet supported by OWL. A data property for a value (e.g. for a parent property) can be specified by `P %`.
+    - **annotation properties**: annotation property expressions are not possible. An annotation property for a value (e.g. for a parent property) can be specified by `P %`.
+- `DOMAIN`: The domain to a property is a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object and data properties). For annotation properties, the domain must be a single class specified by label, CURIE, or IRI.
+- `RANGE`: The range to a property is either a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object properties) or the name, CURIE, or IRI of a datatype (for annotation and data properties).
+
+### Individual Template Strings
+
+- `INDIVIDUAL_TYPE`: ROBOT creates an individual for each or of data that has a `TYPE` of another class. The individual type can be:
+    - `named`: the created individual will be a default named individual. When the `INDIVIDUAL_TYPE` is left blank, this is the default. This should be used when adding object property or data property assertions
+    - `same`: the created individual will be asserted to be the same individual as each templated individual in the row
+    - `different`: the created individual will be asserted to be a different individual than any of the templated individuals in the row
+- `I` **individual assertion**:
+    - `I property %`: when creating a `named` individual, replace property with an object property or data property to add assertions. The `%` will be replaced by the template cell value or values. For object property assertions, this is another individual. For data property assertions, this is a literal value.
+    - `I %`: when creating a `same` or `different` individual, this template string is used to specify which individual will be the value of the same or different individual axiom.
+
+<!-- ### Datatype Template Strings -->
 
 ## Merging
 

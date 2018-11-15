@@ -20,7 +20,8 @@ public class QuotedEntityCheckerTest extends CoreTest {
   public void testEscaping() {
     Assert.assertEquals("testone", QuotedEntityChecker.wrap("testone"));
     Assert.assertEquals("'test one'", QuotedEntityChecker.wrap("test one"));
-    Assert.assertEquals("5-bromo-2\\'-deoxyuridine", QuotedEntityChecker.wrap("5-bromo-2'-deoxyuridine"));
+    Assert.assertEquals(
+        "5-bromo-2\\'-deoxyuridine", QuotedEntityChecker.wrap("5-bromo-2'-deoxyuridine"));
   }
 
   /**
@@ -74,13 +75,13 @@ public class QuotedEntityCheckerTest extends CoreTest {
 
     System.out.println("PARSER");
     ManchesterOWLSyntaxClassExpressionParser parser =
-      new ManchesterOWLSyntaxClassExpressionParser(
-        dataFactory, checker
-        // new org.semanticweb.owlapi.expression.ShortFormEntityChecker(
-        //    new org.semanticweb.owlapi.util.
-        //        BidirectionalShortFormProviderAdapter(
-        //            ioHelper.getPrefixManager()))
-      );
+        new ManchesterOWLSyntaxClassExpressionParser(
+            dataFactory, checker
+            // new org.semanticweb.owlapi.expression.ShortFormEntityChecker(
+            //    new org.semanticweb.owlapi.util.
+            //        BidirectionalShortFormProviderAdapter(
+            //            ioHelper.getPrefixManager()))
+            );
     // assertEquals(cls, parser.parse("'test one'"));
     Assert.assertEquals(cls, parser.parse("GO:XXXX"));
     // checker.add(cls, "%");

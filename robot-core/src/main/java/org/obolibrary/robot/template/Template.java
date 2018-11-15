@@ -71,10 +71,10 @@ public class Template {
    * Expects: table name, header count, template count.
    */
   private static final String columnMismatchError =
-    NS
-      + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match "
-      + "the number of template columns (%3$d) "
-      + "in table \"%1$s\".";
+      NS
+          + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match "
+          + "the number of template columns (%3$d) "
+          + "in table \"%1$s\".";
 
   /** Error message when an invalid individual type is provided. */
   private static final String individualTypeError =
@@ -309,7 +309,7 @@ public class Template {
     templates = rows.get(1);
     if (headers.size() != templates.size()) {
       throw new Exception(
-        String.format(columnMismatchError, name, headers.size(), templates.size()));
+          String.format(columnMismatchError, name, headers.size(), templates.size()));
     }
 
     for (int column = 0; column < templates.size(); column++) {
