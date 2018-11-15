@@ -790,6 +790,7 @@ public class IOHelper {
    * Set the current JSON-LD context to the given context.
    *
    * @param jsonString the new JSON-LD context as a JSON string
+   * @throws IOException on issue parsing JSON
    */
   public void setContext(String jsonString) throws IOException {
     this.context = parseContext(jsonString);
@@ -799,6 +800,7 @@ public class IOHelper {
    * Set the current JSON-LD context to the given map.
    *
    * @param map a map of strings for the new JSON-LD context
+   * @throws IOException on issue parsing JSON
    */
   public void setContext(Map<String, Object> map) throws IOException {
     try {
@@ -900,6 +902,7 @@ public class IOHelper {
    * Set the current prefix map.
    *
    * @param map the new map of prefixes to use
+   * @throws IOException on issue parsing map to context
    */
   public void setPrefixes(Map<String, Object> map) throws IOException {
     setContext(map);
