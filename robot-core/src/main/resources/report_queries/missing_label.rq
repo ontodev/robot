@@ -1,20 +1,26 @@
 # # Missing Label
 #
-# Problem: An entity does not have a label. This may cause confusion or misuse.
+# Problem: An entity does not have a label. This may cause confusion or misuse. Excludes deprecated entities.
 #
 # Solution: Add a label.
 
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
+  VALUES ?property { rdfs:label }
   ?entity ?any ?o .
-  BIND ("rdfs:label" AS ?property) .
-  FILTER NOT EXISTS {?entity rdfs:label ?value}
-  FILTER NOT EXISTS {?entity a owl:Ontology}
+  FILTER NOT EXISTS { ?entity ?property ?value }
+  FILTER NOT EXISTS { ?entity a owl:Ontology }
+  FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER NOT EXISTS {
-    ?entity owl:deprecated ?dep .
-    FILTER regex(str(?dep), "true")
+    ?entity rdfs:subPropertyOf oboInOwl:SubsetProperty .
+  }
+  FILTER EXISTS {
+    ?entity ?prop2 ?object .
+    FILTER (?prop2 != rdf:type)
   }
   FILTER (!isBlank(?entity))
 }
