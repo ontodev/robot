@@ -1,7 +1,9 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -112,12 +114,46 @@ public class TemplateHelper {
    * Create an OWLAnnotation based on the template string and cell value.
    *
    * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return OWLAnnotation, or null if template string is not supported
+   * @throws Exception if annotation cannot be created
+   */
+  public static OWLAnnotation getAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    if (template.startsWith("A ")) {
+      return getStringAnnotation(checker, template, value);
+    } else if (template.startsWith("AT ")) {
+      if (template.contains("^^")) {
+        return getTypedAnnotation(checker, template, value);
+      } else {
+        throw new Exception(String.format(typedFormatError, template));
+      }
+    } else if (template.startsWith("AL ")) {
+      if (template.contains("@")) {
+        return getLanguageAnnotation(checker, template, value);
+      } else {
+        throw new Exception(String.format(languageFormatError, template));
+      }
+    } else if (template.startsWith("AI ")) {
+      return getIRIAnnotation(checker, template, value);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Create an OWLAnnotation based on the template string and cell value. Replaced by
+   * getAnnotation(QuotedEntityChecker checker, String template, String value).
+   *
+   * @param checker used to resolve the annotation property
    * @param ioHelper IOHelper used to create IRIs from values
    * @param template the template string
    * @param value the value for the annotation
    * @return OWLAnnotation, or null if template string is not supported
    * @throws Exception if annotation property cannot be found
    */
+  @Deprecated
   public static OWLAnnotation getAnnotation(
       QuotedEntityChecker checker, IOHelper ioHelper, String template, String value)
       throws Exception {
@@ -210,35 +246,36 @@ public class TemplateHelper {
       Map<OWLClassExpression, Set<OWLAnnotation>> annotatedExpressions)
       throws Exception {
     Set<OWLAxiom> axioms = new HashSet<>();
-    if (classType.equals("subclass")) {
-      for (OWLClassExpression expression : classExpressions) {
-        axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expression));
-      }
-      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
-          annotatedExpressions.entrySet()) {
-        axioms.add(
-            dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
-      }
-      return axioms;
-    } else if (classType.equals("equivalent")) {
-      // Since it's an intersection, all annotations will be added to the same axiom
-      Set<OWLAnnotation> annotations = new HashSet<>();
-      for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
-          annotatedExpressions.entrySet()) {
-        classExpressions.add(annotatedEx.getKey());
-        annotations.addAll(annotatedEx.getValue());
-      }
-      OWLObjectIntersectionOf intersection =
-          dataFactory.getOWLObjectIntersectionOf(classExpressions);
-      OWLAxiom axiom;
-      if (!annotations.isEmpty()) {
-        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, annotations);
-      } else {
-        axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
-      }
-      return Sets.newHashSet(axiom);
-    } else {
-      throw new Exception(String.format(classTypeError, classType));
+    switch (classType) {
+      case "subclass":
+        for (OWLClassExpression expression : classExpressions) {
+          axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expression));
+        }
+        for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
+            annotatedExpressions.entrySet()) {
+          axioms.add(
+              dataFactory.getOWLSubClassOfAxiom(cls, annotatedEx.getKey(), annotatedEx.getValue()));
+        }
+        return axioms;
+      case "equivalent":
+        // Since it's an intersection, all annotations will be added to the same axiom
+        Set<OWLAnnotation> annotations = new HashSet<>();
+        for (Entry<OWLClassExpression, Set<OWLAnnotation>> annotatedEx :
+            annotatedExpressions.entrySet()) {
+          classExpressions.add(annotatedEx.getKey());
+          annotations.addAll(annotatedEx.getValue());
+        }
+        OWLObjectIntersectionOf intersection =
+            dataFactory.getOWLObjectIntersectionOf(classExpressions);
+        OWLAxiom axiom;
+        if (!annotations.isEmpty()) {
+          axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, annotations);
+        } else {
+          axiom = dataFactory.getOWLEquivalentClassesAxiom(cls, intersection);
+        }
+        return Sets.newHashSet(axiom);
+      default:
+        throw new Exception(String.format(classTypeError, classType));
     }
   }
 
@@ -331,8 +368,27 @@ public class TemplateHelper {
   }
 
   /**
-   * Return an IRI annotation for the given template string and value. The template string format is
-   * "AI [name]" and the value is a string that can be interpreted as an IRI.
+   * Return an IRI annotation for the given template string and string value. The template string
+   * format is "AI [name]" and the value is the name of an entity or an IRI.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation axiom with property and an IRI value
+   * @throws Exception if the annotation property cannot be found or the IRI cannot be created
+   */
+  public static OWLAnnotation getIRIAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    IRI iri = checker.getIRI(value, true);
+    if (iri == null) {
+      throw new Exception(String.format(iriError, value));
+    }
+    return getIRIAnnotation(checker, template, iri);
+  }
+
+  /**
+   * Return an IRI annotation for the given template string and IRI value. The template string
+   * format is "AI [name]" and the value is an IRI.
    *
    * @param checker used to resolve the annotation property
    * @param template the template string
@@ -483,7 +539,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(String path) throws IOException {
-    return readCSV(new FileReader(path));
+    return readXSV(new FileReader(path), ',');
   }
 
   /**
@@ -494,7 +550,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(InputStream stream) throws IOException {
-    return readCSV(new InputStreamReader(stream));
+    return readXSV(new InputStreamReader(stream), ',');
   }
 
   /**
@@ -505,14 +561,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readCSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader);
-    List<List<String>> rows = new ArrayList<>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
-      rows.add(new ArrayList<>(Arrays.asList(nextLine)));
-    }
-    csv.close();
-    return rows;
+    return readXSV(reader, ',');
   }
 
   /**
@@ -529,12 +578,14 @@ public class TemplateHelper {
     }
     String extension = FilenameUtils.getExtension(file.getName());
     extension = extension.trim().toLowerCase();
-    if (extension.equals("csv")) {
-      return readCSV(new FileReader(path));
-    } else if (extension.equals("tsv") || extension.equals("tab")) {
-      return readTSV(new FileReader(path));
-    } else {
-      throw new IOException(String.format(fileTypeError, path));
+    switch (extension) {
+      case "csv":
+        return readCSV(new FileReader(path));
+      case "tsv":
+      case "tab":
+        return readTSV(new FileReader(path));
+      default:
+        throw new IOException(String.format(fileTypeError, path));
     }
   }
 
@@ -546,7 +597,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(String path) throws IOException {
-    return readTSV(new FileReader(path));
+    return readXSV(new FileReader(path), '\t');
   }
 
   /**
@@ -557,7 +608,7 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(InputStream stream) throws IOException {
-    return readTSV(new InputStreamReader(stream));
+    return readXSV(new InputStreamReader(stream), '\t');
   }
 
   /**
@@ -568,10 +619,16 @@ public class TemplateHelper {
    * @throws IOException on file or reading problems
    */
   public static List<List<String>> readTSV(Reader reader) throws IOException {
-    CSVReader csv = new CSVReader(reader, '\t');
+    return readXSV(reader, '\t');
+  }
+
+  private static List<List<String>> readXSV(Reader reader, char separator) throws IOException {
+    CSVReader csv =
+        new CSVReaderBuilder(reader)
+            .withCSVParser(new CSVParserBuilder().withSeparator(separator).build())
+            .build();
     List<List<String>> rows = new ArrayList<>();
-    String[] nextLine;
-    while ((nextLine = csv.readNext()) != null) {
+    for (String[] nextLine : csv) {
       rows.add(new ArrayList<>(Arrays.asList(nextLine)));
     }
     csv.close();

@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.slf4j.Logger;
@@ -222,6 +223,21 @@ public class OntologyHelper {
   }
 
   /**
+   * Get all OWLObjects from an input ontology.
+   *
+   * @param ontology OWLOntology to retrieve objects from
+   * @return set of objects
+   */
+  public static Set<OWLObject> getObjects(OWLOntology ontology) {
+    Set<OWLObject> objects = new HashSet<>();
+    // TODO - include or exclude imports?
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      objects.addAll(getObjects(axiom));
+    }
+    return objects;
+  }
+
+  /**
    * Get all OWLObjects associated with an axiom. This is builds on getSignature() by including
    * anonymous objects.
    *
@@ -230,6 +246,14 @@ public class OntologyHelper {
    */
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
     Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
+
+    // Add annotations if the axiom is annotated
+    if (axiom.isAnnotated()) {
+      for (OWLAnnotation annotation : axiom.getAnnotations()) {
+        objects.add(annotation.getProperty());
+        objects.add(annotation.getValue());
+      }
+    }
 
     // The following are special cases
     // where there might be something anonymous that we want to include
@@ -421,7 +445,7 @@ public class OntologyHelper {
 
   /**
    * Given an ontology and an entity, return a set of axioms containing any anonymous entities
-   * referenced in the descendants of the entity. Includes supers & equivalents.
+   * referenced in the descendants of the entity. Includes supers and equivalents.
    *
    * @param ontology the ontology to search
    * @param entity the entity to search descendants of

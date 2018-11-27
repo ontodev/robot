@@ -150,12 +150,16 @@ public class ExtractCommand implements Command {
             .toLowerCase();
 
     ModuleType moduleType = null;
-    if (method.equals("star")) {
-      moduleType = ModuleType.STAR;
-    } else if (method.equals("top")) {
-      moduleType = ModuleType.TOP;
-    } else if (method.equals("bot")) {
-      moduleType = ModuleType.BOT;
+    switch (method) {
+      case "star":
+        moduleType = ModuleType.STAR;
+        break;
+      case "top":
+        moduleType = ModuleType.TOP;
+        break;
+      case "bot":
+        moduleType = ModuleType.BOT;
+        break;
     }
 
     if (method.equals("mireot")) {

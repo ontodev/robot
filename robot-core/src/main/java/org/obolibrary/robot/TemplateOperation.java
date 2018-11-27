@@ -528,7 +528,7 @@ public class TemplateOperation {
           annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
         } else if (template.startsWith("A")) {
           lastAxiomAnnotation = null;
-          lastAnnotation = TemplateHelper.getAnnotation(checker, ioHelper, template, value);
+          lastAnnotation = TemplateHelper.getAnnotation(checker, template, value);
           annotations.add(lastAnnotation);
         } else if (template.startsWith(">A")) {
           if (lastAnnotation == null) {
@@ -545,8 +545,7 @@ public class TemplateOperation {
                     "an annotation"));
           }
           // Get annotation based on annotation type
-          lastAxiomAnnotation =
-              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(1), value);
+          lastAxiomAnnotation = TemplateHelper.getAnnotation(checker, template.substring(1), value);
           // If the last annotation is already in the map, get it's existing annotations
           if (nested.containsKey(lastAnnotation)) {
             axiomAnnotations = nested.get(lastAnnotation);
@@ -580,7 +579,7 @@ public class TemplateOperation {
           axiomAnnotationAnnotations = axiomAnnotations.get(lastAxiomAnnotation);
           // Add this iteration of annotation and put into the nested map
           axiomAnnotationAnnotations.add(
-              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(2), value));
+              TemplateHelper.getAnnotation(checker, template.substring(2), value));
           axiomAnnotations.put(lastAxiomAnnotation, axiomAnnotationAnnotations);
           nested.put(lastAnnotation, axiomAnnotations);
         }

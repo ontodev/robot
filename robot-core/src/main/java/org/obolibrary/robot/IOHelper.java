@@ -7,21 +7,14 @@ import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.google.common.collect.Sets;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
+import java.io.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -197,6 +190,10 @@ public class IOHelper {
   public OWLOntology loadOntology(String ontologyPath) throws IOException {
     File ontologyFile = new File(ontologyPath);
     File catalogFile = guessCatalogFile(ontologyFile);
+    if (!catalogFile.isFile()) {
+      // If the catalog file does not exist, do not use catalog
+      catalogFile = null;
+    }
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -240,6 +237,10 @@ public class IOHelper {
    */
   public OWLOntology loadOntology(File ontologyFile) throws IOException {
     File catalogFile = guessCatalogFile(ontologyFile);
+    if (!catalogFile.isFile()) {
+      // If the catalog file does not exist, do not use catalog
+      catalogFile = null;
+    }
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -269,8 +270,8 @@ public class IOHelper {
    */
   public OWLOntology loadOntology(File ontologyFile, File catalogFile) throws IOException {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
-
     Object jsonObject = null;
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
     try {
       String extension = FilenameUtils.getExtension(ontologyFile.getName());
@@ -298,11 +299,19 @@ public class IOHelper {
         ByteArrayInputStream input = new ByteArrayInputStream(data);
         return loadOntology(input);
       }
-
-      OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+      // Handle catalog file
       if (catalogFile != null && catalogFile.isFile()) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       }
+      // Maybe unzip
+      if (ontologyFile.getPath().endsWith(".gz")) {
+        if (catalogFile == null) {
+          return loadCompressedOntology(ontologyFile, null);
+        } else {
+          return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath());
+        }
+      }
+      // Otherwise load from file using default method
       return manager.loadOntologyFromOntologyDocument(ontologyFile);
     } catch (JsonLdError | OWLOntologyCreationException e) {
       throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
@@ -317,9 +326,33 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(InputStream ontologyStream) throws IOException {
+    return loadOntology(ontologyStream, null);
+  }
+
+  /**
+   * Load an ontology from an InputStream with a catalog file.
+   *
+   * @param ontologyStream the ontology stream to load
+   * @param catalogPath the catalog file to use or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(InputStream ontologyStream, String catalogPath)
+      throws IOException {
     OWLOntology ontology;
+    // Maybe load a catalog file
+    File catalogFile = null;
+    if (catalogPath != null) {
+      catalogFile = new File(catalogPath);
+      if (!catalogFile.isFile()) {
+        throw new IOException(String.format(fileDoesNotExistError, catalogPath));
+      }
+    }
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+      if (catalogFile != null) {
+        manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
+      }
       ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
     } catch (OWLOntologyCreationException e) {
       throw new IOException(invalidOntologyStreamError, e);
@@ -335,34 +368,40 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI) throws IOException {
-    OWLOntology ontology;
-    try {
-      OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-      ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
-    } catch (OWLOntologyCreationException e) {
-      throw new IOException(String.format(invalidOntologyIRIError, ontologyIRI.toString()), e);
-    }
-    return ontology;
+    return loadOntology(ontologyIRI, null);
   }
 
   /**
    * Given an IRI and a path to a catalog file, load the ontology from the IRI with the catalog.
    *
    * @param ontologyIRI the ontology IRI to load
-   * @param catalogPath the catalog file to use
+   * @param catalogPath the catalog file to use or null
    * @return a new ontology object, with a new OWLManager
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI, String catalogPath) throws IOException {
     OWLOntology ontology;
-    File catalogFile = new File(catalogPath);
-    if (!catalogFile.isFile()) {
-      throw new IOException(String.format(fileDoesNotExistError, catalogPath));
+    // Maybe load a catalog file
+    File catalogFile = null;
+    if (catalogPath != null) {
+      catalogFile = new File(catalogPath);
+      if (!catalogFile.isFile()) {
+        throw new IOException(String.format(fileDoesNotExistError, catalogPath));
+      }
     }
     try {
       OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-      manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
-      ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
+      // If a catalog file was loaded, set IRI mappers
+      if (catalogFile != null) {
+        manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
+      }
+      // Maybe load a zipped ontology
+      if (ontologyIRI.toString().endsWith(".gz")) {
+        ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
+      } else {
+        // Otherwise load ontology as normal
+        ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
+      }
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
     }
@@ -389,22 +428,23 @@ public class IOHelper {
    */
   public static OWLDocumentFormat getFormat(String formatName) throws IllegalArgumentException {
     formatName = formatName.trim().toLowerCase();
-    if (formatName.equals("obo")) {
-      return new OBODocumentFormat();
-    } else if (formatName.equals("owl")) {
-      return new RDFXMLDocumentFormat();
-    } else if (formatName.equals("ttl")) {
-      return new TurtleDocumentFormat();
-    } else if (formatName.equals("owx")) {
-      return new OWLXMLDocumentFormat();
-    } else if (formatName.equals("omn")) {
-      return new ManchesterSyntaxDocumentFormat();
-    } else if (formatName.equals("ofn")) {
-      return new FunctionalSyntaxDocumentFormat();
-    } else if (formatName.equals("json")) {
-      return new OboGraphJsonDocumentFormat();
-    } else {
-      throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
+    switch (formatName) {
+      case "obo":
+        return new OBODocumentFormat();
+      case "owl":
+        return new RDFXMLDocumentFormat();
+      case "ttl":
+        return new TurtleDocumentFormat();
+      case "owx":
+        return new OWLXMLDocumentFormat();
+      case "omn":
+        return new ManchesterSyntaxDocumentFormat();
+      case "ofn":
+        return new FunctionalSyntaxDocumentFormat();
+      case "json":
+        return new OboGraphJsonDocumentFormat();
+      default:
+        throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
     }
   }
 
@@ -442,7 +482,11 @@ public class IOHelper {
    */
   public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI) throws IOException {
     try {
-      String formatName = FilenameUtils.getExtension(ontologyIRI.toString());
+      String path = ontologyIRI.toString();
+      if (path.endsWith(".gz")) {
+        path = path.substring(0, path.lastIndexOf("."));
+      }
+      String formatName = FilenameUtils.getExtension(path);
       OWLDocumentFormat format = getFormat(formatName);
       return saveOntology(ontology, format, ontologyIRI, true);
     } catch (Exception e) {
@@ -524,39 +568,19 @@ public class IOHelper {
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI, boolean checkOBO)
       throws IOException {
     logger.debug("Saving ontology {} as {} with to IRI {}", ontology, format, ontologyIRI);
-
     // if (format instanceof PrefixOWLDocumentFormat) {
     //    ((PrefixOWLDocumentFormat) format)
     //        .copyPrefixesFrom(getPrefixManager());
     // }
     XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
-
-    // first handle any non-official output formats.
-    // currently this is just OboGraphs JSON format
-    if (format instanceof OboGraphJsonDocumentFormat) {
-      FromOwl fromOwl = new FromOwl();
-      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
-      String doc = OgJsonGenerator.render(gd);
-      File outfile = new File(ontologyIRI.toURI());
-      FileUtils.writeStringToFile(outfile, doc);
-    } else if (format instanceof OBODocumentFormat && !checkOBO) {
-      // only use this method when ignoring OBO checking, otherwise use native save
-      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
-      OBODoc oboOntology = bridge.convert(ontology);
-      File f = new File(ontologyIRI.toURI());
-      f.createNewFile();
-      BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
-      OBOFormatWriter oboWriter = new OBOFormatWriter();
-      oboWriter.setCheckStructure(checkOBO);
-      oboWriter.write(oboOntology, bw);
-    } else {
-      // use native save functionality
-      try {
-        ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
-      } catch (OWLOntologyStorageException e) {
-        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
-      }
+    // If saving in compressed format, get byte data then save to gzip
+    if (ontologyIRI.toString().endsWith(".gz")) {
+      byte[] data = getOntologyFileData(ontology, format, checkOBO);
+      saveCompressedOntology(data, ontologyIRI);
+      return ontology;
     }
+    // If not compressed, just save the file as-is
+    saveOntologyFile(ontology, format, ontologyIRI, checkOBO);
     return ontology;
   }
 
@@ -765,6 +789,7 @@ public class IOHelper {
    * Set the current JSON-LD context to the given context.
    *
    * @param jsonString the new JSON-LD context as a JSON string
+   * @throws IOException on issue parsing JSON
    */
   public void setContext(String jsonString) throws IOException {
     this.context = parseContext(jsonString);
@@ -774,6 +799,7 @@ public class IOHelper {
    * Set the current JSON-LD context to the given map.
    *
    * @param map a map of strings for the new JSON-LD context
+   * @throws IOException on issue parsing JSON
    */
   public void setContext(Map<String, Object> map) throws IOException {
     try {
@@ -875,6 +901,7 @@ public class IOHelper {
    * Set the current prefix map.
    *
    * @param map the new map of prefixes to use
+   * @throws IOException on issue parsing map to context
    */
   public void setPrefixes(Map<String, Object> map) throws IOException {
     setContext(map);
@@ -994,5 +1021,150 @@ public class IOHelper {
    */
   public static List<List<String>> readTable(String path) throws IOException {
     return TemplateHelper.readTable(path);
+  }
+
+  /**
+   * Given an ontology, a document format, and a boolean indicating to check OBO formatting, return
+   * the ontology file in the OWLDocumentFormat as a byte array.
+   *
+   * @param ontology OWLOntology to save
+   * @param format OWLDocumentFormat to save in
+   * @param checkOBO boolean indiciating to check OBO formatting
+   * @return byte array of formatted ontology data
+   * @throws IOException on any problem
+   */
+  private byte[] getOntologyFileData(
+      final OWLOntology ontology, OWLDocumentFormat format, boolean checkOBO) throws IOException {
+    byte[] data;
+    // first handle any non-official output formats.
+    // currently this is just OboGraphs JSON format
+    if (format instanceof OboGraphJsonDocumentFormat) {
+      FromOwl fromOwl = new FromOwl();
+      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      String doc = OgJsonGenerator.render(gd);
+      data = doc.getBytes();
+    } else if (format instanceof OBODocumentFormat && !checkOBO) {
+      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
+      OBODoc oboOntology = bridge.convert(ontology);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos))) {
+        OBOFormatWriter oboWriter = new OBOFormatWriter();
+        oboWriter.setCheckStructure(checkOBO);
+        oboWriter.write(oboOntology, bw);
+      }
+      data = baos.toByteArray();
+    } else {
+      try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        ontology.getOWLOntologyManager().saveOntology(ontology, format, baos);
+        data = baos.toByteArray();
+      } catch (IOException | OWLOntologyStorageException e) {
+        // TODO
+        throw new IOException(e);
+      }
+    }
+    return data;
+  }
+
+  /**
+   * Given a gzipped ontology file and a catalog path, load the ontology from a zip input stream.
+   *
+   * @param gzipFile compressed File to load ontology from
+   * @param catalogPath the path to the catalog file or null
+   * @return a new ontology object with a new OWLManager
+   * @throws IOException on any problem
+   */
+  private OWLOntology loadCompressedOntology(File gzipFile, String catalogPath) throws IOException {
+    FileInputStream fis = new FileInputStream(gzipFile);
+    GZIPInputStream gis = new GZIPInputStream(fis);
+    return loadOntology(gis, catalogPath);
+  }
+
+  /**
+   * Given the URL to a gzipped ontology and a catalog path, load the ontology from a zip input
+   * stream.
+   *
+   * @param url URL to load from
+   * @param catalogPath the path to the catalog file or null
+   * @return a new ontology object with a new OWLManager
+   * @throws IOException on any problem
+   */
+  private OWLOntology loadCompressedOntology(URL url, String catalogPath) throws IOException {
+    InputStream is;
+    try {
+      is = new BufferedInputStream(url.openStream(), 1024);
+    } catch (FileNotFoundException e) {
+      throw new IOException(String.format(invalidOntologyIRIError, url));
+    }
+    GZIPInputStream gis = new GZIPInputStream(is);
+    return loadOntology(gis, catalogPath);
+  }
+
+  /**
+   * Given an ontology, a format, an IRI to save to, and a boolean indiciating to check OBO
+   * formatting, save the ontology in the given format to a file at the IRI.
+   *
+   * @param ontology OWLOntology to save
+   * @param format OWLDocumentFormat to save in
+   * @param ontologyIRI IRI to save to
+   * @param checkOBO boolean indicating to check OBO formatting
+   * @throws IOException on any problem
+   */
+  private void saveOntologyFile(
+      final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI, boolean checkOBO)
+      throws IOException {
+    // first handle any non-official output formats.
+    // currently this is just OboGraphs JSON format
+    if (format instanceof OboGraphJsonDocumentFormat) {
+      FromOwl fromOwl = new FromOwl();
+      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      String doc = OgJsonGenerator.render(gd);
+      File outfile = new File(ontologyIRI.toURI());
+      FileUtils.writeStringToFile(outfile, doc);
+    } else if (format instanceof OBODocumentFormat && !checkOBO) {
+      // only use this method when ignoring OBO checking, otherwise use native save
+      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
+      OBODoc oboOntology = bridge.convert(ontology);
+      File f = new File(ontologyIRI.toURI());
+      boolean newFile = f.createNewFile();
+      try (BufferedWriter bw =
+          new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
+        OBOFormatWriter oboWriter = new OBOFormatWriter();
+        oboWriter.setCheckStructure(checkOBO);
+        oboWriter.write(oboOntology, bw);
+      } catch (IOException e) {
+        if (!newFile) {
+          f.delete();
+        }
+      }
+    } else {
+      // use native save functionality
+      try {
+        ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
+      } catch (OWLOntologyStorageException e) {
+        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+      }
+    }
+  }
+
+  /**
+   * Given a formatted ontology as a byte array and an IRI, save the data to the IRI as a gzipped
+   * file.
+   *
+   * @param data byte array of ontology
+   * @param ontologyIRI IRI to save to
+   * @throws IOException on any problem
+   */
+  private void saveCompressedOntology(byte[] data, IRI ontologyIRI) throws IOException {
+    File f = new File(ontologyIRI.toURI());
+    boolean newFile = f.createNewFile();
+    FileOutputStream fos = new FileOutputStream(f);
+    BufferedOutputStream bos = new BufferedOutputStream(fos);
+    try (GZIPOutputStream gos = new GZIPOutputStream(bos)) {
+      gos.write(data, 0, data.length);
+    } catch (IOException e) {
+      if (!newFile) {
+        f.delete();
+      }
+    }
   }
 }

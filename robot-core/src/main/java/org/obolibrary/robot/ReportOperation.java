@@ -56,6 +56,10 @@ public class ReportOperation {
   private static final String missingEntityBinding =
       NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
 
+  /** Error message when a user-provided report query does not exist. */
+  private static final String missingQueryError =
+      NS + "MISSING QUERY ERROR query at '%s' does not exist.";
+
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
@@ -184,12 +188,15 @@ public class ReportOperation {
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
       String queryString;
-      // Remove the headers
-      if (fullQueryString.startsWith("#")) {
-        queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
-      } else {
-        queryString = fullQueryString;
+      // Remove any comments
+      List<String> lines = new ArrayList<>();
+      for (String line : fullQueryString.split("\n")) {
+        if (!line.startsWith("#")) {
+          lines.add(line);
+        }
       }
+      queryString = String.join("\n", lines);
+      // Use the query to get violations
       List<Violation> violations = getViolations(dataset, queryString);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
@@ -259,7 +266,7 @@ public class ReportOperation {
     Set<String> userRules = new HashSet<>();
     Map<String, String> queries = new HashMap<>();
     for (String rule : rules) {
-      if (rule.startsWith("file://")) {
+      if (rule.startsWith("file:")) {
         userRules.add(rule);
       } else {
         defaultRules.add(rule);
@@ -283,8 +290,22 @@ public class ReportOperation {
       throws URISyntaxException, IOException {
     Map<String, String> queries = new HashMap<>();
     for (String rule : rules) {
-      File file = new File(new URL(rule).toURI());
-      queries.put(rule, FileUtils.readFileToString(file));
+      if (rule.startsWith("file:///")) {
+        // Process an absolute path
+        File file = new File(new URL(rule).toURI());
+        if (!file.exists()) {
+          throw new IOException(String.format(missingQueryError, file.getPath()));
+        }
+        queries.put(rule, FileUtils.readFileToString(file));
+      } else {
+        // Process a relative path
+        String path = rule.substring(5);
+        File file = new File(path);
+        if (!file.exists()) {
+          throw new IOException(String.format(missingQueryError, file.getPath()));
+        }
+        queries.put(rule, FileUtils.readFileToString(file));
+      }
     }
     return queries;
   }
@@ -360,7 +381,10 @@ public class ReportOperation {
                   sb.append(chr);
                 }
               }
-              queries.put(ruleName, sb.toString());
+              // Remove the headers
+              String fullQueryString = sb.toString();
+              String queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
+              queries.put(ruleName, queryString);
             }
           }
         }
