@@ -108,6 +108,7 @@ public class ExplainCommand implements Command {
 
     Set<Explanation<OWLAxiom>> explanations =
         ExplainOperation.explain(axiom, ontology, reasonerFactory, max);
+
     String result =
         explanations
             .stream()
@@ -120,6 +121,10 @@ public class ExplainCommand implements Command {
     writer.write(result);
     writer.close();
 
+    Set<OWLAxiom> explanationsAxioms = explanations.stream().flatMap(e -> e.getAxioms().stream()).collect(Collectors.toSet());
+    state.setOntology(ontology.getOWLOntologyManager().createOntology(explanationsAxioms));
+
     return state;
   }
+  
 }
