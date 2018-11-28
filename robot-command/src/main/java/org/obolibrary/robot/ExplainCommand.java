@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
@@ -11,6 +12,8 @@ import org.apache.commons.cli.Options;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxInlineAxiomParser;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -123,6 +126,17 @@ public class ExplainCommand implements Command {
 
     Set<OWLAxiom> explanationsAxioms =
         explanations.stream().flatMap(e -> e.getAxioms().stream()).collect(Collectors.toSet());
+    Set<IRI> explanationTerms =
+        explanationsAxioms
+            .stream()
+            .flatMap(ax -> ax.getSignature().stream().map(e -> e.getIRI()))
+            .collect(Collectors.toSet());
+    Set<OWLAnnotationAssertionAxiom> annotations =
+        OntologyHelper.getAnnotationAxioms(
+            ontology,
+            Collections.singleton(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            explanationTerms);
+    explanationsAxioms.addAll(annotations);
     state.setOntology(ontology.getOWLOntologyManager().createOntology(explanationsAxioms));
 
     return state;
