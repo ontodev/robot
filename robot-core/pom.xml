@@ -133,6 +133,29 @@
           <artifactId>owlapi-osgidistribution</artifactId>
         </exclusion>
       </exclusions>
-	</dependency>
+	  </dependency>
+    <dependency>
+      <groupId>edu.stanford.protege</groupId>
+      <artifactId>explanation-workbench</artifactId>
+      <version>3.0.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>net.sourceforge.owlapi</groupId>
+          <artifactId>owlapi-osgidistribution</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>edu.stanford.protege</groupId>
+          <artifactId>protege-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>edu.stanford.protege</groupId>
+          <artifactId>protege-editor-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>edu.stanford.protege</groupId>
+          <artifactId>protege-editor-owl</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 </project>
