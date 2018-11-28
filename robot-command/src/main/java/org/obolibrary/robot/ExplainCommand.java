@@ -102,7 +102,6 @@ public class ExplainCommand implements Command {
     if (line.hasOption("max")) {
       max = Integer.parseInt(line.getOptionValue("max"));
     }
-    File output = CommandLineHelper.getOutputFile(line);
     OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line, true);
     ManchesterOWLSyntaxInlineAxiomParser parser =
         new ManchesterOWLSyntaxInlineAxiomParser(OWLManager.getOWLDataFactory(), checker);
@@ -112,17 +111,20 @@ public class ExplainCommand implements Command {
     Set<Explanation<OWLAxiom>> explanations =
         ExplainOperation.explain(axiom, ontology, reasonerFactory, max);
 
-    String result =
-        explanations
-            .stream()
-            .map(
-                e ->
-                    ExplainOperation.renderExplanationAsMarkdown(
-                        e, ontology.getOWLOntologyManager()))
-            .collect(Collectors.joining("\n\n\n"));
-    Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8);
-    writer.write(result);
-    writer.close();
+    if (line.hasOption("output")) {
+      File output = CommandLineHelper.getOutputFile(line);
+      String result =
+          explanations
+              .stream()
+              .map(
+                  e ->
+                      ExplainOperation.renderExplanationAsMarkdown(
+                          e, ontology.getOWLOntologyManager()))
+              .collect(Collectors.joining("\n\n\n"));
+      Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8);
+      writer.write(result);
+      writer.close();
+    }
 
     Set<OWLAxiom> explanationsAxioms =
         explanations.stream().flatMap(e -> e.getAxioms().stream()).collect(Collectors.toSet());
