@@ -118,7 +118,7 @@ public class ExplainCommand implements Command {
         ExplainOperation.explain(axiom, ontology, reasonerFactory, max);
 
     if (line.hasOption("explanation")) {
-      File output = CommandLineHelper.getOutputFile(line);
+      File output = new File(line.getOptionValue("explanation"));
       String result =
           explanations
               .stream()
