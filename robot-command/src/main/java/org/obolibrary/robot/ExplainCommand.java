@@ -30,6 +30,9 @@ public class ExplainCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ExplainCommand.class);
 
+  private static final String NS = "explain#";
+  private static final String maxTypeError = NS + "MAX TYPE ERROR --max ('%s') must be an integer";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -40,8 +43,9 @@ public class ExplainCommand implements Command {
     o.addOption("r", "reasoner", true, "reasoner to use: ELK, HermiT, JFact");
     o.addOption("a", "axiom", true, "the axiom to explain");
     o.addOption("m", "max", true, "the maximum number of explanations to retrieve");
-    o.addOption("f", "format", true, "the explanation result format: MD, OFN, etc.");
-    o.addOption("o", "output", true, "save explanation to a file");
+    o.addOption("e", "explanation", true, "save explanation to a Markdown file");
+    o.addOption("f", "format", true, "the format: obo, owl, ttl, owx, omn, ofn, json");
+    o.addOption("o", "output", true, "save ontology containing only explanation axioms to a file");
     options = o;
   }
 
@@ -57,7 +61,7 @@ public class ExplainCommand implements Command {
 
   @Override
   public String getUsage() {
-    return "robot explain --input <file> --reasoner <reasoner> --axiom <axiom> <output>";
+    return "robot explain --input <file> --axiom <axiom> --explanation <output>";
   }
 
   @Override
@@ -95,23 +99,25 @@ public class ExplainCommand implements Command {
     checker.setIOHelper(ioHelper);
     checker.addProvider(new SimpleShortFormProvider());
     checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
-    if (ontology != null) {
-      checker.addAll(ontology);
-    }
-    int max = 1;
-    if (line.hasOption("max")) {
-      max = Integer.parseInt(line.getOptionValue("max"));
+    checker.addAll(ontology);
+
+    String maxString = CommandLineHelper.getDefaultValue(line, "max", "1");
+    final int max;
+    try {
+      max = Integer.parseInt(maxString);
+    } catch (NumberFormatException e) {
+      throw new Exception(String.format(maxTypeError, maxString));
     }
     OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line, true);
     ManchesterOWLSyntaxInlineAxiomParser parser =
         new ManchesterOWLSyntaxInlineAxiomParser(OWLManager.getOWLDataFactory(), checker);
-    String expression = line.getOptionValue("axiom");
+    String expression = CommandLineHelper.getRequiredValue(line, "axiom", "an --axiom is required");
     OWLAxiom axiom = parser.parse(expression);
 
     Set<Explanation<OWLAxiom>> explanations =
         ExplainOperation.explain(axiom, ontology, reasonerFactory, max);
 
-    if (line.hasOption("output")) {
+    if (line.hasOption("explanation")) {
       File output = CommandLineHelper.getOutputFile(line);
       String result =
           explanations
@@ -140,7 +146,7 @@ public class ExplainCommand implements Command {
             explanationTerms);
     explanationsAxioms.addAll(annotations);
     state.setOntology(ontology.getOWLOntologyManager().createOntology(explanationsAxioms));
-
+    CommandLineHelper.maybeSaveOutput(line, ontology);
     return state;
   }
 }

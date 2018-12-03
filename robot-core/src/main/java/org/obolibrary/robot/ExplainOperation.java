@@ -24,11 +24,25 @@ import uk.ac.manchester.cs.owl.explanation.ordering.ExplanationOrderer;
 import uk.ac.manchester.cs.owl.explanation.ordering.ExplanationTree;
 import uk.ac.manchester.cs.owl.explanation.ordering.Tree;
 
+/**
+ * Compute an explanation for an entailed axiom.
+ *
+ * @author <a href="mailto:balhoff@renci.org">Jim Balhoff</a>
+ */
 public class ExplainOperation {
 
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ExplainOperation.class);
 
+  /**
+   * Compute explanations for an entailed axiom.
+   *
+   * @param axiom entailed axiom to explain
+   * @param ontology ontology to search for explanation
+   * @param reasonerFactory reasoner factory used to create reasoners to test entailments
+   * @param maxExplanations maximum number of explanations to compute
+   * @return explanations
+   */
   public static Set<Explanation<OWLAxiom>> explain(
       OWLAxiom axiom,
       OWLOntology ontology,
@@ -42,6 +56,14 @@ public class ExplainOperation {
     return gen.getExplanations(axiom, maxExplanations);
   }
 
+  /**
+   * Render an Explanation object as Markdown text, linking text labels to term IRIs and indenting
+   * axioms.
+   *
+   * @param explanation explanation to render
+   * @param manager OWLOntologyManager containing source ontologies for explanation axioms
+   * @return Markdown-formatted explanation text
+   */
   public static String renderExplanationAsMarkdown(
       Explanation<OWLAxiom> explanation, OWLOntologyManager manager) {
     ExplanationOrderer orderer = new ProtegeExplanationOrderer(manager);
@@ -59,6 +81,13 @@ public class ExplainOperation {
     return renderTree(tree, axiomRenderer);
   }
 
+  /**
+   * Render axiom tree in indented Markdown using the provided renderer.
+   *
+   * @param tree indented collection of axioms
+   * @param renderer renderer for displaying axioms and entities
+   * @return
+   */
   private static String renderTree(Tree<OWLAxiom> tree, OWLObjectRenderer renderer) {
     StringBuilder builder = new StringBuilder();
     if (tree.isRoot()) {
@@ -83,6 +112,10 @@ public class ExplainOperation {
     return builder.toString();
   }
 
+  /**
+   * A ShortFormProvider which renders entities as Markdown links, using another provided
+   * ShortFormProvider to render entity labels.
+   */
   private static class MarkdownLinkShortFormProvider implements ShortFormProvider {
 
     final ShortFormProvider labelProvider;
