@@ -3,7 +3,7 @@
 When reviewing inferred axioms, such as after applying the [`reason`](/reason) command,
 you may like more information about why a particular axiom was inferred:
 
-    robot explain -i uvula.ofn -r ELK --axiom "'uvular muscle' SubClassOf 'muscle organ' and 'part of' some 'jaw region'" -o uvular_muscle.md
+    robot explain -i uvula.ofn -r ELK --axiom "'uvular muscle' SubClassOf 'muscle organ' and 'part of' some 'jaw region'" -e uvular_muscle.md
 
 Here we provide an axiom in Manchester syntax. If that relationship is entailed by the 
 axioms asserted in [uvula.ofn](/examples/uvula.ofn), we can use the selected reasoner (here, ELK)
