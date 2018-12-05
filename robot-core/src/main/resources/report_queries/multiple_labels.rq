@@ -1,6 +1,6 @@
 # # Multiple Labels
 #
-# Problem: An entity has more than one label. This may cause confusion or misuse, and will prevent translation to OBO format. Excludes deprecated entities.
+# Problem: An entity has more than one label. This may cause confusion or misuse, and will prevent translation to OBO format. Excludes deprecated entities. Allows for multiple labels with different language tags, assuming that if there is no language tag, it is an English label.
 #
 # Solution: Remove extra labels.
 
@@ -12,6 +12,9 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   ?entity ?property ?value .
   ?entity ?property ?value2 .
   FILTER (?value != ?value2) .
+  FILTER (lang(?value) = lang(?value2) ||
+  	((lang(?value) = "") && (lang(?value2) = "en")) ||
+  	((lang(?value) = "en") && (lang(?value2) = "")))
   FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER (!isBlank(?entity))
 }
