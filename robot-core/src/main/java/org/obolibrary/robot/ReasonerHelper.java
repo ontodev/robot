@@ -244,4 +244,29 @@ public class ReasonerHelper {
     OWLOntology module = createIncoherentModule(ontology, unsatisfiableClasses, null);
     ioHelper.saveOntology(module, path);
   }
+
+  /**
+   * Injects sibling classes and adds disjointness axioms
+   *
+   * <p>see
+   * https://douroucouli.wordpress.com/2018/09/04/debugging-ontologies-using-owl-reasoning-part-2-unintentional-entailed-equivalence/
+   *
+   * @param ontology
+   */
+  private static void makeSubClassesDistinctFromParents(OWLOntology ontology) {
+    OWLDataFactory df = ontology.getOWLOntologyManager().getOWLDataFactory();
+    for (OWLSubClassOfAxiom a : ontology.getAxioms(AxiomType.SUBCLASS_OF)) {
+      if (a.getSubClass().isAnonymous()) continue;
+      if (a.getSuperClass().isAnonymous()) continue;
+      IRI sibIRI = IRI.create(UUID.fromString(a.toString()).toString());
+      OWLClass sibCls = df.getOWLClass(sibIRI);
+      OWLDisjointClassesAxiom dca = df.getOWLDisjointClassesAxiom(a.getSubClass(), sibCls);
+      OWLSubClassOfAxiom sca = df.getOWLSubClassOfAxiom(sibCls, a.getSuperClass());
+      OWLAnnotationAssertionAxiom aaa =
+          df.getOWLAnnotationAssertionAxiom(
+              df.getRDFSLabel(),
+              sibIRI,
+              df.getOWLLiteral("DISJOINT-SIB-OF " + a.getSubClass().toString()));
+    }
+  }
 }
