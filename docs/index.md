@@ -44,10 +44,10 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
 ## 2. Using the Library
 
-ROBOT is written in Java, and can be used from any language that runs on the Java Virtual Machine. It's available on Maven Central. The code is divided into two parts:
+ROBOT is written in Java, and can be used from any language that runs on the Java Virtual Machine. It's available on [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot%22) and [javadoc.io](http://www.javadoc.io/doc/org.obolibrary.robot/robot/). The code is divided into two parts:
 
-1. [`robot-core`](https://github.com/ontodev/robot/tree/master/robot-core/src/main/java/org/obolibrary/robot) is a library of operations for working with ontologies ([Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-core%22), [JavaDocs](http://www.javadoc.io/doc/org.obolibrary.robot/robot-core/))
-2. [`robot-command`](https://github.com/ontodev/robot/tree/master/robot-command/src/main/java/org/obolibrary/robot) is a command-line interface for using those operations ([Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-command%22), [JavaDocs](http://www.javadoc.io/doc/org.obolibrary.robot/robot-command/))
+1. [`robot-core`](https://github.com/ontodev/robot/tree/master/robot-core/src/main/java/org/obolibrary/robot) is a library of operations for working with ontologies ([Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-core%22), [javadoc.io](http://www.javadoc.io/doc/org.obolibrary.robot/robot-core/))
+2. [`robot-command`](https://github.com/ontodev/robot/tree/master/robot-command/src/main/java/org/obolibrary/robot) is a command-line interface for using those operations ([Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot-command%22), [javadoc.io](http://www.javadoc.io/doc/org.obolibrary.robot/robot-command/))
 
 You can also download the standalone `robot.jar` file from the [latest release](https://github.com/ontodev/robot/releases/latest) to include in your projects.
 
