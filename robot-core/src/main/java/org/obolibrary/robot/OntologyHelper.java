@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.base.Optional;
 import java.util.*;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
@@ -1231,22 +1232,25 @@ public class OntologyHelper {
   public static void setOntologyIRI(OWLOntology ontology, IRI ontologyIRI, IRI versionIRI) {
     OWLOntologyID currentID = ontology.getOntologyID();
 
+    // Get rid of optionals when changing to OWLAPI 5
+    Optional<IRI> ont;
+    Optional<IRI> version;
+
     if (ontologyIRI == null && versionIRI == null) {
       // don't change anything
       return;
     } else if (ontologyIRI == null) {
-      ontologyIRI = currentID.getOntologyIRI().orNull();
+      ont = currentID.getOntologyIRI();
+      version = Optional.of(versionIRI);
     } else if (versionIRI == null) {
-      versionIRI = currentID.getVersionIRI().orNull();
-    }
-
-    OWLOntologyID newID;
-    if (versionIRI == null) {
-      newID = new OWLOntologyID(ontologyIRI);
+      version = currentID.getVersionIRI();
+      ont = Optional.of(ontologyIRI);
     } else {
-      newID = new OWLOntologyID(ontologyIRI, versionIRI);
+      ont = Optional.of(ontologyIRI);
+      version = Optional.of(versionIRI);
     }
 
+    OWLOntologyID newID = new OWLOntologyID(ont, version);
     SetOntologyID setID = new SetOntologyID(ontology, newID);
     ontology.getOWLOntologyManager().applyChange(setID);
   }
