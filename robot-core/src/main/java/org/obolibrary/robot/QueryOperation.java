@@ -223,7 +223,6 @@ public class QueryOperation {
    * violations to STDERR.
    *
    * @deprecated use {@link #execVerify(Dataset, String, String)} instead
-   *
    * @param dsg the graph to query over
    * @param ruleName name of rule to verify
    * @param query the SPARQL query string
@@ -246,7 +245,8 @@ public class QueryOperation {
    * @return true if the are results, false otherwise
    * @throws IOException on query parse error
    */
-  public static boolean execVerify(Dataset dataset, String ruleName, String query) throws IOException {
+  public static boolean execVerify(Dataset dataset, String ruleName, String query)
+      throws IOException {
     ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dataset, query));
     System.out.println("Rule " + ruleName + ": " + results.size() + " violation(s)");
     if (results.size() == 0) {
