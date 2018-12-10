@@ -51,6 +51,9 @@
             <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
             <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
             <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+            <!-- include on breaking changes 
+            <excludes></excludes>
+            -->
           </parameter>
         </configuration>
         <executions>
