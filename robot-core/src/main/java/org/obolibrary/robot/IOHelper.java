@@ -428,22 +428,23 @@ public class IOHelper {
    */
   public static OWLDocumentFormat getFormat(String formatName) throws IllegalArgumentException {
     formatName = formatName.trim().toLowerCase();
-    if (formatName.equals("obo")) {
-      return new OBODocumentFormat();
-    } else if (formatName.equals("owl")) {
-      return new RDFXMLDocumentFormat();
-    } else if (formatName.equals("ttl")) {
-      return new TurtleDocumentFormat();
-    } else if (formatName.equals("owx")) {
-      return new OWLXMLDocumentFormat();
-    } else if (formatName.equals("omn")) {
-      return new ManchesterSyntaxDocumentFormat();
-    } else if (formatName.equals("ofn")) {
-      return new FunctionalSyntaxDocumentFormat();
-    } else if (formatName.equals("json")) {
-      return new OboGraphJsonDocumentFormat();
-    } else {
-      throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
+    switch (formatName) {
+      case "obo":
+        return new OBODocumentFormat();
+      case "owl":
+        return new RDFXMLDocumentFormat();
+      case "ttl":
+        return new TurtleDocumentFormat();
+      case "owx":
+        return new OWLXMLDocumentFormat();
+      case "omn":
+        return new ManchesterSyntaxDocumentFormat();
+      case "ofn":
+        return new FunctionalSyntaxDocumentFormat();
+      case "json":
+        return new OboGraphJsonDocumentFormat();
+      default:
+        throw new IllegalArgumentException(String.format(invalidFormatError, formatName));
     }
   }
 
@@ -788,6 +789,7 @@ public class IOHelper {
    * Set the current JSON-LD context to the given context.
    *
    * @param jsonString the new JSON-LD context as a JSON string
+   * @throws IOException on issue parsing JSON
    */
   public void setContext(String jsonString) throws IOException {
     this.context = parseContext(jsonString);
@@ -797,6 +799,7 @@ public class IOHelper {
    * Set the current JSON-LD context to the given map.
    *
    * @param map a map of strings for the new JSON-LD context
+   * @throws IOException on issue parsing JSON
    */
   public void setContext(Map<String, Object> map) throws IOException {
     try {
@@ -898,6 +901,7 @@ public class IOHelper {
    * Set the current prefix map.
    *
    * @param map the new map of prefixes to use
+   * @throws IOException on issue parsing map to context
    */
   public void setPrefixes(Map<String, Object> map) throws IOException {
     setContext(map);
@@ -1047,9 +1051,6 @@ public class IOHelper {
         OBOFormatWriter oboWriter = new OBOFormatWriter();
         oboWriter.setCheckStructure(checkOBO);
         oboWriter.write(oboOntology, bw);
-      } catch (IOException e) {
-        // TODO
-        throw e;
       }
       data = baos.toByteArray();
     } else {

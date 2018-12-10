@@ -92,6 +92,7 @@ public class Tuple<A, B> implements Collection {
     return Lists.newArrayList(left, right).containsAll(c);
   }
 
+  @Nonnull
   @Override
   public Object[] toArray(@Nonnull Object[] a) {
     if (a.length < 2) {

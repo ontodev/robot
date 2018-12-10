@@ -6,13 +6,15 @@ The `remove` command allows you to remove selected axioms from an ontology. The 
 2. `--select`: select a new set of terms using one or more relations (zero or more)
 3. `--axioms`: specify the axiom types to remove from those terms (default: all axioms)
 
+This operation maintains structural integrity; lineage is maintained, and gaps will be filled where classes have been removed. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
+
 For example, to remove all descendants of 'assay' from OBI:
 
 ```
 robot remove --input obi.owl --term OBI:0000070 --select descendants
 ```
 
-`remove` also includes a `--trim` option, set to `false` by default. For an axiom to be removed, *all* entities in the axiom must be in the selected set of terms. If `--trim true` is specified, any axiom containing *one or more* entity in the set will be removed.
+`remove` also includes a `--trim` option, set to `true` by default. For an axiom to be removed, *one or more* of the entities in that axiom must be in the removal set. If `--trim false` is specified, *all* entities in the axiom must be in the selected set of terms.
 
 ## Select
 
@@ -88,31 +90,30 @@ Remove a class ('organ') and and all its descendants:
     robot remove --input uberon_module.owl \
       --term UBERON:0000062 \
       --select "self descendants" \
-      --trim true \
       --output results/remove_class.owl
 
 Remove all individuals from OBI:
 
 ```
-robot remove --input obi.owl --select individuals --trim true
+robot remove --input obi.owl --select individuals 
 ```
 
 Remove all anonymous entities from the UBERON module:
 
     robot remove --input uberon_module.owl \
-      --select anonymous --trim true \
+      --select anonymous \
       --output results/remove_anonymous.owl
 
 Remove all deprecated classes from OBI:
 
 ```
 robot remove --input obi.owl \
-  --select "owl:deprecated='true'^^xsd:boolean" --trim true
+  --select "owl:deprecated='true'^^xsd:boolean" 
 ```
 
 *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
     robot remove --input uberon_module.owl \
-      --term rdfs:label --term oboInOwl:id --trim true \
+      --term rdfs:label --term oboInOwl:id  \
       --select complement --select annotation-properties \
       --output results/filter_annotations.owl

@@ -1,6 +1,6 @@
 # # Duplicate Exact Synonym
 #
-# Problem: Two entities share an exact synonym. This causes ambiguity.
+# Problem: Two entities share an exact synonym. This causes ambiguity. Excludes deprecated entities.
 #
 # Solution: Avoid ambiguity by assigning unique exact synonyms or changing the exact synonym to a different annotation (e.g. broad synonym).
 
@@ -16,10 +16,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   }
   ?entity ?property ?value.
   ?entity2 ?property ?value .
-  FILTER NOT EXISTS {
-      ?entity owl:deprecated ?dep .
-      FILTER regex(str(?dep), "true")
-  }
+  FILTER NOT EXISTS { ?entity owl:deprecated true }
+  FILTER NOT EXISTS { ?entity2 owl:deprecated true }
   FILTER (?entity != ?entity2)
 }
 ORDER BY DESC(UCASE(str(?value)))

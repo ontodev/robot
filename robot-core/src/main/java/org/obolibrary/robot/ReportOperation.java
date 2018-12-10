@@ -188,12 +188,15 @@ public class ReportOperation {
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
       String queryString;
-      // Remove the headers
-      if (fullQueryString.startsWith("#")) {
-        queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
-      } else {
-        queryString = fullQueryString;
+      // Remove any comments
+      List<String> lines = new ArrayList<>();
+      for (String line : fullQueryString.split("\n")) {
+        if (!line.startsWith("#")) {
+          lines.add(line);
+        }
       }
+      queryString = String.join("\n", lines);
+      // Use the query to get violations
       List<Violation> violations = getViolations(dataset, queryString);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
@@ -378,7 +381,10 @@ public class ReportOperation {
                   sb.append(chr);
                 }
               }
-              queries.put(ruleName, sb.toString());
+              // Remove the headers
+              String fullQueryString = sb.toString();
+              String queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
+              queries.put(ruleName, queryString);
             }
           }
         }
