@@ -34,8 +34,8 @@ public class ExtractOperation {
    * @throws OWLOntologyCreationException on any OWLAPI problem
    */
   public static OWLOntology extract(
-      OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI, ModuleType moduleType)
-      throws OWLOntologyCreationException {
+    OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI, ModuleType moduleType)
+    throws OWLOntologyCreationException {
     logger.debug("Extracting...");
 
     Set<OWLEntity> entities = new HashSet<>();
@@ -49,10 +49,10 @@ public class ExtractOperation {
     }
 
     SyntacticLocalityModuleExtractor extractor =
-        new SyntacticLocalityModuleExtractor(
-            inputOntology.getOWLOntologyManager(), inputOntology, type);
+      new SyntacticLocalityModuleExtractor(
+        inputOntology.getOWLOntologyManager(), inputOntology, type);
 
     return OWLManager.createOWLOntologyManager()
-        .createOntology(extractor.extract(entities), outputIRI);
+      .createOntology(extractor.extract(entities), outputIRI);
   }
 }
