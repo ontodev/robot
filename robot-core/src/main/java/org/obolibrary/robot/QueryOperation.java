@@ -186,7 +186,7 @@ public class QueryOperation {
   }
 
   /**
-   * Execute a verification. Writes to the given output stream.
+   * Execute a verification. Writes to STDERR.
    *
    * @deprecated previously used as test method.
    * @param queriesResults a map from files to query results and output streams
@@ -205,7 +205,7 @@ public class QueryOperation {
           "Rule " + outFile.getCanonicalPath() + ": " + results.size() + " violation(s)");
       if (results.size() > 0) {
         isViolation = true;
-        ResultSetMgr.write(outStream, results, Lang.CSV);
+        ResultSetMgr.write(System.err, results, Lang.CSV);
         results.reset();
       }
       System.err.print('\n');
