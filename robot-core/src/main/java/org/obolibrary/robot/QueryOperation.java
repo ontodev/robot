@@ -215,17 +215,14 @@ public class QueryOperation {
   }
 
   /**
-   * Execute a SPARQL query and return true if there are any results, false otherwise. Prints
-   * violations to STDERR.
+   * Execute a SPARQL query and return true if there are any results, false otherwise.
    *
-   * @deprecated replaced by {@link #execVerify(Dataset, String, String)}
    * @param dsg the graph to query over
    * @param ruleName name of rule to verify
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
    * @throws IOException on query parse error
    */
-  @Deprecated
   public static boolean execVerify(DatasetGraph dsg, String ruleName, String query)
       throws IOException {
     return execVerify(DatasetFactory.wrap(dsg), ruleName, query);
