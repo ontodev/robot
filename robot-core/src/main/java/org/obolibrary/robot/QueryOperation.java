@@ -194,10 +194,12 @@ public class QueryOperation {
   /**
    * Execute a verification. Writes to STDERR.
    *
+   * @deprecated previously used as test method.
    * @param queriesResults a map from files to query results and output streams
    * @return true if there are any violations
    * @throws IOException on file issues
    */
+  @Deprecated
   public static boolean execVerify(
       Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
     boolean isViolation = false;
@@ -219,8 +221,7 @@ public class QueryOperation {
   }
 
   /**
-   * Execute a SPARQL query and return true if there are any results, false otherwise. Prints
-   * violations to STDERR.
+   * Execute a SPARQL query and return true if there are any results, false otherwise.
    *
    * @deprecated use {@link #execVerify(Dataset, String, String)} instead
    * @param dsg the graph to query over
@@ -236,13 +237,13 @@ public class QueryOperation {
   }
 
   /**
-   * Execute a SPARQL query and return true if there are any results, false otherwise. Prints
-   * violations to STDERR.
+   * Given a dataset to query, a rule name, and the query string, execute the query over the
+   * dataset.
    *
-   * @param dataset the dataset to query
+   * @param dataset Dataset to query
    * @param ruleName name of rule to verify
    * @param query the SPARQL query string
-   * @return true if the are results, false otherwise
+   * @return true if there are results, false otherwise
    * @throws IOException on query parse error
    */
   public static boolean execVerify(Dataset dataset, String ruleName, String query)
