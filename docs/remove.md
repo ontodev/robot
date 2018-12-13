@@ -16,6 +16,8 @@ robot remove --input obi.owl --term OBI:0000070 --select descendants
 
 `remove` also includes a `--trim` option, set to `true` by default. For an axiom to be removed, *one or more* of the entities in that axiom must be in the removal set. If `--trim false` is specified, *all* entities in the axiom must be in the selected set of terms.
 
+If you are removing import statements and wish to keep references to imported terms, use `--trim false`. Otherwise, the dangling entities left over from removing the imports will also be removed.
+
 ## Select
 
 `--select` supports multiple options. These can be provided in quotes in one select statement (`--select "x y z"`), or in multiple statements (`--select x --select y --select z`). When selects are provided in multiple statements, the output of the first will be passed to the second and so on. If multiple options are provided in one statement, all options will be processed at the same time.
