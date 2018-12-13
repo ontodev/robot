@@ -45,10 +45,12 @@ public class QueryOperation {
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
    *
+   * @deprecated use {@link #loadOntologyAsDataset(OWLOntology)} instead.
    * @param ontology The ontology to load into the graph
    * @return A new DatasetGraph with the ontology loaded into the default graph
    * @throws OWLOntologyStorageException rarely
    */
+  @Deprecated
   public static DatasetGraph loadOntology(OWLOntology ontology) throws OWLOntologyStorageException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
@@ -129,18 +131,20 @@ public class QueryOperation {
   }
 
   public static Dataset createEmptyDataset() {
-    return DatasetFactory.create(DatasetGraphFactory.create());
+    return DatasetFactory.create();
   }
 
   /**
    * Execute a SPARQL CONSTRUCT query on a graph and return the model.
    *
+   * @deprecated use {@link #execConstruct(Dataset, String)} instead.
    * @param dsg the graph to construct in
    * @param query the SPARQL construct query string
    * @return the result Model
    */
+  @Deprecated
   public static Model execConstruct(DatasetGraph dsg, String query) {
-    return execConstruct(DatasetFactory.create(dsg), query);
+    return execConstruct(DatasetFactory.wrap(dsg), query);
   }
 
   /**
@@ -158,13 +162,15 @@ public class QueryOperation {
   /**
    * Execute a SPARQL SELECT query on a graph and return a result set.
    *
+   * @deprecated use {@link #execQuery(Dataset, String)} instead.
    * @param dsg the graph to query
    * @param query the SPARQL query string
    * @return the result set
    * @throws IOException on query parse error
    */
+  @Deprecated
   public static ResultSet execQuery(DatasetGraph dsg, String query) throws IOException {
-    return execQuery(DatasetFactory.create(dsg), query);
+    return execQuery(DatasetFactory.wrap(dsg), query);
   }
 
   /**
@@ -217,12 +223,14 @@ public class QueryOperation {
   /**
    * Execute a SPARQL query and return true if there are any results, false otherwise.
    *
+   * @deprecated use {@link #execVerify(Dataset, String, String)} instead
    * @param dsg the graph to query over
    * @param ruleName name of rule to verify
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
    * @throws IOException on query parse error
    */
+  @Deprecated
   public static boolean execVerify(DatasetGraph dsg, String ruleName, String query)
       throws IOException {
     return execVerify(DatasetFactory.wrap(dsg), ruleName, query);
@@ -433,15 +441,17 @@ public class QueryOperation {
   /**
    * Run a SELECT query on a graph and write the results to a file.
    *
+   * @deprecated use {@link #runQuery(Dataset, String, File, Lang)} instead.
    * @param dsg the graph to query
    * @param query The SPARQL query string.
    * @param output The file to write to.
    * @param outputFormat The file format.
    * @throws IOException if output file is not found or query cannot be parsed
    */
+  @Deprecated
   public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
       throws IOException {
-    runQuery(DatasetFactory.create(dsg), query, output, outputFormat);
+    runQuery(DatasetFactory.wrap(dsg), query, output, outputFormat);
   }
 
   /**
@@ -464,6 +474,7 @@ public class QueryOperation {
   /**
    * Run a SPARQL query and return true if there were results, false otherwise.
    *
+   * @deprecated use {@link #runSparqlQuery(Dataset, String, String, OutputStream)} instead.
    * @param dsg the graph to query over
    * @param query the SPARQL query string
    * @param formatName the name of the output format
@@ -471,9 +482,10 @@ public class QueryOperation {
    * @return true if results, false if otherwise
    * @throws IOException on issue parsing query
    */
+  @Deprecated
   public static boolean runSparqlQuery(
       DatasetGraph dsg, String query, String formatName, OutputStream output) throws IOException {
-    return runSparqlQuery(DatasetFactory.create(dsg), query, formatName, output);
+    return runSparqlQuery(DatasetFactory.wrap(dsg), query, formatName, output);
   }
 
   /**
@@ -535,6 +547,7 @@ public class QueryOperation {
   /**
    * Run a SELECT query over the graph and write the result to a file. Prints violations to STDERR.
    *
+   * @deprecated use {@link #runVerify(Dataset, String, String, Path, Lang)} instead.
    * @param dsg The graph to query over.
    * @param ruleName name of the rule
    * @param query The SPARQL query string.
@@ -543,10 +556,11 @@ public class QueryOperation {
    * @throws IOException if output file is not found or query cannot be parsed
    * @return true if the are results (so file is written), false otherwise
    */
+  @Deprecated
   public static boolean runVerify(
       DatasetGraph dsg, String ruleName, String query, Path outputPath, Lang outputFormat)
       throws IOException {
-    return runVerify(DatasetFactory.create(dsg), ruleName, query, outputPath, outputFormat);
+    return runVerify(DatasetFactory.wrap(dsg), ruleName, query, outputPath, outputFormat);
   }
 
   /**

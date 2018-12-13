@@ -27,6 +27,7 @@ public class RelatedObjectsHelperTest extends CoreTest {
    * @throws IOException on any problem
    */
   @Test
+  @SuppressWarnings("unchecked")
   public void testGetCompleteAxioms() throws IOException {
     IOHelper ioHelper = new IOHelper();
     String base = "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#";
@@ -57,6 +58,7 @@ public class RelatedObjectsHelperTest extends CoreTest {
    * @throws IOException on any problem
    */
   @Test
+  @SuppressWarnings("unchecked")
   public void testGetPartialAxioms() throws IOException {
     IOHelper ioHelper = new IOHelper();
     String base = "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#";

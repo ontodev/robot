@@ -73,7 +73,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/simple.owl");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
     assertEquals(6, reasoned.getAxiomCount());
     assertIdentical("/simple_hermit.owl", reasoned);
@@ -111,7 +111,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/simple.owl");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
     // see https://github.com/ontodev/robot/issues/80
     opts.put("create-new-ontology", "true");
@@ -135,7 +135,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
 
     // see https://github.com/ontodev/robot/issues/80
@@ -163,7 +163,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
     opts.put("create-new-ontology", "true");
     opts.put("annotate-inferred-axioms", "true");
