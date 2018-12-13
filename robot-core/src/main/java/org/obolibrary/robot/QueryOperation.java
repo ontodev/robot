@@ -230,7 +230,7 @@ public class QueryOperation {
 
   /**
    * Given a dataset to query, a rule name, and the query string, execute the query over the
-   * dataset. Prints violations to STDERR.
+   * dataset.
    *
    * @param dataset Dataset to query
    * @param ruleName name of rule to verify
