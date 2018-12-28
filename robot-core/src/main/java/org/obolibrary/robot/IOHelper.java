@@ -28,12 +28,7 @@ import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.OBODocumentFormat;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.formats.*;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -162,6 +157,33 @@ public class IOHelper {
   public IOHelper(File file) throws IOException {
     String jsonString = FileUtils.readFileToString(file);
     setContext(jsonString);
+  }
+
+  /**
+   * @param ontology
+   * @param outputFile
+   * @param addPrefixes
+   * @throws IOException
+   */
+  public void addPrefixesAndSave(OWLOntology ontology, File outputFile, List<String> addPrefixes)
+      throws IOException {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+
+    for (String pref : addPrefixes) {
+      String[] split = pref.split(": ");
+      if (split.length != 2) {
+        // TODO - prefix error
+        throw new IOException();
+      }
+      OWLDocumentFormat df = manager.getOntologyFormat(ontology);
+      if (df != null && df.isPrefixOWLOntologyFormat()) {
+        df.asPrefixOWLOntologyFormat().setPrefix(split[0], split[1]);
+        saveOntology(ontology, df, outputFile);
+      } else {
+        // TODO - why would this be null?
+        logger.error("Unable to set prefix...");
+      }
+    }
   }
 
   /**
@@ -488,6 +510,9 @@ public class IOHelper {
       }
       String formatName = FilenameUtils.getExtension(path);
       OWLDocumentFormat format = getFormat(formatName);
+
+      PrefixDocumentFormat pf = (PrefixDocumentFormat) format;
+
       return saveOntology(ontology, format, ontologyIRI, true);
     } catch (Exception e) {
       throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
