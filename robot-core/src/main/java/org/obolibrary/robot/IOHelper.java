@@ -510,9 +510,6 @@ public class IOHelper {
       }
       String formatName = FilenameUtils.getExtension(path);
       OWLDocumentFormat format = getFormat(formatName);
-
-      PrefixDocumentFormat pf = (PrefixDocumentFormat) format;
-
       return saveOntology(ontology, format, ontologyIRI, true);
     } catch (Exception e) {
       throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
