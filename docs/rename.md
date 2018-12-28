@@ -24,6 +24,26 @@ Prefix(fb:=<http://foo.bar/>)
 
 The difference is that the global `--prefix` option does not include the prefix in the output ontology.
 
+### Mappings Files
+
+The mappings for renaming should be specified with the `--full` or `--partial` option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with. 
+
+For a full rename (you can use prefixes as long as they are defined by the defaults, `--prefix`, or `--add-prefix`):
+
+```
+Old IRI,New IRI
+obo:BFO_0000051,fb:BFO_1234567
+```
+
+For a partial rename:
+
+```
+Old Base,New Base
+http://purl.obolibrary.org/obo/,http://foo.bar/
+```
+
+The `rename` command expects the first line to contain headers.
+
 ---
 
 ## Error Messages
