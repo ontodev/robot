@@ -160,30 +160,35 @@ public class IOHelper {
   }
 
   /**
-   * @param ontology
-   * @param outputFile
-   * @param addPrefixes
-   * @throws IOException
+   * Given an ontology, a file, and a list of prefixes, save the ontology to the file and include
+   * the prefixes in the header.
+   *
+   * @param ontology OWLOntology to save
+   * @param outputFile File to save ontology to
+   * @param addPrefixes List of prefixes to add ("foo: http://foo.bar/")
+   * @throws IOException On issue parsing list of prefixes or saving file
    */
   public void addPrefixesAndSave(OWLOntology ontology, File outputFile, List<String> addPrefixes)
       throws IOException {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDocumentFormat df = getFormat(FilenameUtils.getExtension(outputFile.getPath()));
 
+    // If prefixes are not supported, just save the ontology without adding prefixes
+    if (!df.isPrefixOWLOntologyFormat()) {
+      logger.error("Prefixes are not supported in " + df.toString() + " (saving without prefixes)");
+      saveOntology(ontology, df, outputFile);
+      return;
+    }
+
+    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
     for (String pref : addPrefixes) {
       String[] split = pref.split(": ");
       if (split.length != 2) {
-        // TODO - prefix error
-        throw new IOException();
+        throw new IOException(String.format(invalidPrefixError, pref));
       }
-      OWLDocumentFormat df = manager.getOntologyFormat(ontology);
-      if (df != null && df.isPrefixOWLOntologyFormat()) {
-        df.asPrefixOWLOntologyFormat().setPrefix(split[0], split[1]);
-        saveOntology(ontology, df, outputFile);
-      } else {
-        // TODO - why would this be null?
-        logger.error("Unable to set prefix...");
-      }
+      pf.setPrefix(split[0].trim(), split[1].trim());
     }
+    saveOntology(ontology, df, outputFile);
   }
 
   /**
