@@ -3,7 +3,7 @@
 When reviewing inferred axioms, such as after applying the [`reason`](/reason) command,
 you may like more information about why a particular axiom was inferred:
 
-    robot explain -i uvula.ofn -r ELK \
+    robot explain --input uvula.ofn --reasoner ELK \
       --axiom "'uvular muscle' SubClassOf 'muscle organ' and 'part of' some 'jaw region'" \
       --explanation results/uvular_muscle.md
 
@@ -27,9 +27,11 @@ GitHub issues:
 In addition to outputting the explanation axioms in Markdown using `--explanation` (or `-e`), an ontology containing just
 those axioms can be output with `-o` or passed to any subsequent chained commands:
 
-    robot explain -i uvula.ofn -r ELK \
+    robot explain --input uvula.ofn --reasoner ELK \
       --axiom "'uvular muscle' SubClassOf 'muscle organ' and 'part of' some 'jaw region'" \
-      annotate --annotation rdfs:label "Uvular Muscle Explanation" -o uvular_muscle.ofn
+      annotate --annotation rdfs:label "Uvular Muscle Explanation" \
+      --ontology-iri "https://github.com/ontodev/robot/examples/uvular_muscle.ofn" \
+      --output results/uvular_muscle.ofn
 
 Finally, since there can be more than one way to derive an inference from an ontology,
 `explain` includes one more option, `--max`, which allows you to specify the maximum

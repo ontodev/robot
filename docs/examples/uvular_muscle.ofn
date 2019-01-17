@@ -1,4 +1,4 @@
-Prefix(:=<urn:unnamed:ontology#ont31#>)
+Prefix(:=<https://github.com/ontodev/robot/examples/uvular_muscle.ofn#>)
 Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
 Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
 Prefix(xml:=<http://www.w3.org/XML/1998/namespace>)
@@ -6,7 +6,8 @@ Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
 Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
 
 
-Ontology(<urn:unnamed:ontology#ont31>
+Ontology(<https://github.com/ontodev/robot/examples/uvular_muscle.ofn>
+Annotation(rdfs:label "Uvular Muscle Explanation"^^xsd:string)
 
 Declaration(Class(<http://purl.obolibrary.org/obo/CL_0000100>))
 Declaration(Class(<http://purl.obolibrary.org/obo/UBERON_0001134>))
