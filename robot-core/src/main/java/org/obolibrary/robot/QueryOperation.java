@@ -568,6 +568,7 @@ public class QueryOperation {
    * Prints violations to STDERR.
    *
    * @param dataset The dataset to query over.
+   * @param ruleName The name of the rule to verify.
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.
