@@ -8,13 +8,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /** Helper methods for core tests. */
@@ -68,7 +62,7 @@ public class CoreTest {
     // TODO: move logic here to IOHelper
     // IOHelper ioh = new IOHelper();
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    manager.addIRIMapper(new CatalogXmlIRIMapper(catalogFile));
+    manager.getIRIMappers().add(new CatalogXmlIRIMapper(catalogFile));
     return manager.loadOntology(ontologyIRI);
   }
 

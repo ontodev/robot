@@ -447,13 +447,15 @@ public class ReportOperation {
   /**
    * Given an ontology as a DatasetGraph and a query, return the violations found by that query.
    *
+   * @deprecated use {@link #getViolations(Dataset, String)} instead.
    * @param dsg the ontology as a graph
    * @param query the query
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
+  @Deprecated
   private static List<Violation> getViolations(DatasetGraph dsg, String query) throws IOException {
-    return getViolations(DatasetFactory.create(dsg), query);
+    return getViolations(DatasetFactory.wrap(dsg), query);
   }
 
   /**
@@ -477,7 +479,7 @@ public class ReportOperation {
         return null;
       }
       // skip RDFS and OWL terms
-      if (entity != null && (entity.contains("/rdf-schema#") || entity.contains("/owl#"))) {
+      if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
         continue;
       }
       Violation violation = new Violation(entity);
