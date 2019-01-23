@@ -59,7 +59,7 @@ public class RenameOperation {
    * @param ioHelper IOHelper to create IRIs
    * @param mappings map of old base -> new base
    */
-  public static void renamePartial(
+  public static void renamePrefixes(
       OWLOntology ontology, IOHelper ioHelper, Map<String, String> mappings) {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLEntityRenamer entityRenamer = new OWLEntityRenamer(manager, Sets.newHashSet(ontology));

@@ -11,7 +11,6 @@ import java.util.Scanner;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,8 @@ public class RenameCommand implements Command {
 
   /** Error message when neither a full or prefix mappings file is provided. */
   private static final String missingMappingsError =
-      NS + "MISSING MAPPINGS ERROR either a --mappings or a --prefix-mappings file must be specified.";
+      NS
+          + "MISSING MAPPINGS ERROR either a --mappings or a --prefix-mappings file must be specified.";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -127,7 +127,6 @@ public class RenameCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
 
     // TODO - maybe make this a global option?
     // Get additional prefixes to add to prefix manager
@@ -153,7 +152,7 @@ public class RenameCommand implements Command {
     if (prefixFile != null) {
       separator = getSeparator(prefixFile);
       Map<String, String> mappings = parseTableMappings(new File(prefixFile), separator, false);
-      RenameOperation.renamePartial(ontology, ioHelper, mappings);
+      RenameOperation.renamePrefixes(ontology, ioHelper, mappings);
     }
 
     if (!addPrefixes.isEmpty()) {
