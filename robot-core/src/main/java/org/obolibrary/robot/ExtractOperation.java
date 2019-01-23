@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,8 @@ public class ExtractOperation {
    */
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
-    options.put("instances", "include");
+    options.put("individuals", "include");
+    options.put("imports", "include");
     options.put("copy-ontology-annotations", "false");
     return options;
   }
@@ -74,15 +76,25 @@ public class ExtractOperation {
       options = getDefaultOptions();
     }
 
-    String instances = OptionsHelper.getOption(options, "instances", "include");
+    String individuals = OptionsHelper.getOption(options, "individuals", "include");
     boolean excludeInstances = false;
-    if (instances.equalsIgnoreCase("exclude") || instances.equalsIgnoreCase("minimal")) {
+    if (individuals.equalsIgnoreCase("exclude")
+        || individuals.equalsIgnoreCase("minimal")
+        || individuals.equalsIgnoreCase("definitions")) {
       excludeInstances = true;
+    }
+
+    String importsString = OptionsHelper.getOption(options, "imports", "include");
+    Imports imports;
+    if ("include".equalsIgnoreCase(importsString)) {
+      imports = Imports.INCLUDED;
+    } else {
+      imports = Imports.EXCLUDED;
     }
 
     Set<OWLEntity> entities = new HashSet<>();
     for (IRI term : terms) {
-      entities.addAll(inputOntology.getEntitiesInSignature(term, Imports.INCLUDED));
+      entities.addAll(inputOntology.getEntitiesInSignature(term, imports));
     }
 
     // Default moduleType is STAR
@@ -107,8 +119,10 @@ public class ExtractOperation {
             .createOntology(extractor.extract(entities), outputIRI);
 
     // Maybe add the axioms belonging to individuals of class types included
-    if (instances.equalsIgnoreCase("minimal")) {
-      addMinimalIndividualAxioms(inputOntology, outputOntology);
+    if (individuals.equalsIgnoreCase("minimal")) {
+      addMinimalIndividualAxioms(inputOntology, outputOntology, imports);
+    } else if (individuals.equalsIgnoreCase("definitions")) {
+      addDefinitionIndividualAxioms(inputOntology, outputOntology, imports);
     }
 
     // Maybe copy ontology annotations
@@ -124,17 +138,65 @@ public class ExtractOperation {
   }
 
   /**
-   * Given an input ontology and an output ontology, copy any individual axioms and their annotations from the input to the output ontology as long as the class type is included in the output ontology.
+   * @param inputOntology
+   * @param outputOntology
+   * @param imports
+   */
+  private static void addDefinitionIndividualAxioms(
+      OWLOntology inputOntology, OWLOntology outputOntology, Imports imports) {
+    Set<OWLIndividual> individuals = new HashSet<>();
+    Set<OWLClass> classes = outputOntology.getClassesInSignature();
+    for (OWLClass cls : classes) {
+      for (OWLClassExpression expr : EntitySearcher.getEquivalentClasses(cls, inputOntology)) {
+        if (!expr.isAnonymous()) {
+          continue;
+        }
+        individuals.addAll(expr.getIndividualsInSignature());
+      }
+
+      for (OWLClassExpression expr : EntitySearcher.getSubClasses(cls, inputOntology)) {
+        if (!expr.isAnonymous()) {
+          continue;
+        }
+        individuals.addAll(expr.getIndividualsInSignature());
+      }
+    }
+    addIndiviudalsAxioms(inputOntology, outputOntology, individuals, imports);
+  }
+
+  /**
+   * Given an input ontology and an output ontology, copy any individual axioms and their
+   * annotations from the input to the output ontology as long as the class type is included in the
+   * output ontology.
    *
    * @param inputOntology OWLOntology to copy axioms from
    * @param outputOntology OWLOntology to copy axioms to
+   * @param imports
    */
-  private static void addMinimalIndividualAxioms(OWLOntology inputOntology, OWLOntology outputOntology) {
+  private static void addMinimalIndividualAxioms(
+      OWLOntology inputOntology, OWLOntology outputOntology, Imports imports) {
     Set<OWLIndividual> individuals = new HashSet<>();
     Set<OWLClass> classes = outputOntology.getClassesInSignature();
     // Get the individuals for each of the included classes
     for (OWLClass cls : classes) {
       individuals.addAll(EntitySearcher.getIndividuals(cls, inputOntology));
+    }
+    addIndiviudalsAxioms(inputOntology, outputOntology, individuals, imports);
+  }
+
+  /**
+   * @param inputOntology
+   * @param outputOntology
+   * @param individuals
+   * @param imports
+   */
+  private static void addIndiviudalsAxioms(
+      OWLOntology inputOntology,
+      OWLOntology outputOntology,
+      Set<OWLIndividual> individuals,
+      Imports imports) {
+    if (imports == null) {
+      imports = Imports.INCLUDED;
     }
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLIndividual individual : individuals) {
@@ -142,9 +204,9 @@ public class ExtractOperation {
         // Add axioms about named individuals (includes assertions)
         OWLNamedIndividual namedIndividual = individual.asOWLNamedIndividual();
         axioms.addAll(inputOntology.getAnnotationAssertionAxioms(namedIndividual.getIRI()));
-        axioms.addAll(inputOntology.getAxioms(namedIndividual));
+        axioms.addAll(inputOntology.getAxioms(namedIndividual, imports));
       } else {
-        axioms.addAll(inputOntology.getAxioms(individual));
+        axioms.addAll(inputOntology.getAxioms(individual, imports));
       }
     }
     outputOntology.getOWLOntologyManager().addAxioms(outputOntology, axioms);

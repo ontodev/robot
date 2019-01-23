@@ -63,7 +63,8 @@ public class ExtractCommand implements Command {
     o.addOption("b", "branch-from-term", true, "root term of branch to extract");
     o.addOption("B", "branch-from-terms", true, "root terms of branches to extract");
     o.addOption("c", "copy-ontology-annotations", true, "if true, include ontology annotations");
-    o.addOption("n", "instances", true, "include, minimal, or exclude instances");
+    o.addOption("n", "individuals", true, "handle individuals (default: include)");
+    o.addOption("M", "imports", true, "handle imports (default: include)");
     options = o;
   }
 
@@ -162,10 +163,11 @@ public class ExtractCommand implements Command {
     // Get extract options
     Map<String, String> extractOptions = new HashMap<>();
     extractOptions.put(
-        "instances", CommandLineHelper.getDefaultValue(line, "instances", "include"));
+        "individuals", CommandLineHelper.getDefaultValue(line, "individuals", "include"));
     extractOptions.put(
         "copy-ontology-annotations",
         CommandLineHelper.getDefaultValue(line, "copy-ontology-annotations", "false"));
+    extractOptions.put("imports", CommandLineHelper.getDefaultValue(line, "imports", "include"));
 
     if (method.equals("mireot")) {
       // MIREOT is not included in ModuleType - handle first

@@ -18,6 +18,8 @@ The `--method` options fall into two groups: Syntactic Locality Module Extractor
 - BOT: use the SLME to extract a bottom module
 - MIREOT: extract a simple hierarchy of terms
 
+By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method.
+
 ## Syntactic Locality Module Extractor (SLME)
 
 Each SLME module type takes a "seed" that you specify with `--term` and `--term-file` options. From the seed it builds a module with a "signature" that includes the seed plus any other terms required so that any logical entailments are preserved between entities (classes, properties and individuals) in the signature. For example, if an ontology implies that A is a subclass of B, and the seed contains A and B, then the module will also imply that A is a subclass of B. In other words, the module will contain all the axioms needed to provide the same entailments for the seed terms (and resulting signature) as the full ontology would.
@@ -36,10 +38,11 @@ For more details see:
 
 ### Instances
 
-When using the SLME method of extraction, all instances (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--instances` option to specify what (if any) instances are included in the output ontology:
-* `--instances include`: all instances in the input ontology and their class types (default)
-* `--instances minimal`: only the instances that are a type of a class in the extracted module
-* `--instances exclude`: no instances
+When using the SLME method of extraction, all individuals (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--individuals` option to specify what (if any) individuals are included in the output ontology:
+* `--individuals include`: all individuals in the input ontology and their class types (default)
+* `--individuals minimal`: only the individuals that are a type of a class in the extracted module
+* `--individuals definitions`: only the individuals that are used in logical definitions of classes
+* `--individuals exclude`: no individuals
 
 ## MIREOT
 
