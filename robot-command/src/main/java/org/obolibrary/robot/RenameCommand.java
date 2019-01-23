@@ -41,9 +41,9 @@ public class RenameCommand implements Command {
   private static final String missingFileError =
       NS + "MISSING FILE ERROR mappings file '%s' does not exist.";
 
-  /** Error message when neither a full or partial mappings file is provided. */
+  /** Error message when neither a full or prefix mappings file is provided. */
   private static final String missingMappingsError =
-      NS + "MISSING MAPPINGS ERROR either a --full or a --partial mappings file must be specified.";
+      NS + "MISSING MAPPINGS ERROR either a --mappings or a --prefix-mappings file must be specified.";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -54,8 +54,8 @@ public class RenameCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("f", "full", true, "table of mappings for renaming");
-    o.addOption("r", "partial", true, "table of partial mappings for renaming");
+    o.addOption("m", "mappings", true, "table of mappings for renaming");
+    o.addOption("r", "prefix-mappings", true, "table of prefix mappings for renaming");
     o.addOption("A", "add-prefix", true, "add a new prefix to ontology file header");
     options = o;
   }
@@ -136,9 +136,9 @@ public class RenameCommand implements Command {
       ioHelper.addPrefix(pref);
     }
 
-    String fullFile = CommandLineHelper.getOptionalValue(line, "full");
-    String partialFile = CommandLineHelper.getOptionalValue(line, "partial");
-    if (fullFile == null && partialFile == null) {
+    String fullFile = CommandLineHelper.getOptionalValue(line, "mappings");
+    String prefixFile = CommandLineHelper.getOptionalValue(line, "prefix-mappings");
+    if (fullFile == null && prefixFile == null) {
       throw new IOException(missingMappingsError);
     }
 
@@ -149,10 +149,10 @@ public class RenameCommand implements Command {
       Map<String, String> mappings = parseTableMappings(new File(fullFile), separator, true);
       RenameOperation.renameFull(ontology, ioHelper, mappings);
     }
-    // Process partial renames
-    if (partialFile != null) {
-      separator = getSeparator(partialFile);
-      Map<String, String> mappings = parseTableMappings(new File(partialFile), separator, false);
+    // Process prefix renames
+    if (prefixFile != null) {
+      separator = getSeparator(prefixFile);
+      Map<String, String> mappings = parseTableMappings(new File(prefixFile), separator, false);
       RenameOperation.renamePartial(ontology, ioHelper, mappings);
     }
 

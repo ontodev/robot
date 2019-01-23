@@ -2,17 +2,21 @@
 
 The `rename` command allows you to rename entity IRIs in an ontology in two ways:
 
-**Full**: renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`)
+#### Full
+
+Renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`) in a file specified by `--mappings`:
 
     robot rename --input test.owl \
-      --full full-rename.tsv \
+      --mappings full-rename.tsv \
       --add-prefix "fb: http://foo.bar/"
       --output results/full-rename.owl
 
-**Partial**: renames the base IRIs of all matching entites (e.g. change the prefix `http://purl.obolibrary.org/obo/` to `http://foo.bar/`)
+#### Prefixes
+
+Renames the base IRIs of all matching entites (e.g. change the prefix `http://purl.obolibrary.org/obo/` to `http://foo.bar/`), based on mappings in a file specified by `--prefix-mappings`:
 
     robot rename --input test.owl \
-      --partial partial-rename.tsv \
+      --prefix-mappings partial-rename.tsv \
       --add-prefix "fb: http://foo.bar/"
       --output results/partial-rename.owl
       
@@ -26,7 +30,7 @@ The difference is that the global `--prefix` option does not include the prefix 
 
 ### Mappings Files
 
-The mappings for renaming should be specified with the `--full` or `--partial` option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with. 
+The mappings for renaming should be specified with the `--mappings` (for full renames) or `--prefix-mappings` (for renaming prefixes) option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with. 
 
 For a full rename (you can use prefixes as long as they are defined by the defaults, `--prefix`, or `--add-prefix`):
 
@@ -35,7 +39,7 @@ Old IRI,New IRI
 obo:BFO_0000051,fb:BFO_1234567
 ```
 
-For a partial rename:
+For a prefix rename:
 
 ```
 Old Base,New Base
@@ -66,8 +70,8 @@ For a 'full' IRI replacement, the 'old IRI' must exist in the ontology. If not, 
 
 ### Missing File Error
 
-This error occurs when the file provided for the `--full` or `--partial` option does not exist. Check the path and try again.
+This error occurs when the file provided for the `--mappings` or `--prefix-mappings` option does not exist. Check the path and try again.
 
 ### Missing Mappings Error
 
-This error occurs when a `--full` or `--partial` file is not provided.
+This error occurs when a `--mappings` or `--prefix-mappings` file is not provided.
