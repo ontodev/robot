@@ -39,7 +39,7 @@ public class RenameOperationTest extends CoreTest {
         "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#",
         "http://foo.bar/");
 
-    RenameOperation.renamePartial(ont, new IOHelper(), mappings);
+    RenameOperation.renamePrefixes(ont, new IOHelper(), mappings);
 
     assertIdentical("/rename_partial.owl", ont);
   }
