@@ -3,7 +3,9 @@ package org.obolibrary.robot;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,9 @@ public class RemoveCommand implements Command {
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
-    o.addOption("r", "trim", true, "if true, trim dangling entities");
+    o.addOption("r", "trim", true, "if false, do not trim dangling entities");
+    o.addOption(
+        "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     options = o;
   }
 
@@ -100,14 +104,14 @@ public class RemoveCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology ontology = state.getOntology();
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLOntology inputOntology = state.getOntology();
+    OWLOntologyManager manager = inputOntology.getOWLOntologyManager();
 
     // Get a set of entities to start with
     Set<OWLObject> objects = new HashSet<>();
     if (line.hasOption("term") || line.hasOption("term-file")) {
       Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
-      objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
+      objects.addAll(OntologyHelper.getEntities(inputOntology, entityIRIs));
     }
 
     // Get a set of axiom types
@@ -121,7 +125,11 @@ public class RemoveCommand implements Command {
       selects.add("self");
     }
     boolean removeImports = false;
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", false);
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
+
+    // Copy the input ontology to create the output ontology
+    OWLOntology outputOntology =
+        OWLManager.createOWLOntologyManager().copyOntology(inputOntology, OntologyCopy.DEEP);
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
@@ -130,7 +138,7 @@ public class RemoveCommand implements Command {
       List<String> selectGroup = CommandLineHelper.splitSelects(select);
       // Imports should be handled separately
       if (selectGroup.contains("imports")) {
-        OntologyHelper.removeImports(ontology);
+        OntologyHelper.removeImports(outputOntology);
         removeImports = true;
         selectGroup.remove("imports");
       }
@@ -142,31 +150,44 @@ public class RemoveCommand implements Command {
     // If removing imports, and there are no other selects, save and return
     if (removeImports && selectGroups.isEmpty()) {
       if (trim) {
-        OntologyHelper.trimOntology(ontology);
+        OntologyHelper.trimOntology(outputOntology);
       }
-      CommandLineHelper.maybeSaveOutput(line, ontology);
-      state.setOntology(ontology);
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
       return state;
     } else if (objects.isEmpty()) {
       // Otherwise, proceed, and if objects is empty, add all objects
-      for (OWLAxiom axiom : ontology.getAxioms()) {
-        objects.addAll(OntologyHelper.getObjects(axiom));
-      }
+      objects.addAll(OntologyHelper.getObjects(outputOntology));
     }
 
+    // Use the select statements to get a set of objects to remove
     Set<OWLObject> relatedObjects =
-        RelatedObjectsHelper.selectGroups(ontology, objects, selectGroups);
+        RelatedObjectsHelper.selectGroups(outputOntology, ioHelper, objects, selectGroups);
     Set<OWLAxiom> axiomsToRemove;
     if (trim) {
-      axiomsToRemove = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
+      // Get axioms that include at least one object
+      axiomsToRemove =
+          RelatedObjectsHelper.getPartialAxioms(outputOntology, relatedObjects, axiomTypes);
     } else {
-      axiomsToRemove = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
+      // Get axioms that ONLY include the objects
+      axiomsToRemove =
+          RelatedObjectsHelper.getCompleteAxioms(outputOntology, relatedObjects, axiomTypes);
     }
-    manager.removeAxioms(ontology, axiomsToRemove);
+    manager.removeAxioms(outputOntology, axiomsToRemove);
+
+    // Handle gaps
+    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
+    if (preserveStructure) {
+      // Since we are preserving the structure between the objects that were NOT removed, we need to
+      // get the complement of the removed object set and build relationships between those objects.
+      relatedObjects = RelatedObjectsHelper.select(outputOntology, ioHelper, objects, "complement");
+      manager.addAxioms(
+          outputOntology, RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
+    }
 
     // Save the changed ontology and return the state
-    CommandLineHelper.maybeSaveOutput(line, ontology);
-    state.setOntology(ontology);
+    CommandLineHelper.maybeSaveOutput(line, outputOntology);
+    state.setOntology(outputOntology);
     return state;
   }
 }

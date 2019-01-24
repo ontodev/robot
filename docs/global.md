@@ -12,6 +12,16 @@ The Java options for ROBOT can be set by running `export ROBOT_JAVA_ARGS=<option
 
 To set the Java options for ROBOT permanently, you will need to edit your `.bash_profile` and add the line `export ROBOT_JAVA_ARGS=<options>`. This is the same file you edited to add ROBOT to your system PATH, usually located in your root directory. You can verify that the variable is set by running `echo $ROBOT_JAVA_ARGS`.
 
+You can also set `ROBOT_JAVA_ARGS` and run `robot` in one command:
+```
+export ROBOT_JAVA_ARGS=<java options> && robot <command> <robot options>
+```
+
+For example, to increase memory:
+```
+export ROBOT_JAVA_ARGS=-Xmx4G && robot <command> <robot options>
+```
+
 #### Windows
 
 The Java options for ROBOT can be set by running `set ROBOT_JAVA_ARGS=<options>` prior to running a ROBOT command. This will only save the Java options in the current process space. To set the Java options for ROBOT permanently, run `setx ROBOT_JAVA_ARGS <options>`.
@@ -21,6 +31,11 @@ The Java options for ROBOT can be set by running `set ROBOT_JAVA_ARGS=<options>`
 Alternatively, if you are running ROBOT directly from the jar, these can be specified in the command itself:
 ```
 java <java options> -jar robot.jar <command> <robot options>
+```
+
+For example, to increase memory:
+```
+java -Xmx4G -jar robot.jar <command> <robot options>
 ```
 
 ## Prefixes
