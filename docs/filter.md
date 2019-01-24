@@ -4,6 +4,8 @@ The `filter` command allows you to create a new ontology from a source ontology 
 
 By default, `filter` will include all axioms from the input ontology that contain *one or more* entities from the specified set. To be more strict and only include axioms in which *all* entities in the axiom are in the specified set, use `--trim false`.
 
+This operation maintains structural integrity; lineage is maintained, and gaps will be filled where classes have been excluded. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
+
 ## Annotations
 
 The `filter` command also includes a special `--select "annotations"` option. If this is included, all annotations on filtered terms will be included, regardless of if those properties are in the set of terms or not.
@@ -36,10 +38,10 @@ Copy all of OBI except descendants of 'assay' (`remove` is preferred):
      --select complement\
      --output results/remove_class.owl
 
-Copy a subset of classes based on an annotation property:
+Copy a subset of classes based on an annotation property (maintains hierarchy):
 
-```
-robot filter --input foo.owl --select "annotations classes"\
- --select "oboInOwl:inSubset='bar'" --output bar.owl
-```
-
+    robot filter --input uberon_module.owl\
+     --prefix "core: http://purl.obolibrary.org/obo/uberon/core#"\
+     --select "oboInOwl:inSubset=core:uberon_slim"\
+     --select annotations\
+     --output results/uberon_slim.owl

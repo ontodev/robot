@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.obolibrary.robot</groupId>
     <artifactId>robot</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.4.0-SNAPSHOT</version>
   </parent>
   <artifactId>robot-core</artifactId>
   <name>robot-core</name>
@@ -38,7 +38,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.0.0</version>
+              <version>1.2.0</version>
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -51,18 +51,9 @@
             <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
             <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
             <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-            <excludes>
-              <!-- Temporarily exclude QueryOperation for Jena upgrade #314. -->
-              <exclude>org.obolibrary.robot.QueryOperation</exclude>
-              <!-- Exceptions added -->
-              <exclude>org.obolibrary.robot.IOHelper</exclude>
-              <exclude>org.obolibrary.robot.OntologyHelper</exclude>
-              <exclude>org.obolibrary.robot.ReportOperation</exclude>
-              <exclude>org.obolibrary.robot.ReasonerHelper</exclude>
-              <!-- Exceptions removed -->
-              <exclude>org.obolibrary.robot.CatalogElementHandler</exclude>
-              <exclude>org.obolibrary.robot.TemplateOperation</exclude>
-            </excludes>
+            <!-- include on breaking changes 
+            <excludes></excludes>
+            -->
           </parameter>
         </configuration>
         <executions>
@@ -122,6 +113,40 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
       <version>2.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlexplanation</artifactId>
+      <version>2.0.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>net.sourceforge.owlapi</groupId>
+          <artifactId>owlapi-osgidistribution</artifactId>
+        </exclusion>
+      </exclusions>
+	  </dependency>
+    <dependency>
+      <groupId>edu.stanford.protege</groupId>
+      <artifactId>explanation-workbench</artifactId>
+      <version>3.0.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>net.sourceforge.owlapi</groupId>
+          <artifactId>owlapi-osgidistribution</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>edu.stanford.protege</groupId>
+          <artifactId>protege-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>edu.stanford.protege</groupId>
+          <artifactId>protege-editor-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>edu.stanford.protege</groupId>
+          <artifactId>protege-editor-owl</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 </project>

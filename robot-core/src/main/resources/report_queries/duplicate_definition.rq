@@ -1,6 +1,6 @@
 # # Duplicate Definition
 #
-# Problem: An entity shares an exact definition with another entity.
+# Problem: An entity shares an exact definition with another entity. Excludes deprecated entities.
 #
 # Solution: Update the definition to reflect the entities, or determine if the entities are the same.
 
@@ -9,14 +9,12 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
-  VALUES ?property {obo:IAO_0000115}
+  VALUES ?property { obo:IAO_0000115 }
   ?entity obo:IAO_0000115 ?value .
   ?entity2 obo:IAO_0000115 ?value .
-  FILTER NOT EXISTS {
-      ?entity owl:deprecated ?dep .
-      FILTER regex(str(?dep), "true")
-  }
-  FILTER (?entity != ?entity2) .
+  FILTER NOT EXISTS { ?entity owl:deprecated true }
+  FILTER NOT EXISTS { ?entity2 owl:deprecated true }
+  FILTER (?entity != ?entity2)
   FILTER (!isBlank(?entity))
 }
 ORDER BY DESC(UCASE(str(?value)))

@@ -69,7 +69,7 @@ public class ExtractOperation {
 
     Set<OWLEntity> entities = new HashSet<>();
     for (IRI term : terms) {
-      entities.addAll(inputOntology.getEntitiesInSignature(term, true));
+      entities.addAll(inputOntology.getEntitiesInSignature(term, Imports.INCLUDED));
     }
 
     ModuleType type = moduleType;
