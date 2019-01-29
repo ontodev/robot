@@ -67,7 +67,7 @@ public class ReasonOperation {
    * @throws InvalidReferenceException on unsatisfiable class(es)
    */
   public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
+      throws Exception {
     reason(ontology, reasonerFactory, getDefaultOptions());
   }
 
@@ -84,7 +84,7 @@ public class ReasonOperation {
    */
   public static void reason(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
+      throws Exception {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
     logger.info("Fetching labels...");

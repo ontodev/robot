@@ -25,7 +25,8 @@ public class ReasonerHelper {
   private static final String NS = "reason#";
 
   /** Error message when an unknown axiom generator is provided. */
-  private static final String axiomGeneratorError = NS + "UNKNOWN AXIOM GENERATOR %s is not a valid inferred axiom generator";
+  private static final String axiomGeneratorError =
+      NS + "UNKNOWN AXIOM GENERATOR %s is not a valid inferred axiom generator";
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReasonerHelper.class);
@@ -229,7 +230,6 @@ public class ReasonerHelper {
   }
 
   /**
-   *
    * @param axGenerators
    * @return
    * @throws Exception
@@ -248,7 +248,6 @@ public class ReasonerHelper {
   }
 
   /**
-   *
    * @param axGenerator
    * @return
    * @throws Exception

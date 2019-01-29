@@ -32,9 +32,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testStructural()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testStructural() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory =
         new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
@@ -51,9 +49,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testELK()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testELK() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -69,9 +65,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testHermit()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testHermit() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -88,9 +82,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testJFact()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testJFact() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new JFactFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -107,9 +99,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testInferIntoNewOntology()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testInferIntoNewOntology() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
@@ -131,9 +121,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testInferIntoNewOntologyNonTrivial()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testInferIntoNewOntologyNonTrivial() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
@@ -159,9 +147,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testInferIntoNewOntologyNoDupes()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testInferIntoNewOntologyNoDupes() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
@@ -182,9 +168,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testRemoveRedundantSubClassAxioms()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testRemoveRedundantSubClassAxioms() throws Exception {
     OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory, Collections.emptyMap());
@@ -209,9 +193,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testEMRBasic()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testEMRBasic() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
     OWLReasonerFactory reasonerFactory =
@@ -231,9 +213,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testEMRRelax()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testEMRRelax() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
     OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
     OWLReasonerFactory reasonerFactory =
@@ -253,9 +233,7 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testIntersection()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testIntersection() throws Exception {
     OWLOntology reasoned = loadOntology("/intersection.omn");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
