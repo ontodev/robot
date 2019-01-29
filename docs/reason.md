@@ -53,6 +53,35 @@ robot reason --reasoner ELK \
 
 If the input module contains at least one import, axioms in the debug module will be tagged with the source ontology, to assist in debugging.
 
+## Axiom Generators
+
+By default, the `reason` operation will only assert inferred subclass axioms. This can be configured with the `--axiom-generators` option. OWLAPI provides the following inferred axiom generators:
+
+  * Class axiom generators
+    * `SubClass`
+    * `EquivalentClass`
+    * `DisjointClasses`
+  * Data property axiom generators
+    * `DataPropertyCharacteristic`
+    * `EquivalentDataProperties`
+    * `SubDataProperty`
+  * Individual axiom generators
+    * `ClassAssertion`
+    * `PropertyAssertion`
+  * Object property axiom generators
+    * `EquivalentObjectProperties`
+    * `InverseObjectProperties`
+    * `ObjectPropertyCharacteristic`
+    * `SubObjectProperty`
+  
+One or more of these axiom generators can be passed into the option (separated by spaces). For example, to generate both subclass and disjoint class axioms:
+
+```
+robot reason --input unreasoned.owl
+  --axiom-generators "SubClass DisjointClasses"
+  --output reasoned.owl
+```
+
 ---
 
 ## Error Messages
@@ -60,3 +89,7 @@ If the input module contains at least one import, axioms in the debug module wil
 ### Create Ontology Error
 
 You must select between `--create-new-ontology-with-annotations` (`-m`) and `--create-new-ontology` (`-n`). Both cannot be passed in as `true` to one reason command, as they have opposite results.
+
+### Axiom Generator Error
+
+The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](/reason#axiom-generators).

@@ -77,6 +77,11 @@ public class ReasonCommand implements Command {
         true,
         "if 'none', any equivalent class will cause an error, if 'all', all equivalent classes are "
             + "allowed, and if 'asserted-only', inferred equivalent classes will cause an error.");
+    o.addOption(
+        "A",
+        "axiom-generators",
+        true,
+        "specify one or more space-separated inferred axiom generators");
     o.addOption("i", "input", true, "reason ontology from a file");
     o.addOption("I", "input-iri", true, "reason ontology from an IRI");
     o.addOption("o", "output", true, "save reasoned ontology to a file");

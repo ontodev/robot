@@ -2,12 +2,7 @@ package org.obolibrary.robot;
 
 import static org.obolibrary.robot.reason.EquivalentClassReasoningMode.ALL;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.geneontology.reasoner.ExpressionMaterializingReasoner;
@@ -26,7 +21,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.InferredAxiomGenerator;
 import org.semanticweb.owlapi.util.InferredOntologyGenerator;
-import org.semanticweb.owlapi.util.InferredSubClassAxiomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +51,7 @@ public class ReasonOperation {
     options.put("prevent-invalid-references", "false");
     options.put("preserve-annotated-axioms", "false");
     options.put("dump-unsatisfiable", null);
+    options.put("axiom-generators", "subclass");
 
     return options;
   }
@@ -154,9 +149,12 @@ public class ReasonOperation {
     // asserting inferred axioms that are duplicates of existing axioms
     Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
 
-    // Make sure to add the axiom generators in this way!!!
-    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
-    gens.add(new InferredSubClassAxiomGenerator());
+    // Get the axiom generators
+    // If none are provided, just default to subclass
+    String axGeneratorString = OptionsHelper.getOption(options, "axiom-generators", "subclass");
+    List<String> axGenerators = Arrays.asList(axGeneratorString.split(" "));
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
+        ReasonerHelper.getInferredAxiomGenerators(axGenerators);
     InferredOntologyGenerator generator = new InferredOntologyGenerator(reasoner, gens);
     logger.info("Using these axiom generators:");
     for (InferredAxiomGenerator<?> inf : generator.getAxiomGenerators()) {
