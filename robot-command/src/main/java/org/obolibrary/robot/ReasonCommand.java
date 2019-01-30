@@ -82,6 +82,7 @@ public class ReasonCommand implements Command {
         "axiom-generators",
         true,
         "specify one or more space-separated inferred axiom generators");
+    o.addOption("d", "include-indirect", true, "if true, assert direct and indirect axioms");
     o.addOption("i", "input", true, "reason ontology from a file");
     o.addOption("I", "input-iri", true, "reason ontology from an IRI");
     o.addOption("o", "output", true, "save reasoned ontology to a file");

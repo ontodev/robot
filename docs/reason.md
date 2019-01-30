@@ -53,7 +53,7 @@ robot reason --reasoner ELK \
 
 If the input module contains at least one import, axioms in the debug module will be tagged with the source ontology, to assist in debugging.
 
-## Axiom Generators
+## Generated Axioms
 
 By default, the `reason` operation will only assert inferred subclass axioms. This can be configured with the `--axiom-generators` option. OWLAPI provides the following inferred axiom generators:
 
@@ -79,6 +79,16 @@ One or more of these axiom generators can be passed into the option (separated b
 ```
 robot reason --input unreasoned.owl
   --axiom-generators "SubClass DisjointClasses"
+  --output reasoned.owl
+```
+
+If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
+
+The axioms that are generated for subclasses, class assertions, and sub-object properties can be either direct or indirect. By default, the operation will only generate direct axioms (`--include-indirect false`). For example, to generate all direct and indirect class assertions:
+```
+robot reason --input unreasoned.owl
+  --axiom-generators ClassAssertion
+  --include-indirect true
   --output reasoned.owl
 ```
 
