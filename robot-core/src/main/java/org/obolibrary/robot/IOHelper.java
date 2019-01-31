@@ -632,6 +632,8 @@ public class IOHelper {
       String result = ((Map<String, Object>) expanded).keySet().iterator().next();
       if (result != null) {
         return IRI.create(result);
+      } else {
+        return IRI.create(term);
       }
     } catch (Exception e) {
       logger.warn("Could not create IRI for {}", term);
