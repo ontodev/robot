@@ -28,6 +28,7 @@ public class CommandLineInterface {
     m.addCommand("filter", new FilterCommand());
     m.addCommand("materialize", new MaterializeCommand());
     m.addCommand("merge", new MergeCommand());
+    m.addCommand("minimize", new MinimizeCommand());
     m.addCommand("mirror", new MirrorCommand());
     m.addCommand("query", new QueryCommand());
     m.addCommand("reason", new ReasonCommand());
