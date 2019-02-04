@@ -202,11 +202,10 @@ public class TemplateOperation {
    * @param type the IRI of the type for this entity, or null
    * @param id the ID for this entity, or null
    * @param label the label for this entity, or null
-   * @return the entity
-   * @throws Exception if the entity cannot be created
+   * @return the entity or null
    */
-  public static OWLEntity getEntity(QuotedEntityChecker checker, IRI type, String id, String label)
-      throws Exception {
+  public static OWLEntity getEntity(
+      QuotedEntityChecker checker, IRI type, String id, String label) {
     return TemplateHelper.getEntity(checker, type, id, label);
   }
 
@@ -257,13 +256,10 @@ public class TemplateOperation {
     if (template.equals("CLASS_TYPE")) {
       return true;
     }
-    if (template.matches("^(>?C|>{0,2}A[L,T,I]?) .*")) {
+    if (template.matches("^(>?C|>{0,2}A[LTI]?) .*")) {
       return true;
     }
-    if (template.equals("CI")) {
-      return true;
-    }
-    return false;
+    return template.equals("CI");
   }
 
   /**
@@ -345,8 +341,8 @@ public class TemplateOperation {
     logger.debug("Templating...");
 
     // Check templates and find the ID and LABEL columns.
-    Map<String, Integer> idColumns = new HashMap<String, Integer>();
-    Map<String, Integer> labelColumns = new HashMap<String, Integer>();
+    Map<String, Integer> idColumns = new HashMap<>();
+    Map<String, Integer> labelColumns = new HashMap<>();
     for (Map.Entry<String, List<List<String>>> table : tables.entrySet()) {
       String tableName = table.getKey();
       List<List<String>> rows = table.getValue();
@@ -496,7 +492,7 @@ public class TemplateOperation {
         continue;
       }
 
-      String cell = null;
+      String cell;
       try {
         cell = rows.get(row).get(column);
       } catch (IndexOutOfBoundsException e) {
@@ -532,7 +528,7 @@ public class TemplateOperation {
           annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
         } else if (template.startsWith("A")) {
           lastAxiomAnnotation = null;
-          lastAnnotation = TemplateHelper.getAnnotation(checker, ioHelper, template, value);
+          lastAnnotation = TemplateHelper.getAnnotation(checker, template, value);
           annotations.add(lastAnnotation);
         } else if (template.startsWith(">A")) {
           if (lastAnnotation == null) {
@@ -549,8 +545,7 @@ public class TemplateOperation {
                     "an annotation"));
           }
           // Get annotation based on annotation type
-          lastAxiomAnnotation =
-              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(1), value);
+          lastAxiomAnnotation = TemplateHelper.getAnnotation(checker, template.substring(1), value);
           // If the last annotation is already in the map, get it's existing annotations
           if (nested.containsKey(lastAnnotation)) {
             axiomAnnotations = nested.get(lastAnnotation);
@@ -561,9 +556,7 @@ public class TemplateOperation {
           axiomAnnotations.put(lastAxiomAnnotation, Sets.newHashSet());
           nested.put(lastAnnotation, axiomAnnotations);
           // Remove from annotation set to prevent duplication
-          if (annotations.contains(lastAnnotation)) {
-            annotations.remove(lastAnnotation);
-          }
+          annotations.remove(lastAnnotation);
           // Handle axiom annotation annotations ?
         } else if (template.startsWith(">>A")) {
           if (lastAxiomAnnotation == null) {
@@ -586,7 +579,7 @@ public class TemplateOperation {
           axiomAnnotationAnnotations = axiomAnnotations.get(lastAxiomAnnotation);
           // Add this iteration of annotation and put into the nested map
           axiomAnnotationAnnotations.add(
-              TemplateHelper.getAnnotation(checker, ioHelper, template.substring(2), value));
+              TemplateHelper.getAnnotation(checker, template.substring(2), value));
           axiomAnnotations.put(lastAxiomAnnotation, axiomAnnotationAnnotations);
           nested.put(lastAnnotation, axiomAnnotations);
         }
@@ -678,7 +671,7 @@ public class TemplateOperation {
       }
 
       String header = headers.get(column);
-      String cell = null;
+      String cell;
       try {
         cell = rows.get(row).get(column);
       } catch (IndexOutOfBoundsException e) {
@@ -736,9 +729,7 @@ public class TemplateOperation {
               TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
           annotatedExpressions.put(lastExpression, annotations);
           // Remove to prevent duplication
-          if (classExpressions.contains(lastExpression)) {
-            classExpressions.remove(lastExpression);
-          }
+          classExpressions.remove(lastExpression);
         }
       }
     }

@@ -1,19 +1,14 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /** Helper methods for core tests. */
@@ -49,7 +44,7 @@ public class CoreTest {
    */
   public OWLOntology loadOntologyWithCatalog(String path) throws IOException {
     IOHelper ioh = new IOHelper();
-    String fullpath = this.getClass().getResource(path).getFile().toString();
+    String fullpath = this.getClass().getResource(path).getFile();
     return ioh.loadOntology(fullpath);
   }
 
@@ -67,7 +62,7 @@ public class CoreTest {
     // TODO: move logic here to IOHelper
     // IOHelper ioh = new IOHelper();
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    manager.addIRIMapper(new CatalogXmlIRIMapper(catalogFile));
+    manager.getIRIMappers().add(new CatalogXmlIRIMapper(catalogFile));
     return manager.loadOntology(ontologyIRI);
   }
 
@@ -95,7 +90,7 @@ public class CoreTest {
     StringWriter writer = new StringWriter();
     boolean actual = DiffOperation.compare(left, right, writer);
     System.out.println(writer.toString());
-    assertEquals(true, actual);
+    assertTrue(actual);
     assertEquals("Ontologies are identical\n", writer.toString());
   }
 

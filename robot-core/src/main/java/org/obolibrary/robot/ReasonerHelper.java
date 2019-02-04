@@ -10,17 +10,7 @@ import java.util.stream.Collectors;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyID;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.slf4j.Logger;
@@ -51,7 +41,21 @@ public class ReasonerHelper {
   }
 
   /**
-   * Validates ontology, writes unsatisfiable module
+   * Validates ontology.
+   *
+   * @param reasoner OWLReasoner being used.
+   * @param unsatisfiableModulePath path to unsatisfiable module as string
+   * @throws IncoherentTBoxException on unsatisfiable classes
+   * @throws InconsistentOntologyException on logical inconsistencies
+   * @throws IncoherentRBoxException on unsatisfiable properties
+   */
+  public static void validate(OWLReasoner reasoner, String unsatisfiableModulePath)
+      throws InconsistentOntologyException, IncoherentRBoxException, IncoherentTBoxException {
+    validate(reasoner, unsatisfiableModulePath, null);
+  }
+
+  /**
+   * Validates ontology, writes unsatisfiable module.
    *
    * @param reasoner OWLReasoner being used
    * @param unsatisfiableModulePath path to unsatisfiable module as string
@@ -98,9 +102,7 @@ public class ReasonerHelper {
         // we want to ensure this is thrown
         try {
           saveIncoherentModule(ont, unsatisfiableClasses, unsatisfiableModulePath, ioHelper);
-        } catch (OWLOntologyCreationException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
+        } catch (OWLOntologyCreationException | IOException e) {
           e.printStackTrace();
         }
       }
@@ -161,13 +163,23 @@ public class ReasonerHelper {
     return createIncoherentModule(ontology, unsatisfiableClasses, outputIRI);
   }
 
+  /**
+   * Create an incoherent module from an ontology based on a set of unsatisfiable classes.
+   *
+   * @param ontology OWLOntology to create module from
+   * @param unsatisfiableClasses set of unsatisfiable OWLClasses
+   * @param outputIRI IRI for the output, or null
+   * @return incoherent module as OWLOntology
+   * @throws OWLOntologyCreationException on problem extracting incoherent module
+   */
   private static OWLOntology createIncoherentModule(
       OWLOntology ontology, Set<OWLClass> unsatisfiableClasses, IRI outputIRI)
       throws OWLOntologyCreationException {
     if (outputIRI == null) {
       outputIRI = IRI.generateDocumentIRI();
     }
-    Set<IRI> terms = unsatisfiableClasses.stream().map(x -> x.getIRI()).collect(Collectors.toSet());
+    Set<IRI> terms =
+        unsatisfiableClasses.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
     OWLOntology module = ExtractOperation.extract(ontology, terms, outputIRI, ModuleType.BOT);
 
     if (ontology.getImportsClosure().size() > 1) {
@@ -213,9 +225,22 @@ public class ReasonerHelper {
     return module;
   }
 
+  /**
+   * Save an incoherent ontology module to a path.
+   *
+   * @param ontology OWLOntology to create module from
+   * @param unsatisfiableClasses set of unsatisfiable OWLClasses
+   * @param path path to save module to
+   * @param ioHelper IOHelper to use, or null
+   * @throws OWLOntologyCreationException on problem creating incoherent module
+   * @throws IOException on problem saving module
+   */
   private static void saveIncoherentModule(
       OWLOntology ontology, Set<OWLClass> unsatisfiableClasses, String path, IOHelper ioHelper)
       throws OWLOntologyCreationException, IOException {
+    if (ioHelper == null) {
+      ioHelper = new IOHelper();
+    }
     OWLOntology module = createIncoherentModule(ontology, unsatisfiableClasses, null);
     ioHelper.saveOntology(module, path);
   }

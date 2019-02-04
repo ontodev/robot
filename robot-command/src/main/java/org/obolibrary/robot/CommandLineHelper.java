@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,24 +22,7 @@ import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLLogicalAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -307,7 +291,21 @@ public class CommandLineHelper {
         axiomTypes.add(OWLDisjointUnionAxiom.class);
       } else if (axiom.equalsIgnoreCase("type")) {
         axiomTypes.add(OWLClassAssertionAxiom.class);
-        // TODO: Make a-box, t-box, r-box
+      } else if (axiom.equalsIgnoreCase("abox")) {
+        axiomTypes.addAll(
+            AxiomType.ABoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("tbox")) {
+        axiomTypes.addAll(
+            AxiomType.TBoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
+      } else if (axiom.equalsIgnoreCase("rbox")) {
+        axiomTypes.addAll(
+            AxiomType.RBoxAxiomTypes.stream()
+                .map(AxiomType::getActualClass)
+                .collect(Collectors.toSet()));
       } else if (axiom.equalsIgnoreCase("declaration")) {
         axiomTypes.add(OWLDeclarationAxiom.class);
       } else {
@@ -405,8 +403,9 @@ public class CommandLineHelper {
    *
    * @param line the command line to use
    * @return an initialized IOHelper
+   * @throws IOException on issue creating IOHelper with given context
    */
-  public static IOHelper getIOHelper(CommandLine line) {
+  public static IOHelper getIOHelper(CommandLine line) throws IOException {
     IOHelper ioHelper;
     String prefixes = getOptionalValue(line, "prefixes");
     if (prefixes != null) {
@@ -776,14 +775,11 @@ public class CommandLineHelper {
       // This will be used any time `robot --version` is entered on command line
       String cls = CommandLineHelper.class.getName().replace(".", "/") + ".class";
       resource = CommandLineHelper.class.getClassLoader().getResource(cls);
-      String protocol;
-      try {
-        protocol = resource.getProtocol();
-      } catch (NullPointerException e) {
+      if (resource == null) {
         throw new IOException(
-            "Cannot access version information from JAR. The directory address has no protocol.");
+            "Cannot access version information from JAR. The resource does not exist.");
       }
-      if (protocol.equals("jar")) {
+      if (resource.getProtocol().equals("jar")) {
         // Get the JAR path and open as JAR file
         String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
         try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {

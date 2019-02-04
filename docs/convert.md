@@ -13,6 +13,20 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
   - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
   - ttl - [Turtle](https://www.w3.org/TR/turtle/)
 
+### Handling Compressed Files
+
+All ROBOT commands support [gzip](https://www.gzip.org/) format files ending with the extension `.gz`. Any of the above formats can be compressed as long as the output ends with `.gz` (format must be specified for a compressed output):
+
+	robot convert --input annotated.owl --format obo \
+	 --output results/annotated.obo.gz
+
+Gzip format files can also be used as input:
+
+	robot convert --input annotated.obo.gz \
+	 --output results/annotated.owl
+
+### Converting to OBO Format
+
 By default, the OBO writer strictly enforces [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4). If an ontology violates these, the convert to OBO operation will fail. These checks can be ignored by including `--check false`.
 
 As a document is converted to OBO, you may see `ERROR MASKING ERROR` exceptions. This does not indicate failure, but it should be noted that these axioms will not be translated to OBO format. Rather, they will be included in the ontology header under `owl-axioms`. See [Untranslatable OWL axioms](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.0.4) for more details.

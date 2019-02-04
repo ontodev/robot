@@ -71,6 +71,10 @@ The file provided for `--update` does not exist. Check the path and try again.
 
 You must specify a query to execute with `--query` or `--queries`.
 
+### Query Parse Error
+
+The query was not able to be parsed. Often, this is as a result of an undefined prefix in the query. See the error message for more details.
+
 ### Query Type Error
 
 Each SPARQL query should be a SELECT, ASK, DESCRIBE, or CONSTRUCT.

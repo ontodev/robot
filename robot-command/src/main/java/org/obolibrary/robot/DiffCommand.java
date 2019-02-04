@@ -1,8 +1,11 @@
 package org.obolibrary.robot;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
@@ -22,11 +25,8 @@ public class DiffCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "diff#";
 
-  private static final String doubleLeftError =
-      NS + "DOUBLE INPUT ERROR only one left ontology allowed";
-
-  private static final String doubleRightError =
-      NS + "DOUBLE INPUT ERROR only one right ontology allowed";
+  private static final String doubleInputError =
+      NS + "DOUBLE INPUT ERROR only one of each side (right/left) allowed";
 
   /** Error message when --left is not provided. */
   private static final String missingLeftError =
@@ -47,6 +47,7 @@ public class DiffCommand implements Command {
     o.addOption("r", "right", true, "load right ontology from file");
     o.addOption("R", "right-iri", true, "load right ontology from IRI");
     o.addOption("o", "output", true, "save results to file");
+    o.addOption(null, "labels", true, "if true, use labels in place of entity IRIs");
     options = o;
   }
 
@@ -120,36 +121,21 @@ public class DiffCommand implements Command {
     }
 
     OWLOntology leftOntology = null;
-    if (state != null && state.getOntology() != null) {
+    if (state.getOntology() != null) {
       leftOntology = state.getOntology();
     }
     if (leftOntology == null) {
       String leftOntologyPath = CommandLineHelper.getOptionalValue(line, "left");
       String leftOntologyIRI = CommandLineHelper.getOptionalValue(line, "left-iri");
-      if (leftOntologyPath != null && leftOntologyIRI != null) {
-        throw new IllegalArgumentException(doubleLeftError);
-      } else if (leftOntologyPath != null) {
-        leftOntology = ioHelper.loadOntology(leftOntologyPath);
-      } else if (leftOntologyIRI != null) {
-        leftOntology = ioHelper.loadOntology(IRI.create(leftOntologyIRI));
-      }
+      leftOntology = setOntology(ioHelper, leftOntologyPath, leftOntologyIRI);
     }
     if (leftOntology == null) {
       throw new IllegalArgumentException(missingLeftError);
     }
 
-    OWLOntology rightOntology = null;
-    if (rightOntology == null) {
-      String rightOntologyPath = CommandLineHelper.getOptionalValue(line, "right");
-      String rightOntologyIRI = CommandLineHelper.getOptionalValue(line, "right-iri");
-      if (rightOntologyPath != null && rightOntologyIRI != null) {
-        throw new IllegalArgumentException(doubleRightError);
-      } else if (rightOntologyPath != null) {
-        rightOntology = ioHelper.loadOntology(rightOntologyPath);
-      } else if (rightOntologyIRI != null) {
-        rightOntology = ioHelper.loadOntology(IRI.create(rightOntologyIRI));
-      }
-    }
+    String rightOntologyPath = CommandLineHelper.getOptionalValue(line, "right");
+    String rightOntologyIRI = CommandLineHelper.getOptionalValue(line, "right-iri");
+    OWLOntology rightOntology = setOntology(ioHelper, rightOntologyPath, rightOntologyIRI);
     if (rightOntology == null) {
       throw new IllegalArgumentException(missingRightError);
     }
@@ -162,10 +148,35 @@ public class DiffCommand implements Command {
       writer = new PrintWriter(System.out);
     }
 
-    DiffOperation.compare(leftOntology, rightOntology, writer);
+    Map<String, String> options = new HashMap<>();
+    options.put("labels", CommandLineHelper.getDefaultValue(line, "labels", "false"));
+
+    DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
     writer.flush();
     writer.close();
 
     return state;
+  }
+
+  /**
+   * Given an IOHelper, a path (or null), and an IRI (or null), return the OWLOntology loaded by
+   * either path or IRI. Either path or iri must be included (not null), but both cannot be
+   * included.
+   *
+   * @param ioHelper IOHelper to load ontology
+   * @param path path to local ontology, or null
+   * @param iri IRI to remote ontology, or null
+   * @return loaded OWLOntology
+   * @throws IOException on issue loading ontology
+   */
+  private static OWLOntology setOntology(IOHelper ioHelper, String path, String iri)
+      throws IOException {
+    if (path != null && iri != null) {
+      throw new IllegalArgumentException(doubleInputError);
+    } else if (path != null) {
+      return ioHelper.loadOntology(path);
+    } else if (iri != null) {
+      return ioHelper.loadOntology(IRI.create(iri));
+    } else return null;
   }
 }

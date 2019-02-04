@@ -73,7 +73,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/simple.owl");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
     assertEquals(6, reasoned.getAxiomCount());
     assertIdentical("/simple_hermit.owl", reasoned);
@@ -111,7 +111,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/simple.owl");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
     // see https://github.com/ontodev/robot/issues/80
     opts.put("create-new-ontology", "true");
@@ -135,7 +135,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
 
     // see https://github.com/ontodev/robot/issues/80
@@ -163,7 +163,7 @@ public class ReasonOperationTest extends CoreTest {
       throws IOException, OWLOntologyCreationException, OntologyLogicException,
           InvalidReferenceException {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.Reasoner.ReasonerFactory();
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
     opts.put("create-new-ontology", "true");
     opts.put("annotate-inferred-axioms", "true");
@@ -190,7 +190,7 @@ public class ReasonOperationTest extends CoreTest {
     ReasonOperation.reason(reasoned, reasonerFactory, Collections.emptyMap());
     assertIdentical("/redundant_subclasses.owl", reasoned);
 
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("remove-redundant-subclass-axioms", "true");
 
     reasoned = loadOntology("/redundant_subclasses.owl");
@@ -274,11 +274,12 @@ public class ReasonOperationTest extends CoreTest {
    * @throws InvalidReferenceException if a reference is invalid
    */
   @Test
-  public void testExternal()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testExternal() throws Exception {
     OWLOntology importOnt1 = loadOntology("/intersection.omn");
-    IRI oiri = importOnt1.getOntologyID().getOntologyIRI().get();
+    IRI oiri = importOnt1.getOntologyID().getOntologyIRI().orNull();
+    if (oiri == null) {
+      throw new Exception("Ontology 'intersection.omn' does not have an IRI");
+    }
     OWLOntology mainOnt = loadOntology("/simple.owl");
     OWLOntologyManager mgr = mainOnt.getOWLOntologyManager();
     OWLOntology importOnt = mgr.createOntology(oiri);

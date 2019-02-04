@@ -1,6 +1,8 @@
 # Reason
 
-One of the main benefits of working with OWL is the availability of powerful automated reasoners. There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using <a href="https://code.google.com/p/elk-reasoner/" target="_blank">ELK</a>, a very fast reasoner that supports the EL subset of OWL 2.
+One of the main benefits of working with OWL is the availability of powerful automated reasoners. Reasoning involves two steps: logical validation (described in detail below) and automatic classification. Automatic classification involves asserting all inferred superclasses.
+
+There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using <a href="https://code.google.com/p/elk-reasoner/" target="_blank">ELK</a>, a very fast reasoner that supports the EL subset of OWL 2.
 
     robot reason --reasoner ELK \
       --input ribosome.owl \
@@ -37,7 +39,7 @@ If no `--reasoner` is provided, ROBOT will default to ELK. The following other r
 
 ## Logical Validation
 
-ROBOT will always perform a logical validation check prior to reasoning. Formally, this is known as testing for *incoherency*, i.e. the presence of either a logical inconsistency or unsatisfiable classes. If either of these hold true, the reason operation will fail and robot will exit with a non-zero code, after reporting the problematic classes.
+ROBOT will always perform a logical validation check prior to automatic classification. Formally, this is known as testing for *incoherency*, i.e. the presence of either a logical inconsistency or unsatisfiable classes. If either of these hold true, the reason operation will fail and robot will exit with a non-zero code, after reporting the problematic classes.
 
 You can perform detailed debugging using an environment like Protege - load the ontology, switch on the reasoner and use the explain feature. For example, if you have unsatisfiable classes, find one of them (they should show up red) and click on the `?` where it says `EquivalentTo Nothing`.
 

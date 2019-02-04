@@ -7,7 +7,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /** A SAX DefaultHandler for reading OWL Catalog files. */
@@ -41,11 +40,9 @@ public class CatalogElementHandler extends DefaultHandler {
    * @param localName the local name of the start element
    * @param qName the qualified name of the start element
    * @param attributes the attributes object of the start element
-   * @throws SAXException on any problem
    */
   @Override
-  public void startElement(String uri, String localName, String qName, Attributes attributes)
-      throws SAXException {
+  public void startElement(String uri, String localName, String qName, Attributes attributes) {
     if (!"uri".equals(qName)) {
       return;
     }
@@ -55,10 +52,6 @@ public class CatalogElementHandler extends DefaultHandler {
       return;
     }
     IRI fromIRI = IRI.create(fromString);
-    if (fromIRI == null) {
-      return;
-    }
-
     String toString = attributes.getValue("uri");
     if (toString == null) {
       return;
@@ -69,7 +62,7 @@ public class CatalogElementHandler extends DefaultHandler {
     // then treat this as a "file://" IRI.
     // Otherwise treat this as web IRI.
     IRI toIRI = null;
-    if (parentFolder != null && toString.indexOf(":") < 0) {
+    if (parentFolder != null && !toString.contains(":")) {
       File toFile = new File(toString);
       if (!toFile.isAbsolute()) {
         toFile = new File(parentFolder, toString);

@@ -50,10 +50,6 @@ public class OptionsHelper {
     }
 
     value = value.trim().toLowerCase();
-    if (value.equals("true") || value.equals("yes")) {
-      return true;
-    }
-
-    return false;
+    return value.equals("true") || value.equals("yes");
   }
 }

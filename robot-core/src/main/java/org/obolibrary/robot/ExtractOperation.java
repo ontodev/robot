@@ -7,6 +7,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
@@ -38,9 +39,9 @@ public class ExtractOperation {
       throws OWLOntologyCreationException {
     logger.debug("Extracting...");
 
-    Set<OWLEntity> entities = new HashSet<OWLEntity>();
+    Set<OWLEntity> entities = new HashSet<>();
     for (IRI term : terms) {
-      entities.addAll(inputOntology.getEntitiesInSignature(term, true));
+      entities.addAll(inputOntology.getEntitiesInSignature(term, Imports.INCLUDED));
     }
 
     ModuleType type = moduleType;

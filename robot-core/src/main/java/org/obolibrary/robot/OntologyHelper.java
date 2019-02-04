@@ -1,16 +1,11 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.Sets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.base.Optional;
+import java.util.*;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.slf4j.Logger;
@@ -197,7 +192,7 @@ public class OntologyHelper {
     for (OWLAnnotationAssertionAxiom axiom : axioms) {
       if (annotationProperties == null || annotationProperties.contains(axiom.getProperty())) {
         // Copy the annotation property and then the axiom.
-        copy(inputOntology, outputOntology, (OWLEntity) axiom.getProperty(), annotationProperties);
+        copy(inputOntology, outputOntology, axiom.getProperty(), annotationProperties);
         outputManager.addAxiom(outputOntology, axiom);
       }
     }
@@ -229,6 +224,21 @@ public class OntologyHelper {
   }
 
   /**
+   * Get all OWLObjects from an input ontology.
+   *
+   * @param ontology OWLOntology to retrieve objects from
+   * @return set of objects
+   */
+  public static Set<OWLObject> getObjects(OWLOntology ontology) {
+    Set<OWLObject> objects = new HashSet<>();
+    // TODO - include or exclude imports?
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      objects.addAll(getObjects(axiom));
+    }
+    return objects;
+  }
+
+  /**
    * Get all OWLObjects associated with an axiom. This is builds on getSignature() by including
    * anonymous objects.
    *
@@ -236,8 +246,15 @@ public class OntologyHelper {
    * @return The set of objects
    */
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
-    Set<OWLObject> objects = new HashSet<>();
-    objects.addAll(axiom.getSignature());
+    Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
+
+    // Add annotations if the axiom is annotated
+    if (axiom.isAnnotated()) {
+      for (OWLAnnotation annotation : axiom.getAnnotations()) {
+        objects.add(annotation.getProperty());
+        objects.add(annotation.getValue());
+      }
+    }
 
     // The following are special cases
     // where there might be something anonymous that we want to include
@@ -257,12 +274,16 @@ public class OntologyHelper {
     } else if (axiom instanceof OWLNaryClassAxiom) {
       OWLNaryClassAxiom a = (OWLNaryClassAxiom) axiom;
       objects.addAll(a.getClassExpressions());
+    } else if (axiom instanceof OWLSameIndividualAxiom) {
+      OWLSameIndividualAxiom a = (OWLSameIndividualAxiom) axiom;
+      objects.addAll(a.getAnonymousIndividuals());
     } else if (axiom instanceof OWLNaryIndividualAxiom) {
       OWLNaryIndividualAxiom a = (OWLNaryIndividualAxiom) axiom;
       objects.addAll(a.getIndividuals());
     } else if (axiom instanceof OWLNaryPropertyAxiom) {
       OWLNaryPropertyAxiom a = (OWLNaryPropertyAxiom) axiom;
-      objects.addAll(a.getProperties());
+      objects.addAll(a.getDataPropertiesInSignature());
+      objects.addAll(a.getObjectPropertiesInSignature());
     } else if (axiom instanceof OWLNegativeObjectPropertyAssertionAxiom) {
       OWLNegativeObjectPropertyAssertionAxiom a = (OWLNegativeObjectPropertyAssertionAxiom) axiom;
       objects.addAll(a.getAnonymousIndividuals());
@@ -272,9 +293,6 @@ public class OntologyHelper {
     } else if (axiom instanceof OWLObjectPropertyAxiom) {
       OWLObjectPropertyAxiom a = (OWLObjectPropertyAxiom) axiom;
       objects.addAll(a.getNestedClassExpressions());
-    } else if (axiom instanceof OWLSameIndividualAxiom) {
-      OWLSameIndividualAxiom a = (OWLSameIndividualAxiom) axiom;
-      objects.addAll(a.getAnonymousIndividuals());
     } else if (axiom instanceof OWLSubClassOfAxiom) {
       OWLSubClassOfAxiom a = (OWLSubClassOfAxiom) axiom;
       objects.add(a.getSuperClass());
@@ -428,7 +446,7 @@ public class OntologyHelper {
 
   /**
    * Given an ontology and an entity, return a set of axioms containing any anonymous entities
-   * referenced in the descendants of the entity. Includes supers & equivalents.
+   * referenced in the descendants of the entity. Includes supers and equivalents.
    *
    * @param ontology the ontology to search
    * @param entity the entity to search descendants of
@@ -668,10 +686,9 @@ public class OntologyHelper {
    */
   public static Set<OWLAnnotationAssertionAxiom> getAnnotationAxioms(
       OWLOntology ontology, OWLAnnotationProperty property) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    Set<OWLAnnotationProperty> properties = new HashSet<>();
     properties.add(property);
-    Set<IRI> subjects = null;
-    return getAnnotationAxioms(ontology, properties, subjects);
+    return getAnnotationAxioms(ontology, properties, null);
   }
 
   /**
@@ -685,11 +702,11 @@ public class OntologyHelper {
    */
   public static Set<OWLAnnotationAssertionAxiom> getAnnotationAxioms(
       OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    Set<OWLAnnotationProperty> properties = new HashSet<>();
     properties.add(property);
     Set<IRI> subjects = null;
     if (subject != null) {
-      subjects = new HashSet<IRI>();
+      subjects = new HashSet<>();
       subjects.add(subject);
     }
     return getAnnotationAxioms(ontology, properties, subjects);
@@ -706,7 +723,7 @@ public class OntologyHelper {
    */
   public static Set<OWLAnnotationAssertionAxiom> getAnnotationAxioms(
       OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
-    Set<OWLAnnotationAssertionAxiom> results = new HashSet<OWLAnnotationAssertionAxiom>();
+    Set<OWLAnnotationAssertionAxiom> results = new HashSet<>();
 
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (!(axiom instanceof OWLAnnotationAssertionAxiom)) {
@@ -719,7 +736,7 @@ public class OntologyHelper {
       OWLAnnotationSubject subject = aaa.getSubject();
       if (subjects == null) {
         results.add(aaa);
-      } else if (subject instanceof IRI && subjects.contains((IRI) subject)) {
+      } else if (subject instanceof IRI && subjects.contains(subject)) {
         results.add(aaa);
       }
     }
@@ -738,9 +755,9 @@ public class OntologyHelper {
    */
   public static String getAnnotationString(
       OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    Set<OWLAnnotationProperty> properties = new HashSet<>();
     properties.add(property);
-    Set<IRI> subjects = new HashSet<IRI>();
+    Set<IRI> subjects = new HashSet<>();
     subjects.add(subject);
     return getAnnotationString(ontology, properties, subjects);
   }
@@ -758,7 +775,7 @@ public class OntologyHelper {
   public static String getAnnotationString(
       OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
     Set<String> valueSet = getAnnotationStrings(ontology, properties, subjects);
-    List<String> valueList = new ArrayList<String>(valueSet);
+    List<String> valueList = new ArrayList<>(valueSet);
     Collections.sort(valueList);
     String value = null;
     if (valueList.size() > 0) {
@@ -778,9 +795,9 @@ public class OntologyHelper {
    */
   public static Set<String> getAnnotationStrings(
       OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    Set<OWLAnnotationProperty> properties = new HashSet<>();
     properties.add(property);
-    Set<IRI> subjects = new HashSet<IRI>();
+    Set<IRI> subjects = new HashSet<>();
     subjects.add(subject);
     return getAnnotationStrings(ontology, properties, subjects);
   }
@@ -796,7 +813,7 @@ public class OntologyHelper {
    */
   public static Set<String> getAnnotationStrings(
       OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
-    Set<String> results = new HashSet<String>();
+    Set<String> results = new HashSet<>();
     Set<OWLAnnotationValue> values = getAnnotationValues(ontology, properties, subjects);
     for (OWLAnnotationValue value : values) {
       results.add(getValue(value));
@@ -815,9 +832,9 @@ public class OntologyHelper {
    */
   public static Set<OWLAnnotationValue> getAnnotationValues(
       OWLOntology ontology, OWLAnnotationProperty property, IRI subject) {
-    Set<OWLAnnotationProperty> properties = new HashSet<OWLAnnotationProperty>();
+    Set<OWLAnnotationProperty> properties = new HashSet<>();
     properties.add(property);
-    Set<IRI> subjects = new HashSet<IRI>();
+    Set<IRI> subjects = new HashSet<>();
     subjects.add(subject);
     return getAnnotationValues(ontology, properties, subjects);
   }
@@ -833,7 +850,7 @@ public class OntologyHelper {
    */
   public static Set<OWLAnnotationValue> getAnnotationValues(
       OWLOntology ontology, Set<OWLAnnotationProperty> properties, Set<IRI> subjects) {
-    Set<OWLAnnotationValue> results = new HashSet<OWLAnnotationValue>();
+    Set<OWLAnnotationValue> results = new HashSet<>();
     Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(ontology, properties, subjects);
     for (OWLAnnotationAssertionAxiom axiom : axioms) {
       results.add(axiom.getValue());
@@ -896,13 +913,16 @@ public class OntologyHelper {
       return entities;
     }
     for (IRI iri : iris) {
+      OWLEntity entity;
       try {
-        OWLEntity entity = getEntity(ontology, iri, true);
-        if (entity != null) {
-          // Do not add null entries
-          entities.add(entity);
-        }
+        entity = getEntity(ontology, iri, true);
       } catch (Exception e) {
+        // This block shouldn't get hit, but just in case, skip this entity
+        entity = null;
+      }
+      if (entity != null) {
+        // Do not add null entries
+        entities.add(entity);
       }
     }
     return entities;
@@ -928,7 +948,7 @@ public class OntologyHelper {
    * @return a set of IRIs for all entities in the ontology
    */
   public static Set<IRI> getIRIs(OWLOntology ontology) {
-    Set<IRI> iris = new HashSet<IRI>();
+    Set<IRI> iris = new HashSet<>();
     for (OWLEntity entity : getEntities(ontology)) {
       iris.add(entity.getIRI());
     }
@@ -974,7 +994,7 @@ public class OntologyHelper {
    * @return a map from label strings to IRIs
    */
   public static Map<String, IRI> getLabelIRIs(OWLOntology ontology) {
-    Map<String, IRI> results = new HashMap<String, IRI>();
+    Map<String, IRI> results = new HashMap<>();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
     Set<OWLAnnotationAssertionAxiom> axioms = getAnnotationAxioms(ontology, rdfsLabel);
@@ -984,7 +1004,7 @@ public class OntologyHelper {
         continue;
       }
       OWLAnnotationSubject subject = axiom.getSubject();
-      if (subject == null || !(subject instanceof IRI)) {
+      if (!(subject instanceof IRI)) {
         continue;
       }
       if (results.containsKey(value)) {
@@ -1004,10 +1024,10 @@ public class OntologyHelper {
    */
   public static Map<IRI, String> getLabels(OWLOntology ontology) {
     logger.info("Fetching labels for " + ontology.getOntologyID());
-    Map<IRI, String> results = new HashMap<IRI, String>();
+    Map<IRI, String> results = new HashMap<>();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
-    Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+    Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
     ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
     logger.info("iterating through entities...");
@@ -1092,7 +1112,7 @@ public class OntologyHelper {
    */
   public static String getValue(Set<OWLAnnotation> annotations) {
     Set<String> valueSet = getValues(annotations);
-    List<String> valueList = new ArrayList<String>(valueSet);
+    List<String> valueList = new ArrayList<>(valueSet);
     Collections.sort(valueList);
     String value = null;
     if (valueList.size() > 0) {
@@ -1108,7 +1128,7 @@ public class OntologyHelper {
    * @return a set of the value strings
    */
   public static Set<String> getValues(Set<OWLAnnotation> annotations) {
-    Set<String> results = new HashSet<String>();
+    Set<String> results = new HashSet<>();
     for (OWLAnnotation annotation : annotations) {
       String value = getValue(annotation);
       if (value != null) {
@@ -1154,15 +1174,15 @@ public class OntologyHelper {
     return false;
   }
 
-  public static void removeImports(OWLOntology ontology) throws Exception {
+  /**
+   * Given an ontology, remove the import declarations.
+   *
+   * @param ontology OWLOntology to remove imports from
+   */
+  public static void removeImports(OWLOntology ontology) {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    for (OWLOntology i : ontology.getImports()) {
-      IRI iri = i.getOntologyID().getOntologyIRI().orNull();
-      if (iri == null) {
-        throw new Exception(nullIRIError);
-      }
-      manager.applyChange(
-          new RemoveImport(ontology, manager.getOWLDataFactory().getOWLImportsDeclaration(iri)));
+    for (OWLImportsDeclaration i : ontology.getImportsDeclarations()) {
+      manager.applyChange(new RemoveImport(ontology, i));
     }
   }
 
@@ -1212,22 +1232,25 @@ public class OntologyHelper {
   public static void setOntologyIRI(OWLOntology ontology, IRI ontologyIRI, IRI versionIRI) {
     OWLOntologyID currentID = ontology.getOntologyID();
 
+    // Get rid of optionals when changing to OWLAPI 5
+    Optional<IRI> ont;
+    Optional<IRI> version;
+
     if (ontologyIRI == null && versionIRI == null) {
       // don't change anything
       return;
     } else if (ontologyIRI == null) {
-      ontologyIRI = currentID.getOntologyIRI().orNull();
+      ont = currentID.getOntologyIRI();
+      version = Optional.of(versionIRI);
     } else if (versionIRI == null) {
-      versionIRI = currentID.getVersionIRI().orNull();
-    }
-
-    OWLOntologyID newID;
-    if (versionIRI == null) {
-      newID = new OWLOntologyID(ontologyIRI);
+      version = currentID.getVersionIRI();
+      ont = Optional.of(ontologyIRI);
     } else {
-      newID = new OWLOntologyID(ontologyIRI, versionIRI);
+      ont = Optional.of(ontologyIRI);
+      version = Optional.of(versionIRI);
     }
 
+    OWLOntologyID newID = new OWLOntologyID(ont, version);
     SetOntologyID setID = new SetOntologyID(ontology, newID);
     ontology.getOWLOntologyManager().applyChange(setID);
   }
@@ -1253,9 +1276,9 @@ public class OntologyHelper {
         }
       }
     }
-    Set<OWLAxiom> axioms =
-        RelatedObjectsHelper.getPartialAxioms(
-            ontology, trimObjects, Sets.newHashSet(OWLAxiom.class));
+    Set<Class<? extends OWLAxiom>> type = new HashSet<>();
+    type.add(OWLAxiom.class);
+    Set<OWLAxiom> axioms = RelatedObjectsHelper.getPartialAxioms(ontology, trimObjects, type);
     manager.removeAxioms(ontology, axioms);
   }
 }

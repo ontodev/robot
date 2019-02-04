@@ -18,16 +18,25 @@ public class OntologyHelperTest extends CoreTest {
   /**
    * Test changing an ontology IRI.
    *
-   * @throws IOException on file problem
+   * @throws Exception on any problem
    */
   @Test
-  public void testSetOntologyIRI() throws IOException {
+  public void testSetOntologyIRI() throws Exception {
     OWLOntology simple = loadOntology("/simple.owl");
     OntologyHelper.setOntologyIRI(simple, "http://ontology.iri", "http://version.iri");
 
-    assertEquals(
-        "http://ontology.iri", simple.getOntologyID().getOntologyIRI().orNull().toString());
-    assertEquals("http://version.iri", simple.getOntologyID().getVersionIRI().orNull().toString());
+    IRI ontologyIRI = simple.getOntologyID().getOntologyIRI().orNull();
+    IRI versionIRI = simple.getOntologyID().getVersionIRI().orNull();
+    if (ontologyIRI != null) {
+      assertEquals("http://ontology.iri", ontologyIRI.toString());
+    } else {
+      throw new Exception(String.format("Ontology IRI for %s does not exist.", "/simple.owl"));
+    }
+    if (versionIRI != null) {
+      assertEquals("http://version.iri", versionIRI.toString());
+    } else {
+      throw new Exception(String.format("Version IRI for %s does not exist.", "/simple.owl"));
+    }
   }
 
   /**
@@ -42,7 +51,7 @@ public class OntologyHelperTest extends CoreTest {
     OWLDataFactory df = simple.getOWLOntologyManager().getOWLDataFactory();
     Set<String> actual = OntologyHelper.getAnnotationStrings(simple, df.getRDFSLabel(), iri);
 
-    Set<String> expected = new HashSet<String>();
+    Set<String> expected = new HashSet<>();
     expected.add("Test 1");
     expected.add("test one");
     assertEquals(expected, actual);
@@ -56,7 +65,7 @@ public class OntologyHelperTest extends CoreTest {
   @Test
   public void testGetLabels() throws IOException {
     OWLOntology simple = loadOntology("/simple.owl");
-    Map<IRI, String> expected = new HashMap<IRI, String>();
+    Map<IRI, String> expected = new HashMap<>();
     expected.put(IRI.create(base + "simple.owl#test1"), "Test 1");
     Map<IRI, String> actual = OntologyHelper.getLabels(simple);
     assertEquals(expected, actual);
@@ -70,7 +79,7 @@ public class OntologyHelperTest extends CoreTest {
   @Test
   public void testGetLabelIRIs() throws IOException {
     OWLOntology simple = loadOntology("/simple.owl");
-    Map<String, IRI> expected = new HashMap<String, IRI>();
+    Map<String, IRI> expected = new HashMap<>();
     expected.put("Test 1", IRI.create(base + "simple.owl#test1"));
     expected.put("test one", IRI.create(base + "simple.owl#test1"));
     Map<String, IRI> actual = OntologyHelper.getLabelIRIs(simple);
@@ -91,7 +100,7 @@ public class OntologyHelperTest extends CoreTest {
 
     // Add plain literal
     OntologyHelper.addOntologyAnnotation(
-        simple, ioHelper.createIRI(base + "foo"), ioHelper.createLiteral("FOO"));
+        simple, ioHelper.createIRI(base + "foo"), IOHelper.createLiteral("FOO"));
     assertEquals(1, simple.getAnnotations().size());
 
     OWLAnnotation annotation = simple.getAnnotations().iterator().next();

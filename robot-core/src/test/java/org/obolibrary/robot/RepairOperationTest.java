@@ -18,7 +18,7 @@ public class RepairOperationTest extends CoreTest {
   public void testRepair() throws IOException, OWLOntologyCreationException {
     OWLOntology ontology = loadOntology("/need-of-repair.owl");
     IOHelper iohelper = new IOHelper();
-    RepairOperation.repair(ontology, iohelper);
+    RepairOperation.repair(ontology, iohelper, true);
     iohelper.saveOntology(ontology, "target/foo.owl");
     assertIdentical("/repaired.owl", ontology);
   }

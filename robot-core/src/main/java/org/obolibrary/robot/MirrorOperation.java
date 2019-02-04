@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import com.google.common.base.Optional;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,21 +44,21 @@ public class MirrorOperation {
       validateImports(ont);
 
       OWLOntologyID ontologyID = ont.getOntologyID();
-      Optional<IRI> ontologyIRI = ontologyID.getOntologyIRI();
+      IRI ontologyIRI = ontologyID.getOntologyIRI().orNull();
 
       // Not really sure why this is here, but apparently we can get
       // an ontology without an IRI, in which case we'll generate one
       // that is 'sort of' unique (only fails if two different machines
       // run this tool at the exact same time).
       //
-      if (!ontologyIRI.isPresent()) {
-        ontologyIRI = Optional.of(IRI.generateDocumentIRI());
+      if (ontologyIRI == null) {
+        ontologyIRI = IRI.generateDocumentIRI();
       }
       // Always write the actualIRI
-      String localFilePath = getMirrorPathOfOntologyIRI(ontologyIRI.get());
+      String localFilePath = getMirrorPathOfOntologyIRI(ontologyIRI);
       IRI outputStream = IRI.create(new File(baseFolder, localFilePath));
       ont.getOWLOntologyManager().saveOntology(ont, outputStream);
-      iriMap.put(ontologyIRI.get(), localFilePath);
+      iriMap.put(ontologyIRI, localFilePath);
 
       //
       // In case there is a difference between the source document IRI
@@ -74,8 +73,8 @@ public class MirrorOperation {
       //
 
       IRI documentIRI = ont.getOWLOntologyManager().getOntologyDocumentIRI(ont);
-      if (!documentIRI.toString().startsWith("file:") && documentIRI != ontologyIRI.get()) {
-        String sourceLocalFile = getMirrorPathOfOntologyIRI(ontologyIRI.get());
+      if (!documentIRI.toString().startsWith("file:") && documentIRI != ontologyIRI) {
+        String sourceLocalFile = getMirrorPathOfOntologyIRI(ontologyIRI);
         logger.info("Mirroring " + documentIRI + " in " + sourceLocalFile);
         iriMap.put(documentIRI, sourceLocalFile);
       }
@@ -91,7 +90,7 @@ public class MirrorOperation {
    * @throws IOException on any problem.
    */
   public static void writeCatalog(File catalogFile, Map<IRI, String> iriMap) throws IOException {
-    List<String> lines = new ArrayList<String>();
+    List<String> lines = new ArrayList<>();
     lines.add("<?xml version=\"1.0\" encoding=\"UTF-8\" " + "standalone=\"no\"?>");
     lines.add(
         "<catalog prefer=\"public\" xmlns=\"urn:oasis:names:tc:entity" + ":xmlns:xml:catalog\">");
