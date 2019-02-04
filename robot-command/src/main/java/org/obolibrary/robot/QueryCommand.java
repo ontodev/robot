@@ -3,14 +3,18 @@ package org.obolibrary.robot;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +29,9 @@ public class QueryCommand implements Command {
 
   /** Namespace for error messages. */
   private static final String NS = "query#";
+
+  /** Error message when update file provided does not exist. */
+  private static final String missingFileError = NS + "MISSING FILE ERROR file '%s' does not exist";
 
   /** Error message when a query is not provided */
   private static final String missingQueryError =
@@ -43,8 +50,10 @@ public class QueryCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("f", "format", true, "the query result format: CSV, TSV," + " TTL, JSONLD, etc.");
+    o.addOption("o", "output", true, "save updated ontology to a file");
     o.addOption("O", "output-dir", true, "Directory for output");
     o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
+    o.addOption("u", "update", true, "run a SPARQL UPDATE");
 
     Option opt;
 
@@ -135,14 +144,51 @@ public class QueryCommand implements Command {
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology inputOntology = state.getOntology();
+
+    // If an update(s) are provided, run then return the OWLOntology
+    List<String> updatePaths = CommandLineHelper.getOptionalValues(line, "update");
+    if (!updatePaths.isEmpty()) {
+      Map<String, String> updates = new LinkedHashMap<>();
+      for (String updatePath : updatePaths) {
+        File f = new File(updatePath);
+        if (!f.exists()) {
+          throw new Exception(String.format(missingFileError, updatePath));
+        }
+        updates.put(f.getPath(), FileUtils.readFileToString(f));
+      }
+
+      // Load the ontology as a model, ignoring imports
+      Model model = QueryOperation.loadOntologyAsModel(inputOntology);
+
+      // Execute the updates
+      for (Map.Entry<String, String> update : updates.entrySet()) {
+        logger.debug(String.format("Running update '%s'", update.getKey()));
+        QueryOperation.execUpdate(model, update.getValue());
+      }
+
+      OWLOntology outputOntology = QueryOperation.convertModel(model);
+
+      // If the input ontology had imports, maintain them
+      if (inputOntology.getImports().size() > 0) {
+        OWLOntologyManager manager = inputOntology.getOWLOntologyManager();
+        for (OWLImportsDeclaration importsDeclaration : inputOntology.getImportsDeclarations()) {
+          manager.applyChange(new AddImport(outputOntology, importsDeclaration));
+        }
+      }
+
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
 
     // Determine what to do with the imports and create a new dataset
     boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset;
     if (useGraphs) {
-      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), true);
+      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, true);
     } else {
-      dataset = QueryOperation.loadOntologyAsDataset(state.getOntology(), false);
+      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, false);
     }
 
     // Collect all queries as (queryPath, outputPath) pairs.
