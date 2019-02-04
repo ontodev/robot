@@ -59,6 +59,8 @@ You can perform multiple updates in one command to reduce time spent loading and
 
 The `--update` option only updates the ontology itself, not any of the imports.
 
+**Warning:** The output of SPARQL updates will not include `xsd:string` datatypes, because `xsd:string` is considered implicit in RDF version 1.1. This behaviour differs from other ROBOT commands, where `xsd:string` datatypes from the input are maintained in the output.
+
 ---
 
 ## Error Messages
