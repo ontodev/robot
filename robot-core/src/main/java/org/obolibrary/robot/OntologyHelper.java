@@ -166,6 +166,7 @@ public class OntologyHelper {
       return;
     }
 
+    // Add declaration
     OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
     if (entity.isOWLAnnotationProperty()) {
       outputManager.addAxiom(
@@ -187,6 +188,7 @@ public class OntologyHelper {
           outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLNamedIndividual()));
     }
 
+    // Copy the axioms
     Set<OWLAnnotationAssertionAxiom> axioms =
         inputOntology.getAnnotationAssertionAxioms(entity.getIRI());
     for (OWLAnnotationAssertionAxiom axiom : axioms) {

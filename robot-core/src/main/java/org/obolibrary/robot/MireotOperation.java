@@ -2,19 +2,10 @@ package org.obolibrary.robot;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
@@ -36,6 +27,9 @@ public class MireotOperation {
 
   /** Shared data factory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
+
+  /** RDFS isDefinedBy annotation property. */
+  private static OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
 
   /**
    * Get a set of default annotation properties. Currenly includes only RDFS label.
@@ -66,6 +60,32 @@ public class MireotOperation {
       Set<IRI> lowerIRIs,
       Set<OWLAnnotationProperty> annotationProperties)
       throws OWLOntologyCreationException {
+    return getAncestors(inputOntology, upperIRIs, lowerIRIs, annotationProperties, false, null);
+  }
+
+  /**
+   * Given an ontology, a set of upper-level IRIs, a set of lower-level IRIs, a set of annotation
+   * properties, and a boolean indiciating if rdfs:isDefinedBy should be added to copied classes,
+   * return a new ontology with just the named ancestors of those terms, their subclass relations,
+   * and the selected annotations. The input ontology is not changed.
+   *
+   * @param inputOntology the ontology to extract from
+   * @param upperIRIs ancestors will be copied up to and including these terms
+   * @param lowerIRIs copy these terms and their superclasses
+   * @param annotationProperties the annotation properties to copy; if null, all will be copied
+   * @param annotateSource if true, annotate copied classes with rdfs:isDefinedBy
+   * @param sourceMap map of term IRI to source IRI
+   * @return a new ontology with the target terms and their named ancestors
+   * @throws OWLOntologyCreationException on problems creating new ontology
+   */
+  public static OWLOntology getAncestors(
+      OWLOntology inputOntology,
+      Set<IRI> upperIRIs,
+      Set<IRI> lowerIRIs,
+      Set<OWLAnnotationProperty> annotationProperties,
+      boolean annotateSource,
+      Map<IRI, IRI> sourceMap)
+      throws OWLOntologyCreationException {
     logger.debug("Extract with MIREOT ...");
 
     OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
@@ -79,15 +99,27 @@ public class MireotOperation {
     Set<OWLEntity> upperEntities = OntologyHelper.getEntities(inputOntology, upperIRIs);
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
+      if (annotateSource) {
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+      }
     }
 
     Set<OWLEntity> lowerEntities = OntologyHelper.getEntities(inputOntology, lowerIRIs);
     for (OWLEntity entity : lowerEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
+      if (annotateSource) {
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+      }
       copyAncestors(
-          reasoner, inputOntology, outputOntology, upperEntities, entity, annotationProperties);
+          reasoner,
+          inputOntology,
+          outputOntology,
+          upperEntities,
+          entity,
+          annotationProperties,
+          annotateSource,
+          sourceMap);
     }
-
     return outputOntology;
   }
 
@@ -103,6 +135,7 @@ public class MireotOperation {
    * @param upperEntities the top level of entities, or null
    * @param entity the target entity that will have its ancestors copied
    * @param annotationProperties the annotations to copy, or null for all
+   * @param annotateSource if true, annotate copied classes with rdfs:isDefinedBy
    */
   private static void copyAncestors(
       OWLReasoner reasoner,
@@ -110,7 +143,9 @@ public class MireotOperation {
       OWLOntology outputOntology,
       Set<OWLEntity> upperEntities,
       OWLEntity entity,
-      Set<OWLAnnotationProperty> annotationProperties) {
+      Set<OWLAnnotationProperty> annotationProperties,
+      boolean annotateSource,
+      Map<IRI, IRI> sourceMap) {
     OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
 
     // If this is an upperEntity, copy it and return.
@@ -133,7 +168,9 @@ public class MireotOperation {
             outputOntology,
             upperEntities,
             superclass,
-            annotationProperties);
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> superproperies =
@@ -150,7 +187,9 @@ public class MireotOperation {
             outputOntology,
             upperEntities,
             superproperty,
-            annotationProperties);
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
     } else if (entity.isOWLObjectProperty()) {
       Set<OWLObjectPropertyExpression> superproperies =
@@ -171,7 +210,9 @@ public class MireotOperation {
             outputOntology,
             upperEntities,
             superproperty,
-            annotationProperties);
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
     } else if (entity.isOWLDataProperty()) {
       Set<OWLDataProperty> superproperies =
@@ -187,8 +228,15 @@ public class MireotOperation {
             outputOntology,
             upperEntities,
             superproperty,
-            annotationProperties);
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
+    }
+
+    // Annotate with rdfs:isDefinedBy (maybe)
+    if (annotateSource) {
+      maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
     }
   }
 
@@ -208,6 +256,29 @@ public class MireotOperation {
       Set<IRI> upperIRIs,
       Set<OWLAnnotationProperty> annotationProperties)
       throws OWLOntologyCreationException {
+    return getDescendants(inputOntology, upperIRIs, annotationProperties, false, null);
+  }
+
+  /**
+   * Given an ontology, a set of upper-level IRIs, and a set of annotation properties, return a new
+   * ontology with just those terms and their named descendants, their subclass relations, and the
+   * selected annotations. The input ontology is not changed.
+   *
+   * @param inputOntology the ontology to extract from
+   * @param upperIRIs these terms and their descendants will be copied
+   * @param annotationProperties the annotation properties to copy; if null, all will be copied
+   * @param annotateSource if true, annotate copied classes with rdfs:isDefinedBy
+   * @param sourceMap map of term IRI to source IRI
+   * @return a new ontology with the target terms and their named ancestors
+   * @throws OWLOntologyCreationException on problems creating new ontology
+   */
+  public static OWLOntology getDescendants(
+      OWLOntology inputOntology,
+      Set<IRI> upperIRIs,
+      Set<OWLAnnotationProperty> annotationProperties,
+      boolean annotateSource,
+      Map<IRI, IRI> sourceMap)
+      throws OWLOntologyCreationException {
     logger.debug("Extract with MIREOT ...");
 
     OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
@@ -219,7 +290,17 @@ public class MireotOperation {
     Set<OWLEntity> upperEntities = OntologyHelper.getEntities(inputOntology, upperIRIs);
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
-      copyDescendants(reasoner, inputOntology, outputOntology, entity, annotationProperties);
+      if (annotateSource) {
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+      }
+      copyDescendants(
+          reasoner,
+          inputOntology,
+          outputOntology,
+          entity,
+          annotationProperties,
+          annotateSource,
+          sourceMap);
     }
 
     return outputOntology;
@@ -236,16 +317,18 @@ public class MireotOperation {
    * @param outputOntology the ontology to copy to
    * @param entity the target entity that will have its descendants copied
    * @param annotationProperties the annotations to copy, or null for all
+   * @param annotateSource if true, annotate copied classes with rdfs:isDefinedBy
    */
   private static void copyDescendants(
       OWLReasoner reasoner,
       OWLOntology inputOntology,
       OWLOntology outputOntology,
       OWLEntity entity,
-      Set<OWLAnnotationProperty> annotationProperties) {
+      Set<OWLAnnotationProperty> annotationProperties,
+      boolean annotateSource,
+      Map<IRI, IRI> sourceMap) {
     OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
 
-    // Otherwise copy descendants recursively.
     if (entity.isOWLClass()) {
       Set<OWLClass> subclasses = reasoner.getSubClasses(entity.asOWLClass(), true).getFlattened();
       for (OWLClass subclass : subclasses) {
@@ -255,7 +338,14 @@ public class MireotOperation {
         OntologyHelper.copy(inputOntology, outputOntology, subclass, annotationProperties);
         outputManager.addAxiom(
             outputOntology, dataFactory.getOWLSubClassOfAxiom(subclass, entity.asOWLClass()));
-        copyDescendants(reasoner, inputOntology, outputOntology, subclass, annotationProperties);
+        copyDescendants(
+            reasoner,
+            inputOntology,
+            outputOntology,
+            subclass,
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> subproperies =
@@ -266,7 +356,14 @@ public class MireotOperation {
             outputOntology,
             dataFactory.getOWLSubAnnotationPropertyOfAxiom(
                 subproperty, entity.asOWLAnnotationProperty()));
-        copyDescendants(reasoner, inputOntology, outputOntology, subproperty, annotationProperties);
+        copyDescendants(
+            reasoner,
+            inputOntology,
+            outputOntology,
+            subproperty,
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
     } else if (entity.isOWLObjectProperty()) {
       Set<OWLObjectPropertyExpression> subproperies =
@@ -280,7 +377,14 @@ public class MireotOperation {
         outputManager.addAxiom(
             outputOntology,
             dataFactory.getOWLSubObjectPropertyOfAxiom(subproperty, entity.asOWLObjectProperty()));
-        copyDescendants(reasoner, inputOntology, outputOntology, subproperty, annotationProperties);
+        copyDescendants(
+            reasoner,
+            inputOntology,
+            outputOntology,
+            subproperty,
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
     } else if (entity.isOWLDataProperty()) {
       Set<OWLDataProperty> subproperies =
@@ -290,8 +394,38 @@ public class MireotOperation {
         outputManager.addAxiom(
             outputOntology,
             dataFactory.getOWLSubDataPropertyOfAxiom(subproperty, entity.asOWLDataProperty()));
-        copyDescendants(reasoner, inputOntology, outputOntology, subproperty, annotationProperties);
+        copyDescendants(
+            reasoner,
+            inputOntology,
+            outputOntology,
+            subproperty,
+            annotationProperties,
+            annotateSource,
+            sourceMap);
       }
+    }
+
+    // Annotate with rdfs:isDefinedBy (maybe)
+    if (annotateSource) {
+      maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+    }
+  }
+
+  /**
+   * Given an ontology, a manager for that ontology, an entity to annotate, and a map of source
+   * replacements, add the rdfs:isDefinedBy annotation to the entity.
+   *
+   * @param ontology OWLOntology to add annotation in
+   * @param manager OWLManager for the ontology
+   * @param entity OWLEntity to add annotation on
+   * @param sourceMap term-to-source map
+   */
+  private static void maybeAnnotateSource(
+      OWLOntology ontology, OWLOntologyManager manager, OWLEntity entity, Map<IRI, IRI> sourceMap) {
+    Set<OWLAnnotationValue> existingValues =
+        OntologyHelper.getAnnotationValues(ontology, isDefinedBy, entity.getIRI());
+    if (existingValues == null || existingValues.size() == 0) {
+      manager.addAxiom(ontology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
     }
   }
 }

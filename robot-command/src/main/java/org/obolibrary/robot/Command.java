@@ -8,6 +8,10 @@ import org.apache.commons.cli.Options;
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public interface Command {
+
+  String global = "global#";
+  String missingFileError = global + "MISSING FILE ERROR file '%s' for '%s' does not exist";
+
   /**
    * Name of the command.
    *
