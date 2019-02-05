@@ -47,6 +47,8 @@ Relation type selections provide the ability to select which terms to remove bas
 6. `equivalents`
 7. `types`
 8. `instances`
+9. `domains`
+10. `ranges`
 
 #### Entity Types
 

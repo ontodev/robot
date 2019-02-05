@@ -14,6 +14,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.Lang;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 /**
@@ -103,6 +104,29 @@ public class QueryOperationTest extends CoreTest {
     Property p = ResourceFactory.createProperty("http://purl.obolibrary.org/obo/BFO_0000050");
     RDFNode o = ResourceFactory.createResource("http://purl.obolibrary.org/obo/UBERON_0000467");
     assertTrue(model.contains(s, p, o));
+  }
+
+  /**
+   * Tests an update statement that adds a label.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyStorageException on ontology error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  @Test
+  public void testExecUpdate()
+      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
+    OWLOntology inputOntology = loadOntology("/simple.owl");
+    Model model = QueryOperation.loadOntologyAsModel(inputOntology);
+    String updateString =
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+            + "PREFIX s: <https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#>"
+            + "INSERT { "
+            + "s:test2 rdfs:label \"test 2\" ."
+            + " } WHERE {}";
+    QueryOperation.execUpdate(model, updateString);
+    OWLOntology outputOntology = QueryOperation.convertModel(model);
+    assertIdentical("/simple_update.owl", outputOntology);
   }
 
   /**
