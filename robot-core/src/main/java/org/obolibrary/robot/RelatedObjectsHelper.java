@@ -86,6 +86,11 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    if (axiomTypes == null) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
+    }
+
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
@@ -137,6 +142,10 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    if (axiomTypes == null) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
+    }
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {

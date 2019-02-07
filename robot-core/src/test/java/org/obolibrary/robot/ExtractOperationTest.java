@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.*;
-import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
 /**
  * Tests non-MIREOT extraction operations.
@@ -21,37 +20,61 @@ public class ExtractOperationTest extends CoreTest {
   /**
    * Tests STAR.
    *
-   * @throws IOException on IO error
-   * @throws OWLOntologyCreationException on ontology error
+   * @throws Exception on any issue
    */
   @Test
-  public void testExtractStar() throws IOException, OWLOntologyCreationException {
+  public void testExtractStar() throws Exception {
+    Map<String, String> options = new HashMap<>();
+    options.put("method", "star");
+    testExtract("/star.owl", options);
+  }
 
-    testExtract(ModuleType.STAR, "/star.owl");
+  /**
+   * Tests minimal intermediates with STAR.
+   *
+   * @throws Exception on any issue
+   */
+  @Test
+  public void testExtractMinimal() throws Exception {
+    Map<String, String> options = new HashMap<>();
+    options.put("intermediates", "minimal");
+    testExtract("/star-minimal.owl", options);
+  }
+
+  /**
+   * Tests no intermediates with STAR.
+   *
+   * @throws Exception on any issue
+   */
+  @Test
+  public void testExtractNone() throws Exception {
+    Map<String, String> options = new HashMap<>();
+    options.put("intermediates", "none");
+    testExtract("/none.owl", options);
   }
 
   /**
    * Tests BOT.
    *
-   * @throws IOException on IO error
-   * @throws OWLOntologyCreationException on ontology error
+   * @throws Exception on any issue
    */
   @Test
-  public void testExtractBot() throws IOException, OWLOntologyCreationException {
-
-    testExtract(ModuleType.BOT, "/bot.owl");
+  public void testExtractBot() throws Exception {
+    Map<String, String> options = new HashMap<>();
+    options.put("method", "bot");
+    testExtract("/bot.owl", options);
   }
 
   /**
    * Tests TOP.
    *
-   * @throws IOException on IO error
-   * @throws OWLOntologyCreationException on ontology error
+   * @throws Exception on any issue
    */
   @Test
-  public void testExtractTop() throws IOException, OWLOntologyCreationException {
-
-    testExtract(ModuleType.TOP, "/top.owl");
+  public void testExtractTop() throws Exception {
+    Map<String, String> options = new HashMap<>();
+    options.put("method", "top");
+    testExtract("/top.owl", options);
   }
 
   /** Tests getting the source annotation based on IRI of the entity. */
@@ -97,20 +120,19 @@ public class ExtractOperationTest extends CoreTest {
    * Tests a generic non-MIREOT (i.e. SLME) extraction operation using a custom module type and a
    * pre-generated OWL file to compare against.
    *
-   * @param moduleType type for the extraction
    * @param expectedPath path to the known-good file for comparison
    * @throws IOException on IO error
    * @throws OWLOntologyCreationException on ontology error
    */
-  public void testExtract(ModuleType moduleType, String expectedPath)
-      throws IOException, OWLOntologyCreationException {
+  public void testExtract(String expectedPath, Map<String, String> options) throws Exception {
     OWLOntology simple = loadOntology("/filtered.owl");
 
     IRI outputIRI = IRI.create("http://purl.obolibrary.org/obo/uberon.owl");
 
     Set<IRI> terms =
         Collections.singleton(IRI.create("http://purl.obolibrary.org/obo/UBERON_0001235"));
-    OWLOntology module = ExtractOperation.extract(simple, terms, outputIRI, moduleType);
+    OWLOntology module =
+        ExtractOperation.extract(simple, new IOHelper(), terms, outputIRI, options);
 
     OWLOntology expected = loadOntology(expectedPath);
     removeDeclarations(expected);

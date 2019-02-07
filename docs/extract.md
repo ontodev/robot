@@ -49,7 +49,7 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
-## Ontology Annotations
+### Ontology Annotations
 
 You can also include ontology annotations from the input ontology with `--copy-ontology-annotations true`. By default, this is false.
 
@@ -59,7 +59,7 @@ You can also include ontology annotations from the input ontology with `--copy-o
       --copy-ontology-annotations true \
       --output results/annotated_module.owl
       
-## Source Annotations
+### Source Annotations
 
 `extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`. If the term already has an annotation using this property, the existing annotation will be copied and no new annotation will be added.
 
@@ -73,7 +73,8 @@ The object of the property is, by default, the base name of the term's IRI. For 
 
 Sometimes classes are adopted by other ontologies, but retain their original IRI. In this case, you can provide the path to a [term-to-source mapping file](/examples/source-map.tsv) as CSV or TSV.
 
-    robot --prefix 'GO: http://purl.obolibrary.org/obo/GO_' extract --method BOT \
+    robot --prefix 'GO: http://purl.obolibrary.org/obo/GO_' \
+      extract --method BOT \
       --input annotated.owl \
       --term UBERON:0000916 \
       --annotate-with-source true \
@@ -91,6 +92,18 @@ Or prefixes, as long as the [prefix is valid](/global#prefixes):
 ```
 BFO:0000001,RO
 ```
+
+### Intermediates
+
+When extracting, sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. By specifying how to handle these intermediates, you can reduce unnecessary intermediate classes:
+
+* `--intermediates all`: default behavior, do not prune the ontology
+* `--intermediates minimal`: only include intermediate intermediates with more than one child, as well as the top-level parents
+* `--intermediates none`: do not include any intermediates
+  * For MIREOT, this will only include top and bottom level classes.
+  * For any SLME method, this will only include the classes directly used in the logic of the input terms
+
+Any term specified as an input term will not be pruned.
 
 ---
 
@@ -118,3 +131,7 @@ The following flags *should not* be used with STAR, TOP, or BOT methods:
 ### Invalid Source Map Error
 
 The input for `--sources` must be either CSV or TSV format.
+
+### Invalid Intermediates Error
+
+`--intermediates` must be one of: `all`, `minimal`, or `none`.

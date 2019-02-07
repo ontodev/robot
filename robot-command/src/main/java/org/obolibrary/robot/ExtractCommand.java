@@ -1,17 +1,12 @@
 package org.obolibrary.robot;
 
-import com.opencsv.CSVParserBuilder;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import java.io.*;
+import com.google.common.collect.Sets;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
 /**
  * Handles inputs and outputs for the {@link ExtractOperation}.
@@ -48,9 +43,8 @@ public class ExtractCommand implements Command {
           + "only --term or --term-file can be used to specify extract term(s) "
           + "for STAR, TOP, or BOT";
 
-  /** Error message when the source map is not TSV or CSV. */
-  private static final String invalidSourceMapError =
-      NS + "INVALID SOURCE MAP ERROR --sources input must be .tsv or .csv";
+  /** Set of valid SLME extraction methods. */
+  private static final Set<String> validMethods = Sets.newHashSet("star", "bot", "top");
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -74,6 +68,7 @@ public class ExtractCommand implements Command {
     o.addOption("c", "copy-ontology-annotations", true, "if true, include ontology annotations");
     o.addOption("a", "annotate-with-source", true, "if true, annotate terms with rdfs:isDefinedBy");
     o.addOption("s", "sources", true, "specify a mapping file of term to source ontology");
+    o.addOption("n", "intermediates", true, "specify how to handle intermediate entities");
     options = o;
   }
 
@@ -155,12 +150,12 @@ public class ExtractCommand implements Command {
       outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
     }
 
-    // Determine if terms should be annotated with isDefinedBy
-    boolean annotateSource = CommandLineHelper.getBooleanValue(line, "annotate-with-source", false);
-    String sourceMapPath = CommandLineHelper.getOptionalValue(line, "sources");
-    Map<IRI, IRI> sourceMap = new HashMap<>();
-    if (sourceMapPath != null) {
-      sourceMap = getSourceMap(ioHelper, sourceMapPath);
+    // Override default reasoner options with command-line options
+    Map<String, String> extractOptions = ExtractOperation.getDefaultOptions();
+    for (String option : extractOptions.keySet()) {
+      if (line.hasOption(option)) {
+        extractOptions.put(option, line.getOptionValue(option));
+      }
     }
 
     // Get method, make sure it has been specified
@@ -168,19 +163,6 @@ public class ExtractCommand implements Command {
         CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
             .trim()
             .toLowerCase();
-
-    ModuleType moduleType = null;
-    switch (method) {
-      case "star":
-        moduleType = ModuleType.STAR;
-        break;
-      case "top":
-        moduleType = ModuleType.TOP;
-        break;
-      case "bot":
-        moduleType = ModuleType.BOT;
-        break;
-    }
 
     if (method.equals("mireot")) {
       List<OWLOntology> outputOntologies = new ArrayList<>();
@@ -220,7 +202,7 @@ public class ExtractCommand implements Command {
         if (lowerIRIs != null) {
           outputOntologies.add(
               MireotOperation.getAncestors(
-                  inputOntology, upperIRIs, lowerIRIs, null, annotateSource, sourceMap));
+                  inputOntology, ioHelper, upperIRIs, null, null, extractOptions));
           // If there are no lower IRIs, there shouldn't be any upper IRIs
         } else if (upperIRIs != null) {
           throw new IllegalArgumentException(missingLowerTermError);
@@ -229,11 +211,11 @@ public class ExtractCommand implements Command {
         if (branchIRIs != null) {
           outputOntologies.add(
               MireotOperation.getDescendants(
-                  inputOntology, branchIRIs, null, annotateSource, sourceMap));
+                  inputOntology, ioHelper, branchIRIs, null, extractOptions));
         }
       }
       outputOntology = MergeOperation.merge(outputOntologies);
-    } else if (moduleType != null) {
+    } else if (validMethods.contains(method.toLowerCase())) {
       // upper-term, lower-term, and branch-from term should not be used
       List<String> mireotTerms =
           Arrays.asList(
@@ -253,8 +235,7 @@ public class ExtractCommand implements Command {
           OntologyHelper.filterExistingTerms(
               inputOntology, CommandLineHelper.getTerms(ioHelper, line), false);
       outputOntology =
-          ExtractOperation.extract(
-              inputOntology, terms, outputIRI, moduleType, annotateSource, sourceMap);
+          ExtractOperation.extract(inputOntology, ioHelper, terms, outputIRI, extractOptions);
     } else {
       throw new Exception(invalidMethodError);
     }
@@ -272,62 +253,5 @@ public class ExtractCommand implements Command {
 
     state.setOntology(outputOntology);
     return state;
-  }
-
-  /**
-   * Given an IOHelper and the path to a term-to-source map, return a map of term IRI to source IRI.
-   *
-   * @param ioHelper IOHelper to handle prefixes
-   * @param sourceMapPath path of the term-to-source map
-   * @return map of term IRI to source IRI
-   * @throws Exception on file reading issue
-   */
-  private static Map<IRI, IRI> getSourceMap(IOHelper ioHelper, String sourceMapPath)
-      throws Exception {
-    File sourceMapFile = new File(sourceMapPath);
-    if (!sourceMapFile.exists()) {
-      throw new Exception(String.format(missingFileError, sourceMapPath, "--sources"));
-    }
-
-    char separator;
-    if (sourceMapPath.endsWith(".tsv")) {
-      separator = '\t';
-    } else if (sourceMapPath.endsWith(".csv")) {
-      separator = ',';
-    } else {
-      throw new Exception(invalidSourceMapError);
-    }
-
-    DefaultPrefixManager pm = ioHelper.getPrefixManager();
-
-    Reader reader = new FileReader(sourceMapFile);
-    CSVReader csv =
-        new CSVReaderBuilder(reader)
-            .withCSVParser(new CSVParserBuilder().withSeparator(separator).build())
-            .build();
-    // Skip first line
-    csv.skip(1);
-
-    Map<IRI, IRI> sourceMap = new HashMap<>();
-    for (String line[] : csv) {
-      IRI entity = ioHelper.createIRI(line[0]);
-
-      // Maybe create a source IRI from a prefix
-      // Otherwise the full IRI should be provided
-      IRI source;
-      String sourceStr = line[1];
-      String namespace = pm.getPrefix(sourceStr + ":");
-      if (namespace != null) {
-        if (namespace.endsWith("_") || namespace.endsWith("#") || namespace.endsWith("/")) {
-          namespace = namespace.substring(0, namespace.length() - 1);
-        }
-        source = IRI.create(namespace.toLowerCase() + ".owl");
-      } else {
-        source = IRI.create(sourceStr);
-      }
-      sourceMap.put(entity, source);
-    }
-
-    return sourceMap;
   }
 }

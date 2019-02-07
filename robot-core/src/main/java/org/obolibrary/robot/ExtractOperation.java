@@ -1,11 +1,20 @@
 package org.obolibrary.robot;
 
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import java.io.File;
+import java.io.FileReader;
+import java.io.Reader;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.search.EntitySearcher;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
@@ -22,69 +31,88 @@ public class ExtractOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ExtractOperation.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "extract#";
+
+  /** Error message when the source map is not TSV or CSV. */
+  private static final String invalidSourceMapError =
+      NS + "INVALID SOURCE MAP ERROR --sources input must be .tsv or .csv";
+
+  /** Error message when an invalid intermediates opiton is provided. */
+  private static final String invalidIntermediatesError =
+      NS + "UNKNOWN INTERMEDIATES ERROR '%s' is not a valid --intermediates arg";
+
   /** Shared data factory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
   /** RDFS isDefinedBy annotation property. */
   private static OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
 
-  /**
-   * Extract a set of terms from an ontology using the OWLAPI's SyntacticLocalityModuleExtractor
-   * (SLME). The input ontology is not changed.
-   *
-   * @param inputOntology the ontology to extract from
-   * @param terms a set of IRIs for terms to extract
-   * @param outputIRI the OntologyIRI of the new ontology
-   * @param moduleType determines the type of extraction; defaults to STAR
-   * @return a new ontology (with a new manager)
-   * @throws OWLOntologyCreationException on any OWLAPI problem
-   */
-  public static OWLOntology extract(
-      OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI, ModuleType moduleType)
-      throws OWLOntologyCreationException {
-    return extract(inputOntology, terms, outputIRI, moduleType, false, null);
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> extractOptions = new HashMap<>();
+    extractOptions.put("copy-ontology-annotations", "false");
+    extractOptions.put("annotate-with-source", "false");
+    extractOptions.put("sources", null);
+    extractOptions.put("intermediates", "all");
+    extractOptions.put("method", "star");
+    extractOptions.put("reasoner", "elk");
+    return extractOptions;
   }
 
   /**
    * Extract a set of terms from an ontology using the OWLAPI's SyntacticLocalityModuleExtractor
    * (SLME). The input ontology is not changed.
    *
-   * @param inputOntology the ontology to extract from
-   * @param terms a set of IRIs for terms to extract
-   * @param outputIRI the OntologyIRI of the new ontology
-   * @param moduleType determines the type of extraction; defaults to STAR
-   * @param annotateSource if true, annotate copied classes with rdfs:isDefinedBy
-   * @param sourceMap map of term IRI to source IRI
-   * @return a new ontology (with a new manager)
-   * @throws OWLOntologyCreationException on any OWLAPI problem
+   * @param inputOntology OWLOntology to extract from
+   * @param terms Set of IRIs to extract
+   * @param outputIRI IRI for output ontology
+   * @param options Map of extract options, or null for defauls
+   * @return OWLOntology extracted module
+   * @throws OWLOntologyCreationException on problem creating new ontology
    */
   public static OWLOntology extract(
       OWLOntology inputOntology,
+      IOHelper ioHelper,
       Set<IRI> terms,
       IRI outputIRI,
-      ModuleType moduleType,
-      boolean annotateSource,
-      Map<IRI, IRI> sourceMap)
-      throws OWLOntologyCreationException {
-    logger.debug("Extracting...");
-
-    Set<OWLEntity> entities = new HashSet<>();
-    for (IRI term : terms) {
-      entities.addAll(inputOntology.getEntitiesInSignature(term, Imports.INCLUDED));
+      Map<String, String> options)
+      throws Exception {
+    // Get options
+    if (options == null) {
+      options = getDefaultOptions();
     }
 
-    ModuleType type = moduleType;
-    if (type == null) {
-      type = ModuleType.STAR;
+    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
+    boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
+    String sourceMapPath = OptionsHelper.getOption(options, "sources");
+    Map<IRI, IRI> sourceMap = new HashMap<>();
+    if (sourceMapPath != null) {
+      sourceMap = getSourceMap(ioHelper, sourceMapPath);
     }
 
-    SyntacticLocalityModuleExtractor extractor =
-        new SyntacticLocalityModuleExtractor(
-            inputOntology.getOWLOntologyManager(), inputOntology, type);
+    // Get the method for extraction
+    String method = OptionsHelper.getOption(options, "method", "star");
+    ModuleType moduleType;
+    switch (method) {
+      case "star":
+        moduleType = ModuleType.STAR;
+        break;
+      case "top":
+        moduleType = ModuleType.TOP;
+        break;
+      case "bot":
+        moduleType = ModuleType.BOT;
+        break;
+      default:
+        moduleType = ModuleType.STAR;
+    }
 
+    SyntacticLocalityModuleExtractor extractor = getExtractor(inputOntology, moduleType);
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    Set<OWLEntity> entities = getEntities(inputOntology, terms);
     OWLOntology outputOntology = manager.createOntology(extractor.extract(entities), outputIRI);
-    // Maybe annotate entities with rdfs:isDefinedBy
+
+    // Maybe add sources
     if (annotateSource) {
       Set<OWLAnnotationAxiom> sourceAxioms = new HashSet<>();
       for (OWLEntity entity : OntologyHelper.getEntities(outputOntology)) {
@@ -99,7 +127,39 @@ public class ExtractOperation {
       manager.addAxioms(outputOntology, sourceAxioms);
     }
 
-    return outputOntology;
+    if ("all".equalsIgnoreCase(intermediates)) {
+      System.out.println("RETURNING ALL");
+      return outputOntology;
+    } else if ("none".equalsIgnoreCase(intermediates)) {
+      pruneIntermediates(outputOntology, entities);
+      return outputOntology;
+    } else if ("minimal".equalsIgnoreCase(intermediates)) {
+      OntologyHelper.collapseOntology(outputOntology, ioHelper, terms);
+      return outputOntology;
+    } else {
+      throw new Exception(String.format(invalidIntermediatesError, intermediates));
+    }
+  }
+
+  /**
+   * Extract a set of terms from an ontology using the OWLAPI's SyntacticLocalityModuleExtractor
+   * (SLME). The input ontology is not changed. Replaced by {@link #extract(OWLOntology, IOHelper,
+   * Set, IRI, Map)}
+   *
+   * @param inputOntology the ontology to extract from
+   * @param terms a set of IRIs for terms to extract
+   * @param outputIRI the OntologyIRI of the new ontology
+   * @param moduleType determines the type of extraction; defaults to STAR
+   * @return a new ontology (with a new manager)
+   * @throws OWLOntologyCreationException on any OWLAPI problem
+   */
+  public static OWLOntology extract(
+      OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI, ModuleType moduleType)
+      throws OWLOntologyCreationException {
+    Set<OWLEntity> entities = getEntities(inputOntology, terms);
+    SyntacticLocalityModuleExtractor extractor = getExtractor(inputOntology, moduleType);
+    return OWLManager.createOWLOntologyManager()
+        .createOntology(extractor.extract(entities), outputIRI);
   }
 
   /**
@@ -119,11 +179,11 @@ public class ExtractOperation {
       // Brute force edit the IRI string
       // Warning - this may not work with non-OBO Foundry terms, depending on the IRI format!
       if (iri.contains("#")) {
+        final String s = iri.substring(0, iri.lastIndexOf("#")).toLowerCase();
         if (iri.contains(".owl#")) {
-          String baseStr = iri.substring(0, iri.lastIndexOf("#")).toLowerCase();
-          base = IRI.create(baseStr);
+          base = IRI.create(s);
         } else {
-          String baseStr = iri.substring(0, iri.lastIndexOf("#")).toLowerCase() + ".owl";
+          String baseStr = s + ".owl";
           base = IRI.create(baseStr);
         }
       } else if (iri.contains("_")) {
@@ -135,5 +195,134 @@ public class ExtractOperation {
       }
     }
     return dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, entity.getIRI(), base);
+  }
+
+  /**
+   * Given an ontology and a set of IRIs, get the OWLEntity objects for each IRI.
+   *
+   * @param ontology OWLOntology to get entities from
+   * @param terms IRIs of entities
+   * @return set of OWLEntities
+   */
+  private static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> terms) {
+    Set<OWLEntity> entities = new HashSet<>();
+    for (IRI term : terms) {
+      entities.addAll(ontology.getEntitiesInSignature(term, Imports.INCLUDED));
+    }
+    return entities;
+  }
+
+  /**
+   * Given a ontology and a ModuleType, get an SLME extractor.
+   *
+   * @param ontology OWLOntology to extract from
+   * @param moduleType ModuleType for extractor
+   * @return SLME object
+   */
+  private static SyntacticLocalityModuleExtractor getExtractor(
+      OWLOntology ontology, ModuleType moduleType) {
+    ModuleType type = moduleType;
+    if (type == null) {
+      type = ModuleType.STAR;
+    }
+
+    logger.debug("Extracting using method: " + type.name());
+
+    return new SyntacticLocalityModuleExtractor(ontology.getOWLOntologyManager(), ontology, type);
+  }
+
+  /**
+   * Given an input ontology, an extracted output ontology, and a set of entities, prune all
+   * intermediates. This leaves only the classes directly used in the logic of any input entities.
+   *
+   * @param outputOntology extracted module
+   * @param entities Set of extracted entities
+   */
+  private static void pruneIntermediates(OWLOntology outputOntology, Set<OWLEntity> entities) {
+    Set<OWLObject> precious = new HashSet<>();
+    OWLOntologyManager manager = outputOntology.getOWLOntologyManager();
+    for (OWLEntity e : entities) {
+      if (!e.isOWLClass()) {
+        continue;
+      }
+      OWLClass cls = e.asOWLClass();
+      precious.add(cls);
+      for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, outputOntology)) {
+        precious.addAll(expr.getClassesInSignature());
+      }
+      for (OWLClassExpression expr : EntitySearcher.getEquivalentClasses(cls, outputOntology)) {
+        precious.addAll(expr.getClassesInSignature());
+      }
+      for (OWLClassExpression expr : EntitySearcher.getDisjointClasses(cls, outputOntology)) {
+        precious.addAll(expr.getClassesInSignature());
+      }
+    }
+    Set<OWLAxiom> removeAxioms =
+        RelatedObjectsHelper.getPartialAxioms(
+            outputOntology,
+            RelatedObjectsHelper.selectClasses(
+                RelatedObjectsHelper.selectComplement(outputOntology, precious)),
+            null);
+    manager.removeAxioms(outputOntology, removeAxioms);
+  }
+
+  /**
+   * Given an IOHelper and the path to a term-to-source map, return a map of term IRI to source IRI.
+   *
+   * @param ioHelper IOHelper to handle prefixes
+   * @param sourceMapPath path of the term-to-source map
+   * @return map of term IRI to source IRI
+   * @throws Exception on file reading issue
+   */
+  protected static Map<IRI, IRI> getSourceMap(IOHelper ioHelper, String sourceMapPath)
+      throws Exception {
+    File sourceMapFile = new File(sourceMapPath);
+    if (!sourceMapFile.exists()) {
+      throw new Exception(
+          String.format(
+              "MISSING FILE ERROR file %s for option %s does not exist",
+              sourceMapPath, "--sources"));
+    }
+
+    char separator;
+    if (sourceMapPath.endsWith(".tsv")) {
+      separator = '\t';
+    } else if (sourceMapPath.endsWith(".csv")) {
+      separator = ',';
+    } else {
+      throw new Exception(invalidSourceMapError);
+    }
+
+    DefaultPrefixManager pm = ioHelper.getPrefixManager();
+
+    Reader reader = new FileReader(sourceMapFile);
+    CSVReader csv =
+        new CSVReaderBuilder(reader)
+            .withCSVParser(new CSVParserBuilder().withSeparator(separator).build())
+            .build();
+    // Skip first line
+    csv.skip(1);
+
+    Map<IRI, IRI> sourceMap = new HashMap<>();
+    for (String[] line : csv) {
+      IRI entity = ioHelper.createIRI(line[0]);
+
+      // Maybe create a source IRI from a prefix
+      // Otherwise the full IRI should be provided
+      IRI source;
+      String sourceStr = line[1];
+      String namespace = pm.getPrefix(sourceStr + ":");
+      if (namespace != null) {
+        if (namespace.endsWith("_") || namespace.endsWith("#") || namespace.endsWith("/")) {
+          namespace = namespace.substring(0, namespace.length() - 1);
+        }
+        source = IRI.create(namespace.toLowerCase() + ".owl");
+      } else {
+        source = IRI.create(sourceStr);
+      }
+      sourceMap.put(entity, source);
+    }
+
+    return sourceMap;
   }
 }
