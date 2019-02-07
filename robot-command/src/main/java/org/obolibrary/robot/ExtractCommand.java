@@ -72,6 +72,7 @@ public class ExtractCommand implements Command {
     o.addOption("b", "branch-from-term", true, "root term of branch to extract");
     o.addOption("B", "branch-from-terms", true, "root terms of branches to extract");
     o.addOption("c", "copy-ontology-annotations", true, "if true, include ontology annotations");
+    o.addOption("f", "force", true, "if true, warn on empty input terms instead of fail");
     o.addOption("a", "annotate-with-source", true, "if true, annotate terms with rdfs:isDefinedBy");
     o.addOption("s", "sources", true, "specify a mapping file of term to source ontology");
     options = o;
@@ -169,6 +170,8 @@ public class ExtractCommand implements Command {
             .trim()
             .toLowerCase();
 
+    boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
+
     ModuleType moduleType = null;
     switch (method) {
       case "star":
@@ -251,7 +254,7 @@ public class ExtractCommand implements Command {
       // Make sure the terms exist in the input ontology
       Set<IRI> terms =
           OntologyHelper.filterExistingTerms(
-              inputOntology, CommandLineHelper.getTerms(ioHelper, line), false);
+              inputOntology, CommandLineHelper.getTerms(ioHelper, line), force);
       outputOntology =
           ExtractOperation.extract(
               inputOntology, terms, outputIRI, moduleType, annotateSource, sourceMap);
