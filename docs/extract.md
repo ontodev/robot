@@ -81,7 +81,7 @@ The above example, with `--intermediates minimal`, would become:
       - adrenal gland (*)
 ```
 
-Note that `organ` is added as a reasoner has been used to find superclasses to preserve the structure, but MIREOT extraction will not include any anonymous superclasses, disjoint, or equivalent classes.
+You can chain this output into reduce to further clean up the structure, as some redundant axioms may appear.
 
 With `--intermediates none` (particularly with MIREOT):
 ```
