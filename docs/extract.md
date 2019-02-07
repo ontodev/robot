@@ -51,36 +51,41 @@ For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
 ### Intermediates
 
-When extracting (especially with MIREOT), sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. For example, you may end up with this after extracting `adrenal gland` and `trunk region element`:
+When extracting (especially with MIREOT), sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. For example, you may end up with this after extracting `adrenal gland`:
 ```
- - organ
-   - trunk region element
-   - gland
-     - endocrine gland
-       - adrenal/interrenal gland
-         - adrenal gland
+ - material anatomical entity
+   - anatomical structure
+     - multicellular anatomical structure
+       - organ
+         - abdomen element
+           - adrenal/interrenal gland
+             - adrenal gland (*)
+     - lateral structure
+       - adrenal gland (*)
 ```
 
 By specifying how to handle these intermediates, you can reduce unnecessary intermediate classes:
 
 * `--intermediates all`: default behavior, do not prune the ontology
-* `--intermediates minimal`: only include intermediate intermediates with more than one child, as well as the top-level parents
+* `--intermediates minimal`: only include intermediate intermediates with more than one *sibling* (i.e. the parent class has another child)
 * `--intermediates none`: do not include any intermediates
   * For MIREOT, this will only include top and bottom level classes.
   * For any SLME method, this will only include the classes directly used in the logic of the input terms
 
 The above example, with `--intermediates minimal`, would become:
 ```
-- organ
-  - trunk region element
-  - gland
-    - adrenal gland
+- material anatomical entity
+  - anatomical structure
+    - adrenal gland (*)
+    - organ
+      - adrenal gland (*)
 ```
+
+Note that `organ` is added as a reasoner has been used to find superclasses to preserve the structure, but MIREOT extraction will not include any anonymous superclasses, disjoint, or equivalent classes.
 
 With `--intermediates none` (particularly with MIREOT):
 ```
-- organ
-  - trunk region element
+- material anatomical entity
   - adrenal gland
 ```
 
