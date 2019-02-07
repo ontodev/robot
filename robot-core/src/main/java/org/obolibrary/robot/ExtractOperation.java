@@ -82,7 +82,7 @@ public class ExtractOperation {
       options = getDefaultOptions();
     }
 
-    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
+    String intermediates = OptionsHelper.getOption(options, "intermediates", "all").toLowerCase();
     boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
     String sourceMapPath = OptionsHelper.getOption(options, "sources");
     Map<IRI, IRI> sourceMap = new HashMap<>();
@@ -91,7 +91,7 @@ public class ExtractOperation {
     }
 
     // Get the method for extraction
-    String method = OptionsHelper.getOption(options, "method", "star");
+    String method = OptionsHelper.getOption(options, "method", "star").toLowerCase();
     ModuleType moduleType;
     switch (method) {
       case "star":
@@ -107,6 +107,7 @@ public class ExtractOperation {
         moduleType = ModuleType.STAR;
     }
 
+    // Extract based on the ModuleType
     SyntacticLocalityModuleExtractor extractor = getExtractor(inputOntology, moduleType);
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     Set<OWLEntity> entities = getEntities(inputOntology, terms);
@@ -127,11 +128,11 @@ public class ExtractOperation {
       manager.addAxioms(outputOntology, sourceAxioms);
     }
 
+    // Determine what to do based on intermediates
     if ("all".equalsIgnoreCase(intermediates)) {
-      System.out.println("RETURNING ALL");
       return outputOntology;
     } else if ("none".equalsIgnoreCase(intermediates)) {
-      pruneIntermediates(outputOntology, entities);
+      removeIntermediates(outputOntology, entities);
       return outputOntology;
     } else if ("minimal".equalsIgnoreCase(intermediates)) {
       OntologyHelper.collapseOntology(outputOntology, ioHelper, terms);
@@ -156,6 +157,9 @@ public class ExtractOperation {
   public static OWLOntology extract(
       OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI, ModuleType moduleType)
       throws OWLOntologyCreationException {
+    // TODO - deprecate this class
+    // We cannot easily replace the use of extract in ReasonerHelper.createIncoherentModule
+    // as it will cause a breaking change (addition of Exception)
     Set<OWLEntity> entities = getEntities(inputOntology, terms);
     SyntacticLocalityModuleExtractor extractor = getExtractor(inputOntology, moduleType);
     return OWLManager.createOWLOntologyManager()
@@ -232,13 +236,13 @@ public class ExtractOperation {
   }
 
   /**
-   * Given an input ontology, an extracted output ontology, and a set of entities, prune all
+   * Given an input ontology, an extracted output ontology, and a set of entities, remove all
    * intermediates. This leaves only the classes directly used in the logic of any input entities.
    *
    * @param outputOntology extracted module
    * @param entities Set of extracted entities
    */
-  private static void pruneIntermediates(OWLOntology outputOntology, Set<OWLEntity> entities) {
+  private static void removeIntermediates(OWLOntology outputOntology, Set<OWLEntity> entities) {
     Set<OWLObject> precious = new HashSet<>();
     OWLOntologyManager manager = outputOntology.getOWLOntologyManager();
     for (OWLEntity e : entities) {

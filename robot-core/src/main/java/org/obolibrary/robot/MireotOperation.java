@@ -3,6 +3,9 @@ package org.obolibrary.robot;
 import java.util.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +81,7 @@ public class MireotOperation {
     // so we'll use it here too.
     OWLOntology outputOntology = outputManager.createOntology(inputOntology.getOntologyID());
 
+    // Directly copy all upper entities
     Set<OWLEntity> upperEntities = OntologyHelper.getEntities(inputOntology, upperIRIs);
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
@@ -86,21 +90,32 @@ public class MireotOperation {
       }
     }
 
+    OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
+    OWLReasoner reasoner = reasonerFactory.createReasoner(inputOntology);
+
+    // For each lower entity, get the ancestors (all or none)
     Set<OWLEntity> lowerEntities = OntologyHelper.getEntities(inputOntology, lowerIRIs);
     for (OWLEntity entity : lowerEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if ("none".equals(intermediates)) {
         copyAncestorsNoIntermediates(
-            inputOntology, outputOntology, upperEntities, entity, entity, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            entity,
+            entity,
+            annotationProperties);
       } else {
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, upperEntities, entity, annotationProperties);
+            inputOntology, outputOntology, reasoner, upperEntities, entity, annotationProperties);
       }
       if (annotateSource) {
         maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
       }
     }
 
+    // Maybe remove unnecessary intermediates
     if (intermediates.equalsIgnoreCase("minimal")) {
       Set<IRI> precious = new HashSet<>();
       if (upperIRIs != null) {
@@ -145,11 +160,14 @@ public class MireotOperation {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
     }
 
+    OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
+    OWLReasoner reasoner = reasonerFactory.createReasoner(inputOntology);
+
     Set<OWLEntity> lowerEntities = OntologyHelper.getEntities(inputOntology, lowerIRIs);
     for (OWLEntity entity : lowerEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       copyAncestorsAllIntermediates(
-          inputOntology, outputOntology, upperEntities, entity, annotationProperties);
+          inputOntology, outputOntology, reasoner, upperEntities, entity, annotationProperties);
     }
 
     return outputOntology;
@@ -163,6 +181,7 @@ public class MireotOperation {
    *
    * @param inputOntology the ontology to copy from
    * @param outputOntology the ontology to copy to
+   * @param reasoner OWLReasoner to get superclasses and superproperties while maintaining structure
    * @param upperEntities the top level of entities, or null
    * @param entity the target entity that will have its ancestors copied
    * @param annotationProperties the annotations to copy, or null for all
@@ -170,6 +189,7 @@ public class MireotOperation {
   private static void copyAncestorsAllIntermediates(
       OWLOntology inputOntology,
       OWLOntology outputOntology,
+      OWLReasoner reasoner,
       Set<OWLEntity> upperEntities,
       OWLEntity entity,
       Set<OWLAnnotationProperty> annotationProperties) {
@@ -183,18 +203,19 @@ public class MireotOperation {
 
     // Otherwise copy ancestors recursively.
     if (entity.isOWLClass()) {
-      Collection<OWLClassExpression> superclasses =
-          EntitySearcher.getSuperClasses(entity.asOWLClass(), inputOntology);
-      for (OWLClassExpression superclassExpr : superclasses) {
-        if (superclassExpr.isAnonymous()) {
-          continue;
-        }
-        OWLClass superclass = superclassExpr.asOWLClass();
+      Set<OWLClass> superclasses =
+          reasoner.getSuperClasses(entity.asOWLClass(), true).getFlattened();
+      for (OWLClass superclass : superclasses) {
         OntologyHelper.copy(inputOntology, outputOntology, superclass, annotationProperties);
         outputManager.addAxiom(
             outputOntology, dataFactory.getOWLSubClassOfAxiom(entity.asOWLClass(), superclass));
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, upperEntities, superclass, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            superclass,
+            annotationProperties);
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> superProperties =
@@ -206,11 +227,16 @@ public class MireotOperation {
             dataFactory.getOWLSubAnnotationPropertyOfAxiom(
                 entity.asOWLAnnotationProperty(), superProperty));
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, upperEntities, superProperty, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            superProperty,
+            annotationProperties);
       }
     } else if (entity.isOWLObjectProperty()) {
-      Collection<OWLObjectPropertyExpression> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), inputOntology);
+      Set<OWLObjectPropertyExpression> superProperties =
+          reasoner.getSuperObjectProperties(entity.asOWLObjectProperty(), true).getFlattened();
       for (OWLObjectPropertyExpression superexpression : superProperties) {
         if (superexpression.isAnonymous()) {
           continue;
@@ -222,19 +248,28 @@ public class MireotOperation {
             dataFactory.getOWLSubObjectPropertyOfAxiom(
                 entity.asOWLObjectProperty(), superProperty));
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, upperEntities, superProperty, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            superProperty,
+            annotationProperties);
       }
     } else if (entity.isOWLDataProperty()) {
-      Collection<OWLDataPropertyExpression> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), inputOntology);
-      for (OWLDataPropertyExpression superPropertyExpr : superProperties) {
-        OWLDataProperty superProperty = superPropertyExpr.asOWLDataProperty();
+      Set<OWLDataProperty> superProperties =
+          reasoner.getSuperDataProperties(entity.asOWLDataProperty(), true).getFlattened();
+      for (OWLDataProperty superProperty : superProperties) {
         OntologyHelper.copy(inputOntology, outputOntology, superProperty, annotationProperties);
         outputManager.addAxiom(
             outputOntology,
             dataFactory.getOWLSubDataPropertyOfAxiom(entity.asOWLDataProperty(), superProperty));
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, upperEntities, superProperty, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            superProperty,
+            annotationProperties);
       }
     }
   }
@@ -248,6 +283,7 @@ public class MireotOperation {
    *
    * @param inputOntology the ontology to copy from
    * @param outputOntology the ontology to copy to
+   * @param reasoner OWLReasoner to get superclasses and superproperties while maintaining structure
    * @param upperEntities the top level of entities, or null
    * @param entity the target entity to check if included in upper entities
    * @param bottomEntity the entity from lower terms to include
@@ -256,6 +292,7 @@ public class MireotOperation {
   private static void copyAncestorsNoIntermediates(
       OWLOntology inputOntology,
       OWLOntology outputOntology,
+      OWLReasoner reasoner,
       Set<OWLEntity> upperEntities,
       OWLEntity entity,
       OWLEntity bottomEntity,
@@ -270,13 +307,9 @@ public class MireotOperation {
 
     // Otherwise find the highest level ancestor that was included in upper-terms
     if (entity.isOWLClass()) {
-      Collection<OWLClassExpression> superclasses =
-          EntitySearcher.getSuperClasses(entity.asOWLClass(), inputOntology);
-      for (OWLClassExpression superexpression : superclasses) {
-        if (superexpression.isAnonymous()) {
-          continue;
-        }
-        OWLClass superclass = superexpression.asOWLClass();
+      Set<OWLClass> superclasses =
+          reasoner.getSuperClasses(entity.asOWLClass(), true).getFlattened();
+      for (OWLClass superclass : superclasses) {
         if (upperEntities.contains(superclass)) {
           OntologyHelper.copyAnnotations(inputOntology, outputOntology, entity, null);
           outputManager.addAxiom(
@@ -286,6 +319,7 @@ public class MireotOperation {
           copyAncestorsNoIntermediates(
               inputOntology,
               outputOntology,
+              reasoner,
               upperEntities,
               superclass,
               bottomEntity,
@@ -306,6 +340,7 @@ public class MireotOperation {
           copyAncestorsNoIntermediates(
               inputOntology,
               outputOntology,
+              reasoner,
               upperEntities,
               superProperty,
               bottomEntity,
@@ -313,8 +348,8 @@ public class MireotOperation {
         }
       }
     } else if (entity.isOWLObjectProperty()) {
-      Collection<OWLObjectPropertyExpression> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), inputOntology);
+      Set<OWLObjectPropertyExpression> superProperties =
+          reasoner.getSuperObjectProperties(entity.asOWLObjectProperty(), true).getFlattened();
       for (OWLObjectPropertyExpression superexpression : superProperties) {
         if (superexpression.isAnonymous()) {
           continue;
@@ -330,6 +365,7 @@ public class MireotOperation {
           copyAncestorsNoIntermediates(
               inputOntology,
               outputOntology,
+              reasoner,
               upperEntities,
               superProperty,
               bottomEntity,
@@ -337,10 +373,9 @@ public class MireotOperation {
         }
       }
     } else if (entity.isOWLDataProperty()) {
-      Collection<OWLDataPropertyExpression> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), inputOntology);
-      for (OWLDataPropertyExpression superexpression : superProperties) {
-        OWLDataProperty superProperty = superexpression.asOWLDataProperty();
+      Set<OWLDataProperty> superProperties =
+          reasoner.getSuperDataProperties(entity.asOWLDataProperty(), true).getFlattened();
+      for (OWLDataProperty superProperty : superProperties) {
         if (upperEntities.contains(superProperty)) {
           OntologyHelper.copyAnnotations(inputOntology, outputOntology, entity, null);
           outputManager.addAxiom(
@@ -351,6 +386,7 @@ public class MireotOperation {
           copyAncestorsNoIntermediates(
               inputOntology,
               outputOntology,
+              reasoner,
               upperEntities,
               superProperty,
               bottomEntity,

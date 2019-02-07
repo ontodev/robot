@@ -202,7 +202,7 @@ public class ExtractCommand implements Command {
         if (lowerIRIs != null) {
           outputOntologies.add(
               MireotOperation.getAncestors(
-                  inputOntology, ioHelper, upperIRIs, null, null, extractOptions));
+                  inputOntology, ioHelper, upperIRIs, lowerIRIs, null, extractOptions));
           // If there are no lower IRIs, there shouldn't be any upper IRIs
         } else if (upperIRIs != null) {
           throw new IllegalArgumentException(missingLowerTermError);

@@ -49,6 +49,43 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
+### Intermediates
+
+When extracting (especially with MIREOT), sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. For example, you may end up with this after extracting `adrenal gland` and `trunk region element`:
+```
+ - organ
+   - trunk region element
+   - gland
+     - endocrine gland
+       - adrenal/interrenal gland
+         - adrenal gland
+```
+
+By specifying how to handle these intermediates, you can reduce unnecessary intermediate classes:
+
+* `--intermediates all`: default behavior, do not prune the ontology
+* `--intermediates minimal`: only include intermediate intermediates with more than one child, as well as the top-level parents
+* `--intermediates none`: do not include any intermediates
+  * For MIREOT, this will only include top and bottom level classes.
+  * For any SLME method, this will only include the classes directly used in the logic of the input terms
+
+The above example, with `--intermediates minimal`, would become:
+```
+- organ
+  - trunk region element
+  - gland
+    - adrenal gland
+```
+
+With `--intermediates none` (particularly with MIREOT):
+```
+- organ
+  - trunk region element
+  - adrenal gland
+```
+
+Any term specified as an input term will not be pruned.
+
 ### Ontology Annotations
 
 You can also include ontology annotations from the input ontology with `--copy-ontology-annotations true`. By default, this is false.
@@ -92,18 +129,6 @@ Or prefixes, as long as the [prefix is valid](/global#prefixes):
 ```
 BFO:0000001,RO
 ```
-
-### Intermediates
-
-When extracting, sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. By specifying how to handle these intermediates, you can reduce unnecessary intermediate classes:
-
-* `--intermediates all`: default behavior, do not prune the ontology
-* `--intermediates minimal`: only include intermediate intermediates with more than one child, as well as the top-level parents
-* `--intermediates none`: do not include any intermediates
-  * For MIREOT, this will only include top and bottom level classes.
-  * For any SLME method, this will only include the classes directly used in the logic of the input terms
-
-Any term specified as an input term will not be pruned.
 
 ---
 
