@@ -94,7 +94,7 @@ public class ReasonOperation {
 
     // Check the ontology for reference violations
     // Maybe fail if prevent-invalid-references
-    getReferenceViolations(ontology, options);
+    checkReferenceViolations(ontology, options);
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
     reason(ontology, reasoner, options);
 
@@ -139,7 +139,10 @@ public class ReasonOperation {
 
     // Check the ontology for reference violations
     // Maybe fail if prevent-invalid-references
-    getReferenceViolations(ontology, options);
+    checkReferenceViolations(ontology, options);
+
+    // Get the reasoner and run initial reasoning
+    // No axioms are asserted in this step
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
     reason(ontology, reasoner, options);
 
@@ -154,6 +157,7 @@ public class ReasonOperation {
       logger.info("    " + inf);
     }
 
+    // Assert inferred axioms in the ontology
     assertInferred(ontology, reasoner, gens, options);
   }
 
@@ -249,21 +253,25 @@ public class ReasonOperation {
       Map<String, String> options)
       throws OWLOntologyCreationException {
     long startTime = System.currentTimeMillis();
+    // Create an ontology with ONLY the newly inferred axioms
+    // Use this to check against the updated ontology with both inferred and asserted axioms
     OWLOntology newAxiomOntology = getNewAxiomOntology(ontology, reasoner, gens, options);
 
-    // because the ontology is passed by reference,
-    // we manipulate it in place
-    // todo: set ontology id
+    // If create-new-ontology or create-new-ontology-with-annotations
+    // remove the axioms from the input ontology (maybe keeping annotations)
     maybeCreateNewOntology(ontology, options);
-    excludeAxioms(ontology, newAxiomOntology, options);
 
+    // Add the inferred axioms to input ontology from the new axiom ontology
+    addInferredAxioms(ontology, newAxiomOntology, options);
+
+    // Maybe use the reasoner to remove redundant subclass axioms (reduce)
     if (OptionsHelper.optionIsTrue(options, "remove-redundant-subclass-axioms")) {
       removeRedundantSubClassAxioms(reasoner, options);
     }
     logger.info("Ontology has {} axioms after all reasoning steps.", ontology.getAxioms().size());
 
-    long elapsedTime = System.currentTimeMillis() - startTime;
-    long seconds = (int) Math.ceil(elapsedTime / 1000);
+    float elapsedTime = System.currentTimeMillis() - startTime;
+    long seconds = (long) Math.ceil(elapsedTime / 1000);
     logger.info("Filling took {} seconds.", seconds);
   }
 
@@ -380,15 +388,70 @@ public class ReasonOperation {
     return newAxiomOntology;
   }
 
-  private static void excludeAxioms(
+  /**
+   * Given an input ontology, a new axiom ontology (created from reasoning), and a map of options,
+   * maybe remove asserted axioms from the input ontology if create-new-ontology or
+   * create-new-ontology-with-annotations. The input ontology is updated in place.
+   *
+   * @param ontology OWLOntology to maybe update
+   * @param options Map of reason options
+   */
+  private static void maybeCreateNewOntology(OWLOntology ontology, Map<String, String> options) {
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+
+    // If we need to "create" a new ontology,
+    // we actually just remove any asserted axioms from the input ontology
+    if (OptionsHelper.optionIsTrue(options, "create-new-ontology")
+        || OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
+      if (OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
+        logger.info("Placing inferred axioms with annotations into a new ontology");
+        manager.removeAxioms(
+            ontology,
+            ontology
+                .getAxioms()
+                .stream()
+                .filter(nonap -> !(nonap instanceof OWLAnnotationAssertionAxiom))
+                .collect(Collectors.toSet()));
+
+      } else {
+        logger.info("Placing inferred axioms into a new ontology");
+        manager.removeAxioms(ontology, ontology.getAxioms());
+      }
+
+      Set<OWLImportsDeclaration> oids = ontology.getImportsDeclarations();
+      for (OWLImportsDeclaration oid : oids) {
+        RemoveImport ri = new RemoveImport(ontology, oid);
+        manager.applyChange(ri);
+      }
+    }
+  }
+
+  /**
+   * Given an ontology, an ontology containing only inferred axioms, and a map of options, add the
+   * inferred axioms to the input ontology. Updates the input ontology in place.
+   *
+   * @param ontology OWLOntology to add inferred axioms to
+   * @param newAxiomOntology OWLOntology containing inferred axioms
+   * @param options Map of reason options
+   */
+  private static void addInferredAxioms(
       OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
     // cache the complete set of asserted axioms at the initial state.
     // we will later use this if the -x option is passed, to avoid
     // asserting inferred axioms that are duplicates of existing axioms
     Set<OWLAxiom> existingAxioms = ontology.getAxioms(Imports.INCLUDED);
+
+    // get all entities that 'belong' to the main ontology
+    // see: https://github.com/ontodev/robot/issues/296
+    Set<OWLEntity> ontologyEntities =
+        ontology
+            .getAxioms(AxiomType.DECLARATION)
+            .stream()
+            .map(OWLDeclarationAxiom::getEntity)
+            .collect(Collectors.toSet());
 
     // Get a property and value to annotate inferred axioms
     IRI propertyIRI = null;
@@ -400,31 +463,28 @@ public class ReasonOperation {
       value = dataFactory.getOWLLiteral("true");
     }
 
-    // get all entities that 'belong' to the main ontology
-    // see: https://github.com/ontodev/robot/issues/296
-    Set<OWLEntity> ontologyEntities =
-        ontology
-            .getAxioms(AxiomType.DECLARATION)
-            .stream()
-            .map(OWLDeclarationAxiom::getEntity)
-            .collect(Collectors.toSet());
+    // Look at each inferred axiom
+    // Check the options, and maybe add the inferred axiom to the ontology
     for (OWLAxiom a : newAxiomOntology.getAxioms()) {
+
       if (OptionsHelper.optionIsTrue(options, "exclude-external-entities")) {
         if (a instanceof OWLClassAxiom) {
           boolean overlapsSignature = false;
+          // Check that each class in the axiom is DECLARED in the input ontology
           for (OWLClass c : a.getClassesInSignature()) {
             if (ontologyEntities.contains(c)) {
               overlapsSignature = true;
               break;
             }
           }
+          // If one or more class(es) is not in the input ontology, skip this axiom
           if (!overlapsSignature) {
             logger.debug("Excluding axiom as class signatures do not overlap: " + a);
-            manager.removeAxiom(newAxiomOntology, a);
             continue;
           }
         }
       }
+
       if (OptionsHelper.optionIsTrue(options, "exclude-duplicate-axioms")) {
         // if this option is passed, do not add any axioms that are
         // duplicates of existing axioms present at initial state.
@@ -439,21 +499,35 @@ public class ReasonOperation {
           continue;
         }
       }
+
       if (OptionsHelper.optionIsTrue(options, "exclude-duplicate-axioms")
           || OptionsHelper.optionIsTrue(options, "exclude-owl-thing")) {
         if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
+          // If axiom contains owl:Thing, skip it
           logger.debug("Ignoring trivial axioms with " + "OWLThing in signature: " + a);
           continue;
         }
       }
+
+      // If the axiom has not been skipped, add it to the ontology
       manager.addAxiom(ontology, a);
+      // If propertyIRI isn't null, we are annotating the inferred axioms
+      // Add that annotation here
       if (propertyIRI != null) {
         OntologyHelper.addAxiomAnnotation(ontology, a, propertyIRI, value);
       }
     }
   }
 
-  private static void getReferenceViolations(OWLOntology ontology, Map<String, String> options)
+  /**
+   * Given an ontology and a map of options, find any reference violations in the ontology. If
+   * prevent-invalid-references, fail on any invalid reference violations.
+   *
+   * @param ontology OWLOntology to check
+   * @param options map of reason options
+   * @throws InvalidReferenceException on invalid reference, if prevent-invalid-references
+   */
+  private static void checkReferenceViolations(OWLOntology ontology, Map<String, String> options)
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
@@ -482,12 +556,24 @@ public class ReasonOperation {
     }
   }
 
+  /**
+   * Given an ontology, a reasoner, and a map of options, use the reasoner to validate the ontology,
+   * compute class hierarchy, and find equivalencies.
+   *
+   * @param ontology OWLOntology to reason over
+   * @param reasoner OWLReasoner to use
+   * @param options Map of reason options
+   * @throws InconsistentOntologyException on invalid ontology
+   * @throws IncoherentRBoxException on invalid ontology
+   * @throws IncoherentTBoxException on invalid ontology
+   */
   private static void reason(
       OWLOntology ontology, OWLReasoner reasoner, Map<String, String> options)
       throws InconsistentOntologyException, IncoherentRBoxException, IncoherentTBoxException {
     long startTime = System.currentTimeMillis();
     logger.info("Starting reasoning...");
 
+    // Validate and maybe dump the unsat classes into a file
     String dumpFilePath = OptionsHelper.getOption(options, "dump-unsatisfiable", null);
     ReasonerHelper.validate(reasoner, dumpFilePath);
 
@@ -506,35 +592,8 @@ public class ReasonOperation {
       System.exit(1);
     }
 
-    long elapsedTime = System.currentTimeMillis() - startTime;
+    float elapsedTime = System.currentTimeMillis() - startTime;
     long seconds = (int) Math.ceil(elapsedTime / 1000);
     logger.info("Reasoning took {} seconds.", seconds);
-  }
-
-  private static void maybeCreateNewOntology(OWLOntology ontology, Map<String, String> options) {
-    if (OptionsHelper.optionIsTrue(options, "create-new-ontology")
-        || OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
-      OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-      if (OptionsHelper.optionIsTrue(options, "create-new-ontology-with-annotations")) {
-        logger.info("Placing inferred axioms with annotations into a new ontology");
-        manager.removeAxioms(
-            ontology,
-            ontology
-                .getAxioms()
-                .stream()
-                .filter(nonap -> !(nonap instanceof OWLAnnotationAssertionAxiom))
-                .collect(Collectors.toSet()));
-
-      } else {
-        logger.info("Placing inferred axioms into a new ontology");
-        manager.removeAxioms(ontology, ontology.getAxioms());
-      }
-
-      Set<OWLImportsDeclaration> oids = ontology.getImportsDeclarations();
-      for (OWLImportsDeclaration oid : oids) {
-        RemoveImport ri = new RemoveImport(ontology, oid);
-        manager.applyChange(ri);
-      }
-    }
   }
 }
