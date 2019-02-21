@@ -1,6 +1,7 @@
 # # Missing Label
 #
 # **Problem:** An entity does not have a label. This may cause confusion or misuse. Excludes deprecated entities.
+#
 # **OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
 #
 # **Solution:** Add a label.

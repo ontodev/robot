@@ -1,6 +1,7 @@
 # Duplicate Definition
 
 **Problem:** An entity shares an exact definition or elucidation with another entity. Excludes deprecated entities.
+
 **OBO Foundry Principle:** [6 - Textual Definitions](http://obofoundry.org/principles/fp-006-textual-definitions.html)
 
 **Solution:** Update the definition to reflect the entities, or determine if the entities are the same.

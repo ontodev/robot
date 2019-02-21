@@ -1,6 +1,7 @@
 # Multiple Labels
 
 **Problem:** An entity has more than one label. This may cause confusion or misuse, and will prevent translation to OBO format. Excludes deprecated entities.
+
 **OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
 
 **Solution:** Remove extra labels.

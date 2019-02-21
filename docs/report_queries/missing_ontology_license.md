@@ -1,6 +1,7 @@
 # Missing Ontology License
 
 **Problem:** The ontology header is missing required metadata: [license](http://dublincore.org/documents/dcmi-terms/#terms-license).
+
 **OBO Foundry Principle:** [1 - Open](http://obofoundry.org/principles/fp-001-open.html)
 
 **Solution:** Add the missing license. See link for appropriate property.

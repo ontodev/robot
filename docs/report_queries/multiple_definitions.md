@@ -1,6 +1,7 @@
 # Multiple Defintions
 
 **Problem:** An entity has more than one definition or elucidation. This may cause confusion or misuse, and will prevent translation to OBO format (in case of multiple definitions). Excludes deprecated entities.
+
 **OBO Foundry Principle:** [6 - Textual Definitions](http://obofoundry.org/principles/fp-006-textual-definitions.html)
 
 **Solution:** Remove extra definitions.

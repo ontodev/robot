@@ -1,6 +1,7 @@
 # Missing Definition
 
 **Problem:** An entity does not have a definition or elucidation. This may cause confusion or misuse of the entity. Excludes deprecated entities.
+
 **OBO Foundry Principle:** [6 - Textual Definitions](http://obofoundry.org/principles/fp-006-textual-definitions.html)
 
 **Solution:** Add a definition.

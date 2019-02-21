@@ -1,6 +1,7 @@
 # # Duplicate Label
 #
 # **Problem:** Two different subjects have been assigned the same label. This causes ambiguity.
+#
 # **OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
 #
 # **Solution:** Avoid ambiguity by assigning distinct labels to each subject.
