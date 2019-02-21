@@ -14,7 +14,7 @@
 ### Configuration
 
 # Collect the list of query files for report.
-REPORT_QUERIES := $(wildcard ../robot-core/src/main/resources/queries/*.rq)
+REPORT_QUERIES := $(wildcard ../robot-core/src/main/resources/report_queries/*.rq)
 REPORT_DOCS := $(foreach x, $(REPORT_QUERIES), report_queries/$(notdir $(basename $(x))).md)
 
 
@@ -29,7 +29,7 @@ report_queries:
 	mkdir -p $@
 
 # Convert each SPARQL file to a Markdown file.
-report_queries/%.md: ../robot-core/src/main/resources/queries/%.rq | report_queries
+report_queries/%.md: ../robot-core/src/main/resources/report_queries/%.rq | report_queries
 	awk '/^PREFIX/ && !x {print "```sparql"; x=1} 1' $< \
 	| sed 's/^#//' \
 	| sed 's/^ //' \

@@ -1,8 +1,8 @@
 # # Multiple Equivalent Classes
 #
-# Problem: A class has more than one asserted equivalent classes, anonymous or named. This is probably a mistake, as equivalent statements can be intersections.
+# **Problem:** A class has more than one asserted equivalent classes, anonymous or named. This is probably a mistake, as equivalent statements can be intersections.
 #
-# Solution: Combine the equivalent class statements.
+# **Solution:** Combine the equivalent class statements.
 
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 

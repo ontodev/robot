@@ -1,8 +1,8 @@
 # # Misused Obsolete Label
 #
-# Problem: A non-deprecated class has the "obsolete" prefix. This may mean that a deprecated class is missing the `owl:deprecated` annotation, or that this prefix was added accidentally.
+# **Problem:** A non-deprecated class has the "obsolete" prefix. This may mean that a deprecated class is missing the `owl:deprecated` annotation, or that this prefix was added accidentally.
 #
-# Solution: Remove the "obsolete" prefix or add the `owl:deprecated` annotation.
+# **Solution:** Remove the "obsolete" prefix or add the `owl:deprecated` annotation.
 
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
