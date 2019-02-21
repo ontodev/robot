@@ -36,7 +36,7 @@ public class ReasonOperationTest extends CoreTest {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory =
         new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
-    ReasonOperation.reason(reasoned, reasonerFactory);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory);
     assertIdentical("/simple_structural.owl", reasoned);
   }
 
@@ -52,7 +52,7 @@ public class ReasonOperationTest extends CoreTest {
   public void testELK() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    ReasonOperation.reason(reasoned, reasonerFactory);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory);
     assertIdentical("/simple_elk.owl", reasoned);
   }
 
@@ -68,7 +68,7 @@ public class ReasonOperationTest extends CoreTest {
   public void testHermit() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
-    ReasonOperation.reason(reasoned, reasonerFactory);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory);
     assertEquals(6, reasoned.getAxiomCount());
     assertIdentical("/simple_hermit.owl", reasoned);
   }
@@ -85,7 +85,7 @@ public class ReasonOperationTest extends CoreTest {
   public void testJFact() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new JFactFactory();
-    ReasonOperation.reason(reasoned, reasonerFactory);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory);
     assertEquals(6, reasoned.getAxiomCount());
     assertIdentical("/simple_jfact.owl", reasoned);
   }
@@ -107,7 +107,7 @@ public class ReasonOperationTest extends CoreTest {
     opts.put("create-new-ontology", "true");
     // see https://github.com/ontodev/robot/issues/80
     opts.put("annotate-inferred-axioms", "true");
-    ReasonOperation.reason(reasoned, reasonerFactory, opts);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory, opts);
     assertEquals(2, reasoned.getAxiomCount());
     // assertIdentical("/simple_hermit.owl", reasoned);
   }
@@ -130,7 +130,7 @@ public class ReasonOperationTest extends CoreTest {
     opts.put("create-new-ontology", "true");
     opts.put("annotate-inferred-axioms", "true");
 
-    ReasonOperation.reason(reasoned, reasonerFactory, opts);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory, opts);
 
     // note that some of the inferred axioms are trivial
     // involving owl:Thing
@@ -154,7 +154,7 @@ public class ReasonOperationTest extends CoreTest {
     opts.put("create-new-ontology", "true");
     opts.put("annotate-inferred-axioms", "true");
     opts.put("exclude-duplicate-axioms", "true");
-    ReasonOperation.reason(reasoned, reasonerFactory, opts);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory, opts);
     assertEquals(5, reasoned.getAxiomCount());
     // assertIdentical("/simple_hermit.owl", reasoned);
   }
@@ -171,14 +171,14 @@ public class ReasonOperationTest extends CoreTest {
   public void testRemoveRedundantSubClassAxioms() throws Exception {
     OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
-    ReasonOperation.reason(reasoned, reasonerFactory, Collections.emptyMap());
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory, Collections.emptyMap());
     assertIdentical("/redundant_subclasses.owl", reasoned);
 
     Map<String, String> options = new HashMap<>();
     options.put("remove-redundant-subclass-axioms", "true");
 
     reasoned = loadOntology("/redundant_subclasses.owl");
-    ReasonOperation.reason(reasoned, reasonerFactory, options);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory, options);
     assertIdentical("/without_redundant_subclasses.owl", reasoned);
   }
 
@@ -198,7 +198,7 @@ public class ReasonOperationTest extends CoreTest {
     OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
     OWLReasonerFactory reasonerFactory =
         new ExpressionMaterializingReasonerFactory(coreReasonerFactory);
-    ReasonOperation.reason(reasoned, reasonerFactory);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory);
     assertIdentical("/simple_elk.owl", reasoned);
   }
 
@@ -220,7 +220,7 @@ public class ReasonOperationTest extends CoreTest {
         new ExpressionMaterializingReasonerFactory(coreReasonerFactory);
     Map<String, String> opts = ReasonOperation.getDefaultOptions();
     opts.put("exclude-owl-thing", "true");
-    ReasonOperation.reason(reasoned, reasonerFactory, opts);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory, opts);
     assertIdentical("/relax_equivalence_axioms_expressions_materialized.obo", reasoned);
   }
 
@@ -236,7 +236,7 @@ public class ReasonOperationTest extends CoreTest {
   public void testIntersection() throws Exception {
     OWLOntology reasoned = loadOntology("/intersection.omn");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    ReasonOperation.reason(reasoned, reasonerFactory);
+    ReasonOperation.reasonAndAssert(reasoned, reasonerFactory);
     assertTrue(checkContains(reasoned, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
   }
 
@@ -270,10 +270,10 @@ public class ReasonOperationTest extends CoreTest {
 
     Map<String, String> opts = new HashMap<>();
     opts.put("exclude-external-entities", "true");
-    ReasonOperation.reason(mainOnt, reasonerFactory, opts);
+    ReasonOperation.reasonAndAssert(mainOnt, reasonerFactory, opts);
     assertFalse(checkContains(mainOnt, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
     opts.put("exclude-external-entities", "false");
-    ReasonOperation.reason(mainOnt, reasonerFactory, opts);
+    ReasonOperation.reasonAndAssert(mainOnt, reasonerFactory, opts);
     assertTrue(checkContains(mainOnt, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
   }
 

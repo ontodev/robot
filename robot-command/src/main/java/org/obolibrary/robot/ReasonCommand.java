@@ -173,7 +173,7 @@ public class ReasonCommand implements Command {
         && reasonerOptions.get("create-new-ontology").equalsIgnoreCase("true")) {
       throw new IllegalArgumentException(createOntologyError);
     }
-    ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
+    ReasonOperation.reasonAndAssert(ontology, reasonerFactory, reasonerOptions);
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
 
