@@ -153,11 +153,6 @@ public class ExtractCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
-    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-    if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
-    }
-
     // Override default reasoner options with command-line options
     Map<String, String> extractOptions = ExtractOperation.getDefaultOptions();
     for (String option : extractOptions.keySet()) {
@@ -166,21 +161,11 @@ public class ExtractCommand implements Command {
       }
     }
 
-    // Determine if terms should be annotated with isDefinedBy
-    boolean annotateSource = CommandLineHelper.getBooleanValue(line, "annotate-with-source", false);
-    String sourceMapPath = CommandLineHelper.getOptionalValue(line, "sources");
-    Map<IRI, IRI> sourceMap = new HashMap<>();
-    if (sourceMapPath != null) {
-      sourceMap = getSourceMap(ioHelper, sourceMapPath);
-    }
-
     // Get method, make sure it has been specified
     String method =
         CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
             .trim()
             .toLowerCase();
-
-    boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
 
     ModuleType moduleType = null;
     switch (method) {
@@ -288,7 +273,16 @@ public class ExtractCommand implements Command {
                 inputOntology, branchIRIs, null, annotateSource, sourceMap));
       }
     }
-    return MergeOperation.merge(outputOntologies);
+    // Get the output IRI and create the output ontology
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+    if (outputIRI == null) {
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    }
+    OWLOntology outputOntology = MergeOperation.merge(outputOntologies);
+    if (outputIRI != null) {
+      outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
+    }git 
+    return outputOntology;
   }
 
   /**
