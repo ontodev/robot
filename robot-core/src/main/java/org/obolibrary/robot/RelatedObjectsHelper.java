@@ -86,16 +86,12 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    Set<OWLAxiom> axioms = new HashSet<>();
-
-    Set<IRI> iris = new HashSet<>();
-    for (OWLObject object : objects) {
-      if (OWLNamedObject.class.isInstance(object)) {
-        OWLNamedObject namedObject = (OWLNamedObject) object;
-        iris.add(namedObject.getIRI());
-      }
+    if (axiomTypes == null) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
     }
-
+    Set<OWLAxiom> axioms = new HashSet<>();
+    Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Check both the full annotated axiom and axiom without annotations (if annotated)
@@ -145,16 +141,12 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    Set<OWLAxiom> axioms = new HashSet<>();
-
-    Set<IRI> iris = new HashSet<>();
-    for (OWLObject object : objects) {
-      if (OWLNamedObject.class.isInstance(object)) {
-        OWLNamedObject namedObject = (OWLNamedObject) object;
-        iris.add(namedObject.getIRI());
-      }
+    if (axiomTypes == null) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
     }
-
+    Set<OWLAxiom> axioms = new HashSet<>();
+    Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
@@ -284,6 +276,10 @@ public class RelatedObjectsHelper {
       return objects;
     } else if (selector.equals("types")) {
       return selectTypes(ontology, objects);
+    } else if (selector.equals("ranges")) {
+      return selectRanges(ontology, objects);
+    } else if (selector.equals("domains")) {
+      return selectDomains(ontology, objects);
     } else if (selector.contains("=")) {
       return selectPattern(ontology, ioHelper, objects, selector);
     } else {
@@ -448,6 +444,27 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an ontology and a set of objects, return all domains of any properties in the set.
+   *
+   * @param ontology OWLOntology to retrieve domains from
+   * @param objects OWLObjects to retrieve domains of
+   * @return set of domains of the starting set
+   */
+  public static Set<OWLObject> selectDomains(OWLOntology ontology, Set<OWLObject> objects) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLAnnotationProperty) {
+        relatedObjects.addAll(EntitySearcher.getDomains((OWLAnnotationProperty) object, ontology));
+      } else if (object instanceof OWLDataProperty) {
+        relatedObjects.addAll(EntitySearcher.getDomains((OWLDataProperty) object, ontology));
+      } else if (object instanceof OWLObjectProperty) {
+        relatedObjects.addAll(EntitySearcher.getDomains((OWLObjectProperty) object, ontology));
+      }
+    }
+    return relatedObjects;
+  }
+
+  /**
    * Given an ontology and a set of objects, return all equivalent objects of the starting set.
    *
    * @param ontology OWLOntology to retrieve equivalents from
@@ -589,6 +606,27 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an ontology and a set of objects, return all ranges of any properties in the set.
+   *
+   * @param ontology OWLOntology to retrieve ranges from
+   * @param objects OWLObjects to retrieve ranges of
+   * @return set of ranges of the starting set
+   */
+  public static Set<OWLObject> selectRanges(OWLOntology ontology, Set<OWLObject> objects) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLAnnotationProperty) {
+        relatedObjects.addAll(EntitySearcher.getRanges((OWLAnnotationProperty) object, ontology));
+      } else if (object instanceof OWLDataProperty) {
+        relatedObjects.addAll(EntitySearcher.getRanges((OWLDataProperty) object, ontology));
+      } else if (object instanceof OWLObjectProperty) {
+        relatedObjects.addAll(EntitySearcher.getRanges((OWLObjectProperty) object, ontology));
+      }
+    }
+    return relatedObjects;
+  }
+
+  /**
    * Given an ontology and a set of objects, return a set of all the types of the individuals in
    * that set.
    *
@@ -716,6 +754,23 @@ public class RelatedObjectsHelper {
       }
       return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
     }
+  }
+
+  /**
+   * Given a set of OWLObjects, return the set of IRIs for those objects.
+   *
+   * @param objects OWLObjects to get IRIs of
+   * @return IRIs of the given objects
+   */
+  private static Set<IRI> getIRIs(Set<OWLObject> objects) {
+    Set<IRI> iris = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLNamedObject) {
+        OWLNamedObject namedObject = (OWLNamedObject) object;
+        iris.add(namedObject.getIRI());
+      }
+    }
+    return iris;
   }
 
   /**

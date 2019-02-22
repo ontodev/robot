@@ -1,8 +1,10 @@
 # # Missing Definition
 #
-# Problem: An entity does not have a definition. This may cause confusion or misuse of the entity. Excludes deprecated entities.
+# **Problem:** An entity does not have a definition or elucidation. This may cause confusion or misuse of the entity. Excludes deprecated entities.
 #
-# Solution: Add a definition.
+# **OBO Foundry Principle:** [6 - Textual Definitions](http://obofoundry.org/principles/fp-006-textual-definitions.html)
+#
+# **Solution:** Add a definition.
 
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -11,7 +13,8 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
-  VALUES ?property { obo:IAO_0000115 }
+  VALUES ?property { obo:IAO_0000115
+                     obo:IAO_0000600 }
   ?entity ?any ?o
   FILTER NOT EXISTS { ?entity ?property ?value }
   FILTER NOT EXISTS { ?entity a owl:Ontology }
