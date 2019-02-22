@@ -1,8 +1,8 @@
 # # Duplicate Exact Synonym
 #
-# Problem: Two entities share an exact synonym. This causes ambiguity. Excludes deprecated entities.
+# **Problem:** Two entities share an exact synonym. This causes ambiguity. Excludes deprecated entities.
 #
-# Solution: Avoid ambiguity by assigning unique exact synonyms or changing the exact synonym to a different annotation (e.g. broad synonym).
+# **Solution:** Avoid ambiguity by assigning unique exact synonyms or changing the exact synonym to a different annotation (e.g. broad synonym).
 
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
