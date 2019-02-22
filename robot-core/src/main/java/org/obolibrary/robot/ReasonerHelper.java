@@ -230,9 +230,11 @@ public class ReasonerHelper {
   }
 
   /**
-   * @param axGenerators
-   * @return
-   * @throws Exception
+   * Given a list of axiom generator strings, return a list of InferredAxiomGenerator objects.
+   *
+   * @param axGenerators list of strings to get InferredAxiomGenerators
+   * @return list of InferredAxiomGenerators
+   * @throws Exception on problem getting InferredAxiomGenerator
    */
   public static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
       List<String> axGenerators) throws Exception {
@@ -248,9 +250,11 @@ public class ReasonerHelper {
   }
 
   /**
-   * @param axGenerator
-   * @return
-   * @throws Exception
+   * Given an axiom generator as a string, return the InferredAxiomGenerator object.
+   *
+   * @param axGenerator name of InferredAxiomGenerator
+   * @return InferredAxiomGenerator
+   * @throws Exception if the string is not a valid axiom generator
    */
   public static InferredAxiomGenerator<? extends OWLAxiom> getInferredAxiomGenerator(
       String axGenerator) throws Exception {
