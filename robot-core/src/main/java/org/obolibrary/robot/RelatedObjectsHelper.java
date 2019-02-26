@@ -86,6 +86,11 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    if (axiomTypes == null) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
+    }
+
     Set<OWLAxiom> axioms = new HashSet<>();
 
     Set<IRI> iris = new HashSet<>();
@@ -145,6 +150,11 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    if (axiomTypes == null) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
+    }
+
     Set<OWLAxiom> axioms = new HashSet<>();
 
     Set<IRI> iris = new HashSet<>();
@@ -826,6 +836,29 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an ontology and a class expression, return the set of superclasses while removing any circular subclass definitions. Warn on any circular subclasses.
+   *
+   * @param ontology OWLOntology to get superclasses
+   * @param cls OWLClass to get superclasses of
+   * @return Set of OWLClassExpressions that are superclasses of cls
+   */
+  private static Set<OWLClassExpression> getSuperClasses(OWLOntology ontology, OWLClass cls) {
+    Set<OWLClassExpression> superclasses = new HashSet<>();
+    for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, ontology)) {
+      if (expr.isAnonymous()) {
+        superclasses.add(expr);
+        continue;
+      }
+      if (expr.asOWLClass().getIRI() != cls.getIRI()) {
+        superclasses.add(expr);
+      } else {
+        logger.warn("Circular subclass definition: " + cls.getIRI());
+      }
+    }
+    return superclasses;
+  }
+
+  /**
    * Given an ontology, a set of objects, and a set of annotations, return a set of objects that are
    * annotated with at least one of the annotations in the set.
    *
@@ -1173,12 +1206,12 @@ public class RelatedObjectsHelper {
         classPair.put(SUPER, sc);
         classPairs.add(classPair);
         if (!sc.isAnonymous()) {
-          spanGapsHelper(
-              ontology,
-              objects,
-              classPairs,
-              sc.asOWLClass(),
-              EntitySearcher.getSuperClasses(sc.asOWLClass(), ontology));
+            spanGapsHelper(
+                ontology,
+                objects,
+                classPairs,
+                sc.asOWLClass(),
+                getSuperClasses(ontology, sc.asOWLClass()));
         }
       } else if (!sc.isAnonymous()) {
         spanGapsHelper(
@@ -1186,7 +1219,7 @@ public class RelatedObjectsHelper {
             objects,
             classPairs,
             cls,
-            EntitySearcher.getSuperClasses(sc.asOWLClass(), ontology));
+            getSuperClasses(ontology, sc.asOWLClass()));
       }
     }
   }
