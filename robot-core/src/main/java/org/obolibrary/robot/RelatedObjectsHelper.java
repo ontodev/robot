@@ -882,7 +882,8 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Given an ontology and a class expression, return the set of superclasses while removing any circular subclass definitions. Warn on any circular subclasses.
+   * Given an ontology and a class expression, return the set of superclasses while removing any
+   * circular subclass definitions. Warn on any circular subclasses.
    *
    * @param ontology OWLOntology to get superclasses
    * @param cls OWLClass to get superclasses of
@@ -1261,11 +1262,7 @@ public class RelatedObjectsHelper {
         }
       } else if (!sc.isAnonymous()) {
         spanGapsHelper(
-            ontology,
-            objects,
-            classPairs,
-            cls,
-          getSuperClasses(ontology, sc.asOWLClass()));
+            ontology, objects, classPairs, cls, getSuperClasses(ontology, sc.asOWLClass()));
       }
     }
   }

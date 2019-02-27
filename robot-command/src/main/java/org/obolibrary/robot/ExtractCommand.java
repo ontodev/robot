@@ -167,19 +167,6 @@ public class ExtractCommand implements Command {
 
     boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
 
-    ModuleType moduleType = null;
-    switch (method) {
-      case "star":
-        moduleType = ModuleType.STAR;
-        break;
-      case "top":
-        moduleType = ModuleType.TOP;
-        break;
-      case "bot":
-        moduleType = ModuleType.BOT;
-        break;
-    }
-
     if (method.equals("mireot")) {
       List<OWLOntology> outputOntologies = new ArrayList<>();
       // Get terms from input (ensuring that they are in the input ontology)
