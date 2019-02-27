@@ -1,8 +1,10 @@
 # # Missing Label
 #
-# Problem: An entity does not have a label. This may cause confusion or misuse. Excludes deprecated entities.
+# **Problem:** An entity does not have a label. This may cause confusion or misuse. Excludes deprecated entities.
 #
-# Solution: Add a label.
+# **OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
+#
+# **Solution:** Add a label.
 
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

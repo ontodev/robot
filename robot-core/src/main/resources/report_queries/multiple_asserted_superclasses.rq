@@ -1,8 +1,8 @@
 # # Multiple Asserted Superclasses
 #
-# Problem: A class has more than one asserted named parent. This filters any axioms with the `is_inferred true` annotation, but inferences may not always be annotated. Double check where the parent is coming from before making changes.
+# **Problem:** A class has more than one asserted named parent. This filters any axioms with the `is_inferred true` annotation, but inferences may not always be annotated. Double check where the parent is coming from before making changes.
 #
-# Solution: Use logical axioms to infer dual parentage.
+# **Solution:** Use logical axioms to infer dual parentage.
 
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>

@@ -1,0 +1,17 @@
+# Missing Ontology Title
+
+**Problem:** The ontology header is missing required metadata: [title](http://dublincore.org/documents/dcmi-terms/#elements-title).
+
+**Solution:** Add the missing title. See link for appropriate property.
+
+```sparql
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?entity ?property ?value WHERE {
+ VALUES ?property { dc:title }
+ ?entity a owl:Ontology .
+ OPTIONAL { ?entity ?property ?value }
+ FILTER (!bound(?value))
+}
+```

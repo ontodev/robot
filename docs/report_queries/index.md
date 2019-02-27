@@ -21,9 +21,12 @@ See [`report`](../report) for more details.
 | [missing definition](missing_definition)  | WARN
 | [missing label](missing_label)  | ERROR
 | [missing obsolete label](missing_obsolete_label)  | WARN
+| [missing ontology description](missing_ontology_description)  | ERROR
+| [missing ontology license](missing_ontology_license)  | ERROR
+| [missing ontology title](missing_ontology_title)  | ERROR
 | [missing superclass](missing_superclass)  | INFO
 | [misused obsolete label](misused_obsolete_label)  | ERROR
 | [multiple asserted superclasses](multiple_asserted_superclasses)  | WARN
 | [multiple definitions](multiple_definitions)  | ERROR
+| [multiple equivalent classes](multiple_equivalent_classes)  | ERROR
 | [multiple labels](multiple_labels)  | ERROR
-| [ontology metadata](ontology_metadata)  | ERROR

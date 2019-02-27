@@ -1,8 +1,8 @@
 # # Duplicate Scoped Synonyms
 #
-# Problem: An entity has duplicate synonyms with different properties (e.g. the same broad and related synonym). This causes ambiguity.
+# **Problem:** An entity has duplicate synonyms with different properties (e.g. the same broad and related synonym). This causes ambiguity.
 #
-# Solution: Remove duplicate synonyms and determine the correct scope.
+# **Solution:** Remove duplicate synonyms and determine the correct scope.
 
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>

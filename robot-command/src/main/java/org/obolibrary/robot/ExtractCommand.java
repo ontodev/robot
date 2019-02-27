@@ -66,6 +66,7 @@ public class ExtractCommand implements Command {
     o.addOption("b", "branch-from-term", true, "root term of branch to extract");
     o.addOption("B", "branch-from-terms", true, "root terms of branches to extract");
     o.addOption("c", "copy-ontology-annotations", true, "if true, include ontology annotations");
+    o.addOption("f", "force", true, "if true, warn on empty input terms instead of fail");
     o.addOption("a", "annotate-with-source", true, "if true, annotate terms with rdfs:isDefinedBy");
     o.addOption("s", "sources", true, "specify a mapping file of term to source ontology");
     o.addOption("n", "intermediates", true, "specify how to handle intermediate entities");
@@ -164,6 +165,21 @@ public class ExtractCommand implements Command {
             .trim()
             .toLowerCase();
 
+    boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
+
+    ModuleType moduleType = null;
+    switch (method) {
+      case "star":
+        moduleType = ModuleType.STAR;
+        break;
+      case "top":
+        moduleType = ModuleType.TOP;
+        break;
+      case "bot":
+        moduleType = ModuleType.BOT;
+        break;
+    }
+
     if (method.equals("mireot")) {
       List<OWLOntology> outputOntologies = new ArrayList<>();
       // Get terms from input (ensuring that they are in the input ontology)
@@ -233,7 +249,7 @@ public class ExtractCommand implements Command {
       // Make sure the terms exist in the input ontology
       Set<IRI> terms =
           OntologyHelper.filterExistingTerms(
-              inputOntology, CommandLineHelper.getTerms(ioHelper, line), false);
+              inputOntology, CommandLineHelper.getTerms(ioHelper, line), force);
       outputOntology =
           ExtractOperation.extract(inputOntology, ioHelper, terms, outputIRI, extractOptions);
     } else {
