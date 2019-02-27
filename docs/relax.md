@@ -25,4 +25,4 @@ finger SubClassOf 'part of' some hand
 
 ## Combination with other commands
 
-A common sequence is [reason](/reason) [relax](/relax) [reduce](/reduce), with the last step removing any redundancies introduced by the relax step.
+A common sequence is [reason](/reason) [relax](/relax) [reduce](/reduce), with the last step removing any redundancies in the SubClassOf graph introduced by the relax step.
