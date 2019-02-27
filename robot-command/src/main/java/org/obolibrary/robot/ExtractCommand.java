@@ -281,7 +281,7 @@ public class ExtractCommand implements Command {
     OWLOntology outputOntology = MergeOperation.merge(outputOntologies);
     if (outputIRI != null) {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
-    }git 
+    }
     return outputOntology;
   }
 
