@@ -73,9 +73,9 @@ public class MireotOperation {
   }
 
   /**
-   * Given an input ontology, a set of upper IRIs, a set of lower IRIs, a set of
-   * annotation properties (or null for all), and a map of extract options, get the ancestors of the
-   * lower IRIs up to the upper IRIs. Include the specified annotation properties.
+   * Given an input ontology, a set of upper IRIs, a set of lower IRIs, a set of annotation
+   * properties (or null for all), and a map of extract options, get the ancestors of the lower IRIs
+   * up to the upper IRIs. Include the specified annotation properties.
    *
    * @param inputOntology OWLOntology to extract from
    * @param upperIRIs top level IRIs
