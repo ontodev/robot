@@ -77,6 +77,7 @@ public class ExtractCommand implements Command {
     o.addOption("s", "sources", true, "specify a mapping file of term to source ontology");
     o.addOption("n", "individuals", true, "handle individuals (default: include)");
     o.addOption("M", "imports", true, "handle imports (default: include)");
+    o.addOption("N", "intermediates", true, "specify how to handle intermediate entities");
     options = o;
   }
 
@@ -253,7 +254,6 @@ public class ExtractCommand implements Command {
     if (branchIRIs == null && lowerIRIs == null) {
       throw new IllegalArgumentException(missingMireotTermsError);
     } else {
-      boolean annotateSource = OptionsHelper.optionIsTrue(extractOptions, "annotate-with-source");
       Map<IRI, IRI> sourceMap =
           getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
 
@@ -261,7 +261,7 @@ public class ExtractCommand implements Command {
       if (lowerIRIs != null) {
         outputOntologies.add(
             MireotOperation.getAncestors(
-                inputOntology, upperIRIs, lowerIRIs, null, annotateSource, sourceMap));
+                inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
         // If there are no lower IRIs, there shouldn't be any upper IRIs
       } else if (upperIRIs != null) {
         throw new IllegalArgumentException(missingLowerTermError);
@@ -270,7 +270,7 @@ public class ExtractCommand implements Command {
       if (branchIRIs != null) {
         outputOntologies.add(
             MireotOperation.getDescendants(
-                inputOntology, branchIRIs, null, annotateSource, sourceMap));
+                inputOntology, branchIRIs, null, extractOptions, sourceMap));
       }
     }
     // Get the output IRI and create the output ontology
