@@ -62,6 +62,7 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
 ### Intermediates
+
 When extracting (especially with MIREOT), sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. For example, you may end up with this after extracting `adrenal gland`:
 ```
 - material anatomical entity
@@ -87,7 +88,7 @@ Running this command to extract, inclusively, between 'material anatomical entit
         --input uberon_fragment.owl \
         --upper-term UBERON:0000465 \
         --lower-term UBERON:0002369 \
-        --intermediates minimal
+        --intermediates minimal \
         --output results/uberon_minimal.owl
 
 Would result in the following structure:
@@ -107,7 +108,7 @@ Running the same command, but with `--intermediates none`:
         --input uberon_fragment.owl \
         --upper-term UBERON:0000465 \
         --lower-term UBERON:0002369 \
-        --intermediates none
+        --intermediates none \
         --output results/uberon_none.owl
 
 Would result in:
