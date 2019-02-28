@@ -63,7 +63,7 @@ By default, the `reason` operation will only assert inferred subclass axioms. Th
     * `DisjointClasses`
   * Data property axiom generators
     * `DataPropertyCharacteristic`
-    * `EquivalentDataProperty`
+    * `EquivalentDataProperties`
     * `SubDataProperty`
   * Individual axiom generators
     * `ClassAssertion`

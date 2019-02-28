@@ -266,7 +266,7 @@ public class ReasonerHelper {
         return new InferredEquivalentClassAxiomGenerator();
       case "datapropertycharacteristic":
         return new InferredDataPropertyCharacteristicAxiomGenerator();
-      case "equivalentdataproperty":
+      case "equivalentdataproperties":
         return new InferredEquivalentDataPropertiesAxiomGenerator();
       case "subdataproperty":
         return new InferredSubDataPropertyAxiomGenerator();
