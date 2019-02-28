@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/tauber/ontologies/2019/1/untitled-ontology-482#"
+     xml:base="http://www.semanticweb.org/tauber/ontologies/2019/1/untitled-ontology-482"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:obo="http://purl.obolibrary.org/obo/">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/tauber/ontologies/2019/1/untitled-ontology-482"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OP_01 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/OP_01">
+        <owl:equivalentProperty rdf:resource="http://purl.obolibrary.org/obo/OP_04"/>
+        <owl:inverseOf rdf:resource="http://purl.obolibrary.org/obo/OP_02"/>
+        <owl:propertyDisjointWith rdf:resource="http://purl.obolibrary.org/obo/OP_02"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OP_02 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/OP_02"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OP_03 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/OP_03">
+        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/OP_02"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OP_04 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/OP_04"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OP_05 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/OP_05">
+        <owl:equivalentProperty>
+            <rdf:Description>
+                <owl:inverseOf rdf:resource="http://purl.obolibrary.org/obo/OP_03"/>
+            </rdf:Description>
+        </owl:equivalentProperty>
+        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/OP_02"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OP_08 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/OP_08">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DP_01 -->
+
+    <owl:DatatypeProperty rdf:about="http://purl.obolibrary.org/obo/DP_01">
+        <owl:equivalentProperty rdf:resource="http://purl.obolibrary.org/obo/DP_02"/>
+        <owl:equivalentProperty rdf:resource="http://purl.obolibrary.org/obo/DP_04"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DP_02 -->
+
+    <owl:DatatypeProperty rdf:about="http://purl.obolibrary.org/obo/DP_02"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DP_03 -->
+
+    <owl:DatatypeProperty rdf:about="http://purl.obolibrary.org/obo/DP_03">
+        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/DP_02"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DP_04 -->
+
+    <owl:DatatypeProperty rdf:about="http://purl.obolibrary.org/obo/DP_04"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_01 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_01">
+        <owl:equivalentClass>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/OP_01"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/CLS_01"/>
+            </owl:Restriction>
+        </owl:equivalentClass>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_02 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_02">
+        <owl:equivalentClass>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/OP_01"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/CLS_01"/>
+            </owl:Restriction>
+        </owl:equivalentClass>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_03 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_03"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_04 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_04">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CLS_03"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/OP_01"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/CLS_01"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_05 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_05">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CLS_01"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_06 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_06">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:complementOf rdf:resource="http://purl.obolibrary.org/obo/CLS_01"/>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/CLS_07 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CLS_07">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CLS_03"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IND_01 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/IND_01">
+        <rdf:type rdf:resource="http://purl.obolibrary.org/obo/CLS_07"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IND_02 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/IND_02">
+        <rdf:type rdf:resource="http://purl.obolibrary.org/obo/CLS_07"/>
+        <obo:OP_08 rdf:resource="http://purl.obolibrary.org/obo/IND_03"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IND_03 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/IND_03">
+        <rdf:type>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/OP_01"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/CLS_01"/>
+            </owl:Restriction>
+        </rdf:type>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.2.8.20170104-2310) https://github.com/owlcs/owlapi -->
+
