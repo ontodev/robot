@@ -75,6 +75,8 @@ public class ExtractCommand implements Command {
     o.addOption("f", "force", true, "if true, warn on empty input terms instead of fail");
     o.addOption("a", "annotate-with-source", true, "if true, annotate terms with rdfs:isDefinedBy");
     o.addOption("s", "sources", true, "specify a mapping file of term to source ontology");
+    o.addOption("n", "individuals", true, "handle individuals (default: include)");
+    o.addOption("M", "imports", true, "handle imports (default: include)");
     options = o;
   }
 
@@ -151,17 +153,12 @@ public class ExtractCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
-    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-    if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
-    }
-
-    // Determine if terms should be annotated with isDefinedBy
-    boolean annotateSource = CommandLineHelper.getBooleanValue(line, "annotate-with-source", false);
-    String sourceMapPath = CommandLineHelper.getOptionalValue(line, "sources");
-    Map<IRI, IRI> sourceMap = new HashMap<>();
-    if (sourceMapPath != null) {
-      sourceMap = getSourceMap(ioHelper, sourceMapPath);
+    // Override default reasoner options with command-line options
+    Map<String, String> extractOptions = ExtractOperation.getDefaultOptions();
+    for (String option : extractOptions.keySet()) {
+      if (line.hasOption(option)) {
+        extractOptions.put(option, line.getOptionValue(option));
+      }
     }
 
     // Get method, make sure it has been specified
@@ -169,8 +166,6 @@ public class ExtractCommand implements Command {
         CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
             .trim()
             .toLowerCase();
-
-    boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
 
     ModuleType moduleType = null;
     switch (method) {
@@ -186,78 +181,9 @@ public class ExtractCommand implements Command {
     }
 
     if (method.equals("mireot")) {
-      List<OWLOntology> outputOntologies = new ArrayList<>();
-      // Get terms from input (ensuring that they are in the input ontology)
-      // It's okay for any of these to return empty (allowEmpty = true)
-      // Checks for empty sets later
-      Set<IRI> upperIRIs =
-          OntologyHelper.filterExistingTerms(
-              inputOntology,
-              CommandLineHelper.getTerms(ioHelper, line, "upper-term", "upper-terms"),
-              true);
-      if (upperIRIs.size() == 0) {
-        upperIRIs = null;
-      }
-      Set<IRI> lowerIRIs =
-          OntologyHelper.filterExistingTerms(
-              inputOntology,
-              CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms"),
-              true);
-      if (lowerIRIs.size() == 0) {
-        lowerIRIs = null;
-      }
-      Set<IRI> branchIRIs =
-          OntologyHelper.filterExistingTerms(
-              inputOntology,
-              CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", "branch-from-terms"),
-              true);
-      if (branchIRIs.size() == 0) {
-        branchIRIs = null;
-      }
-
-      // Need branch IRIs or lower IRIs to proceed
-      if (branchIRIs == null && lowerIRIs == null) {
-        throw new IllegalArgumentException(missingMireotTermsError);
-      } else {
-        // First check for lower IRIs, upper IRIs can be null or not
-        if (lowerIRIs != null) {
-          outputOntologies.add(
-              MireotOperation.getAncestors(
-                  inputOntology, upperIRIs, lowerIRIs, null, annotateSource, sourceMap));
-          // If there are no lower IRIs, there shouldn't be any upper IRIs
-        } else if (upperIRIs != null) {
-          throw new IllegalArgumentException(missingLowerTermError);
-        }
-        // Check for branch IRIs
-        if (branchIRIs != null) {
-          outputOntologies.add(
-              MireotOperation.getDescendants(
-                  inputOntology, branchIRIs, null, annotateSource, sourceMap));
-        }
-      }
-      outputOntology = MergeOperation.merge(outputOntologies);
+      outputOntology = mireotExtract(ioHelper, inputOntology, line, extractOptions);
     } else if (moduleType != null) {
-      // upper-term, lower-term, and branch-from term should not be used
-      List<String> mireotTerms =
-          Arrays.asList(
-              CommandLineHelper.getOptionalValue(line, "upper-term"),
-              CommandLineHelper.getOptionalValue(line, "upper-terms"),
-              CommandLineHelper.getOptionalValue(line, "lower-term"),
-              CommandLineHelper.getOptionalValue(line, "lower-terms"),
-              CommandLineHelper.getOptionalValue(line, "branch-from-term"),
-              CommandLineHelper.getOptionalValue(line, "branch-from-terms"));
-      for (String mt : mireotTerms) {
-        if (mt != null) {
-          throw new IllegalArgumentException(invalidOptionError);
-        }
-      }
-      // Make sure the terms exist in the input ontology
-      Set<IRI> terms =
-          OntologyHelper.filterExistingTerms(
-              inputOntology, CommandLineHelper.getTerms(ioHelper, line), force);
-      outputOntology =
-          ExtractOperation.extract(
-              inputOntology, terms, outputIRI, moduleType, annotateSource, sourceMap);
+      outputOntology = slmeExtract(ioHelper, inputOntology, moduleType, line, extractOptions);
     } else {
       throw new Exception(invalidMethodError);
     }
@@ -278,6 +204,140 @@ public class ExtractCommand implements Command {
   }
 
   /**
+   * Perform a MIREOT extraction on an ontology after validating command line options.
+   *
+   * @param ioHelper IOHelper to use
+   * @param inputOntology OWLOntology to extract from
+   * @param line CommandLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws IOException on problem parsing terms
+   * @throws OWLOntologyCreationException on OWLAPI issue
+   */
+  private static OWLOntology mireotExtract(
+      IOHelper ioHelper,
+      OWLOntology inputOntology,
+      CommandLine line,
+      Map<String, String> extractOptions)
+      throws Exception {
+    List<OWLOntology> outputOntologies = new ArrayList<>();
+    // Get terms from input (ensuring that they are in the input ontology)
+    // It's okay for any of these to return empty (allowEmpty = true)
+    // Checks for empty sets later
+    Set<IRI> upperIRIs =
+        OntologyHelper.filterExistingTerms(
+            inputOntology,
+            CommandLineHelper.getTerms(ioHelper, line, "upper-term", "upper-terms"),
+            true);
+    if (upperIRIs.size() == 0) {
+      upperIRIs = null;
+    }
+    Set<IRI> lowerIRIs =
+        OntologyHelper.filterExistingTerms(
+            inputOntology,
+            CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms"),
+            true);
+    if (lowerIRIs.size() == 0) {
+      lowerIRIs = null;
+    }
+    Set<IRI> branchIRIs =
+        OntologyHelper.filterExistingTerms(
+            inputOntology,
+            CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", "branch-from-terms"),
+            true);
+    if (branchIRIs.size() == 0) {
+      branchIRIs = null;
+    }
+
+    // Need branch IRIs or lower IRIs to proceed
+    if (branchIRIs == null && lowerIRIs == null) {
+      throw new IllegalArgumentException(missingMireotTermsError);
+    } else {
+      boolean annotateSource = OptionsHelper.optionIsTrue(extractOptions, "annotate-with-source");
+      Map<IRI, IRI> sourceMap =
+          getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
+
+      // First check for lower IRIs, upper IRIs can be null or not
+      if (lowerIRIs != null) {
+        outputOntologies.add(
+            MireotOperation.getAncestors(
+                inputOntology, upperIRIs, lowerIRIs, null, annotateSource, sourceMap));
+        // If there are no lower IRIs, there shouldn't be any upper IRIs
+      } else if (upperIRIs != null) {
+        throw new IllegalArgumentException(missingLowerTermError);
+      }
+      // Check for branch IRIs
+      if (branchIRIs != null) {
+        outputOntologies.add(
+            MireotOperation.getDescendants(
+                inputOntology, branchIRIs, null, annotateSource, sourceMap));
+      }
+    }
+    // Get the output IRI and create the output ontology
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+    if (outputIRI == null) {
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    }
+    OWLOntology outputOntology = MergeOperation.merge(outputOntologies);
+    if (outputIRI != null) {
+      outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
+    }
+    return outputOntology;
+  }
+
+  /**
+   * Perform a SLME extraction after validating command line options.
+   *
+   * @param inputOntology OWLOntology to extract from
+   * @param moduleType type of extraction
+   * @param line CommandLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws IOException on issue parsing terms
+   * @throws OWLOntologyCreationException on OWLAPI issue
+   */
+  private static OWLOntology slmeExtract(
+      IOHelper ioHelper,
+      OWLOntology inputOntology,
+      ModuleType moduleType,
+      CommandLine line,
+      Map<String, String> extractOptions)
+      throws Exception {
+    // upper-term, lower-term, and branch-from term should not be used
+    List<String> mireotTerms =
+        Arrays.asList(
+            CommandLineHelper.getOptionalValue(line, "upper-term"),
+            CommandLineHelper.getOptionalValue(line, "upper-terms"),
+            CommandLineHelper.getOptionalValue(line, "lower-term"),
+            CommandLineHelper.getOptionalValue(line, "lower-terms"),
+            CommandLineHelper.getOptionalValue(line, "branch-from-term"),
+            CommandLineHelper.getOptionalValue(line, "branch-from-terms"));
+    for (String mt : mireotTerms) {
+      if (mt != null) {
+        throw new IllegalArgumentException(invalidOptionError);
+      }
+    }
+    // Make sure the terms exist in the input ontology
+    Set<IRI> terms =
+        OntologyHelper.filterExistingTerms(
+            inputOntology,
+            CommandLineHelper.getTerms(ioHelper, line),
+            OptionsHelper.optionIsTrue(extractOptions, "force"));
+
+    // Determine what to do with sources
+    Map<IRI, IRI> sourceMap =
+        getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
+    // Get the output IRI
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+    if (outputIRI == null) {
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    }
+
+    return ExtractOperation.extract(
+        inputOntology, terms, outputIRI, moduleType, extractOptions, sourceMap);
+  }
+
+  /**
    * Given an IOHelper and the path to a term-to-source map, return a map of term IRI to source IRI.
    *
    * @param ioHelper IOHelper to handle prefixes
@@ -287,6 +347,12 @@ public class ExtractCommand implements Command {
    */
   private static Map<IRI, IRI> getSourceMap(IOHelper ioHelper, String sourceMapPath)
       throws Exception {
+    // If no source map path is specified, just return null
+    if (sourceMapPath == null) {
+      return null;
+    }
+
+    // Otherwise, use the path to get a file containing the mappings
     File sourceMapFile = new File(sourceMapPath);
     if (!sourceMapFile.exists()) {
       throw new Exception(String.format(missingFileError, sourceMapPath, "--sources"));
@@ -312,7 +378,7 @@ public class ExtractCommand implements Command {
     csv.skip(1);
 
     Map<IRI, IRI> sourceMap = new HashMap<>();
-    for (String line[] : csv) {
+    for (String[] line : csv) {
       IRI entity = ioHelper.createIRI(line[0]);
 
       // Maybe create a source IRI from a prefix

@@ -94,6 +94,39 @@ public class ExtractOperationTest extends CoreTest {
   }
 
   /**
+   * Tests extraction with minimal individuals.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  @Test
+  public void testExtractMinimalIndividuals() throws IOException, OWLOntologyCreationException {
+    testExtractIndividuals("minimal", "/minimal-individuals.owl");
+  }
+
+  /**
+   * Tests extraction with definition individuals.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  @Test
+  public void testExtractDefinitionIndividuals() throws IOException, OWLOntologyCreationException {
+    testExtractIndividuals("definitions", "/definition-individuals.owl");
+  }
+
+  /**
+   * Tests extraction with no individuals.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  @Test
+  public void testExtractNoIndividuals() throws IOException, OWLOntologyCreationException {
+    testExtractIndividuals("exclude", "/no-individuals.owl");
+  }
+
+  /**
    * Tests a generic non-MIREOT (i.e. SLME) extraction operation using a custom module type and a
    * pre-generated OWL file to compare against.
    *
@@ -105,12 +138,40 @@ public class ExtractOperationTest extends CoreTest {
   public void testExtract(ModuleType moduleType, String expectedPath)
       throws IOException, OWLOntologyCreationException {
     OWLOntology simple = loadOntology("/filtered.owl");
-
     IRI outputIRI = IRI.create("http://purl.obolibrary.org/obo/uberon.owl");
 
     Set<IRI> terms =
         Collections.singleton(IRI.create("http://purl.obolibrary.org/obo/UBERON_0001235"));
     OWLOntology module = ExtractOperation.extract(simple, terms, outputIRI, moduleType);
+
+    OWLOntology expected = loadOntology(expectedPath);
+    removeDeclarations(expected);
+    removeDeclarations(module);
+    assertIdentical(expected, module);
+  }
+
+  /**
+   * Tests extraction based on how to handle individuals. Uses TOP method.
+   *
+   * @param individuals 'exclude', 'minimal', or 'definitions'
+   * @param expectedPath path to the known-good file for comparison
+   * @throws IOException on IO error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  private void testExtractIndividuals(String individuals, String expectedPath)
+      throws IOException, OWLOntologyCreationException {
+    Map<String, String> options = ExtractOperation.getDefaultOptions();
+    options.put("individuals", individuals);
+    OWLOntology simple = loadOntology("/simple-individuals.owl");
+    IRI outputIRI =
+        IRI.create("https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl");
+
+    Set<IRI> terms =
+        Collections.singleton(
+            IRI.create(
+                "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2"));
+    OWLOntology module =
+        ExtractOperation.extract(simple, terms, outputIRI, ModuleType.TOP, options);
 
     OWLOntology expected = loadOntology(expectedPath);
     removeDeclarations(expected);

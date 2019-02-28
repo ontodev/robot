@@ -1,11 +1,13 @@
 package org.obolibrary.robot;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
@@ -28,9 +30,30 @@ public class ExtractOperation {
   /** RDFS isDefinedBy annotation property. */
   private static OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
 
+  /** Namespace for errors. */
+  private static final String NS = "extract#";
+
+  /** Error message when an invalid argument is passed to --individuals. */
+  private static final String unknownIndividuals =
+      NS + "UNKNOWN INDIVIDUALS %s is not a valid --individuals argument";
+
+  /**
+   * Return a map from option name to default option value.
+   *
+   * @return a map with default values for all available options
+   */
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> options = new HashMap<>();
+    options.put("individuals", "include");
+    options.put("imports", "include");
+    options.put("copy-ontology-annotations", "false");
+    options.put("annotate-with-source", "false");
+    return options;
+  }
+
   /**
    * Extract a set of terms from an ontology using the OWLAPI's SyntacticLocalityModuleExtractor
-   * (SLME). The input ontology is not changed.
+   * (SLME) with default options. The input ontology is not changed.
    *
    * @param inputOntology the ontology to extract from
    * @param terms a set of IRIs for terms to extract
@@ -42,7 +65,17 @@ public class ExtractOperation {
   public static OWLOntology extract(
       OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI, ModuleType moduleType)
       throws OWLOntologyCreationException {
-    return extract(inputOntology, terms, outputIRI, moduleType, false, null);
+    return extract(inputOntology, terms, outputIRI, moduleType, getDefaultOptions(), null);
+  }
+
+  public static OWLOntology extract(
+      OWLOntology inputOntology,
+      Set<IRI> terms,
+      IRI outputIRI,
+      ModuleType moduleType,
+      Map<String, String> options)
+      throws OWLOntologyCreationException {
+    return extract(inputOntology, terms, outputIRI, moduleType, options, null);
   }
 
   /**
@@ -53,8 +86,8 @@ public class ExtractOperation {
    * @param terms a set of IRIs for terms to extract
    * @param outputIRI the OntologyIRI of the new ontology
    * @param moduleType determines the type of extraction; defaults to STAR
-   * @param annotateSource if true, annotate copied classes with rdfs:isDefinedBy
-   * @param sourceMap map of term IRI to source IRI
+   * @param options map of extract options
+   * @param sourceMap map of term IRI to source IRI, or null (only used with annotate-with-source)
    * @return a new ontology (with a new manager)
    * @throws OWLOntologyCreationException on any OWLAPI problem
    */
@@ -63,29 +96,85 @@ public class ExtractOperation {
       Set<IRI> terms,
       IRI outputIRI,
       ModuleType moduleType,
-      boolean annotateSource,
+      Map<String, String> options,
       Map<IRI, IRI> sourceMap)
       throws OWLOntologyCreationException {
+    if (options == null) {
+      options = getDefaultOptions();
+    }
+
+    String individuals = OptionsHelper.getOption(options, "individuals", "include");
+    boolean excludeInstances;
+    if (individuals.equalsIgnoreCase("exclude")
+        || individuals.equalsIgnoreCase("minimal")
+        || individuals.equalsIgnoreCase("definitions")) {
+      excludeInstances = true;
+    } else if (individuals.equalsIgnoreCase("include")) {
+      excludeInstances = false;
+    } else {
+      throw new IllegalArgumentException(String.format(unknownIndividuals, individuals));
+    }
+
+    String importsString = OptionsHelper.getOption(options, "imports", "include");
+    Imports imports;
+    if ("include".equalsIgnoreCase(importsString)) {
+      imports = Imports.INCLUDED;
+    } else {
+      imports = Imports.EXCLUDED;
+    }
     logger.debug("Extracting...");
 
     Set<OWLEntity> entities = new HashSet<>();
     for (IRI term : terms) {
-      entities.addAll(inputOntology.getEntitiesInSignature(term, Imports.INCLUDED));
+      entities.addAll(inputOntology.getEntitiesInSignature(term, imports));
     }
 
+    // Default moduleType is STAR
     ModuleType type = moduleType;
     if (type == null) {
       type = ModuleType.STAR;
     }
 
+    // Get all axioms from the ontology and its imports
+    Set<OWLAxiom> axs = new HashSet<>(inputOntology.getAxioms());
+    for (OWLOntology importedOnt : inputOntology.getImportsClosure()) {
+      axs.addAll(importedOnt.getAxioms());
+    }
+    // Maybe get an IRI
+    IRI ontIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+
     SyntacticLocalityModuleExtractor extractor =
         new SyntacticLocalityModuleExtractor(
-            inputOntology.getOWLOntologyManager(), inputOntology, type);
+            inputOntology.getOWLOntologyManager(), ontIRI, axs, type, excludeInstances);
 
+    // Create the output with the extracted terms
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology outputOntology = manager.createOntology(extractor.extract(entities), outputIRI);
+
+    // Maybe add the axioms belonging to individuals of class types included
+    if (individuals.equalsIgnoreCase("minimal")) {
+      addMinimalIndividualAxioms(inputOntology, outputOntology, imports);
+    } else if (individuals.equalsIgnoreCase("definitions")) {
+      addDefinitionIndividualAxioms(inputOntology, outputOntology, imports);
+    } else if ("exclude".equalsIgnoreCase(individuals)) {
+      // Make sure to completely remove individuals
+      Set<OWLObject> indivs = new HashSet<>(outputOntology.getIndividualsInSignature());
+      Set<OWLAxiom> indivAxioms =
+          RelatedObjectsHelper.getCompleteAxioms(outputOntology, indivs, null);
+      manager.removeAxioms(outputOntology, indivAxioms);
+    }
+
+    // Maybe copy ontology annotations
+    boolean copyOntologyAnnotations =
+        OptionsHelper.optionIsTrue(options, "copy-ontology-annotations");
+    if (copyOntologyAnnotations) {
+      for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
+        OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
+      }
+    }
+
     // Maybe annotate entities with rdfs:isDefinedBy
-    if (annotateSource) {
+    if (OptionsHelper.optionIsTrue(options, "annotate-with-source")) {
       Set<OWLAnnotationAxiom> sourceAxioms = new HashSet<>();
       for (OWLEntity entity : OntologyHelper.getEntities(outputOntology)) {
         // Check if rdfs:isDefinedBy already exists
@@ -100,6 +189,89 @@ public class ExtractOperation {
     }
 
     return outputOntology;
+  }
+
+  /**
+   * Given an input ontology, an output ontology, and an Imports specification, copy individuals
+   * used in logical definitions from the input to the output ontology.
+   *
+   * @param inputOntology OWLOntology to copy axioms from
+   * @param outputOntology OWLOntology to copy axioms to
+   * @param imports Imports.INCLUDED or Imports.EXCLUDED
+   */
+  private static void addDefinitionIndividualAxioms(
+      OWLOntology inputOntology, OWLOntology outputOntology, Imports imports) {
+    Set<OWLIndividual> individuals = new HashSet<>();
+    Set<OWLClass> classes = outputOntology.getClassesInSignature();
+    for (OWLClass cls : classes) {
+      for (OWLClassExpression expr : EntitySearcher.getEquivalentClasses(cls, inputOntology)) {
+        if (!expr.isAnonymous()) {
+          continue;
+        }
+        individuals.addAll(expr.getIndividualsInSignature());
+      }
+
+      for (OWLClassExpression expr : EntitySearcher.getSubClasses(cls, inputOntology)) {
+        if (!expr.isAnonymous()) {
+          continue;
+        }
+        individuals.addAll(expr.getIndividualsInSignature());
+      }
+    }
+
+    addIndiviudalsAxioms(inputOntology, outputOntology, individuals, imports);
+  }
+
+  /**
+   * Given an input ontology and an output ontology, copy any individual axioms and their
+   * annotations from the input to the output ontology as long as the class type is included in the
+   * output ontology.
+   *
+   * @param inputOntology OWLOntology to copy axioms from
+   * @param outputOntology OWLOntology to copy axioms to
+   * @param imports Imports.INCLUDED or Imports.EXCLUDED
+   */
+  private static void addMinimalIndividualAxioms(
+      OWLOntology inputOntology, OWLOntology outputOntology, Imports imports) {
+    Set<OWLIndividual> individuals = new HashSet<>();
+    Set<OWLClass> classes = outputOntology.getClassesInSignature();
+    // Get the individuals for each of the included classes
+    for (OWLClass cls : classes) {
+      individuals.addAll(EntitySearcher.getIndividuals(cls, inputOntology));
+    }
+    addIndiviudalsAxioms(inputOntology, outputOntology, individuals, imports);
+  }
+
+  /**
+   * Given an input ontology, an output ontology, a set of individuals, and an Imports
+   * specification, copy the individual axioms for the set of individuals from the input to the
+   * output ontology.
+   *
+   * @param inputOntology OWLOntology to copy axioms from
+   * @param outputOntology OWLOntology to copy axioms to
+   * @param individuals Set of OWLIndividuals to copy axioms for
+   * @param imports Imports.INCLUDED or Imports.EXCLUDED
+   */
+  private static void addIndiviudalsAxioms(
+      OWLOntology inputOntology,
+      OWLOntology outputOntology,
+      Set<OWLIndividual> individuals,
+      Imports imports) {
+    if (imports == null) {
+      imports = Imports.INCLUDED;
+    }
+    Set<OWLAxiom> axioms = new HashSet<>();
+    for (OWLIndividual individual : individuals) {
+      if (individual.isNamed()) {
+        // Add axioms about named individuals (includes assertions)
+        OWLNamedIndividual namedIndividual = individual.asOWLNamedIndividual();
+        axioms.addAll(inputOntology.getAnnotationAssertionAxioms(namedIndividual.getIRI()));
+        axioms.addAll(inputOntology.getAxioms(namedIndividual, imports));
+      } else {
+        axioms.addAll(inputOntology.getAxioms(individual, imports));
+      }
+    }
+    outputOntology.getOWLOntologyManager().addAxioms(outputOntology, axioms);
   }
 
   /**
