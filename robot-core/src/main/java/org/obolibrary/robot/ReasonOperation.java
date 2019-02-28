@@ -55,57 +55,6 @@ public class ReasonOperation {
   }
 
   /**
-   * Given an ontology, the name of a reasoner, and an output IRI, return the ontology with inferred
-   * axioms added, using the default reasoner options.
-   *
-   * @deprecated replaced by {@link #reasonAndAssert(OWLOntology, OWLReasonerFactory)}
-   * @param ontology the ontology to reason over
-   * @param reasonerFactory the factory to create a reasoner instance from
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on inconsistency or incoherency
-   * @throws InvalidReferenceException on unsatisfiable class(es)
-   */
-  public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
-    reason(ontology, reasonerFactory, getDefaultOptions());
-  }
-
-  /**
-   * Given an ontology, the name of a reasoner, an output IRI, and an optional map of reasoner
-   * options, return the ontology with inferred axioms added.
-   *
-   * @deprecated replaced by {@link #reasonAndAssert(OWLOntology, OWLReasonerFactory, Map)}
-   * @param ontology the ontology to reason over
-   * @param reasonerFactory the factory to create a reasoner instance from
-   * @param options a map of option strings, or null
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on inconsistency or incoherency
-   * @throws InvalidReferenceException on unsatisfiable class(es)
-   */
-  public static void reason(
-      OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws OWLOntologyCreationException, OntologyLogicException, InvalidReferenceException {
-    logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
-
-    logger.info("Fetching labels...");
-
-    // Function<OWLNamedObject, String> labelFunc = OntologyHelper.getLabelFunction(ontology,
-    // false);
-
-    // Check the ontology for reference violations
-    // Maybe fail if prevent-invalid-references
-    checkReferenceViolations(ontology, options);
-    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-    reason(ontology, reasoner, options);
-
-    // Make sure to add the axiom generators in this way!!!
-    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
-    gens.add(new InferredSubClassAxiomGenerator());
-
-    assertInferred(ontology, reasoner, gens, options);
-  }
-
-  /**
    * Given an ontology and a reasoner factory, return the ontology with inferred axioms added after
    * reasoning. Use default options.
    *
@@ -113,9 +62,9 @@ public class ReasonOperation {
    * @param reasonerFactory the factory to create a reasoner instance from
    * @throws Exception on any problem
    */
-  public static void reasonAndAssert(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws Exception {
-    reasonAndAssert(ontology, reasonerFactory, getDefaultOptions());
+  public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
+      throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
+    reason(ontology, reasonerFactory, getDefaultOptions());
   }
 
   /**
@@ -127,9 +76,9 @@ public class ReasonOperation {
    * @param options a map of option strings, or null
    * @throws Exception on any problem
    */
-  public static void reasonAndAssert(
+  public static void reason(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws Exception {
+      throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
     // TODO - what is this for?
