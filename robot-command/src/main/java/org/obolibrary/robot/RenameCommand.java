@@ -59,7 +59,7 @@ public class RenameCommand implements Command {
     o.addOption("m", "mappings", true, "table of mappings for renaming");
     o.addOption("r", "prefix-mappings", true, "table of prefix mappings for renaming");
     o.addOption("A", "add-prefix", true, "add a new prefix to ontology file header");
-    o.addOption("f", "allow-duplicates", true, "allow two or more terms to be renamed to the same full IRI");
+    o.addOption("d", "allow-duplicates", true, "allow two or more terms to be renamed to the same full IRI");
     options = o;
   }
 
