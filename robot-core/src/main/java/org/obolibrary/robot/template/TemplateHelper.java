@@ -183,21 +183,21 @@ public class TemplateHelper {
       template = template.substring(1);
     }
 
-    if (template.startsWith("A ") || template.startsWith("C ")) {
+    if (template.startsWith("A ")) {
       return getStringAnnotations(checker, template, split, value);
-    } else if (template.startsWith("AT ") || template.startsWith("CT ")) {
+    } else if (template.startsWith("AT ")) {
       if (template.contains("^^")) {
         return getTypedAnnotations(checker, template, split, value);
       } else {
         throw new Exception(String.format(typedFormatError, template));
       }
-    } else if (template.startsWith("AL ") || template.startsWith("CL ")) {
+    } else if (template.startsWith("AL ")) {
       if (template.contains("@")) {
         return getLanguageAnnotations(checker, template, split, value);
       } else {
         throw new Exception(String.format(languageFormatError, template));
       }
-    } else if (template.startsWith("AI ") || template.startsWith("CI ")) {
+    } else if (template.startsWith("AI ")) {
       Set<OWLAnnotation> annotations = new HashSet<>();
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
@@ -317,21 +317,6 @@ public class TemplateHelper {
     }
 
     return expressions;
-  }
-
-  /**
-   * TODO
-   *
-   * @param checker QuotedEntityChecker to get entities
-   * @param value value or values to parse to data ranges
-   * @param split character to split value string on or null
-   * @return set of OWLDataRanges for a datatype
-   */
-  public static Set<OWLDataRange> getDataRanges(
-      QuotedEntityChecker checker, String value, String split) {
-    List<String> allValues = getAllValues(value, split);
-    Set<OWLDataRange> dataRanges = new HashSet<>();
-    return dataRanges;
   }
 
   /**

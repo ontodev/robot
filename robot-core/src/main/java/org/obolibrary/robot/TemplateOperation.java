@@ -146,9 +146,9 @@ public class TemplateOperation {
    * @return a new annotation with property and string literal value
    * @throws Exception if the annotation property cannot be found
    */
-  public static void getStringAnnotation(QuotedEntityChecker checker, String template, String value)
-      throws Exception {
-    // return TemplateHelper.getStringAnnotation(checker, template, value);
+  public static OWLAnnotation getStringAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    return TemplateHelper.getStringAnnotation(checker, template, value);
   }
 
   /**
@@ -161,9 +161,9 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and typed literal value
    * @throws Exception if the annotation property cannot be found
    */
-  public static void getTypedAnnotation(QuotedEntityChecker checker, String template, String value)
-      throws Exception {
-    // return TemplateHelper.getTypedAnnotation(checker, template, value);
+  public static OWLAnnotation getTypedAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    return TemplateHelper.getTypedAnnotation(checker, template, value);
   }
 
   /**
@@ -176,9 +176,9 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and language tagged literal
    * @throws Exception if the annotation property cannot be found
    */
-  public static void getLanguageAnnotation(
+  public static OWLAnnotation getLanguageAnnotation(
       QuotedEntityChecker checker, String template, String value) throws Exception {
-    // return TemplateHelper.getLanguageAnnotation(checker, template, value);
+    return TemplateHelper.getLanguageAnnotation(checker, template, value);
   }
 
   /**
@@ -341,11 +341,7 @@ public class TemplateOperation {
         if (template.isEmpty()) {
           continue;
         }
-        // if (!validateTemplateString(template)) {
-        // throw new Exception(
-        //  String.format(
-        //    unknownTemplateError, tableName, column + 1, headers.get(column), template));
-        // }
+
         if (template.equals("ID")) {
           idColumn = column;
         }
@@ -491,7 +487,6 @@ public class TemplateOperation {
         if (template.equals("LABEL")) {
           label = value;
           lastAxiomAnnotation = null;
-          // lastAnnotation = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
         } else if (template.equals("TYPE")) {
           OWLEntity entity = checker.getOWLEntity(value);
