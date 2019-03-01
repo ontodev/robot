@@ -312,10 +312,9 @@ public class ReasonOperationTest extends CoreTest {
     Map<String, String> options = ReasonOperation.getDefaultOptions();
     OWLReasonerFactory reasonerFactory = new JFactFactory();
 
-    options.put("axiom-generators", "EquivalentDataProperty SubDataProperty");
+    options.put("axiom-generators", "EquivalentDataProperties SubDataProperty");
     ReasonOperation.reason(ontology, reasonerFactory, options);
     IOHelper ioHelper = new IOHelper();
-    ioHelper.saveOntology(ontology, "test-ontology.ofn");
 
     // subproperty
     assertTrue(
