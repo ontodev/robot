@@ -33,9 +33,13 @@ public class ExtractOperation {
   /** Namespace for errors. */
   private static final String NS = "extract#";
 
+  /** Error message when an invalid intermediates opiton is provided. */
+  private static final String unknownIntermediatesError =
+      NS + "UNKNOWN INTERMEDIATES ERROR '%s' is not a valid --intermediates arg";
+
   /** Error message when an invalid argument is passed to --individuals. */
-  private static final String unknownIndividuals =
-      NS + "UNKNOWN INDIVIDUALS %s is not a valid --individuals argument";
+  private static final String unknownIndividualsError =
+      NS + "UNKNOWN INDIVIDUALS ERROR %s is not a valid --individuals argument";
 
   /**
    * Return a map from option name to default option value.
@@ -48,6 +52,7 @@ public class ExtractOperation {
     options.put("imports", "include");
     options.put("copy-ontology-annotations", "false");
     options.put("annotate-with-source", "false");
+    options.put("intermediates", "all");
     return options;
   }
 
@@ -103,6 +108,7 @@ public class ExtractOperation {
       options = getDefaultOptions();
     }
 
+    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
     String individuals = OptionsHelper.getOption(options, "individuals", "include");
     boolean excludeInstances;
     if (individuals.equalsIgnoreCase("exclude")
@@ -112,7 +118,7 @@ public class ExtractOperation {
     } else if (individuals.equalsIgnoreCase("include")) {
       excludeInstances = false;
     } else {
-      throw new IllegalArgumentException(String.format(unknownIndividuals, individuals));
+      throw new IllegalArgumentException(String.format(unknownIndividualsError, individuals));
     }
 
     String importsString = OptionsHelper.getOption(options, "imports", "include");
@@ -172,7 +178,6 @@ public class ExtractOperation {
         OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
       }
     }
-
     // Maybe annotate entities with rdfs:isDefinedBy
     if (OptionsHelper.optionIsTrue(options, "annotate-with-source")) {
       Set<OWLAnnotationAxiom> sourceAxioms = new HashSet<>();
@@ -188,7 +193,18 @@ public class ExtractOperation {
       manager.addAxioms(outputOntology, sourceAxioms);
     }
 
-    return outputOntology;
+    // Determine what to do based on intermediates
+    if ("all".equalsIgnoreCase(intermediates)) {
+      return outputOntology;
+    } else if ("none".equalsIgnoreCase(intermediates)) {
+      removeIntermediates(outputOntology, entities);
+      return outputOntology;
+    } else if ("minimal".equalsIgnoreCase(intermediates)) {
+      OntologyHelper.collapseOntology(outputOntology, terms);
+      return outputOntology;
+    } else {
+      throw new IllegalArgumentException(String.format(unknownIntermediatesError, intermediates));
+    }
   }
 
   /**
@@ -307,5 +323,40 @@ public class ExtractOperation {
       }
     }
     return dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, entity.getIRI(), base);
+  }
+
+  /**
+   * Given an input ontology, an extracted output ontology, and a set of entities, remove all
+   * intermediates. This leaves only the classes directly used in the logic of any input entities.
+   *
+   * @param outputOntology extracted module
+   * @param entities Set of extracted entities
+   */
+  private static void removeIntermediates(OWLOntology outputOntology, Set<OWLEntity> entities) {
+    Set<OWLObject> precious = new HashSet<>();
+    OWLOntologyManager manager = outputOntology.getOWLOntologyManager();
+    for (OWLEntity e : entities) {
+      if (!e.isOWLClass()) {
+        continue;
+      }
+      OWLClass cls = e.asOWLClass();
+      precious.add(cls);
+      for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, outputOntology)) {
+        precious.addAll(expr.getClassesInSignature());
+      }
+      for (OWLClassExpression expr : EntitySearcher.getEquivalentClasses(cls, outputOntology)) {
+        precious.addAll(expr.getClassesInSignature());
+      }
+      for (OWLClassExpression expr : EntitySearcher.getDisjointClasses(cls, outputOntology)) {
+        precious.addAll(expr.getClassesInSignature());
+      }
+    }
+    Set<OWLAxiom> removeAxioms =
+        RelatedObjectsHelper.getPartialAxioms(
+            outputOntology,
+            RelatedObjectsHelper.selectClasses(
+                RelatedObjectsHelper.selectComplement(outputOntology, precious)),
+            null);
+    manager.removeAxioms(outputOntology, removeAxioms);
   }
 }

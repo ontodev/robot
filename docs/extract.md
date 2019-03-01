@@ -61,6 +61,64 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
+### Intermediates
+
+When extracting (especially with MIREOT), sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. For example, you may end up with this after extracting `adrenal gland`:
+```
+- material anatomical entity
+  - anatomical structure
+    - multicellular anatomical structure
+      - organ
+        - abdomen element
+          - adrenal/interrenal gland
+            - adrenal gland (*)
+    - lateral structure
+      - adrenal gland (*)
+```
+By specifying how to handle these intermediates, you can reduce unnecessary intermediate classes:
+* `--intermediates all`: default behavior, do not prune the ontology
+* `--intermediates minimal`: only include intermediate intermediates with more than one *sibling* (i.e. the parent class has another child)
+* `--intermediates none`: do not include any intermediates
+  * For MIREOT, this will only include top and bottom level classes.
+  * For any SLME method, this will only include the classes directly used in the logic of the input terms
+
+Running this command to extract, inclusively, between 'material anatomical entity' and 'adrenal gland':
+
+    robot extract --method MIREOT \
+        --input uberon_fragment.owl \
+        --upper-term UBERON:0000465 \
+        --lower-term UBERON:0002369 \
+        --intermediates minimal \
+        --output results/uberon_minimal.owl
+
+Would result in the following structure:
+```
+- material anatomical entity
+  - anatomical structure
+    - adrenal gland (*)
+    - organ
+      - adrenal gland (*)
+```
+
+You can chain this output into reduce to further clean up the structure, as some redundant axioms may appear.
+
+Running the same command, but with `--intermediates none`:
+
+    robot extract --method MIREOT \
+        --input uberon_fragment.owl \
+        --upper-term UBERON:0000465 \
+        --lower-term UBERON:0002369 \
+        --intermediates none \
+        --output results/uberon_none.owl
+
+Would result in:
+```
+- material anatomical entity
+  - adrenal gland
+```
+
+Any term specified as an input term will not be pruned.
+
 ## Ontology Annotations
 
 You can also include ontology annotations from the input ontology with `--copy-ontology-annotations true`. By default, this is false.
@@ -85,7 +143,8 @@ The object of the property is, by default, the base name of the term's IRI. For 
 
 Sometimes classes are adopted by other ontologies, but retain their original IRI. In this case, you can provide the path to a [term-to-source mapping file](/examples/source-map.tsv) as CSV or TSV.
 
-    robot --prefix 'GO: http://purl.obolibrary.org/obo/GO_' extract --method BOT \
+    robot --prefix 'GO: http://purl.obolibrary.org/obo/GO_' \
+      extract --method BOT \
       --input annotated.owl \
       --term UBERON:0000916 \
       --annotate-with-source true \
@@ -130,3 +189,11 @@ The following flags *should not* be used with STAR, TOP, or BOT methods:
 ### Invalid Source Map Error
 
 The input for `--sources` must be either CSV or TSV format.
+
+### Unknown Individuals Error
+
+`--individuals` must be one of: `include`, `minimal`, `definitions`, or `exclude`.
+
+### Unknown Intermediates Error
+
+ `--intermediates` must be one of: `all`, `minimal`, or `none`.
