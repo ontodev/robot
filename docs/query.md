@@ -40,9 +40,34 @@ The example above also uses the [global](/global)  `--catalog` option to specify
 
 The names of the graphs correspond to the ontology IRIs of the imports. If the import does not have an ontology IRI, one will be automatically generated. Running `query` with the `-vv` flag will print the names of all graphs as they are added.
 
+## Update
+
+The `query` command also supports [SPARQL Update](https://www.w3.org/TR/sparql11-update/) to insert and delete triples.
+
+    robot query --input nucleus.owl \
+      --update update.ru \
+      --output results/nucleus_update.owl
+
+When using SPARQL update, you can either provide an `--output` for the updated ontology, or [chain](/chaining) it into another command.
+
+You can perform multiple updates in one command to reduce time spent loading and saving the ontology. Updates are processed in the order that they are input.
+
+    robot query --input nucleus.owl \
+     --update update.ru \
+     --update revert.ru \
+     --output results/nucleus.owl
+
+The `--update` option only updates the ontology itself, not any of the imports.
+
+**Warning:** The output of SPARQL updates will not include `xsd:string` datatypes, because `xsd:string` is considered implicit in RDF version 1.1. This behaviour differs from other ROBOT commands, where `xsd:string` datatypes from the input are maintained in the output.
+
 ---
 
 ## Error Messages
+
+### Missing File Error
+
+The file provided for `--update` does not exist. Check the path and try again.
 
 ### Missing Query Error
 

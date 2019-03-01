@@ -614,6 +614,7 @@ public class IOHelper {
    * @param term the term to convert to an IRI
    * @return the new IRI
    */
+  @SuppressWarnings("unchecked")
   public IRI createIRI(String term) {
     if (term == null) {
       return null;
@@ -632,6 +633,8 @@ public class IOHelper {
       String result = ((Map<String, Object>) expanded).keySet().iterator().next();
       if (result != null) {
         return IRI.create(result);
+      } else {
+        return IRI.create(term);
       }
     } catch (Exception e) {
       logger.warn("Could not create IRI for {}", term);
@@ -730,6 +733,7 @@ public class IOHelper {
    * @return a map from prefix name strings to prefix IRI strings
    * @throws IOException on any problem
    */
+  @SuppressWarnings("unchecked")
   public static Context parseContext(String jsonString) throws IOException {
     try {
       Object jsonObject = JsonUtils.fromString(jsonString);

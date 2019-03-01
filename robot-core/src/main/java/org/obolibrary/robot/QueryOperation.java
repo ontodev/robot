@@ -2,10 +2,7 @@ package org.obolibrary.robot;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -15,11 +12,10 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.tdb.TDB;
 import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.update.UpdateAction;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +41,12 @@ public class QueryOperation {
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
    *
+   * @deprecated use {@link #loadOntologyAsDataset(OWLOntology)} instead.
    * @param ontology The ontology to load into the graph
    * @return A new DatasetGraph with the ontology loaded into the default graph
    * @throws OWLOntologyStorageException rarely
    */
+  @Deprecated
   public static DatasetGraph loadOntology(OWLOntology ontology) throws OWLOntologyStorageException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
@@ -93,11 +91,7 @@ public class QueryOperation {
     TDB.getContext().set(TDB.symUnionDefaultGraph, true);
     // Load each ontology in the set as a named model
     for (OWLOntology ont : ontologies) {
-      Model m = ModelFactory.createDefaultModel();
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      manager.saveOntology(ont, new TurtleDocumentFormat(), os);
-      String content = new String(os.toByteArray(), "UTF-8");
-      RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(m);
+      Model m = loadOntologyAsModel(ont);
       // Get the name of the graph as the ontology IRI
       IRI iri = ont.getOntologyID().getOntologyIRI().orNull();
       String name;
@@ -107,10 +101,42 @@ public class QueryOperation {
         // If there is no IRI, generate a random ID
         name = UUID.randomUUID().toString();
       }
-      dataset.addNamedModel(name, m);
       logger.info("Named graph added: " + name);
+      dataset.addNamedModel(name, m);
     }
     return dataset;
+  }
+
+  /**
+   * Given an OWLOntology, return the Model representation of the axioms.
+   *
+   * @param ontology OWLOntology to convert to Model
+   * @return Model of axioms (imports ignored)
+   * @throws UnsupportedEncodingException on issue parsing byte array to string
+   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   */
+  public static Model loadOntologyAsModel(OWLOntology ontology)
+      throws UnsupportedEncodingException, OWLOntologyStorageException {
+    Model model = ModelFactory.createDefaultModel();
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
+    String content = new String(os.toByteArray(), "UTF-8");
+    RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(model);
+    return model;
+  }
+
+  /**
+   * Given a Model, return the OWLOntology representation of the axioms.
+   *
+   * @param model Model to convert to OWLOntology
+   * @return OWLOntology of axioms
+   * @throws OWLOntologyCreationException on issue loading ontology from byte array
+   */
+  public static OWLOntology convertModel(Model model) throws OWLOntologyCreationException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    RDFDataMgr.write(os, model, Lang.TTL);
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    return manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(os.toByteArray()));
   }
 
   /**
@@ -129,18 +155,20 @@ public class QueryOperation {
   }
 
   public static Dataset createEmptyDataset() {
-    return DatasetFactory.create(DatasetGraphFactory.create());
+    return DatasetFactory.create();
   }
 
   /**
    * Execute a SPARQL CONSTRUCT query on a graph and return the model.
    *
+   * @deprecated use {@link #execConstruct(Dataset, String)} instead.
    * @param dsg the graph to construct in
    * @param query the SPARQL construct query string
    * @return the result Model
    */
+  @Deprecated
   public static Model execConstruct(DatasetGraph dsg, String query) {
-    return execConstruct(DatasetFactory.create(dsg), query);
+    return execConstruct(DatasetFactory.wrap(dsg), query);
   }
 
   /**
@@ -158,13 +186,15 @@ public class QueryOperation {
   /**
    * Execute a SPARQL SELECT query on a graph and return a result set.
    *
+   * @deprecated use {@link #execQuery(Dataset, String)} instead.
    * @param dsg the graph to query
    * @param query the SPARQL query string
    * @return the result set
    * @throws IOException on query parse error
    */
+  @Deprecated
   public static ResultSet execQuery(DatasetGraph dsg, String query) throws IOException {
-    return execQuery(DatasetFactory.create(dsg), query);
+    return execQuery(DatasetFactory.wrap(dsg), query);
   }
 
   /**
@@ -186,12 +216,24 @@ public class QueryOperation {
   }
 
   /**
+   * Given a Model and a SPARQL update (as string), update the model.
+   *
+   * @param model Model to update
+   * @param updateString SPARQL update
+   */
+  public static void execUpdate(Model model, String updateString) {
+    UpdateAction.parseExecute(updateString, model);
+  }
+
+  /**
    * Execute a verification. Writes to STDERR.
    *
+   * @deprecated previously used as test method.
    * @param queriesResults a map from files to query results and output streams
    * @return true if there are any violations
    * @throws IOException on file issues
    */
+  @Deprecated
   public static boolean execVerify(
       Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
     boolean isViolation = false;
@@ -213,18 +255,34 @@ public class QueryOperation {
   }
 
   /**
-   * Execute a SPARQL query and return true if there are any results, false otherwise. Prints
-   * violations to STDERR.
+   * Execute a SPARQL query and return true if there are any results, false otherwise.
    *
+   * @deprecated use {@link #execVerify(Dataset, String, String)} instead
    * @param dsg the graph to query over
    * @param ruleName name of rule to verify
    * @param query the SPARQL query string
    * @return true if the are results, false otherwise
    * @throws IOException on query parse error
    */
+  @Deprecated
   public static boolean execVerify(DatasetGraph dsg, String ruleName, String query)
       throws IOException {
-    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dsg, query));
+    return execVerify(DatasetFactory.wrap(dsg), ruleName, query);
+  }
+
+  /**
+   * Given a dataset to query, a rule name, and the query string, execute the query over the
+   * dataset.
+   *
+   * @param dataset Dataset to query
+   * @param ruleName name of rule to verify
+   * @param query the SPARQL query string
+   * @return true if there are results, false otherwise
+   * @throws IOException on query parse error
+   */
+  public static boolean execVerify(Dataset dataset, String ruleName, String query)
+      throws IOException {
+    ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dataset, query));
     System.out.println("Rule " + ruleName + ": " + results.size() + " violation(s)");
     if (results.size() == 0) {
       System.out.println("PASS Rule " + ruleName + ": 0 violation(s)");
@@ -417,15 +475,17 @@ public class QueryOperation {
   /**
    * Run a SELECT query on a graph and write the results to a file.
    *
+   * @deprecated use {@link #runQuery(Dataset, String, File, Lang)} instead.
    * @param dsg the graph to query
    * @param query The SPARQL query string.
    * @param output The file to write to.
    * @param outputFormat The file format.
    * @throws IOException if output file is not found or query cannot be parsed
    */
+  @Deprecated
   public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
       throws IOException {
-    runQuery(DatasetFactory.create(dsg), query, output, outputFormat);
+    runQuery(DatasetFactory.wrap(dsg), query, output, outputFormat);
   }
 
   /**
@@ -448,6 +508,7 @@ public class QueryOperation {
   /**
    * Run a SPARQL query and return true if there were results, false otherwise.
    *
+   * @deprecated use {@link #runSparqlQuery(Dataset, String, String, OutputStream)} instead.
    * @param dsg the graph to query over
    * @param query the SPARQL query string
    * @param formatName the name of the output format
@@ -455,9 +516,10 @@ public class QueryOperation {
    * @return true if results, false if otherwise
    * @throws IOException on issue parsing query
    */
+  @Deprecated
   public static boolean runSparqlQuery(
       DatasetGraph dsg, String query, String formatName, OutputStream output) throws IOException {
-    return runSparqlQuery(DatasetFactory.create(dsg), query, formatName, output);
+    return runSparqlQuery(DatasetFactory.wrap(dsg), query, formatName, output);
   }
 
   /**
@@ -517,8 +579,27 @@ public class QueryOperation {
   }
 
   /**
+   * Given a Model, a SPARQL update string, an output stream, and the output format, update the
+   * model and write it to the output.
+   *
+   * @param model Model to update
+   * @param updateString SPARQL update
+   * @param output output stream to write to
+   * @param outputFormat the file format
+   */
+  public static void runUpdate(Model model, String updateString, File output, Lang outputFormat)
+      throws FileNotFoundException {
+    if (outputFormat == null) {
+      outputFormat = Lang.TTL;
+    }
+    execUpdate(model, updateString);
+    writeResult(model, outputFormat, new FileOutputStream(output));
+  }
+
+  /**
    * Run a SELECT query over the graph and write the result to a file. Prints violations to STDERR.
    *
+   * @deprecated use {@link #runVerify(Dataset, String, String, Path, Lang)} instead.
    * @param dsg The graph to query over.
    * @param ruleName name of the rule
    * @param query The SPARQL query string.
@@ -527,10 +608,11 @@ public class QueryOperation {
    * @throws IOException if output file is not found or query cannot be parsed
    * @return true if the are results (so file is written), false otherwise
    */
+  @Deprecated
   public static boolean runVerify(
       DatasetGraph dsg, String ruleName, String query, Path outputPath, Lang outputFormat)
       throws IOException {
-    return runVerify(DatasetFactory.create(dsg), ruleName, query, outputPath, outputFormat);
+    return runVerify(DatasetFactory.wrap(dsg), ruleName, query, outputPath, outputFormat);
   }
 
   /**
@@ -538,6 +620,7 @@ public class QueryOperation {
    * Prints violations to STDERR.
    *
    * @param dataset The dataset to query over.
+   * @param ruleName The name of the rule to verify.
    * @param query The SPARQL query string.
    * @param outputPath The file path to write to, if there are results
    * @param outputFormat The file format.

@@ -6,15 +6,15 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.Lists;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetRewindable;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.riot.Lang;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 /**
@@ -107,6 +107,29 @@ public class QueryOperationTest extends CoreTest {
   }
 
   /**
+   * Tests an update statement that adds a label.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyStorageException on ontology error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  @Test
+  public void testExecUpdate()
+      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
+    OWLOntology inputOntology = loadOntology("/simple.owl");
+    Model model = QueryOperation.loadOntologyAsModel(inputOntology);
+    String updateString =
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+            + "PREFIX s: <https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#>"
+            + "INSERT { "
+            + "s:test2 rdfs:label \"test 2\" ."
+            + " } WHERE {}";
+    QueryOperation.execUpdate(model, updateString);
+    OWLOntology outputOntology = QueryOperation.convertModel(model);
+    assertIdentical("/simple_update.owl", outputOntology);
+  }
+
+  /**
    * Tests a verify with violations.
    *
    * @throws IOException on IO error
@@ -119,12 +142,19 @@ public class QueryOperationTest extends CoreTest {
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology);
     String allViolations =
         "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    ?s ?p ?o .\n" + "}\n" + "LIMIT 10";
+
     ResultSet resultSet = QueryOperation.execQuery(dataset, allViolations);
     ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);
-    Map<File, Tuple<ResultSetRewindable, OutputStream>> testResults = new HashMap<>();
+    int resultSize = copy.size();
+    copy.reset();
+
     ByteArrayOutputStream testOut = new ByteArrayOutputStream();
-    testResults.put(new File("/path/to/rule.sparql"), new Tuple<>(copy, testOut));
-    boolean violations = QueryOperation.execVerify(testResults);
+    QueryOperation.writeResult(copy, Lang.CSV, testOut);
+
+    boolean violations = false;
+    if (resultSize > 0) {
+      violations = true;
+    }
 
     assertTrue(violations);
     assertEquals(7, Lists.newArrayList(testOut.toString().split("\n")).size());
@@ -138,15 +168,23 @@ public class QueryOperationTest extends CoreTest {
    */
   @Test
   public void testExecVerifyNoViolations() throws IOException, OWLOntologyStorageException {
+
     OWLOntology ontology = loadOntology("/simple.owl");
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology);
     String allViolations = "SELECT ?s ?p ?o\n" + "WHERE {\n" + "    \n" + "}\n" + "LIMIT 0";
+
     ResultSet resultSet = QueryOperation.execQuery(dataset, allViolations);
     ResultSetRewindable copy = ResultSetFactory.copyResults(resultSet);
-    Map<File, Tuple<ResultSetRewindable, OutputStream>> testResults = new HashMap<>();
+    int resultSize = copy.size();
+    copy.reset();
+
     ByteArrayOutputStream testOut = new ByteArrayOutputStream();
-    testResults.put(new File("/path/to/rule.sparql"), new Tuple<>(copy, testOut));
-    boolean violations = QueryOperation.execVerify(testResults);
+    QueryOperation.writeResult(copy, Lang.CSV, testOut);
+
+    boolean violations = false;
+    if (resultSize > 0) {
+      violations = true;
+    }
 
     assertFalse(violations);
     assertEquals(1, Lists.newArrayList(testOut.toString().split("\n")).size());

@@ -1,9 +1,13 @@
 package org.obolibrary.robot;
 
+import com.google.common.base.Optional;
 import java.util.*;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.slf4j.Logger;
@@ -135,6 +139,73 @@ public class OntologyHelper {
   }
 
   /**
+   * Given an ontology and a set of IRIs that must be retained, remove intermediate superclasses
+   * (classes that only have one child) and update the subclass relationships to preserve structure.
+   * The ontology passed in is updated.
+   *
+   * @param ontology ontology to remove intermediates in
+   * @param precious set of OWLEntities that should not be removed
+   * @throws OWLOntologyCreationException
+   */
+  public static void collapseOntology(OWLOntology ontology, Set<IRI> precious)
+      throws OWLOntologyCreationException {
+
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    OWLClass thing = manager.getOWLDataFactory().getOWLThing();
+
+    Set<OWLObject> removeObjects = new HashSet<>();
+
+    for (OWLEntity e : OntologyHelper.getEntities(ontology)) {
+      // Skip anything that is not a class
+      if (!e.isOWLClass()) {
+        continue;
+      }
+      // Skip any precious classes
+      OWLClass cls = e.asOWLClass();
+      if (precious.contains(cls.getIRI())) {
+        continue;
+      }
+      // Skip anything that is a SC of owl:Thing
+      Collection<OWLClassExpression> superClasses = EntitySearcher.getSuperClasses(cls, ontology);
+      if (superClasses.contains(thing)) {
+        continue;
+      }
+      // Skip anything that does not have a named SC (default SC of owl:Thing)
+      boolean hasNamedSuperClass = false;
+      for (OWLClassExpression superExpr : superClasses) {
+        if (!superExpr.isAnonymous()) {
+          hasNamedSuperClass = true;
+          break;
+        }
+      }
+      if (!hasNamedSuperClass) {
+        continue;
+      }
+      Collection<OWLClassExpression> subClasses = EntitySearcher.getSubClasses(cls, ontology);
+      if (subClasses.size() == 1) {
+        removeObjects.add(cls);
+      }
+    }
+
+    logger.debug("Removing " + removeObjects.size() + " classes and associated axioms...");
+
+    // Remove the unnecessary intermediate classes
+    Set<OWLAxiom> axiomsToRemove =
+        RelatedObjectsHelper.getPartialAxioms(
+            ontology, removeObjects, new HashSet<>(Collections.singletonList(OWLAxiom.class)));
+    // Make copy before removing to preserve structure
+    OWLOntology copy = manager.copyOntology(ontology, OntologyCopy.DEEP);
+    manager.removeAxioms(ontology, axiomsToRemove);
+
+    // Then re-associate classes with new superclasses
+    Set<OWLObject> relatedObjects = RelatedObjectsHelper.selectComplement(ontology, removeObjects);
+    manager.addAxioms(ontology, RelatedObjectsHelper.spanGaps(copy, relatedObjects));
+
+    // Discard copy
+    manager.removeOntology(copy);
+  }
+
+  /**
    * Given input and output ontologies, a target entity, and a set of annotation properties, copy
    * the target entity from the input ontology to the output ontology, along with the specified
    * annotations. If the entity is already in the outputOntology, then return without making any
@@ -164,6 +235,7 @@ public class OntologyHelper {
       return;
     }
 
+    // Add declaration
     OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
     if (entity.isOWLAnnotationProperty()) {
       outputManager.addAxiom(
@@ -185,6 +257,26 @@ public class OntologyHelper {
           outputOntology, dataFactory.getOWLDeclarationAxiom(entity.asOWLNamedIndividual()));
     }
 
+    // Copy the axioms
+    copyAnnotations(inputOntology, outputOntology, entity, annotationProperties);
+  }
+
+  /**
+   * Given an input ontology, an output ontology, an entity to copy annotations of, and the
+   * annotation properties to copy (or null for all), copy annotations of the entity from the input
+   * to the output ontology.
+   *
+   * @param inputOntology OWLOntology to copy from
+   * @param outputOntology OWLOntology to copy to
+   * @param entity OWLEntity to copy annotations of
+   * @param annotationProperties Set of annotation properties to copy, or null for all
+   */
+  public static void copyAnnotations(
+      OWLOntology inputOntology,
+      OWLOntology outputOntology,
+      OWLEntity entity,
+      Set<OWLAnnotationProperty> annotationProperties) {
+    OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
     Set<OWLAnnotationAssertionAxiom> axioms =
         inputOntology.getAnnotationAssertionAxioms(entity.getIRI());
     for (OWLAnnotationAssertionAxiom axiom : axioms) {
@@ -222,6 +314,21 @@ public class OntologyHelper {
   }
 
   /**
+   * Get all OWLObjects from an input ontology.
+   *
+   * @param ontology OWLOntology to retrieve objects from
+   * @return set of objects
+   */
+  public static Set<OWLObject> getObjects(OWLOntology ontology) {
+    Set<OWLObject> objects = new HashSet<>();
+    // TODO - include or exclude imports?
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      objects.addAll(getObjects(axiom));
+    }
+    return objects;
+  }
+
+  /**
    * Get all OWLObjects associated with an axiom. This is builds on getSignature() by including
    * anonymous objects.
    *
@@ -230,6 +337,14 @@ public class OntologyHelper {
    */
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
     Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
+
+    // Add annotations if the axiom is annotated
+    if (axiom.isAnnotated()) {
+      for (OWLAnnotation annotation : axiom.getAnnotations()) {
+        objects.add(annotation.getProperty());
+        objects.add(annotation.getValue());
+      }
+    }
 
     // The following are special cases
     // where there might be something anonymous that we want to include
@@ -1207,22 +1322,25 @@ public class OntologyHelper {
   public static void setOntologyIRI(OWLOntology ontology, IRI ontologyIRI, IRI versionIRI) {
     OWLOntologyID currentID = ontology.getOntologyID();
 
+    // Get rid of optionals when changing to OWLAPI 5
+    Optional<IRI> ont;
+    Optional<IRI> version;
+
     if (ontologyIRI == null && versionIRI == null) {
       // don't change anything
       return;
     } else if (ontologyIRI == null) {
-      ontologyIRI = currentID.getOntologyIRI().orNull();
+      ont = currentID.getOntologyIRI();
+      version = Optional.of(versionIRI);
     } else if (versionIRI == null) {
-      versionIRI = currentID.getVersionIRI().orNull();
-    }
-
-    OWLOntologyID newID;
-    if (versionIRI == null) {
-      newID = new OWLOntologyID(ontologyIRI);
+      version = currentID.getVersionIRI();
+      ont = Optional.of(ontologyIRI);
     } else {
-      newID = new OWLOntologyID(ontologyIRI, versionIRI);
+      ont = Optional.of(ontologyIRI);
+      version = Optional.of(versionIRI);
     }
 
+    OWLOntologyID newID = new OWLOntologyID(ont, version);
     SetOntologyID setID = new SetOntologyID(ontology, newID);
     ontology.getOWLOntologyManager().applyChange(setID);
   }

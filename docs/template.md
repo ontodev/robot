@@ -48,7 +48,7 @@ Sometimes you want to include zero or more values in a single spreadsheet cell, 
     - `subclass`: the created class will be asserted to be a subclass of each templated class expression (default)
     - `disjoint`: the created class will be disjoint from each templated class expression, meaning the classes cannot share subclasses
     - `equivalent`: the created class will be asserted to be equivalent to the intersection of all the templated class expressions
-- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to a class by its IRI (or CURIE - compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
+- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its rdfs:label (enclosing in single quotes if it has a space in it). If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
 
 #### Example of Class Template Strings
 
@@ -83,7 +83,7 @@ The first class will be a subclass of `Class 1`, as there is no included `CLASS_
 - `DOMAIN`: The domain to a property is a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object and data properties). For annotation properties, the domain must be a single class specified by label, CURIE, or IRI.
 - `RANGE`: The range to a property is either a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object properties) or the name, CURIE, or IRI of a datatype (for annotation and data properties).
 
-#### Example of Property Template Strings 
+#### Example of Property Template Strings
 
 | TYPE | PROPERTY_TYPE | P % | DOMAIN | RANGE |
 | --- | --- | --- | --- | --- |
@@ -107,7 +107,7 @@ The `functional` data property will still default to a `subproperty` logical axi
 | TYPE | INDIVIDUAL_TYPE | I part_of some % | I % |
 | --- | --- | --- | --- |
 | Class 1 | named | Individual 2 | |
-| Class 2 | different | | Individual 1 | 
+| Class 2 | different | | Individual 1 |
 
 <!-- ### Datatype Template Strings -->
 
@@ -175,6 +175,8 @@ robot template --merge-before \
 ```
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
+
+Further examples can be found [in the OBI repository](https://github.com/obi-ontology/obi/tree/master/src/ontology/templates)
 
 ---
 
