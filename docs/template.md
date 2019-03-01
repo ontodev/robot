@@ -104,6 +104,8 @@ robot template --merge-before \
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
 
+Further examples can be found [in the OBI repository](https://github.com/obi-ontology/obi/tree/master/src/ontology/templates)
+
 ---
 
 ## Error Messages
