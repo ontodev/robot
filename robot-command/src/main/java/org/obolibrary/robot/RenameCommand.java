@@ -7,7 +7,6 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -31,6 +30,9 @@ public class RenameCommand implements Command {
   private static final String duplicateMappingError =
       NS
           + "DUPLICATE MAPPING ERROR line %d in file '%s' contains a duplicate mapping for value '%s'.";
+
+  /** Error message when a new IRI value is duplicated and fail-on-duplicates is true. */
+  private static final String duplicateRenameError = NS + "DUPLICATE RENAME ERROR line %d in file '%s' contains a duplicate rename for value '%s'";
 
   /** Error message when a file is not in CSV or TSV/TXT format. */
   private static final String fileFormatError =
@@ -57,6 +59,7 @@ public class RenameCommand implements Command {
     o.addOption("m", "mappings", true, "table of mappings for renaming");
     o.addOption("r", "prefix-mappings", true, "table of prefix mappings for renaming");
     o.addOption("A", "add-prefix", true, "add a new prefix to ontology file header");
+    o.addOption("f", "allow-duplicates", true, "allow two or more terms to be renamed to the same full IRI");
     options = o;
   }
 
@@ -140,17 +143,19 @@ public class RenameCommand implements Command {
       throw new IOException(missingMappingsError);
     }
 
+    boolean allowDuplicates = CommandLineHelper.getBooleanValue(line, "allow-duplicates", false);
+
     char separator;
     // Process full renames
     if (fullFile != null) {
       separator = getSeparator(fullFile);
-      Map<String, String> mappings = parseTableMappings(new File(fullFile), separator, true);
+      Map<String, String> mappings = parseTableMappings(new File(fullFile), separator, allowDuplicates);
       RenameOperation.renameFull(ontology, ioHelper, mappings);
     }
-    // Process prefix renames
+    // Process prefix renames (no need to fail on duplicates)
     if (prefixFile != null) {
       separator = getSeparator(prefixFile);
-      Map<String, String> mappings = parseTableMappings(new File(prefixFile), separator, false);
+      Map<String, String> mappings = parseTableMappings(new File(prefixFile), separator, true);
       RenameOperation.renamePrefixes(ontology, ioHelper, mappings);
     }
 
@@ -189,13 +194,12 @@ public class RenameCommand implements Command {
    *
    * @param mappingsFile File to parse mappings from
    * @param separator character to separate cells in mapping file
-   * @param warnDuplicateValues boolean indicating if duplicate map values should provoke a warning
+   * @param allowDuplicates boolean indicating if duplicate rename (new) should be allowed
    * @return map of old values -> new values
-   * @throws IOException if the file does not exist, if each row does not have exactly two cells, or
-   *     if there are multiple mappings for one key (old value)
+   * @throws Exception on any issue
    */
   private static Map<String, String> parseTableMappings(
-      File mappingsFile, char separator, boolean warnDuplicateValues) throws IOException {
+      File mappingsFile, char separator, boolean allowDuplicates) throws Exception {
     Map<String, String> mappings = new HashMap<>();
 
     if (!mappingsFile.exists()) {
@@ -214,27 +218,25 @@ public class RenameCommand implements Command {
         if (nextLine.length != 2) {
           throw new IOException(String.format(columnCountError, lineNum, mappingsFile.getPath()));
         }
-        if (mappings.containsKey(nextLine[0])) {
+
+        String oldIRI = nextLine[0];
+        String newIRI = nextLine[1];
+
+        // The OLD IRI has two distinct new IRIs
+        if (mappings.containsKey(oldIRI)) {
           throw new IOException(
-              String.format(duplicateMappingError, lineNum, mappingsFile.getPath(), nextLine[0]));
+              String.format(duplicateMappingError, lineNum, mappingsFile.getPath(), oldIRI));
         }
-        if (mappings.containsValue(nextLine[1]) && warnDuplicateValues) {
-          Scanner s = new Scanner(System.in);
-          System.out.println(
-              String.format(
-                  "---------- WARNING ----------\n"
-                      + "Line %d in file '%s' contains a duplicate value ('%s').\n"
-                      + "This will rename two separate entities to have the same IRI, resulting in a merge."
-                      + "\nDo you wish to continue? [y/N]",
-                  lineNum, mappingsFile.getPath(), nextLine[1]));
-          String cont = s.nextLine();
-          if (!cont.equalsIgnoreCase("y")) {
-            logger.error("rename operation aborted!");
-            System.exit(1);
+        // The new IRI is being used for one or more OLD IRI
+        // This results in a merge
+        if (mappings.containsValue(newIRI)) {
+          if (!allowDuplicates) {
+            throw new Exception(String.format(duplicateRenameError, lineNum, mappingsFile.getPath(), newIRI));
           }
-          System.out.println("Continuing rename operation...");
+          logger.warn(String.format("IRI '%s' will be used for two or more entities", newIRI));
         }
-        mappings.put(nextLine[0], nextLine[1]);
+
+        mappings.put(oldIRI, newIRI);
       }
     }
 

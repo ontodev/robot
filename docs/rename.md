@@ -11,6 +11,8 @@ Renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`) in a 
       --add-prefix "fb: http://foo.bar/"
       --output results/full-rename.owl
 
+If two or more old IRIs are mapped to the same new IRI, these two entities will be merged. By default, ROBOT will throw an error if this happens. This behavior can be overridden by including `--allow-duplicates true`.
+
 #### Prefixes
 
 Renames the base IRIs of all matching entites (e.g. change the prefix `http://purl.obolibrary.org/obo/` to `http://foo.bar/`), based on mappings in a file specified by `--prefix-mappings`:
@@ -59,6 +61,10 @@ Each row of the mapping file must have two columns: first, the old IRI, second, 
 ### Duplicate Mapping Error
 
 This error occurs when two rows have the same 'old IRI' value. This will cause two rename operations to occur for the same IRI, resulting in unexpected values. Make sure each 'old IRI' is only entered in the mappings once.
+
+### Duplicate Rename Error
+
+This error occurs when two rows have the same 'new IRI' value. This will cause a merge of the two old IRIs into the new IRI. If this is the intended behavior, use `--allow-duplicates true`.
 
 ### File Format Error
 
