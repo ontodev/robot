@@ -84,7 +84,7 @@ public class RenameCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot rename --input <file> " + "--mapping <file> " + "--output <file>";
+    return "robot rename --input <file> " + "--mappings <file> " + "--output <file>";
   }
 
   /**
@@ -128,7 +128,6 @@ public class RenameCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    // TODO - maybe make this a global option?
     // Get additional prefixes to add to prefix manager
     List<String> addPrefixes = CommandLineHelper.getOptionalValues(line, "add-prefix");
     for (String pref : addPrefixes) {
@@ -226,7 +225,7 @@ public class RenameCommand implements Command {
                   "---------- WARNING ----------\n"
                       + "Line %d in file '%s' contains a duplicate value ('%s').\n"
                       + "This will rename two separate entities to have the same IRI, resulting in a merge."
-                      + "\nDo you wish to continue? [Y/N]",
+                      + "\nDo you wish to continue? [y/N]",
                   lineNum, mappingsFile.getPath(), nextLine[1]));
           String cont = s.nextLine();
           if (!cont.equalsIgnoreCase("y")) {
