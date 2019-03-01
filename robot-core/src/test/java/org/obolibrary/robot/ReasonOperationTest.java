@@ -2,21 +2,17 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
-import org.obolibrary.robot.exceptions.InvalidReferenceException;
-import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
@@ -26,15 +22,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test reasoning with StructuralReasoner.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testStructural()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testStructural() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory =
         new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
@@ -45,15 +36,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test reasoning with ELK.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testELK()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testELK() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -63,15 +49,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test reasoning with HermiT.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testHermit()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testHermit() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -82,15 +63,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test reasoning with JFact.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testJFact()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testJFact() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new JFactFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -101,15 +77,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test inferring into new ontology.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testInferIntoNewOntology()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testInferIntoNewOntology() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
@@ -125,15 +96,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test inferring into new ontology.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testInferIntoNewOntologyNonTrivial()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testInferIntoNewOntologyNonTrivial() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
@@ -153,15 +119,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test inferring into new ontology, excluding duplicates.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testInferIntoNewOntologyNoDupes()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testInferIntoNewOntologyNoDupes() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
     Map<String, String> opts = new HashMap<>();
@@ -176,15 +137,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test removing redundant subclass axioms.
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testRemoveRedundantSubClassAxioms()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testRemoveRedundantSubClassAxioms() throws Exception {
     OWLOntology reasoned = loadOntology("/redundant_subclasses.owl");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory, Collections.emptyMap());
@@ -203,15 +159,10 @@ public class ReasonOperationTest extends CoreTest {
    *
    * <p>This test should return the same results as running any other reasoner
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testEMRBasic()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testEMRBasic() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
     OWLReasonerFactory reasonerFactory =
@@ -225,15 +176,10 @@ public class ReasonOperationTest extends CoreTest {
    *
    * <p>This test effectively relaxes an equivalence axiom
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testEMRRelax()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testEMRRelax() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");
     OWLReasonerFactory coreReasonerFactory = new ElkReasonerFactory();
     OWLReasonerFactory reasonerFactory =
@@ -247,15 +193,10 @@ public class ReasonOperationTest extends CoreTest {
   /**
    * Test reasoning with intersection axioms
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
-  public void testIntersection()
-      throws IOException, OWLOntologyCreationException, OntologyLogicException,
-          InvalidReferenceException {
+  public void testIntersection() throws Exception {
     OWLOntology reasoned = loadOntology("/intersection.omn");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
@@ -268,10 +209,7 @@ public class ReasonOperationTest extends CoreTest {
    * <p>Depending on user option, inferred axioms that refer solely to external ontology classes
    * (i.e. those in the import chain) should not be asserted
    *
-   * @throws IOException on file problem
-   * @throws OWLOntologyCreationException on ontology problem
-   * @throws OntologyLogicException on logic error
-   * @throws InvalidReferenceException if a reference is invalid
+   * @throws Exception on any problem
    */
   @Test
   public void testExternal() throws Exception {
@@ -297,6 +235,123 @@ public class ReasonOperationTest extends CoreTest {
     opts.put("exclude-external-entities", "false");
     ReasonOperation.reason(mainOnt, reasonerFactory, opts);
     assertTrue(checkContains(mainOnt, "SubClassOf(<http://x.org/XA> <http://x.org/XB>)"));
+  }
+
+  /**
+   * Test class axiom generators.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testClassAxiomGenerators() throws Exception {
+    OWLOntology ontology = loadOntology("/simple_logic.owl");
+    Map<String, String> options = ReasonOperation.getDefaultOptions();
+    OWLReasonerFactory reasonerFactory = new JFactFactory();
+
+    options.put("axiom-generators", "EquivalentClass Subclass DisjointClasses");
+    ReasonOperation.reason(ontology, reasonerFactory, options);
+
+    // subclass
+    assertTrue(
+        checkContains(
+            ontology,
+            "SubClassOf(<http://purl.obolibrary.org/obo/CLS_04> <http://purl.obolibrary.org/obo/CLS_01>)"));
+    // equivalent classes
+    assertTrue(
+        checkContains(
+            ontology,
+            "EquivalentClasses(<http://purl.obolibrary.org/obo/CLS_01> <http://purl.obolibrary.org/obo/CLS_02> )"));
+
+    // disjoint classes
+    assertTrue(
+        checkContains(
+            ontology,
+            "DisjointClasses(<http://purl.obolibrary.org/obo/CLS_04> <http://purl.obolibrary.org/obo/CLS_06>)"));
+  }
+
+  /**
+   * Test object property axiom generators.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testObjectPropertyAxiomGenerators() throws Exception {
+    OWLOntology ontology = loadOntology("/simple_logic.owl");
+    Map<String, String> options = ReasonOperation.getDefaultOptions();
+    OWLReasonerFactory reasonerFactory = new JFactFactory();
+
+    options.put(
+        "axiom-generators", "EquivalentObjectProperty InverseObjectProperties SubObjectProperty");
+    ReasonOperation.reason(ontology, reasonerFactory, options);
+
+    // subproperty
+    assertTrue(
+        checkContains(
+            ontology,
+            "SubObjectPropertyOf(<http://purl.obolibrary.org/obo/OP_05> <http://purl.obolibrary.org/obo/OP_04>)"));
+    // equivalent properties
+    assertTrue(
+        checkContains(
+            ontology,
+            "EquivalentObjectProperties(<http://purl.obolibrary.org/obo/OP_01> <http://purl.obolibrary.org/obo/OP_04> )"));
+    // inverse properties
+    assertTrue(
+        checkContains(
+            ontology,
+            "InverseObjectProperties(<http://purl.obolibrary.org/obo/OP_02> <http://purl.obolibrary.org/obo/OP_04>)"));
+  }
+
+  /**
+   * Test data property axiom generators.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testDataPropertyAxiomGenerators() throws Exception {
+    OWLOntology ontology = loadOntology("/simple_logic.owl");
+    Map<String, String> options = ReasonOperation.getDefaultOptions();
+    OWLReasonerFactory reasonerFactory = new JFactFactory();
+
+    options.put("axiom-generators", "EquivalentDataProperties SubDataProperty");
+    ReasonOperation.reason(ontology, reasonerFactory, options);
+    IOHelper ioHelper = new IOHelper();
+
+    // subproperty
+    assertTrue(
+        checkContains(
+            ontology,
+            "SubDataPropertyOf(<http://purl.obolibrary.org/obo/DP_03> <http://purl.obolibrary.org/obo/DP_01>)"));
+    // equivalent properties
+    assertTrue(
+        checkContains(
+            ontology,
+            "EquivalentDataProperties(<http://purl.obolibrary.org/obo/DP_01> <http://purl.obolibrary.org/obo/DP_04> )"));
+  }
+
+  /**
+   * Test individual axiom generators.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testIndividualAxiomGenerators() throws Exception {
+    OWLOntology ontology = loadOntology("/simple_logic.owl");
+    Map<String, String> options = ReasonOperation.getDefaultOptions();
+    OWLReasonerFactory reasonerFactory = new JFactFactory();
+
+    options.put("axiom-generators", "ClassAssertion");
+    ReasonOperation.reason(ontology, reasonerFactory, options);
+
+    // class assertion
+    assertTrue(
+        checkContains(
+            ontology,
+            "ClassAssertion(<http://purl.obolibrary.org/obo/CLS_02> <http://purl.obolibrary.org/obo/IND_03>)"));
+    // property assertion
+    assertTrue(
+        checkContains(
+            ontology,
+            "ObjectPropertyAssertion(<http://purl.obolibrary.org/obo/OP_08> <http://purl.obolibrary.org/obo/IND_02> <http://purl.obolibrary.org/obo/IND_03>)"));
   }
 
   private boolean checkContains(OWLOntology reasoned, String axStr) {
