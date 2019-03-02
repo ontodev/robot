@@ -14,6 +14,40 @@
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000118 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000118"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of -->
+
+    <owl:ObjectProperty rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
     // Classes
     //
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -60,6 +94,18 @@
             </owl:Class>
         </owl:equivalentClass>
     </owl:Class>
+    
+
+
+    <!-- https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1 -->
+
+    <owl:Class rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"/>
+    
+
+
+    <!-- https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2 -->
+
+    <owl:Class rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2"/>
 </rdf:RDF>
 
 

@@ -58,6 +58,6 @@ public class TemplateTest extends CoreTest {
     }
     assertEquals("Count classes", 4, template.getClassesInSignature().size());
     assertEquals("Count logical axioms", 3, template.getLogicalAxiomCount());
-    assertEquals("Count all axioms", 11, template.getAxiomCount());
+    assertEquals("Count all axioms", 9, template.getAxiomCount());
   }
 }

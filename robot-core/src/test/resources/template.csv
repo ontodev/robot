@@ -1,5 +1,5 @@
 Label,Label Comment,ID,Synonyms,Type,Parent,Parts
-A rdfs:label,>AL rdfs:comment@en,ID,A IAO:0000118 SPLIT=|,CLASS_TYPE,C %,C part_of some %
+LABEL,>AL rdfs:comment@en,ID,A IAO:0000118 SPLIT=|,CLASS_TYPE,C %,C part_of some %
 skip this row
 test 3,test 3 comment,GO:1234,synonym 1|synonym 2,subclass,test2,test one
 test 4,test 4 comment,GO:1235,,equivalent,test one,(test2 and 'test 3')
