@@ -30,21 +30,19 @@ The `template` command accepts an optional input ontology, either using the `--i
     - `data property` or `owl:DataProperty`
     - `annotation property` or `owl:AnnotationProperty`
     - `datatype` or `owl:Datatype`
+    - `individual`, `named individual`, `owl:Individual`, `owl:NamedIndividual`, or a defined class ID or label
 - **annotations**: ROBOT can attach annotations to your class. There are four options:
     - `A` string annotation: If the template string starts with an `A` and a space then it will be interpreted as a string annotation. The rest of the template string should be the label or compact IRI of an annotation property, e.g. `label` or `rdfs:label`. The cell value will be the literal value of the annotation with type `xsd:string`.
     - `AT` typed annotation: If the template string starts with an `AT` and a space then it will be interpreted as a typed annotation. The `^^` characters must be used to separate the annotation property from the datatype, e.g. `rdfs:comment^^xsd:integer`. The cell value will be the typed literal value of the annotation.
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.
     - `AI` annotation IRI: If the template string starts with an `AI` and a space, then the annotation will be made as with a string annotation, except that the cell value will be interpreted as an IRI.
-- **axiom annotations**: ROBOT can also annotate logical and annotation axioms.
-    - `>A` annotation on annotation: Annotates the annotation axiom created from the cell to the left with the cell value. The column to the left must be an `A*` template string.
-    - `>C` annotation on class expression: Annotates the class expression axiom created from the cell to the left with the cell value. The column to the left must be a `C` template string.
-    - `>P` annotation on property expression: Annotates the property expression axiom created fromt eh cell to the left with the cell value. The column to the left must be a `P` template string.
-
+- `>A` (**axiom annotations**): ROBOT can also annotate logical and annotation axioms. The axiom annotation will be on the axiom created on the cell to the left of the `>A*` template string. The `>` symbol can be used in front of any valid annotation character (`>A`, `>AT`, `>AL`, `>AI`)
+   
 Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have seperate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice - other than pure whitespace - to split on (e.g. `SPLIT=, `).
 
 ### Class Template Strings
 
-- `CLASS_TYPE`: ROBOT creates a class for each row of data with a that has a `TYPE` of `class` or `owl:Class`. The class type can be:
+- `CLASS_TYPE`: ROBOT creates a class for each row of data with a that has a `TYPE` of `class` or `owl:Class`. The class type can be ONLY ONE OF:
     - `subclass`: the created class will be asserted to be a subclass of each templated class expression (default)
     - `disjoint`: the created class will be disjoint from each templated class expression, meaning the classes cannot share subclasses
     - `equivalent`: the created class will be asserted to be equivalent to the intersection of all the templated class expressions
@@ -63,12 +61,12 @@ The first class will be a subclass of `Class 1`, as there is no included `CLASS_
 ### Property Template Strings
 
 - `PROPERTY_TYPE`: ROBOT creates a property for each row of data that has a `TYPE` of either an object or data property. The property type can be (any type followed by a \* can ONLY be used for object properties):
-    - **logical types**: these types link the created property to other properties (annotation properties can *only* use `subproperty`)
+    - **logical types**: these types link the created property to other properties (annotation properties can *only* use `subproperty`). You may only include ONE of these in each `PROPERTY_TYPE`.
       - `subproperty`: the created property will be a subproperty of each templated property expression (default)
       - `equivalent`: the created property will be equivalent to all of the templated property expressions
       - `disjoint`: the created property will be disjoint from each templated property expression and the values cannot be the same
       - `inverse`\*: the created object property will be the inverse of each templated property expression
-    - **property types**: these types define the type of the created property, and will not work with annotation properties
+    - **property types**: these types define the type of the created property, and will not work with annotation properties. You may include any number of these.
       - `functional`: the created property will be functional, meaning each entity (subject) can have at most one value
       - `inverse functional`\*: the created object property will be inverse functional, meaning each value can have at most one subject
       - `irreflexive`\*: the created object property will be irreflexive, meaning the subject cannot also be the value
@@ -93,6 +91,8 @@ The first class will be a subclass of `Class 1`, as there is no included `CLASS_
 The `functional` data property will still default to a `subproperty` logical axiom for the `P %` template string, unless a different logical property type (`equivalent`, `disjoint`) is provided. Property type can be split, e.g. `PROPERTY_TYPE SPLIT=|`.
 
 ### Individual Template Strings
+
+If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an instance will be created. If the `TYPE` does not include a defined class, that instance will have no class assertions. You may include a `SPLIT=` in `TYPE` if you wish to provide more than one class assertion for an individual.
 
 - `INDIVIDUAL_TYPE`: ROBOT creates an individual for each or of data that has a `TYPE` of another class. The individual type can be:
     - `named`: the created individual will be a default named individual. When the `INDIVIDUAL_TYPE` is left blank, this is the default. This should be used when adding object property or data property assertions
@@ -182,14 +182,6 @@ Further examples can be found [in the OBI repository](https://github.com/obi-ont
 
 ## Error Messages
 
-### Missing Template Error
-
-You must specify at least one template with `--template` to proceed.
-
-### Merge Error
-
-`--merge-before` and `--merge-after` cannot be used simultaneously.
-
 ### Annotation Property Error
 
 The annotation property provided could not be resolved. Check your template to ensure the provided annotation property is in a correct IRI or CURIE format. For legibility, using CURIEs is recommended, but you must ensure that the prefix is defined.
@@ -197,6 +189,30 @@ The annotation property provided could not be resolved. Check your template to e
 A rdfs:label
 A http://www.w3.org/2000/01/rdf-schema#label
 ```
+
+### Annotation Property Type Error
+
+The only valid `PROPERTY_TYPE` for an annotation property is `subproperty`. Other types of logic for annotation properties are not supported in OWL. If this column is left blank, it will default to `subproperty`.
+
+### Axiom Annotation Error
+
+An axiom annotation is an annotation on an axiom, either a class axiom or another annotation. Because of this, any time `>A` is used, an annotation must be in the previous column. Any time `>C` is used, a class expression must be in the previous column.
+```
+A rdfs:label,>A rdfs:comment
+C %,>C rdfs:comment
+```
+
+### Class Type Error
+
+The valid `CLASS_TYPE` values are: `subclass`, `equivalent`, and `disjoint`.
+
+### Class Type Split Error
+
+A class row may only use one of: `subclass`, `equivalent`, and `disjoint`. To add other types of axioms on an OWL class, use a separate row.
+
+### Column Mismatch Error
+
+There number of header columns (first row) must be equal to the number of template string columns (second row).
 
 ### Datatype Error
 
@@ -214,6 +230,14 @@ The `--template` option accepts the following file types: CSV, TSV, or TAB.
 
 Each template must have an ID column. Keep in mind that if the template has an ID column, but it is not filled in for a row, that row will be skipped.
 
+### Individual Type Error
+
+The valid `INDIVIDUAL_TYPE` values are: `named`, `same`, and `different`.
+
+### Individual Type Split Error
+
+An individual row may only use one of: `named`, `same`, and `different`. To add other types of axioms on an OWL individual, use a separate row.
+
 ### IRI Error
 
 The IRI provided as the value (in a row) to an `AI` template string could not be resolved as an IRI. Check your template to ensure the provided value is in a correct IRI or CURIE format. If using CURIEs, remember to ensure the prefix is defined.
@@ -225,6 +249,38 @@ The template string for an `AL` annotation must always include `@`.
 AL rdfs:label@en
 ```
 
+### Manchester Parse Error
+
+The provided value cannot be parsed and may not be in proper Manchester syntax. See [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) for more details.
+
+### Merge Error
+
+`--merge-before` and `--merge-after` cannot be used simultaneously.
+
+### Missing Template Error
+
+You must specify at least one template with `--template` to proceed.
+
+### Missing Type Error
+
+If no `CLASS_TYPE` column is included, ROBOT will default to using `subclass`. If a `CLASS_TYPE` column is included, though, each row must include a specified class type. If the `CLASS_TYPE` is left empty, this error message will be returned.
+
+### Multiple Property Type Error
+
+While the `PROPERTY_TYPE` column may include multiple types, only one of the logical types is allowed in each column: `subproperty`, `equivalent`, `disjoint`, or (for object properties only) `inverse`. To add other types of axioms on an OWL property, use a separate row.
+
+### Null ID Error
+
+An IRI cannot be created from the provided ID. This is most likely because the ID is not formatted properly, as an IRI or a CURIE.
+
+### Parse Error
+
+The content of a class expression cell (`C`) was not able to be parsed by OWLAPI. Check the formatting of the cell and the template string to ensure you are using valid CURIEs and/or IRIs.
+
+### Property Type Error
+
+The valid `PROPERTY_TYPE` values are: `subproperty`, `equivalent`, `disjoint`, and (for object properties only) `inverse`.
+
 ### Template File Error
 
 The template cannot be found in the current directory. Make sure the file exists and your path is correct.
@@ -235,30 +291,6 @@ The template string for an `AT` annotation must always include `^^`.
 ```
 AT rdfs:label^^xsd:string
 ```
-
-### Axiom Annotation Error
-
-An axiom annotation is an annotation on an axiom, either a class axiom or another annotation. Because of this, any time `>A` is used, an annotation must be in the previous column. Any time `>C` is used, a class expression must be in the previous column.
-```
-A rdfs:label,>A rdfs:comment
-C %,>C rdfs:comment
-```
-
-### Column Mismatch Error
-
-There number of header columns (first row) must be equal to the number of template string columns (second row).
-
-### Missing Type Error
-
-If no `CLASS_TYPE` column is included, ROBOT will default to using `subclass`. If a `CLASS_TYPE` column is included, though, each row must include a specified class type. If the `CLASS_TYPE` is left empty, this error message will be returned.
-
-### Null ID Error
-
-An IRI cannot be created from the provided ID. This is most likely because the ID is not formatted properly, as an IRI or a CURIE.
-
-### Parse Error
-
-The content of a class expression cell (`C`) was not able to be parsed by OWLAPI. Check the formatting of the cell and the template string to ensure you are using valid CURIEs and/or IRIs.
 
 ### Unknown Template Error
 

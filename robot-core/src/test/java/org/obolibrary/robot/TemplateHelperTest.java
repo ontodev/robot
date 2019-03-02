@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
-import org.obolibrary.robot.template.TemplateHelper;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.*;
@@ -68,12 +67,10 @@ public class TemplateHelperTest extends CoreTest {
    */
   @Test
   public void testGetAnnotations() throws Exception {
-    IOHelper ioHelper = new IOHelper();
     // String
     String template = "A rdfs:label";
     String value = "anatomical cluster";
-    Set<OWLAnnotation> annotations =
-        TemplateHelper.getAnnotations(checker, ioHelper, template, value);
+    Set<OWLAnnotation> annotations = TemplateHelper.getAnnotations(checker, template, value);
 
     OWLAnnotationProperty p = checker.getOWLAnnotationProperty("rdfs:label");
     OWLLiteral lit = dataFactory.getOWLLiteral(value);
@@ -85,7 +82,7 @@ public class TemplateHelperTest extends CoreTest {
 
     // Language
     template = "AL rdfs:label@en";
-    annotations = TemplateHelper.getAnnotations(checker, ioHelper, template, value);
+    annotations = TemplateHelper.getAnnotations(checker, template, value);
 
     lit = dataFactory.getOWLLiteral(value, "en");
     annMatch = dataFactory.getOWLAnnotation(p, lit);
@@ -96,7 +93,7 @@ public class TemplateHelperTest extends CoreTest {
 
     // Typed
     template = "AT rdfs:label^^xsd:string";
-    annotations = TemplateHelper.getAnnotations(checker, ioHelper, template, value);
+    annotations = TemplateHelper.getAnnotations(checker, template, value);
 
     OWLDatatype dt = checker.getOWLDatatype("xsd:string");
     lit = dataFactory.getOWLLiteral(value, dt);
@@ -109,7 +106,7 @@ public class TemplateHelperTest extends CoreTest {
     // IRI
     template = "AI rdfs:seeAlso";
     value = "http://robot.obolibrary.org/";
-    annotations = TemplateHelper.getAnnotations(checker, ioHelper, template, value);
+    annotations = TemplateHelper.getAnnotations(checker, template, value);
 
     p = checker.getOWLAnnotationProperty("rdfs:seeAlso");
     IRI iri = IRI.create(value);
@@ -122,7 +119,7 @@ public class TemplateHelperTest extends CoreTest {
 
   /** Tests getting a class expression from a template string and value. */
   @Test
-  public void testGetClassExpressions() {
+  public void testGetClassExpressions() throws Exception {
     ManchesterOWLSyntaxClassExpressionParser parser =
         new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
 
@@ -150,7 +147,7 @@ public class TemplateHelperTest extends CoreTest {
 
   /** Tests getting a data property expression from a template string and value. */
   @Test
-  public void testGetDataPropertyExpressions() {
+  public void testGetDataPropertyExpressions() throws Exception {
     String template = "P %";
     String value = "UBERON:8888888";
     Set<OWLDataPropertyExpression> expressions =
@@ -189,7 +186,7 @@ public class TemplateHelperTest extends CoreTest {
 
   /** Tests getting an object property expression from a template string and value. */
   @Test
-  public void testGetObjectPropertyExpressions() {
+  public void testGetObjectPropertyExpressions() throws Exception {
     String template = "P inverse %";
     String value = "obo:BFO_0000050";
     Set<OWLObjectPropertyExpression> expressions =

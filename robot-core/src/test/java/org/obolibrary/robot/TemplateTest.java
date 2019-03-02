@@ -2,13 +2,8 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.junit.Test;
-import org.obolibrary.robot.template.Template;
-import org.obolibrary.robot.template.TemplateHelper;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
@@ -62,7 +57,7 @@ public class TemplateTest extends CoreTest {
       System.out.println(cls);
     }
     assertEquals("Count classes", 4, template.getClassesInSignature().size());
-    assertEquals("Count logical axioms", 4, template.getLogicalAxiomCount());
-    assertEquals("Count all axioms", 12, template.getAxiomCount());
+    assertEquals("Count logical axioms", 3, template.getLogicalAxiomCount());
+    assertEquals("Count all axioms", 11, template.getAxiomCount());
   }
 }

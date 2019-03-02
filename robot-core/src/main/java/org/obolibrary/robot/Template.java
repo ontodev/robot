@@ -1,16 +1,19 @@
-package org.obolibrary.robot.template;
+package org.obolibrary.robot;
 
 import com.google.common.collect.Lists;
 import java.util.*;
-import org.obolibrary.robot.IOHelper;
-import org.obolibrary.robot.QuotedEntityChecker;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a> */
 public class Template {
+
+  /** Logger */
+  private static final Logger logger = LoggerFactory.getLogger(Template.class);
 
   /** Template IOHelper to resolve prefixes. */
   private IOHelper ioHelper;
@@ -67,33 +70,52 @@ public class Template {
   private static final String NS = "template#";
 
   /** Error message when an annotation property gets a property type other than subproperty. */
-  private static final String annotationPropertyTypeError = NS + "ANNOTATION PROPERTY TYPE ERROR annotation property %s type '%s' must be 'subproperty' at row %d, column %d";
+  private static final String annotationPropertyTypeError =
+      NS
+          + "ANNOTATION PROPERTY TYPE ERROR annotation property %s type '%s' must be 'subproperty' at row %d, column %d";
 
   /** Error message when an invalid class type is provided. */
-  private static final String classTypeError = NS + "CLASS TYPE ERROR class %s has unknown type '%s' at row %d, column %d";
+  private static final String classTypeError =
+      NS + "CLASS TYPE ERROR class %s has unknown type '%s' at row %d, column %d";
+
+  /** Error message when CLASS_TYPE has a SPLIT. */
+  private static final String classTypeSplitError =
+      NS
+          + "CLASS TYPE SPLIT ERROR the SPLIT functionality should not be used for CLASS_TYPE in column %d";
 
   /**
    * Error message when the number of header columns does not match the number of template columns.
    * Expects: table name, header count, template count.
    */
   private static final String columnMismatchError =
-      NS  + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match the number of template columns (%3$d) in table \"%1$s\".";
+      NS
+          + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match the number of template columns (%3$d) in table \"%1$s\".";
 
   /** Error message when an invalid individual type is provided. */
   private static final String individualTypeError =
       NS + "INDIVIDUAL TYPE ERROR individual %s has unknown type '%s' at row %d, column %d";
 
-  /** Error message when an invalid property type is provided. */
-  private static final String propertyTypeError = NS + "PROPERTY TYPE ERROR property %s has unknown type '%s' at row %d, column %d";
+  /** Error message when INDIVIDUAL_TYPE has a SPLIT. */
+  private static final String individualTypeSplitError =
+      NS
+          + "INDIVIDUAL TYPE SPLIT ERROR the SPLIT functionality should not be used for INDIVIDUAL_TYPE in column %d";
 
-  private static final String multiplePropertyTypeError = NS + "MULTIPLE PROPERTY TYPE ERROR property type list may only include one of: subproperty, equivalent, disjoint, or inverse.";
+  /** Error message when an invalid property type is provided. */
+  private static final String propertyTypeError =
+      NS + "PROPERTY TYPE ERROR property %s has unknown type '%s' at row %d, column %d";
+
+  /** Error message when more than one logical type is used in PROPERTY_TYPE. */
+  private static final String multiplePropertyTypeError =
+      NS
+          + "MULTIPLE PROPERTY TYPE ERROR property type list may only include one of: subproperty, equivalent, disjoint, or inverse (for object properties).";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
    * name, template.
    */
   private static final String unknownTemplateError =
-      NS + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" for column %2$d (\"%3$s\") in table \"%1$s\".";
+      NS
+          + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" for column %2$d (\"%3$s\") in table \"%1$s\".";
 
   /**
    * Given a template name and a list of rows, create a template object with a new IOHelper and
@@ -334,18 +356,15 @@ public class Template {
       // Validate the template string
       if (!TemplateHelper.validateTemplateString(template)) {
         throw new Exception(
-          String.format(unknownTemplateError, name, column + 1, headers.get(column), template));
+            String.format(unknownTemplateError, name, column + 1, headers.get(column), template));
       }
 
       // Get the location of important columns
-      // TODO: support other label properties
       switch (template) {
         case "ID":
           idColumn = column;
           break;
         case "LABEL":
-        case "A rdfs:label":
-        case "A label":
           labelColumn = column;
           break;
         default:
@@ -359,8 +378,8 @@ public class Template {
       } else if (template.startsWith("CLASS_TYPE")) {
         classTypeColumn = column;
         if (template.contains("SPLIT=")) {
-          // TODO - add message
-          throw new Exception();
+          // Classes should only have one class type
+          throw new Exception(String.format(classTypeSplitError, column));
         }
       } else if (template.startsWith("PROPERTY_TYPE")) {
         propertyTypeColumn = column;
@@ -370,8 +389,8 @@ public class Template {
       } else if (template.startsWith("INDIVIDUAL_TYPE")) {
         individualTypeColumn = column;
         if (template.contains("SPLIT=")) {
-          // TODO - add message
-          throw new Exception();
+          // Instances should only have one individual type
+          throw new Exception(String.format(individualTypeSplitError, column));
         }
       }
     }
@@ -491,70 +510,73 @@ public class Template {
    * @throws Exception on issue creating axioms from template
    */
   private void processRow(List<String> row) throws Exception {
-      rowNum++;
-      String id = null;
-      try {
-        id = row.get(idColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // ignore
-      }
-      String label = null;
-      try {
-        label = row.get(labelColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // ignore
-      }
-      String type = null;
-      try {
-        type = row.get(typeColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // ignore
-      }
+    rowNum++;
+    String id = null;
+    try {
+      id = row.get(idColumn);
+    } catch (IndexOutOfBoundsException e) {
+      // ignore
+    }
+    String label = null;
+    try {
+      label = row.get(labelColumn);
+    } catch (IndexOutOfBoundsException e) {
+      // ignore
+    }
+    String type = null;
+    try {
+      type = row.get(typeColumn);
+    } catch (IndexOutOfBoundsException e) {
+      // ignore
+    }
 
-      // Skip if no ID and no label
-      if (id == null && label == null) {
-        return;
-      }
+    // Skip if no ID and no label
+    if (id == null && label == null) {
+      return;
+    }
 
-      if (type == null || type.trim().isEmpty()) {
-        type = "class";
-      }
+    if (type == null || type.trim().isEmpty()) {
+      type = "class";
+    }
 
-      IRI iri = getIRI(id, label);
-      switch (type) {
-        case "owl:Class":
-        case "class":
-          addClassAxioms(iri, row);
-          break;
+    IRI iri = getIRI(id, label);
+    if (iri == null) {
+      return;
+    }
+    switch (type) {
+      case "owl:Class":
+      case "class":
+        addClassAxioms(iri, row);
+        break;
 
-        case "owl:ObjectProperty":
-        case "object property":
-          addObjectPropertyAxioms(iri, row);
-          break;
+      case "owl:ObjectProperty":
+      case "object property":
+        addObjectPropertyAxioms(iri, row);
+        break;
 
-        case "owl:DataProperty":
-        case "data property":
-          addDataPropertyAxioms(iri, row);
-          break;
+      case "owl:DataProperty":
+      case "data property":
+        addDataPropertyAxioms(iri, row);
+        break;
 
-        case "owl:AnnotationProperty":
-        case "annotation property":
-          addAnnotationPropertyAxioms(iri, row);
-          break;
+      case "owl:AnnotationProperty":
+      case "annotation property":
+        addAnnotationPropertyAxioms(iri, row);
+        break;
 
-        case "owl:Datatype":
-        case "datatype":
-          addDatatypeAxioms(iri, row);
-          break;
+      case "owl:Datatype":
+      case "datatype":
+        addDatatypeAxioms(iri, row);
+        break;
 
-        case "owl:Individual":
-        case "individual":
-        case "owl:NamedIndividual":
-        case "named individual":
-        default:
-          addIndividualAxioms(iri, row);
-          break;
-      }
+      case "owl:Individual":
+      case "individual":
+      case "owl:NamedIndividual":
+      case "named individual":
+      default:
+        addIndividualAxioms(iri, row);
+        break;
+    }
   }
 
   /* CLASS AXIOMS */
@@ -589,7 +611,9 @@ public class Template {
       classType = classType.trim().toLowerCase();
     }
 
-    Set<OWLClassExpression> expressions = new HashSet<>();
+    // Iterate through all columns and add annotations as we go
+    // Also collect any class expressions that will be used in logical definitions
+    Map<Integer, Set<OWLClassExpression>> expressionColumns = new HashMap<>();
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
       String value = null;
@@ -610,99 +634,110 @@ public class Template {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
       } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
-        // Handle class logic
-        expressions.addAll(TemplateHelper.getClassExpressions(parser, template, value));
-        switch (classType) {
-          case "subclass":
-            addSubClassAxioms(cls, expressions, row, column);
-            break;
-          case "equivalent":
-            addEquivalentClassesAxioms(cls, expressions, row, column);
-            break;
-          case "disjoint":
-            addDisjointClassAxioms(cls, expressions, row, column);
-            break;
-          default:
-            // TODO - unknown class type
-            throw new Exception(String.format(classTypeError, cls.getIRI().getShortForm(), classType, rowNum, column));
-        }
+        expressionColumns.put(column, TemplateHelper.getClassExpressions(parser, template, value));
+      }
+    }
+
+    // Add the class expressions for logic
+    switch (classType) {
+      case "subclass":
+        addSubClassAxioms(cls, expressionColumns, row);
+        break;
+      case "equivalent":
+        addEquivalentClassesAxioms(cls, expressionColumns, row);
+        break;
+      case "disjoint":
+        addDisjointClassAxioms(cls, expressionColumns, row);
+        break;
+      default:
+        // Unknown class type
+        throw new Exception(
+            String.format(
+                classTypeError, cls.getIRI().getShortForm(), classType, rowNum, classTypeColumn));
+    }
+  }
+
+  /**
+   * Given an OWLClass, a map of column number to class expressions, and the row containing the
+   * class details, generate subClassOf axioms for the class where the parents are the class
+   * expressions. Maybe annotate the axioms.
+   *
+   * @param cls OWLClass to create subClassOf axioms for
+   * @param expressionColumns map of column numbers to sets of parent class expressions
+   * @param row list of template values for given class
+   * @throws Exception on issue getting axiom annotations
+   */
+  private void addSubClassAxioms(
+      OWLClass cls, Map<Integer, Set<OWLClassExpression>> expressionColumns, List<String> row)
+      throws Exception {
+    // Generate axioms
+    for (int column : expressionColumns.keySet()) {
+      // Maybe get an annotation on the expression
+      Set<OWLAnnotation> axiomAnnotations = maybeGetAxiomAnnotations(row, column);
+      Set<OWLClassExpression> exprs = expressionColumns.get(column);
+      // Each expression will be its own subclass statement
+      for (OWLClassExpression expr : exprs) {
+        axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expr, axiomAnnotations));
       }
     }
   }
 
   /**
-   * Given an OWLClass, a set of OWLClassExpressions, and the row containing the class details,
-   * generate subClassOf axioms for the class where the parents are the class expressions. Maybe
-   * annotate the axioms.
+   * Given an OWLClass, a map of column number to class expressions, and the row for this class,
+   * generate an equivalentClasses axiom for the class where the equivalent is the intersection of
+   * the provided class expressions. Maybe annotate the axioms.
    *
-   * @param cls OWLClass to create subClassOf axioms for
-   * @param expressions set of parent OWLClassExpressions
+   * @param cls OWLClass to create equivalentClasses axiom for
+   * @param expressionColumns map of column number to equivalent class expression
    * @param row list of template values for given class
-   * @param column column number of logical template string
-   * @throws Exception on issue getting axiom annotations
-   */
-  private void addSubClassAxioms(
-      OWLClass cls, Set<OWLClassExpression> expressions, List<String> row, int column)
-      throws Exception {
-    // Maybe get an annotation on the expression
-    Set<OWLAnnotation> axiomAnnotations = maybeGetAxiomAnnotations(row, column);
-
-    // Generate axioms
-    for (OWLClassExpression expr : expressions) {
-      axioms.add(dataFactory.getOWLSubClassOfAxiom(cls, expr, axiomAnnotations));
-    }
-  }
-  
-  /**
-   * Given an OWLClass, a set of OWLClassExpressions, and the row containing the class details,
-   * generate equivalentClasses axioms for the class where the equivalents are the class
-   * expressions. Maybe annotate the axioms.
-   *
-   * @param cls OWLClass to create equivalentClasses axioms for
-   * @param expressions set of equivalent OWLClassExpressions
-   * @param row list of template values for given class
-   * @param column column number of logical template string
    * @throws Exception on issue getting axiom annotations
    */
   private void addEquivalentClassesAxioms(
-      OWLClass cls, Set<OWLClassExpression> expressions, List<String> row, int column)
+      OWLClass cls, Map<Integer, Set<OWLClassExpression>> expressionColumns, List<String> row)
       throws Exception {
-    // Maybe get an annotation on the expression
-    Set<OWLAnnotation> axiomAnnotations = maybeGetAxiomAnnotations(row, column);
-
-    // Generate axioms
-    for (OWLClassExpression expr : expressions) {
-      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, expr, axiomAnnotations));
+    Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
+    Set<OWLClassExpression> expressions = new HashSet<>();
+    for (int column : expressionColumns.keySet()) {
+      // Maybe get an annotation on the expression (all annotations will be on the one intersection)
+      axiomAnnotations.addAll(maybeGetAxiomAnnotations(row, column));
+      // Add all expressions to the set of expressions
+      expressions.addAll(expressionColumns.get(column));
     }
+    // Create the axiom as an intersection of the provided expressions
+    OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(expressions);
+    axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, axiomAnnotations));
   }
 
   /**
-   * Given an OWLClass, a set of OWLClassExpressions, and the row containing the class details,
-   * generate disjointClasses axioms for the class where the disjoints are the class expressions.
-   * Maybe annotate the axioms.
+   * Given an OWLClass, a map of column number to class expressions, and the row containing the
+   * class details, generate disjointClasses axioms for the class where the disjoints are the class
+   * expressions. Maybe annotate the axioms.
    *
    * @param cls OWLClass to create disjointClasses axioms for
-   * @param expressions set of disjoint OWLClassExpressions
+   * @param expressionColumns map of column number to equivalent class expression
    * @param row list of template values for given class
-   * @param column column number of logical template string
    * @throws Exception on issue getting axiom annotations
    */
   private void addDisjointClassAxioms(
-      OWLClass cls, Set<OWLClassExpression> expressions, List<String> row, int column)
+      OWLClass cls, Map<Integer, Set<OWLClassExpression>> expressionColumns, List<String> row)
       throws Exception {
-    // Maybe get an annotation on the expression
-    Set<OWLAnnotation> axiomAnnotations = maybeGetAxiomAnnotations(row, column);
-
-    // Generate axioms
-    expressions.add(cls);
-    axioms.add(dataFactory.getOWLDisjointClassesAxiom(expressions, axiomAnnotations));
+    for (int column : expressionColumns.keySet()) {
+      // Maybe get an annotation on the expression
+      Set<OWLAnnotation> axiomAnnotations = maybeGetAxiomAnnotations(row, column);
+      Set<OWLClassExpression> exprs = expressionColumns.get(column);
+      // Each expression will be its own disjoint statement
+      for (OWLClassExpression expr : exprs) {
+        Set<OWLClassExpression> disjoint = new HashSet<>(Arrays.asList(cls, expr));
+        axioms.add(dataFactory.getOWLDisjointClassesAxiom(disjoint, axiomAnnotations));
+      }
+    }
   }
 
   /* OBJECT PROPERTY AXIOMS */
 
   /**
-   * Given an object property IRI and the row containing the property details, generate
-   * property axioms.
+   * Given an object property IRI and the row containing the property details, generate property
+   * axioms.
    *
    * @param iri object property IRI
    * @param row list of template values for given object property
@@ -772,7 +807,6 @@ public class Template {
       propertyTypes.add("subproperty");
     }
     propertyType = propertyTypes.get(0);
-
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
       String value = null;
@@ -810,8 +844,9 @@ public class Template {
             addInverseObjectPropertiesAxioms(property, expressions, row, column);
             break;
           default:
-            // TODO - invalid property type
-            throw new Exception(String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
+            // Unknown property type
+            throw new Exception(
+                String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -833,7 +868,7 @@ public class Template {
    * property expressions. Maybe annotate the axioms.
    *
    * @param property OWLObjectProperty to create subPropertyOf axioms for
-   * @param expressions set of parent OWLObjectPropertyExpressions
+   * @param expressions set of OWLObjectPropertyExpressions
    * @param row list of template values for given property
    * @param column column number of logical template string
    * @throws Exception on issue getting axiom annotations
@@ -980,8 +1015,8 @@ public class Template {
   /* DATA PROPERTY AXIOMS */
 
   /**
-   * Given an data property IRI and the row containing the property details, generate
-   * property axioms.
+   * Given an data property IRI and the row containing the property details, generate property
+   * axioms.
    *
    * @param iri data property IRI
    * @param row list of template values for given data property
@@ -1014,8 +1049,7 @@ public class Template {
     }
     propertyTypes.remove("functional");
     if (propertyTypes.size() > 1) {
-      // TODO - can only have one of: subproperty, equivalent, or disjoint
-      throw new Exception();
+      throw new Exception(multiplePropertyTypeError);
     } else if (propertyTypes.size() == 0) {
       propertyTypes.add("subproperty");
     }
@@ -1060,8 +1094,8 @@ public class Template {
             addDisjointDataPropertiesAxioms(property, expressions, row, column);
             break;
           default:
-            // TODO - invalid property type
-            throw new Exception();
+            // Unknown property type
+            throw new Exception(String.format(propertyTypeError, propertyType, rowNum, column));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1204,15 +1238,14 @@ public class Template {
   /* ANNOTATION PROPERTY AXIOMS */
 
   /**
-   * Given an annotation property IRI and the row containing the property details,
-   * generate property axioms.
+   * Given an annotation property IRI and the row containing the property details, generate property
+   * axioms.
    *
    * @param iri annotation property IRI
    * @param row list of template values for given annotation property
    * @throws Exception on issue creating annotation property axioms from template
    */
-  private void addAnnotationPropertyAxioms(IRI iri, List<String> row)
-      throws Exception {
+  private void addAnnotationPropertyAxioms(IRI iri, List<String> row) throws Exception {
     // Add the declaration
     axioms.add(
         dataFactory.getOWLDeclarationAxiom(
@@ -1233,7 +1266,9 @@ public class Template {
     }
     if (!propertyType.equals("subproperty")) {
       // Annotation properties can only have type "subproperty"
-      throw new Exception(String.format(annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn));
+      throw new Exception(
+          String.format(
+              annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn));
     }
 
     OWLAnnotationProperty property = dataFactory.getOWLAnnotationProperty(iri);
@@ -1356,8 +1391,7 @@ public class Template {
   /* DATATYPE AXIOMS */
 
   /**
-   * Given a datatype IRI and the row containing the datatype details, generate datatype
-   * axioms.
+   * Given a datatype IRI and the row containing the datatype details, generate datatype axioms.
    *
    * @param iri datatype IRI
    * @param row list of template values for given datatype
@@ -1396,8 +1430,8 @@ public class Template {
   /* INDIVIDUAL AXIOMS */
 
   /**
-   * Given an individual IRI and the row containing the individual details, generate
-   * individual axioms.
+   * Given an individual IRI and the row containing the individual details, generate individual
+   * axioms.
    *
    * @param iri individual IRI
    * @param row list of template values for given individual
@@ -1412,7 +1446,9 @@ public class Template {
     List<String> types = new ArrayList<>();
     if (typeSplit != null) {
       for (String t : typeCol.split(typeSplit)) {
-        types.add(t.trim());
+        if (!t.trim().equals("")) {
+          types.add(t.trim());
+        }
       }
     } else {
       types.add(typeCol.trim());
@@ -1420,7 +1456,8 @@ public class Template {
 
     // The individualType is used to determine what kind of axioms are associated
     // e.g. different individuals, same individuals...
-    String individualType = null;
+    // The default is just "named" individual (no special axioms)
+    String individualType = "named";
     if (individualTypeColumn != -1) {
       try {
         individualType = row.get(individualTypeColumn);
@@ -1436,17 +1473,19 @@ public class Template {
     for (String type : types) {
       // Add a type if the type is not owl:Individual or owl:NamedIndividual
       if (!type.equalsIgnoreCase("individual")
-        && !type.equalsIgnoreCase("named individual")
-        && !type.equalsIgnoreCase("owl:NamedIndividual")
-        && !type.equalsIgnoreCase("owl:Individual")) {
+          && !type.equalsIgnoreCase("named individual")
+          && !type.equalsIgnoreCase("owl:NamedIndividual")
+          && !type.equalsIgnoreCase("owl:Individual")) {
         OWLClass typeCls = checker.getOWLClass(type);
         if (typeCls != null) {
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeCls, individual));
+        } else {
+          // If the class is null, assume it is a class expression
+          OWLClassExpression typeExpr = TemplateHelper.tryParse(parser, type);
+          axioms.add(dataFactory.getOWLClassAssertionAxiom(typeExpr, individual));
         }
-        // TODO: Manchester syntax parsing for anonymous classes
       }
     }
-
 
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
@@ -1509,7 +1548,6 @@ public class Template {
             }
             break;
           default:
-            // TODO - unknown individual type
             throw new Exception(
                 String.format(
                     individualTypeError, iri.getShortForm(), individualType, rowNum, column));
@@ -1519,7 +1557,9 @@ public class Template {
   }
 
   /**
-   * Given an OWLIndividual, a set of OWLIndividuals, an object property expression, the row as list of strings, and the column number, add each individual as the object of the object property expression for that individual.
+   * Given an OWLIndividual, a set of OWLIndividuals, an object property expression, the row as list
+   * of strings, and the column number, add each individual as the object of the object property
+   * expression for that individual.
    *
    * @param individual OWLIndividual to add object property assertion axioms to
    * @param otherIndividuals set of other OWLIndividuals representing the objects of the axioms
@@ -1546,7 +1586,9 @@ public class Template {
   }
 
   /**
-   * Given an OWLIndividual, a set of OWLLiterals, a data property expression, the row as list of strings, and the column number, add each literal as the object of the data property expression for that individual.
+   * Given an OWLIndividual, a set of OWLLiterals, a data property expression, the row as list of
+   * strings, and the column number, add each literal as the object of the data property expression
+   * for that individual.
    *
    * @param individual OWLIndividual to add data property assertion axioms to
    * @param literals set of OWLLiterals representing the objects of the axioms
@@ -1573,7 +1615,8 @@ public class Template {
   }
 
   /**
-   * Given an OWLIndividual, a set of same individuals, a row as list of strings, and a column number, add the same individual axioms.
+   * Given an OWLIndividual, a set of same individuals, a row as list of strings, and a column
+   * number, add the same individual axioms.
    *
    * @param individual OWLIndiviudal to add axioms to
    * @param sameIndividuals set of same individuals
@@ -1596,7 +1639,8 @@ public class Template {
   }
 
   /**
-   * Given an OWLIndividual, a set of different individuals, a row as list of strings, and a column number, add the different individual axioms.
+   * Given an OWLIndividual, a set of different individuals, a row as list of strings, and a column
+   * number, add the different individual axioms.
    *
    * @param individual OWLIndiviudal to add axioms to
    * @param differentIndividuals set of different individuals
@@ -1621,7 +1665,8 @@ public class Template {
   /* ANNOTATION HELPERS */
 
   /**
-   * Given a template string, a value string, a row as a list of strings, and the column number, return a set of one or more OWLAnnotations.
+   * Given a template string, a value string, a row as a list of strings, and the column number,
+   * return a set of one or more OWLAnnotations.
    *
    * @param template template string
    * @param value value of annotation(s)
@@ -1636,8 +1681,7 @@ public class Template {
       return new HashSet<>();
     }
 
-    Set<OWLAnnotation> annotations =
-        TemplateHelper.getAnnotations(checker, ioHelper, template, value);
+    Set<OWLAnnotation> annotations = TemplateHelper.getAnnotations(checker, template, value);
 
     // Maybe get an annotation on the annotation
     String nextTemplate;
@@ -1657,7 +1701,7 @@ public class Template {
       }
       if (nextValue != null) {
         Set<OWLAnnotation> nextAnnotations =
-            TemplateHelper.getAnnotations(checker, ioHelper, nextTemplate, nextValue);
+            TemplateHelper.getAnnotations(checker, nextTemplate, nextValue);
         Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
         for (OWLAnnotation annotation : annotations) {
           fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextAnnotations));
@@ -1671,7 +1715,8 @@ public class Template {
   }
 
   /**
-   * Given a row as a list of strings, the template string, and the number of the next column, maybe get axiom annotations on existing axiom annotations.
+   * Given a row as a list of strings, the template string, and the number of the next column, maybe
+   * get axiom annotations on existing axiom annotations.
    *
    * @param row list of strings
    * @param template template string for the column
@@ -1682,6 +1727,12 @@ public class Template {
   private Set<OWLAnnotation> getAxiomAnnotations(List<String> row, String template, int nextColumn)
       throws Exception {
     Set<OWLAnnotation> annotations = new HashSet<>();
+    if (template.startsWith(">C")) {
+      logger.warn(
+          String.format(
+              ">A* should be used for all axiom annotations\n(Template '%s' in column %d)",
+              template, nextColumn));
+    }
     template = template.substring(1);
     String nextValue;
     try {
@@ -1692,12 +1743,13 @@ public class Template {
     if (nextValue == null || nextValue.trim().isEmpty()) {
       return annotations;
     }
-    annotations.addAll(TemplateHelper.getAnnotations(checker, ioHelper, template, nextValue));
+    annotations.addAll(TemplateHelper.getAnnotations(checker, template, nextValue));
     return annotations;
   }
 
   /**
-   * Given a string ID and a string label, with at least one of those being non-null, return an IRI for the entity.
+   * Given a string ID and a string label, with at least one of those being non-null, return an IRI
+   * for the entity.
    *
    * @param id String ID of entity, maybe null
    * @param label String label of entity, maybe null
@@ -1716,14 +1768,18 @@ public class Template {
   }
 
   /**
-   * Given a row as a list of strings and a column number, determine if the next column contains a one or more axiom annotations. If so, return the axiom annotation or annotations as a set of OWLAnnotations.
+   * Given a row as a list of strings and a column number, determine if the next column contains a
+   * one or more axiom annotations. If so, return the axiom annotation or annotations as a set of
+   * OWLAnnotations.
    *
    * @param row list of strings
    * @param column column number
    * @return set of OWLAnnotations, maybe empty
    * @throws Exception on issue getting the OWLAnnotations
    */
-  private Set<OWLAnnotation> maybeGetAxiomAnnotations(List<String> row, int column) throws Exception {
+  private Set<OWLAnnotation> maybeGetAxiomAnnotations(List<String> row, int column)
+      throws Exception {
+    // Look at the template string of the next column
     String nextTemplate;
     try {
       nextTemplate = templates.get(column + 1);
@@ -1732,6 +1788,8 @@ public class Template {
     }
 
     Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
+    // If the next template string is not null, not empty, and it starts with >
+    // Get the axiom annotations from the row
     if (nextTemplate != null && !nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
       axiomAnnotations = getAxiomAnnotations(row, nextTemplate, column + 1);
     }

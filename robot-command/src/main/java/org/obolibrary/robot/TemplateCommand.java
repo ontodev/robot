@@ -3,8 +3,6 @@ package org.obolibrary.robot;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.obolibrary.robot.template.Template;
-import org.obolibrary.robot.template.TemplateHelper;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
@@ -138,9 +136,7 @@ public class TemplateCommand implements Command {
     // Process the templates
     List<OWLOntology> ontologies = new ArrayList<>();
     for (String table : tables.keySet()) {
-      Template template = new Template(table, tables.get(table), inputOntology, ioHelper);
-      OWLOntology ont = template.generateOutputOntology();
-      ontologies.add(ont);
+      ontologies.add(TemplateOperation.template(inputOntology, ioHelper, table, tables.get(table)));
     }
     OWLOntology outputOntology = MergeOperation.merge(ontologies);
     // OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null,
