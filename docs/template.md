@@ -295,7 +295,3 @@ AT rdfs:label^^xsd:string
 ### Unknown Template Error
 
 Valid template strings are limited to the <a href="#template-strings">described above</a>. If a different template string is provided, this error message will be returned.
-
-### Unknown Type Error
-
-The `CLASS_TYPE` values are limited to `subclass` or `equivalent`. Anything else placed in that column will result in this error message.
