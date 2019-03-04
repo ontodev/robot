@@ -22,8 +22,12 @@ The `template` command accepts an optional input ontology, either using the `--i
 
 ### Generic Template Strings
 
-- `ID`: Every term must have an IRI to identify it. This can be specified with an `ID` column. Usually this will be a prefixed ID like `GO:12345`. See the `--prefix` options for details. Rows with an empty ID cell will be skipped.
-- `LABEL`: If a term exists in an ontology, or its ID has been defined elsewhere (perhaps in a previous template), then the `LABEL` column can specify an `rdfs:label` that uniquely identifies the target term. This can be easier the numeric IDs for human readers. The `LABEL` column DOES NOT create an `rdfs:label` annotation for an entity.
+- `ID`: Every term must have an IRI to identify it. This can be specified with an `ID` column. Usually this will be a prefixed ID like `GO:12345`. See the `--prefix` options for details.
+    - If an entity already exists in the `--input` ontology, you can refer to it by `LABEL` instead (see below).
+    - Rows with no `ID` or `LABEL` will be skipped.
+- `LABEL`: If a term exists in an ontology, or its ID has been defined elsewhere (perhaps in a previous template), then the `LABEL` column can specify an `rdfs:label` that uniquely identifies the target term. This can be easier than the numeric IDs for human readers. 
+    - The `LABEL` column DOES NOT create an `rdfs:label` annotation for an entity. 
+    - If you are creating new entities using `LABEL`, be sure to include an `ID` column as well (and an `A rdfs:label` column if you would like to annotate the new entity with a label).
 - `TYPE`: this is the `rdf:type` for the row. Because ROBOT is focused on ontology development, the default value is `owl:Class` and this column is optional. When creating an OWLIndividual, specify the class to which it belongs in this column.
     - `class` or `owl:Class`
     - `object property` or `owl:ObjectProperty`
@@ -46,17 +50,31 @@ Sometimes you want to include zero or more values in a single spreadsheet cell, 
     - `subclass`: the created class will be asserted to be a subclass of each templated class expression (default)
     - `disjoint`: the created class will be disjoint from each templated class expression, meaning the classes cannot share subclasses
     - `equivalent`: the created class will be asserted to be equivalent to the intersection of all the templated class expressions
-- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its rdfs:label (enclosing in single quotes if it has a space in it). If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
+- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. 
+    - ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its `rdfs:label` (enclosing in single quotes if it has a space in it). 
+    - If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
+    - Properties in class expression **must** be referred to by label in order to be parsed.
 
 #### Example of Class Template Strings
 
-| TYPE | CLASS_TYPE | C % | C part_of some % |
-| --- | --- | --- | --- |
-| class | Class 1 | |
-| class | disjoint | Class 1 | |
-| class | equivalent | | Class 1 |
+| Label | Entity Type | Class Type | Related classes | Other axioms |
+| --- | --- | --- | --- | --- |
+| LABEL | TYPE | CLASS_TYPE | C % | C part_of some % |
+| Class 2 | class | | Class 1 | |
+| Class 3 | class | disjoint | Class 2 | |
+| Class 4 | class | equivalent | | Class 3 |
 
-The first class will be a subclass of `Class 1`, as there is no included `CLASS_TYPE`.
+Class 2 will be a subclass of Class 1, as there is no included `CLASS_TYPE`. Class 3 will be disjoint with Class 2, and Class 4 will be equivalent to `part_of some 'Class 3'`.
+
+Manchester expressions can also be used within the cells, as long as they are enclosed in parentheses:
+
+| Label | Parent |
+| --- | --- |
+| LABEL | C % |
+| Class 4 | |
+| Class 5 | (part_of some 'Class 4') |
+
+In this template, Class 5 would be a subclass of `part_of some 'Class 4'`.
 
 ### Property Template Strings
 
@@ -83,10 +101,11 @@ The first class will be a subclass of `Class 1`, as there is no included `CLASS_
 
 #### Example of Property Template Strings
 
-| TYPE | PROPERTY_TYPE | P % | DOMAIN | RANGE |
-| --- | --- | --- | --- | --- |
-| owl:ObjectProperty | subproperty | Property 1 | Class 1 | Class 2 |
-| owl:DataProperty | functional | Property 2 | Class 2 | xsd:string |
+| ID | Entity Type | Property Type | Related Property | Domain | Range |
+| --- | --- | --- | --- | --- | --- |
+| ID | TYPE | PROPERTY_TYPE | P % | DOMAIN | RANGE |
+| OP:1 | owl:ObjectProperty | subproperty | Property 1 | Class 1 | Class 2 |
+| DP:1 | owl:DataProperty | functional | Property 2 | Class 2 | xsd:string |
 
 The `functional` data property will still default to a `subproperty` logical axiom for the `P %` template string, unless a different logical property type (`equivalent`, `disjoint`) is provided. Property type can be split, e.g. `PROPERTY_TYPE SPLIT=|`.
 
@@ -104,10 +123,11 @@ If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an
 
 #### Example of Individual Template Strings
 
-| TYPE | INDIVIDUAL_TYPE | I part_of some % | I % |
-| --- | --- | --- | --- |
-| Class 1 | named | Individual 2 | |
-| Class 2 | different | | Individual 1 |
+| Label | Entity Type | Individual Type | Other Axioms | Related Individuals |
+| --- | --- | --- | --- | --- |
+| LABEL | TYPE | INDIVIDUAL_TYPE | I part_of some % | I % |
+| Individual 1 | Class 1 | named | Individual 2 | |
+| Individual 2 | Class 1 | different | | Individual 1 |
 
 <!-- ### Datatype Template Strings -->
 
