@@ -271,7 +271,7 @@ AL rdfs:label@en
 
 ### Manchester Parse Error
 
-The provided value cannot be parsed and may not be in proper Manchester syntax. See [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) for more details.
+The provided value cannot be parsed and may not be in proper Manchester syntax. See [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) for more details. If you are using labels, make sure the labels are defined in the `--input` ontology or using the `LABEL` column. Also ensure that all properties use a label instead of a CURIE or IRI.
 
 ### Merge Error
 
