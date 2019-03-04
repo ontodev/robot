@@ -28,12 +28,7 @@ import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.OBODocumentFormat;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.formats.*;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -162,6 +157,38 @@ public class IOHelper {
   public IOHelper(File file) throws IOException {
     String jsonString = FileUtils.readFileToString(file);
     setContext(jsonString);
+  }
+
+  /**
+   * Given an ontology, a file, and a list of prefixes, save the ontology to the file and include
+   * the prefixes in the header.
+   *
+   * @param ontology OWLOntology to save
+   * @param outputFile File to save ontology to
+   * @param addPrefixes List of prefixes to add ("foo: http://foo.bar/")
+   * @throws IOException On issue parsing list of prefixes or saving file
+   */
+  public void addPrefixesAndSave(OWLOntology ontology, File outputFile, List<String> addPrefixes)
+      throws IOException {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDocumentFormat df = getFormat(FilenameUtils.getExtension(outputFile.getPath()));
+
+    // If prefixes are not supported, just save the ontology without adding prefixes
+    if (!df.isPrefixOWLOntologyFormat()) {
+      logger.error("Prefixes are not supported in " + df.toString() + " (saving without prefixes)");
+      saveOntology(ontology, df, outputFile);
+      return;
+    }
+
+    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    for (String pref : addPrefixes) {
+      String[] split = pref.split(": ");
+      if (split.length != 2) {
+        throw new IOException(String.format(invalidPrefixError, pref));
+      }
+      pf.setPrefix(split[0].trim(), split[1].trim());
+    }
+    saveOntology(ontology, df, outputFile);
   }
 
   /**

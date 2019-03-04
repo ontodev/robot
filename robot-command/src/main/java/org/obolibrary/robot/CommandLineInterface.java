@@ -34,6 +34,7 @@ public class CommandLineInterface {
     m.addCommand("reduce", new ReduceCommand());
     m.addCommand("relax", new RelaxCommand());
     m.addCommand("remove", new RemoveCommand());
+    m.addCommand("rename", new RenameCommand());
     m.addCommand("repair", new RepairCommand());
     m.addCommand("report", new ReportCommand());
     m.addCommand("template", new TemplateCommand());
