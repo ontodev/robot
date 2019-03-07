@@ -63,7 +63,7 @@ If an entity type is provided, only the terms of that type will be included in t
 
 ### Patterns
 
-Terms can also be selected from the set based on axioms. This can be helpful if you want to remove only terms with a specific annotation. When selecting with axioms, the `--select` option must always be quoted.
+Terms can also be selected from the set based on their annotations. This can be helpful if you want to remove only terms with a specific annotation. When selecting with axioms, the `--select` option must always be quoted.
 
 1. `CURIE=CURIE`
     - e.g. `rdfs:seeAlso=obo:EX_123`
