@@ -66,10 +66,24 @@ If an entity type is provided, only the terms of that type will be included in t
 Terms can also be selected from the set based on axioms. This can be helpful if you want to remove only terms with a specific annotation. When selecting with axioms, the `--select` option must always be quoted.
 
 1. `CURIE=CURIE`
+    - e.g. `rdfs:seeAlso=obo:EX_123`
 2. `CURIE=<IRI>`
+    - e.g. `rdfs:seeAlso=<http://purl.obolibrary.org/obo/EX_123>`
 3. `CURIE='literal'`
+    - e.g. `rdfs:label='example label'`
 4. `CURIE='literal'^^datatype`
+    - e.g. `rdfs:label='example label'^^xsd:string`
 5. `CURIE=~'regex pattern'`
+    - e.g. `rdfs:label=~'example.*'`
+
+It is also possible to select terms based on parts of their IRI. You may include an IRI pattern using one or more wildcard characters (`*` and/or `?`) enclosed in angle brackets. This MUST be enclosed in quotes to work on the command line.
+
+- `<IRI-pattern>`
+    - e.g. `<http://purl.obolibrary.org/obo/EX_*>`
+    
+If you wish to match a more complicated pattern, you may also use a regex pattern here by preceding the pattern with a tilde (`~`):
+- `<~IRI-regex>`
+    - e.g. `<~^.+EX_[0-9]{7}$>`
 
 ## Axioms
 
@@ -89,24 +103,30 @@ The `--axioms` option allows you to specify the type of OWLAxiom to remove. More
 
 ## Examples
 
-Remove a class ('organ') and and all its descendants:
+Remove a class ('organ'), all its descendants, and any axioms using these classes:
 
     robot remove --input uberon_module.owl \
       --term UBERON:0000062 \
       --select "self descendants" \
       --output results/remove_class.owl
 
-Remove all individuals from OBI:
+Remove all axioms containing an entity in the BFO namespace from the UBERON module:
 
-```
-robot remove --input obi.owl --select individuals 
-```
+    robot remove --input uberon_module.owl \
+      --select "<http://purl.obolibrary.org/obo/BFO_*>" \
+      --output results/remove_bfo.owl
 
 Remove all anonymous entities from the UBERON module:
 
     robot remove --input uberon_module.owl \
       --select anonymous \
       --output results/remove_anonymous.owl
+
+Remove all individuals from OBI:
+
+```
+robot remove --input obi.owl --select individuals 
+```
 
 Remove all deprecated classes from OBI:
 
