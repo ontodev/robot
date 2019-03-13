@@ -172,7 +172,7 @@ public class FilterCommand implements Command {
       }
     }
 
-    if (hadSelection && selectGroups.isEmpty()) {
+    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty()) {
       // Maybe return the ontology at this point if there was a previous selection (such as
       // ontology)
       if (trim) {

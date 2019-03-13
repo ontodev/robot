@@ -150,7 +150,7 @@ public class RemoveCommand implements Command {
     }
 
     // If removing imports, and there are no other selects, save and return
-    if (hadSelection && selectGroups.isEmpty()) {
+    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty()) {
       if (trim) {
         OntologyHelper.trimOntology(ontology);
       }
