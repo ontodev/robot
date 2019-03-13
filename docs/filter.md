@@ -45,3 +45,12 @@ Copy a subset of classes based on an annotation property (maintains hierarchy):
      --select "oboInOwl:inSubset=core:uberon_slim"\
      --select annotations\
      --output results/uberon_slim.owl
+
+Copy a subset (as in the first example) plus ontology annotations:
+```
+robot filter --input uberon_module.owl\
+ --term UBERON:0000062\
+ --select ontology\
+ --select "annotations self descendants"\
+ --output results/uberon_annotated.owl
+```
