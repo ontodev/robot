@@ -159,8 +159,15 @@ public class FilterCommand implements Command {
         includeAnnotations = true;
         selectGroup.remove("annotations");
       }
-      // The ontology keyword retrieves the ontology annotations
-      if (selectGroup.contains("ontology")) {
+      if (selectGroup.contains("imports")) {
+        // The imports keyword copies the import delcarations to the output ontology
+        for (OWLImportsDeclaration imp : inputOntology.getImportsDeclarations()) {
+          manager.applyChange(new AddImport(outputOntology, imp));
+        }
+        hadSelection = true;
+        selectGroup.remove("import");
+      } else if (selectGroup.contains("ontology")) {
+        // The ontology keyword retrieves the ontology annotations
         for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
           OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
         }

@@ -32,9 +32,7 @@ There are three general select options that give control over the types of axiom
 2. `named`: remove named entities.
 3. `anonymous`: remove anonymous entities (e.g. anonymous ancestors).
 4. `ontology`: remove ontology annotations (for [filter](/filter), this returns just the ontology annotations)
-5. `imports`: remove import statements *
-
-\* The `imports` selection cannot be used with [filter](/filter)
+5. `imports`: remove import statements (for [filter](/filter), this will copy the import declarations to the output ontology)
 
 #### Relation Types
 
