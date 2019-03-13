@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.slf4j.Logger;
@@ -127,7 +128,8 @@ public class RemoveCommand implements Command {
     boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
 
     // Copy the unchanged ontology to reserve for filling gaps later
-    OWLOntology copy = manager.copyOntology(ontology, OntologyCopy.DEEP);
+    OWLOntology copy =
+        OWLManager.createOWLOntologyManager().copyOntology(ontology, OntologyCopy.DEEP);
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
