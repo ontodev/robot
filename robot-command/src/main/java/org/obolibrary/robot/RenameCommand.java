@@ -32,7 +32,8 @@ public class RenameCommand implements Command {
           + "DUPLICATE MAPPING ERROR line %d in file '%s' contains a duplicate mapping for value '%s'.";
 
   /** Error message when a new IRI value is duplicated and fail-on-duplicates is true. */
-  private static final String duplicateRenameError = NS + "DUPLICATE RENAME ERROR line %d in file '%s' contains a duplicate rename for value '%s'";
+  private static final String duplicateRenameError =
+      NS + "DUPLICATE RENAME ERROR line %d in file '%s' contains a duplicate rename for value '%s'";
 
   /** Error message when a file is not in CSV or TSV/TXT format. */
   private static final String fileFormatError =
@@ -59,7 +60,11 @@ public class RenameCommand implements Command {
     o.addOption("m", "mappings", true, "table of mappings for renaming");
     o.addOption("r", "prefix-mappings", true, "table of prefix mappings for renaming");
     o.addOption("A", "add-prefix", true, "add a new prefix to ontology file header");
-    o.addOption("d", "allow-duplicates", true, "allow two or more terms to be renamed to the same full IRI");
+    o.addOption(
+        "d",
+        "allow-duplicates",
+        true,
+        "allow two or more terms to be renamed to the same full IRI");
     options = o;
   }
 
@@ -149,7 +154,8 @@ public class RenameCommand implements Command {
     // Process full renames
     if (fullFile != null) {
       separator = getSeparator(fullFile);
-      Map<String, String> mappings = parseTableMappings(new File(fullFile), separator, allowDuplicates);
+      Map<String, String> mappings =
+          parseTableMappings(new File(fullFile), separator, allowDuplicates);
       RenameOperation.renameFull(ontology, ioHelper, mappings);
     }
     // Process prefix renames (no need to fail on duplicates)
@@ -231,7 +237,8 @@ public class RenameCommand implements Command {
         // This results in a merge
         if (mappings.containsValue(newIRI)) {
           if (!allowDuplicates) {
-            throw new Exception(String.format(duplicateRenameError, lineNum, mappingsFile.getPath(), newIRI));
+            throw new Exception(
+                String.format(duplicateRenameError, lineNum, mappingsFile.getPath(), newIRI));
           }
           logger.warn(String.format("IRI '%s' will be used for two or more entities", newIRI));
         }
