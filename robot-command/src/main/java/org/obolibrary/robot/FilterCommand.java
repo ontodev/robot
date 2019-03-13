@@ -165,7 +165,7 @@ public class FilterCommand implements Command {
           manager.applyChange(new AddImport(outputOntology, imp));
         }
         hadSelection = true;
-        selectGroup.remove("import");
+        selectGroup.remove("imports");
       } else if (selectGroup.contains("ontology")) {
         // The ontology keyword retrieves the ontology annotations
         for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
