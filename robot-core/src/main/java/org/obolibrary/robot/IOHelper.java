@@ -90,7 +90,7 @@ public class IOHelper {
 
   /** Error message when OBO cannot be saved. */
   private static final String oboStructureError =
-      NS + "OBO STRUCTURE ERROR Ontology does not conform to OBO structure rules:\n\t%s";
+      NS + "OBO STRUCTURE ERROR Ontology does not conform to OBO structure rules:\n%s";
 
   /** Error message when the ontology cannot be saved. Expects the IRI string. */
   private static final String ontologyStorageError =
@@ -1176,9 +1176,8 @@ public class IOHelper {
         // Determine if its caused by an OBO Format error
         if (format instanceof OBODocumentFormat
             && e.getCause() instanceof FrameStructureException) {
-          // Trim the message (the user can run -vvv to see full message)
-          String trim = e.getCause().getLocalizedMessage().substring(0, 100) + "...";
-          throw new IOException(String.format(oboStructureError, trim), e);
+          throw new IOException(
+              String.format(oboStructureError, e.getCause().getMessage()), e.getCause());
         }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }

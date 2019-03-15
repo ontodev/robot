@@ -80,9 +80,9 @@ For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `-
 
 ### OBO Structure Error
 
-When running the [convert](/convert) command, if `--check` is true (which, by default, it is), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. If you are saving an ontology in OBO format from another command, `--check` is always `true`. 
+When running the [convert](/convert) command, if `--check` is true (default behavior), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. If you are saving an ontology in OBO format from another command, `--check` is always `true`. 
 
-You may choose to review the full exception message by running the command again with `-vvv`, or run convert (or chain to convert) with the `--check false` option to ignore the errors, e.g.:
+You may run convert (or chain to convert) with the `--check false` option to ignore the errors, e.g.:
 ```
 robot reason --input ont.owl \
   convert --check false --output ont.obo
