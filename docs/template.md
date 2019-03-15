@@ -18,6 +18,8 @@ Each template file must be set up in the following format:
 
 The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template` or `-t` option specified the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See below for the three different merge options, and details on how they control the output of the command.
 
+A template may have multiple errors in different rows and columns. The operation will log these errors as it encounters them, and will, by default, fail if it has logged any errors. If you wish to force ontology creation, even with template errors, include `--force true`. Errors will still be logged, but an output ontology will be created if possible.
+
 ## Template Strings
 
 ### Generic Template Strings

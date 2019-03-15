@@ -119,6 +119,28 @@ public class TemplateOperation {
   }
 
   /**
+   * Given an OWLOntology, an IOHelper, a table name, and the table contents, use the table as the
+   * template to generate an output OWLOntology.
+   *
+   * @param inputOntology OWLOntology to use to get existing entities
+   * @param ioHelper IOHelper to resolve prefixes
+   * @param tableName name of the table for error reporting
+   * @param table List of rows (lists of cells) in the template
+   * @return new OWLOntology created from the template
+   * @throws Exception on any issue
+   */
+  public static OWLOntology template(
+      OWLOntology inputOntology,
+      IOHelper ioHelper,
+      String tableName,
+      List<List<String>> table,
+      boolean force)
+      throws Exception {
+    Template template = new Template(tableName, table, inputOntology, ioHelper);
+    return template.generateOutputOntology(null, force);
+  }
+
+  /**
    * Find an annotation property with the given name or create one.
    *
    * @param checker used to search by rdfs:label (for example)
@@ -520,7 +542,7 @@ public class TemplateOperation {
           annotations.add(dataFactory.getOWLAnnotation(rdfType, type));
         } else if (template.startsWith("A")) {
           lastAxiomAnnotation = null;
-          lastAnnotation = TemplateHelper.getAnnotation(checker, template, value);
+          lastAnnotation = TemplateHelper.getAnnotation(checker, template, value, row, column);
           annotations.add(lastAnnotation);
         } else if (template.startsWith(">A")) {
           if (lastAnnotation == null) {
@@ -537,7 +559,8 @@ public class TemplateOperation {
                     "an annotation"));
           }
           // Get annotation based on annotation type
-          lastAxiomAnnotation = TemplateHelper.getAnnotation(checker, template.substring(1), value);
+          lastAxiomAnnotation =
+              TemplateHelper.getAnnotation(checker, template.substring(1), value, row, column);
           // If the last annotation is already in the map, get it's existing annotations
           if (nested.containsKey(lastAnnotation)) {
             axiomAnnotations = nested.get(lastAnnotation);
@@ -571,7 +594,7 @@ public class TemplateOperation {
           axiomAnnotationAnnotations = axiomAnnotations.get(lastAxiomAnnotation);
           // Add this iteration of annotation and put into the nested map
           axiomAnnotationAnnotations.add(
-              TemplateHelper.getAnnotation(checker, template.substring(2), value));
+              TemplateHelper.getAnnotation(checker, template.substring(2), value, row, column));
           axiomAnnotations.put(lastAxiomAnnotation, axiomAnnotationAnnotations);
           nested.put(lastAnnotation, axiomAnnotations);
         }

@@ -107,7 +107,7 @@ public class Template {
   /** Error message when more than one logical type is used in PROPERTY_TYPE. */
   private static final String multiplePropertyTypeError =
       NS
-          + "MULTIPLE PROPERTY TYPE ERROR property type list may only include one of: subproperty, equivalent, disjoint, or inverse (for object properties).";
+          + "MULTIPLE PROPERTY TYPE ERROR property type list at row %d, column %d may only include one of: subproperty, equivalent, disjoint, or inverse (for object properties).";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
@@ -295,18 +295,36 @@ public class Template {
    * @throws Exception on issue parsing rows to axioms or creating new ontology
    */
   public OWLOntology generateOutputOntology() throws Exception {
-    return generateOutputOntology(null);
+    return generateOutputOntology(null, false);
   }
 
   /**
    * Generate an OWLOntology with given IRI based on the rows of the template.
    *
+   * @param outputIRI IRI for final ontology
+   * @param force if true, do not exit on errors
    * @return new OWLOntology
    * @throws Exception on issue parsing rows to axioms or creating new ontology
    */
-  public OWLOntology generateOutputOntology(String outputIRI) throws Exception {
+  public OWLOntology generateOutputOntology(String outputIRI, boolean force) throws Exception {
+    boolean hasException = false;
     for (List<String> row : tableRows) {
-      processRow(row);
+      try {
+        processRow(row);
+      } catch (Exception e) {
+        // print exceptions as they show up
+        hasException = true;
+        logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
+      }
+    }
+
+    // If there was at least one exception, quit the process
+    if (hasException && !force) {
+      System.out.println("\nTemplate failed with errors");
+      System.out.println("For details see: http://robot.obolibrary.org/template#error-messages");
+      System.exit(1);
+    } else if (hasException) {
+      logger.error("Ontology created from template with errors");
     }
 
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -634,7 +652,8 @@ public class Template {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
       } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
-        expressionColumns.put(column, TemplateHelper.getClassExpressions(parser, template, value));
+        expressionColumns.put(
+            column, TemplateHelper.getClassExpressions(parser, template, value, rowNum, column));
       }
     }
 
@@ -802,7 +821,7 @@ public class Template {
             "transitive"));
     if (propertyTypes.size() > 1) {
       // There may only be one of: subproperty, equivalent, disjoint, or inverse
-      throw new Exception(multiplePropertyTypeError);
+      throw new Exception(String.format(multiplePropertyTypeError, rowNum, propertyTypeColumn));
     } else if (propertyTypes.size() == 0) {
       propertyTypes.add("subproperty");
     }
@@ -829,7 +848,7 @@ public class Template {
       } else if (template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
         // Handle property logic
         Set<OWLObjectPropertyExpression> expressions =
-            TemplateHelper.getObjectPropertyExpressions(checker, template, value);
+            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
         switch (propertyType) {
           case "subproperty":
             addSubObjectPropertyAxioms(property, expressions, row, column);
@@ -851,12 +870,12 @@ public class Template {
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(parser, template, value);
+            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column);
         addObjectPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(parser, template, value);
+            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column);
         addObjectPropertyRanges(property, expressions, row, column);
       }
     }
@@ -1082,7 +1101,7 @@ public class Template {
       } else if (template.startsWith("P ") && !template.startsWith("PROPERTY_TYPE")) {
         // Handle property logic
         Set<OWLDataPropertyExpression> expressions =
-            TemplateHelper.getDataPropertyExpressions(checker, template, value);
+            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
         switch (propertyType) {
           case "subproperty":
             addSubDataPropertyAxioms(property, expressions, row, column);
@@ -1095,12 +1114,13 @@ public class Template {
             break;
           default:
             // Unknown property type
-            throw new Exception(String.format(propertyTypeError, propertyType, rowNum, column));
+            throw new Exception(
+                String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(parser, template, value);
+            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column);
         addDataPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
@@ -1481,7 +1501,7 @@ public class Template {
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeCls, individual));
         } else {
           // If the class is null, assume it is a class expression
-          OWLClassExpression typeExpr = TemplateHelper.tryParse(parser, type);
+          OWLClassExpression typeExpr = TemplateHelper.tryParse(parser, type, rowNum, typeColumn);
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeExpr, individual));
         }
       }
@@ -1681,7 +1701,8 @@ public class Template {
       return new HashSet<>();
     }
 
-    Set<OWLAnnotation> annotations = TemplateHelper.getAnnotations(checker, template, value);
+    Set<OWLAnnotation> annotations =
+        TemplateHelper.getAnnotations(checker, template, value, rowNum, column);
 
     // Maybe get an annotation on the annotation
     String nextTemplate;
@@ -1701,7 +1722,7 @@ public class Template {
       }
       if (nextValue != null) {
         Set<OWLAnnotation> nextAnnotations =
-            TemplateHelper.getAnnotations(checker, nextTemplate, nextValue);
+            TemplateHelper.getAnnotations(checker, nextTemplate, nextValue, rowNum, column);
         Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
         for (OWLAnnotation annotation : annotations) {
           fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextAnnotations));
@@ -1743,7 +1764,8 @@ public class Template {
     if (nextValue == null || nextValue.trim().isEmpty()) {
       return annotations;
     }
-    annotations.addAll(TemplateHelper.getAnnotations(checker, template, nextValue));
+    annotations.addAll(
+        TemplateHelper.getAnnotations(checker, template, nextValue, rowNum, nextColumn));
     return annotations;
   }
 

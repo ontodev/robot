@@ -47,6 +47,7 @@ public class TemplateCommand implements Command {
         "c", "collapse-import-closure", true, "if true, collapse the import closure when merging");
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
+    o.addOption("f", "force", true, "if true, do not exit on error");
 
     options = o;
   }
@@ -133,14 +134,16 @@ public class TemplateCommand implements Command {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
 
+    // Determine if Template should exit if there are any errors
+    boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
+
     // Process the templates
     List<OWLOntology> ontologies = new ArrayList<>();
     for (String table : tables.keySet()) {
-      ontologies.add(TemplateOperation.template(inputOntology, ioHelper, table, tables.get(table)));
+      ontologies.add(
+          TemplateOperation.template(inputOntology, ioHelper, table, tables.get(table), force));
     }
     OWLOntology outputOntology = MergeOperation.merge(ontologies);
-    // OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null,
-    // ioHelper);
 
     boolean collapseImports =
         CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
