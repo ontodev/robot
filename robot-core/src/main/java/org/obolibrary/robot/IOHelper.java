@@ -25,6 +25,7 @@ import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
 import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
+import org.obolibrary.oboformat.model.FrameStructureException;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -86,6 +87,10 @@ public class IOHelper {
   /** Error message when a JSON-LD context cannot be read, for any reason. */
   private static final String jsonldContextParseError =
       NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+
+  /** Error message when OBO cannot be saved. */
+  private static final String oboStructureError =
+      NS + "OBO STRUCTURE ERROR Ontology does not conform to OBO structure rules:\n\t%s";
 
   /** Error message when the ontology cannot be saved. Expects the IRI string. */
   private static final String ontologyStorageError =
@@ -508,17 +513,13 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI) throws IOException {
-    try {
-      String path = ontologyIRI.toString();
-      if (path.endsWith(".gz")) {
-        path = path.substring(0, path.lastIndexOf("."));
-      }
-      String formatName = FilenameUtils.getExtension(path);
-      OWLDocumentFormat format = getFormat(formatName);
-      return saveOntology(ontology, format, ontologyIRI, true);
-    } catch (Exception e) {
-      throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+    String path = ontologyIRI.toString();
+    if (path.endsWith(".gz")) {
+      path = path.substring(0, path.lastIndexOf("."));
     }
+    String formatName = FilenameUtils.getExtension(path);
+    OWLDocumentFormat format = getFormat(formatName);
+    return saveOntology(ontology, format, ontologyIRI, true);
   }
 
   /**
@@ -1172,6 +1173,13 @@ public class IOHelper {
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
       } catch (OWLOntologyStorageException e) {
+        // Determine if its caused by an OBO Format error
+        if (format instanceof OBODocumentFormat
+            && e.getCause() instanceof FrameStructureException) {
+          // Trim the message (the user can run -vvv to see full message)
+          String trim = e.getCause().getLocalizedMessage().substring(0, 100) + "...";
+          throw new IOException(String.format(oboStructureError, trim), e);
+        }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }
     }
