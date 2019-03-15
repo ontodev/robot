@@ -145,7 +145,7 @@ public class OntologyHelper {
    *
    * @param ontology ontology to remove intermediates in
    * @param precious set of OWLEntities that should not be removed
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException on problem creating ontology
    */
   public static void collapseOntology(OWLOntology ontology, Set<IRI> precious)
       throws OWLOntologyCreationException {

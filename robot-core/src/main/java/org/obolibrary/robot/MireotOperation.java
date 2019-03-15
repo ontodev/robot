@@ -234,6 +234,8 @@ public class MireotOperation {
    * @param inputOntology the ontology to extract from
    * @param upperIRIs these terms and their descendants will be copied
    * @param annotationProperties the annotation properties to copy; if null, all will be copied
+   * @param options map of options
+   * @param inputSourceMap map of source IRIs (or null)
    * @return a new ontology with the target terms and their named ancestors
    * @throws OWLOntologyCreationException on problems creating new ontology
    */

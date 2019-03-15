@@ -60,7 +60,10 @@ public class ReasonOperation {
    *
    * @param ontology the ontology to reason over
    * @param reasonerFactory the factory to create a reasoner instance from
-   * @throws Exception on any problem
+   * @throws OntologyLogicException if the ontology contains unsatisfiable classes, properties or
+   *     inconsistencies
+   * @throws OWLOntologyCreationException if ontology cannot be created
+   * @throws InvalidReferenceException if the reference checker fails
    */
   public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
       throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
@@ -74,7 +77,10 @@ public class ReasonOperation {
    * @param ontology the ontology to reason over
    * @param reasonerFactory the factory to create a reasoner instance from
    * @param options a map of option strings, or null
-   * @throws Exception on any problem
+   * @throws OntologyLogicException if the ontology contains unsatisfiable classes, properties or
+   *     inconsistencies
+   * @throws OWLOntologyCreationException if ontology cannot be created
+   * @throws InvalidReferenceException if the reference checker fails
    */
   public static void reason(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)

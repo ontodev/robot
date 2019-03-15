@@ -1,8 +1,6 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
-
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,7 +34,7 @@ public class RenameOperation {
    *
    * @param ontology OWLOntology to rename entities in
    * @param ioHelper IOHelper to create IRIs
-   * @param mappings map of old IRI -> new IRI
+   * @param mappings map of old IRI to new IRI
    * @throws Exception if the old IRI in a mapping does not exist
    */
   public static void renameFull(
@@ -59,7 +57,7 @@ public class RenameOperation {
    *
    * @param ontology OWLOntology to rename base prefixes in
    * @param ioHelper IOHelper to create IRIs
-   * @param mappings map of old base -> new base
+   * @param mappings map of old base to new base
    */
   public static void renamePrefixes(
       OWLOntology ontology, IOHelper ioHelper, Map<String, String> mappings) {

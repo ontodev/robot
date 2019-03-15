@@ -586,6 +586,7 @@ public class QueryOperation {
    * @param updateString SPARQL update
    * @param output output stream to write to
    * @param outputFormat the file format
+   * @throws FileNotFoundException if output file cannot be found
    */
   public static void runUpdate(Model model, String updateString, File output, Lang outputFormat)
       throws FileNotFoundException {
