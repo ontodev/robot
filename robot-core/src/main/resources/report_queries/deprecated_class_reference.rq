@@ -26,13 +26,9 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
    ?entity a owl:Class ;
            owl:deprecated true ;
            ?property ?value .
-   FILTER NOT EXISTS { ?property a owl:AnnotationProperty }
-   FILTER (?property != obo:IAO_0000231)
-   FILTER (?property != rdf:type)
-   FILTER (?property != owl:deprecated)
-   FILTER (?value != oboInOwl:ObsoleteClass)
-   OPTIONAL { ?entity rdfs:subClassOf ?value
-              FILTER (isBlank(?value)) }
+   FILTER EXISTS { ?property a owl:ObjectProperty }
+   FILTER EXISTS { ?property a owl:DatatypeProperty }
+   FILTER ( ?value != oboInOwl:ObsoleteClass )
   }
   UNION
   {
