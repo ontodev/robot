@@ -29,12 +29,22 @@ public class InvalidReferenceChecker {
   public static boolean isDangling(OWLOntology ontology, OWLEntity entity) {
     if (entity instanceof OWLClass) {
       OWLClass owlClass = (OWLClass) entity;
-      if (ontology.getAxioms(owlClass, Imports.INCLUDED).size() > 0) return false;
+      // Ignore OWLThing and OWLNothing
+      // Not dangling if there are axioms about the class
+      if (owlClass.isOWLThing()
+          || owlClass.isOWLNothing()
+          || ontology.getAxioms(owlClass, Imports.INCLUDED).size() > 0) return false;
       return ontology.getAnnotationAssertionAxioms(owlClass.getIRI()).size() <= 0;
     }
     if (entity instanceof OWLObjectProperty) {
       OWLObjectProperty owlProperty = (OWLObjectProperty) entity;
-      if (ontology.getAxioms(owlProperty, Imports.INCLUDED).size() > 0) return false;
+      // Ignore top and bottom properties
+      // Not dangling if there are axioms about the property
+      if (owlProperty.isOWLBottomDataProperty()
+          || owlProperty.isOWLTopDataProperty()
+          || owlProperty.isOWLBottomObjectProperty()
+          || owlProperty.isOWLTopObjectProperty()
+          || ontology.getAxioms(owlProperty, Imports.INCLUDED).size() > 0) return false;
       return ontology.getAnnotationAssertionAxioms(owlProperty.getIRI()).size() <= 0;
     }
     return false;
