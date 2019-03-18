@@ -164,7 +164,12 @@ public class TemplateOperation {
    */
   @Deprecated
   public static OWLDatatype getDatatype(QuotedEntityChecker checker, String name) throws Exception {
-    return TemplateHelper.getDatatype(checker, name);
+    OWLDatatype datatype = TemplateHelper.getDatatype(checker, name);
+    if (datatype == null) {
+      throw new Exception(
+          String.format("%sDATATYPE ERROR could not find datatype for '%s'", NS, name));
+    }
+    return datatype;
   }
 
   /**

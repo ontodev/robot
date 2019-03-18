@@ -175,7 +175,7 @@ public class TemplateHelperTest extends CoreTest {
   public void testGetDatatypes() throws Exception {
     String value = "xsd:string|xsd:boolean";
     String split = "|";
-    Set<OWLDatatype> datatypes = TemplateHelper.getDatatypes(checker, value, split);
+    Set<OWLDatatype> datatypes = TemplateHelper.getDatatypes(checker, value, split, 0, 0);
 
     OWLDatatype dt1 = checker.getOWLDatatype("xsd:string");
     OWLDatatype dt2 = checker.getOWLDatatype("xsd:boolean");
@@ -224,7 +224,8 @@ public class TemplateHelperTest extends CoreTest {
     }
     assertEquals("Annotation(rdfs:label \"bar\"^^xsd:string)", ann.toString());
 
-    anns = TemplateHelper.getTypedAnnotations(checker, "AT rdfs:label^^xsd:integer", null, "1");
+    anns =
+        TemplateHelper.getTypedAnnotations(checker, "AT rdfs:label^^xsd:integer", null, "1", 0, 0);
     for (OWLAnnotation a : anns) {
       ann = a;
     }

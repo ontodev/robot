@@ -2,6 +2,8 @@ package org.obolibrary.robot;
 
 import com.google.common.collect.Lists;
 import java.util.*;
+import org.obolibrary.robot.exceptions.ColumnException;
+import org.obolibrary.robot.exceptions.RowParseException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.*;
@@ -50,6 +52,8 @@ public class Template {
 
   /** Character to split generic types on. */
   private String typeSplit = null;
+
+  private String templateName;
 
   /** List of human-readable template headers. */
   private List<String> headers;
@@ -108,6 +112,10 @@ public class Template {
   private static final String multiplePropertyTypeError =
       NS
           + "MULTIPLE PROPERTY TYPE ERROR property type list at row %d, column %d may only include one of: subproperty, equivalent, disjoint, or inverse (for object properties).";
+
+  /** Error message when a template fails. */
+  private static final String rowParseError =
+      NS + "ROW PARSE ERROR parsing rows in template %s failed, see ERROR messages above";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
@@ -311,7 +319,7 @@ public class Template {
     for (List<String> row : tableRows) {
       try {
         processRow(row);
-      } catch (Exception e) {
+      } catch (RowParseException e) {
         // print exceptions as they show up
         hasException = true;
         logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
@@ -320,11 +328,10 @@ public class Template {
 
     // If there was at least one exception, quit the process
     if (hasException && !force) {
-      System.out.println("\nTemplate failed with errors");
-      System.out.println("For details see: http://robot.obolibrary.org/template#error-messages");
-      System.exit(1);
+      throw new Exception(String.format(rowParseError, templateName));
     } else if (hasException) {
-      logger.error("Ontology created from template with errors");
+      // Unless --force, then just warn and proceed
+      logger.warn("Ontology created from template with errors");
     }
 
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -352,10 +359,11 @@ public class Template {
    */
   private void addTable(String name, List<List<String>> rows) throws Exception {
     // Get and validate headers
+    templateName = name;
     headers = rows.get(0);
     templates = rows.get(1);
     if (headers.size() != templates.size()) {
-      throw new Exception(
+      throw new ColumnException(
           String.format(columnMismatchError, name, headers.size(), templates.size()));
     }
 
@@ -373,7 +381,7 @@ public class Template {
 
       // Validate the template string
       if (!TemplateHelper.validateTemplateString(template)) {
-        throw new Exception(
+        throw new ColumnException(
             String.format(unknownTemplateError, name, column + 1, headers.get(column), template));
       }
 
@@ -397,7 +405,7 @@ public class Template {
         classTypeColumn = column;
         if (template.contains("SPLIT=")) {
           // Classes should only have one class type
-          throw new Exception(String.format(classTypeSplitError, column));
+          throw new ColumnException(String.format(classTypeSplitError, column));
         }
       } else if (template.startsWith("PROPERTY_TYPE")) {
         propertyTypeColumn = column;
@@ -408,13 +416,13 @@ public class Template {
         individualTypeColumn = column;
         if (template.contains("SPLIT=")) {
           // Instances should only have one individual type
-          throw new Exception(String.format(individualTypeSplitError, column));
+          throw new ColumnException(String.format(individualTypeSplitError, column));
         }
       }
     }
 
     if (idColumn == -1 && labelColumn == -1) {
-      throw new Exception(
+      throw new ColumnException(
           "Template row must include an \"ID\" or \"LABEL\" column in table: " + name);
     }
 
@@ -670,7 +678,7 @@ public class Template {
         break;
       default:
         // Unknown class type
-        throw new Exception(
+        throw new RowParseException(
             String.format(
                 classTypeError, cls.getIRI().getShortForm(), classType, rowNum, classTypeColumn));
     }
@@ -821,7 +829,8 @@ public class Template {
             "transitive"));
     if (propertyTypes.size() > 1) {
       // There may only be one of: subproperty, equivalent, disjoint, or inverse
-      throw new Exception(String.format(multiplePropertyTypeError, rowNum, propertyTypeColumn));
+      throw new RowParseException(
+          String.format(multiplePropertyTypeError, rowNum, propertyTypeColumn));
     } else if (propertyTypes.size() == 0) {
       propertyTypes.add("subproperty");
     }
@@ -864,7 +873,7 @@ public class Template {
             break;
           default:
             // Unknown property type
-            throw new Exception(
+            throw new RowParseException(
                 String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
         }
       } else if (template.startsWith("DOMAIN")) {
@@ -1068,7 +1077,8 @@ public class Template {
     }
     propertyTypes.remove("functional");
     if (propertyTypes.size() > 1) {
-      throw new Exception(multiplePropertyTypeError);
+      throw new RowParseException(
+          String.format(multiplePropertyTypeError, rowNum, propertyTypeColumn));
     } else if (propertyTypes.size() == 0) {
       propertyTypes.add("subproperty");
     }
@@ -1114,7 +1124,7 @@ public class Template {
             break;
           default:
             // Unknown property type
-            throw new Exception(
+            throw new RowParseException(
                 String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
         }
       } else if (template.startsWith("DOMAIN")) {
@@ -1124,7 +1134,8 @@ public class Template {
         addDataPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
-        Set<OWLDatatype> datatypes = TemplateHelper.getDatatypes(checker, value, split);
+        Set<OWLDatatype> datatypes =
+            TemplateHelper.getDatatypes(checker, value, split, rowNum, column);
         addDataPropertyRanges(property, datatypes, row, column);
       }
     }
@@ -1286,7 +1297,7 @@ public class Template {
     }
     if (!propertyType.equals("subproperty")) {
       // Annotation properties can only have type "subproperty"
-      throw new Exception(
+      throw new RowParseException(
           String.format(
               annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn));
     }
@@ -1547,7 +1558,8 @@ public class Template {
               }
               OWLDataProperty dataProperty = checker.getOWLDataProperty(propStr);
               if (dataProperty != null) {
-                Set<OWLLiteral> literals = TemplateHelper.getLiterals(checker, value, split);
+                Set<OWLLiteral> literals =
+                    TemplateHelper.getLiterals(checker, value, split, rowNum, column);
                 addDataPropertyAssertionAxioms(individual, literals, dataProperty, row, column);
                 break;
               }
@@ -1568,7 +1580,7 @@ public class Template {
             }
             break;
           default:
-            throw new Exception(
+            throw new RowParseException(
                 String.format(
                     individualTypeError, iri.getShortForm(), individualType, rowNum, column));
         }
