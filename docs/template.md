@@ -18,7 +18,7 @@ Each template file must be set up in the following format:
 
 The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template` or `-t` option specified the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See below for the three different merge options, and details on how they control the output of the command.
 
-A template may have multiple errors in different rows and columns. The operation will log these errors to STDERR as it encounters them, and will, by default, fail if it has logged any errors. If you wish to force ontology creation, even with template errors, include `--force true`. Errors will still be logged, but an output ontology will be created if possible.
+A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms.
 
 ## Template Strings
 
@@ -298,10 +298,6 @@ An IRI cannot be created from the provided ID. This is most likely because the I
 ### Property Type Error
 
 The valid `PROPERTY_TYPE` values are: `subproperty`, `equivalent`, `disjoint`, and (for object properties only) `inverse`.
-
-### Row Parse Error
-
-At least one row in the template could not be parsed. Specific errors are logged to STDERR and can be used to identify the cause. If you wish to ignore errors and generate an ontology from template anyway, use `--force true`. Be aware that axioms may be missing.
 
 ### Template File Error
 

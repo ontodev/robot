@@ -383,7 +383,7 @@ public class TemplateHelper {
         } catch (OWLParserException e) {
           String cause = getManchesterErrorCause(e);
           throw new RowParseException(
-              String.format(manchesterParseError, sub, rowNum, column, cause));
+              String.format(manchesterParseError, sub, rowNum, column + 1, cause));
         }
       }
     }
@@ -407,7 +407,7 @@ public class TemplateHelper {
     if (datatype != null) {
       return datatype;
     }
-    throw new RowParseException(String.format(datatypeError, name, rowNum, column));
+    throw new RowParseException(String.format(datatypeError, name, rowNum, column + 1));
   }
 
   /**
@@ -700,7 +700,7 @@ public class TemplateHelper {
         } catch (OWLParserException e) {
           String cause = getManchesterErrorCause(e);
           throw new RowParseException(
-              String.format(manchesterParseError, sub, rowNum, column, cause));
+              String.format(manchesterParseError, sub, rowNum, column + 1, cause));
         }
       }
     }
@@ -1007,7 +1007,7 @@ public class TemplateHelper {
     } catch (OWLParserException e) {
       String cause = getManchesterErrorCause(e);
       throw new RowParseException(
-          String.format(manchesterParseError, content, rowNum, column, cause));
+          String.format(manchesterParseError, content, rowNum, column + 1, cause));
     }
     return expr;
   }
@@ -1117,7 +1117,7 @@ public class TemplateHelper {
     if (iri != null) {
       return getIRIAnnotation(checker, template, iri);
     } else {
-      throw new RowParseException(String.format(iriError, rowNum, column, value));
+      throw new RowParseException(String.format(iriError, rowNum, column + 1, value));
     }
   }
 

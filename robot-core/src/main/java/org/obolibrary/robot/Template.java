@@ -53,8 +53,6 @@ public class Template {
   /** Character to split generic types on. */
   private String typeSplit = null;
 
-  private String templateName;
-
   /** List of human-readable template headers. */
   private List<String> headers;
 
@@ -64,8 +62,8 @@ public class Template {
   /** All other rows of the table (does not include headers and template strings). */
   private List<List<String>> tableRows;
 
-  /** Row number tracker. */
-  private int rowNum = 0;
+  /** Row number tracker. Start with 2 to skip headers. */
+  private int rowNum = 2;
 
   /** Shared data factory. */
   private final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
@@ -112,10 +110,6 @@ public class Template {
   private static final String multiplePropertyTypeError =
       NS
           + "MULTIPLE PROPERTY TYPE ERROR property type list at row %d, column %d may only include one of: subproperty, equivalent, disjoint, or inverse (for object properties).";
-
-  /** Error message when a template fails. */
-  private static final String rowParseError =
-      NS + "ROW PARSE ERROR parsing rows in template %s failed, see ERROR messages above";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
@@ -320,17 +314,16 @@ public class Template {
       try {
         processRow(row);
       } catch (RowParseException e) {
+        if (!force) {
+          throw e;
+        }
         // print exceptions as they show up
         hasException = true;
         logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
       }
     }
 
-    // If there was at least one exception, quit the process
-    if (hasException && !force) {
-      throw new Exception(String.format(rowParseError, templateName));
-    } else if (hasException) {
-      // Unless --force, then just warn and proceed
+    if (hasException) {
       logger.warn("Ontology created from template with errors");
     }
 
@@ -359,7 +352,6 @@ public class Template {
    */
   private void addTable(String name, List<List<String>> rows) throws Exception {
     // Get and validate headers
-    templateName = name;
     headers = rows.get(0);
     templates = rows.get(1);
     if (headers.size() != templates.size()) {
@@ -661,7 +653,8 @@ public class Template {
         }
       } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
         expressionColumns.put(
-            column, TemplateHelper.getClassExpressions(parser, template, value, rowNum, column));
+            column,
+            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
       }
     }
 
@@ -874,7 +867,8 @@ public class Template {
           default:
             // Unknown property type
             throw new RowParseException(
-                String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
+                String.format(
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1125,7 +1119,8 @@ public class Template {
           default:
             // Unknown property type
             throw new RowParseException(
-                String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column));
+                String.format(
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1582,7 +1577,7 @@ public class Template {
           default:
             throw new RowParseException(
                 String.format(
-                    individualTypeError, iri.getShortForm(), individualType, rowNum, column));
+                    individualTypeError, iri.getShortForm(), individualType, rowNum, column + 1));
         }
       }
     }
