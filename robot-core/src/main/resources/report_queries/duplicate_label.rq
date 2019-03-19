@@ -14,5 +14,6 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   ?entity2 ?property ?value .
   FILTER (?entity != ?entity2)
   FILTER (!isBlank(?entity))
+  FILTER (!isBlank(?entity2))
 }
 ORDER BY DESC(UCASE(str(?value)))
