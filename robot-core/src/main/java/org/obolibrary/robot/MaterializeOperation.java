@@ -127,15 +127,14 @@ public class MaterializeOperation {
     int i = 0;
     Imports importsFlag = Imports.EXCLUDED; // TODO - make this optional
 
-    for (OWLClass c : ontology.getClassesInSignature(importsFlag)) {
+    Set<OWLClass> signature = ontology.getClassesInSignature(importsFlag);
+    Set<OWLAxiom> axiomsIncludingImports = ontology.getAxioms(Imports.INCLUDED);
+
+    for (OWLClass c : signature) {
       logger.debug(" Materializing parents of class " + c);
       i++;
       if (i % 100 == 1) {
-        logger.info(
-            " Materializing parents of class "
-                + i
-                + "/"
-                + ontology.getClassesInSignature(importsFlag).size());
+        logger.info(" Materializing parents of class " + i + "/" + signature.size());
       }
       if (c.equals(dataFactory.getOWLNothing())) {
         continue;
@@ -170,7 +169,7 @@ public class MaterializeOperation {
         OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(c, sce);
 
         // skip axioms that already exist
-        if (ontology.getAxioms(Imports.INCLUDED).contains(ax)) {
+        if (axiomsIncludingImports.contains(ax)) {
           logger.debug("Already have: " + ax);
           continue;
         }
