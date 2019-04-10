@@ -47,7 +47,12 @@ public class DiffCommand implements Command {
     o.addOption("r", "right", true, "load right ontology from file");
     o.addOption("R", "right-iri", true, "load right ontology from IRI");
     o.addOption("o", "output", true, "save results to file");
-    o.addOption(null, "labels", true, "if true, use labels in place of entity IRIs");
+    o.addOption(
+        null,
+        "labels",
+        true,
+        "if true, append labels after entity IRIs in the simple format output");
+    o.addOption("f", "format", true, "format for diff output: simple (default) | html | markdown");
     options = o;
   }
 
@@ -150,6 +155,7 @@ public class DiffCommand implements Command {
 
     Map<String, String> options = new HashMap<>();
     options.put("labels", CommandLineHelper.getDefaultValue(line, "labels", "false"));
+    options.put("format", CommandLineHelper.getDefaultValue(line, "format", "simple"));
 
     DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
     writer.flush();

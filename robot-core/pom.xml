@@ -148,5 +148,10 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.geneontology</groupId>
+      <artifactId>owl-diff_2.12</artifactId>
+      <version>1.1</version>
+    </dependency>
   </dependencies>
 </project>
