@@ -1518,6 +1518,7 @@ public class Template {
       String split = null;
       if (template.contains("SPLIT=")) {
         split = template.substring(template.indexOf("SPLIT=") + 6).trim();
+        template = template.substring(0, template.indexOf("SPLIT=")).trim();
       }
 
       String value = null;
@@ -1542,7 +1543,7 @@ public class Template {
         switch (individualType) {
           case "named":
             if (template.startsWith("I ")) {
-              String propStr = template.split(" ")[1];
+              String propStr = template.substring(2).replace("'", "");
               OWLObjectProperty objectProperty = checker.getOWLObjectProperty(propStr);
               if (objectProperty != null) {
                 Set<OWLIndividual> otherIndividuals =
@@ -1704,7 +1705,7 @@ public class Template {
    */
   private Set<OWLAnnotation> getAnnotations(
       String template, String value, List<String> row, int column) throws Exception {
-    if (value == null || value.trim().isEmpty()) {
+    if (value == null || value.trim().equals("")) {
       return new HashSet<>();
     }
 
@@ -1719,6 +1720,7 @@ public class Template {
       nextTemplate = null;
     }
 
+    // Handle axiom annotations
     if (nextTemplate != null && !nextTemplate.trim().isEmpty() && nextTemplate.startsWith(">A")) {
       nextTemplate = nextTemplate.substring(1);
       String nextValue;
@@ -1727,7 +1729,7 @@ public class Template {
       } catch (IndexOutOfBoundsException e) {
         nextValue = null;
       }
-      if (nextValue != null) {
+      if (nextValue != null && !nextValue.trim().equals("")) {
         Set<OWLAnnotation> nextAnnotations =
             TemplateHelper.getAnnotations(checker, nextTemplate, nextValue, rowNum, column);
         Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
@@ -1768,7 +1770,7 @@ public class Template {
     } catch (IndexOutOfBoundsException e) {
       nextValue = null;
     }
-    if (nextValue == null || nextValue.trim().isEmpty()) {
+    if (nextValue == null || nextValue.trim().equals("")) {
       return annotations;
     }
     annotations.addAll(

@@ -120,14 +120,14 @@ If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an
     - `same`: the created individual will be asserted to be the same individual as each templated individual in the row
     - `different`: the created individual will be asserted to be a different individual than any of the templated individuals in the row
 - `I` **individual assertion**:
-    - `I property %`: when creating a `named` individual, replace property with an object property or data property to add assertions. The `%` will be replaced by the template cell value or values. For object property assertions, this is another individual. For data property assertions, this is a literal value.
+    - `I <property>`: when creating a `named` individual, replace property with an object property or data property to add assertions (either by label or CURIE). The value of each axiom will be the value of the cell in this column. For object property assertions, this is another individual. For data property assertions, this is a literal value.
     - `I %`: when creating a `same` or `different` individual, this template string is used to specify which individual will be the value of the same or different individual axiom.
 
 #### Example of Individual Template Strings
 
 | Label | Entity Type | Individual Type | Other Axioms | Related Individuals |
 | --- | --- | --- | --- | --- |
-| LABEL | TYPE | INDIVIDUAL_TYPE | I part_of some % | I % |
+| LABEL | TYPE | INDIVIDUAL_TYPE | I part_of | I % |
 | Individual 1 | Class 1 | named | Individual 2 | |
 | Individual 2 | Class 1 | different | | Individual 1 |
 
