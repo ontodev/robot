@@ -36,7 +36,7 @@ public class FilterCommand implements Command {
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
-    o.addOption("r", "trim", true, "if true, trim dangling entities");
+    o.addOption("r", "trim", true, "if true, include all axioms containing a selected term");
     options = o;
   }
 

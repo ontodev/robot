@@ -32,7 +32,7 @@ public class RemoveCommand implements Command {
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
-    o.addOption("r", "trim", true, "if false, do not trim dangling entities");
+    o.addOption("r", "trim", true, "if true, remove all axioms containing a selected term");
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     options = o;

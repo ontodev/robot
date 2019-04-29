@@ -2,7 +2,7 @@
 
 The `filter` command allows you to create a new ontology from a source ontology by copying only the selected axioms. The `remove` command is the opposite of `filter`, allowing you to remove selected axioms. `filter` accepts the same options as `remove` and processes them in the same order. See [`remove`](/remove) for details on configuring the options.
 
-By default, `filter` will include all axioms from the input ontology that contain *one or more* entities from the specified set. To be more strict and only include axioms in which *all* entities in the axiom are in the specified set, use `--trim false`.
+By default, `filter` will include all axioms from the input ontology that contain *one or more* entities from the specified set. To be more strict and only include axioms in which *all* entities in the axiom are in the specified set, use `--trim true`.
 
 This operation maintains structural integrity; lineage is maintained, and gaps will be filled where classes have been excluded. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
 
