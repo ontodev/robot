@@ -231,10 +231,6 @@ public class QueryOperation {
     return qExec.execSelect();
   }
 
-  public static void execUpdate(Dataset dataset, String updateString) {
-    UpdateAction.parseExecute(updateString, dataset);
-  }
-
   /**
    * Given a Model and a SPARQL update (as string), update the model.
    *
