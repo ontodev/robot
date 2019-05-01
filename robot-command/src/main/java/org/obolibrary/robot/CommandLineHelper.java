@@ -434,40 +434,51 @@ public class CommandLineHelper {
    * @param ioHelper the IOHelper to load the ontology with
    * @param line the command line to use
    * @return the input ontology
-   * @throws IllegalArgumentException if requires options are missing
    * @throws IOException if the ontology cannot be loaded
    */
   public static OWLOntology getInputOntology(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
-    OWLOntology inputOntology;
-    // Check for multiple inputs
+    // Get the catalog if specified by --catalog
+    String catalogPath = getOptionalValue(line, "catalog");
+    return getInputOntology(ioHelper, line, catalogPath);
+  }
+
+  /**
+   * Given an IOHelper, a command line, and a path to a catalog, return an OWLOntology loaded from
+   * input or input-iri using the specified catalog (or null).
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @param catalogPath the catalog to use to load imports
+   * @return the input ontology
+   * @throws IOException if the ontology cannot be loaded
+   */
+  public static OWLOntology getInputOntology(
+      IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
-    String catalogPath = getOptionalValue(line, "catalog");
 
-    Integer check = inputOntologyPaths.size() + inputOntologyIRIs.size();
+    int check = inputOntologyPaths.size() + inputOntologyIRIs.size();
     if (check > 1) {
       throw new IllegalArgumentException(multipleInputsError);
     }
 
     if (!inputOntologyPaths.isEmpty()) {
       if (catalogPath != null) {
-        inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
+        return ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
       } else {
-        inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0));
+        return ioHelper.loadOntology(inputOntologyPaths.get(0));
       }
     } else if (!inputOntologyIRIs.isEmpty()) {
       if (catalogPath != null) {
-        inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
+        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
       } else {
-        inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
+        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
       }
     } else {
       // Both input options are empty
       throw new IllegalArgumentException(missingInputError);
     }
-
-    return inputOntology;
   }
 
   /**
@@ -540,9 +551,21 @@ public class CommandLineHelper {
       }
     }
 
+    // If normal --input is used, save the path
+    String ontologyPath = CommandLineHelper.getOptionalValue(line, "input");
+    if (ontologyPath != null) {
+      state.setOntologyPath(ontologyPath);
+    }
+
+    // If a --catalog is provided, save the catalog
+    String catalogPath = CommandLineHelper.getOptionalValue(line, "catalog");
+    if (catalogPath != null) {
+      state.setCatalogPath(catalogPath);
+    }
+
     OWLOntology ontology = null;
     try {
-      ontology = getInputOntology(ioHelper, line);
+      ontology = getInputOntology(ioHelper, line, catalogPath);
     } catch (Exception e) {
       if (required) {
         // Throw message from IOHelper

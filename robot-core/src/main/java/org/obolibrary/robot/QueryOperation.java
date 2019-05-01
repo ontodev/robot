@@ -128,15 +128,31 @@ public class QueryOperation {
   /**
    * Given a Model, return the OWLOntology representation of the axioms.
    *
+   * @deprecated Use {@link #convertModel(Model, IOHelper, String)}
    * @param model Model to convert to OWLOntology
    * @return OWLOntology of axioms
    * @throws OWLOntologyCreationException on issue loading ontology from byte array
    */
+  @Deprecated
   public static OWLOntology convertModel(Model model) throws OWLOntologyCreationException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     RDFDataMgr.write(os, model, Lang.TTL);
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     return manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(os.toByteArray()));
+  }
+
+  /**
+   * @param model
+   * @param ioHelper
+   * @param catalogPath
+   * @return
+   * @throws IOException
+   */
+  public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
+      throws IOException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    RDFDataMgr.write(os, model, Lang.TTL);
+    return ioHelper.loadOntology(new ByteArrayInputStream(os.toByteArray()), catalogPath);
   }
 
   /**
@@ -213,6 +229,10 @@ public class QueryOperation {
       throw new IOException(String.format(queryParseError, e.getMessage()));
     }
     return qExec.execSelect();
+  }
+
+  public static void execUpdate(Dataset dataset, String updateString) {
+    UpdateAction.parseExecute(updateString, dataset);
   }
 
   /**
