@@ -1059,7 +1059,11 @@ public class OntologyHelper {
       if (ax.getProperty().isLabel()
           && ax.getSubject() instanceof IRI
           && ax.getValue() instanceof OWLLiteral) {
-        labelMap.put((IRI) ax.getSubject(), ax.getValue().asLiteral().toString());
+        OWLLiteral lit = ax.getValue().asLiteral().orNull();
+        if (lit == null) {
+          continue;
+        }
+        labelMap.put((IRI) ax.getSubject(), lit.getLiteral());
       }
     }
     return (obj) -> {

@@ -23,6 +23,7 @@ public class CommandLineInterface {
     m.addCommand("convert", new ConvertCommand());
     m.addCommand("diff", new DiffCommand());
     m.addCommand("explain", new ExplainCommand());
+    m.addCommand("export", new ExportCommand());
     m.addCommand("export-prefixes", new ExportPrefixesCommand());
     m.addCommand("extract", new ExtractCommand());
     m.addCommand("filter", new FilterCommand());
