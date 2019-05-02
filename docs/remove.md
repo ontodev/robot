@@ -16,8 +16,6 @@ robot remove --input obi.owl --term OBI:0000070 --select descendants
 
 `remove` also includes a `--trim` option, set to `true` by default. For an axiom to be removed, *one or more* of the entities in that axiom must be in the removal set. If `--trim false` is specified, *all* entities in the axiom must be in the selected set of terms. Dangling entities (entities without any axioms *about* them) will also be removed when `--trim` is `true`.
 
-If you are removing import statements and wish to keep references to imported terms, use `--trim false`. Otherwise, the dangling entities left over from removing the imports will also be removed.
-
 ## Select
 
 `--select` supports multiple options. These can be provided in quotes in one select statement (`--select "x y z"`), or in multiple statements (`--select x --select y --select z`). When selects are provided in multiple statements, the output of the first will be passed to the second and so on. If multiple options are provided in one statement, all options will be processed at the same time.
@@ -32,7 +30,7 @@ There are three general select options that give control over the types of axiom
 2. `named`: remove named entities.
 3. `anonymous`: remove anonymous entities (e.g. anonymous ancestors).
 4. `ontology`: remove ontology annotations (for [filter](/filter), this returns just the ontology annotations)
-5. `imports`: remove import statements (for [filter](/filter), this will copy the import declarations to the output ontology)
+5. `imports`: remove import statements and "dangling" references to imported terms (for [filter](/filter), this will copy the import declarations to the output ontology) **Warning:** If you wish to remove import statements but keep dangling references to imported terms, you must use `--trim false`.
 
 #### Relation Types
 
