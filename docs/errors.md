@@ -6,6 +6,14 @@ If you run into any other errors or exceptions not listed, or have any issues wi
 
 ---
 
+## Java Errors
+
+### Out of Memory Error
+
+Sometimes when working with very large ontologies, the JVM will run out of memory (`OutOfMemoryError`). You can increase the max heap size using the Java option `-Xmx4G` before running `robot`, which increases the heap to 4G. Any size can be specified here, e.g. `-Xmx8G`. For details on setting these options based on platform, see [Java Options](http://robot.obolibrary.org/global#java-options).
+
+---
+
 ## Command & Option Errors
 
 ### Boolean Value Error
