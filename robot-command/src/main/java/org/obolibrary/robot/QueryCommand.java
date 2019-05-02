@@ -253,7 +253,15 @@ public class QueryCommand implements Command {
       String ontologyPath = state.getOntologyPath();
       File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
       if (catalogFile != null) {
-        catalogPath = catalogFile.getAbsolutePath();
+        catalogPath = catalogFile.getPath();
+      }
+    }
+    // Make sure the file exists
+    if (catalogPath != null) {
+      File catalogFile = new File(catalogPath);
+      if (!catalogFile.exists()) {
+        // If it does not, set the path to null
+        catalogPath = null;
       }
     }
     return QueryOperation.convertModel(model, ioHelper, catalogPath);
