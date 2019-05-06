@@ -48,6 +48,7 @@ public class TemplateCommand implements Command {
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     o.addOption("f", "force", true, "if true, do not exit on error");
+    o.addOption("l", "label-property", true, "specify a label property (default rdfs:label)");
 
     options = o;
   }
@@ -124,6 +125,14 @@ public class TemplateCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line, false);
     OWLOntology inputOntology = state.getOntology();
 
+    // Override default reasoner options with command-line options
+    Map<String, String> templateOptions = TemplateOperation.getDefaultOptions();
+    for (String option : templateOptions.keySet()) {
+      if (line.hasOption(option)) {
+        templateOptions.put(option, line.getOptionValue(option));
+      }
+    }
+
     // Read the whole CSV into a nested list of strings.
     List<String> templatePaths = CommandLineHelper.getOptionalValues(line, "template");
     if (templatePaths.size() == 0) {
@@ -141,7 +150,8 @@ public class TemplateCommand implements Command {
     List<OWLOntology> ontologies = new ArrayList<>();
     for (String table : tables.keySet()) {
       ontologies.add(
-          TemplateOperation.template(inputOntology, ioHelper, table, tables.get(table), force));
+          TemplateOperation.template(
+              inputOntology, ioHelper, table, tables.get(table), templateOptions));
     }
     OWLOntology outputOntology = MergeOperation.merge(ontologies);
 

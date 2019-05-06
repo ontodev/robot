@@ -101,21 +101,15 @@ public class TemplateOperation {
       NS + "UNKNOWN TYPE ERROR \"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
 
   /**
-   * Given an OWLOntology, an IOHelper, a table name, and the table contents, use the table as the
-   * template to generate an output OWLOntology.
+   * Get the default template options.
    *
-   * @param inputOntology OWLOntology to use to get existing entities
-   * @param ioHelper IOHelper to resolve prefixes
-   * @param tableName name of the table for error reporting
-   * @param table List of rows (lists of cells) in the template
-   * @return new OWLOntology created from the template
-   * @throws Exception on any issue
+   * @return map of template options
    */
-  public static OWLOntology template(
-      OWLOntology inputOntology, IOHelper ioHelper, String tableName, List<List<String>> table)
-      throws Exception {
-    Template template = new Template(tableName, table, inputOntology, ioHelper);
-    return template.generateOutputOntology();
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> options = new HashMap<>();
+    options.put("force", "false");
+    options.put("label-property", null);
+    return options;
   }
 
   /**
@@ -130,13 +124,36 @@ public class TemplateOperation {
    * @throws Exception on any issue
    */
   public static OWLOntology template(
+      OWLOntology inputOntology, IOHelper ioHelper, String tableName, List<List<String>> table)
+      throws Exception {
+    return template(inputOntology, ioHelper, tableName, table, getDefaultOptions());
+  }
+
+  /**
+   * Given an OWLOntology, an IOHelper, a table name, the table contents, and a map of template
+   * options, use the table as the template to generate an output OWLOntology.
+   *
+   * @param inputOntology OWLOntology to use to get existing entities
+   * @param ioHelper IOHelper to resolve prefixes
+   * @param tableName name of the table for error reporting
+   * @param table List of rows (lists of cells) in the template
+   * @param options map of template options
+   * @return new OWLOntology created from the template
+   * @throws Exception on any issue
+   */
+  public static OWLOntology template(
       OWLOntology inputOntology,
       IOHelper ioHelper,
       String tableName,
       List<List<String>> table,
-      boolean force)
+      Map<String, String> options)
       throws Exception {
     Template template = new Template(tableName, table, inputOntology, ioHelper);
+    String labelProperty = OptionsHelper.getOption(options, "label-property");
+    if (labelProperty != null) {
+      template.setLabelProperty(labelProperty);
+    }
+    boolean force = OptionsHelper.optionIsTrue(options, "force");
     return template.generateOutputOntology(null, force);
   }
 
