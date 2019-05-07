@@ -11,10 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
-import org.semanticweb.owlapi.model.AddImport;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +33,6 @@ public class QueryCommand implements Command {
   /** Error message when a query is not provided */
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR at least one query must be provided";
-
-  /** Error message when an invalid --imports option is provided */
-  private static final String importsOptionError =
-      NS + "IMPORTS OPTION ERROR --imports must be union, graphs, or ignore.";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -147,36 +140,11 @@ public class QueryCommand implements Command {
     OWLOntology inputOntology = state.getOntology();
 
     // If an update(s) are provided, run then return the OWLOntology
+    // This is different than the rest of the Query operations because it returns an ontology
+    // Whereas the others return query results
     List<String> updatePaths = CommandLineHelper.getOptionalValues(line, "update");
     if (!updatePaths.isEmpty()) {
-      Map<String, String> updates = new LinkedHashMap<>();
-      for (String updatePath : updatePaths) {
-        File f = new File(updatePath);
-        if (!f.exists()) {
-          throw new Exception(String.format(missingFileError, updatePath));
-        }
-        updates.put(f.getPath(), FileUtils.readFileToString(f));
-      }
-
-      // Load the ontology as a model, ignoring imports
-      Model model = QueryOperation.loadOntologyAsModel(inputOntology);
-
-      // Execute the updates
-      for (Map.Entry<String, String> update : updates.entrySet()) {
-        logger.debug(String.format("Running update '%s'", update.getKey()));
-        QueryOperation.execUpdate(model, update.getValue());
-      }
-
-      OWLOntology outputOntology = QueryOperation.convertModel(model);
-
-      // If the input ontology had imports, maintain them
-      if (inputOntology.getImports().size() > 0) {
-        OWLOntologyManager manager = inputOntology.getOWLOntologyManager();
-        for (OWLImportsDeclaration importsDeclaration : inputOntology.getImportsDeclarations()) {
-          manager.applyChange(new AddImport(outputOntology, importsDeclaration));
-        }
-      }
-
+      OWLOntology outputOntology = executeUpdate(state, inputOntology, ioHelper, updatePaths);
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
@@ -242,5 +210,60 @@ public class QueryCommand implements Command {
       QueryOperation.runSparqlQuery(dataset, query, formatName, output);
     }
     return state;
+  }
+
+  /**
+   * Given an updated command state, an input ontology, an IOHelper, and a list of paths to update
+   * queries, run the updates on the input ontology and return an updated ontology.
+   *
+   * @param state the current state
+   * @param inputOntology the ontology to update
+   * @param ioHelper IOHelper to handle loading OWLOntology objects
+   * @param updatePaths paths to update queries
+   * @return updated OWLOntology
+   * @throws Exception on file or ontology loading issues
+   */
+  private static OWLOntology executeUpdate(
+      CommandState state, OWLOntology inputOntology, IOHelper ioHelper, List<String> updatePaths)
+      throws Exception {
+    Map<String, String> updates = new LinkedHashMap<>();
+    for (String updatePath : updatePaths) {
+      File f = new File(updatePath);
+      if (!f.exists()) {
+        throw new Exception(String.format(missingFileError, updatePath));
+      }
+      updates.put(f.getPath(), FileUtils.readFileToString(f));
+    }
+
+    // Load the ontology as a model, ignoring imports
+    Model model = QueryOperation.loadOntologyAsModel(inputOntology);
+
+    // Execute the updates
+    for (Map.Entry<String, String> update : updates.entrySet()) {
+      logger.debug(String.format("Running update '%s'", update.getKey()));
+      QueryOperation.execUpdate(model, update.getValue());
+    }
+
+    // Re-load the updated model as an OWLOntology
+    // We need to handle imports while loading
+    // User may have specified a path to a catalog in the CLI options
+    // Check for this path in state, or check for ontology path in state to guess catalog
+    String catalogPath = state.getCatalogPath();
+    if (catalogPath == null) {
+      String ontologyPath = state.getOntologyPath();
+      File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
+      if (catalogFile != null) {
+        catalogPath = catalogFile.getPath();
+      }
+    }
+    // Make sure the file exists
+    if (catalogPath != null) {
+      File catalogFile = new File(catalogPath);
+      if (!catalogFile.exists()) {
+        // If it does not, set the path to null
+        catalogPath = null;
+      }
+    }
+    return QueryOperation.convertModel(model, ioHelper, catalogPath);
   }
 }
