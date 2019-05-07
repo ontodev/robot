@@ -13,10 +13,10 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
-  VALUES ?property { obo:IAO_0000115
-                     obo:IAO_0000600 }
+  VALUES ?property { obo:IAO_0000115 }
   ?entity ?any ?o
   FILTER NOT EXISTS { ?entity ?property ?value }
+  FILTER NOT EXISTS { ?entity obo:IAO_0000600 ?elucidation }
   FILTER NOT EXISTS { ?entity a owl:Ontology }
   FILTER NOT EXISTS { ?entity a owl:NamedIndividual }
   FILTER NOT EXISTS { ?entity owl:deprecated true }
@@ -27,6 +27,5 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
     ?entity ?prop2 ?object .
     FILTER (?prop2 != rdf:type)
   }
-  FILTER (!isBlank(?entity))
-}
+  FILTER (!isBlank(?entity)) }
 ORDER BY ?entity
