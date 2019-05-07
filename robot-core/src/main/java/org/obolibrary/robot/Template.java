@@ -196,7 +196,9 @@ public class Template {
     checker.setIOHelper(this.ioHelper);
     checker.addProvider(new SimpleShortFormProvider());
     checker.addProperty(dataFactory.getRDFSLabel());
-    checker.addAll(inputOntology);
+    if (inputOntology != null) {
+      checker.addAll(inputOntology);
+    }
 
     // Add the contents of the tableRows
     addTable(name, rows);
@@ -229,7 +231,9 @@ public class Template {
     checker.setIOHelper(this.ioHelper);
     checker.addProvider(new SimpleShortFormProvider());
     checker.addProperty(dataFactory.getRDFSLabel());
-    checker.addAll(inputOntology);
+    if (inputOntology != null) {
+      checker.addAll(inputOntology);
+    }
 
     // Add the contents of the tableRows
     addTable(name, rows);
@@ -1823,9 +1827,11 @@ public class Template {
   }
 
   /**
+   * Given a property string (label or CURIE) and the column of that template string, determine if
+   * this is RDFS label and if so, set the label column.
    *
-   * @param property
-   * @param column
+   * @param property property string
+   * @param column int column number
    */
   private void maybeSetLabelColumn(String property, int column) {
     OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(property, true);
