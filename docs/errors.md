@@ -86,6 +86,18 @@ Some commands ([extract](/extract) and [filter](/filter)) require terms as input
 
 For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `--input` may be specified.
 
+### OBO Structure Error
+
+When running the [convert](/convert) command, if `--check` is true (default behavior), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. If you are saving an ontology in OBO format from another command, `--check` is always `true`. 
+
+You may run convert (or chain to convert) with the `--check false` option to ignore the errors, e.g.:
+```
+robot reason --input ont.owl \
+  convert --check false --output ont.obo
+```
+
+Please note that `--check false` may result in some unintended output. For example, for terms with more than one definition annotation, a definition will be chosen at random.
+
 ### Ontology Storage Error
 
 The ontology could not be saved to the specified IRI. The most common reasons are: the IRI is not a valid file path; ROBOT does not have write permissions; there is not enough space on the storage device.

@@ -44,12 +44,6 @@ grep -v ^owl-axioms
 
 `--check` only accepts `true` or `false` (not case sensitive) as arguments. By default, `--check` is true and the OBO document structure checks are performed.
 
-### OBO Structure Error
-
-If `--check` is true (which, by default, it is), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. You may choose to review the exception message by running the command again with `--very-very-verbose`, or run `convert` with the `--check false` option to ignore the errors.
-
-Please note that `--check false` may result in some unintended output. For example, for terms with more than one definition annotation, a defintion will be chosen at random.
-
 ### Output Error
 
 `convert` requires exactly one `--output`. If you do not specify the `--output`, or specify more than one, ROBOT cannot proceed. If chaining commands, place `convert` last.
