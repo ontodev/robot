@@ -20,9 +20,6 @@ public class Template {
   /** Template IOHelper to resolve prefixes. */
   private IOHelper ioHelper;
 
-  /** The existing ontology to use for labels, etc. */
-  private OWLOntology inputOntology;
-
   /** Template QuotedEntityChecker to get entities and IRIs by label. */
   private QuotedEntityChecker checker;
 
@@ -49,9 +46,6 @@ public class Template {
 
   /** Location of individual types (INDIVIDUAL_TYPE). */
   private int individualTypeColumn = -1;
-
-  /** Label property default - can be overridden. */
-  private String labelProperty = "rdfs:label";
 
   /** Character to split property types on. */
   private String propertyTypeSplit = null;
@@ -136,14 +130,19 @@ public class Template {
    */
   public Template(String name, List<List<String>> rows) throws Exception {
     this.ioHelper = new IOHelper();
-    inputOntology = null;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
     headers = new ArrayList<>();
     axioms = new HashSet<>();
 
+    checker = new QuotedEntityChecker();
+    checker.setIOHelper(this.ioHelper);
+    checker.addProvider(new SimpleShortFormProvider());
+
     // Add the contents of the tableRows
     addTable(name, rows);
+    addLabels();
+    createParser();
   }
 
   /**
@@ -158,14 +157,20 @@ public class Template {
    */
   public Template(String name, List<List<String>> rows, IOHelper ioHelper) throws Exception {
     this.ioHelper = ioHelper;
-    inputOntology = null;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
     headers = new ArrayList<>();
     axioms = new HashSet<>();
 
+    checker = new QuotedEntityChecker();
+    checker.setIOHelper(this.ioHelper);
+    checker.addProvider(new SimpleShortFormProvider());
+    checker.addProperty(dataFactory.getRDFSLabel());
+
     // Add the contents of the tableRows
     addTable(name, rows);
+    addLabels();
+    createParser();
   }
 
   /**
@@ -182,14 +187,21 @@ public class Template {
   public Template(String name, List<List<String>> rows, OWLOntology inputOntology)
       throws Exception {
     ioHelper = new IOHelper();
-    this.inputOntology = inputOntology;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
     headers = new ArrayList<>();
     axioms = new HashSet<>();
 
+    checker = new QuotedEntityChecker();
+    checker.setIOHelper(this.ioHelper);
+    checker.addProvider(new SimpleShortFormProvider());
+    checker.addProperty(dataFactory.getRDFSLabel());
+    checker.addAll(inputOntology);
+
     // Add the contents of the tableRows
     addTable(name, rows);
+    addLabels();
+    createParser();
   }
 
   /**
@@ -207,15 +219,22 @@ public class Template {
   public Template(
       String name, List<List<String>> rows, OWLOntology inputOntology, IOHelper ioHelper)
       throws Exception {
-    this.inputOntology = inputOntology;
     this.ioHelper = ioHelper;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
     headers = new ArrayList<>();
     axioms = new HashSet<>();
 
+    checker = new QuotedEntityChecker();
+    checker.setIOHelper(this.ioHelper);
+    checker.addProvider(new SimpleShortFormProvider());
+    checker.addProperty(dataFactory.getRDFSLabel());
+    checker.addAll(inputOntology);
+
     // Add the contents of the tableRows
     addTable(name, rows);
+    addLabels();
+    createParser();
   }
 
   /**
@@ -234,7 +253,6 @@ public class Template {
       throws Exception {
     this.ioHelper = ioHelper;
     this.checker = checker;
-    inputOntology = null;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
     headers = new ArrayList<>();
@@ -242,6 +260,8 @@ public class Template {
 
     // Add the contents of the tableRows
     addTable(name, rows);
+    addLabels();
+    createParser();
   }
 
   /**
@@ -263,15 +283,6 @@ public class Template {
    * @throws Exception on issue parsing rows to axioms or creating new ontology
    */
   public OWLOntology generateOutputOntology(String outputIRI, boolean force) throws Exception {
-    // Create a QuotedEntityChecker for labels using (probably) RDFS label
-    // Unless something else was specified
-    createChecker();
-    // Set all the new labels used in the template
-    // Other labels can be found from the input ontology with the checker
-    addLabels();
-    // Create a Manchester parser using the checker
-    createParser();
-
     // Set to true on first exception
     boolean hasException = false;
 
@@ -306,15 +317,6 @@ public class Template {
     manager.addAxioms(outputOntology, axioms);
 
     return outputOntology;
-  }
-
-  /**
-   * Given a label property as a CURIE, set the label property.
-   *
-   * @param labelProperty label property to use to lookup new labels
-   */
-  public void setLabelProperty(String labelProperty) {
-    this.labelProperty = labelProperty;
   }
 
   /**
@@ -354,13 +356,23 @@ public class Template {
       }
 
       // Get the location of important columns
-      String labelTemplate = String.format("A %s", labelProperty);
-      if (template.equals("ID")) {
+      // If it is an annotation, check if it resolves to RDFS label
+      if (template.startsWith("A ")) {
+        String property = template.substring(2);
+        maybeSetLabelColumn(property, column);
+      } else if (template.startsWith("AT ")) {
+        String property = template.substring(3, template.indexOf("^")).trim();
+        maybeSetLabelColumn(property, column);
+      } else if (template.startsWith("AL ")) {
+        String property = template.substring(3, template.indexOf("@")).trim();
+        maybeSetLabelColumn(property, column);
+      } else if (template.startsWith("AI ")) {
+        String property = template.substring(3);
+        maybeSetLabelColumn(property, column);
+      } else if (template.equals("ID")) {
         // Unique identifier (CURIE, IRI...)
         idColumn = column;
-      } else if (template.equals("LABEL")
-          || template.equals("A label")
-          || template.equals(labelTemplate)) {
+      } else if (template.equals("LABEL")) {
         // Label identifier
         labelColumn = column;
       } else if (template.startsWith("TYPE")) {
@@ -494,23 +506,6 @@ public class Template {
           break;
       }
       checker.add(entity, label);
-    }
-  }
-
-  private void createChecker() {
-    if (checker != null) {
-      // Don't override an existing checker
-      return;
-    }
-    checker = new QuotedEntityChecker();
-    checker.setIOHelper(this.ioHelper);
-    checker.addProvider(new SimpleShortFormProvider());
-
-    // Use the label property in case its not RDFS label
-    OWLAnnotationProperty label = checker.getOWLAnnotationProperty(labelProperty, true);
-    checker.addProperty(label);
-    if (inputOntology != null) {
-      checker.addAll(inputOntology);
     }
   }
 
@@ -1825,5 +1820,19 @@ public class Template {
       axiomAnnotations = getAxiomAnnotations(row, nextTemplate, column + 1);
     }
     return axiomAnnotations;
+  }
+
+  /**
+   *
+   * @param property
+   * @param column
+   */
+  private void maybeSetLabelColumn(String property, int column) {
+    OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(property, true);
+    if (ap != null) {
+      if (ap.getIRI().toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
+        labelColumn = column;
+      }
+    }
   }
 }

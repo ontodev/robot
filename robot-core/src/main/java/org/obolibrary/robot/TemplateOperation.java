@@ -108,7 +108,6 @@ public class TemplateOperation {
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
     options.put("force", "false");
-    options.put("label-property", null);
     return options;
   }
 
@@ -149,10 +148,6 @@ public class TemplateOperation {
       Map<String, String> options)
       throws Exception {
     Template template = new Template(tableName, table, inputOntology, ioHelper);
-    String labelProperty = OptionsHelper.getOption(options, "label-property");
-    if (labelProperty != null) {
-      template.setLabelProperty(labelProperty);
-    }
     boolean force = OptionsHelper.optionIsTrue(options, "force");
     return template.generateOutputOntology(null, force);
   }

@@ -22,8 +22,6 @@ The `template` command accepts an optional input ontology, either using the `--i
 
 A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms.
 
-The `template` command assumes that both your ontology and your template use the default `rdfs:label` property to define labels. If you use a different label property, you can specify it by CURIE with `--label-property`.
-
 ## Template Strings
 
 ### Generic Template Strings

@@ -48,7 +48,6 @@ public class TemplateCommand implements Command {
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     o.addOption("f", "force", true, "if true, do not exit on error");
-    o.addOption("l", "label-property", true, "specify a label property (default rdfs:label)");
 
     options = o;
   }
