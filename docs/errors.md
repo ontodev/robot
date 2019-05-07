@@ -50,6 +50,10 @@ Many commands involve creating IRIs from provided string representations of the 
 
 When using CURIEs, make sure the prefix is defined, or add it with `--prefix`.
 
+### Invalid IRI Pattern Error
+
+When matching an IRI by pattern, the pattern should contain one or more wildcard characters (`*` and/or `?`) or should be a regex pattern preceded by `~`. If you wish to match a full IRI to remove or filter, use the `--term` option.
+
 ### Invalid Prefix Error
 
 Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/prefixes) for more details on adding prefixes.
