@@ -280,6 +280,9 @@ public class TemplateHelper {
         annotations.add(maybeGetIRIAnnotation(checker, template, value, rowNum, column));
       }
       return annotations;
+    } else if (template.equals("LABEL")) {
+      // Handle special LABEL case
+      return getStringAnnotations(checker, template, split, value);
     } else {
       return new HashSet<>();
     }
@@ -739,8 +742,14 @@ public class TemplateHelper {
   public static Set<OWLAnnotation> getStringAnnotations(
       QuotedEntityChecker checker, String template, String split, String value) throws Exception {
 
-    String name = template.substring(1).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
+    OWLAnnotationProperty property;
+    if (template.equals("LABEL")) {
+      // Handle special LABEL case
+      property = dataFactory.getRDFSLabel();
+    } else {
+      String name = template.substring(1).trim();
+      property = getAnnotationProperty(checker, name);
+    }
 
     Set<OWLAnnotation> annotations = new HashSet<>();
     if (split != null) {
@@ -1094,9 +1103,9 @@ public class TemplateHelper {
    */
   private static String getTemplate(String template) {
     if (template.contains("SPLIT=")) {
-      return template.substring(0, template.indexOf("SPLIT="));
+      return template.substring(0, template.indexOf("SPLIT=")).trim();
     }
-    return template;
+    return template.trim();
   }
 
   /**

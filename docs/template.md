@@ -29,9 +29,9 @@ A template may have multiple errors in different rows and columns. By default, `
 - `ID`: Every term must have an IRI to identify it. This can be specified with an `ID` column. Usually this will be a prefixed ID like `GO:12345`. See the `--prefix` options for details.
     - If an entity already exists in the `--input` ontology, you can refer to it by `LABEL` instead (see below).
     - Rows with no `ID` or `LABEL` will be skipped.
-- `LABEL`: If a term exists in an ontology, or its ID has been defined elsewhere (perhaps in a previous template), then the `LABEL` column can specify an `rdfs:label` that uniquely identifies the target term. This can be easier than the numeric IDs for human readers. 
-    - The `LABEL` column DOES NOT create an `rdfs:label` annotation for an entity. 
-    - If you are creating new entities using `LABEL`, be sure to include an `ID` column as well (and an `A rdfs:label` column if you would like to annotate the new entity with a label).
+- `LABEL`: a special keyword to specify an `rdfs:label` that uniquely identifies the target term. This can be easier than the numeric IDs for human readers. Keep in mind:
+    - The `LABEL` column will create `rdfs:label` string annotation for the entity 
+    - If you are creating new entities using `LABEL`, be sure to include an `ID` column as well
 - `TYPE`: this is the `rdf:type` for the row. Because ROBOT is focused on ontology development, the default value is `owl:Class` and this column is optional. When creating an OWLIndividual, specify the class to which it belongs in this column.
     - `class` or `owl:Class`
     - `object property` or `owl:ObjectProperty`

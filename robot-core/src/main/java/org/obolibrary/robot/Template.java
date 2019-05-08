@@ -644,7 +644,7 @@ public class Template {
         continue;
       }
 
-      if (template.startsWith("A")) {
+      if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Handle class annotations
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {
