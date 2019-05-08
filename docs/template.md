@@ -50,31 +50,30 @@ Sometimes you want to include zero or more values in a single spreadsheet cell, 
 
 ### Class Template Strings
 
-- `CLASS_TYPE`: ROBOT creates a class for each row of data with a that has a `TYPE` of `class` or `owl:Class`. The class type can be ONLY ONE OF:
-    - `subclass`: the created class will be asserted to be a subclass of each templated class expression (default)
-    - `disjoint`: the created class will be disjoint from each templated class expression, meaning the classes cannot share subclasses
-    - `equivalent`: the created class will be asserted to be equivalent to the intersection of all the templated class expressions
-- `C` **class expression**: If the template string starts with a `C` and a space then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then the result will be parsed into an OWL class expression. 
+- **class expression**: If the template string starts with `SC`, `EC`, or `DC` followed by a space and the template string (e.g. `SC %`) then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then, the result will be parsed into an OWL class expression. 
     - ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its `rdfs:label` (enclosing in single quotes if it has a space in it). 
     - If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
     - Properties in class expressions **must** be referred to by label in order to be parsed.
+- `SC %`: the class will be asserted to be a subclass of the class expression in this column
+- `EC %`: the class will be asserted to be an equivalent class of the intersection of *all* `EC` class expressions in a row
+- `DC %`: the class will be asserted to be disjoint with the class expression in this column
 
 #### Example of Class Template Strings
 
-| Label   | Entity Type | Class Type | Related classes | Other axioms     |
-| ------- | ----------- | ---------- | --------------- | ---------------- |
-| LABEL   | TYPE        | CLASS_TYPE | C %             | C part_of some % |
-| Class 2 | class       |            | Class 1         |                  |
-| Class 3 | class       | disjoint   | Class 2         |                  |
-| Class 4 | class       | equivalent |                 | Class 3          |
+| Label   | Entity Type | Superclass | Disjoint Classes | Equivalent axioms |
+| ------- | ----------- | ---------- | ---------------- | ----------------- |
+| LABEL   | TYPE        | SC %       | DC %             | EC part_of some % |
+| Class 2 | class       | Class 1    |                  |                   |
+| Class 3 | class       |            |                  | Class 2           |
+| Class 4 | class       | equivalent | Class 3          |                   |
 
-Class 2 will be a subclass of Class 1, as there is no included `CLASS_TYPE`. Class 3 will be disjoint with Class 2, and Class 4 will be equivalent to `part_of some 'Class 3'`.
+Class 2 will be a subclass of Class 1. Class 3 will be equivalent to `part_of some 'Class 2'` and Class 4 will be disjoint with Class 3.
 
 Manchester expressions can also be used within the cells, as long as they are enclosed in parentheses:
 
 | Label   | Parent                   |
 | ------- | ------------------------ |
-| LABEL   | C %                      |
+| LABEL   | SC %                     |
 | Class 4 |                          |
 | Class 5 | (part_of some 'Class 4') |
 
@@ -82,34 +81,29 @@ In this template, Class 5 would be a subclass of `part_of some 'Class 4'`.
 
 ### Property Template Strings
 
-- `PROPERTY_TYPE`: ROBOT creates a property for each row of data that has a `TYPE` of annotation property, object property, or data property. Property type can be split, e.g. `PROPERTY_TYPE SPLIT=|`, to specify multiple property types, but only ONE of the logical types can be used. For example, a property type column cannot use both `equivalent` and `subproperty`, but it can use both `subproperty` and `functional`. The property type can be (any type followed by a \* can ONLY be used for object properties):
-    - **logical types**: these types link the created property to other properties (annotation properties can *only* use `subproperty`). You may only include ONLY ONE of these in each `PROPERTY_TYPE`:
-      - `subproperty`: the created property will be a subproperty of each templated property expression (default)
-      - `equivalent`: the created property will be equivalent to all of the templated property expressions
-      - `disjoint`: the created property will be disjoint from each templated property expression and the values cannot be the same
-      - `inverse`\*: the created object property will be the inverse of each templated property expression
-    - **property types**: these types define the type of the created property, and will not work with annotation properties. You may include any number of these.
-      - `functional`: the created property will be functional, meaning each entity (subject) can have at most one value
-      - `inverse functional`\*: the created object property will be inverse functional, meaning each value can have at most one subject
-      - `irreflexive`\*: the created object property will be irreflexive, meaning the subject cannot also be the value
-      - `reflexive`\*: the created object property will be reflexive, meaning each subject is also a value
-      - `symmetric`\*: the created object property will be symmetric, meaning the subject and value can be reversed
-      - `asymmetric`\*: the created object property will be asymmetric, meaning the subject and value cannot be reversed
-      - `transitive`\*: the created object property will be transitive, meaning the property can be chained
-- `P` **property expression**: If the template string starts with a `P` and a space then it will be interpreted as a property expression. The value of the current cell will be substituted into the template, replacing all occurrences of the `%` character. Then the result will be parsed into an OWL property expression. ROBOT uses the same syntax for property expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to an entity by its IRI or CURIE. This can lead to unexpected behavior, but it allows you to refer to entities without loading them into the input ontology.
-    - **object properties**: the only supported object property expression is the inverse object property expression. The template string is `P inverse(%)`. A single object property for a value can be specified by `P %`.
-    - **data properties**: data property expressions are not yet supported by OWL. A data property for a value (e.g. for a parent property) can be specified by `P %`.
-    - **annotation properties**: annotation property expressions are not possible. An annotation property for a value (e.g. for a parent property) can be specified by `P %`.
+- `PROPERTY_TYPE`: for each row of data that has a `TYPE` of object property or data property (*not* an annotation property), you can also specify a `PROPERTY_TYPE`. This field can be left blank to not specify a property type. Property type can be split, e.g. `PROPERTY_TYPE SPLIT=|`, to specify multiple property types. The property type can be (any type followed by a \* can ONLY be used for object properties):
+    - `functional`: the created property will be functional, meaning each entity (subject) can have at most one value
+    - `inverse functional`\*: the created object property will be inverse functional, meaning each value can have at most one subject
+    - `irreflexive`\*: the created object property will be irreflexive, meaning the subject cannot also be the value
+    - `reflexive`\*: the created object property will be reflexive, meaning each subject is also a value
+    - `symmetric`\*: the created object property will be symmetric, meaning the subject and value can be reversed
+    - `asymmetric`\*: the created object property will be asymmetric, meaning the subject and value cannot be reversed
+    - `transitive`\*: the created object property will be transitive, meaning the property can be chained
+- **property expression**: If the template string starts with `SP`, `EP`, `DP`, or `IP` followed by a space and the template string (e.g. `SP %`), then it will be interpreted as a property expression. The value of the current cell will be substituted into the template, replacing all occurrences of the `%` character. Then the result will be parsed into an OWL property expression. ROBOT uses the same syntax for property expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to an entity by its IRI or CURIE. This can lead to unexpected behavior, but it allows you to refer to entities without loading them into the input ontology.
+    - `SP %`: the property will be asserted to be a subproperty of the property expression in the column
+    - `EP %`: the property will be asserted to be equivalent with the property expression in the column
+    - `DP %`: the property will be asserted to be disjoint with the property expression in the column
+    - `IP %`: this can only be used with object properties - the property will be asserted to be the inverse of the property expression in the column.
 - `DOMAIN`: The domain to a property is a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object and data properties). For annotation properties, the domain must be a single class specified by label, CURIE, or IRI.
 - `RANGE`: The range to a property is either a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object properties) or the name, CURIE, or IRI of a datatype (for annotation and data properties).
 
 #### Example of Property Template Strings
 
-| ID   | Entity Type        | Property Type | Related Property | Domain  | Range      |
-| ---- | ------------------ | ------------- | ---------------- | ------- | ---------- |
-| ID   | TYPE               | PROPERTY_TYPE | P %              | DOMAIN  | RANGE      |
-| OP:1 | owl:ObjectProperty | subproperty   | Property 1       | Class 1 | Class 2    |
-| DP:1 | owl:DataProperty   | functional    | Property 2       | Class 2 | xsd:string |
+| ID   | Entity Type        | Property Type | Super Property | Domain  | Range      |
+| ---- | ------------------ | ------------- | -------------- | ------- | ---------- |
+| ID   | TYPE               | PROPERTY_TYPE | SP %           | DOMAIN  | RANGE      |
+| OP:1 | owl:ObjectProperty |               | Property 1     | Class 1 | Class 2    |
+| DP:1 | owl:DataProperty   | functional    | Property 2     | Class 2 | xsd:string |
 
 The `functional` data property will still default to a `subproperty` logical axiom for the `P %` template string, unless a different logical property type (`equivalent`, `disjoint`) is provided.
 
@@ -117,21 +111,18 @@ The `functional` data property will still default to a `subproperty` logical axi
 
 If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an instance will be created. If the `TYPE` does not include a defined class, that instance will have no class assertions. You may include a `SPLIT=` in `TYPE` if you wish to provide more than one class assertion for an individual.
 
-- `INDIVIDUAL_TYPE`: ROBOT creates an individual for each row of data that has a `TYPE` of another class. The individual type can be:
-    - `named`: the created individual will be a default named individual. When the `INDIVIDUAL_TYPE` is left blank, this is the default. This should be used when adding object property or data property assertions
-    - `same`: the created individual will be asserted to be the same individual as each templated individual in the row
-    - `different`: the created individual will be asserted to be a different individual than any of the templated individuals in the row
-- `I` **individual assertion**:
-    - `I <property>`: when creating a `named` individual, replace property with an object property or data property to add assertions (either by label or CURIE). The value of each axiom will be the value of the cell in this column. For object property assertions, this is another individual. For data property assertions, this is a literal value.
-    - `I %`: when creating a `same` or `different` individual, this template string is used to specify which individual will be the value of the same or different individual axiom.
+- **individual assertion**:
+    - `I <property>`: when creating an individual, replace property with an object property or data property to add assertions (either by label or CURIE). The value of each axiom will be the value of the cell in this column. For object property assertions, this is another individual. For data property assertions, this is a literal value.
+    - `SI %`: the individual in the column will be asserted to be the same individual
+    - `DI %`: the individual in the column will be asserted to be a different individual
 
 #### Example of Individual Template Strings
 
-| Label        | Entity Type | Individual Type | Other Axioms | Related Individuals |
-| ------------ | ----------- | --------------- | ------------ | ------------------- |
-| LABEL        | TYPE        | INDIVIDUAL_TYPE | I part_of    | I %                 |
-| Individual 1 | Class 1     | named           | Individual 2 |                     |
-| Individual 2 | Class 1     | different       |              | Individual 1        |
+| Label        | Entity Type | Property Assertions | Different Individuals |
+| ------------ | ----------- | ------------------- | --------------------- |
+| LABEL        | TYPE        | I part_of           | DI %                  |
+| Individual 1 | Class 1     | Individual 2        |                       |
+| Individual 2 | Class 1     |                     | Individual 1          |
 
 <!-- ### Datatype Template Strings -->
 

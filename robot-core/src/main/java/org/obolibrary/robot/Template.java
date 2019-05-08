@@ -119,6 +119,9 @@ public class Template {
       NS
           + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" for column %2$d (\"%3$s\") in table \"%1$s\".";
 
+  private static final List<String> validClassTypes =
+      new ArrayList<>(Arrays.asList("subclass", "disjoint", "equivalent"));
+
   /**
    * Given a template name and a list of rows, create a template object with a new IOHelper and
    * QuotedEntityChecker. The rows are added to the object, new labels from the rows are added to
@@ -628,9 +631,21 @@ public class Template {
       classType = classType.trim().toLowerCase();
     }
 
+    if (!validClassTypes.contains(classType)) {
+      // Unknown class type
+      throw new RowParseException(
+          String.format(
+              classTypeError, cls.getIRI().getShortForm(), classType, rowNum, classTypeColumn));
+    }
+
     // Iterate through all columns and add annotations as we go
     // Also collect any class expressions that will be used in logical definitions
-    Map<Integer, Set<OWLClassExpression>> expressionColumns = new HashMap<>();
+    // We collect all of these together so that equivalent expressions can be made into an
+    // intersection
+    // Instead of adding them in as we iterate through
+    Map<Integer, Set<OWLClassExpression>> subclassExpressionColumns = new HashMap<>();
+    Map<Integer, Set<OWLClassExpression>> equivalentExpressionColumns = new HashMap<>();
+    Map<Integer, Set<OWLClassExpression>> disjointExpressionColumns = new HashMap<>();
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
       String value = null;
@@ -650,29 +665,54 @@ public class Template {
         for (OWLAnnotation annotation : annotations) {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
-      } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
-        expressionColumns.put(
+      } else if (template.startsWith("SC")) {
+        // Subclass expression
+        subclassExpressionColumns.put(
             column,
             TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+      } else if (template.startsWith("EC")) {
+        // Equivalent expression
+        equivalentExpressionColumns.put(
+            column,
+            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+      } else if (template.startsWith("DC")) {
+        // Disjoint expression
+        disjointExpressionColumns.put(
+            column,
+            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+      } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
+        // Use class type to determine what to do with the expression
+        switch (classType) {
+          case "subclass":
+            subclassExpressionColumns.put(
+                column,
+                TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+            break;
+          case "equivalent":
+            equivalentExpressionColumns.put(
+                column,
+                TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+            break;
+          case "disjoint":
+            disjointExpressionColumns.put(
+                column,
+                TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+            break;
+          default:
+            break;
+        }
       }
     }
 
-    // Add the class expressions for logic
-    switch (classType) {
-      case "subclass":
-        addSubClassAxioms(cls, expressionColumns, row);
-        break;
-      case "equivalent":
-        addEquivalentClassesAxioms(cls, expressionColumns, row);
-        break;
-      case "disjoint":
-        addDisjointClassAxioms(cls, expressionColumns, row);
-        break;
-      default:
-        // Unknown class type
-        throw new RowParseException(
-            String.format(
-                classTypeError, cls.getIRI().getShortForm(), classType, rowNum, classTypeColumn));
+    // Add the axioms
+    if (!subclassExpressionColumns.isEmpty()) {
+      addSubClassAxioms(cls, subclassExpressionColumns, row);
+    }
+    if (!equivalentExpressionColumns.isEmpty()) {
+      addEquivalentClassesAxioms(cls, equivalentExpressionColumns, row);
+    }
+    if (!disjointExpressionColumns.isEmpty()) {
+      addDisjointClassAxioms(cls, disjointExpressionColumns, row);
     }
   }
 
@@ -846,8 +886,28 @@ public class Template {
         for (OWLAnnotation annotation : annotations) {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
+      } else if (template.startsWith("SP")) {
+        // Subproperty expressions
+        Set<OWLObjectPropertyExpression> expressions =
+            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+        addSubObjectPropertyAxioms(property, expressions, row, column);
+      } else if (template.startsWith("EP")) {
+        // Equivalent properties expressions
+        Set<OWLObjectPropertyExpression> expressions =
+            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+        addEquivalentObjectPropertiesAxioms(property, expressions, row, column);
+      } else if (template.startsWith("DP")) {
+        // Disjoint properties expressions
+        Set<OWLObjectPropertyExpression> expressions =
+            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+        addDisjointObjectPropertiesAxioms(property, expressions, row, column);
+      } else if (template.startsWith("IP")) {
+        // Inverse properties expressions
+        Set<OWLObjectPropertyExpression> expressions =
+            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+        addInverseObjectPropertiesAxioms(property, expressions, row, column);
       } else if (template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
-        // Handle property logic
+        // Use the property type to determine what type of expression
         Set<OWLObjectPropertyExpression> expressions =
             TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
         switch (propertyType) {
@@ -1101,8 +1161,27 @@ public class Template {
         for (OWLAnnotation annotation : annotations) {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
+      } else if (template.startsWith("SP")) {
+        // Subproperty expressions
+        Set<OWLDataPropertyExpression> expressions =
+            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+        addSubDataPropertyAxioms(property, expressions, row, column);
+      } else if (template.startsWith("EP")) {
+        // Equivalent properties expressions
+        Set<OWLDataPropertyExpression> expressions =
+            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+        addEquivalentDataPropertiesAxioms(property, expressions, row, column);
+      } else if (template.startsWith("DP")) {
+        // Disjoint properties expressions
+        Set<OWLDataPropertyExpression> expressions =
+            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+        addDisjointDataPropertiesAxioms(property, expressions, row, column);
+      } else if (template.startsWith("IP")) {
+        // Cannot use inverse with data properties
+        throw new RowParseException(
+            String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1));
       } else if (template.startsWith("P ") && !template.startsWith("PROPERTY_TYPE")) {
-        // Handle property logic
+        // Use property type to handle expression type
         Set<OWLDataPropertyExpression> expressions =
             TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
         switch (propertyType) {
@@ -1538,7 +1617,38 @@ public class Template {
         for (OWLAnnotation annotation : annotations) {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
+      } else if (template.startsWith("NI")) {
+        // Just links to other named individuals
+        String propStr = template.substring(3).replace("'", "");
+        OWLObjectProperty objectProperty = checker.getOWLObjectProperty(propStr);
+        if (objectProperty != null) {
+          Set<OWLIndividual> otherIndividuals =
+              TemplateHelper.getIndividuals(checker, value, split);
+          addObjectPropertyAssertionAxioms(
+              individual, otherIndividuals, objectProperty, row, column);
+          continue;
+        }
+        OWLDataProperty dataProperty = checker.getOWLDataProperty(propStr);
+        if (dataProperty != null) {
+          Set<OWLLiteral> literals =
+              TemplateHelper.getLiterals(checker, value, split, rowNum, column);
+          addDataPropertyAssertionAxioms(individual, literals, dataProperty, row, column);
+        }
+      } else if (template.startsWith("SI")) {
+        // Same individuals axioms
+        Set<OWLIndividual> sameIndividuals = TemplateHelper.getIndividuals(checker, value, split);
+        if (!sameIndividuals.isEmpty()) {
+          addSameIndividualsAxioms(individual, sameIndividuals, row, column);
+        }
+      } else if (template.startsWith("DI")) {
+        // Different individuals axioms
+        Set<OWLIndividual> differentIndividuals =
+            TemplateHelper.getIndividuals(checker, value, split);
+        if (!differentIndividuals.isEmpty()) {
+          addDifferentIndividualsAxioms(individual, differentIndividuals, row, column);
+        }
       } else if (template.startsWith("I") && !template.startsWith("INDIVIDUAL_TYPE")) {
+        // Use individual type to determine how to handle expressions
         switch (individualType) {
           case "named":
             if (template.startsWith("I ")) {

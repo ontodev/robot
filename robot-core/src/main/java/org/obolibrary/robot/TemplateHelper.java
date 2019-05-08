@@ -313,6 +313,7 @@ public class TemplateHelper {
 
     Set<OWLClassExpression> expressions = new HashSet<>();
     if (template.startsWith("CI")) {
+      // CI indicates its just an IRI
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
@@ -323,17 +324,19 @@ public class TemplateHelper {
         String content = QuotedEntityChecker.wrap(value);
         expressions.add(tryParse(parser, content, rowNum, col));
       }
-    } else if (template.startsWith("C ")) {
+    } else {
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
           String content = QuotedEntityChecker.wrap(v);
-          String sub = template.substring(2).trim().replaceAll("%", content);
+          // Get the template without identifier by breaking on the first space
+          String sub = template.substring(template.indexOf(" ")).trim().replaceAll("%", content);
           expressions.add(tryParse(parser, sub, rowNum, col));
         }
       } else {
         String content = QuotedEntityChecker.wrap(value);
-        String sub = template.substring(2).trim().replaceAll("%", content);
+        // Get the template without identifier by breaking on the first space
+        String sub = template.substring(template.indexOf(" ")).replaceAll("%", content);
         expressions.add(tryParse(parser, sub, rowNum, col));
       }
     }
@@ -370,15 +373,17 @@ public class TemplateHelper {
 
     Set<OWLDataPropertyExpression> expressions = new HashSet<>();
     if (template.startsWith("PI")) {
+      // PI indicates its just an IRI
       for (String v : allValues) {
         String content = QuotedEntityChecker.wrap(v);
         OWLDataProperty property = checker.getOWLDataProperty(content);
         expressions.add(property);
       }
-    } else if (template.startsWith("P ")) {
+    } else {
       for (String v : allValues) {
         String content = QuotedEntityChecker.wrap(v);
-        String sub = template.substring(2).trim().replaceAll("%", content);
+        // Get the template without identifier by breaking on the first space
+        String sub = template.substring(template.indexOf(" ")).trim().replaceAll("%", content);
         parser.setStringToParse(sub);
         logger.info("Parsing expression '%s'", sub);
         try {
@@ -687,6 +692,7 @@ public class TemplateHelper {
 
     Set<OWLObjectPropertyExpression> expressions = new HashSet<>();
     if (template.startsWith("PI")) {
+      // PI indicates its just an IRI
       for (String v : allValues) {
         String content = QuotedEntityChecker.wrap(v);
         OWLObjectProperty property = checker.getOWLObjectProperty(content);
@@ -695,7 +701,8 @@ public class TemplateHelper {
     } else if (template.startsWith("P ")) {
       for (String v : allValues) {
         String content = QuotedEntityChecker.wrap(v);
-        String sub = template.substring(2).trim().replaceAll("%", content);
+        // Get the template without identifier by breaking on the first space
+        String sub = template.substring(template.indexOf(" ")).trim().replaceAll("%", content);
         parser.setStringToParse(sub);
         logger.info("Parsing expression '%s'", sub);
         try {
@@ -992,7 +999,7 @@ public class TemplateHelper {
     if (template.startsWith("INDIVIDUAL_TYPE")) {
       return true;
     }
-    return template.matches("^(CI|PI|DI|RI|II)");
+    return template.matches("^(SC|EC|DC|SP|EP|DP|IP|NI|SI|DI|CI|PI|RI|II) .*");
   }
 
   /**
