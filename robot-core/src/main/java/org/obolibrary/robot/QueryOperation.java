@@ -159,6 +159,9 @@ public class QueryOperation {
       FileManager.get().readModel(m, inputPath);
       dataset.commit();
     } catch (JenaException e) {
+      dataset.abort();
+      dataset.end();
+      dataset.close();
       throw new IOException(String.format(syntaxError, inputPath, e.getMessage()));
     } finally {
       dataset.end();
