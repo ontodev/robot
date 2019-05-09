@@ -698,7 +698,7 @@ public class TemplateHelper {
         OWLObjectProperty property = checker.getOWLObjectProperty(content);
         expressions.add(property);
       }
-    } else if (template.startsWith("P ")) {
+    } else {
       for (String v : allValues) {
         String content = QuotedEntityChecker.wrap(v);
         // Get the template without identifier by breaking on the first space

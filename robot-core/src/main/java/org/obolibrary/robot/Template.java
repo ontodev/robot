@@ -463,7 +463,7 @@ public class Template {
           // ignore
         }
       }
-      if (type == null) {
+      if (type == null || type.trim().isEmpty()) {
         type = "class";
       }
 
@@ -880,7 +880,7 @@ public class Template {
         continue;
       }
 
-      if (template.startsWith("A")) {
+      if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Handle annotations
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {
@@ -1155,7 +1155,7 @@ public class Template {
         split = template.substring(template.indexOf("SPLIT=") + 6).trim();
       }
 
-      if (template.startsWith("A")) {
+      if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Handle annotations
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {
@@ -1363,7 +1363,7 @@ public class Template {
         // do nothing
       }
     }
-    if (propertyType == null) {
+    if (propertyType == null || propertyType.trim().isEmpty()) {
       propertyType = "subproperty";
     } else {
       propertyType = propertyType.trim().toLowerCase();
@@ -1396,13 +1396,14 @@ public class Template {
         split = template.substring(template.indexOf("SPLIT=") + 6).trim();
       }
 
-      if (template.startsWith("A")) {
+      if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Handle annotations
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
-      } else if (template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
+      } else if (template.startsWith("SP")
+          || template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
         // Handle property logic
         Set<OWLAnnotationProperty> parents =
             TemplateHelper.getAnnotationProperties(checker, value, split);
@@ -1611,7 +1612,7 @@ public class Template {
       }
 
       // Handle annotations
-      if (template.startsWith("A")) {
+      if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Add the annotations to the individual
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {
