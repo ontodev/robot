@@ -368,10 +368,20 @@ public class Template {
         String property = template.substring(2);
         maybeSetLabelColumn(property, column);
       } else if (template.startsWith("AT ")) {
-        String property = template.substring(3, template.indexOf("^")).trim();
+        String property;
+        if (template.contains("^^")) {
+          property = template.substring(3, template.indexOf("^^")).trim();
+        } else {
+          property = template.substring(3).trim();
+        }
         maybeSetLabelColumn(property, column);
       } else if (template.startsWith("AL ")) {
-        String property = template.substring(3, template.indexOf("@")).trim();
+        String property;
+        if (template.contains("@")) {
+          property = template.substring(3, template.indexOf("@")).trim();
+        } else {
+          property = template.substring(3).trim();
+        }
         maybeSetLabelColumn(property, column);
       } else if (template.startsWith("AI ")) {
         String property = template.substring(3);
