@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import org.apache.jena.query.*;
@@ -8,11 +9,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.resultset.ResultSetLang;
+import org.apache.jena.shared.JenaException;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.tdb.TDB;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.update.UpdateAction;
+import org.apache.jena.util.FileManager;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -39,6 +42,12 @@ public class QueryOperation {
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
 
   /**
+   * Error message when a JenaException is thrown from reading file to model due to a syntax error.
+   * Expects: file name, error message.
+   */
+  private static final String syntaxError = NS + "SYNTAX ERROR %s cannot be read:\n%s";
+
+  /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
    *
    * @deprecated use {@link #loadOntologyAsDataset(OWLOntology)} instead.
@@ -60,11 +69,10 @@ public class QueryOperation {
    *
    * @param ontology ontology to query
    * @return dataset to query
-   * @throws IOException on issue creating temp files
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology)
-      throws IOException, OWLOntologyStorageException {
+      throws OWLOntologyStorageException {
     return loadOntologyAsDataset(ontology, false);
   }
 
@@ -76,11 +84,9 @@ public class QueryOperation {
    * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
-   * @throws UnsupportedEncodingException on parsing TTL string
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
-      throws OWLOntologyStorageException, UnsupportedEncodingException {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      throws OWLOntologyStorageException {
     Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
     if (useGraphs) {
@@ -112,17 +118,54 @@ public class QueryOperation {
    *
    * @param ontology OWLOntology to convert to Model
    * @return Model of axioms (imports ignored)
-   * @throws UnsupportedEncodingException on issue parsing byte array to string
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
-  public static Model loadOntologyAsModel(OWLOntology ontology)
-      throws UnsupportedEncodingException, OWLOntologyStorageException {
+  public static Model loadOntologyAsModel(OWLOntology ontology) throws OWLOntologyStorageException {
     Model model = ModelFactory.createDefaultModel();
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
-    String content = new String(os.toByteArray(), "UTF-8");
+    String content = new String(os.toByteArray(), StandardCharsets.UTF_8);
     RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(model);
     return model;
+  }
+
+  /**
+   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
+   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
+   *
+   * <p>WARNING - this creates a directory at given tdbDir location!
+   *
+   * @param inputPath input path of RDF/XML or TTL file
+   * @param tdbDir location to put TDB mappings
+   * @return Dataset instantiated with triples
+   */
+  public static Dataset loadTriplesAsDataset(String inputPath, String tdbDir) throws IOException {
+    // Dataset backed by a temp dir
+    Dataset dataset;
+    if (new File(tdbDir).isDirectory()) {
+      dataset = TDBFactory.createDataset(tdbDir);
+      if (!dataset.isEmpty()) {
+        return dataset;
+      }
+    }
+    dataset = TDBFactory.createDataset(tdbDir);
+    logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
+    // Track parsing time
+    long start = System.nanoTime();
+    Model m;
+    dataset.begin(ReadWrite.WRITE);
+    try {
+      m = dataset.getDefaultModel();
+      FileManager.get().readModel(m, inputPath);
+      dataset.commit();
+    } catch (JenaException e) {
+      throw new IOException(String.format(syntaxError, inputPath, e.getMessage()));
+    } finally {
+      dataset.end();
+    }
+    long time = (System.nanoTime() - start) / 1000000000;
+    logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
+    return dataset;
   }
 
   /**
@@ -142,11 +185,14 @@ public class QueryOperation {
   }
 
   /**
-   * @param model
-   * @param ioHelper
-   * @param catalogPath
-   * @return
-   * @throws IOException
+   * Given a Model, an IOHelper, and a path to an XML catalog, convert the model to an OWLOntology
+   * object.
+   *
+   * @param model Model to convert to OWLOntology
+   * @param ioHelper IOHelper to load ontology
+   * @param catalogPath String path to XML catalog
+   * @return OWLOntology object version of model
+   * @throws IOException on issue loading ontology
    */
   public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
       throws IOException {

@@ -456,7 +456,8 @@ public class CommandLineHelper {
    * @throws IOException if the ontology cannot be loaded
    */
   public static OWLOntology getInputOntology(
-      IOHelper ioHelper, CommandLine line, String catalogPath) throws IllegalArgumentException, IOException {
+      IOHelper ioHelper, CommandLine line, String catalogPath)
+      throws IllegalArgumentException, IOException {
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
 

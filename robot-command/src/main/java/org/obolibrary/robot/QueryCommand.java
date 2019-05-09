@@ -2,6 +2,7 @@ package org.obolibrary.robot;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
@@ -11,6 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.tdb.TDBFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,10 @@ public class QueryCommand implements Command {
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR at least one query must be provided";
 
+  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
+  protected static final String tdbFormatError =
+      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -47,6 +53,9 @@ public class QueryCommand implements Command {
     o.addOption("O", "output-dir", true, "Directory for output");
     o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
     o.addOption("u", "update", true, "run a SPARQL UPDATE");
+    o.addOption("t", "tdb", true, "if true, load RDF/XML or TTL onto disk");
+    o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
+    o.addOption("d", "tdb-directory", true, "directory to put TDB mappings (default: .tdb)");
 
     Option opt;
 
@@ -133,83 +142,93 @@ public class QueryCommand implements Command {
       return null;
     }
 
-    String format = CommandLineHelper.getOptionalValue(line, "format");
-    String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
 
     // If an update(s) are provided, run then return the OWLOntology
     // This is different than the rest of the Query operations because it returns an ontology
     // Whereas the others return query results
     List<String> updatePaths = CommandLineHelper.getOptionalValues(line, "update");
     if (!updatePaths.isEmpty()) {
+      state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+      OWLOntology inputOntology = state.getOntology();
+
       OWLOntology outputOntology = executeUpdate(state, inputOntology, ioHelper, updatePaths);
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
     }
 
-    // Determine what to do with the imports and create a new dataset
-    boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
-    Dataset dataset;
-    if (useGraphs) {
-      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, true);
+    List<List<String>> queries = getQueries(line);
+
+    boolean useTDB = CommandLineHelper.getBooleanValue(line, "tdb", false);
+    if (useTDB) {
+      // DOES NOT UPDATE STATE
+      // This will not work with chained commands as it uses the `--input` option
+      // Updating the state results in loading the ontology to memory
+      executeOnDisk(line, queries);
     } else {
-      dataset = QueryOperation.loadOntologyAsDataset(inputOntology, false);
+      state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+      executeInMemory(line, state.getOntology(), queries);
     }
 
-    // Collect all queries as (queryPath, outputPath) pairs.
-    List<List<String>> queries = new ArrayList<>();
-    List<String> qs = CommandLineHelper.getOptionalValues(line, "query");
-    for (int i = 0; i < qs.size(); i += 2) {
-      queries.add(qs.subList(i, i + 2));
-    }
-    qs = CommandLineHelper.getOptionalValues(line, "select");
-    for (int i = 0; i < qs.size(); i += 2) {
-      queries.add(qs.subList(i, i + 2));
-    }
-    qs = CommandLineHelper.getOptionalValues(line, "construct");
-    for (int i = 0; i < qs.size(); i += 2) {
-      queries.add(qs.subList(i, i + 2));
-    }
-    qs = CommandLineHelper.getOptionalValues(line, "queries");
-    for (String q : qs) {
-      List<String> xs = new ArrayList<>();
-      xs.add(q);
-      xs.add(null);
-      queries.add(xs);
-    }
+    return state;
+  }
 
-    if (queries.isEmpty()) {
-      throw new IllegalArgumentException(missingQueryError);
+  /**
+   * Given a command line, an ontology, and a list of queries, run the queries over the ontology
+   * with any options.
+   *
+   * @param line CommandLine with options
+   * @param inputOntology OWLOntology to query
+   * @param queries List of queries
+   * @throws Exception on issue loading ontology or running queries
+   */
+  private static void executeInMemory(
+      CommandLine line, OWLOntology inputOntology, List<List<String>> queries) throws Exception {
+    boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology, useGraphs);
+    try {
+      runQueries(line, dataset, queries);
+    } finally {
+      dataset.close();
+      TDBFactory.release(dataset);
     }
+  }
 
-    // Run queries
-    for (List<String> q : queries) {
-      String queryPath = q.get(0);
-      String outputPath = q.get(1);
-
-      String query = FileUtils.readFileToString(new File(queryPath));
-
-      String formatName = format;
-      if (formatName == null) {
-        if (outputPath == null) {
-          formatName = QueryOperation.getDefaultFormatName(query);
-        } else {
-          formatName = FilenameUtils.getExtension(outputPath);
+  /**
+   * Given a command line and a list of queries, execute 'query' using TDB and writing mappings to
+   * disk.
+   *
+   * @param line CommandLine with options
+   * @param queries List of queries
+   * @throws IOException on problem running queries
+   */
+  private static void executeOnDisk(CommandLine line, List<List<String>> queries)
+      throws IOException {
+    String inputPath =
+        CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
+    String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
+    boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
+    Dataset dataset;
+    if (inputPath.endsWith(".rdf") || inputPath.endsWith(".owl")) {
+      dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
+    } else if (inputPath.endsWith(".ttl")) {
+      dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
+    } else {
+      throw new IllegalArgumentException(tdbFormatError);
+    }
+    try {
+      runQueries(line, dataset, queries);
+    } finally {
+      dataset.close();
+      TDBFactory.release(dataset);
+      if (!keepMappings) {
+        boolean success = clean(tdbDir);
+        if (!success) {
+          logger.error(String.format("Unable to remove directory '%s'", tdbDir));
         }
       }
-
-      if (outputPath == null) {
-        String fileName = FilenameUtils.getBaseName(queryPath) + "." + formatName;
-        outputPath = new File(outputDir).toPath().resolve(fileName).toString();
-      }
-
-      OutputStream output = new FileOutputStream(outputPath);
-      QueryOperation.runSparqlQuery(dataset, query, formatName, output);
     }
-    return state;
   }
 
   /**
@@ -265,5 +284,104 @@ public class QueryCommand implements Command {
       }
     }
     return QueryOperation.convertModel(model, ioHelper, catalogPath);
+  }
+
+  /**
+   * Given a command line, get a list of queries.
+   *
+   * @param line CommandLine with options
+   * @return List of queries
+   */
+  private static List<List<String>> getQueries(CommandLine line) {
+    // Collect all queries as (queryPath, outputPath) pairs.
+    List<List<String>> queries = new ArrayList<>();
+    List<String> qs = CommandLineHelper.getOptionalValues(line, "query");
+    for (int i = 0; i < qs.size(); i += 2) {
+      queries.add(qs.subList(i, i + 2));
+    }
+    qs = CommandLineHelper.getOptionalValues(line, "select");
+    for (int i = 0; i < qs.size(); i += 2) {
+      queries.add(qs.subList(i, i + 2));
+    }
+    qs = CommandLineHelper.getOptionalValues(line, "construct");
+    for (int i = 0; i < qs.size(); i += 2) {
+      queries.add(qs.subList(i, i + 2));
+    }
+    qs = CommandLineHelper.getOptionalValues(line, "queries");
+    for (String q : qs) {
+      List<String> xs = new ArrayList<>();
+      xs.add(q);
+      xs.add(null);
+      queries.add(xs);
+    }
+    if (queries.isEmpty()) {
+      throw new IllegalArgumentException(missingQueryError);
+    }
+    return queries;
+  }
+
+  /**
+   * Given a command line, a dataset to query, and a list of queries, run the queries with any
+   * options from the command line.
+   *
+   * @param line CommandLine with options
+   * @param dataset Dataset to run queries on
+   * @param queries List of queries
+   * @throws IOException on issue reading or writing files
+   */
+  private static void runQueries(CommandLine line, Dataset dataset, List<List<String>> queries)
+      throws IOException {
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
+
+    for (List<String> q : queries) {
+      String queryPath = q.get(0);
+      String outputPath = q.get(1);
+
+      String query = FileUtils.readFileToString(new File(queryPath));
+
+      String formatName = format;
+      if (formatName == null) {
+        if (outputPath == null) {
+          formatName = QueryOperation.getDefaultFormatName(query);
+        } else {
+          formatName = FilenameUtils.getExtension(outputPath);
+        }
+      }
+
+      if (outputPath == null) {
+        String fileName = FilenameUtils.getBaseName(queryPath) + "." + formatName;
+        outputPath = new File(outputDir).toPath().resolve(fileName).toString();
+      }
+
+      OutputStream output = new FileOutputStream(outputPath);
+      QueryOperation.runSparqlQuery(dataset, query, formatName, output);
+    }
+  }
+
+  /**
+   * Given a directory containing TDB mappings, remove the files and directory. If successful,
+   * return true.
+   *
+   * @param tdbDir directory to remove
+   * @return boolean indicating success
+   */
+  protected static boolean clean(String tdbDir) {
+    File dir = new File(tdbDir);
+    boolean success = true;
+    if (dir.exists()) {
+      String[] files = dir.list();
+      if (files != null) {
+        for (String file : files) {
+          File f = new File(dir.getPath(), file);
+          success = f.delete();
+        }
+      }
+      // Only delete if all the files in dir were deleted
+      if (success) {
+        success = dir.delete();
+      }
+    }
+    return success;
   }
 }
