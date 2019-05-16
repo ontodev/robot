@@ -2,6 +2,8 @@
 
 **Problem:** A definition or elucidation does not begin with an uppercase letter. This may be indicative of inconsistent formatting.
 
+**OBO Foundry Principle:** [6 - Textual Definitions](http://www.obofoundry.org/principles/fp-006-textual-definitions.html)
+
 **Solution:** Capitalize the first letter of the definition, or disregard this INFO.
 
 ```sparql
