@@ -158,11 +158,11 @@ public class ExportOperation {
         case "LABEL":
           headers.add("Label");
           break;
-        case "subclasses":
+        case "subclass-of":
         case "rdfs:subClassOf":
           headers.add("SubClass Of");
           break;
-        case "subproperties":
+        case "subproperty-of":
         case "rdfs:subPropertyOf":
           headers.add("SubProperty Of");
           break;
@@ -181,6 +181,7 @@ public class ExportOperation {
         case "types":
         case "rdf:type":
           headers.add("Instance Of");
+          break;
         default:
           headers.add(col);
       }
@@ -254,18 +255,18 @@ public class ExportOperation {
         case "LABEL":
           cellMap.put("LABEL", provider.getShortForm(e));
           break;
-        case "subclasses":
+        case "subclass-of":
         case "rdfs:subClassOf":
           if (e.isOWLClass()) {
             cellMap.put(
-                "rdfs:subClassOf",
+                col,
                 classExpressionsToString(
                     EntitySearcher.getSuperClasses(e.asOWLClass(), ontology),
                     provider,
                     excludeAnonymous));
           }
           break;
-        case "subproperties":
+        case "subproperty-of":
         case "rdfs:subPropertyOf":
           if (e.isOWLAnnotationProperty()) {
             List<String> supers =
@@ -273,17 +274,17 @@ public class ExportOperation {
                     .stream()
                     .map(provider::getShortForm)
                     .collect(Collectors.toList());
-            cellMap.put("rdfs:subPropertyOf", String.join("|", supers));
+            cellMap.put(col, String.join("|", supers));
           } else if (e.isOWLDataProperty()) {
             cellMap.put(
-                "rdfs:subPropertyOf",
+                col,
                 propertyExpressionsToString(
                     EntitySearcher.getSuperProperties(e.asOWLDataProperty(), ontology),
                     provider,
                     excludeAnonymous));
           } else if (e.isOWLObjectProperty()) {
             cellMap.put(
-                "rdfs:subPropertyOf",
+                col,
                 propertyExpressionsToString(
                     EntitySearcher.getSuperProperties(e.asOWLObjectProperty(), ontology),
                     provider,
@@ -294,7 +295,7 @@ public class ExportOperation {
         case "owl:equivalentClass":
           if (e.isOWLClass()) {
             cellMap.put(
-                "owl:equivalentClass",
+                col,
                 classExpressionsToString(
                     EntitySearcher.getEquivalentClasses(e.asOWLClass(), ontology),
                     provider,
@@ -309,17 +310,17 @@ public class ExportOperation {
                     .stream()
                     .map(provider::getShortForm)
                     .collect(Collectors.toList());
-            cellMap.put("owl:equivalentProperty", String.join("|", eqs));
+            cellMap.put(col, String.join("|", eqs));
           } else if (e.isOWLDataProperty()) {
             cellMap.put(
-                "owl:equivalentProperty",
+                col,
                 propertyExpressionsToString(
                     EntitySearcher.getEquivalentProperties(e.asOWLDataProperty(), ontology),
                     provider,
                     excludeAnonymous));
           } else if (e.isOWLObjectProperty()) {
             cellMap.put(
-                "owl:equivalentProperty",
+                col,
                 propertyExpressionsToString(
                     EntitySearcher.getEquivalentProperties(e.asOWLObjectProperty(), ontology),
                     provider,
@@ -330,7 +331,7 @@ public class ExportOperation {
         case "owl:disjointWith":
           if (e.isOWLClass()) {
             cellMap.put(
-                "owl:disjointWith",
+                col,
                 classExpressionsToString(
                     EntitySearcher.getDisjointClasses(e.asOWLClass(), ontology),
                     provider,
@@ -341,17 +342,17 @@ public class ExportOperation {
                     .stream()
                     .map(provider::getShortForm)
                     .collect(Collectors.toList());
-            cellMap.put("owl:disjointWith", String.join("|", eqs));
+            cellMap.put(col, String.join("|", eqs));
           } else if (e.isOWLDataProperty()) {
             cellMap.put(
-                "owl:disjointWith",
+                col,
                 propertyExpressionsToString(
                     EntitySearcher.getDisjointProperties(e.asOWLDataProperty(), ontology),
                     provider,
                     excludeAnonymous));
           } else if (e.isOWLObjectProperty()) {
             cellMap.put(
-                "owl:disjointWith",
+                col,
                 propertyExpressionsToString(
                     EntitySearcher.getDisjointProperties(e.asOWLObjectProperty(), ontology),
                     provider,
@@ -362,12 +363,13 @@ public class ExportOperation {
         case "rdf:type":
           if (e.isOWLNamedIndividual()) {
             cellMap.put(
-                "rdf:type",
+                col,
                 classExpressionsToString(
                     EntitySearcher.getTypes(e.asOWLNamedIndividual(), ontology),
                     provider,
                     excludeAnonymous));
           }
+          break;
         default:
           OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(col, false);
           if (ap != null) {
@@ -495,7 +497,7 @@ public class ExportOperation {
               .sorted(String::compareToIgnoreCase)
               .collect(Collectors.toList());
       return String.join("|", pvStrings);
-    } else if (entity.isOWLClass() && !excludeAnonymous) {
+    } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
       Set<OWLDatatype> vals = new HashSet<>();
       for (OWLClassExpression expr :
@@ -504,7 +506,7 @@ public class ExportOperation {
           continue;
         }
         // break down into conjuncts
-        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp));
+        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, excludeAnonymous));
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
@@ -513,7 +515,7 @@ public class ExportOperation {
           continue;
         }
         // break down into conjuncts
-        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp));
+        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, excludeAnonymous));
       }
       if (vals.isEmpty()) {
         return null;
@@ -554,7 +556,7 @@ public class ExportOperation {
               .sorted(String::compareToIgnoreCase)
               .collect(Collectors.toList());
       return String.join("|", pvStrings);
-    } else if (entity.isOWLClass() && !excludeAnonymous) {
+    } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
       Set<OWLClassExpression> exprs = new HashSet<>();
       for (OWLClassExpression expr :
@@ -563,7 +565,7 @@ public class ExportOperation {
           continue;
         }
         // break down into conjuncts
-        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op));
+        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, excludeAnonymous));
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
@@ -572,7 +574,7 @@ public class ExportOperation {
           continue;
         }
         // break down into conjuncts
-        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op));
+        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, excludeAnonymous));
       }
       if (exprs.isEmpty()) {
         return null;
@@ -590,10 +592,11 @@ public class ExportOperation {
    *
    * @param exprs set of OWLClassExpressions to check
    * @param dp OWLDataProperty to look for
+   * @param excludeAnonymous if true, exclude anonymous data ranges
    * @return set of OWLDatatype fillers that are 'values' of the data property
    */
   private static Set<OWLDatatype> getRestrictionFillers(
-      Set<OWLClassExpression> exprs, OWLDataProperty dp) {
+      Set<OWLClassExpression> exprs, OWLDataProperty dp, boolean excludeAnonymous) {
     Set<OWLDatatype> fillers = new HashSet<>();
     for (OWLClassExpression ce : exprs) {
       ClassExpressionType t = ce.getClassExpressionType();
@@ -605,6 +608,10 @@ public class ExportOperation {
         OWLDataPropertyExpression pe = qr.getProperty();
         // Get the data range
         OWLDataRange f = qr.getFiller();
+        if (excludeAnonymous && f.isAnonymous()) {
+          // Maybe skip anonymous
+          continue;
+        }
         if (!pe.isAnonymous()) {
           OWLDataProperty p = pe.asOWLDataProperty();
           if (p.getIRI() == dp.getIRI()) {
@@ -626,10 +633,11 @@ public class ExportOperation {
    *
    * @param exprs set of OWLClassExpressions to check
    * @param op OWLObjectProperty to look for
+   * @param excludeAnonymous if true, exclude anonymous class expressions
    * @return set of OWLClassExpression fillers that are 'values' of the object property
    */
   private static Set<OWLClassExpression> getRestrictionFillers(
-      Set<OWLClassExpression> exprs, OWLObjectProperty op) {
+      Set<OWLClassExpression> exprs, OWLObjectProperty op, boolean excludeAnonymous) {
     Set<OWLClassExpression> fillers = new HashSet<>();
     for (OWLClassExpression ce : exprs) {
       ClassExpressionType t = ce.getClassExpressionType();
@@ -641,6 +649,9 @@ public class ExportOperation {
         OWLObjectPropertyExpression pe = qr.getProperty();
         // Get the class expression
         OWLClassExpression f = qr.getFiller();
+        if (excludeAnonymous && f.isAnonymous()) {
+          continue;
+        }
         if (!pe.isAnonymous()) {
           OWLObjectProperty p = pe.asOWLObjectProperty();
           if (p.getIRI() == op.getIRI()) {

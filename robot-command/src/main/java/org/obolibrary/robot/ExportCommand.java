@@ -104,6 +104,13 @@ public class ExportCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line, false);
     OWLOntology ontology = state.getOntology();
 
+    if (ontology == null) {
+      if (line.hasOption("input")) {
+        throw new IllegalArgumentException(
+            String.format("Input ontology '%s' does not exist", line.getOptionValue("input")));
+      }
+    }
+
     // Override default reasoner options with command-line options
     Map<String, String> exportOptions = ExportOperation.getDefaultOptions();
     for (String option : exportOptions.keySet()) {
