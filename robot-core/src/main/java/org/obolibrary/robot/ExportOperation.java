@@ -27,6 +27,9 @@ public class ExportOperation {
   private static final String invalidColumnError =
       NS + "INVALID COLUMN ERROR unable to find property for column header '%s'";
 
+  private static final String excludeAllError =
+      NS + "EXCLUDE ALL ERROR you cannot exclude all types of ontology terms";
+
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
   /**
@@ -36,7 +39,9 @@ public class ExportOperation {
    */
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
-    options.put("classes-only", "false");
+    options.put("exclude-classes", "false");
+    options.put("exclude-properties", "true");
+    options.put("exclude-individuals", "false");
     options.put("exclude-anonymous", "false");
     options.put("sort", null);
     return options;
@@ -61,13 +66,11 @@ public class ExportOperation {
       File exportFile,
       Map<String, String> options)
       throws Exception {
-    boolean classesOnly = OptionsHelper.optionIsTrue(options, "classes-only");
     boolean excludeAnonymous = OptionsHelper.optionIsTrue(options, "exclude-anonymous");
     String sortColumn = OptionsHelper.getOption(options, "sort");
     if (sortColumn == null) {
       sortColumn = columns.get(0);
     }
-    System.out.println(sortColumn);
 
     String delimiter;
     if (exportFile.getPath().endsWith(".csv")) {
@@ -84,7 +87,7 @@ public class ExportOperation {
     checker.addAll(ontology);
 
     // Get the entities to include in the spreadsheet
-    Set<OWLEntity> entities = getEntities(ontology, classesOnly);
+    Set<OWLEntity> entities = getEntities(ontology, options);
 
     // Get the label provider for Manchester rendering and labels
     DefaultPrefixManager pm = ioHelper.getPrefixManager();
@@ -155,21 +158,29 @@ public class ExportOperation {
         case "LABEL":
           headers.add("Label");
           break;
+        case "subclasses":
         case "rdfs:subClassOf":
           headers.add("SubClass Of");
           break;
+        case "subproperties":
         case "rdfs:subPropertyOf":
           headers.add("SubProperty Of");
           break;
+        case "equivalent-classes":
         case "owl:equivalentClass":
           headers.add("Equivalent Classes");
           break;
+        case "equivalent-properties":
         case "owl:equivalentProperty":
           headers.add("Equivalent Properties");
           break;
+        case "disjoints":
         case "owl:disjointWith":
           headers.add("Disjoint With");
           break;
+        case "types":
+        case "rdf:type":
+          headers.add("Instance Of");
         default:
           headers.add(col);
       }
@@ -243,6 +254,7 @@ public class ExportOperation {
         case "LABEL":
           cellMap.put("LABEL", provider.getShortForm(e));
           break;
+        case "subclasses":
         case "rdfs:subClassOf":
           if (e.isOWLClass()) {
             cellMap.put(
@@ -253,6 +265,7 @@ public class ExportOperation {
                     excludeAnonymous));
           }
           break;
+        case "subproperties":
         case "rdfs:subPropertyOf":
           if (e.isOWLAnnotationProperty()) {
             List<String> supers =
@@ -277,6 +290,7 @@ public class ExportOperation {
                     excludeAnonymous));
           }
           break;
+        case "equivalent-classes":
         case "owl:equivalentClass":
           if (e.isOWLClass()) {
             cellMap.put(
@@ -287,6 +301,7 @@ public class ExportOperation {
                     excludeAnonymous));
           }
           break;
+        case "equivalent-properties":
         case "owl:equivalentProperty":
           if (e.isOWLAnnotationProperty()) {
             List<String> eqs =
@@ -311,6 +326,7 @@ public class ExportOperation {
                     excludeAnonymous));
           }
           break;
+        case "disjoints":
         case "owl:disjointWith":
           if (e.isOWLClass()) {
             cellMap.put(
@@ -342,6 +358,16 @@ public class ExportOperation {
                     excludeAnonymous));
           }
           break;
+        case "types":
+        case "rdf:type":
+          if (e.isOWLNamedIndividual()) {
+            cellMap.put(
+                "rdf:type",
+                classExpressionsToString(
+                    EntitySearcher.getTypes(e.asOWLNamedIndividual(), ontology),
+                    provider,
+                    excludeAnonymous));
+          }
         default:
           OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(col, false);
           if (ap != null) {
@@ -369,10 +395,19 @@ public class ExportOperation {
    * of all entities in the ontology.
    *
    * @param ontology OWLOntology to get entities from
-   * @param classesOnly if true, only include classes in the set
+   * @param options map of export options
    * @return set of OWLEntities in the ontology
    */
-  private static Set<OWLEntity> getEntities(OWLOntology ontology, boolean classesOnly) {
+  private static Set<OWLEntity> getEntities(OWLOntology ontology, Map<String, String> options) {
+    // Determine what types of entities to include
+    boolean excludeClasses = OptionsHelper.optionIsTrue(options, "exclude-classes");
+    boolean excludeProperties = OptionsHelper.optionIsTrue(options, "exclude-properties");
+    boolean excludeIndividuals = OptionsHelper.optionIsTrue(options, "exclude-individuals");
+    if (excludeClasses && excludeProperties && excludeIndividuals) {
+      // If all three are true, nothing to include
+      throw new IllegalArgumentException(excludeAllError);
+    }
+
     Set<OWLEntity> entities = OntologyHelper.getEntities(ontology);
     // Remove defaults
     entities.remove(dataFactory.getOWLThing());
@@ -381,16 +416,24 @@ public class ExportOperation {
     entities.remove(dataFactory.getOWLBottomObjectProperty());
     entities.remove(dataFactory.getOWLTopDataProperty());
     entities.remove(dataFactory.getOWLBottomDataProperty());
-    if (!classesOnly) {
-      return entities;
-    }
-    Set<OWLEntity> classes = new HashSet<>();
+
+    // If we need to exclude anything, return a set of trimmed entities
+    Set<OWLEntity> trimmedEntities = new HashSet<>();
     for (OWLEntity e : entities) {
-      if (e.isOWLClass()) {
-        classes.add(e);
+      if (e.isOWLClass() && excludeClasses) {
+        continue;
+      } else if ((e.isOWLObjectProperty() || e.isOWLDataProperty() || e.isOWLAnnotationProperty())
+          && excludeProperties) {
+        continue;
+      } else if (e.isOWLNamedIndividual() && excludeIndividuals) {
+        continue;
+      } else if (e.isOWLDatatype()) {
+        // Always exclude datatypes
+        continue;
       }
+      trimmedEntities.add(e);
     }
-    return classes;
+    return trimmedEntities;
   }
 
   /**
@@ -453,7 +496,7 @@ public class ExportOperation {
               .collect(Collectors.toList());
       return String.join("|", pvStrings);
     } else if (entity.isOWLClass() && !excludeAnonymous) {
-      // Find anon superclasses that use this property
+      // Find super class expressions that use this property
       Set<OWLDatatype> vals = new HashSet<>();
       for (OWLClassExpression expr :
           EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
@@ -463,6 +506,7 @@ public class ExportOperation {
         // break down into conjuncts
         vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp));
       }
+      // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
           EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)) {
         if (!expr.isAnonymous()) {
@@ -474,6 +518,7 @@ public class ExportOperation {
       if (vals.isEmpty()) {
         return null;
       }
+      // Return values separated by pipes
       return vals.stream().map(provider::getShortForm).collect(Collectors.joining("|"));
     } else {
       return null;
@@ -510,7 +555,7 @@ public class ExportOperation {
               .collect(Collectors.toList());
       return String.join("|", pvStrings);
     } else if (entity.isOWLClass() && !excludeAnonymous) {
-      // Find anon superclasses that use this property
+      // Find super class expressions that use this property
       Set<OWLClassExpression> exprs = new HashSet<>();
       for (OWLClassExpression expr :
           EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
@@ -520,6 +565,7 @@ public class ExportOperation {
         // break down into conjuncts
         exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op));
       }
+      // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
           EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)) {
         if (!expr.isAnonymous()) {
@@ -537,6 +583,15 @@ public class ExportOperation {
     }
   }
 
+  /**
+   * Given a set of OWL class expressions and a data property, get the fillers of the restrictions
+   * (SOME or ALL) as datatypes and determine if the data property used in the original expression
+   * matches the provided data property. If so, add the filler to the set of datatypes to return.
+   *
+   * @param exprs set of OWLClassExpressions to check
+   * @param dp OWLDataProperty to look for
+   * @return set of OWLDatatype fillers that are 'values' of the data property
+   */
   private static Set<OWLDatatype> getRestrictionFillers(
       Set<OWLClassExpression> exprs, OWLDataProperty dp) {
     Set<OWLDatatype> fillers = new HashSet<>();
@@ -544,8 +599,11 @@ public class ExportOperation {
       ClassExpressionType t = ce.getClassExpressionType();
       if (t == ClassExpressionType.DATA_ALL_VALUES_FROM
           || t == ClassExpressionType.DATA_SOME_VALUES_FROM) {
+        // Convert to quantified restriction
         OWLQuantifiedDataRestriction qr = (OWLQuantifiedDataRestriction) ce;
+        // Get the property used
         OWLDataPropertyExpression pe = qr.getProperty();
+        // Get the data range
         OWLDataRange f = qr.getFiller();
         if (!pe.isAnonymous()) {
           OWLDataProperty p = pe.asOWLDataProperty();
@@ -560,6 +618,16 @@ public class ExportOperation {
     return fillers;
   }
 
+  /**
+   * Given a set of OWL class expressions and an object property, get the fillers of the
+   * restrictions (SOME or ALL) as class expressions and determine if the object property used in
+   * the original expression matches the provided object property. If so, add the filler to the set
+   * of class expressions to return.
+   *
+   * @param exprs set of OWLClassExpressions to check
+   * @param op OWLObjectProperty to look for
+   * @return set of OWLClassExpression fillers that are 'values' of the object property
+   */
   private static Set<OWLClassExpression> getRestrictionFillers(
       Set<OWLClassExpression> exprs, OWLObjectProperty op) {
     Set<OWLClassExpression> fillers = new HashSet<>();
@@ -567,8 +635,11 @@ public class ExportOperation {
       ClassExpressionType t = ce.getClassExpressionType();
       if (t == ClassExpressionType.OBJECT_ALL_VALUES_FROM
           || t == ClassExpressionType.OBJECT_SOME_VALUES_FROM) {
+        // Convert to quantified restriction
         OWLQuantifiedObjectRestriction qr = (OWLQuantifiedObjectRestriction) ce;
+        // Get the property used
         OWLObjectPropertyExpression pe = qr.getProperty();
+        // Get the class expression
         OWLClassExpression f = qr.getFiller();
         if (!pe.isAnonymous()) {
           OWLObjectProperty p = pe.asOWLObjectProperty();
@@ -593,6 +664,7 @@ public class ExportOperation {
    */
   private static String propertyExpressionsToString(
       Collection<?> props, ShortFormProvider provider, boolean excludeAnonymous) {
+    // Try to convert to object property expressions
     Collection<OWLObjectPropertyExpression> opes =
         props
             .stream()
@@ -600,6 +672,7 @@ public class ExportOperation {
             .filter(OWLPropertyExpression::isObjectPropertyExpression)
             .map(p -> (OWLObjectPropertyExpression) p)
             .collect(Collectors.toList());
+    // Try to convert to data property expressions
     Collection<OWLDataPropertyExpression> dpes =
         props
             .stream()
@@ -609,6 +682,8 @@ public class ExportOperation {
             .collect(Collectors.toList());
 
     List<String> strings = new ArrayList<>();
+    // Only one of the above collections will have entries
+    // Maybe process object property expressions
     for (OWLObjectPropertyExpression expr : opes) {
       if (expr.isAnonymous() && !excludeAnonymous) {
         String manString = renderManchester(expr, provider);
@@ -618,6 +693,7 @@ public class ExportOperation {
         strings.add(provider.getShortForm(op));
       }
     }
+    // Maybe process data property expressions
     for (OWLDataPropertyExpression expr : dpes) {
       if (expr.isAnonymous() && !excludeAnonymous) {
         String manString = renderManchester(expr, provider);
@@ -627,8 +703,11 @@ public class ExportOperation {
         strings.add(provider.getShortForm(dp));
       }
     }
+    // Sort alphabetically
     List<String> sorted =
         strings.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
+
+    // Return split by pipe character
     return String.join("|", sorted);
   }
 

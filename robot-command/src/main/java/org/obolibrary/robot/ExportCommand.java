@@ -24,8 +24,10 @@ public class ExportCommand implements Command {
     o.addOption("e", "export", true, "file to export ontology to");
     o.addOption("c", "columns", true, "ordered list of column names");
     o.addOption("s", "sort", true, "field to sort on (default: first column)");
-    o.addOption("C", "classes-only", true, "if true, only include classes in export");
-    o.addOption("x", "exclude-anonymous", true, "if true, exclude anonymous parents");
+    o.addOption("C", "exclude-classes", true, "if true, exclude classes (default: false)");
+    o.addOption("P", "exclude-properties", true, "if false, include properties (default: true)");
+    o.addOption("N", "exclude-individuals", true, "if true, exclude individuals (default: false)");
+    o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous parents");
 
     options = o;
   }
