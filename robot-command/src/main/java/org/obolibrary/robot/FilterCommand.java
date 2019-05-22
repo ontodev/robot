@@ -38,10 +38,7 @@ public class FilterCommand implements Command {
     o.addOption("a", "axioms", true, "filter only for given axiom types");
     o.addOption("r", "trim", true, "if true, keep axioms containing only selected objects");
     o.addOption(
-        "S",
-        "signature",
-        true,
-        "if true, keep axioms with any selected entity in their signature");
+        "S", "signature", true, "if true, keep axioms with any selected entity in their signature");
     options = o;
   }
 
@@ -197,7 +194,7 @@ public class FilterCommand implements Command {
       return state;
     } else if (objects.isEmpty()) {
       // Otherwise, proceed, and if objects is empty, add all objects
-      objects.addAll(OntologyHelper.getObjects(outputOntology));
+      objects.addAll(OntologyHelper.getObjects(inputOntology));
     }
 
     // Use the select statements to get a set of objects to remove
