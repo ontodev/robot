@@ -262,22 +262,6 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Given a set of OWL objects, return only the OWLEntities in that set.
-   *
-   * @param objects set of objects
-   * @return set of entities
-   */
-  private static Set<OWLEntity> getEntities(Set<OWLObject> objects) {
-    Set<OWLEntity> entities = new HashSet<>();
-    for (OWLObject o : objects) {
-      if (o instanceof OWLEntity) {
-        entities.add((OWLEntity) o);
-      }
-    }
-    return entities;
-  }
-
-  /**
    * Given an ontology, a set of objects, and a list of select groups (as lists), return the objects
    * related to the set of OWLObjects based on each set of selectors. Each selector group will build
    * on the previous group.
