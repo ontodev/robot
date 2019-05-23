@@ -18,6 +18,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
@@ -398,8 +399,8 @@ public class CommandLineHelper {
   }
 
   /**
-   * Given a command line, return an initialized IOHelper. The --prefix, --prefixes, --noprefixes
-   * and --xml-entities options are handled.
+   * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
+   * --noprefixes and --xml-entities options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper
@@ -415,6 +416,14 @@ public class CommandLineHelper {
     }
 
     for (String prefix : getOptionalValues(line, "prefix")) {
+      try {
+        ioHelper.addPrefix(prefix);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
+      }
+    }
+
+    for (String prefix : getOptionalValues(line, "add-prefix")) {
       try {
         ioHelper.addPrefix(prefix);
       } catch (IllegalArgumentException e) {
@@ -456,7 +465,8 @@ public class CommandLineHelper {
    * @throws IOException if the ontology cannot be loaded
    */
   public static OWLOntology getInputOntology(
-      IOHelper ioHelper, CommandLine line, String catalogPath) throws IllegalArgumentException, IOException {
+      IOHelper ioHelper, CommandLine line, String catalogPath)
+      throws IllegalArgumentException, IOException {
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
 
@@ -624,9 +634,35 @@ public class CommandLineHelper {
    */
   public static void maybeSaveOutput(CommandLine line, OWLOntology ontology) throws IOException {
     IOHelper ioHelper = getIOHelper(line);
+    // Determine if OBO structure should be enforced
+    boolean checkOBO = CommandLineHelper.getBooleanValue(line, "check", true);
+
+    // Determine if prefixes should be added to the header of output
+    List<String> addPrefixes = CommandLineHelper.getOptionalValues(line, "add-prefix");
+
+    // Get an output format or null
+    // If null, format will be guessed from the output path
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    OWLDocumentFormat df;
+    if (format != null) {
+      df = IOHelper.getFormat(format);
+    } else {
+      df = null;
+    }
+
+    // Save outputs
     for (String path : getOptionValues(line, "output")) {
       try {
-        ioHelper.saveOntology(ontology, path);
+        // maybe guess the document format
+        OWLDocumentFormat thisDf = df;
+        if (thisDf == null) {
+          if (path.endsWith(".gz")) {
+            path = path.substring(0, path.lastIndexOf("."));
+          }
+          String formatName = FilenameUtils.getExtension(path);
+          thisDf = IOHelper.getFormat(formatName);
+        }
+        ioHelper.saveOntology(ontology, thisDf, IRI.create(new File(path)), addPrefixes, checkOBO);
       } catch (IllegalArgumentException e) {
         // Exception from getFormat -- invalid format
         throw new IllegalArgumentException(
@@ -840,6 +876,8 @@ public class CommandLineHelper {
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
+    o.addOption(
+        "A", "add-prefix", true, "add a prefix 'foo: http://bar' and include it in the header");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");
     return o;
   }

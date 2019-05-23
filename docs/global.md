@@ -58,6 +58,18 @@ The various prefix options can be used with any command. When chaining commands,
       export-prefixes --prefix "bar: http://bar#" \
       export-prefixes
 
+The `--add-prefix` option allows you to specify a prefix mapping in the same way as `--prefix`:
+
+    robot --noprefixes --add-prefix "foo: http://foo#" \
+      export-prefixes --output results/foo.json
+
+The difference is that the `--prefix` option does not include the new prefix in the header of the output ontology, whereas `--add-prefix` does, for example in Turtle:
+
+```
+@prefix foo: <http://foo#> .
+```
+
+
 ## XML Catalogs
 
 OWLAPI, Protégé, and ROBOT use XML catalogs to specify where import files are located when loading an ontology. By default, this catalog is called `catalog-v001.xml`. ROBOT assumes that a `catalog-v001.xml` file exists in the working directory and attempts to resolve imports based on that. Because Protègè also predicts that catalog, we recommend sticking to this standard. For more details, see [Importing Ontologies in Protègè and OWL 2](https://protegewiki.stanford.edu/wiki/Importing_Ontologies_in_P41).

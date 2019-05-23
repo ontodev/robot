@@ -5,7 +5,6 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -59,7 +58,6 @@ public class RenameCommand implements Command {
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("m", "mappings", true, "table of mappings for renaming");
     o.addOption("r", "prefix-mappings", true, "table of prefix mappings for renaming");
-    o.addOption("A", "add-prefix", true, "add a new prefix to ontology file header");
     o.addOption(
         "d",
         "allow-duplicates",
@@ -136,12 +134,6 @@ public class RenameCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    // Get additional prefixes to add to prefix manager
-    List<String> addPrefixes = CommandLineHelper.getOptionalValues(line, "add-prefix");
-    for (String pref : addPrefixes) {
-      ioHelper.addPrefix(pref);
-    }
-
     String fullFile = CommandLineHelper.getOptionalValue(line, "mappings");
     String prefixFile = CommandLineHelper.getOptionalValue(line, "prefix-mappings");
     if (fullFile == null && prefixFile == null) {
@@ -165,12 +157,7 @@ public class RenameCommand implements Command {
       RenameOperation.renamePrefixes(ontology, ioHelper, mappings);
     }
 
-    if (!addPrefixes.isEmpty()) {
-      ioHelper.addPrefixesAndSave(ontology, CommandLineHelper.getOutputFile(line), addPrefixes);
-    } else {
-      CommandLineHelper.maybeSaveOutput(line, ontology);
-    }
-
+    CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
     return state;
   }

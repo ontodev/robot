@@ -21,14 +21,8 @@ Renames the base IRIs of all matching entites (e.g. change the prefix `http://pu
       --prefix-mappings partial-rename.tsv \
       --add-prefix "fb: http://foo.bar/"
       --output results/partial-rename.owl
-      
-The `--add-prefix` option allows you to specify a prefix mapping in the same way as the [global prefix option](/global#prefixes). This will be added to the output ontology:
 
-```
-Prefix(fb:=<http://foo.bar/>)
-```
-
-The difference is that the global `--prefix` option does not include the prefix in the output ontology.
+More information on the `--add-prefix` option can be found in [Global Options](/global#prefixes).
 
 ### Mappings Files
 
