@@ -26,3 +26,38 @@ finger SubClassOf 'part of' some hand
 ## Combination with other commands
 
 A common sequence is [reason](/reason) [relax](/relax) [reduce](/reduce), with the last step removing any redundancies in the SubClassOf graph introduced by the relax step.
+
+For example, given an ontology with the following axioms:
+
+```
+1. 'cerebellar neuron' EquivalentTo neuron and 'part of' some cerebellum
+2. 'hindbrain neuron' EquivalentTo neuron and 'part of' some brain
+3. cerebellum SubClassOf 'part of' some brain
+4. Transitive('part of')
+```
+
+Running `relax` will yield the following axioms about cerebellar neurons:
+
+```
+5. 'cerebellar neuron' SubClassOf neuron
+6. 'cerebellar neuron' SubClassOf 'part of' some cerebellum
+```
+
+Running `reason` will yield the following axioms about cerebellar neurons:
+
+```
+7. 'cerebellar neuron' SubClassOf 'hindbrain neuron`
+```
+
+Running `reduce` will remove the redundant axiom (5), leaving the following axioms about cerebellar neurons:
+
+```
+5. 'cerebellar neuron' SubClassOf 'hindbrain neuron'
+6. 'cerebellar neuron' SubClassOf 'part of' some cerebellum
+```
+
+This SubClassOf graph is complete and non-redundant, and can be used for intuitive visualization and browsing of the ontology
+
+
+
+
