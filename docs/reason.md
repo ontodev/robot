@@ -103,3 +103,15 @@ You must select between `--create-new-ontology-with-annotations` (`-m`) and `--c
 ### Axiom Generator Error
 
 The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](/reason#axiom-generators).
+
+### No equivalent class axioms are allowed
+
+This is raised if equivalence between two classes is detected, and robot is configured to throw an error here.
+
+In many cases, inferring equivalence between two classes is usually a sign that something has gone wrong. Sometimes we want to avoid equivalence between named classes at all (in the case of OBO, where we strive for orthogonality). Users will likely want to configure this behavior. This can be done through `--equivalent-classes-allowed` (shorthand `-e`). 
+
+The options are:
+
+ * all: always allow
+ * none: never allow
+ * asserted-only: allow asserted equivalence, but throw an error if equivalence is inferred
