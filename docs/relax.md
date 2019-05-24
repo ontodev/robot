@@ -52,8 +52,8 @@ Running `reason` will yield the following axioms about cerebellar neurons:
 Running `reduce` will remove the redundant axiom (5), leaving the following axioms about cerebellar neurons:
 
 ```
-5. 'cerebellar neuron' SubClassOf 'hindbrain neuron'
 6. 'cerebellar neuron' SubClassOf 'part of' some cerebellum
+7. 'cerebellar neuron' SubClassOf 'hindbrain neuron'
 ```
 
 This SubClassOf graph is complete and non-redundant, and can be used for intuitive visualization and browsing of the ontology
