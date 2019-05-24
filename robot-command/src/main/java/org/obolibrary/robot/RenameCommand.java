@@ -63,6 +63,7 @@ public class RenameCommand implements Command {
         "allow-duplicates",
         true,
         "allow two or more terms to be renamed to the same full IRI");
+    o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     options = o;
   }
 

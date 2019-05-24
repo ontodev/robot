@@ -58,12 +58,16 @@ The various prefix options can be used with any command. When chaining commands,
       export-prefixes --prefix "bar: http://bar#" \
       export-prefixes
 
-The `--add-prefix` option allows you to specify a prefix mapping in the same way as `--prefix`:
+The `--add-prefix` and `--add-prefixes` options allows you to specify prefix mappings in the same way as `--prefix` and `--prefixes`:
 
     robot --noprefixes --add-prefix "foo: http://foo#" \
       export-prefixes --output results/foo.json
 
-The difference is that the `--prefix` option does not include the new prefix in the header of the output ontology, whereas `--add-prefix` does, for example in Turtle:
+    robot --noprefixes --add-prefixes foo.json \
+      -ap "bar: http://bar#" -ap "baz: http://baz#" \
+      export-prefixes
+
+The difference is that the `--prefix`/`--prefixes` options do not include the new prefix in the header of the output ontology, whereas `--add-prefix`/`--add-prefixes` options do, for example in Turtle:
 
 ```
 @prefix foo: <http://foo#> .

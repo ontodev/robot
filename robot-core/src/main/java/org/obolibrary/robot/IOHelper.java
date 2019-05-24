@@ -59,7 +59,7 @@ public class IOHelper {
   private static final String NS = "errors#";
 
   /** Error message when the specified file does not exist. Expects file name. */
-  private static final String fileDoesNotExistError =
+  static final String fileDoesNotExistError =
       NS + "FILE DOES NOT EXIST ERROR File does not exist: %s";
 
   /** Error message when an invalid extension is provided (file format). Expects the file format. */
@@ -168,7 +168,7 @@ public class IOHelper {
    * Given an ontology, a file, and a list of prefixes, save the ontology to the file and include
    * the prefixes in the header.
    *
-   * @deprecated replaced by {@link #saveOntology(OWLOntology, OWLDocumentFormat, IRI, List,
+   * @deprecated replaced by {@link #saveOntology(OWLOntology, OWLDocumentFormat, IRI, Map,
    *     boolean)}
    * @param ontology OWLOntology to save
    * @param outputFile File to save ontology to
@@ -187,7 +187,17 @@ public class IOHelper {
       return;
     }
 
-    addPrefixes(df, addPrefixes);
+    // Convert prefixes to map
+    Map<String, String> prefixMap = new HashMap<>();
+    for (String pref : addPrefixes) {
+      String[] split = pref.split(": ");
+      if (split.length != 2) {
+        throw new IOException(String.format(invalidPrefixError, pref));
+      }
+      prefixMap.put(split[0], split[1]);
+    }
+
+    addPrefixes(df, prefixMap);
     saveOntology(ontology, df, IRI.create(outputFile));
   }
 
@@ -600,7 +610,7 @@ public class IOHelper {
    * @param ontology the ontology to save
    * @param format the ontology format to use
    * @param ontologyIRI the IRI to save the ontology to
-   * @param addPrefixes list of prefixes to add to header
+   * @param addPrefixes map of prefixes to add to header
    * @param checkOBO if false, ignore OBO document checks
    * @return the saved ontology
    * @throws IOException on any problem
@@ -609,7 +619,7 @@ public class IOHelper {
       final OWLOntology ontology,
       OWLDocumentFormat format,
       IRI ontologyIRI,
-      List<String> addPrefixes,
+      Map<String, String> addPrefixes,
       boolean checkOBO)
       throws IOException {
     // Determine the format if not provided
@@ -938,6 +948,22 @@ public class IOHelper {
   }
 
   /**
+   * Given a path to a JSON-LD prefix file, add the prefix mappings in the file to the current
+   * JSON-LD context.
+   *
+   * @param prefixPath path to JSON-LD prefix file to add
+   * @throws IOException if the file does not exist or cannot be read
+   */
+  public void addPrefixes(String prefixPath) throws IOException {
+    File prefixFile = new File(prefixPath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, prefixPath));
+    }
+    Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    context.putAll(context1.getPrefixes(false));
+  }
+
+  /**
    * Get a copy of the current prefix map.
    *
    * @return a copy of the current prefix map
@@ -1073,25 +1099,22 @@ public class IOHelper {
   }
 
   /**
-   * Given a document format and a list of prefixes to add, add the prefixes to the document.
+   * Given a document format and a map of prefixes to add, add the prefixes to the document.
    *
    * @param df OWLDocumentFormat
-   * @param addPrefixes list of prefixes from command line option
-   * @throws IOException if prefixes are not formatted correctly
+   * @param addPrefixes map of prefix to namespace to add
    */
-  private void addPrefixes(OWLDocumentFormat df, List<String> addPrefixes) throws IOException {
+  private void addPrefixes(OWLDocumentFormat df, Map<String, String> addPrefixes) {
     if (!df.isPrefixOWLOntologyFormat()) {
       // Warn on non-prefix document format (i.e. OBO)
-      logger.warn(String.format("Unable to add prefixes to %s document", df.toString()));
+      logger.warn(
+          String.format(
+              "Unable to add prefixes to %s document - saving without prefixes", df.toString()));
       return;
     }
     PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
-    for (String pref : addPrefixes) {
-      String[] split = pref.split(": ");
-      if (split.length != 2) {
-        throw new IOException(String.format(invalidPrefixError, pref));
-      }
-      pf.setPrefix(split[0].trim(), split[1].trim());
+    for (Map.Entry<String, String> pref : addPrefixes.entrySet()) {
+      pf.setPrefix(pref.getKey(), pref.getValue());
     }
   }
 

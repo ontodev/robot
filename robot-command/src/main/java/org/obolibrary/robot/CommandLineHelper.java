@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.github.jsonldjava.core.Context;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -400,7 +401,7 @@ public class CommandLineHelper {
 
   /**
    * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
-   * --noprefixes and --xml-entities options are handled.
+   * --add-prefixes, --noprefixes and --xml-entities options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper
@@ -414,21 +415,17 @@ public class CommandLineHelper {
     } else {
       ioHelper = new IOHelper(!line.hasOption("noprefixes"));
     }
+    prefixes = getOptionalValue(line, "add-prefixes");
+    if (prefixes != null) {
+      ioHelper.addPrefixes(prefixes);
+    }
 
     for (String prefix : getOptionalValues(line, "prefix")) {
-      try {
-        ioHelper.addPrefix(prefix);
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
-      }
+      ioHelper.addPrefix(prefix);
     }
 
     for (String prefix : getOptionalValues(line, "add-prefix")) {
-      try {
-        ioHelper.addPrefix(prefix);
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
-      }
+      ioHelper.addPrefix(prefix);
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
@@ -638,7 +635,8 @@ public class CommandLineHelper {
     boolean checkOBO = CommandLineHelper.getBooleanValue(line, "check", true);
 
     // Determine if prefixes should be added to the header of output
-    List<String> addPrefixes = CommandLineHelper.getOptionalValues(line, "add-prefix");
+    // Create a map of these to include in output (or an empty map)
+    Map<String, String> addPrefixes = getAddPrefixes(line);
 
     // Get an output format or null
     // If null, format will be guessed from the output path
@@ -687,6 +685,37 @@ public class CommandLineHelper {
       throw new IllegalArgumentException(String.format(invalidIRIError, field, term));
     }
     return iri;
+  }
+
+  /**
+   * Given a command line, get a map of all prefixes to use and add to the output.
+   *
+   * @param line the command line to use
+   * @return a map of prefixes to add to output
+   * @throws IOException if the prefixes are not formatted correctly or a JSON file cannot be read
+   */
+  public static Map<String, String> getAddPrefixes(CommandLine line) throws IOException {
+    Map<String, String> addPrefixes = new HashMap<>();
+    if (line.hasOption("add-prefix")) {
+      for (String pref : CommandLineHelper.getOptionalValues(line, "add-prefix")) {
+        String[] split = pref.split(": ");
+        if (split.length != 2) {
+          throw new IOException(String.format(IOHelper.invalidPrefixError, pref));
+        }
+        addPrefixes.put(split[0], split[1]);
+      }
+    }
+    if (line.hasOption("add-prefixes")) {
+      for (String prefixFilePath : CommandLineHelper.getOptionalValues(line, "add-prefixes")) {
+        File prefixFile = new File(prefixFilePath);
+        if (!prefixFile.exists()) {
+          throw new IOException(String.format(IOHelper.fileDoesNotExistError, prefixFilePath));
+        }
+        Context json = IOHelper.parseContext(FileUtils.readFileToString(prefixFile));
+        addPrefixes.putAll(json.getPrefixes(false));
+      }
+    }
+    return addPrefixes;
   }
 
   /**
@@ -876,8 +905,8 @@ public class CommandLineHelper {
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
-    o.addOption(
-        "A", "add-prefix", true, "add a prefix 'foo: http://bar' and include it in the header");
+    o.addOption("ap", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
+    o.addOption("AP", "add-prefixes", true, "add JSON-LD prefixes to the output");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");
     return o;
   }
