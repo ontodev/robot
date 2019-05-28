@@ -64,7 +64,7 @@ The `--add-prefix` and `--add-prefixes` options allows you to specify prefix map
       export-prefixes --output results/foo.json
 
     robot --noprefixes --add-prefixes foo.json \
-      -ap "bar: http://bar#" -ap "baz: http://baz#" \
+      -add-prefix "bar: http://bar#" -add-prefix "baz: http://baz#" \
       export-prefixes
 
 The difference is that the `--prefix`/`--prefixes` options do not include the new prefix in the header of the output ontology, whereas `--add-prefix`/`--add-prefixes` options do, for example in Turtle:
