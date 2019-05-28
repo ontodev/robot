@@ -65,11 +65,14 @@ public class ReasonOperation {
    *
    * @param ontology the ontology to reason over
    * @param reasonerFactory the factory to create a reasoner instance from
-   * @throws Exception if ontology is invalid
+   * @throws OntologyLogicException if the ontology contains unsatisfiable classes, properties or
+   *     inconsistencies
+   * @throws OWLOntologyCreationException if ontology cannot be created
+   * @throws InvalidReferenceException if the reference checker fails
    */
-  public static void reasonOperation(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws Exception {
-    reasonOperation(ontology, reasonerFactory, getDefaultOptions());
+  public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
+      throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
+    reason(ontology, reasonerFactory, getDefaultOptions());
   }
 
   /**
@@ -79,11 +82,14 @@ public class ReasonOperation {
    * @param ontology the ontology to reason over
    * @param reasonerFactory the factory to create a reasoner instance from
    * @param options a map of option strings, or null
-   * @throws Exception if ontology is invalid
+   * @throws OntologyLogicException if the ontology contains unsatisfiable classes, properties or
+   *     inconsistencies
+   * @throws OWLOntologyCreationException if ontology cannot be created
+   * @throws InvalidReferenceException if the reference checker fails
    */
-  public static void reasonOperation(
+  public static void reason(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws Exception {
+      throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
     // Check the ontology for reference violations
@@ -101,54 +107,6 @@ public class ReasonOperation {
 
     // Assert inferred axioms in the ontology
     assertInferred(ontology, reasoner, gens, options);
-  }
-
-  /**
-   * Given an ontology and a reasoner factory, return the ontology with inferred axioms added after
-   * reasoning. Use default options.
-   *
-   * @deprecated replaced by {@link #reasonOperation(OWLOntology, OWLReasonerFactory)}
-   * @param ontology the ontology to reason over
-   * @param reasonerFactory the factory to create a reasoner instance from
-   * @throws OntologyLogicException if the ontology contains unsatisfiable classes, properties or
-   *     inconsistencies
-   * @throws OWLOntologyCreationException if ontology cannot be created
-   * @throws InvalidReferenceException if the reference checker fails
-   */
-  @Deprecated
-  public static void reason(OWLOntology ontology, OWLReasonerFactory reasonerFactory)
-      throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
-    reason(ontology, reasonerFactory, getDefaultOptions());
-  }
-
-  /**
-   * Given an ontology, a reasoner factory, and a map of options, return the ontology with inferred
-   * axioms added after reasoning.
-   *
-   * @deprecated replaced by {@link #reasonOperation(OWLOntology, OWLReasonerFactory, Map)}
-   * @param ontology the ontology to reason over
-   * @param reasonerFactory the factory to create a reasoner instance from
-   * @param options a map of option strings, or null
-   * @throws OntologyLogicException if the ontology contains unsatisfiable classes, properties or
-   *     inconsistencies
-   * @throws OWLOntologyCreationException if ontology cannot be created
-   * @throws InvalidReferenceException if the reference checker fails
-   */
-  @Deprecated
-  public static void reason(
-      OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
-      throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
-    try {
-      reasonOperation(ontology, reasonerFactory, options);
-    } catch (OntologyLogicException | OWLOntologyCreationException | InvalidReferenceException e) {
-      // Rethrow any of these exceptions
-      throw e;
-    } catch (Exception e) {
-      // Generic Exception is an issue with equivalence axioms
-      // Logger will have printed out details
-      // Just exit with status 1 after that
-      System.exit(1);
-    }
   }
 
   /**
@@ -572,10 +530,11 @@ public class ReasonOperation {
    * @param ontology OWLOntology to reason over
    * @param reasoner OWLReasoner to use
    * @param options Map of reason options
-   * @throws Exception on invalid ontology
+   * @throws OntologyLogicException on invalid ontology
    */
   private static void reason(
-      OWLOntology ontology, OWLReasoner reasoner, Map<String, String> options) throws Exception {
+      OWLOntology ontology, OWLReasoner reasoner, Map<String, String> options)
+      throws OntologyLogicException {
     long startTime = System.currentTimeMillis();
     logger.info("Starting reasoning...");
 
@@ -595,7 +554,7 @@ public class ReasonOperation {
     boolean passesEquivalenceTests = equivalentReasoning.reason();
     equivalentReasoning.logReport(logger);
     if (!passesEquivalenceTests) {
-      throw new Exception(equivalentClassAxiomError);
+      throw new OntologyLogicException(equivalentClassAxiomError);
     }
 
     float elapsedTime = System.currentTimeMillis() - startTime;

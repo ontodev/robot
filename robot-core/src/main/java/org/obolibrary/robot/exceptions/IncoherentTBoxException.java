@@ -16,5 +16,6 @@ public class IncoherentTBoxException extends OntologyLogicException {
   /** @param unsatisfiableClasses list of unsat classes */
   public IncoherentTBoxException(Set<OWLClass> unsatisfiableClasses) {
     // TODO Auto-generated constructor stub
+    super(unsatisfiableClasses);
   }
 }
