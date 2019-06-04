@@ -60,7 +60,7 @@ The various prefix options can be used with any command. When chaining commands,
 
 ## XML Catalogs
 
-OWLAPI, Protégé, and ROBOT use XML catalogs to specify where import files are located when loading an ontology. By default, this catalog is called `catalog-v001.xml`. ROBOT assumes that a `catalog-v001.xml` file exists in the working directory and attempts to resolve imports based on that. Because Protègè also predicts that catalog, we recommend sticking to this standard. For more details, see [Importing Ontologies in Protègè and OWL 2](https://protegewiki.stanford.edu/wiki/Importing_Ontologies_in_P41).
+OWLAPI, Protégé, and ROBOT use XML catalogs to specify where import files are located when loading an ontology. By default, this catalog is called `catalog-v001.xml`. ROBOT assumes that a `catalog-v001.xml` file exists in the input directory (the same directory as the `--input` ontology) and attempts to resolve imports based on that. Because Protégé also predicts that catalog, we recommend sticking to this standard. For more details, see [Importing Ontologies in Protégé and OWL 2](https://protegewiki.stanford.edu/wiki/Importing_Ontologies_in_P41).
 
 That said, occasionally, you may want to use different catalog files for different purposes. This is especially useful for automated releases with [Makefiles](/makefile). ROBOT provides an option to specify the catalog location with `--catalog`. 
 
