@@ -1,0 +1,7 @@
+{
+  "@context" : {
+    "foo" : "http://foo#",
+    "bar" : "http://bar#",
+    "baz" : "http://baz#"
+  }
+}
