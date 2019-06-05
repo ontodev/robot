@@ -8,7 +8,7 @@ Sometimes when working with very large ontologies, the JVM will run out of memor
 
 #### Linux & MacOS
 
-The Java options for ROBOT can be set by running `export ROBOT_JAVA_ARGS=<options>` prior to running a ROBOT command. This will only save the Java options in the current process space. 
+The Java options for ROBOT can be set by running `export ROBOT_JAVA_ARGS=<options>` prior to running a ROBOT command. This will only save the Java options in the current process space.
 
 To set the Java options for ROBOT permanently, you will need to edit your `.bash_profile` and add the line `export ROBOT_JAVA_ARGS=<options>`. This is the same file you edited to add ROBOT to your system PATH, usually located in your root directory. You can verify that the variable is set by running `echo $ROBOT_JAVA_ARGS`.
 
@@ -58,11 +58,26 @@ The various prefix options can be used with any command. When chaining commands,
       export-prefixes --prefix "bar: http://bar#" \
       export-prefixes
 
+The `--add-prefix` and `--add-prefixes` options allows you to specify prefix mappings in the same way as `--prefix` and `--prefixes`:
+
+    robot --noprefixes --add-prefixes foo.json \
+      --add-prefix "bar: http://bar#" --add-prefix "baz: http://baz#" \
+      export-prefixes --output results/bar.json
+
+The difference is that the `--prefix`/`--prefixes` options do not include the new prefix in the header of the output ontology, whereas `--add-prefix`/`--add-prefixes` options do, for example in Turtle:
+
+```
+@prefix foo: <http://foo#> .
+@prefix bar: <http://bar#> .
+@prefix baz: <http://baz#> .
+```
+
+
 ## XML Catalogs
 
 OWLAPI, Protégé, and ROBOT use XML catalogs to specify where import files are located when loading an ontology. By default, this catalog is called `catalog-v001.xml`. ROBOT assumes that a `catalog-v001.xml` file exists in the input directory (the same directory as the `--input` ontology) and attempts to resolve imports based on that. Because Protégé also predicts that catalog, we recommend sticking to this standard. For more details, see [Importing Ontologies in Protégé and OWL 2](https://protegewiki.stanford.edu/wiki/Importing_Ontologies_in_P41).
 
-That said, occasionally, you may want to use different catalog files for different purposes. This is especially useful for automated releases with [Makefiles](/makefile). ROBOT provides an option to specify the catalog location with `--catalog`. 
+That said, occasionally, you may want to use different catalog files for different purposes. This is especially useful for automated releases with [Makefiles](/makefile). ROBOT provides an option to specify the catalog location with `--catalog`.
 
 For example, you may want to [`merge`](/merge) a set of edited import ontologies to create a module. You may have one set of imports for one module, and another set of imports for another module. You can also chain this command with [`annotate`](/annotate) to specify the output ontology's IRI.
 
