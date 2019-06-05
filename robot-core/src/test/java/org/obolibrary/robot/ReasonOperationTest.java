@@ -314,7 +314,6 @@ public class ReasonOperationTest extends CoreTest {
 
     options.put("axiom-generators", "EquivalentDataProperties SubDataProperty");
     ReasonOperation.reason(ontology, reasonerFactory, options);
-    IOHelper ioHelper = new IOHelper();
 
     // subproperty
     assertTrue(
