@@ -1,11 +1,9 @@
 package org.obolibrary.robot;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -22,12 +20,11 @@ public class ExportCommand implements Command {
     o.addOption("i", "input", true, "load ontology to merge from a file");
     o.addOption("I", "input-iri", true, "load ontology to merge from an IRI");
     o.addOption("e", "export", true, "file to export ontology to");
-    o.addOption("c", "columns", true, "ordered list of column names");
+    o.addOption("c", "header", true, "ordered list of column names to act as header");
+    o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous entities");
     o.addOption("s", "sort", true, "field to sort on (default: first column)");
-    o.addOption("C", "exclude-classes", true, "if true, exclude classes (default: false)");
-    o.addOption("P", "exclude-properties", true, "if false, include properties (default: true)");
-    o.addOption("N", "exclude-individuals", true, "if true, exclude individuals (default: false)");
-    o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous parents");
+    o.addOption(null, "include", true, "if true, exclude classes (default: false)");
+    o.addOption("d", "delimiter", true, "override default comma or tab delimiter");
 
     options = o;
   }
@@ -119,22 +116,26 @@ public class ExportCommand implements Command {
       }
     }
 
-    String columnsString =
-        CommandLineHelper.getRequiredValue(line, "columns", "--columns is a required option");
+    String headerString =
+        CommandLineHelper.getRequiredValue(line, "header", "--header is a required option");
     String exportPath =
         CommandLineHelper.getRequiredValue(line, "export", "an export file must be specified");
-    ExportOperation.export(
-        ontology, ioHelper, splitColumns(columnsString), new File(exportPath), exportOptions);
-    return state;
-  }
 
-  private static List<String> splitColumns(String columnsString) {
-    List<String> split = new ArrayList<>();
-    Matcher m = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'").matcher(columnsString);
-    while (m.find()) {
-      String s = m.group().trim().replace("'", "");
-      split.add(s);
+    // Maybe get an override delimiter
+    String delimiter = CommandLineHelper.getOptionalValue(line, "delimiter");
+    if (delimiter == null) {
+      // Use the path to determine the delimiter
+      if (exportPath.endsWith(".csv")) {
+        delimiter = ",";
+      } else {
+        // Tab is default for anything else
+        delimiter = "\t";
+      }
     }
-    return split;
+    // Get the split columns
+    List<String> columns = Arrays.asList(headerString.split(delimiter));
+
+    ExportOperation.export(ontology, ioHelper, columns, new File(exportPath), exportOptions);
+    return state;
   }
 }
