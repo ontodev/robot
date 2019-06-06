@@ -999,7 +999,7 @@ public class TemplateHelper {
     if (template.startsWith("INDIVIDUAL_TYPE")) {
       return true;
     }
-    return template.matches("^(SC|EC|DC|SP|EP|DP|IP|NI|SI|DI|CI|PI|RI|II) .*");
+    return template.matches("^(SC|EC|DC|SP|EP|DP|IP|NI|SI|DI|CI|PI|RI|II).*");
   }
 
   /**
