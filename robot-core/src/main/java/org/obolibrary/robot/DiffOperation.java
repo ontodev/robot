@@ -132,7 +132,9 @@ public class DiffOperation {
               new DoubleShortFormProvider(iriProvider, labelProvider);
           writer.write(BasicDiffRenderer.render(diff, doubleProvider));
         } else {
-          writer.write(BasicDiffRenderer.renderPlain(diff));
+          DefaultPrefixManager pm = ioHelper.getPrefixManager();
+          OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
+          writer.write(BasicDiffRenderer.render(diff, iriProvider));
         }
         break;
       case "markdown":
