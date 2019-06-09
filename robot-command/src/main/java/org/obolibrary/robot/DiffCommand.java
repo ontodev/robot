@@ -155,7 +155,7 @@ public class DiffCommand implements Command {
 
     Map<String, String> options = new HashMap<>();
     options.put("labels", CommandLineHelper.getDefaultValue(line, "labels", "false"));
-    options.put("format", CommandLineHelper.getDefaultValue(line, "format", "simple"));
+    options.put("format", CommandLineHelper.getDefaultValue(line, "format", "text"));
 
     DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
     writer.flush();
