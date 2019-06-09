@@ -48,10 +48,7 @@ public class DiffCommand implements Command {
     o.addOption("R", "right-iri", true, "load right ontology from IRI");
     o.addOption("o", "output", true, "save results to file");
     o.addOption(
-        null,
-        "labels",
-        true,
-        "if true, append labels after entity IRIs in the text format output");
+        null, "labels", true, "if true, append labels after entity IRIs in the text format output");
     o.addOption("f", "format", true, "format for diff output: text (default) | html | markdown");
     options = o;
   }

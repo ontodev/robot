@@ -173,6 +173,8 @@ public class DiffOperation {
    * @param labels a map from IRIs to label strings
    * @param axiom a string representation of an OWLAxiom
    * @return a string with labels inserted next to IRIs
+   * @deprecated This functionality is now provided by the owl-diff library and no longer used to
+   *     format results in DiffOperation.
    */
   @Deprecated
   public static String addLabels(Map<IRI, String> labels, String axiom) {
@@ -202,6 +204,8 @@ public class DiffOperation {
    * @param labels a map from IRIs to label strings
    * @param axiom a string representation of an OWLAxiom
    * @return a string with labels inserted next to CURIEs
+   * @deprecated This functionality is now provided by the owl-diff library and no longer used to
+   *     format results in DiffOperation.
    */
   @Deprecated
   public static String addLabels(IOHelper ioHelper, Map<IRI, String> labels, String axiom) {
@@ -232,6 +236,7 @@ public class DiffOperation {
    *
    * @param ontology the ontology to use
    * @return a set of strings, one for each axiom in the ontology
+   * @deprecated This functionality is no longer used within DiffOperation.
    */
   @Deprecated
   public static Set<String> getAxiomStrings(OWLOntology ontology) {
