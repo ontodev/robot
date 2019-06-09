@@ -97,7 +97,7 @@ public class DiffOperation {
       throws IOException {
 
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
-    String format = OptionsHelper.getOption(options, "format", "simple");
+    String format = OptionsHelper.getOption(options, "format", "text");
 
     Differ.BasicDiff diff = Differ.diff(ontology1, ontology2);
 
