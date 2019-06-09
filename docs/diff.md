@@ -22,8 +22,8 @@ If `--output` is provided then a report will be written with any differences bet
 
 See <a href="/examples/release-diff.txt" target="_blank">`release-diff.txt`</a> for an example. In the output, 'Ontology 1' corresponds to your `--left` input and 'Ontology 2' corresponds to your `--right` input.
 
-The default "simple" output is in OWL Functional syntax, but you can include entity labels with `--labels true`. In addition, Markdown and HTML diff formats (based on Manchester syntax) are available. You can select the desired format using 
-the `--format` (or `-f`) option, with possible values `simple`, `html`, or `markdown`.
+The default "text" output is in OWL Functional syntax, but you can include entity labels with `--labels true`. In addition, Markdown and HTML diff formats (based on Manchester syntax) are available. You can select the desired format using 
+the `--format` (or `-f`) option, with possible values `text`, `html`, or `markdown`.
 
 You can also compare ontologies by IRI with `--left-iri` and `--right-iri`. You may want to compare a local file to a release, in which case:
 <!-- DO NOT TEST -->

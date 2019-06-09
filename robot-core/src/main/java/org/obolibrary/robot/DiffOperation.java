@@ -117,7 +117,7 @@ public class DiffOperation {
             ontology1.getOWLOntologyManager(), ontology2.getOWLOntologyManager());
 
     switch (format.toLowerCase()) {
-      case "simple":
+      case "text":
         if (useLabels) {
           DefaultPrefixManager pm = ioHelper.getPrefixManager();
           AnnotationValueShortFormProvider labelProvider =
