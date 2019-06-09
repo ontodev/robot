@@ -51,8 +51,8 @@ public class DiffCommand implements Command {
         null,
         "labels",
         true,
-        "if true, append labels after entity IRIs in the simple format output");
-    o.addOption("f", "format", true, "format for diff output: simple (default) | html | markdown");
+        "if true, append labels after entity IRIs in the text format output");
+    o.addOption("f", "format", true, "format for diff output: text (default) | html | markdown");
     options = o;
   }
 
