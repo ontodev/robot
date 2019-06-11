@@ -19,7 +19,6 @@ ERROR	missing_ontology_license
 ERROR	missing_ontology_title
 INFO	missing_superclass
 ERROR	misused_obsolete_label
-WARN	multiple_asserted_superclasses
 ERROR	multiple_definitions
 ERROR	multiple_equivalent_classes
 ERROR	multiple_labels
