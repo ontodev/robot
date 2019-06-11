@@ -97,7 +97,11 @@ public class DiffOperation {
       throws IOException {
 
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
-    String format = OptionsHelper.getOption(options, "format", "text");
+    String format = OptionsHelper.getOption(options, "format", "plain");
+    format = format.toLowerCase();
+    if (useLabels && format.equals("plain")) {
+      format = "pretty";
+    }
 
     Differ.BasicDiff diff = Differ.diff(ontology1, ontology2);
 
@@ -116,26 +120,23 @@ public class DiffOperation {
         new DualOntologySetProvider(
             ontology1.getOWLOntologyManager(), ontology2.getOWLOntologyManager());
 
-    switch (format.toLowerCase()) {
-      case "text":
-        if (useLabels) {
-          DefaultPrefixManager pm = ioHelper.getPrefixManager();
-          AnnotationValueShortFormProvider labelProvider =
-              new AnnotationValueShortFormProvider(
-                  ontologyProvider,
-                  pm,
-                  pm,
-                  Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-                  Collections.emptyMap());
-          OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
-          DoubleShortFormProvider doubleProvider =
-              new DoubleShortFormProvider(iriProvider, labelProvider);
-          writer.write(BasicDiffRenderer.render(diff, doubleProvider));
-        } else {
-          DefaultPrefixManager pm = ioHelper.getPrefixManager();
-          OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
-          writer.write(BasicDiffRenderer.render(diff, iriProvider));
-        }
+    switch (format) {
+      case "plain":
+        writer.write(BasicDiffRenderer.renderPlain(diff));
+        break;
+      case "pretty":
+        DefaultPrefixManager pm = ioHelper.getPrefixManager();
+        AnnotationValueShortFormProvider labelProvider =
+            new AnnotationValueShortFormProvider(
+                ontologyProvider,
+                pm,
+                pm,
+                Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+                Collections.emptyMap());
+        OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
+        DoubleShortFormProvider doubleProvider =
+            new DoubleShortFormProvider(iriProvider, labelProvider);
+        writer.write(BasicDiffRenderer.render(diff, doubleProvider));
         break;
       case "markdown":
         Differ.GroupedDiff groupedForMarkdown = Differ.groupedDiff(diff);

@@ -49,7 +49,8 @@ public class DiffCommand implements Command {
     o.addOption("o", "output", true, "save results to file");
     o.addOption(
         null, "labels", true, "if true, append labels after entity IRIs in the text format output");
-    o.addOption("f", "format", true, "format for diff output: text (default) | html | markdown");
+    o.addOption(
+        "f", "format", true, "format for diff output: plain (default) | pretty | html | markdown");
     options = o;
   }
 
@@ -152,7 +153,7 @@ public class DiffCommand implements Command {
 
     Map<String, String> options = new HashMap<>();
     options.put("labels", CommandLineHelper.getDefaultValue(line, "labels", "false"));
-    options.put("format", CommandLineHelper.getDefaultValue(line, "format", "text"));
+    options.put("format", CommandLineHelper.getDefaultValue(line, "format", "plain"));
 
     DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
     writer.flush();
