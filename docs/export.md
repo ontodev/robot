@@ -84,7 +84,7 @@ When exporting details on classes using object or data properties, we recommend 
 
 ## Error Messages
 
-### Exclude All Error
+### Include Nothing Error
 
 `--include` cannot be an empty string as there will be no entities to return details on. Note that classes and individuals are *included* by default and properties are *excluded* by default.
 

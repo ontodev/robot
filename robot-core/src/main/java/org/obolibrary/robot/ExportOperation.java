@@ -28,8 +28,8 @@ public class ExportOperation {
   private static final String invalidColumnError =
       NS + "INVALID COLUMN ERROR unable to find property for column header '%s'";
 
-  private static final String excludeAllError =
-      NS + "EXCLUDE ALL ERROR you cannot exclude all types of ontology terms";
+  private static final String includeNothingError =
+      NS + "INCLUDE NOTHING ERROR you cannot exclude all types of ontology terms";
 
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
@@ -445,7 +445,7 @@ public class ExportOperation {
     }
     if (!includeClasses && !includeProperties && !includeIndividuals) {
       // If all three are false, nothing to include
-      throw new IllegalArgumentException(excludeAllError);
+      throw new IllegalArgumentException(includeNothingError);
     }
 
     Set<OWLEntity> entities = OntologyHelper.getEntities(ontology);
