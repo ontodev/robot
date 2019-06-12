@@ -55,7 +55,7 @@ Sometimes you want to include zero or more values in a single spreadsheet cell, 
     - If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
     - Properties in class expressions **must** be referred to by label in order to be parsed.
 - `SC %`: the class will be asserted to be a subclass of the class expression in this column
-- `EC %`: the class will be asserted to be an equivalent class of the intersection of *all* `EC` class expressions in a row
+- `EC %`: the class will be asserted to be equivalent with the class expression in this column
 - `DC %`: the class will be asserted to be disjoint with the class expression in this column
 
 #### Example of Class Template Strings
