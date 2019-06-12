@@ -10,9 +10,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
-import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,8 +97,8 @@ public class ExportOperation {
 
     // Get the label provider for Manchester rendering and labels
     DefaultPrefixManager pm = ioHelper.getPrefixManager();
-    AnnotationValueShortFormProvider labelProvider =
-        new AnnotationValueShortFormProvider(
+    QuotedAnnotationValueShortFormProvider labelProvider =
+        new QuotedAnnotationValueShortFormProvider(
             ontology.getOWLOntologyManager(),
             pm,
             pm,
@@ -185,13 +183,13 @@ public class ExportOperation {
    * character. Use labels when possible. Return null if no values exist.
    *
    * @param classes Set of class expressions to convert to string
-   * @param provider ShortFormProvider for Manchester expressions
+   * @param provider QuotedAnnotationValueShortFormProvider for Manchester expressions
    * @param excludeAnonymous if true, exclude anonymous class expressions
    * @return String of class expressions or null
    */
   private static String classExpressionsToString(
       Collection<OWLClassExpression> classes,
-      ShortFormProvider provider,
+      QuotedAnnotationValueShortFormProvider provider,
       boolean excludeAnonymous) {
     List<String> strings = new ArrayList<>();
     for (OWLClassExpression expr : classes) {
@@ -221,7 +219,7 @@ public class ExportOperation {
    * @param checker QuotedEntityChecker to resolve entities
    * @param e OWLEntity to get details of
    * @param columns List of columns indicating the details to get
-   * @param provider ShortFormProvider for Manchester expressions
+   * @param provider QuotedAnnotationValueShortFormProvider for Manchester expressions
    * @param excludeAnonymous if true, exclude anonymous class expressions
    * @return Map of column names to cell values
    * @throws Exception if a property (from columns) cannot be resolved
@@ -232,7 +230,7 @@ public class ExportOperation {
       QuotedEntityChecker checker,
       OWLEntity e,
       List<String> columns,
-      ShortFormProvider provider,
+      QuotedAnnotationValueShortFormProvider provider,
       boolean excludeAnonymous)
       throws Exception {
     Map<String, String> cellMap = new HashMap<>();
@@ -509,11 +507,12 @@ public class ExportOperation {
   }
 
   /**
-   * Given an OWL Ontology, an OWL Entity, and an OWL Data Property, get all property values as one
-   * string separated by the pipe character. If there are no property values, return null.
+   * Given an OWL Ontology, a quoted short form provider, an OWL Entity, and an OWL Data Property,
+   * get all property values as one string separated by the pipe character. If there are no property
+   * values, return null.
    *
    * @param ontology OWLOntology to get values from
-   * @param provider ShortFormProvider for Manchester expressions
+   * @param provider QuotedAnnotationValueShortFormProvider for Manchester expressions
    * @param entity OWLEntity to get relations of
    * @param dp OWLDataProperty to get the value(s) of
    * @param excludeAnonymous if true, do not include anonymous class expressions
@@ -521,7 +520,7 @@ public class ExportOperation {
    */
   private static String getPropertyValue(
       OWLOntology ontology,
-      ShortFormProvider provider,
+      QuotedAnnotationValueShortFormProvider provider,
       OWLEntity entity,
       OWLDataProperty dp,
       boolean excludeAnonymous) {
@@ -537,14 +536,14 @@ public class ExportOperation {
       return String.join("|", pvStrings);
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
-      Set<OWLDatatype> vals = new HashSet<>();
+      Set<String> vals = new HashSet<>();
       for (OWLClassExpression expr :
           EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
         if (!expr.isAnonymous()) {
           continue;
         }
         // break down into conjuncts
-        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, excludeAnonymous));
+        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, provider, excludeAnonymous));
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
@@ -553,25 +552,25 @@ public class ExportOperation {
           continue;
         }
         // break down into conjuncts
-        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, excludeAnonymous));
+        vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, provider, excludeAnonymous));
       }
       if (vals.isEmpty()) {
         return "";
       }
       // Return values separated by pipes
-      return vals.stream().map(provider::getShortForm).collect(Collectors.joining("|"));
+      return String.join("|", vals);
     } else {
       return "";
     }
   }
 
   /**
-   * Given an OWL Ontology, an OWL Entity, and an OWL Object Property, get all property values as
-   * one string separated by the pipe character. Use labels when possible. If there are no property
-   * values, return null.
+   * Given an OWL Ontology, a quoted short form provider, an OWL Entity, and an OWL Object Property,
+   * get all property values as one string separated by the pipe character. Use labels when
+   * possible. If there are no property values, return null.
    *
    * @param ontology OWLOntology to get values from
-   * @param provider ShortFormProvider for Manchester expressions
+   * @param provider QuotedAnnotationValueShortFormProvider for Manchester expressions
    * @param entity OWLEntity to get annotations on
    * @param op OWLObjectProperty to get the value(s) of
    * @param excludeAnonymous if true, do not include anonymous class expressions
@@ -579,7 +578,7 @@ public class ExportOperation {
    */
   private static String getPropertyValue(
       OWLOntology ontology,
-      ShortFormProvider provider,
+      QuotedAnnotationValueShortFormProvider provider,
       OWLEntity entity,
       OWLObjectProperty op,
       boolean excludeAnonymous) {
@@ -596,14 +595,14 @@ public class ExportOperation {
       return String.join("|", pvStrings);
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
-      Set<OWLClassExpression> exprs = new HashSet<>();
+      Set<String> exprs = new HashSet<>();
       for (OWLClassExpression expr :
           EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
         if (!expr.isAnonymous()) {
           continue;
         }
         // break down into conjuncts
-        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, excludeAnonymous));
+        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, provider, excludeAnonymous));
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
@@ -612,92 +611,243 @@ public class ExportOperation {
           continue;
         }
         // break down into conjuncts
-        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, excludeAnonymous));
+        exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, provider, excludeAnonymous));
       }
       if (exprs.isEmpty()) {
         return "";
       }
-      return classExpressionsToString(exprs, provider, false);
+      return String.join("|", exprs);
     } else {
       return "";
     }
   }
 
   /**
-   * Given a set of OWL class expressions and a data property, get the fillers of the restrictions
-   * (SOME or ALL) as datatypes and determine if the data property used in the original expression
-   * matches the provided data property. If so, add the filler to the set of datatypes to return.
+   * Given a set of OWL class expressions, a data property, a quoted short form provider, and a
+   * boolean indicating to exclude anonymous expressions, get the fillers of the restrictions and
+   * determine if the data property used in the original expression matches the provided data
+   * property. If so, add the filler to the set.
    *
    * @param exprs set of OWLClassExpressions to check
    * @param dp OWLDataProperty to look for
+   * @param provider QuotedAnnotationValueShortFormProvider for labels
    * @param excludeAnonymous if true, exclude anonymous data ranges
-   * @return set of OWLDatatype fillers that are 'values' of the data property
+   * @return set of fillers that are 'values' of the data property
    */
-  private static Set<OWLDatatype> getRestrictionFillers(
-      Set<OWLClassExpression> exprs, OWLDataProperty dp, boolean excludeAnonymous) {
-    Set<OWLDatatype> fillers = new HashSet<>();
+  private static Set<String> getRestrictionFillers(
+      Set<OWLClassExpression> exprs,
+      OWLDataProperty dp,
+      QuotedAnnotationValueShortFormProvider provider,
+      boolean excludeAnonymous) {
+    Set<String> fillers = new HashSet<>();
     for (OWLClassExpression ce : exprs) {
+      // Determine the type of restriction
       ClassExpressionType t = ce.getClassExpressionType();
-      if (t == ClassExpressionType.DATA_ALL_VALUES_FROM
-          || t == ClassExpressionType.DATA_SOME_VALUES_FROM) {
-        // Convert to quantified restriction
-        OWLQuantifiedDataRestriction qr = (OWLQuantifiedDataRestriction) ce;
-        // Get the property used
-        OWLDataPropertyExpression pe = qr.getProperty();
-        // Get the data range
-        OWLDataRange f = qr.getFiller();
-        if (excludeAnonymous && f.isAnonymous()) {
-          // Maybe skip anonymous
-          continue;
-        }
-        if (!pe.isAnonymous()) {
-          OWLDataProperty p = pe.asOWLDataProperty();
-          if (p.getIRI() == dp.getIRI()) {
-            if (f.isDatatype()) {
-              fillers.add(f.asOWLDatatype());
+      OWLDataPropertyExpression pe;
+      OWLDataRange f;
+      int n;
+      switch (t) {
+        case DATA_ALL_VALUES_FROM:
+          OWLDataAllValuesFrom avf = (OWLDataAllValuesFrom) ce;
+          f = avf.getFiller();
+          pe = avf.getProperty();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLDataProperty prop = pe.asOWLDataProperty();
+            if (prop.getIRI() == dp.getIRI()) {
+              fillers.add(renderRestrictionString("only", f, null, provider));
             }
           }
-        }
+          break;
+        case DATA_SOME_VALUES_FROM:
+          OWLDataSomeValuesFrom svf = (OWLDataSomeValuesFrom) ce;
+          f = svf.getFiller();
+          pe = svf.getProperty();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLDataProperty prop = pe.asOWLDataProperty();
+            if (prop.getIRI() == dp.getIRI()) {
+              fillers.add(renderRestrictionString("some", f, null, provider));
+            }
+          }
+          break;
+        case DATA_EXACT_CARDINALITY:
+          OWLDataExactCardinality ec = (OWLDataExactCardinality) ce;
+          f = ec.getFiller();
+          pe = ec.getProperty();
+          n = ec.getCardinality();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLDataProperty prop = pe.asOWLDataProperty();
+            if (prop.getIRI() == dp.getIRI()) {
+              fillers.add(renderRestrictionString("exactly", f, n, provider));
+            }
+          }
+          break;
+        case DATA_MIN_CARDINALITY:
+          OWLDataMinCardinality minc = (OWLDataMinCardinality) ce;
+          f = minc.getFiller();
+          pe = minc.getProperty();
+          n = minc.getCardinality();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLDataProperty prop = pe.asOWLDataProperty();
+            if (prop.getIRI() == dp.getIRI()) {
+              fillers.add(renderRestrictionString("min", f, n, provider));
+            }
+          }
+          break;
+        case DATA_MAX_CARDINALITY:
+          OWLDataMaxCardinality maxc = (OWLDataMaxCardinality) ce;
+          f = maxc.getFiller();
+          pe = maxc.getProperty();
+          n = maxc.getCardinality();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLDataProperty prop = pe.asOWLDataProperty();
+            if (prop.getIRI() == dp.getIRI()) {
+              fillers.add(renderRestrictionString("max", f, n, provider));
+            }
+          }
+          break;
       }
     }
     return fillers;
   }
 
   /**
-   * Given a set of OWL class expressions and an object property, get the fillers of the
-   * restrictions (SOME or ALL) as class expressions and determine if the object property used in
-   * the original expression matches the provided object property. If so, add the filler to the set
-   * of class expressions to return.
+   * Given a set of OWL class expressions, an object property, a quoted short form provider, and a
+   * boolean indicating to exclude anonymous expressions, get the fillers of the restrictions and
+   * determine if the object property used in the original expression matches the provided object
+   * property. If so, add the filler to the set.
    *
    * @param exprs set of OWLClassExpressions to check
    * @param op OWLObjectProperty to look for
+   * @param provider QuotedAnnotationValueShortFormProvider to resolve labels
    * @param excludeAnonymous if true, exclude anonymous class expressions
-   * @return set of OWLClassExpression fillers that are 'values' of the object property
+   * @return set of fillers that are 'values' of the object property
    */
-  private static Set<OWLClassExpression> getRestrictionFillers(
-      Set<OWLClassExpression> exprs, OWLObjectProperty op, boolean excludeAnonymous) {
-    Set<OWLClassExpression> fillers = new HashSet<>();
+  private static Set<String> getRestrictionFillers(
+      Set<OWLClassExpression> exprs,
+      OWLObjectProperty op,
+      QuotedAnnotationValueShortFormProvider provider,
+      boolean excludeAnonymous) {
+    Set<String> fillers = new HashSet<>();
     for (OWLClassExpression ce : exprs) {
+      // Determine the type of restriction
       ClassExpressionType t = ce.getClassExpressionType();
-      if (t == ClassExpressionType.OBJECT_ALL_VALUES_FROM
-          || t == ClassExpressionType.OBJECT_SOME_VALUES_FROM) {
-        // Convert to quantified restriction
-        OWLQuantifiedObjectRestriction qr = (OWLQuantifiedObjectRestriction) ce;
-        // Get the property used
-        OWLObjectPropertyExpression pe = qr.getProperty();
-        // Get the class expression
-        OWLClassExpression f = qr.getFiller();
-        if (excludeAnonymous && f.isAnonymous()) {
-          continue;
-        }
-        if (!pe.isAnonymous()) {
-          OWLObjectProperty p = pe.asOWLObjectProperty();
-          if (p.getIRI() == op.getIRI()) {
-            fillers.add(f);
+      OWLObjectPropertyExpression pe;
+      OWLClassExpression f;
+      int n;
+      switch (t) {
+        case OBJECT_ALL_VALUES_FROM:
+          // property only object
+          OWLObjectAllValuesFrom avf = (OWLObjectAllValuesFrom) ce;
+          pe = avf.getProperty();
+          f = avf.getFiller();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
           }
-        }
+          if (!pe.isAnonymous()) {
+            OWLObjectProperty prop = pe.asOWLObjectProperty();
+            if (prop.getIRI() == op.getIRI()) {
+              fillers.add(renderRestrictionString("only", f, null, provider));
+            }
+          }
+          break;
+        case OBJECT_SOME_VALUES_FROM:
+          // property some object
+          OWLObjectSomeValuesFrom svf = (OWLObjectSomeValuesFrom) ce;
+          pe = svf.getProperty();
+          f = svf.getFiller();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLObjectProperty prop = pe.asOWLObjectProperty();
+            if (prop.getIRI() == op.getIRI()) {
+              fillers.add(renderRestrictionString("some", f, null, provider));
+            }
+          }
+          break;
+        case OBJECT_EXACT_CARDINALITY:
+          // property exactly n object
+          OWLObjectExactCardinality ec = (OWLObjectExactCardinality) ce;
+          pe = ec.getProperty();
+          f = ec.getFiller();
+          n = ec.getCardinality();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLObjectProperty prop = pe.asOWLObjectProperty();
+            if (prop.getIRI() == op.getIRI()) {
+              fillers.add(renderRestrictionString("exactly", f, n, provider));
+            }
+          }
+          break;
+        case OBJECT_MIN_CARDINALITY:
+          // property min n object
+          OWLObjectMinCardinality minc = (OWLObjectMinCardinality) ce;
+          pe = minc.getProperty();
+          f = minc.getFiller();
+          n = minc.getCardinality();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLObjectProperty prop = pe.asOWLObjectProperty();
+            if (prop.getIRI() == op.getIRI()) {
+              fillers.add(renderRestrictionString("min", f, n, provider));
+            }
+          }
+          break;
+        case OBJECT_MAX_CARDINALITY:
+          // property max n object
+          OWLObjectMaxCardinality maxc = (OWLObjectMaxCardinality) ce;
+          pe = maxc.getProperty();
+          f = maxc.getFiller();
+          n = maxc.getCardinality();
+          if (excludeAnonymous && f.isAnonymous()) {
+            continue;
+          }
+          if (!pe.isAnonymous()) {
+            OWLObjectProperty prop = pe.asOWLObjectProperty();
+            if (prop.getIRI() == op.getIRI()) {
+              fillers.add(renderRestrictionString("max", f, n, provider));
+            }
+          }
+          break;
+        case OBJECT_ONE_OF:
+          System.out.println("ONE OF " + ce);
+          break;
+        case OBJECT_UNION_OF:
+          System.out.println("UNION OF " + ce);
+          break;
+        case OBJECT_INTERSECTION_OF:
+          System.out.println("INTERSECTION OF " + ce);
+          break;
       }
     }
+
+    // Not handled:
+    // ClassExpressionType.OBJECT_ONE_OF
+    // ClassExpressionType.OBJECT_INTERSECTION_OF
+    // ClassExpressionType.OBJECT_UNION_OF
+    // ClassExpressionType.OBJECT_COMPLEMENT_OF
+    // ClassExpressionType.OBJECT_HAS_SELF
+    // ClassExpressionType.OBJECT_HAS_VALUE
+
     return fillers;
   }
 
@@ -707,12 +857,15 @@ public class ExportOperation {
    * separated by the pipe character. Use labels when possible. Return null if no values exist.
    *
    * @param props Set of property expressions to convert to string
-   * @param provider ShortFormProvider for Manchester expressions and short forms
+   * @param provider QuotedAnnotationValueShortFormProvider for Manchester expressions and short
+   *     forms
    * @param excludeAnonymous if true, exclude anonymous expressions
    * @return String of property expressions or null
    */
   private static String propertyExpressionsToString(
-      Collection<?> props, ShortFormProvider provider, boolean excludeAnonymous) {
+      Collection<?> props,
+      QuotedAnnotationValueShortFormProvider provider,
+      boolean excludeAnonymous) {
     // Try to convert to object property expressions
     Collection<OWLObjectPropertyExpression> opes =
         props
@@ -760,6 +913,19 @@ public class ExportOperation {
     return String.join("|", sorted);
   }
 
+  private static String renderRestrictionString(
+      String restriction, OWLObject f, Integer n, QuotedAnnotationValueShortFormProvider provider) {
+    if (f.isAnonymous() && n != null) {
+      return String.format("%s %d (%s)", restriction, n, renderManchester(f, provider));
+    } else if (!f.isAnonymous() && n != null) {
+      return String.format("%s %d %s", restriction, n, renderManchester(f, provider));
+    } else if (f.isAnonymous() && n == null) {
+      return String.format("%s (%s)", restriction, renderManchester(f, provider));
+    } else {
+      return String.format("%s %s", restriction, renderManchester(f, provider));
+    }
+  }
+
   /**
    * Given an OWL Object and a short form provider for labels, return the Manchester representation
    * of that object.
@@ -768,10 +934,13 @@ public class ExportOperation {
    * @param p ShortFormProvider to render short forms
    * @return Manchester string
    */
-  private static String renderManchester(OWLObject o, ShortFormProvider p) {
+  private static String renderManchester(OWLObject o, QuotedAnnotationValueShortFormProvider p) {
+    p.toggleQuoting();
     StringWriter sw = new StringWriter();
     ManchesterOWLSyntaxObjectRenderer r = new ManchesterOWLSyntaxObjectRenderer(sw, p);
     o.accept(r);
-    return sw.toString();
+    // Reset quoting to default
+    p.toggleQuoting();
+    return sw.toString().replace("\n", "").replaceAll(" +", " ");
   }
 }
