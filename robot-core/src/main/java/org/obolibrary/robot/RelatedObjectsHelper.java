@@ -37,6 +37,11 @@ public class RelatedObjectsHelper {
   private static final String invalidIRIError =
       NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
 
+  /** Error message when an IRI pattern to match does not have a wildcard character. */
+  private static final String invalidIRIPatternError =
+      NS
+          + "INVALID IRI PATTERN ERROR the pattern '%s' must contain at least one wildcard character.";
+
   /** String for subclass/property mapping */
   private static final String SUB = "sub";
   /** String for superclass/property mapping */
@@ -282,6 +287,8 @@ public class RelatedObjectsHelper {
       return selectDomains(ontology, objects);
     } else if (selector.contains("=")) {
       return selectPattern(ontology, ioHelper, objects, selector);
+    } else if (Pattern.compile("<.*>").matcher(selector).find()) {
+      return selectIRI(objects, selector);
     } else {
       logger.error(String.format("%s is not a valid selector and will be ignored", selector));
       return new HashSet<>();
@@ -503,11 +510,61 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
+  /**
+   * Given an ontology and a set of objects, select all the instances of the classes in the set of
+   * objects.
+   *
+   * @param ontology OWLOntology to retrieve instances from
+   * @param objects Set of OWLObjects to get instances of
+   * @return set of instances as OWLObjects
+   */
   public static Set<OWLObject> selectInstances(OWLOntology ontology, Set<OWLObject> objects) {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLClass) {
         relatedObjects.addAll(EntitySearcher.getIndividuals((OWLClass) object, ontology));
+      }
+    }
+    return relatedObjects;
+  }
+
+  /**
+   * Given a set of objects, and a selector string (IRI pattern in angle brackets), select all the
+   * objects that have an IRI matching that pattern.
+   *
+   * @param objects Set of OWLObjects to look through
+   * @param selector IRI pattern to match (enclosed in angle brackets, using ? or * wildcards)
+   * @return set of IRIs that match the selector pattern
+   */
+  public static Set<OWLObject> selectIRI(Set<OWLObject> objects, String selector) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+
+    // Check that we're matching a pattern here
+    // --term should be used for full IRIs
+    if (!selector.contains("~") && !selector.contains("*") && !selector.contains("?")) {
+      throw new IllegalArgumentException(String.format(invalidIRIPatternError, selector));
+    }
+    // Get rid of brackets
+    if (selector.startsWith("<") && selector.endsWith(">")) {
+      selector = selector.substring(1, selector.length() - 1);
+    }
+    if (!selector.startsWith("~")) {
+      // Transform wildcards into regex patterns and escape periods
+      selector = selector.replace(".", "\\.").replace("?", ".?").replace("*", ".*");
+    } else {
+      // Otherwise, it is already a regex pattern
+      // Just remove the tilde
+      selector = selector.substring(1);
+    }
+    Pattern pattern = Pattern.compile(selector);
+    for (OWLObject object : objects) {
+      if (object instanceof OWLEntity) {
+        OWLEntity entity = (OWLEntity) object;
+        // Determine if IRI matches the pattern
+        String iri = entity.getIRI().toString();
+        if (pattern.matcher(iri).matches()) {
+          relatedObjects.add(object);
+        }
       }
     }
     return relatedObjects;
@@ -668,8 +725,7 @@ public class RelatedObjectsHelper {
             ontology, objects, aPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
       } else if (object instanceof OWLClass) {
         OWLClass cls = (OWLClass) object;
-        spanGapsHelper(
-            ontology, objects, classPairs, cls, EntitySearcher.getSuperClasses(cls, ontology));
+        spanGapsHelper(ontology, objects, classPairs, cls, getSuperClasses(ontology, cls));
       } else if (object instanceof OWLDataProperty) {
         OWLDataProperty p = (OWLDataProperty) object;
         spanGapsHelper(
@@ -890,16 +946,27 @@ public class RelatedObjectsHelper {
    */
   private static Set<OWLClassExpression> getSuperClasses(OWLOntology ontology, OWLClass cls) {
     Set<OWLClassExpression> superclasses = new HashSet<>();
+
+    // We might get stuck if a class is both subclass and equivalent
+    // So compare the eqs to the superclasses and don't add a super if it's also an eq
+    Collection<OWLClassExpression> eqs = EntitySearcher.getEquivalentClasses(cls, ontology);
+
     for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, ontology)) {
       if (expr.isAnonymous()) {
         superclasses.add(expr);
         continue;
       }
-      if (expr.asOWLClass().getIRI() != cls.getIRI()) {
-        superclasses.add(expr);
-      } else {
-        logger.warn("Circular subclass definition: " + cls.getIRI());
+      if (eqs.contains(expr)) {
+        logger.warn(
+            String.format(
+                "Class '%s' has equivalent class and superclass '%s'", cls.getIRI(), expr));
+        continue;
       }
+      if (expr.asOWLClass().getIRI() == cls.getIRI()) {
+        logger.warn("Circular subclass definition: " + cls.getIRI());
+        continue;
+      }
+      superclasses.add(expr);
     }
     return superclasses;
   }

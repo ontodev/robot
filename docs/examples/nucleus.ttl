@@ -1,0 +1,191 @@
+@prefix : <http://purl.obolibrary.org/obo/go.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://purl.obolibrary.org/obo/go.owl> .
+
+<http://purl.obolibrary.org/obo/go.owl> rdf:type owl:Ontology .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://www.w3.org/2000/01/rdf-schema#label
+rdfs:label rdf:type owl:AnnotationProperty .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#string
+xsd:string rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://purl.obolibrary.org/obo/BFO_0000050
+<http://purl.obolibrary.org/obo/BFO_0000050> rdf:type owl:ObjectProperty ,
+                                                      owl:TransitiveProperty .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://purl.obolibrary.org/obo/GO_0005575
+<http://purl.obolibrary.org/obo/GO_0005575> rdf:type owl:Class ;
+                                            rdfs:label "cellular_component" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0005622
+<http://purl.obolibrary.org/obo/GO_0005622> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0044464> ;
+                                            rdfs:label "intracellular" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0005623
+<http://purl.obolibrary.org/obo/GO_0005623> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0005575> ;
+                                            rdfs:label "cell" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0005634
+<http://purl.obolibrary.org/obo/GO_0005634> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0043231> ;
+                                            rdfs:label "nucleus" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0031974
+<http://purl.obolibrary.org/obo/GO_0031974> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0005575> ;
+                                            rdfs:label "membrane-enclosed lumen" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0031981
+<http://purl.obolibrary.org/obo/GO_0031981> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0044428> ,
+                                                            <http://purl.obolibrary.org/obo/GO_0070013> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0005634>
+                                                            ] ;
+                                            rdfs:label "nuclear lumen" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0043226
+<http://purl.obolibrary.org/obo/GO_0043226> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0005575> ;
+                                            rdfs:label "organelle" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0043227
+<http://purl.obolibrary.org/obo/GO_0043227> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0043226> ;
+                                            rdfs:label "membrane-bounded organelle" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0043229
+<http://purl.obolibrary.org/obo/GO_0043229> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0043226> ,
+                                                            <http://purl.obolibrary.org/obo/GO_0044424> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0005622>
+                                                            ] ;
+                                            rdfs:label "intracellular organelle" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0043231
+<http://purl.obolibrary.org/obo/GO_0043231> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0043227> ,
+                                                            <http://purl.obolibrary.org/obo/GO_0043229> ;
+                                            rdfs:label "intracellular membrane-bounded organelle" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0043233
+<http://purl.obolibrary.org/obo/GO_0043233> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0031974> ,
+                                                            <http://purl.obolibrary.org/obo/GO_0044422> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0043226>
+                                                            ] ;
+                                            rdfs:label "organelle lumen" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0044422
+<http://purl.obolibrary.org/obo/GO_0044422> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0005575> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0043226>
+                                                            ] ;
+                                            rdfs:label "organelle part" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0044424
+<http://purl.obolibrary.org/obo/GO_0044424> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0044464> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0005622>
+                                                            ] ;
+                                            rdfs:label "intracellular part" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0044428
+<http://purl.obolibrary.org/obo/GO_0044428> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0044446> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0005634>
+                                                            ] ;
+                                            rdfs:label "nuclear part" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0044446
+<http://purl.obolibrary.org/obo/GO_0044446> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0044422> ,
+                                                            <http://purl.obolibrary.org/obo/GO_0044424> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0005622>
+                                                            ] ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0043226>
+                                                            ] ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0043229>
+                                                            ] ;
+                                            rdfs:label "intracellular organelle part" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0044464
+<http://purl.obolibrary.org/obo/GO_0044464> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0005575> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0005623>
+                                                            ] ;
+                                            rdfs:label "cell part" .
+
+
+###  http://purl.obolibrary.org/obo/GO_0070013
+<http://purl.obolibrary.org/obo/GO_0070013> rdf:type owl:Class ;
+                                            rdfs:subClassOf <http://purl.obolibrary.org/obo/GO_0043233> ,
+                                                            <http://purl.obolibrary.org/obo/GO_0044446> ,
+                                                            [ rdf:type owl:Restriction ;
+                                                              owl:onProperty <http://purl.obolibrary.org/obo/BFO_0000050> ;
+                                                              owl:someValuesFrom <http://purl.obolibrary.org/obo/GO_0043229>
+                                                            ] ;
+                                            rdfs:label "intracellular organelle lumen" .
+
+
+###  Generated by the OWL API (version 4.5.6) https://github.com/owlcs/owlapi

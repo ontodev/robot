@@ -1,10 +1,7 @@
 package org.obolibrary.robot;
 
-import java.io.File;
-import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +31,6 @@ public class ConvertCommand implements Command {
 
   /** Error message when a --format is not specified and the --output does not have an extension. */
   private static final String missingFormatError = NS + "FORMAT ERROR an output format is required";
-
-  /** Error message when --check is true and the document is not in valid OBO structure */
-  private static final String oboStructureError =
-      NS + "OBO STRUCTURE ERROR the ontology does not conform to OBO structure rules";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -144,37 +137,8 @@ public class ConvertCommand implements Command {
     } else if (outputs.length > 1) {
       throw new IllegalArgumentException(multipleOutputsError);
     }
-    File outputFile = CommandLineHelper.getOutputFile(line);
 
-    // Check for a format
-    String formatName = CommandLineHelper.getOptionalValue(line, "format");
-    if (formatName == null) {
-      formatName = FilenameUtils.getExtension(outputFile.getName());
-      if (formatName.equals("")) {
-        throw new IllegalArgumentException(missingFormatError);
-      }
-    }
-
-    boolean checkOBO = true;
-    String check = CommandLineHelper.getDefaultValue(line, "check", "true");
-    if ("false".equals(check.toLowerCase())) {
-      checkOBO = false;
-    } else if (!"true".equals(check.toLowerCase())) {
-      throw new IllegalArgumentException(checkArgError);
-    }
-
-    try {
-      ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
-    } catch (IOException e) {
-      // specific feedback for writing to OBO
-      if (e.getMessage().contains("FrameStructureException")) {
-        logger.debug(e.getMessage());
-        throw new Exception(oboStructureError, e);
-      } else {
-        throw e;
-      }
-    }
-
+    CommandLineHelper.maybeSaveOutput(line, ontology);
     return state;
   }
 }

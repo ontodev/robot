@@ -53,6 +53,7 @@ public class ExtractOperation {
     options.put("copy-ontology-annotations", "false");
     options.put("annotate-with-source", "false");
     options.put("intermediates", "all");
+    options.put("force", "false");
     return options;
   }
 
@@ -295,6 +296,7 @@ public class ExtractOperation {
    * rdfs:isDefinedBy.
    *
    * @param entity entity to get source of
+   * @param sourceMap map of term IRI to source IRI, or null
    * @return OWLAnnotationAssertionAxiom with rdfs:isDefinedBy as the property
    */
   protected static OWLAnnotationAxiom getIsDefinedBy(OWLEntity entity, Map<IRI, IRI> sourceMap) {

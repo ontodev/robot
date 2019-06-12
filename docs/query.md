@@ -61,6 +61,19 @@ The `--update` option only updates the ontology itself, not any of the imports.
 
 **Warning:** The output of SPARQL updates will not include `xsd:string` datatypes, because `xsd:string` is considered implicit in RDF version 1.1. This behaviour differs from other ROBOT commands, where `xsd:string` datatypes from the input are maintained in the output.
 
+## Executing on Disk
+
+For very large ontologies, it may be beneficial to load the ontology to a mapping file on disk rather than loading it into memory. This is supported by [Jena TDB Datasets](http://jena.apache.org/documentation/tdb/datasets.html). To execute a query with TDB, use `--tdb true`:
+ 
+    robot query --input nucleus.ttl --tdb true \
+     --query cell_part.sparql results/cell_part.csv
+ 
+Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`). Attempting to load an ontology in a different syntax will result in a [Syntax Error](/query#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
+
+Once the query operation is complete, ROBOT will remove the TDB directory. If you are performing many query commands on one ontology, you can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory. This will greatly reduce the execution time of subsequent queries.
+
+The ontology is never loaded as an `OWLOntology` object, since doing so loads the whole ontology into memory. Therefore, TDB cannot be used while chaining commands or with the `--update` option.
+
 ---
 
 ## Error Messages
@@ -80,3 +93,11 @@ The query was not able to be parsed. Often, this is as a result of an undefined 
 ### Query Type Error
 
 Each SPARQL query should be a SELECT, ASK, DESCRIBE, or CONSTRUCT.
+
+### Syntax Error
+
+This error occurs when an ontology cannot be loaded from file to a TDB dataset. Review your ontology to ensure it is valid RDF/XML or TTL syntax.
+
+### TDB Format Error
+
+`--tdb true` can only be used with RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`).

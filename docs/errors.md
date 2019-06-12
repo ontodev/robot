@@ -6,6 +6,14 @@ If you run into any other errors or exceptions not listed, or have any issues wi
 
 ---
 
+## Java Errors
+
+### Out of Memory Error
+
+Sometimes when working with very large ontologies, the JVM will run out of memory (`OutOfMemoryError`). You can increase the max heap size using the Java option `-Xmx4G` before running `robot`, which increases the heap to 4G. Any size can be specified here, e.g. `-Xmx8G`. For details on setting these options based on platform, see [Java Options](http://robot.obolibrary.org/global#java-options).
+
+---
+
 ## Command & Option Errors
 
 ### Boolean Value Error
@@ -42,6 +50,10 @@ Many commands involve creating IRIs from provided string representations of the 
 
 When using CURIEs, make sure the prefix is defined, or add it with `--prefix`.
 
+### Invalid IRI Pattern Error
+
+When matching an IRI by pattern, the pattern should contain one or more wildcard characters (`*` and/or `?`) or should be a regex pattern preceded by `~`. If you wish to match a full IRI to remove or filter, use the `--term` option.
+
 ### Invalid Prefix Error
 
 Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/prefixes) for more details on adding prefixes.
@@ -77,6 +89,18 @@ Some commands ([extract](/extract) and [filter](/filter)) require terms as input
 ### Multiple Inputs Error
 
 For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `--input` may be specified.
+
+### OBO Structure Error
+
+When running the [convert](/convert) command, if `--check` is true (default behavior), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. If you are saving an ontology in OBO format from another command, `--check` is always `true`. 
+
+You may run convert (or chain to convert) with the `--check false` option to ignore the errors, e.g.:
+```
+robot reason --input ont.owl \
+  convert --check false --output ont.obo
+```
+
+Please note that `--check false` may result in some unintended output. For example, for terms with more than one definition annotation, a definition will be chosen at random.
 
 ### Ontology Storage Error
 

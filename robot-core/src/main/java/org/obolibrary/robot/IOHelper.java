@@ -25,15 +25,11 @@ import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
 import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
+import org.obolibrary.oboformat.model.FrameStructureException;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.OBODocumentFormat;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.formats.*;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -63,7 +59,7 @@ public class IOHelper {
   private static final String NS = "errors#";
 
   /** Error message when the specified file does not exist. Expects file name. */
-  private static final String fileDoesNotExistError =
+  static final String fileDoesNotExistError =
       NS + "FILE DOES NOT EXIST ERROR File does not exist: %s";
 
   /** Error message when an invalid extension is provided (file format). Expects the file format. */
@@ -91,6 +87,10 @@ public class IOHelper {
   /** Error message when a JSON-LD context cannot be read, for any reason. */
   private static final String jsonldContextParseError =
       NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+
+  /** Error message when OBO cannot be saved. */
+  private static final String oboStructureError =
+      NS + "OBO STRUCTURE ERROR Ontology does not conform to OBO structure rules:\n%s";
 
   /** Error message when the ontology cannot be saved. Expects the IRI string. */
   private static final String ontologyStorageError =
@@ -162,6 +162,43 @@ public class IOHelper {
   public IOHelper(File file) throws IOException {
     String jsonString = FileUtils.readFileToString(file);
     setContext(jsonString);
+  }
+
+  /**
+   * Given an ontology, a file, and a list of prefixes, save the ontology to the file and include
+   * the prefixes in the header.
+   *
+   * @deprecated replaced by {@link #saveOntology(OWLOntology, OWLDocumentFormat, IRI, Map,
+   *     boolean)}
+   * @param ontology OWLOntology to save
+   * @param outputFile File to save ontology to
+   * @param addPrefixes List of prefixes to add ("foo: http://foo.bar/")
+   * @throws IOException On issue parsing list of prefixes or saving file
+   */
+  @Deprecated
+  public void addPrefixesAndSave(OWLOntology ontology, File outputFile, List<String> addPrefixes)
+      throws IOException {
+    OWLDocumentFormat df = getFormat(FilenameUtils.getExtension(outputFile.getPath()));
+
+    // If prefixes are not supported, just save the ontology without adding prefixes
+    if (!df.isPrefixOWLOntologyFormat()) {
+      logger.error("Prefixes are not supported in " + df.toString() + " (saving without prefixes)");
+      saveOntology(ontology, df, IRI.create(outputFile));
+      return;
+    }
+
+    // Convert prefixes to map
+    Map<String, String> prefixMap = new HashMap<>();
+    for (String pref : addPrefixes) {
+      String[] split = pref.split(": ");
+      if (split.length != 2) {
+        throw new IOException(String.format(invalidPrefixError, pref));
+      }
+      prefixMap.put(split[0], split[1]);
+    }
+
+    addPrefixes(df, prefixMap);
+    saveOntology(ontology, df, IRI.create(outputFile));
   }
 
   /**
@@ -481,17 +518,13 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI) throws IOException {
-    try {
-      String path = ontologyIRI.toString();
-      if (path.endsWith(".gz")) {
-        path = path.substring(0, path.lastIndexOf("."));
-      }
-      String formatName = FilenameUtils.getExtension(path);
-      OWLDocumentFormat format = getFormat(formatName);
-      return saveOntology(ontology, format, ontologyIRI, true);
-    } catch (Exception e) {
-      throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+    String path = ontologyIRI.toString();
+    if (path.endsWith(".gz")) {
+      path = path.substring(0, path.lastIndexOf("."));
     }
+    String formatName = FilenameUtils.getExtension(path);
+    OWLDocumentFormat format = getFormat(formatName);
+    return saveOntology(ontology, format, ontologyIRI, true);
   }
 
   /**
@@ -567,11 +600,30 @@ public class IOHelper {
   public OWLOntology saveOntology(
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI, boolean checkOBO)
       throws IOException {
-    logger.debug("Saving ontology {} as {} with to IRI {}", ontology, format, ontologyIRI);
-    // if (format instanceof PrefixOWLDocumentFormat) {
-    //    ((PrefixOWLDocumentFormat) format)
-    //        .copyPrefixesFrom(getPrefixManager());
-    // }
+    return saveOntology(ontology, format, ontologyIRI, null, checkOBO);
+  }
+
+  /**
+   * Save an ontology in the given format to an IRI, with option to add prefixes and option to
+   * ignore OBO document checks.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyIRI the IRI to save the ontology to
+   * @param addPrefixes map of prefixes to add to header
+   * @param checkOBO if false, ignore OBO document checks
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology,
+      OWLDocumentFormat format,
+      IRI ontologyIRI,
+      Map<String, String> addPrefixes,
+      boolean checkOBO)
+      throws IOException {
+    // Determine the format if not provided
+    logger.debug("Saving ontology as {} with to IRI {}", format, ontologyIRI);
     XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
     // If saving in compressed format, get byte data then save to gzip
     if (ontologyIRI.toString().endsWith(".gz")) {
@@ -580,6 +632,9 @@ public class IOHelper {
       return ontology;
     }
     // If not compressed, just save the file as-is
+    if (addPrefixes != null && !addPrefixes.isEmpty()) {
+      addPrefixes(format, addPrefixes);
+    }
     saveOntologyFile(ontology, format, ontologyIRI, checkOBO);
     return ontology;
   }
@@ -893,6 +948,22 @@ public class IOHelper {
   }
 
   /**
+   * Given a path to a JSON-LD prefix file, add the prefix mappings in the file to the current
+   * JSON-LD context.
+   *
+   * @param prefixPath path to JSON-LD prefix file to add
+   * @throws IOException if the file does not exist or cannot be read
+   */
+  public void addPrefixes(String prefixPath) throws IOException {
+    File prefixFile = new File(prefixPath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, prefixPath));
+    }
+    Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    context.putAll(context1.getPrefixes(false));
+  }
+
+  /**
    * Get a copy of the current prefix map.
    *
    * @return a copy of the current prefix map
@@ -1028,6 +1099,26 @@ public class IOHelper {
   }
 
   /**
+   * Given a document format and a map of prefixes to add, add the prefixes to the document.
+   *
+   * @param df OWLDocumentFormat
+   * @param addPrefixes map of prefix to namespace to add
+   */
+  private void addPrefixes(OWLDocumentFormat df, Map<String, String> addPrefixes) {
+    if (!df.isPrefixOWLOntologyFormat()) {
+      // Warn on non-prefix document format (i.e. OBO)
+      logger.warn(
+          String.format(
+              "Unable to add prefixes to %s document - saving without prefixes", df.toString()));
+      return;
+    }
+    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    for (Map.Entry<String, String> pref : addPrefixes.entrySet()) {
+      pf.setPrefix(pref.getKey(), pref.getValue());
+    }
+  }
+
+  /**
    * Given an ontology, a document format, and a boolean indicating to check OBO formatting, return
    * the ontology file in the OWLDocumentFormat as a byte array.
    *
@@ -1145,6 +1236,12 @@ public class IOHelper {
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
       } catch (OWLOntologyStorageException e) {
+        // Determine if its caused by an OBO Format error
+        if (format instanceof OBODocumentFormat
+            && e.getCause() instanceof FrameStructureException) {
+          throw new IOException(
+              String.format(oboStructureError, e.getCause().getMessage()), e.getCause());
+        }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }
     }
