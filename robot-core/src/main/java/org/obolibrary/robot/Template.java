@@ -655,6 +655,7 @@ public class Template {
     // Instead of adding them in as we iterate through
     Map<Integer, Set<OWLClassExpression>> subclassExpressionColumns = new HashMap<>();
     Map<Integer, Set<OWLClassExpression>> equivalentExpressionColumns = new HashMap<>();
+    Map<Integer, Set<OWLClassExpression>> intersectionEquivalentExpressionColumns = new HashMap<>();
     Map<Integer, Set<OWLClassExpression>> disjointExpressionColumns = new HashMap<>();
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
@@ -699,7 +700,7 @@ public class Template {
                 TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
             break;
           case "equivalent":
-            equivalentExpressionColumns.put(
+            intersectionEquivalentExpressionColumns.put(
                 column,
                 TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
             break;
@@ -720,6 +721,11 @@ public class Template {
     }
     if (!equivalentExpressionColumns.isEmpty()) {
       addEquivalentClassesAxioms(cls, equivalentExpressionColumns, row);
+    }
+    if (!intersectionEquivalentExpressionColumns.isEmpty()) {
+      // Special case to support legacy "C"/"equivalent" class type
+      // Which is the intersection of all C columns
+      addIntersectionEquivalentClassesAxioms(cls, intersectionEquivalentExpressionColumns, row);
     }
     if (!disjointExpressionColumns.isEmpty()) {
       addDisjointClassAxioms(cls, disjointExpressionColumns, row);
@@ -752,6 +758,33 @@ public class Template {
   }
 
   /**
+   * Given an OWLClass, a map of column number to class expressions, and the row containing the
+   * class details, generate equivalent class axioms for the class where the equivalents are the
+   * class expressions. Maybe annotate the axioms.
+   *
+   * @param cls OWLClass to create equivalentClasses axiom for
+   * @param expressionColumns map of column number to equivalent class expression
+   * @param row list of template values for given class
+   * @throws Exception on issue getting axiom annotations
+   */
+  private void addEquivalentClassesAxioms(
+      OWLClass cls, Map<Integer, Set<OWLClassExpression>> expressionColumns, List<String> row)
+      throws Exception {
+    Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
+    Set<OWLClassExpression> expressions = new HashSet<>();
+    for (int column : expressionColumns.keySet()) {
+      // Maybe get an annotation on the expression (all annotations will be on the one intersection)
+      axiomAnnotations.addAll(maybeGetAxiomAnnotations(row, column));
+      // Add all expressions to the set of expressions
+      expressions.addAll(expressionColumns.get(column));
+    }
+    // Each expression will be its own equivalent class statement
+    for (OWLClassExpression expr : expressions) {
+      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, expr, axiomAnnotations));
+    }
+  }
+
+  /**
    * Given an OWLClass, a map of column number to class expressions, and the row for this class,
    * generate an equivalentClasses axiom for the class where the equivalent is the intersection of
    * the provided class expressions. Maybe annotate the axioms.
@@ -761,7 +794,7 @@ public class Template {
    * @param row list of template values for given class
    * @throws Exception on issue getting axiom annotations
    */
-  private void addEquivalentClassesAxioms(
+  private void addIntersectionEquivalentClassesAxioms(
       OWLClass cls, Map<Integer, Set<OWLClassExpression>> expressionColumns, List<String> row)
       throws Exception {
     Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
