@@ -1,7 +1,6 @@
-
 # Template
 
-ROBOT can convert tables to OWL format using templates. See <a href="/examples/template.csv" target="_blank">`template.csv`</a> for an example. The approach extends the QTT method described in <a href="http://dx.doi.org/10.3233/AO-2011-0086" target="_blank">Overcoming the ontology enrichment bottleneck with Quick Term Templates</a>.
+ROBOT can convert tables to OWL format using templates. See [`template.csv`](/examples/template.csv) for an example. The approach extends the QTT method described in [Overcoming the ontology enrichment bottleneck with Quick Term Templates](http://dx.doi.org/10.3233/AO-2011-0086).
 
 ROBOT can read comma-separated values (`.csv`) or tab-separated values (`.tsv` or `.tab`):
 
@@ -14,11 +13,11 @@ Each template file must be set up in the following format:
 
 1. **Headers**: ROBOT expects the first row to contain column names for every column used in the data. These are used to make error messages more helpful.
 2. **Templates**: ROBOT expects the second row to contain template strings for each column that will be used in the OWL conversion. See below for details on template strings.
-3. **Data**: ROBOT expects each of the remaining rows to correspond to an OWLClass or OWLIndividual. (In the future we may add support for other sorts of OWL entities). Rows with a blank "ID" column will be skipped.
+3. **Data**: ROBOT expects each of the remaining rows to correspond to a term (a class, property, or individual).
 
 ### Template Options
 
-The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its RDFS labels will be used when parsing the template. The `--template` or `-t` option specified the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See [Merging](/template#merging) for the three different merge options, and details on how they control the output of the command.
+The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its `rdfs:label`s will be used when parsing the template. The `--template` or `-t` option specifies the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See [Merging](/template#merging) for the three different merge options, and details on how they control the output of the command.
 
 A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms.
 
@@ -30,7 +29,7 @@ A template may have multiple errors in different rows and columns. By default, `
     - If an entity already exists in the `--input` ontology, you can refer to it by `LABEL` instead (see below).
     - Rows with no `ID` or `LABEL` will be skipped.
 - `LABEL`: a special keyword to specify an `rdfs:label` that uniquely identifies the target term. This can be easier than the numeric IDs for human readers. Keep in mind:
-    - The `LABEL` column will create `rdfs:label` string annotation for the entity 
+    - The `LABEL` column will create `rdfs:label` string annotation for the entity
     - If you are creating new entities using `LABEL`, be sure to include an `ID` column as well
 - `TYPE`: this is the `rdf:type` for the row. Because ROBOT is focused on ontology development, the default value is `owl:Class` and this column is optional. When creating an OWLIndividual, specify the class to which it belongs in this column.
     - `class` or `owl:Class`
@@ -45,18 +44,25 @@ A template may have multiple errors in different rows and columns. By default, `
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.
     - `AI` annotation IRI: If the template string starts with an `AI` and a space, then the annotation will be made as with a string annotation, except that the cell value will be interpreted as an IRI.
 - `>A` (**axiom annotations**): ROBOT can also annotate logical and annotation axioms. The axiom annotation will be on the axiom created on the cell to the left of the `>A*` template string. The `>` symbol can be used in front of any valid annotation character (`>A`, `>AT`, `>AL`, `>AI`)
-   
-Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have seperate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice - other than pure whitespace - to split on (e.g. `SPLIT=, `).
+
+Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have separate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice -- other than pure whitespace -- to split on (e.g. `SPLIT=, `).
 
 ### Class Template Strings
 
-- **class expression**: If the template string starts with `SC`, `EC`, or `DC` followed by a space and the template string (e.g. `SC %`) then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then, the result will be parsed into an OWL class expression. 
-    - ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its `rdfs:label` (enclosing in single quotes if it has a space in it). 
+- **class expression**: If the template string starts with `C`, `SC`, `EC`, or `DC` followed by a space and the template string (e.g. `SC %`) then it will be interpreted as a class expression. The value of the current cell will be substituted into the template, replacing all occurrences of the percent `%` character. Then, the result will be parsed into an OWL class expression.
+    - ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its `rdfs:label` (enclosing in single quotes if it has a space in it).
     - If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
     - Properties in class expressions **must** be referred to by label in order to be parsed.
 - `SC %`: the class will be asserted to be a subclass of the class expression in this column
-- `EC %`: the class will be asserted to be equivalent with the class expression in this column
+- `EC %`: the class will be asserted to be an equivalent class of the intersection of *all* `EC` class expressions in a row
 - `DC %`: the class will be asserted to be disjoint with the class expression in this column
+- `C %`: the class will be asserted as specified in the `CLASS_TYPE` column
+- `CLASS_TYPE`: an optional column that specifies the type for all `C` columns. This allows different rows to have different types of logical definitions. Valid values are:
+    - `subclass`: the values of all `C` columns will be asserted as subclasses (this is the default)
+    - `equivalent`: values of all `C` columns will be taken as an intersection and asserted to be an equivalent class
+    - `disjoint`: the values of all `C` columns will be asserted as disjoint classes
+
+(A `CI` template string tells ROBOT to read the cell value as an IRI and assert it as the `CLASS_TYPE`. This is included for legacy support, and the other class template strings are preferred.)
 
 #### Example of Class Template Strings
 
@@ -69,7 +75,7 @@ Sometimes you want to include zero or more values in a single spreadsheet cell, 
 
 Class 2 will be a subclass of Class 1. Class 3 will be equivalent to `part_of some 'Class 2'` and Class 4 will be disjoint with Class 3.
 
-Manchester expressions can also be used within the cells, as long as they are enclosed in parentheses:
+Manchester expressions can also be used within the cells. To avoid ambiguity, it's best to enclose expressions in parentheses:
 
 | Label   | Parent                   |
 | ------- | ------------------------ |
@@ -81,31 +87,35 @@ In this template, Class 5 would be a subclass of `part_of some 'Class 4'`.
 
 ### Property Template Strings
 
-- `PROPERTY_TYPE`: for each row of data that has a `TYPE` of object property or data property (*not* an annotation property), you can also specify a `PROPERTY_TYPE`. This field can be left blank to not specify a property type. Property type can be split, e.g. `PROPERTY_TYPE SPLIT=|`, to specify multiple property types. The property type can be (any type followed by a \* can ONLY be used for object properties):
+- `DOMAIN`: The domain to a property is a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object and data properties). For annotation properties, the domain must be a single class specified by label, CURIE, or IRI.
+- `RANGE`: The range to a property is either a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object properties) or the name, CURIE, or IRI of a datatype (for annotation and data properties).
+- `CHARACTERISTIC`: for each row of data that has a `TYPE` of object property or data property (*not* an annotation property), you can optionally specify a logical `CHARACTERISTIC` column. The column can be split, e.g. `CHARACTERISTIC SPLIT=|`, to specify multiple characteristics. Object properties can have any of the following characteristics, but only `functional` applies to data properties:
     - `functional`: the created property will be functional, meaning each entity (subject) can have at most one value
-    - `inverse functional`\*: the created object property will be inverse functional, meaning each value can have at most one subject
-    - `irreflexive`\*: the created object property will be irreflexive, meaning the subject cannot also be the value
-    - `reflexive`\*: the created object property will be reflexive, meaning each subject is also a value
-    - `symmetric`\*: the created object property will be symmetric, meaning the subject and value can be reversed
-    - `asymmetric`\*: the created object property will be asymmetric, meaning the subject and value cannot be reversed
-    - `transitive`\*: the created object property will be transitive, meaning the property can be chained
-- **property expression**: If the template string starts with `SP`, `EP`, `DP`, or `IP` followed by a space and the template string (e.g. `SP %`), then it will be interpreted as a property expression. The value of the current cell will be substituted into the template, replacing all occurrences of the `%` character. Then the result will be parsed into an OWL property expression. ROBOT uses the same syntax for property expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to an entity by its IRI or CURIE. This can lead to unexpected behavior, but it allows you to refer to entities without loading them into the input ontology.
+    - `inverse functional`: the created object property will be inverse functional, meaning each value can have at most one subject
+    - `reflexive`: the created object property will be reflexive, meaning each subject can also be a value
+    - `irreflexive`: the created object property will be irreflexive, meaning the subject cannot also be the value
+    - `symmetric`: the created object property will be symmetric, meaning the subject and value can be reversed
+    - `asymmetric`: the created object property will be asymmetric, meaning the subject and value cannot be reversed
+    - `transitive`: the created object property will be transitive, meaning the property can be chained
+- **property expression**: If the template string starts with `P`, `SP`, `EP`, `DP`, or `IP` followed by a space and the template string (e.g. `SP %`), then it will be interpreted as a property expression. The value of the current cell will be substituted into the template, replacing all occurrences of the `%` character. Then the result will be parsed into an OWL property expression. ROBOT uses the same syntax for property expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). If it does not recognize a name, ROBOT will assume that you're trying to refer to an entity by its IRI or CURIE. This can lead to unexpected behavior, but it allows you to refer to entities without loading them into the input ontology.
     - `SP %`: the property will be asserted to be a subproperty of the property expression in the column
     - `EP %`: the property will be asserted to be equivalent with the property expression in the column
     - `DP %`: the property will be asserted to be disjoint with the property expression in the column
-    - `IP %`: this can only be used with object properties - the property will be asserted to be the inverse of the property expression in the column.
-- `DOMAIN`: The domain to a property is a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object and data properties). For annotation properties, the domain must be a single class specified by label, CURIE, or IRI.
-- `RANGE`: The range to a property is either a class expression in [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) (for object properties) or the name, CURIE, or IRI of a datatype (for annotation and data properties).
+    - `IP %`: the property will be asserted to be the inverse of the property expression in the column (this can only be used with object properties)
+    - `P %`: the property will be asserted as specified in the `PROPERTY_TYPE` column
+    - `PROPERTY_TYPE`: an optional column that specifies the type for all `P` columns. This allows different rows to have different types of logical definitions. Valid values are:
+        - `subproperty`: the values of all `P` columns will be asserted as subproperties (this is the default, annotation properties can only be subproperties)
+        - `equivalent`: values of all `C` columns will be asserted as equivalent properties
+        - `disjoint`: the values of all `P` columns will be asserted as disjoint properties
+        - `inverse`: the values of all `P` columns will be asserted as inverse properties (only applies to object properties)
 
 #### Example of Property Template Strings
 
-| ID   | Entity Type        | Property Type | Super Property | Domain  | Range      |
-| ---- | ------------------ | ------------- | -------------- | ------- | ---------- |
-| ID   | TYPE               | PROPERTY_TYPE | SP %           | DOMAIN  | RANGE      |
-| OP:1 | owl:ObjectProperty |               | Property 1     | Class 1 | Class 2    |
-| DP:1 | owl:DataProperty   | functional    | Property 2     | Class 2 | xsd:string |
-
-The `functional` data property will still default to a `subproperty` logical axiom for the `P %` template string, unless a different logical property type (`equivalent`, `disjoint`) is provided.
+| ID   | Entity Type        | Characteristic | Super Property | Domain  | Range      |
+| ---- | ------------------ | -------------- | -------------- | ------- | ---------- |
+| ID   | TYPE               | CHARACTERISTIC | SP %           | DOMAIN  | RANGE      |
+| OP:1 | owl:ObjectProperty |                | Property 1     | Class 1 | Class 2    |
+| DP:1 | owl:DataProperty   | functional     | Property 2     | Class 2 | xsd:string |
 
 ### Individual Template Strings
 
@@ -159,7 +169,7 @@ robot template --merge-before --input edit.owl \
   --template template.csv --output results/template.owl
 ```
 
-Create two outputs - the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):
+Create two outputs -- the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):
 <!-- DO NOT TEST -->
 ```
 robot template --merge-after \
@@ -207,7 +217,7 @@ A http://www.w3.org/2000/01/rdf-schema#label
 
 ### Annotation Property Type Error
 
-The only valid `PROPERTY_TYPE` for an annotation property is `subproperty`. Other types of logic for annotation properties are not supported in OWL. If this column is left blank, it will default to `subproperty`.
+The only valid `CHARACTERISTIC` for an annotation property is `subproperty`. Other types of logic for annotation properties are not supported in OWL. If this column is left blank, it will default to `subproperty`.
 
 ### Axiom Annotation Error
 
@@ -305,4 +315,4 @@ AT rdfs:label^^xsd:string
 
 ### Unknown Template Error
 
-Valid template strings are limited to the <a href="#template-strings">described above</a>. If a different template string is provided, this error message will be returned.
+Valid template strings are limited to the [described above](#template-strings). If a different template string is provided, this error message will be returned.
