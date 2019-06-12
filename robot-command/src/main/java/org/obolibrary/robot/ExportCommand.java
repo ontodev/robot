@@ -19,12 +19,12 @@ public class ExportCommand implements Command {
 
     o.addOption("i", "input", true, "load ontology to merge from a file");
     o.addOption("I", "input-iri", true, "load ontology to merge from an IRI");
-    o.addOption("e", "export", true, "file to export ontology to");
-    o.addOption("c", "header", true, "ordered list of column names to act as header");
+    o.addOption("e", "export", true, "target file for export");
+    o.addOption("c", "header", true, "ordered list of column names for header");
     o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous entities");
-    o.addOption("s", "sort", true, "field to sort on (default: first column)");
-    o.addOption(null, "include", true, "if true, exclude classes (default: false)");
-    o.addOption("d", "delimiter", true, "override default comma or tab delimiter");
+    o.addOption("s", "sort", true, "column to sort on (default: first column)");
+    o.addOption("n", "include", true, "groups of terms to include");
+    o.addOption("d", "delimiter", true, "override default delimiter character");
 
     options = o;
   }
@@ -44,7 +44,7 @@ public class ExportCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "export ontology as spreadsheet";
+    return "export ontology as a table";
   }
 
   /**
@@ -53,7 +53,7 @@ public class ExportCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot export --input <file> " + "--export <file> ";
+    return "robot export --input <file> --export <file> ";
   }
 
   /**
@@ -108,7 +108,7 @@ public class ExportCommand implements Command {
       }
     }
 
-    // Override default reasoner options with command-line options
+    // Override default options with command-line options
     Map<String, String> exportOptions = ExportOperation.getDefaultOptions();
     for (String option : exportOptions.keySet()) {
       if (line.hasOption(option)) {

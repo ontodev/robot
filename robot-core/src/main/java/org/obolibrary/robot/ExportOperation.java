@@ -27,7 +27,7 @@ public class ExportOperation {
       NS + "INVALID COLUMN ERROR unable to find property for column header '%s'";
 
   private static final String includeNothingError =
-      NS + "INCLUDE NOTHING ERROR you cannot exclude all types of ontology terms";
+      NS + "INCLUDE NOTHING ERROR you must include some types of ontology terms";
 
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
@@ -403,8 +403,8 @@ public class ExportOperation {
   }
 
   /**
-   * Given an OWLOntology and a boolean indicating if ONLY classes should be included, return a set
-   * of all entities in the ontology.
+   * Given an OWLOntology and a map of options for which types of entities to included return a set
+   * of entities in the ontology.
    *
    * @param ontology OWLOntology to get entities from
    * @param options map of export options
