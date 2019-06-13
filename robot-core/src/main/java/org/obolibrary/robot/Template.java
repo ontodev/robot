@@ -75,7 +75,7 @@ public class Template {
   private static final String NS = "template#";
 
   /** Error message when an annotation property has a characteristic. */
-  private static final String annotationPropertyCharactersiticError =
+  private static final String annotationPropertyCharacteristicError =
       NS
           + "ANNOTATION PROPERTY CHARACTERISTIC ERROR annotation property '%s' should not have any characteristics at line %d, column %d";
 
@@ -125,9 +125,9 @@ public class Template {
           + "PROPERTY TYPE SPLIT ERROR thee SPLIT functionality should not be used for PROPERTY_TYPE in column %d";
 
   /** Error message when property characteristic not valid. */
-  private static final String unknownPropertyCharacteristicError =
+  private static final String unknownCharacteristicError =
       NS
-          + "UNKNOWN PROPERTY CHARACTERISTIC ERROR property '%s' has unknown characteristic '%s' at line %d, column %d.";
+          + "UNKNOWN CHARACTERISTIC ERROR property '%s' has unknown characteristic '%s' at line %d, column %d.";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
@@ -913,7 +913,7 @@ public class Template {
         default:
           throw new Exception(
               String.format(
-                  unknownPropertyCharacteristicError,
+                  unknownCharacteristicError,
                   property.getIRI().getShortForm(),
                   c,
                   rowNum,
@@ -1417,7 +1417,7 @@ public class Template {
       if (propertyCharacteristicString != null && !propertyCharacteristicString.trim().isEmpty()) {
         throw new RowParseException(
             String.format(
-                annotationPropertyCharactersiticError,
+                annotationPropertyCharacteristicError,
                 iri.getShortForm(),
                 rowNum,
                 characteristicColumn));

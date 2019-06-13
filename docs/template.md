@@ -207,6 +207,10 @@ Further examples can be found [in the OBI repository](https://github.com/obi-ont
 
 ## Error Messages
 
+### Annotation Property Characteristic Error
+
+Annotation properties should not have any value in the `CHARACTERISTIC` column, if it exists. This type of logic for annotation properties is not supported in OWL.
+
 ### Annotation Property Error
 
 The annotation property provided could not be resolved. Check your template to ensure the provided annotation property is in a correct IRI or CURIE format. For legibility, using CURIEs is recommended, but you must ensure that the prefix is defined.
@@ -217,7 +221,7 @@ A http://www.w3.org/2000/01/rdf-schema#label
 
 ### Annotation Property Type Error
 
-The only valid `CHARACTERISTIC` for an annotation property is `subproperty`. Other types of logic for annotation properties are not supported in OWL. If this column is left blank, it will default to `subproperty`.
+The only valid `PROPERTY_TYPE` for an annotation property is `subproperty`. Other types of logic for annotation properties are not supported in OWL. If this column is left blank, it will default to `subproperty`.
 
 ### Axiom Annotation Error
 
@@ -238,6 +242,10 @@ A class row may only use one of: `subclass`, `equivalent`, and `disjoint`. To ad
 ### Column Mismatch Error
 
 There number of header columns (first row) must be equal to the number of template string columns (second row).
+
+### Data Property Characteristic Error
+
+The only valid `CHARACTERISTIC` value for a data property is `functional`. Other types of property characteristics for data properties are not supported in OWL.
 
 ### Datatype Error
 
@@ -312,6 +320,17 @@ The template string for an `AT` annotation must always include `^^`.
 ```
 AT rdfs:label^^xsd:string
 ```
+
+### Unknown Characteristic Error
+
+An invalid `CHARACTERISTIC` value was passed. If you are providing multiple characteristics, make sure to include `SPLIT=` in your template string. Valid characteristics are:
+- `functional`
+- `inverse functional`
+- `reflexive`
+- `irreflexive`
+- `symmetric`
+- `asymmetric`
+- `transitive`
 
 ### Unknown Template Error
 
