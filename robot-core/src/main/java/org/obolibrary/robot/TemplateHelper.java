@@ -832,32 +832,6 @@ public class TemplateHelper {
   }
 
   /**
-   * Given an entity type or character-separated entity types, a character to split the type string
-   * on, and a default type, return a list of the types. If type is null, set to the default type.
-   *
-   * @param type type or types to include in list
-   * @param typeSplit character to split type string on
-   * @param defaultType default type if type is null
-   * @return list of types
-   */
-  public static List<String> getTypes(String type, String typeSplit, String defaultType) {
-    List<String> types = new ArrayList<>();
-    if (type == null || type.trim().isEmpty()) {
-      types.add(defaultType);
-    } else {
-      if (typeSplit != null) {
-        String[] ts = type.split(Pattern.quote(typeSplit));
-        for (String t : ts) {
-          types.add(t.trim().toLowerCase());
-        }
-      } else {
-        types.add(type.trim().toLowerCase());
-      }
-    }
-    return types;
-  }
-
-  /**
    * Given a QuotedEntityChecker, a value, and a split character (or null), return the value (or
    * values) as a set of IRIs.
    *
@@ -980,26 +954,23 @@ public class TemplateHelper {
     template = template.trim();
     if (template.equals("ID")) {
       return true;
-    }
-    if (template.equals("LABEL")) {
+    } else if (template.equals("LABEL")) {
       return true;
-    }
-    if (template.equals("TYPE")) {
+    } else if (template.equals("TYPE")) {
       return true;
-    }
-    if (template.equals("CLASS_TYPE")) {
+    } else if (template.equals("CLASS_TYPE")) {
       return true;
-    }
-    if (template.matches("^(>?C|>{0,2}A[LTI]?|>?P|>?D|>?I|>?R|>?DT) .*")) {
+    } else if (template.matches("^(>?C|>{0,2}A[LTI]?|>?P|>?D|>?I|>?R|>?DT) .*")) {
       return true;
-    }
-    if (template.startsWith("PROPERTY_TYPE")) {
+    } else if (template.startsWith("PROPERTY_TYPE")) {
       return true;
-    }
-    if (template.startsWith("INDIVIDUAL_TYPE")) {
+    } else if (template.startsWith("CHARACTERISTIC")) {
       return true;
+    } else if (template.startsWith("INDIVIDUAL_TYPE")) {
+      return true;
+    } else {
+      return template.matches("^(SC|EC|DC|SP|EP|DP|IP|NI|SI|DI|CI|PI|RI|II).*");
     }
-    return template.matches("^(SC|EC|DC|SP|EP|DP|IP|NI|SI|DI|CI|PI|RI|II).*");
   }
 
   /**

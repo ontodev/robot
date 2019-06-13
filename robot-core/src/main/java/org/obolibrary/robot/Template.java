@@ -1,7 +1,7 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.Lists;
 import java.util.*;
+import java.util.regex.Pattern;
 import org.obolibrary.robot.exceptions.ColumnException;
 import org.obolibrary.robot.exceptions.RowParseException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -44,11 +44,14 @@ public class Template {
   /** Location of property types (PROPERTY_TYPE). */
   private int propertyTypeColumn = -1;
 
+  /** Location of property characteristic (CHARACTERISTIC). */
+  private int characteristicColumn = -1;
+
   /** Location of individual types (INDIVIDUAL_TYPE). */
   private int individualTypeColumn = -1;
 
-  /** Character to split property types on. */
-  private String propertyTypeSplit = null;
+  /** Character to split property characteristics on. */
+  private String characteristicSplit = null;
 
   /** Character to split generic types on. */
   private String typeSplit = null;
@@ -70,6 +73,11 @@ public class Template {
 
   /** Namespace for error messages. */
   private static final String NS = "template#";
+
+  /** Error message when an annotation property has a characteristic. */
+  private static final String annotationPropertyCharactersiticError =
+      NS
+          + "ANNOTATION PROPERTY CHARACTERISTIC ERROR annotation property '%s' should not have any characteristics at line %d, column %d";
 
   /** Error message when an annotation property gets a property type other than subproperty. */
   private static final String annotationPropertyTypeError =
@@ -93,6 +101,11 @@ public class Template {
       NS
           + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match the number of template columns (%3$d) in table \"%1$s\".";
 
+  /** Error message when a data property has a characteristic other than 'functional'. */
+  private static final String dataPropertyCharacteristicError =
+      NS
+          + "DATA PROPERTY CHARACTERISTIC ERROR data property '%s' can only have characteristic 'functional' at line %d, column %d.";
+
   /** Error message when an invalid individual type is provided. */
   private static final String individualTypeError =
       NS + "INDIVIDUAL TYPE ERROR individual %s has unknown type '%s' at row %d, column %d";
@@ -107,9 +120,14 @@ public class Template {
       NS + "PROPERTY TYPE ERROR property %s has unknown type '%s' at row %d, column %d";
 
   /** Error message when more than one logical type is used in PROPERTY_TYPE. */
-  private static final String multiplePropertyTypeError =
+  private static final String propertyTypeSplitError =
       NS
-          + "MULTIPLE PROPERTY TYPE ERROR property type list at row %d, column %d may only include one of: subproperty, equivalent, disjoint, or inverse (for object properties).";
+          + "PROPERTY TYPE SPLIT ERROR thee SPLIT functionality should not be used for PROPERTY_TYPE in column %d";
+
+  /** Error message when property characteristic not valid. */
+  private static final String unknownPropertyCharacteristicError =
+      NS
+          + "UNKNOWN PROPERTY CHARACTERISTIC ERROR property '%s' has unknown characteristic '%s' at line %d, column %d.";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
@@ -409,7 +427,8 @@ public class Template {
         // Property expression type
         propertyTypeColumn = column;
         if (template.contains("SPLIT=")) {
-          propertyTypeSplit = template.substring(template.indexOf("SPLIT=") + 6);
+          // Instances should only have one individual type
+          throw new ColumnException(String.format(propertyTypeSplitError, column));
         }
       } else if (template.startsWith("INDIVIDUAL_TYPE")) {
         // Individual expression type
@@ -417,6 +436,12 @@ public class Template {
         if (template.contains("SPLIT=")) {
           // Instances should only have one individual type
           throw new ColumnException(String.format(individualTypeSplitError, column));
+        }
+      } else if (template.startsWith("CHARACTERISTIC")) {
+        // Property characteristic
+        characteristicColumn = column;
+        if (template.contains("SPLIT=")) {
+          characteristicSplit = template.substring(template.indexOf("SPLIT=") + 6);
         }
       }
     }
@@ -851,22 +876,18 @@ public class Template {
         dataFactory.getOWLDeclarationAxiom(
             dataFactory.getOWLEntity(EntityType.OBJECT_PROPERTY, iri)));
 
-    String propertyType = null;
-    if (propertyTypeColumn != 1) {
-      try {
-        propertyType = row.get(propertyTypeColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // do nothing
-      }
-    }
-    List<String> propertyTypes =
-        TemplateHelper.getTypes(propertyType, propertyTypeSplit, "subproperty");
+    // Maybe get a property type (default subproperty)
+    String propertyType = getPropertyType(row);
 
+    // Maybe get characteristics (default none)
+    List<String> characteristics = getCharacteristics(row);
+
+    // Create the property object
     OWLObjectProperty property = dataFactory.getOWLObjectProperty(iri);
 
     // Handle special property types
-    for (String pt : propertyTypes) {
-      switch (pt.trim().toLowerCase()) {
+    for (String c : characteristics) {
+      switch (c.trim().toLowerCase()) {
         case "asymmetric":
           axioms.add(dataFactory.getOWLAsymmetricObjectPropertyAxiom(property));
           break;
@@ -889,27 +910,17 @@ public class Template {
         case "transitive":
           axioms.add(dataFactory.getOWLTransitiveObjectPropertyAxiom(property));
           break;
+        default:
+          throw new Exception(
+              String.format(
+                  unknownPropertyCharacteristicError,
+                  property.getIRI().getShortForm(),
+                  c,
+                  rowNum,
+                  characteristicColumn));
       }
     }
-    // Remove the special types
-    propertyTypes.removeAll(
-        Lists.newArrayList(
-            "asymmetric",
-            "functional",
-            "inversefunctional",
-            "inverse functional",
-            "irreflexive",
-            "reflexive",
-            "symmetric",
-            "transitive"));
-    if (propertyTypes.size() > 1) {
-      // There may only be one of: subproperty, equivalent, disjoint, or inverse
-      throw new RowParseException(
-          String.format(multiplePropertyTypeError, rowNum, propertyTypeColumn));
-    } else if (propertyTypes.size() == 0) {
-      propertyTypes.add("subproperty");
-    }
-    propertyType = propertyTypes.get(0);
+
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
       String value = null;
@@ -1152,33 +1163,26 @@ public class Template {
         dataFactory.getOWLDeclarationAxiom(
             dataFactory.getOWLEntity(EntityType.DATA_PROPERTY, iri)));
 
-    String propertyType = null;
-    if (propertyTypeColumn != 1) {
-      try {
-        propertyType = row.get(propertyTypeColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // do nothing
-      }
-    }
-    List<String> propertyTypes =
-        TemplateHelper.getTypes(propertyType, propertyTypeSplit, "subproperty");
-
     OWLDataProperty property = dataFactory.getOWLDataProperty(iri);
 
-    // Handle special property types
-    for (String pt : propertyTypes) {
-      if (pt.trim().toLowerCase().equals("functional")) {
-        axioms.add(dataFactory.getOWLFunctionalDataPropertyAxiom(property));
+    // Maybe get property type (default subproperty)
+    String propertyType = getPropertyType(row);
+
+    // Maybe get property characteristics (default empty list)
+    List<String> characteristics = getCharacteristics(row);
+
+    // Maybe add property characteristics
+    for (String c : characteristics) {
+      if (!c.equalsIgnoreCase("functional")) {
+        throw new Exception(
+            String.format(
+                dataPropertyCharacteristicError,
+                property.getIRI().getShortForm(),
+                rowNum,
+                characteristicColumn));
       }
+      axioms.add(dataFactory.getOWLFunctionalDataPropertyAxiom(property));
     }
-    propertyTypes.remove("functional");
-    if (propertyTypes.size() > 1) {
-      throw new RowParseException(
-          String.format(multiplePropertyTypeError, rowNum, propertyTypeColumn));
-    } else if (propertyTypes.size() == 0) {
-      propertyTypes.add("subproperty");
-    }
-    propertyType = propertyTypes.get(0);
 
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
@@ -1398,19 +1402,8 @@ public class Template {
         dataFactory.getOWLDeclarationAxiom(
             dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri)));
 
-    String propertyType = null;
-    if (propertyTypeColumn != 1) {
-      try {
-        propertyType = row.get(propertyTypeColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // do nothing
-      }
-    }
-    if (propertyType == null || propertyType.trim().isEmpty()) {
-      propertyType = "subproperty";
-    } else {
-      propertyType = propertyType.trim().toLowerCase();
-    }
+    String propertyType = getPropertyType(row);
+
     if (!propertyType.equals("subproperty")) {
       // Annotation properties can only have type "subproperty"
       throw new RowParseException(
@@ -1418,6 +1411,20 @@ public class Template {
               annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn));
     }
 
+    // Annotation properties should not have characteristics
+    if (characteristicColumn != -1) {
+      String propertyCharacteristicString = row.get(characteristicColumn);
+      if (propertyCharacteristicString != null && !propertyCharacteristicString.trim().isEmpty()) {
+        throw new RowParseException(
+            String.format(
+                annotationPropertyCharactersiticError,
+                iri.getShortForm(),
+                rowNum,
+                characteristicColumn));
+      }
+    }
+
+    // Create the property object
     OWLAnnotationProperty property = dataFactory.getOWLAnnotationProperty(iri);
 
     for (int column = 0; column < templates.size(); column++) {
@@ -1593,7 +1600,7 @@ public class Template {
     // There may be more than one class assertion - right now only named classes are supported
     List<String> types = new ArrayList<>();
     if (typeSplit != null) {
-      for (String t : typeCol.split(typeSplit)) {
+      for (String t : typeCol.split(Pattern.quote(typeSplit))) {
         if (!t.trim().equals("")) {
           types.add(t.trim());
         }
@@ -1932,26 +1939,6 @@ public class Template {
   }
 
   /**
-   * Given a string ID and a string label, with at least one of those being non-null, return an IRI
-   * for the entity.
-   *
-   * @param id String ID of entity, maybe null
-   * @param label String label of entity, maybe null
-   * @return IRI of entity
-   * @throws Exception if both id and label are null
-   */
-  private IRI getIRI(String id, String label) throws Exception {
-    if (id == null && label == null) {
-      // This cannot be hit by CLI users
-      throw new Exception("You must specify either an ID or a label");
-    }
-    if (id != null) {
-      return ioHelper.createIRI(id);
-    }
-    return checker.getIRI(label, true);
-  }
-
-  /**
    * Given a row as a list of strings and a column number, determine if the next column contains a
    * one or more axiom annotations. If so, return the axiom annotation or annotations as a set of
    * OWLAnnotations.
@@ -1994,5 +1981,67 @@ public class Template {
         labelColumn = column;
       }
     }
+  }
+
+  /* OTHER HELPERS */
+
+  /**
+   * Given a string ID and a string label, with at least one of those being non-null, return an IRI
+   * for the entity.
+   *
+   * @param id String ID of entity, maybe null
+   * @param label String label of entity, maybe null
+   * @return IRI of entity
+   * @throws Exception if both id and label are null
+   */
+  private IRI getIRI(String id, String label) throws Exception {
+    if (id == null && label == null) {
+      // This cannot be hit by CLI users
+      throw new Exception("You must specify either an ID or a label");
+    }
+    if (id != null) {
+      return ioHelper.createIRI(id);
+    }
+    return checker.getIRI(label, true);
+  }
+
+  /**
+   * Given a row, get the property type if it exists. If not, return default of "subproperty".
+   *
+   * @param row list of strings
+   * @return property type
+   */
+  private String getPropertyType(List<String> row) {
+    String propertyType = null;
+    if (propertyTypeColumn != -1) {
+      try {
+        propertyType = row.get(propertyTypeColumn);
+      } catch (IndexOutOfBoundsException e) {
+        // do nothing
+      }
+    }
+    if (propertyType == null || propertyType.trim().isEmpty()) {
+      return "subproperty";
+    } else {
+      return propertyType.trim().toLowerCase();
+    }
+  }
+
+  /**
+   * Given a row, get the list of characteristics if they exist. If not, return an empty list.
+   *
+   * @param row list of strings
+   * @return characteristics
+   */
+  private List<String> getCharacteristics(List<String> row) {
+    if (characteristicColumn != -1) {
+      String characteristicString = row.get(characteristicColumn);
+      if (characteristicSplit != null && characteristicString.contains(characteristicSplit)) {
+        return Arrays.asList(characteristicString.split(Pattern.quote(characteristicSplit)));
+      } else {
+        return Collections.singletonList(characteristicString.trim());
+      }
+    }
+    return new ArrayList<>();
   }
 }
