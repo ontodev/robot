@@ -1,8 +1,12 @@
 package org.obolibrary.robot;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +36,12 @@ public class RepairCommand implements Command {
         true,
         "if true, merge axiom annotations on duplicate axioms");
     options = o;
+    o.addOption("a", "annotation-property", true, "an annotation property to migrate");
+    o.addOption(
+        "A",
+        "annotation-properties-file",
+        true,
+        "load annotation properties to migrate from a file");
   }
 
   /**
@@ -111,6 +121,14 @@ public class RepairCommand implements Command {
 
     boolean mergeAxiomAnnotations =
         CommandLineHelper.getBooleanValue(line, "merge-axiom-annotations", false);
+
+    OWLDataFactory factory = inputOntology.getOWLOntologyManager().getOWLDataFactory();
+    Set<OWLAnnotationProperty> properties =
+        CommandLineHelper.getTerms(
+                ioHelper, line, "annotation-property", "annotation-properties-file")
+            .stream()
+            .map(factory::getOWLAnnotationProperty)
+            .collect(Collectors.toSet());
 
     RepairOperation.repair(inputOntology, ioHelper, mergeAxiomAnnotations);
     outputOntology = inputOntology;

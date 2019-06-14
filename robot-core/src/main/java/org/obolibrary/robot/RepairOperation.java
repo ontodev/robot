@@ -1,11 +1,7 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.obolibrary.robot.checks.InvalidReferenceViolation.Category;
@@ -55,6 +51,22 @@ public class RepairOperation {
   /**
    * Repairs ontology
    *
+   * @param ontology the OWLOntology to reapir
+   * @param ioHelper IOHelper to work with the ontology
+   * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
+   * @param migrateAnnotations set of annotation properties for which to migrate values
+   */
+  public static void repair(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      boolean mergeAxiomAnnotations,
+      Set<OWLAnnotationProperty> migrateAnnotations) {
+    repair(ontology, ioHelper, getDefaultOptions(), mergeAxiomAnnotations, migrateAnnotations);
+  }
+
+  /**
+   * Repairs ontology
+   *
    * @param ontology the OWLOntology to repair
    * @param ioHelper IOHelper to work with the ontology
    * @param options map of repair options
@@ -76,9 +88,27 @@ public class RepairOperation {
       IOHelper ioHelper,
       Map<String, String> options,
       boolean mergeAxiomAnnotations) {
+    repair(ontology, ioHelper, options, false, Collections.emptySet());
+  }
+
+  /**
+   * Repairs ontology
+   *
+   * @param ontology the OWLOntology to reapir
+   * @param ioHelper IOHelper to work with the ontology
+   * @param options map of repair options
+   * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
+   * @param migrateAnnotations set of annotation properties for which to migrate values
+   */
+  public static void repair(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      Map<String, String> options,
+      boolean mergeAxiomAnnotations,
+      Set<OWLAnnotationProperty> migrateAnnotations) {
     Set<InvalidReferenceViolation> violations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, true);
-    repairInvalidReferences(ioHelper, ontology, violations);
+    repairInvalidReferences(ioHelper, ontology, violations, migrateAnnotations);
     mergeAxiomAnnotations(ontology);
   }
 
@@ -141,6 +171,26 @@ public class RepairOperation {
    */
   public static void repairInvalidReferences(
       IOHelper iohelper, OWLOntology ontology, Set<InvalidReferenceViolation> violations) {
+    repairInvalidReferences(iohelper, ontology, violations, Collections.emptySet());
+  }
+
+  /**
+   * Repairs invalid references
+   *
+   * <p>Currently only able to repair references to deprecated classes.
+   *
+   * <p>Assumes OBO vocabulary
+   *
+   * @param iohelper IOHelper to work with the ontology
+   * @param ontology the OWLOntology to repair
+   * @param violations set of references violations
+   * @param migrateAnnotations set of annotation properties for which to migrate values
+   */
+  public static void repairInvalidReferences(
+      IOHelper iohelper,
+      OWLOntology ontology,
+      Set<InvalidReferenceViolation> violations,
+      Set<OWLAnnotationProperty> migrateAnnotations) {
     logger.info("Invalid references: " + violations.size());
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLEntityRenamer renamer = new OWLEntityRenamer(manager, ontology.getImportsClosure());
@@ -188,7 +238,12 @@ public class RepairOperation {
         axiomsToPreserve.addAll(ontology.getAxioms((OWLObjectProperty) obsObj, Imports.EXCLUDED));
       }
       axiomsToPreserve.addAll(ontology.getDeclarationAxioms(obsObj));
-      axiomsToPreserve.addAll(ontology.getAnnotationAssertionAxioms(obsObj.getIRI()));
+      axiomsToPreserve.addAll(
+          ontology
+              .getAnnotationAssertionAxioms(obsObj.getIRI())
+              .stream()
+              .filter(ax -> !migrateAnnotations.contains(ax.getProperty()))
+              .collect(Collectors.toSet()));
       logger.info("Replacing: " + obsObj + " -> " + replacedBy);
     }
 
