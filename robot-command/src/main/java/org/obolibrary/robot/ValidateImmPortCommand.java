@@ -1,10 +1,13 @@
 package org.obolibrary.robot;
 
+import com.github.jsonldjava.utils.JsonUtils;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +21,7 @@ public class ValidateImmPortCommand implements Command {
   /** Constructor: Initialises the command with its various options. */
   public ValidateImmPortCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("x", "xyzzy", true, "the XYZZY parameter");
-    o.addOption("p", "plugh", true, "tge PLUGH parameter");
+    o.addOption("j", "input", true, "JSON file containing the data to validate");
     o.addOption("o", "output", true, "save results to file");
     options = o;
   }
@@ -36,7 +38,7 @@ public class ValidateImmPortCommand implements Command {
 
   /** Returns the command-line usage for the command. */
   public String getUsage() {
-    return "validate-immport --xyzzy <xyzzy> --plugh <plugh> --output <file>";
+    return "validate-immport --input <JSON> --output <file>";
   }
 
   /** Returns the command-line options for the command. */
@@ -73,10 +75,19 @@ public class ValidateImmPortCommand implements Command {
     }
 
     writer.write("Executing execute() ...\n");
-    String xyzzy = CommandLineHelper.getOptionalValue(line, "xyzzy");
-    String plugh = CommandLineHelper.getOptionalValue(line, "plugh");
-    writer.write(
-        "Xyzzy and Plugh are equal? " + ValidateImmPortOperation.equals(xyzzy, plugh) + "\n");
+    String inputPath = CommandLineHelper.getOptionalValue(line, "input");
+    File inputFile = new File(inputPath);
+    String jsonString = FileUtils.readFileToString(inputFile);
+    // The type of this object will be a List, Map, String, Boolean,
+    // Number or null depending on the root object in the file:
+    Object jsonObject = JsonUtils.fromString(jsonString);
+    boolean valid = ValidateImmPortOperation.validate(jsonObject, writer);
+    if (valid) {
+      writer.write("The input was valid!\n");
+    } else {
+      writer.write("Argh! The input was not valid!\n");
+    }
+
     writer.flush();
     writer.close();
 
