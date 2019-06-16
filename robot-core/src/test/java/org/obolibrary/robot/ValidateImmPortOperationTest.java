@@ -9,7 +9,11 @@ import org.junit.Test;
 /** Tests for ValidateImmPortOperationTest */
 public class ValidateImmPortOperationTest extends CoreTest {
 
-  /** A dummy test */
+  /**
+   * A dummy test
+   *
+   * @throws IOException
+   */
   @Test
   public void testDummy() throws IOException {
     Object jsonObject = loadJSON("/simple.json");

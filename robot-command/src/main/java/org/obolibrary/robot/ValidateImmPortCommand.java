@@ -26,27 +26,47 @@ public class ValidateImmPortCommand implements Command {
     options = o;
   }
 
-  /** Returns the name of the command */
+  /**
+   * Returns the name of the command
+   *
+   * @return name
+   */
   public String getName() {
     return "validate-immport";
   }
 
-  /** Returns a brief description of the command. */
+  /**
+   * Returns a brief description of the command.
+   *
+   * @return description
+   */
   public String getDescription() {
     return "validate stuff in ImmPort";
   }
 
-  /** Returns the command-line usage for the command. */
+  /**
+   * Returns the command-line usage for the command.
+   *
+   * @return usage
+   */
   public String getUsage() {
     return "validate-immport --input <JSON> --output <file>";
   }
 
-  /** Returns the command-line options for the command. */
+  /**
+   * Returns the command-line options for the command.
+   *
+   * @return options
+   */
   public Options getOptions() {
     return options;
   }
 
-  /** Handles the command-line and file operations for the ValidateImmPortOperation */
+  /**
+   * Handles the command-line and file operations for the ValidateImmPortOperation
+   *
+   * @param args strings to use as arguments
+   */
   public void main(String[] args) {
     try {
       execute(null, args);
@@ -55,13 +75,21 @@ public class ValidateImmPortCommand implements Command {
     }
   }
 
+  /**
+   * Given an input state and command line arguments, report on the differences between ontologies,
+   * if any, and return the state unchanged.
+   *
+   * @param state the state from the previous command, or null
+   * @param args the command-line arguments
+   * @return the input state, unchanged
+   * @throws Exception on any problem
+   */
   public CommandState execute(CommandState state, String[] args) throws Exception {
     CommandLine line = CommandLineHelper.getCommandLine(getUsage(), getOptions(), args);
     if (line == null) {
       return null;
     }
 
-    IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     if (state == null) {
       state = new CommandState();
     }
@@ -75,12 +103,10 @@ public class ValidateImmPortCommand implements Command {
     }
 
     writer.write("Executing execute() ...\n");
-    String inputPath = CommandLineHelper.getOptionalValue(line, "input");
-    File inputFile = new File(inputPath);
-    String jsonString = FileUtils.readFileToString(inputFile);
+    File inputFile = new File(CommandLineHelper.getOptionalValue(line, "input"));
     // The type of this object will be a List, Map, String, Boolean,
     // Number or null depending on the root object in the file:
-    Object jsonObject = JsonUtils.fromString(jsonString);
+    Object jsonObject = JsonUtils.fromString(FileUtils.readFileToString(inputFile));
     boolean valid = ValidateImmPortOperation.validate(jsonObject, writer);
     if (valid) {
       writer.write("The input was valid!\n");
@@ -90,7 +116,6 @@ public class ValidateImmPortCommand implements Command {
 
     writer.flush();
     writer.close();
-
     return state;
   }
 }
