@@ -3,10 +3,12 @@ package org.obolibrary.robot;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.github.jsonldjava.utils.JsonUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Set;
+import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
@@ -33,6 +35,14 @@ public class CoreTest {
   public OWLOntology loadOntology(String path) throws IOException {
     IOHelper ioh = new IOHelper();
     return ioh.loadOntology(this.getClass().getResourceAsStream(path));
+  }
+
+  /** Load a JSON file from a resource path. */
+  public Object loadJSON(String relpath) throws IOException {
+    String fullpath = this.getClass().getResource(relpath).getFile();
+    File inputFile = new File(fullpath);
+    String jsonString = FileUtils.readFileToString(inputFile);
+    return JsonUtils.fromString(jsonString);
   }
 
   /**
