@@ -1669,7 +1669,7 @@ public class Template {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
       } else if (template.startsWith("NI")) {
-        // Just links to other named individuals
+        // Just links to other named individuals or data properties
         String propStr = template.substring(3).replace("'", "");
         OWLObjectProperty objectProperty = checker.getOWLObjectProperty(propStr);
         if (objectProperty != null) {
