@@ -962,6 +962,10 @@ public class TemplateHelper {
       return true;
     } else if (template.equals("PROPERTY_TYPE")) {
       return true;
+    } else if (template.equals("DOMAIN")) {
+      return true;
+    } else if (template.equals("RANGE")) {
+      return true;
     } else if (template.matches("^CHARACTERISTIC( SPLIT=.+)?$")) {
       // CHARACTERISTIC can have a split
       // Should only be followed by SPLIT, nothing else
@@ -982,8 +986,8 @@ public class TemplateHelper {
       // Properties can be P, PI (does not need to be followed by space), SP, EP, DP, or IP
       return true;
     } else
-      // Individuals can be I, II (does not need to be followed by space), NI, SI, or DI
-      return template.matches("^(I .*|II.?|[NSD]I .*)");
+      // Individuals can be I, II (does not need to be followed by space), SI, or DI
+      return template.matches("^(I .*|II.?|[SD]I .*)");
 
     // TODO - future support for DT datatype axioms
   }
@@ -1003,7 +1007,7 @@ public class TemplateHelper {
       ManchesterOWLSyntaxClassExpressionParser parser, String content, int rowNum, int column)
       throws RowParseException {
     OWLClassExpression expr;
-    logger.info("Parsing expression '%s'", content);
+    logger.info(String.format("Parsing expression '%s'", content));
     try {
       expr = parser.parse(content);
     } catch (OWLParserException e) {

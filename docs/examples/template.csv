@@ -1,5 +1,6 @@
-ID,Label,Definition,Definition Source,See Also,Editor,RDF Type,Class Type,Parent IRI
-ID,A rdfs:label,A IAO:0000115,A IAO:0000119,AI rdfs:seeAlso,A IAO:0000117,TYPE,CLASS_TYPE,CI
-ex:F344N,F 344/N,An inbred strain of rat used in many scientific investigations.,James A. Overton,http://www.informatics.jax.org/external/festing/rat/docs/F344.shtml,James A. Overton,owl:Class,subclass,NCBITaxon:10116
-ex:B6C3F1,B6C3F1,An inbred strain of mouse used in many scientific investigations.,James A. Overton,http://jaxmice.jax.org/strain/100010.html,James A. Overton,owl:Class,subclass,NCBITaxon:10090
-ex:rat-1234,rat 1234,,,F 344/N,,ex:F344N,,
+ID,Label,Definition,Definition Source,See Also,Editor,Type,Parent Class,Disjoint Class,Domain,Range,Individual Weight
+ID,A rdfs:label,A IAO:0000115,>A IAO:0000119,AI rdfs:seeAlso,A IAO:0000117,TYPE,SC %,DC %,DOMAIN,RANGE,I weight in kilograms
+ex:F344N,F 344/N,An inbred strain of rat used in many scientific investigations.,James A. Overton,http://www.informatics.jax.org/external/festing/rat/docs/F344.shtml,James A. Overton,class,NCBITaxon:10116,,,,
+ex:B6C3F1,B6C3F1,An inbred strain of mouse used in many scientific investigations.,James A. Overton,http://jaxmice.jax.org/strain/100010.html,James A. Overton,class,NCBITaxon:10090,F 344/N,F 344/N' or B6C3F1,,
+ex:propery-1,weight in kilograms,Weight of a mouse or rat in kilograms (kg).,Rebecca C Jackson,,Rebecca C Jackson,data property,,,,xsd:decimal,
+ex:rat-1234,rat 1234,,,,,F 344/N,,,,,0.2^^xsd:decimal

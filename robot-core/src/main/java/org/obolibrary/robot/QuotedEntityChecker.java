@@ -291,7 +291,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    */
   public IRI getIRI(String name, boolean create) {
     IRI iri = iris.getOrDefault(name, null);
-    if (iri == null && ioHelper != null) {
+    if (iri == null && ioHelper != null && create) {
       iri = ioHelper.createIRI(name);
     }
     return iri;

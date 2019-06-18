@@ -1699,23 +1699,6 @@ public class Template {
         for (OWLAnnotation annotation : annotations) {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
-      } else if (template.startsWith("NI")) {
-        // Just links to other named individuals or data properties
-        String propStr = template.substring(3).trim();
-        OWLObjectProperty objectProperty = checker.getOWLObjectProperty(propStr);
-        if (objectProperty != null) {
-          Set<OWLIndividual> otherIndividuals =
-              TemplateHelper.getIndividuals(checker, value, split);
-          addObjectPropertyAssertionAxioms(
-              individual, otherIndividuals, objectProperty, row, column);
-          continue;
-        }
-        OWLDataProperty dataProperty = checker.getOWLDataProperty(propStr);
-        if (dataProperty != null) {
-          Set<OWLLiteral> literals =
-              TemplateHelper.getLiterals(checker, value, split, rowNum, column);
-          addDataPropertyAssertionAxioms(individual, literals, dataProperty, row, column);
-        }
       } else if (template.startsWith("SI")) {
         // Same individuals axioms
         Set<OWLIndividual> sameIndividuals = TemplateHelper.getIndividuals(checker, value, split);
