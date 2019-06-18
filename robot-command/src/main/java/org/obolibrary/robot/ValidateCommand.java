@@ -11,15 +11,15 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ValidateImmPortCommand implements Command {
+public class ValidateCommand implements Command {
   /** Logger */
-  private static final Logger logger = LoggerFactory.getLogger(ValidateImmPortCommand.class);
+  private static final Logger logger = LoggerFactory.getLogger(ValidateCommand.class);
 
   /** Used to store the command-line options for the command. */
   private Options options;
 
   /** Constructor: Initialises the command with its various options. */
-  public ValidateImmPortCommand() {
+  public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("j", "input", true, "JSON file containing the data to validate");
     o.addOption("o", "output", true, "save results to file");
@@ -32,7 +32,7 @@ public class ValidateImmPortCommand implements Command {
    * @return name
    */
   public String getName() {
-    return "validate-immport";
+    return "validate";
   }
 
   /**
@@ -41,7 +41,7 @@ public class ValidateImmPortCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "validate stuff in ImmPort";
+    return "validate stuff";
   }
 
   /**
@@ -50,7 +50,7 @@ public class ValidateImmPortCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate-immport --input <JSON> --output <file>";
+    return "validate --input <JSON> --output <file>";
   }
 
   /**
@@ -63,7 +63,7 @@ public class ValidateImmPortCommand implements Command {
   }
 
   /**
-   * Handles the command-line and file operations for the ValidateImmPortOperation
+   * Handles the command-line and file operations for the ValidateOperation
    *
    * @param args strings to use as arguments
    */
@@ -107,7 +107,7 @@ public class ValidateImmPortCommand implements Command {
     // The type of this object will be a List, Map, String, Boolean,
     // Number or null depending on the root object in the file:
     Object jsonObject = JsonUtils.fromString(FileUtils.readFileToString(inputFile));
-    boolean valid = ValidateImmPortOperation.validate(jsonObject, writer);
+    boolean valid = ValidateOperation.validate(jsonObject, writer);
     if (valid) {
       writer.write("The input was valid!\n");
     } else {

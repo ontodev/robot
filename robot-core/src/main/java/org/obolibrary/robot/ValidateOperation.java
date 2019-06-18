@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:consulting@michaelcuffaro.com">Michael E. Cuffaro</a>
  */
-public class ValidateImmPortOperation {
+public class ValidateOperation {
   /** Logger */
-  private static final Logger logger = LoggerFactory.getLogger(ValidateImmPortOperation.class);
+  private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
   /**
    * Validates the given jsonObject, writing output to the given writer. Returns true if jsonObject

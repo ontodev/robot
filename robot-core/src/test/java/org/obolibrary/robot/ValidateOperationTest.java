@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import org.junit.Test;
 
-/** Tests for ValidateImmPortOperationTest */
-public class ValidateImmPortOperationTest extends CoreTest {
+/** Tests for ValidateOperationTest */
+public class ValidateOperationTest extends CoreTest {
 
   /**
    * A dummy test
@@ -17,7 +17,7 @@ public class ValidateImmPortOperationTest extends CoreTest {
   @Test
   public void testDummy() throws IOException {
     Object jsonObject = loadJSON("/simple.json");
-    boolean valid = ValidateImmPortOperation.validate(jsonObject, new PrintWriter(System.out));
+    boolean valid = ValidateOperation.validate(jsonObject, new PrintWriter(System.out));
     assertTrue(valid);
   }
 }
