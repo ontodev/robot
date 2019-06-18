@@ -1,13 +1,11 @@
 package org.obolibrary.robot;
 
-import com.github.jsonldjava.utils.JsonUtils;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +19,7 @@ public class ValidateCommand implements Command {
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("j", "input", true, "JSON file containing the data to validate");
+    o.addOption("c", "input", true, "CSV file containing the data to validate");
     o.addOption("o", "output", true, "save results to file");
     options = o;
   }
@@ -50,7 +48,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --input <JSON> --output <file>";
+    return "validate --input <CSV> --output <file>";
   }
 
   /**
@@ -103,11 +101,9 @@ public class ValidateCommand implements Command {
     }
 
     writer.write("Executing execute() ...\n");
-    File inputFile = new File(CommandLineHelper.getOptionalValue(line, "input"));
-    // The type of this object will be a List, Map, String, Boolean,
-    // Number or null depending on the root object in the file:
-    Object jsonObject = JsonUtils.fromString(FileUtils.readFileToString(inputFile));
-    boolean valid = ValidateOperation.validate(jsonObject, writer);
+    String csvPath = CommandLineHelper.getOptionalValue(line, "input");
+    List<List<String>> csvData = IOHelper.readCSV(csvPath);
+    boolean valid = ValidateOperation.validate(csvData, writer);
     if (valid) {
       writer.write("The input was valid!\n");
     } else {
