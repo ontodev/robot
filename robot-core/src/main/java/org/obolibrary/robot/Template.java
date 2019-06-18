@@ -507,37 +507,46 @@ public class Template {
         iri = IRI.create(id);
       }
 
+      // Try to resolve a CURIE
+      IRI typeIRI = ioHelper.createIRI(type);
+
+      // Set to IRI string or to type string
+      String typeOrIRI = type;
+      if (typeIRI != null) {
+        typeOrIRI = typeIRI.toString();
+      }
+
       OWLEntity entity;
-      switch (type) {
+      switch (typeOrIRI) {
         case "":
-        case "owl:Class":
+        case "http://www.w3.org/2002/07/owl#Class":
         case "class":
           entity = dataFactory.getOWLEntity(EntityType.CLASS, iri);
           break;
 
-        case "owl:ObjectProperty":
+        case "http://www.w3.org/2002/07/owl#ObjectProperty":
         case "object property":
           entity = dataFactory.getOWLEntity(EntityType.OBJECT_PROPERTY, iri);
           break;
 
-        case "owl:DataProperty":
+        case "http://www.w3.org/2002/07/owl#DataProperty":
         case "data property":
           entity = dataFactory.getOWLEntity(EntityType.DATA_PROPERTY, iri);
           break;
 
-        case "owl:AnnotationProperty":
+        case "http://www.w3.org/2002/07/owl#AnnotationProperty":
         case "annotation property":
           entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
           break;
 
-        case "owl:Individual":
+        case "http://www.w3.org/2002/07/owl#Individual":
         case "individual":
-        case "owl:NamedIndividual":
+        case "http://www.w3.org/2002/07/owl#NamedIndividual":
         case "named individual":
           entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
           break;
 
-        case "owl:Datatype":
+        case "http://www.w3.org/2002/07/owl#Datatype":
         case "datatype":
           entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
           break;
@@ -598,35 +607,45 @@ public class Template {
     if (iri == null) {
       return;
     }
-    switch (type) {
-      case "owl:Class":
+
+    // Try to resolve a CURIE
+    IRI typeIRI = ioHelper.createIRI(type);
+
+    // Set to IRI string or to type string
+    String typeOrIRI = type;
+    if (typeIRI != null) {
+      typeOrIRI = typeIRI.toString();
+    }
+
+    switch (typeOrIRI) {
+      case "http://www.w3.org/2002/07/owl#Class":
       case "class":
         addClassAxioms(iri, row);
         break;
 
-      case "owl:ObjectProperty":
+      case "http://www.w3.org/2002/07/owl#ObjectProperty":
       case "object property":
         addObjectPropertyAxioms(iri, row);
         break;
 
-      case "owl:DataProperty":
+      case "http://www.w3.org/2002/07/owl#DataProperty":
       case "data property":
         addDataPropertyAxioms(iri, row);
         break;
 
-      case "owl:AnnotationProperty":
+      case "http://www.w3.org/2002/07/owl#AnnotationProperty":
       case "annotation property":
         addAnnotationPropertyAxioms(iri, row);
         break;
 
-      case "owl:Datatype":
+      case "http://www.w3.org/2002/07/owl#Datatype":
       case "datatype":
         addDatatypeAxioms(iri, row);
         break;
 
-      case "owl:Individual":
+      case "http://www.w3.org/2002/07/owl#Individual":
       case "individual":
-      case "owl:NamedIndividual":
+      case "http://www.w3.org/2002/07/owl#NamedIndividual":
       case "named individual":
       default:
         addIndividualAxioms(iri, row);
@@ -1578,7 +1597,7 @@ public class Template {
           axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
         }
       }
-      // TODO support data definitions
+      // TODO - future support for data definitions with DT
     }
   }
 
@@ -1626,11 +1645,23 @@ public class Template {
     axioms.add(dataFactory.getOWLDeclarationAxiom(dataFactory.getOWLNamedIndividual(iri)));
 
     for (String type : types) {
+      // Trim for safety
+      type = type.trim();
+
+      // Try to resolve a CURIE
+      IRI typeIRI = ioHelper.createIRI(type);
+
+      // Set to IRI string or to type string
+      String typeOrIRI = type;
+      if (typeIRI != null) {
+        typeOrIRI = typeIRI.toString();
+      }
+
       // Add a type if the type is not owl:Individual or owl:NamedIndividual
-      if (!type.equalsIgnoreCase("individual")
-          && !type.equalsIgnoreCase("named individual")
-          && !type.equalsIgnoreCase("owl:NamedIndividual")
-          && !type.equalsIgnoreCase("owl:Individual")) {
+      if (!typeOrIRI.equalsIgnoreCase("individual")
+          && !typeOrIRI.equalsIgnoreCase("named individual")
+          && !typeOrIRI.equalsIgnoreCase("http://www.w3.org/2002/07/owl#NamedIndividual")
+          && !typeOrIRI.equalsIgnoreCase("http://www.w3.org/2002/07/owl#Individual")) {
         OWLClass typeCls = checker.getOWLClass(type);
         if (typeCls != null) {
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeCls, individual));

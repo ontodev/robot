@@ -960,17 +960,32 @@ public class TemplateHelper {
       return true;
     } else if (template.equals("CLASS_TYPE")) {
       return true;
-    } else if (template.matches("^(>?C|>{0,2}A[LTI]?|>?P|>?D|>?I|>?R|>?DT) .*")) {
+    } else if (template.equals("PROPERTY_TYPE")) {
       return true;
-    } else if (template.startsWith("PROPERTY_TYPE")) {
+    } else if (template.matches("^CHARACTERISTIC( SPLIT=.+)?$")) {
+      // CHARACTERISTIC can have a split
+      // Should only be followed by SPLIT, nothing else
       return true;
-    } else if (template.startsWith("CHARACTERISTIC")) {
+    } else if (template.matches("^INDIVIDUAL_TYPE( SPLIT=.+)?$")) {
+      // INDIVIDUAL_TYPE can have a split
+      // Should only be followed by SPLIT, nothing else
       return true;
-    } else if (template.startsWith("INDIVIDUAL_TYPE")) {
+    } else if (template.matches("^>{0,2}A[LTI]? .*")) {
+      // Annotations can have one or two > (nested)
+      // And can be A, AL, AT, or AI always followed by space
       return true;
-    } else {
-      return template.matches("^(SC|EC|DC|SP|EP|DP|IP|NI|SI|DI|CI|PI|RI|II).*");
-    }
+    } else if (template.matches("^>?(C .*|CI.?|[SED]C .*)")) {
+      // Classes can have one > (annotation on previous axiom - legacy support)
+      // Can be C, CI (does not need to be followed by space), SC, EC, or DC
+      return true;
+    } else if (template.matches("^(P .*|PI.?|[SEDI]P .*)")) {
+      // Properties can be P, PI (does not need to be followed by space), SP, EP, DP, or IP
+      return true;
+    } else
+      // Individuals can be I, II (does not need to be followed by space), NI, SI, or DI
+      return template.matches("^(I .*|II.?|[NSD]I .*)");
+
+    // TODO - future support for DT datatype axioms
   }
 
   /**
