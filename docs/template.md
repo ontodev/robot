@@ -39,7 +39,7 @@ A template may have multiple errors in different rows and columns. By default, `
     - `datatype` or `owl:Datatype`
     - `individual`, `named individual`, `owl:Individual`, `owl:NamedIndividual`, or a defined class ID or label
 - **annotations**: ROBOT can attach annotations to your class. There are four options:
-    - `A` string annotation: If the template string starts with an `A` and a space then it will be interpreted as a string annotation. The rest of the template string should be the label or compact IRI of an annotation property, e.g. `label` or `rdfs:label`. The cell value will be the literal value of the annotation with type `xsd:string`.
+    - `A` string annotation: If the template string starts with an `A` and a space then it will be interpreted as a string annotation. The rest of the template string should be the label or compact IRI of an annotation property, e.g. `label` or `rdfs:label`. The cell value will be the literal value of the annotation with type `xsd:string`. Annotation property labels do not need to be wrapped in single quotes.
     - `AT` typed annotation: If the template string starts with an `AT` and a space then it will be interpreted as a typed annotation. The `^^` characters must be used to separate the annotation property from the datatype, e.g. `rdfs:comment^^xsd:integer`. The cell value will be the typed literal value of the annotation.
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.
     - `AI` annotation IRI: If the template string starts with an `AI` and a space, then the annotation will be made as with a string annotation, except that the cell value will be interpreted as an IRI.
@@ -122,7 +122,7 @@ In this template, Class 5 would be a subclass of `part_of some 'Class 4'`.
 If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an instance will be created. If the `TYPE` does not include a defined class, that instance will have no class assertions. You may include a `SPLIT=` in `TYPE` if you wish to provide more than one class assertion for an individual.
 
 - **individual assertion**:
-    - `NI <property>`: when creating an individual, replace property with an object property or data property to add assertions (either by label or CURIE). The value of each axiom will be the value of the cell in this column. For object property assertions, this is another individual. For data property assertions, this is a literal value.
+    - `NI <property>`: when creating an individual, replace property with an object property or data property to add assertions (either by label or CURIE). The value of each axiom will be the value of the cell in this column. For object property assertions, this is another individual. For data property assertions, this is a literal value. If using a property label here, **do not** wrap the label in single quotes.
     - `SI %`: the individual in the column will be asserted to be the same individual
     - `DI %`: the individual in the column will be asserted to be a different individual
 
@@ -130,7 +130,7 @@ If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an
 
 | Label        | Entity Type | Property Assertions | Different Individuals |
 | ------------ | ----------- | ------------------- | --------------------- |
-| LABEL        | TYPE        | I part_of           | DI %                  |
+| LABEL        | TYPE        | NI part_of          | DI %                  |
 | Individual 1 | Class 1     | Individual 2        |                       |
 | Individual 2 | Class 1     |                     | Individual 1          |
 

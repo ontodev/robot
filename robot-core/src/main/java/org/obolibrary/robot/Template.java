@@ -1701,7 +1701,7 @@ public class Template {
         }
       } else if (template.startsWith("NI")) {
         // Just links to other named individuals or data properties
-        String propStr = template.substring(3).replace("'", "");
+        String propStr = template.substring(3).trim();
         OWLObjectProperty objectProperty = checker.getOWLObjectProperty(propStr);
         if (objectProperty != null) {
           Set<OWLIndividual> otherIndividuals =
