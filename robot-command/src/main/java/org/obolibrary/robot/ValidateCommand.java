@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,8 @@ public class ValidateCommand implements Command {
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("c", "input", true, "CSV file containing the data to validate");
+    o.addOption("c", "csv", true, "CSV file containing the data to validate");
+    o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
     o.addOption("o", "output", true, "save results to file");
     options = o;
   }
@@ -48,7 +50,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --input <CSV> --output <file>";
+    return "validate --csv <CSV> --owl <OWL> --output <file>";
   }
 
   /**
@@ -88,6 +90,7 @@ public class ValidateCommand implements Command {
       return null;
     }
 
+    IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     if (state == null) {
       state = new CommandState();
     }
@@ -101,9 +104,13 @@ public class ValidateCommand implements Command {
     }
 
     writer.write("Executing execute() ...\n");
-    String csvPath = CommandLineHelper.getOptionalValue(line, "input");
-    List<List<String>> csvData = IOHelper.readCSV(csvPath);
-    boolean valid = ValidateOperation.validate(csvData, writer);
+    String csvPath = CommandLineHelper.getOptionalValue(line, "csv");
+    List<List<String>> csvData = ioHelper.readCSV(csvPath);
+
+    String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
+    OWLOntology owlData = ioHelper.loadOntology(owlPath);
+
+    boolean valid = ValidateOperation.validate(csvData, owlData, writer);
     if (valid) {
       writer.write("The input was valid!\n");
     } else {

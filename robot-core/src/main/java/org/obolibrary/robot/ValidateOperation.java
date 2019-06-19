@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +24,10 @@ public class ValidateOperation {
    * @param writer the Writer instance to write output to
    * @return true if the JSON object is valid, false otherwise
    */
-  public static boolean validate(List<List<String>> csvData, Writer writer) throws IOException {
-    writer.write("You specified an input parameter of:\n" + csvData + "\n");
-    writer.write("Note that this parameter was of class: " + csvData.getClass() + "\n");
+  public static boolean validate(List<List<String>> csvData, OWLOntology owlData, Writer writer)
+      throws IOException {
+    writer.write("You specified a csv parameter of:\n" + csvData + "\n");
+    writer.write("You specified an owl parameter of:\n" + owlData + "\n");
     return true;
   }
 }
