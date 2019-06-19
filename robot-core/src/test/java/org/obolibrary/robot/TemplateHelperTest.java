@@ -70,7 +70,8 @@ public class TemplateHelperTest extends CoreTest {
     // String
     String template = "A rdfs:label";
     String value = "anatomical cluster";
-    Set<OWLAnnotation> annotations = TemplateHelper.getAnnotations(checker, template, value, 0, 0);
+    Set<OWLAnnotation> annotations =
+        TemplateHelper.getAnnotations("", checker, template, value, 0, 0);
 
     OWLAnnotationProperty p = checker.getOWLAnnotationProperty("rdfs:label");
     OWLLiteral lit = dataFactory.getOWLLiteral(value);
@@ -82,7 +83,7 @@ public class TemplateHelperTest extends CoreTest {
 
     // Language
     template = "AL rdfs:label@en";
-    annotations = TemplateHelper.getAnnotations(checker, template, value, 0, 0);
+    annotations = TemplateHelper.getAnnotations("", checker, template, value, 0, 0);
 
     lit = dataFactory.getOWLLiteral(value, "en");
     annMatch = dataFactory.getOWLAnnotation(p, lit);
@@ -93,7 +94,7 @@ public class TemplateHelperTest extends CoreTest {
 
     // Typed
     template = "AT rdfs:label^^xsd:string";
-    annotations = TemplateHelper.getAnnotations(checker, template, value, 0, 0);
+    annotations = TemplateHelper.getAnnotations("", checker, template, value, 0, 0);
 
     OWLDatatype dt = checker.getOWLDatatype("xsd:string");
     lit = dataFactory.getOWLLiteral(value, dt);
@@ -106,7 +107,7 @@ public class TemplateHelperTest extends CoreTest {
     // IRI
     template = "AI rdfs:seeAlso";
     value = "http://robot.obolibrary.org/";
-    annotations = TemplateHelper.getAnnotations(checker, template, value, 0, 0);
+    annotations = TemplateHelper.getAnnotations("", checker, template, value, 0, 0);
 
     p = checker.getOWLAnnotationProperty("rdfs:seeAlso");
     IRI iri = IRI.create(value);
@@ -126,7 +127,7 @@ public class TemplateHelperTest extends CoreTest {
     String template = "C part_of some %";
     String value = "obo:UBERON_0000467";
     Set<OWLClassExpression> expressions =
-        TemplateHelper.getClassExpressions(parser, template, value, 0, 0);
+        TemplateHelper.getClassExpressions("", parser, template, value, 0, 0);
     OWLObjectProperty p = checker.getOWLObjectProperty("part_of");
     if (p == null) {
       fail("'part_of' property not found by checker");
@@ -151,7 +152,7 @@ public class TemplateHelperTest extends CoreTest {
     String template = "P %";
     String value = "UBERON:8888888";
     Set<OWLDataPropertyExpression> expressions =
-        TemplateHelper.getDataPropertyExpressions(checker, template, value, 0, 0);
+        TemplateHelper.getDataPropertyExpressions("", checker, template, value, 0, 0);
 
     OWLDataProperty p = checker.getOWLDataProperty("height");
     if (p == null) {
@@ -175,7 +176,7 @@ public class TemplateHelperTest extends CoreTest {
   public void testGetDatatypes() throws Exception {
     String value = "xsd:string|xsd:boolean";
     String split = "|";
-    Set<OWLDatatype> datatypes = TemplateHelper.getDatatypes(checker, value, split, 0, 0);
+    Set<OWLDatatype> datatypes = TemplateHelper.getDatatypes("", checker, value, split, 0, 0);
 
     OWLDatatype dt1 = checker.getOWLDatatype("xsd:string");
     OWLDatatype dt2 = checker.getOWLDatatype("xsd:boolean");
@@ -190,7 +191,7 @@ public class TemplateHelperTest extends CoreTest {
     String template = "P inverse %";
     String value = "obo:BFO_0000050";
     Set<OWLObjectPropertyExpression> expressions =
-        TemplateHelper.getObjectPropertyExpressions(checker, template, value, 0, 0);
+        TemplateHelper.getObjectPropertyExpressions("", checker, template, value, 0, 0);
 
     OWLObjectProperty p = checker.getOWLObjectProperty("part_of");
     if (p == null) {
@@ -225,7 +226,8 @@ public class TemplateHelperTest extends CoreTest {
     assertEquals("Annotation(rdfs:label \"bar\"^^xsd:string)", ann.toString());
 
     anns =
-        TemplateHelper.getTypedAnnotations(checker, "AT rdfs:label^^xsd:integer", null, "1", 0, 0);
+        TemplateHelper.getTypedAnnotations(
+            "", checker, "AT rdfs:label^^xsd:integer", null, "1", 0, 0);
     for (OWLAnnotation a : anns) {
       ann = a;
     }

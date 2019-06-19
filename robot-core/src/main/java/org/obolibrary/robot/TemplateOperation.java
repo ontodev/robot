@@ -153,6 +153,38 @@ public class TemplateOperation {
   }
 
   /**
+   * Given an OWLOntology, an IOHelper, a map of table names to table contents, and a map of
+   * template options, use the tables as templates to generate a merged output ontology.
+   *
+   * @param inputOntology OWLOntology to use to get existing entities
+   * @param ioHelper IOHelper to resolve prefixes
+   * @param tables table names to table contents
+   * @param options map of template options
+   * @return new OWLOntology created from merged template ontologies
+   * @throws Exception on any issue
+   */
+  public static OWLOntology template(
+      OWLOntology inputOntology,
+      IOHelper ioHelper,
+      Map<String, List<List<String>>> tables,
+      Map<String, String> options)
+      throws Exception {
+    QuotedEntityChecker checker = null;
+    OWLOntology intermediate = inputOntology;
+    List<OWLOntology> outputOntologies = new ArrayList<>();
+    for (Map.Entry<String, List<List<String>>> t : tables.entrySet()) {
+      Template template = new Template(t.getKey(), t.getValue(), intermediate, ioHelper, checker);
+      // Update the checker with new labels
+      checker = template.getChecker();
+      boolean force = OptionsHelper.optionIsTrue(options, "force");
+      // Update the intermediate ontology as the generated ontology
+      intermediate = template.generateOutputOntology(null, force);
+      outputOntologies.add(intermediate);
+    }
+    return MergeOperation.merge(outputOntologies);
+  }
+
+  /**
    * Find an annotation property with the given name or create one.
    *
    * @param checker used to search by rdfs:label (for example)

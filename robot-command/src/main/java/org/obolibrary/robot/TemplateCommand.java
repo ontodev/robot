@@ -146,13 +146,8 @@ public class TemplateCommand implements Command {
     boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
 
     // Process the templates
-    List<OWLOntology> ontologies = new ArrayList<>();
-    for (String table : tables.keySet()) {
-      ontologies.add(
-          TemplateOperation.template(
-              inputOntology, ioHelper, table, tables.get(table), templateOptions));
-    }
-    OWLOntology outputOntology = MergeOperation.merge(ontologies);
+    OWLOntology outputOntology =
+        TemplateOperation.template(inputOntology, ioHelper, tables, templateOptions);
 
     boolean collapseImports =
         CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
@@ -171,25 +166,23 @@ public class TemplateCommand implements Command {
       OWLOntology ancestors =
           MireotOperation.getAncestors(
               inputOntology, null, iris, MireotOperation.getDefaultAnnotationProperties());
-      ontologies = new ArrayList<>();
-      ontologies.add(ancestors);
-      MergeOperation.mergeInto(ontologies, outputOntology, includeAnnotations, collapseImports);
+      MergeOperation.mergeInto(ancestors, outputOntology, includeAnnotations, collapseImports);
     }
 
     // Either merge-then-save, save-then-merge, or don't merge
-    ontologies = new ArrayList<>();
-    ontologies.add(outputOntology);
     boolean mergeBefore = CommandLineHelper.getBooleanValue(line, "merge-before", false, true);
     boolean mergeAfter = CommandLineHelper.getBooleanValue(line, "merge-after", false, true);
     if (mergeBefore && mergeAfter) {
       throw new IllegalArgumentException(mergeError);
     }
     if (mergeBefore) {
-      MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
+      MergeOperation.mergeInto(outputOntology, inputOntology, includeAnnotations, collapseImports);
       CommandLineHelper.maybeSaveOutput(line, inputOntology);
+      state.setOntology(inputOntology);
     } else if (mergeAfter) {
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
-      MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
+      MergeOperation.mergeInto(outputOntology, inputOntology, includeAnnotations, collapseImports);
+      state.setOntology(inputOntology);
     } else {
       // Set ontology and version IRI
       String versionIRI = CommandLineHelper.getOptionalValue(line, "version-iri");

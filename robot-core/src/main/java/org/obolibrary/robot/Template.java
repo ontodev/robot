@@ -2,6 +2,7 @@ package org.obolibrary.robot;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 import org.obolibrary.robot.exceptions.ColumnException;
 import org.obolibrary.robot.exceptions.RowParseException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -28,6 +29,9 @@ public class Template {
 
   /** Set of axioms generated from template. */
   private Set<OWLAxiom> axioms;
+
+  /** Name of the table. */
+  private String name;
 
   /** Location of IDs (ID). */
   private int idColumn = -1;
@@ -77,21 +81,21 @@ public class Template {
   /** Error message when an annotation property has a characteristic. */
   private static final String annotationPropertyCharacteristicError =
       NS
-          + "ANNOTATION PROPERTY CHARACTERISTIC ERROR annotation property '%s' should not have any characteristics at line %d, column %d";
+          + "ANNOTATION PROPERTY CHARACTERISTIC ERROR annotation property '%s' should not have any characteristics at line %d, column %d in table \"%s\"";
 
   /** Error message when an annotation property gets a property type other than subproperty. */
   private static final String annotationPropertyTypeError =
       NS
-          + "ANNOTATION PROPERTY TYPE ERROR annotation property %s type '%s' must be 'subproperty' at row %d, column %d";
+          + "ANNOTATION PROPERTY TYPE ERROR annotation property %s type '%s' must be 'subproperty' at row %d, column %d in table \"%s\".";
 
   /** Error message when an invalid class type is provided. */
   private static final String classTypeError =
-      NS + "CLASS TYPE ERROR class %s has unknown type '%s' at row %d, column %d";
+      NS + "CLASS TYPE ERROR class %s has unknown type '%s' at row %d, column %d in table \"%s\".";
 
   /** Error message when CLASS_TYPE has a SPLIT. */
   private static final String classTypeSplitError =
       NS
-          + "CLASS TYPE SPLIT ERROR the SPLIT functionality should not be used for CLASS_TYPE in column %d";
+          + "CLASS TYPE SPLIT ERROR the SPLIT functionality should not be used for CLASS_TYPE in column %d in table \"%s\".";
 
   /**
    * Error message when the number of header columns does not match the number of template columns.
@@ -104,30 +108,32 @@ public class Template {
   /** Error message when a data property has a characteristic other than 'functional'. */
   private static final String dataPropertyCharacteristicError =
       NS
-          + "DATA PROPERTY CHARACTERISTIC ERROR data property '%s' can only have characteristic 'functional' at line %d, column %d.";
+          + "DATA PROPERTY CHARACTERISTIC ERROR data property '%s' can only have characteristic 'functional' at line %d, column %d in table \"%s\".";
 
   /** Error message when an invalid individual type is provided. */
   private static final String individualTypeError =
-      NS + "INDIVIDUAL TYPE ERROR individual %s has unknown type '%s' at row %d, column %d";
+      NS
+          + "INDIVIDUAL TYPE ERROR individual %s has unknown type '%s' at row %d, column %d in table \"%s\".";
 
   /** Error message when INDIVIDUAL_TYPE has a SPLIT. */
   private static final String individualTypeSplitError =
       NS
-          + "INDIVIDUAL TYPE SPLIT ERROR the SPLIT functionality should not be used for INDIVIDUAL_TYPE in column %d";
+          + "INDIVIDUAL TYPE SPLIT ERROR the SPLIT functionality should not be used for INDIVIDUAL_TYPE in column %d in table \"%s\".";
 
   /** Error message when an invalid property type is provided. */
   private static final String propertyTypeError =
-      NS + "PROPERTY TYPE ERROR property %s has unknown type '%s' at row %d, column %d";
+      NS
+          + "PROPERTY TYPE ERROR property %s has unknown type '%s' at row %d, column %d in table \"%s\".";
 
   /** Error message when more than one logical type is used in PROPERTY_TYPE. */
   private static final String propertyTypeSplitError =
       NS
-          + "PROPERTY TYPE SPLIT ERROR thee SPLIT functionality should not be used for PROPERTY_TYPE in column %d";
+          + "PROPERTY TYPE SPLIT ERROR thee SPLIT functionality should not be used for PROPERTY_TYPE in column %d in table \"%s\".";
 
   /** Error message when property characteristic not valid. */
   private static final String unknownCharacteristicError =
       NS
-          + "UNKNOWN CHARACTERISTIC ERROR property '%s' has unknown characteristic '%s' at line %d, column %d.";
+          + "UNKNOWN CHARACTERISTIC ERROR property '%s' has unknown characteristic '%s' at line %d, column %d in table \"%s\".";
 
   /**
    * Error message when a template cannot be understood. Expects: table name, column number, column
@@ -149,7 +155,8 @@ public class Template {
    * @param rows list of rows (lists)
    * @throws Exception on issue creating IOHelper or adding table to template object
    */
-  public Template(String name, List<List<String>> rows) throws Exception {
+  public Template(@Nonnull String name, @Nonnull List<List<String>> rows) throws Exception {
+    this.name = name;
     this.ioHelper = new IOHelper();
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
@@ -161,7 +168,7 @@ public class Template {
     checker.addProvider(new SimpleShortFormProvider());
 
     // Add the contents of the tableRows
-    addTable(name, rows);
+    addTable(rows);
     addLabels();
     createParser();
   }
@@ -176,7 +183,9 @@ public class Template {
    * @param ioHelper IOHelper to resolve prefixes
    * @throws Exception on issue adding table to template object
    */
-  public Template(String name, List<List<String>> rows, IOHelper ioHelper) throws Exception {
+  public Template(@Nonnull String name, @Nonnull List<List<String>> rows, IOHelper ioHelper)
+      throws Exception {
+    this.name = name;
     this.ioHelper = ioHelper;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
@@ -189,7 +198,7 @@ public class Template {
     checker.addProperty(dataFactory.getRDFSLabel());
 
     // Add the contents of the tableRows
-    addTable(name, rows);
+    addTable(rows);
     addLabels();
     createParser();
   }
@@ -205,8 +214,9 @@ public class Template {
    * @param inputOntology OWLOntology to get labels of entities for QuotedEntityChecker
    * @throws Exception on issue creating IOHelper or adding table to template object
    */
-  public Template(String name, List<List<String>> rows, OWLOntology inputOntology)
+  public Template(@Nonnull String name, @Nonnull List<List<String>> rows, OWLOntology inputOntology)
       throws Exception {
+    this.name = name;
     ioHelper = new IOHelper();
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
@@ -222,7 +232,7 @@ public class Template {
     }
 
     // Add the contents of the tableRows
-    addTable(name, rows);
+    addTable(rows);
     addLabels();
     createParser();
   }
@@ -240,8 +250,12 @@ public class Template {
    * @throws Exception on issue adding table to template object
    */
   public Template(
-      String name, List<List<String>> rows, OWLOntology inputOntology, IOHelper ioHelper)
+      @Nonnull String name,
+      @Nonnull List<List<String>> rows,
+      OWLOntology inputOntology,
+      IOHelper ioHelper)
       throws Exception {
+    this.name = name;
     this.ioHelper = ioHelper;
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
@@ -257,7 +271,7 @@ public class Template {
     }
 
     // Add the contents of the tableRows
-    addTable(name, rows);
+    addTable(rows);
     addLabels();
     createParser();
   }
@@ -269,24 +283,51 @@ public class Template {
    *
    * @param name template name
    * @param rows list of rows (lists)
+   * @param inputOntology OWLOntology to get labels of entities for QuotedEntityChecker
    * @param ioHelper IOHelper to resolve prefixes
    * @param checker QuotedEntityChecker to get entities by label
    * @throws Exception on issue adding table to template object
    */
   public Template(
-      String name, List<List<String>> rows, IOHelper ioHelper, QuotedEntityChecker checker)
+      @Nonnull String name,
+      @Nonnull List<List<String>> rows,
+      OWLOntology inputOntology,
+      IOHelper ioHelper,
+      QuotedEntityChecker checker)
       throws Exception {
+    this.name = name;
     this.ioHelper = ioHelper;
-    this.checker = checker;
+    if (checker == null) {
+      this.checker = new QuotedEntityChecker();
+      this.checker.setIOHelper(this.ioHelper);
+      this.checker.addProvider(new SimpleShortFormProvider());
+      this.checker.addProperty(dataFactory.getRDFSLabel());
+    } else {
+      this.checker = checker;
+    }
     tableRows = new ArrayList<>();
     templates = new ArrayList<>();
     headers = new ArrayList<>();
     axioms = new HashSet<>();
 
+    if (inputOntology != null) {
+      this.checker.addAll(inputOntology);
+    }
+
     // Add the contents of the tableRows
-    addTable(name, rows);
+    addTable(rows);
     addLabels();
     createParser();
+    parser.setOWLEntityChecker(this.checker);
+  }
+
+  /**
+   * Return the QuotedEntityChecker.
+   *
+   * @return QuotedEntityChecker
+   */
+  public QuotedEntityChecker getChecker() {
+    return checker;
   }
 
   /**
@@ -345,15 +386,14 @@ public class Template {
   }
 
   /**
-   * Given the name of a table and a list of rows, first validate the headers and template strings.
-   * Then, get the location of important columns (e.g. IDs and labels). Finally, add all template
-   * rows to the object.
+   * Given a list of rows for a table, first validate the headers and template strings. Then, get
+   * the location of important columns (e.g. IDs and labels). Finally, add all template rows to the
+   * object.
    *
-   * @param name name of table
    * @param rows list of rows (lists)
    * @throws Exception on malformed template
    */
-  private void addTable(String name, List<List<String>> rows) throws Exception {
+  private void addTable(List<List<String>> rows) throws Exception {
     // Get and validate headers
     headers = rows.get(0);
     templates = rows.get(1);
@@ -421,21 +461,21 @@ public class Template {
         classTypeColumn = column;
         if (template.contains("SPLIT=")) {
           // Classes should only have one class type
-          throw new ColumnException(String.format(classTypeSplitError, column));
+          throw new ColumnException(String.format(classTypeSplitError, column, name));
         }
       } else if (template.startsWith("PROPERTY_TYPE")) {
         // Property expression type
         propertyTypeColumn = column;
         if (template.contains("SPLIT=")) {
           // Instances should only have one individual type
-          throw new ColumnException(String.format(propertyTypeSplitError, column));
+          throw new ColumnException(String.format(propertyTypeSplitError, column, name));
         }
       } else if (template.startsWith("INDIVIDUAL_TYPE")) {
         // Individual expression type
         individualTypeColumn = column;
         if (template.contains("SPLIT=")) {
           // Instances should only have one individual type
-          throw new ColumnException(String.format(individualTypeSplitError, column));
+          throw new ColumnException(String.format(individualTypeSplitError, column, name));
         }
       } else if (template.startsWith("CHARACTERISTIC")) {
         // Property characteristic
@@ -689,7 +729,12 @@ public class Template {
       // Unknown class type
       throw new RowParseException(
           String.format(
-              classTypeError, cls.getIRI().getShortForm(), classType, rowNum, classTypeColumn));
+              classTypeError,
+              cls.getIRI().getShortForm(),
+              classType,
+              rowNum,
+              classTypeColumn,
+              name));
     }
 
     // Iterate through all columns and add annotations as we go
@@ -724,34 +769,37 @@ public class Template {
         // Subclass expression
         subclassExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1));
       } else if (template.startsWith("EC")) {
         // Equivalent expression
         equivalentExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1));
       } else if (template.startsWith("DC")) {
         // Disjoint expression
         disjointExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1));
       } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
         // Use class type to determine what to do with the expression
         switch (classType) {
           case "subclass":
             subclassExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+                TemplateHelper.getClassExpressions(
+                    name, parser, template, value, rowNum, column + 1));
             break;
           case "equivalent":
             intersectionEquivalentExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+                TemplateHelper.getClassExpressions(
+                    name, parser, template, value, rowNum, column + 1));
             break;
           case "disjoint":
             disjointExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(parser, template, value, rowNum, column + 1));
+                TemplateHelper.getClassExpressions(
+                    name, parser, template, value, rowNum, column + 1));
             break;
           default:
             break;
@@ -936,7 +984,8 @@ public class Template {
                   property.getIRI().getShortForm(),
                   c,
                   rowNum,
-                  characteristicColumn));
+                  characteristicColumn,
+                  name));
       }
     }
 
@@ -962,27 +1011,32 @@ public class Template {
       } else if (template.startsWith("SP")) {
         // Subproperty expressions
         Set<OWLObjectPropertyExpression> expressions =
-            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getObjectPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addSubObjectPropertyAxioms(property, expressions, row, column);
       } else if (template.startsWith("EP")) {
         // Equivalent properties expressions
         Set<OWLObjectPropertyExpression> expressions =
-            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getObjectPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addEquivalentObjectPropertiesAxioms(property, expressions, row, column);
       } else if (template.startsWith("DP")) {
         // Disjoint properties expressions
         Set<OWLObjectPropertyExpression> expressions =
-            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getObjectPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addDisjointObjectPropertiesAxioms(property, expressions, row, column);
       } else if (template.startsWith("IP")) {
         // Inverse properties expressions
         Set<OWLObjectPropertyExpression> expressions =
-            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getObjectPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addInverseObjectPropertiesAxioms(property, expressions, row, column);
       } else if (template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
         // Use the property type to determine what type of expression
         Set<OWLObjectPropertyExpression> expressions =
-            TemplateHelper.getObjectPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getObjectPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         switch (propertyType) {
           case "subproperty":
             addSubObjectPropertyAxioms(property, expressions, row, column);
@@ -1000,17 +1054,17 @@ public class Template {
             // Unknown property type
             throw new RowParseException(
                 String.format(
-                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1));
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
         addObjectPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
         addObjectPropertyRanges(property, expressions, row, column);
       }
     }
@@ -1198,7 +1252,8 @@ public class Template {
                 dataPropertyCharacteristicError,
                 property.getIRI().getShortForm(),
                 rowNum,
-                characteristicColumn));
+                characteristicColumn,
+                name));
       }
       axioms.add(dataFactory.getOWLFunctionalDataPropertyAxiom(property));
     }
@@ -1230,26 +1285,31 @@ public class Template {
       } else if (template.startsWith("SP")) {
         // Subproperty expressions
         Set<OWLDataPropertyExpression> expressions =
-            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getDataPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addSubDataPropertyAxioms(property, expressions, row, column);
       } else if (template.startsWith("EP")) {
         // Equivalent properties expressions
         Set<OWLDataPropertyExpression> expressions =
-            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getDataPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addEquivalentDataPropertiesAxioms(property, expressions, row, column);
       } else if (template.startsWith("DP")) {
         // Disjoint properties expressions
         Set<OWLDataPropertyExpression> expressions =
-            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getDataPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         addDisjointDataPropertiesAxioms(property, expressions, row, column);
       } else if (template.startsWith("IP")) {
         // Cannot use inverse with data properties
         throw new RowParseException(
-            String.format(propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1));
+            String.format(
+                propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name));
       } else if (template.startsWith("P ") && !template.startsWith("PROPERTY_TYPE")) {
         // Use property type to handle expression type
         Set<OWLDataPropertyExpression> expressions =
-            TemplateHelper.getDataPropertyExpressions(checker, template, value, rowNum, column);
+            TemplateHelper.getDataPropertyExpressions(
+                name, checker, template, value, rowNum, column);
         switch (propertyType) {
           case "subproperty":
             addSubDataPropertyAxioms(property, expressions, row, column);
@@ -1264,17 +1324,17 @@ public class Template {
             // Unknown property type
             throw new RowParseException(
                 String.format(
-                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1));
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
         addDataPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
         Set<OWLDatatype> datatypes =
-            TemplateHelper.getDatatypes(checker, value, split, rowNum, column);
+            TemplateHelper.getDatatypes(name, checker, value, split, rowNum, column);
         addDataPropertyRanges(property, datatypes, row, column);
       }
     }
@@ -1427,7 +1487,7 @@ public class Template {
       // Annotation properties can only have type "subproperty"
       throw new RowParseException(
           String.format(
-              annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn));
+              annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn, name));
     }
 
     // Annotation properties should not have characteristics
@@ -1439,7 +1499,8 @@ public class Template {
                 annotationPropertyCharacteristicError,
                 iri.getShortForm(),
                 rowNum,
-                characteristicColumn));
+                characteristicColumn,
+                name));
       }
     }
 
@@ -1667,7 +1728,8 @@ public class Template {
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeCls, individual));
         } else {
           // If the class is null, assume it is a class expression
-          OWLClassExpression typeExpr = TemplateHelper.tryParse(parser, type, rowNum, typeColumn);
+          OWLClassExpression typeExpr =
+              TemplateHelper.tryParse(name, parser, type, rowNum, typeColumn);
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeExpr, individual));
         }
       }
@@ -1729,7 +1791,7 @@ public class Template {
               OWLDataProperty dataProperty = checker.getOWLDataProperty(propStr);
               if (dataProperty != null) {
                 Set<OWLLiteral> literals =
-                    TemplateHelper.getLiterals(checker, value, split, rowNum, column);
+                    TemplateHelper.getLiterals(name, checker, value, split, rowNum, column);
                 addDataPropertyAssertionAxioms(individual, literals, dataProperty, row, column);
                 break;
               }
@@ -1752,7 +1814,12 @@ public class Template {
           default:
             throw new RowParseException(
                 String.format(
-                    individualTypeError, iri.getShortForm(), individualType, rowNum, column + 1));
+                    individualTypeError,
+                    iri.getShortForm(),
+                    individualType,
+                    rowNum,
+                    column + 1,
+                    name));
         }
       }
     }
@@ -1884,7 +1951,7 @@ public class Template {
     }
 
     Set<OWLAnnotation> annotations =
-        TemplateHelper.getAnnotations(checker, template, value, rowNum, column);
+        TemplateHelper.getAnnotations(name, checker, template, value, rowNum, column);
 
     // Maybe get an annotation on the annotation
     String nextTemplate;
@@ -1905,7 +1972,7 @@ public class Template {
       }
       if (nextValue != null && !nextValue.trim().equals("")) {
         Set<OWLAnnotation> nextAnnotations =
-            TemplateHelper.getAnnotations(checker, nextTemplate, nextValue, rowNum, column);
+            TemplateHelper.getAnnotations(name, checker, nextTemplate, nextValue, rowNum, column);
         Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
         for (OWLAnnotation annotation : annotations) {
           fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextAnnotations));
@@ -1948,7 +2015,7 @@ public class Template {
       return annotations;
     }
     annotations.addAll(
-        TemplateHelper.getAnnotations(checker, template, nextValue, rowNum, nextColumn));
+        TemplateHelper.getAnnotations(name, checker, template, nextValue, rowNum, nextColumn));
     return annotations;
   }
 
