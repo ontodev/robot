@@ -640,7 +640,24 @@ public class Template {
     }
 
     if (type == null || type.trim().isEmpty()) {
-      type = "class";
+      // Try to guess the type from already existing entities
+      if (label != null) {
+        OWLEntity e = checker.getOWLEntity(label);
+        if (e != null) {
+          type = e.getEntityType().getIRI().toString();
+        }
+      } else {
+        OWLEntity e = checker.getOWLEntity(id);
+        if (e != null) {
+          type = e.getEntityType().getIRI().toString();
+        }
+      }
+      // If the entity type is not defined
+      // and the entity does not already exist
+      // default to class
+      if (type == null) {
+        type = "class";
+      }
     }
 
     IRI iri = getIRI(id, label);
