@@ -2,7 +2,6 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.util.*;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.IRI;
