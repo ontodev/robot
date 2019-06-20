@@ -27,7 +27,9 @@ public class ValidateCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("c", "csv", true, "CSV file containing the data to validate");
     o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
-    o.addOption("o", "output", true, "save results to file");
+    o.addOption("l", "validate", true, "Name of column in CSV file to be validated");
+    o.addOption("a", "ancestor", true, "Name of column in CSV containing ancestor");
+    o.addOption("o", "output", true, "Save results to file");
     options = o;
   }
 
@@ -55,7 +57,8 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> --output <file>";
+    return "validate --csv <CSV> --owl <OWL> --validate <COLNAME> --ancestor <COLNAME> "
+        + "--output <file>";
   }
 
   /**
@@ -109,6 +112,9 @@ public class ValidateCommand implements Command {
     String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
     OWLOntology owlData = ioHelper.loadOntology(owlPath);
 
+    String colToValidate = CommandLineHelper.getOptionalValue(line, "validate");
+    String ancestorCol = CommandLineHelper.getOptionalValue(line, "ancestor");
+
     Writer writer;
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
     if (outputPath != null) {
@@ -118,7 +124,9 @@ public class ValidateCommand implements Command {
     }
 
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    boolean valid = ValidateOperation.validate(csvData, owlData, reasonerFactory, writer);
+    boolean valid =
+        ValidateOperation.validate(
+            csvData, owlData, reasonerFactory, colToValidate, ancestorCol, writer);
     if (valid) {
       writer.write("The input was valid!\n");
     } else {

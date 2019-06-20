@@ -20,7 +20,7 @@ public class ValidateOperationTest extends CoreTest {
    * @throws IOException
    */
   @Test
-  public void testDummy() throws IOException {
+  public void testValidate() throws Exception, IOException {
     IOHelper ioHelper = new IOHelper();
 
     InputStream csvStream = this.getClass().getResourceAsStream("/template.csv");
@@ -36,7 +36,8 @@ public class ValidateOperationTest extends CoreTest {
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
 
     boolean valid =
-        ValidateOperation.validate(csvData, owlData, reasonerFactory, new PrintWriter(System.out));
+        ValidateOperation.validate(
+            csvData, owlData, reasonerFactory, "Label", "Parent", new PrintWriter(System.out));
     assertTrue(valid);
   }
 }
