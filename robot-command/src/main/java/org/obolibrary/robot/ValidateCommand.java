@@ -6,7 +6,9 @@ import java.io.Writer;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +18,9 @@ public class ValidateCommand implements Command {
 
   /** Used to store the command-line options for the command. */
   private Options options;
+
+  /** Namespace for error messages. */
+  private static final String NS = "validate#";
 
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
@@ -76,8 +81,10 @@ public class ValidateCommand implements Command {
   }
 
   /**
-   * Given an input state and command line arguments, report on the differences between ontologies,
-   * if any, and return the state unchanged.
+   * Accepts an input state and the following command line arguments: --owl: an ontology file,
+   * --csv: a comma delimited data file, --output (optional): the name of the file to write the
+   * results of validation to (if not specified, output is sent to STDOUT). The result of this
+   * script is a validation report for the data in the given CSV file.
    *
    * @param state the state from the previous command, or null
    * @param args the command-line arguments
@@ -90,10 +97,17 @@ public class ValidateCommand implements Command {
       return null;
     }
 
-    IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     if (state == null) {
       state = new CommandState();
     }
+
+    IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+
+    String csvPath = CommandLineHelper.getOptionalValue(line, "csv");
+    List<List<String>> csvData = ioHelper.readCSV(csvPath);
+
+    String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
+    OWLOntology owlData = ioHelper.loadOntology(owlPath);
 
     Writer writer;
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
@@ -103,14 +117,8 @@ public class ValidateCommand implements Command {
       writer = new PrintWriter(System.out);
     }
 
-    writer.write("Executing execute() ...\n");
-    String csvPath = CommandLineHelper.getOptionalValue(line, "csv");
-    List<List<String>> csvData = ioHelper.readCSV(csvPath);
-
-    String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
-    OWLOntology owlData = ioHelper.loadOntology(owlPath);
-
-    boolean valid = ValidateOperation.validate(csvData, owlData, writer);
+    OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
+    boolean valid = ValidateOperation.validate(csvData, owlData, reasonerFactory, writer);
     if (valid) {
       writer.write("The input was valid!\n");
     } else {

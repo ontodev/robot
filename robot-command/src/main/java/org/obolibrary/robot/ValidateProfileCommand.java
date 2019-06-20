@@ -17,7 +17,7 @@ public class ValidateProfileCommand implements Command {
   private final Options options;
 
   /** Namespace for error messages. */
-  private static final String NS = "validate#";
+  private static final String NS = "validate-profile#";
 
   /** Error message when a profile is not provided. */
   private static final String missingProfileError =

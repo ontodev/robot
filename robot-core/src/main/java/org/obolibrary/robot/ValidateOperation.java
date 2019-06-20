@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,11 @@ public class ValidateOperation {
    * @param writer the Writer instance to write output to
    * @return true if the JSON object is valid, false otherwise
    */
-  public static boolean validate(List<List<String>> csvData, OWLOntology owlData, Writer writer)
+  public static boolean validate(
+      List<List<String>> csvData,
+      OWLOntology owlData,
+      OWLReasonerFactory reasonerFactory,
+      Writer writer)
       throws IOException {
     writer.write("You specified a csv parameter of:\n" + csvData + "\n");
     writer.write("You specified an owl parameter of:\n" + owlData + "\n");

@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import org.junit.Test;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /** Tests for ValidateOperationTest */
 public class ValidateOperationTest extends CoreTest {
@@ -31,7 +33,10 @@ public class ValidateOperationTest extends CoreTest {
     OWLOntology owlData = ioHelper.loadOntology(owlStream);
     assert (owlData != null);
 
-    boolean valid = ValidateOperation.validate(csvData, owlData, new PrintWriter(System.out));
+    OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
+
+    boolean valid =
+        ValidateOperation.validate(csvData, owlData, reasonerFactory, new PrintWriter(System.out));
     assertTrue(valid);
   }
 }
