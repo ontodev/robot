@@ -142,9 +142,6 @@ public class TemplateCommand implements Command {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
 
-    // Determine if Template should exit if there are any errors
-    boolean force = CommandLineHelper.getBooleanValue(line, "force", false);
-
     // Process the templates
     OWLOntology outputOntology =
         TemplateOperation.template(inputOntology, ioHelper, tables, templateOptions);
