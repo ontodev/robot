@@ -25,32 +25,36 @@ robot filter --input obi.owl --term OBI:0000070 --select annotations
 Copy a class ('organ') and all its descendants, with all annotations:
 
     robot filter --input uberon_module.owl\
-     --term UBERON:0000062\
-     --select "annotations self descendants"\
-     --output results/filter_class.owl
+      --term UBERON:0000062\
+      --select "annotations self descendants"\
+      --signature true \
+      --output results/filter_class.owl
 
 Copy all of OBI except descendants of 'assay' (`remove` is preferred):
 
     robot filter --input uberon_module.owl\
-     --term UBERON:0000062\
-     --select annotations\
-     --select descendants\
-     --select complement\
-     --output results/remove_class.owl
+      --term UBERON:0000062\
+      --select annotations\
+      --select descendants\
+      --select complement\
+      --signature true \
+      --output results/remove_class.owl
 
 Copy a subset of classes based on an annotation property (maintains hierarchy):
 
     robot filter --input uberon_module.owl\
-     --prefix "core: http://purl.obolibrary.org/obo/uberon/core#"\
-     --select "oboInOwl:inSubset=core:uberon_slim"\
-     --select annotations\
-     --output results/uberon_slim.owl
+      --prefix "core: http://purl.obolibrary.org/obo/uberon/core#"\
+      --select "oboInOwl:inSubset=core:uberon_slim"\
+      --select annotations\
+      --signature true \
+      --output results/uberon_slim.owl
 
 Copy a class, all axioms that a class appears in, annotations on all classes used, and the ontology annotations:
 
     robot filter --input uberon_module.owl\
-     --term UBERON:0000062\
-     --select "ontology annotations"\
-     --trim false\
-     --output results/uberon_annotated.owl
+      --term UBERON:0000062\
+      --select "ontology annotations"\
+      --trim false\
+      --signature true \
+      --output results/uberon_annotated.owl
 

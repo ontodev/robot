@@ -314,6 +314,51 @@ public class OntologyHelper {
   }
 
   /**
+   * Get all named OWLObjects from an input ontology.
+   *
+   * @param ontology OWLOntology to retrieve objects from
+   * @return set of objects
+   */
+  public static Set<OWLObject> getNamedObjects(OWLOntology ontology) {
+    Set<OWLObject> objects = new HashSet<>();
+    // TODO - include or exclude imports?
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      objects.addAll(getNamedObjects(axiom));
+    }
+    return objects;
+  }
+
+
+  /**
+   * Get all named OWLObjects associated with an axiom. This is builds on getSignature() by including
+   * annotation subjects, properties, and values.
+   *
+   * @param axiom The axiom to check
+   * @return The set of objects
+   */
+  public static Set<OWLObject> getNamedObjects(OWLAxiom axiom) {
+    Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
+
+    // Add annotations if the axiom is annotated
+    if (axiom.isAnnotated()) {
+      for (OWLAnnotation annotation : axiom.getAnnotations()) {
+        objects.add(annotation.getProperty());
+        objects.add(annotation.getValue());
+      }
+    }
+
+    // The following are special cases
+    // where there might be something anonymous that we want to include
+    // in addition to the (named) entities in the signature.
+    if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+      objects.add(a.getSubject());
+    }
+
+    return objects;
+  }
+
+  /**
    * Get all OWLObjects from an input ontology.
    *
    * @param ontology OWLOntology to retrieve objects from
@@ -336,23 +381,12 @@ public class OntologyHelper {
    * @return The set of objects
    */
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
-    Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
-
-    // Add annotations if the axiom is annotated
-    if (axiom.isAnnotated()) {
-      for (OWLAnnotation annotation : axiom.getAnnotations()) {
-        objects.add(annotation.getProperty());
-        objects.add(annotation.getValue());
-      }
-    }
+    Set<OWLObject> objects = getNamedObjects(axiom);
 
     // The following are special cases
     // where there might be something anonymous that we want to include
     // in addition to the (named) entities in the signature.
-    if (axiom instanceof OWLAnnotationAssertionAxiom) {
-      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
-      objects.add(a.getSubject());
-    } else if (axiom instanceof OWLClassAssertionAxiom) {
+    if (axiom instanceof OWLClassAssertionAxiom) {
       OWLClassAssertionAxiom a = (OWLClassAssertionAxiom) axiom;
       objects.add(a.getClassExpression());
     } else if (axiom instanceof OWLDisjointUnionAxiom) {

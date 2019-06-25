@@ -77,7 +77,7 @@ It is also possible to select terms based on parts of their IRI. You may include
 
 - `<IRI-pattern>`
     - e.g. `<http://purl.obolibrary.org/obo/EX_*>`
-    
+
 If you wish to match a more complicated pattern, you may also use a regex pattern here by preceding the pattern with a tilde (`~`):
 - `<~IRI-regex>`
     - e.g. `<~^.+EX_[0-9]{7}$>`
@@ -105,12 +105,14 @@ Remove a class ('organ'), all its descendants, and any axioms using these classe
     robot remove --input uberon_module.owl \
       --term UBERON:0000062 \
       --select "self descendants" \
+      --signature true \
       --output results/remove_class.owl
 
 Remove all axioms containing an entity in the BFO namespace from the UBERON module:
 
     robot remove --input uberon_module.owl \
       --select "<http://purl.obolibrary.org/obo/BFO_*>" \
+      --signature true \
       --output results/remove_bfo.owl
 
 Remove all anonymous entities from the UBERON module:
@@ -122,14 +124,14 @@ Remove all anonymous entities from the UBERON module:
 Remove all individuals from OBI:
 
 ```
-robot remove --input obi.owl --select individuals 
+robot remove --input obi.owl --select individuals
 ```
 
 Remove all deprecated classes from OBI:
 
 ```
 robot remove --input obi.owl \
-  --select "owl:deprecated='true'^^xsd:boolean" 
+  --select "owl:deprecated='true'^^xsd:boolean"
 ```
 
 *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
@@ -137,4 +139,5 @@ robot remove --input obi.owl \
     robot remove --input uberon_module.owl \
       --term rdfs:label --term oboInOwl:id  \
       --select complement --select annotation-properties \
+      --signature true \
       --output results/filter_annotations.owl

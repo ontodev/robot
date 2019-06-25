@@ -87,21 +87,9 @@ public class RelatedObjectsHelper {
       boolean partial,
       boolean signature) {
     if (partial) {
-      if (signature) {
-        // Get the axioms with signatures including at least one entity from objects
-        return RelatedObjectsHelper.getPartialSignatureAxioms(ontology, objects, axiomTypes);
-      } else {
-        // Get axioms that include at least one object
-        return RelatedObjectsHelper.getPartialAxioms(ontology, objects, axiomTypes);
-      }
+      return RelatedObjectsHelper.getPartialAxioms(ontology, objects, axiomTypes, signature);
     } else {
-      if (signature) {
-        // Get the axioms with signatures containing only entities from objects
-        return RelatedObjectsHelper.getCompleteSignatureAxioms(ontology, objects, axiomTypes);
-      } else {
-        // Get axioms that ONLY include the objects
-        return RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes);
-      }
+      return RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes, signature);
     }
   }
 
@@ -116,17 +104,47 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    return getCompleteAxioms(ontology, objects, axiomTypes, false);
+  }
+
+  /**
+   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
+   * the objects in those axioms are in the set of objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, consider only named OWLObjects
+   * @return Set of OWLAxioms containing only the OWLObjects
+   */
+  public static Set<OWLAxiom> getCompleteAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
     axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Check both the full annotated axiom and axiom without annotations (if annotated)
-        Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+        Set<OWLObject> axiomObjects = null;
+        if (namedOnly) {
+          axiomObjects = OntologyHelper.getNamedObjects(axiom);
+        } else {
+          axiomObjects = OntologyHelper.getObjects(axiom);
+        }
+
         Set<OWLObject> partialAxiomObjects = null;
         if (axiom.isAnnotated()) {
-          partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+          if (namedOnly) {
+            partialAxiomObjects =
+                OntologyHelper.getNamedObjects(axiom.getAxiomWithoutAnnotations());
+          } else {
+            partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+          }
         }
+
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
           // Again, check full annotated axiom and axiom without annotations
@@ -168,6 +186,24 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+    return getPartialAxioms(ontology, objects, axiomTypes, false);
+  }
+
+  /**
+   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
+   * least one object in those axioms is also in the set of objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, only consider named OWLObjects
+   * @return Set of OWLAxioms containing at least one of the OWLObjects
+   */
+  public static Set<OWLAxiom> getPartialAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
     axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
@@ -189,7 +225,12 @@ public class RelatedObjectsHelper {
             axioms.add(axiom);
           }
         } else {
-          Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+          Set<OWLObject> axiomObjects = null;
+          if (namedOnly) {
+            axiomObjects = OntologyHelper.getNamedObjects(axiom);
+          } else {
+            axiomObjects = OntologyHelper.getObjects(axiom);
+          }
           for (OWLObject axiomObject : axiomObjects) {
             if (objects.contains(axiomObject)) {
               axioms.add(axiom);
@@ -200,64 +241,6 @@ public class RelatedObjectsHelper {
       }
     }
 
-    return axioms;
-  }
-
-  /**
-   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
-   * the entities in the signatures of those axioms are in the set of objects.
-   *
-   * @param ontology OWLOntology to get axioms from
-   * @param objects Set of objects to match in axioms
-   * @param axiomTypes OWLAxiom types to return
-   * @return Set of OWLAxioms with signatures containing only the OWLObjects
-   */
-  public static Set<OWLAxiom> getCompleteSignatureAxioms(
-      OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    axiomTypes = setDefaultAxiomType(axiomTypes);
-    // Set<OWLEntity> entities = getEntities(objects);
-
-    Set<OWLAxiom> axioms = new HashSet<>();
-    for (OWLAxiom axiom : ontology.getAxioms()) {
-      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
-        Set<OWLEntity> signature = axiom.getSignature();
-        // Only add the axiom if all entities in the signature are also in entities
-        if (objects.containsAll(signature)) {
-          axioms.add(axiom);
-        }
-      }
-    }
-    return axioms;
-  }
-
-  /**
-   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
-   * least one entity in the signature of those axioms is also in the set of objects.
-   *
-   * @param ontology OWLOntology to get axioms from
-   * @param objects Set of objects to match in axioms
-   * @param axiomTypes OWLAxiom types to return
-   * @return Set of OWLAxioms containing at least one entity from objects
-   */
-  public static Set<OWLAxiom> getPartialSignatureAxioms(
-      OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    axiomTypes = setDefaultAxiomType(axiomTypes);
-    // Set<OWLEntity> entities = getEntities(objects);
-
-    Set<OWLAxiom> axioms = new HashSet<>();
-    for (OWLAxiom axiom : ontology.getAxioms()) {
-      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
-        Set<OWLEntity> signature = axiom.getSignature();
-        for (OWLEntity s : signature) {
-          // If any of the entities in the signature are in entities
-          // Add the axiom and break the loop
-          if (objects.contains(s)) {
-            axioms.add(axiom);
-            break;
-          }
-        }
-      }
-    }
     return axioms;
   }
 
