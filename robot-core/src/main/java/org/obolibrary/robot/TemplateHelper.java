@@ -355,6 +355,7 @@ public class TemplateHelper {
    * @param rowNum the line number
    * @param col the column number
    * @return set of OWLClassExpressions
+   * @throws RowParseException if row is malformed
    */
   public static Set<OWLClassExpression> getClassExpressions(
       String tableName,
@@ -399,12 +400,14 @@ public class TemplateHelper {
    * string). Note that a data property expression can ONLY be another data property, but this
    * allows support for future data property expressions.
    *
+   * @param tableName name of table
    * @param checker QuotedEntityChecker to resolve entities
    * @param template template string
    * @param value template value or values
    * @param rowNum the row number for logging
    * @param column the column number for logging
    * @return set of OWLDataPropertyExpressions
+   * @throws RowParseException if row is malformed
    */
   public static Set<OWLDataPropertyExpression> getDataPropertyExpressions(
       String tableName,
@@ -704,6 +707,7 @@ public class TemplateHelper {
    * @param rowNum the row number
    * @param column the column number
    * @return set of OWLLiterals
+   * @throws RowParseException if row is malformed
    */
   public static Set<OWLLiteral> getLiterals(
       String tableName,
@@ -743,6 +747,7 @@ public class TemplateHelper {
    * @param rowNum the row number for logging
    * @param column the column number for logging
    * @return set of OWLDataPropertyExpressions
+   * @throws RowParseException if row is malformed
    */
   public static Set<OWLObjectPropertyExpression> getObjectPropertyExpressions(
       String tableName,
