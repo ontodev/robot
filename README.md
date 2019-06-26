@@ -52,3 +52,7 @@ Many Operations require lists of terms. The IOHelper class defines methods for c
 # Acknowledgments
 
 The initial version of ROBOT was developed by James A. Overton, based on requirements and designs given by Chris Mungall, Heiko Dietze and David Osumi-Sutherland. This initial version was funded by P41 grant 5P41HG002273-09 to the Gene Ontology Consortium. Current support is from NIH grant 1 R24 HG010032-01, “Services to support the OBO foundry standards” to C. Mungall and B. Peters.
+
+# Copyright
+
+The copyright for ROBOT code and documentation belongs to the respective authors. ROBOT code is distributed under a [BSD3 license](https://github.com/ontodev/robot/blob/master/LICENSE.txt). Our `pom.xml` files list a number of software dependencies, each with its own license.

@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.github.jsonldjava.core.Context;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,6 +19,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
@@ -398,8 +400,8 @@ public class CommandLineHelper {
   }
 
   /**
-   * Given a command line, return an initialized IOHelper. The --prefix, --prefixes, --noprefixes
-   * and --xml-entities options are handled.
+   * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
+   * --add-prefixes, --noprefixes and --xml-entities options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper
@@ -413,13 +415,17 @@ public class CommandLineHelper {
     } else {
       ioHelper = new IOHelper(!line.hasOption("noprefixes"));
     }
+    prefixes = getOptionalValue(line, "add-prefixes");
+    if (prefixes != null) {
+      ioHelper.addPrefixes(prefixes);
+    }
 
     for (String prefix : getOptionalValues(line, "prefix")) {
-      try {
-        ioHelper.addPrefix(prefix);
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
-      }
+      ioHelper.addPrefix(prefix);
+    }
+
+    for (String prefix : getOptionalValues(line, "add-prefix")) {
+      ioHelper.addPrefix(prefix);
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
@@ -625,9 +631,36 @@ public class CommandLineHelper {
    */
   public static void maybeSaveOutput(CommandLine line, OWLOntology ontology) throws IOException {
     IOHelper ioHelper = getIOHelper(line);
+    // Determine if OBO structure should be enforced
+    boolean checkOBO = CommandLineHelper.getBooleanValue(line, "check", true);
+
+    // Determine if prefixes should be added to the header of output
+    // Create a map of these to include in output (or an empty map)
+    Map<String, String> addPrefixes = getAddPrefixes(line);
+
+    // Get an output format or null
+    // If null, format will be guessed from the output path
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    OWLDocumentFormat df;
+    if (format != null) {
+      df = IOHelper.getFormat(format);
+    } else {
+      df = null;
+    }
+
+    // Save outputs
     for (String path : getOptionValues(line, "output")) {
       try {
-        ioHelper.saveOntology(ontology, path);
+        // maybe guess the document format
+        OWLDocumentFormat thisDf = df;
+        if (thisDf == null) {
+          if (path.endsWith(".gz")) {
+            path = path.substring(0, path.lastIndexOf("."));
+          }
+          String formatName = FilenameUtils.getExtension(path);
+          thisDf = IOHelper.getFormat(formatName);
+        }
+        ioHelper.saveOntology(ontology, thisDf, IRI.create(new File(path)), addPrefixes, checkOBO);
       } catch (IllegalArgumentException e) {
         // Exception from getFormat -- invalid format
         throw new IllegalArgumentException(
@@ -652,6 +685,37 @@ public class CommandLineHelper {
       throw new IllegalArgumentException(String.format(invalidIRIError, field, term));
     }
     return iri;
+  }
+
+  /**
+   * Given a command line, get a map of all prefixes to use and add to the output.
+   *
+   * @param line the command line to use
+   * @return a map of prefixes to add to output
+   * @throws IOException if the prefixes are not formatted correctly or a JSON file cannot be read
+   */
+  public static Map<String, String> getAddPrefixes(CommandLine line) throws IOException {
+    Map<String, String> addPrefixes = new HashMap<>();
+    if (line.hasOption("add-prefix")) {
+      for (String pref : CommandLineHelper.getOptionalValues(line, "add-prefix")) {
+        String[] split = pref.split(": ");
+        if (split.length != 2) {
+          throw new IOException(String.format(IOHelper.invalidPrefixError, pref));
+        }
+        addPrefixes.put(split[0], split[1]);
+      }
+    }
+    if (line.hasOption("add-prefixes")) {
+      for (String prefixFilePath : CommandLineHelper.getOptionalValues(line, "add-prefixes")) {
+        File prefixFile = new File(prefixFilePath);
+        if (!prefixFile.exists()) {
+          throw new IOException(String.format(IOHelper.fileDoesNotExistError, prefixFilePath));
+        }
+        Context json = IOHelper.parseContext(FileUtils.readFileToString(prefixFile));
+        addPrefixes.putAll(json.getPrefixes(false));
+      }
+    }
+    return addPrefixes;
   }
 
   /**
@@ -841,6 +905,8 @@ public class CommandLineHelper {
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
+    o.addOption(null, "add-prefix", true, "add prefix 'foo: http://bar' to the output");
+    o.addOption(null, "add-prefixes", true, "add JSON-LD prefixes to the output");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");
     return o;
   }

@@ -594,7 +594,7 @@ public class RelatedObjectsHelper {
    *
    * @param objects Set of OWLObjects to look through
    * @param selector IRI pattern to match (enclosed in angle brackets, using ? or * wildcards)
-   * @return
+   * @return set of IRIs that match the selector pattern
    */
   public static Set<OWLObject> selectIRI(Set<OWLObject> objects, String selector) {
     Set<OWLObject> relatedObjects = new HashSet<>();
@@ -785,8 +785,7 @@ public class RelatedObjectsHelper {
             ontology, objects, aPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
       } else if (object instanceof OWLClass) {
         OWLClass cls = (OWLClass) object;
-        spanGapsHelper(
-            ontology, objects, classPairs, cls, EntitySearcher.getSuperClasses(cls, ontology));
+        spanGapsHelper(ontology, objects, classPairs, cls, getSuperClasses(ontology, cls));
       } else if (object instanceof OWLDataProperty) {
         OWLDataProperty p = (OWLDataProperty) object;
         spanGapsHelper(
@@ -1007,16 +1006,27 @@ public class RelatedObjectsHelper {
    */
   private static Set<OWLClassExpression> getSuperClasses(OWLOntology ontology, OWLClass cls) {
     Set<OWLClassExpression> superclasses = new HashSet<>();
+
+    // We might get stuck if a class is both subclass and equivalent
+    // So compare the eqs to the superclasses and don't add a super if it's also an eq
+    Collection<OWLClassExpression> eqs = EntitySearcher.getEquivalentClasses(cls, ontology);
+
     for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, ontology)) {
       if (expr.isAnonymous()) {
         superclasses.add(expr);
         continue;
       }
-      if (expr.asOWLClass().getIRI() != cls.getIRI()) {
-        superclasses.add(expr);
-      } else {
-        logger.warn("Circular subclass definition: " + cls.getIRI());
+      if (eqs.contains(expr)) {
+        logger.warn(
+            String.format(
+                "Class '%s' has equivalent class and superclass '%s'", cls.getIRI(), expr));
+        continue;
       }
+      if (expr.asOWLClass().getIRI() == cls.getIRI()) {
+        logger.warn("Circular subclass definition: " + cls.getIRI());
+        continue;
+      }
+      superclasses.add(expr);
     }
     return superclasses;
   }

@@ -59,7 +59,7 @@ public class IOHelper {
   private static final String NS = "errors#";
 
   /** Error message when the specified file does not exist. Expects file name. */
-  private static final String fileDoesNotExistError =
+  static final String fileDoesNotExistError =
       NS + "FILE DOES NOT EXIST ERROR File does not exist: %s";
 
   /** Error message when an invalid extension is provided (file format). Expects the file format. */
@@ -168,32 +168,37 @@ public class IOHelper {
    * Given an ontology, a file, and a list of prefixes, save the ontology to the file and include
    * the prefixes in the header.
    *
+   * @deprecated replaced by {@link #saveOntology(OWLOntology, OWLDocumentFormat, IRI, Map,
+   *     boolean)}
    * @param ontology OWLOntology to save
    * @param outputFile File to save ontology to
    * @param addPrefixes List of prefixes to add ("foo: http://foo.bar/")
    * @throws IOException On issue parsing list of prefixes or saving file
    */
+  @Deprecated
   public void addPrefixesAndSave(OWLOntology ontology, File outputFile, List<String> addPrefixes)
       throws IOException {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLDocumentFormat df = getFormat(FilenameUtils.getExtension(outputFile.getPath()));
 
     // If prefixes are not supported, just save the ontology without adding prefixes
     if (!df.isPrefixOWLOntologyFormat()) {
       logger.error("Prefixes are not supported in " + df.toString() + " (saving without prefixes)");
-      saveOntology(ontology, df, outputFile);
+      saveOntology(ontology, df, IRI.create(outputFile));
       return;
     }
 
-    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    // Convert prefixes to map
+    Map<String, String> prefixMap = new HashMap<>();
     for (String pref : addPrefixes) {
       String[] split = pref.split(": ");
       if (split.length != 2) {
         throw new IOException(String.format(invalidPrefixError, pref));
       }
-      pf.setPrefix(split[0].trim(), split[1].trim());
+      prefixMap.put(split[0], split[1]);
     }
-    saveOntology(ontology, df, outputFile);
+
+    addPrefixes(df, prefixMap);
+    saveOntology(ontology, df, IRI.create(outputFile));
   }
 
   /**
@@ -595,11 +600,30 @@ public class IOHelper {
   public OWLOntology saveOntology(
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI, boolean checkOBO)
       throws IOException {
-    logger.debug("Saving ontology {} as {} with to IRI {}", ontology, format, ontologyIRI);
-    // if (format instanceof PrefixOWLDocumentFormat) {
-    //    ((PrefixOWLDocumentFormat) format)
-    //        .copyPrefixesFrom(getPrefixManager());
-    // }
+    return saveOntology(ontology, format, ontologyIRI, null, checkOBO);
+  }
+
+  /**
+   * Save an ontology in the given format to an IRI, with option to add prefixes and option to
+   * ignore OBO document checks.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyIRI the IRI to save the ontology to
+   * @param addPrefixes map of prefixes to add to header
+   * @param checkOBO if false, ignore OBO document checks
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology,
+      OWLDocumentFormat format,
+      IRI ontologyIRI,
+      Map<String, String> addPrefixes,
+      boolean checkOBO)
+      throws IOException {
+    // Determine the format if not provided
+    logger.debug("Saving ontology as {} with to IRI {}", format, ontologyIRI);
     XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
     // If saving in compressed format, get byte data then save to gzip
     if (ontologyIRI.toString().endsWith(".gz")) {
@@ -608,6 +632,9 @@ public class IOHelper {
       return ontology;
     }
     // If not compressed, just save the file as-is
+    if (addPrefixes != null && !addPrefixes.isEmpty()) {
+      addPrefixes(format, addPrefixes);
+    }
     saveOntologyFile(ontology, format, ontologyIRI, checkOBO);
     return ontology;
   }
@@ -921,6 +948,22 @@ public class IOHelper {
   }
 
   /**
+   * Given a path to a JSON-LD prefix file, add the prefix mappings in the file to the current
+   * JSON-LD context.
+   *
+   * @param prefixPath path to JSON-LD prefix file to add
+   * @throws IOException if the file does not exist or cannot be read
+   */
+  public void addPrefixes(String prefixPath) throws IOException {
+    File prefixFile = new File(prefixPath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, prefixPath));
+    }
+    Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    context.putAll(context1.getPrefixes(false));
+  }
+
+  /**
    * Get a copy of the current prefix map.
    *
    * @return a copy of the current prefix map
@@ -1053,6 +1096,26 @@ public class IOHelper {
    */
   public static List<List<String>> readTable(String path) throws IOException {
     return TemplateHelper.readTable(path);
+  }
+
+  /**
+   * Given a document format and a map of prefixes to add, add the prefixes to the document.
+   *
+   * @param df OWLDocumentFormat
+   * @param addPrefixes map of prefix to namespace to add
+   */
+  private void addPrefixes(OWLDocumentFormat df, Map<String, String> addPrefixes) {
+    if (!df.isPrefixOWLOntologyFormat()) {
+      // Warn on non-prefix document format (i.e. OBO)
+      logger.warn(
+          String.format(
+              "Unable to add prefixes to %s document - saving without prefixes", df.toString()));
+      return;
+    }
+    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    for (Map.Entry<String, String> pref : addPrefixes.entrySet()) {
+      pf.setPrefix(pref.getKey(), pref.getValue());
+    }
   }
 
   /**

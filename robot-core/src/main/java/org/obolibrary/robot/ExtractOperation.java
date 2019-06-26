@@ -53,6 +53,7 @@ public class ExtractOperation {
     options.put("copy-ontology-annotations", "false");
     options.put("annotate-with-source", "false");
     options.put("intermediates", "all");
+    options.put("force", "false");
     return options;
   }
 

@@ -1,10 +1,6 @@
 ## Authors
 
- * James A. Overton
- * Heiko Dietze
- * Chris Mungall
+To see the list of contributors, please check the [contributors](https://github.com/ontodev/robot/graphs/contributors) page on GitHub.
 
-The initial version of ROBOT was developed by James A. Overton.
-We acknowledge the support of the Gene Ontology Consortium
-(http://geneontology.org).
+For full acknowledgments, see [README.md](README.md)
 

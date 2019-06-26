@@ -18,6 +18,16 @@ WARN:       572
 INFO:       29
 ```
 
+If you do not provide an `--output`, all violations will be printed to the terminal in either the specified format or TSV (if no format is specified). You can also choose to print the details of the first `n` number of violations using `--print <n>`:
+<!-- DO NOT TEST -->
+```
+robot report --input edit.owl \
+ --print 5 \
+ --output report.tsv
+```
+
+This will print the first five violations and also write the report to `report.tsv`. If you do not provide an `--output` while using `--print <n>`, *only* the first `n` violations will be printed to the terminal.
+
 ## Labels
 
 The report output contains a series of CURIEs and/or IRIs. If you wish to include the entity labels, simply add `--labels true`. For large ontologies, this may take a bit longer to complete.
@@ -87,6 +97,10 @@ Only `info`, `warn`, and `error` are valid inputs for `--fail-on`.
 ### Missing Entity Binding
 
 All queries must bind `?entity ?property ?value` for correct formatting. If `?entity` is ever `null`, the query cannot be reported on.
+
+### Print Number Error
+
+The argument for the `--print` option must be a number. 
 
 ### Report Level Error
 

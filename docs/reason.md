@@ -53,6 +53,18 @@ robot reason --reasoner ELK \
 
 If the input module contains at least one import, axioms in the debug module will be tagged with the source ontology, to assist in debugging.
 
+## Equivalent Class Axioms
+
+By default, ROBOT ignores one-to-one equivalent classes (e.g. `A EquivalentTo B`). But, in many cases, inferring equivalence between two classes is usually a sign that something has gone wrong. 
+
+Sometimes we want to avoid equivalence between named classes at all (in the case of OBO, where we strive for orthogonality). This can be done through `--equivalent-classes-allowed <arg>` (shorthand `-e`). 
+
+The `<arg>` options are:
+
+ * `all`: always allow (default behavior)
+ * `none`: never allow
+ * `asserted-only`: allow asserted equivalence, but throw an error if equivalence is inferred
+ 
 ## Generated Axioms
 
 By default, the `reason` operation will only assert inferred subclass axioms. This can be configured with the `--axiom-generators` option. OWLAPI provides the following inferred axiom generators:
@@ -103,3 +115,8 @@ You must select between `--create-new-ontology-with-annotations` (`-m`) and `--c
 ### Axiom Generator Error
 
 The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](/reason#axiom-generators).
+
+### Equivalent Class Axiom Error
+
+ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](/reason#equivalent-class-axioms).
+

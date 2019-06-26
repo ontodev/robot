@@ -1,9 +1,7 @@
 package org.obolibrary.robot;
 
-import java.io.File;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,26 +137,8 @@ public class ConvertCommand implements Command {
     } else if (outputs.length > 1) {
       throw new IllegalArgumentException(multipleOutputsError);
     }
-    File outputFile = CommandLineHelper.getOutputFile(line);
 
-    // Check for a format
-    String formatName = CommandLineHelper.getOptionalValue(line, "format");
-    if (formatName == null) {
-      formatName = FilenameUtils.getExtension(outputFile.getName());
-      if (formatName.equals("")) {
-        throw new IllegalArgumentException(missingFormatError);
-      }
-    }
-
-    boolean checkOBO = true;
-    String check = CommandLineHelper.getDefaultValue(line, "check", "true");
-    if ("false".equals(check.toLowerCase())) {
-      checkOBO = false;
-    } else if (!"true".equals(check.toLowerCase())) {
-      throw new IllegalArgumentException(checkArgError);
-    }
-
-    ioHelper.saveOntology(ontology, IOHelper.getFormat(formatName), outputFile, checkOBO);
+    CommandLineHelper.maybeSaveOutput(line, ontology);
     return state;
   }
 }

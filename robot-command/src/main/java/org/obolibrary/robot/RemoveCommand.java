@@ -114,9 +114,14 @@ public class RemoveCommand implements Command {
 
     // Get a set of entities to start with
     Set<OWLObject> objects = new HashSet<>();
+    // track if a set of input IRIs were provided
+    boolean hasInputIRIs = false;
     if (line.hasOption("term") || line.hasOption("term-file")) {
       Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
-      objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
+      if (!entityIRIs.isEmpty()) {
+        objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
+        hasInputIRIs = true;
+      }
     }
 
     // Get a set of axiom types
@@ -159,14 +164,22 @@ public class RemoveCommand implements Command {
       }
     }
 
-    // If removing imports or ontology annotations,
-    // and there are no other selects, save and return
     if (hadSelection && selectGroups.isEmpty() && objects.isEmpty()) {
+      // If removing imports or ontology annotations
+      // and there are no other selects, save and return
+      CommandLineHelper.maybeSaveOutput(line, ontology);
+      state.setOntology(ontology);
+      return state;
+    } else if (objects.isEmpty() && hasInputIRIs) {
+      // if objects is empty AND there WERE input IRIs
+      // there is nothing to remove because the IRIs do not exist in the ontology
+      // save and exit
       CommandLineHelper.maybeSaveOutput(line, ontology);
       state.setOntology(ontology);
       return state;
     } else if (objects.isEmpty()) {
-      // Otherwise, proceed, and if objects is empty, add all objects
+      // if objects is empty AND there were NO input IRIs add all
+      // this means that we are adding everything to the set to start
       objects.addAll(OntologyHelper.getObjects(ontology));
     }
 
