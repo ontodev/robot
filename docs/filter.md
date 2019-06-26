@@ -6,7 +6,7 @@ The key difference between `remove` and `filter` comes in the fourth processing 
 
 4. The final step is to take each axiom of the specified types, and compare it to the target set. The `--signature` option works the same as `remove`, but `--trim` differs. When using `filter --trim true` (the default), if *all* objects for the axiom are in the target set then that axiom is copied to the new ontology. When using `filter --trim false`, if *any* object for the axiom are in the target set, then that axiom is copied.
 
-Consider and example with this small ontology:
+Consider an example with this small ontology:
 
 ```
 ax1: A subClassOf B

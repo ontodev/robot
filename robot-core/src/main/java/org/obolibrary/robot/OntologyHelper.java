@@ -328,10 +328,9 @@ public class OntologyHelper {
     return objects;
   }
 
-
   /**
-   * Get all named OWLObjects associated with an axiom. This is builds on getSignature() by including
-   * annotation subjects, properties, and values.
+   * Get all named OWLObjects associated with an axiom. This is builds on getSignature() by
+   * including annotation subjects, properties, and values.
    *
    * @param axiom The axiom to check
    * @return The set of objects

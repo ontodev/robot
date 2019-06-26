@@ -19,7 +19,7 @@ Here is how each step works in more detail:
 
 4. The final step is to take each axiom of the specified types, and compare it to the target set. Two options are important for this step. When `--signature true` is used, the named objects for the axiom (aka the "signature" of the axiom) are compared to the target set. When `--signature false` is used (the default), all named *and* anonymous objects for the axiom are compared to the target set. Named objects, such as classes, have IRIs, while anonymous objects, such as class expressions, do not have IRIs. When using `remove --trim true` (the default), if *any* object for the axiom is in the target set then that axiom is removed. When using `remove --trim false`, if *all* objects for the axiom are in the target set, then that axiom is removed.
 
-Consider and example with this small ontology:
+Consider an example with this small ontology:
 
 ```
 ax1: A subClassOf B
