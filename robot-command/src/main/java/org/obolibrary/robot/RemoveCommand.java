@@ -32,7 +32,12 @@ public class RemoveCommand implements Command {
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
-    o.addOption("r", "trim", true, "if true, remove axioms containing any selected term");
+    o.addOption("r", "trim", true, "if true, remove axioms containing any selected object");
+    o.addOption(
+        "S",
+        "signature",
+        true,
+        "if true, remove axioms with any selected entity in their signature");
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     options = o;
@@ -129,8 +134,11 @@ public class RemoveCommand implements Command {
     if (selects.isEmpty()) {
       selects.add("self");
     }
+
+    // Track if selection was 'imports' or 'ontology'
+    // These get processed separately and then removed
+    // If no other select options are provided, we save and quit after that
     boolean hadSelection = false;
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
 
     // Copy the unchanged ontology to reserve for filling gaps later
     OWLOntology copy =
@@ -178,14 +186,14 @@ public class RemoveCommand implements Command {
     // Use the select statements to get a set of objects to remove
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(ontology, ioHelper, objects, selectGroups);
-    Set<OWLAxiom> axiomsToRemove;
-    if (trim) {
-      // Get axioms that include at least one object
-      axiomsToRemove = RelatedObjectsHelper.getPartialAxioms(ontology, relatedObjects, axiomTypes);
-    } else {
-      // Get axioms that ONLY include the objects
-      axiomsToRemove = RelatedObjectsHelper.getCompleteAxioms(ontology, relatedObjects, axiomTypes);
-    }
+
+    // Use these two options to determine which axioms to remove
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
+    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
+
+    // Get the axioms and remove them
+    Set<OWLAxiom> axiomsToRemove =
+        RelatedObjectsHelper.getAxioms(ontology, relatedObjects, axiomTypes, trim, signature);
     manager.removeAxioms(ontology, axiomsToRemove);
 
     // Handle gaps
