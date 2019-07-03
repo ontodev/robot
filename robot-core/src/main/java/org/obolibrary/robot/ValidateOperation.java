@@ -74,10 +74,6 @@ public class ValidateOperation {
     // The cell in the parent column of the first row should indicate the ancestor which every
     // other row's parent column should be an instance of.
     List<String> globalRow = csvData.remove(0);
-    // Make sure the global row has the right number of columns:
-    if (globalRow.size() != header.size()) {
-      throw new Exception("Global row has wrong number of columns");
-    }
     // Get and check the global ancestor:
     String ancestor = globalRow.get(parentColIndex);
     // Make sure the ancestor is in the ontology:
@@ -105,13 +101,6 @@ public class ValidateOperation {
     // Create a new reasoner, from the reasoner factory, based on the ontology data:
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
     for (List<String> row : csvData) {
-      if (row.size() != header.size()) {
-        comment = String.format(": Wrong number of columns");
-        // In this case, we can't do any further processing, so write what we have and continue:
-        write_row(row, comment, writer);
-        continue;
-      }
-
       String parent = row.get(parentColIndex);
       if (!labelToIriMap.containsKey(parent)) {
         comment = String.format(": '%s' not found in ontology", parent);
