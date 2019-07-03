@@ -23,6 +23,22 @@ public class ValidateOperation {
   private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
   /**
+   * Writes a row of data to the given writer, with a comment appended.
+   *
+   * @param row the row of data to write (a list of strings)
+   * @param comment the comment to append to the end of the row
+   * @param writer the Writer instance to write output to
+   */
+  private static void write_row(List<String> row, String comment, Writer writer)
+      throws Exception, IOException {
+
+    for (String cell : row) {
+      writer.write(String.format("\"%s\",", cell));
+    }
+    writer.write(String.format("\"%s\"\n", comment));
+  }
+
+  /**
    * Generates a validation report for the given CSV data, writing output to the given writer.
    *
    * @param csvData a list of rows extracted from a CSV file to be validated
@@ -56,23 +72,31 @@ public class ValidateOperation {
     }
 
     // The cell in the parent column of the first row should indicate the ancestor which every
-    // other row's parent column should be an instance of. The cell in the child column should be
-    // blank.
-    List<String> global_row = csvData.remove(0);
-    String globalChild = global_row.get(childColIndex);
-    if (!globalChild.equals("")) {
-      writer.write(
-          String.format(
-              "Warning: non-empty child: %s in column %d of global row\n",
-              globalChild, childColIndex));
+    // other row's parent column should be an instance of.
+    List<String> globalRow = csvData.remove(0);
+    // Make sure the global row has the right number of columns:
+    if (globalRow.size() != header.size()) {
+      throw new Exception("Global row has wrong number of columns");
     }
-    String ancestor = global_row.get(parentColIndex);
-    writer.write(String.format("Ancestor for this file is: %s\n", ancestor));
-
+    // Get and check the global ancestor:
+    String ancestor = globalRow.get(parentColIndex);
     // Make sure the ancestor is in the ontology:
     if (!labelToIriMap.containsKey(ancestor)) {
       throw new Exception(String.format("Global ancestor: '%s' not found in ontology", ancestor));
     }
+
+    // Now write the header and global rows to the output file:
+    write_row(header, "", writer);
+    // The cell in the child column of the global row should be blank, so add a comment about this
+    // if the child is non-empty, but don't fail since it is not a showstopper:
+    String comment = "";
+    String globalChild = globalRow.get(childColIndex);
+    if (!globalChild.equals("")) {
+      comment =
+          String.format(
+              ": Non-empty child: %s in column %d of global row", globalChild, childColIndex);
+    }
+    write_row(globalRow, comment, writer);
 
     // Get the OWLClass corresponding to the ancestor:
     OWLClass ancestorClass =
@@ -80,33 +104,26 @@ public class ValidateOperation {
 
     // Create a new reasoner, from the reasoner factory, based on the ontology data:
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-    for (int i = 0; i < csvData.size(); i++) {
-      List<String> row = csvData.get(i);
+    for (List<String> row : csvData) {
       if (row.size() != header.size()) {
-        writer.write(
-            String.format(
-                "Warning: row %d has wrong number of columns; "
-                    + "I'm going to need to report this!\n",
-                i));
+        comment = String.format(": Wrong number of columns");
+        // In this case, we can't do any further processing, so write what we have and continue:
+        write_row(row, comment, writer);
         continue;
       }
+
       String parent = row.get(parentColIndex);
       if (!labelToIriMap.containsKey(parent)) {
-        writer.write(
-            String.format(
-                "On row %d, parent: '%s' not found in ontology. I'm going to "
-                    + "need to report this!\n",
-                i, parent));
+        comment = String.format(": '%s' not found in ontology", parent);
+        // In this case, we can't do any further processing, so write what we have and continue:
+        write_row(row, comment, writer);
         continue;
       }
+
+      comment = "";
       String child = row.get(childColIndex);
       if (!labelToIriMap.containsKey(child)) {
-        writer.write(
-            String.format(
-                "On row %d, child: '%s' not found in ontology. I'm going to "
-                    + "need to report this!\n",
-                i, child));
-        // Don't need to continue in this case since the child is not needed for further processing
+        comment += String.format(" : Child: '%s' not found in ontology", child);
       }
 
       // Get the OWLClass corresponding to the parent, and its super classes:
@@ -116,12 +133,11 @@ public class ValidateOperation {
 
       // Check if the parent's ancestors include the global ancestor:
       if (!parentAncestors.containsEntity(ancestorClass)) {
-        writer.write(
-            String.format(
-                "On row %d, parent '%s' is not a descendant of '%s'. I'm "
-                    + "going to need to report this!\n",
-                i, parent, ancestor));
+        comment += String.format(": Parent '%s' is not a descendant of '%s'", parent, ancestor);
       }
+
+      // Write the row with comment:
+      write_row(row, comment, writer);
     }
     reasoner.dispose();
   }

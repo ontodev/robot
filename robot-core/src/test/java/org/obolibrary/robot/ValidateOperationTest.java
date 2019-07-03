@@ -1,7 +1,5 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -35,9 +33,9 @@ public class ValidateOperationTest extends CoreTest {
 
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
 
-    boolean valid =
-        ValidateOperation.validate(
-            csvData, owlData, reasonerFactory, "Label", "Parent", new PrintWriter(System.out));
-    assertTrue(valid);
+    ValidateOperation.validate(
+        csvData, owlData, reasonerFactory, "Label", "Parent", new PrintWriter(System.out));
+
+    throw new Exception("This test still not fully implemented!");
   }
 }
