@@ -27,9 +27,9 @@ public class ValidateCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("c", "csv", true, "CSV file containing the data to validate");
     o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
-    o.addOption("l", "validate", true, "Name of column in CSV file to be validated");
-    o.addOption("a", "ancestor", true, "Name of column in CSV containing ancestor");
-    o.addOption("o", "output", true, "Save results to file");
+    o.addOption("l", "child", true, "Name of column in CSV containing the child info");
+    o.addOption("a", "parent", true, "Name of column in CSV containing the parent info");
+    o.addOption("o", "output", true, "Save results to file (if unspecified, output to STDOUT)");
     options = o;
   }
 
@@ -57,7 +57,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> --validate <COLNAME> --ancestor <COLNAME> "
+    return "validate --csv <CSV> --owl <OWL> --child <COLNAME> --parent <COLNAME> "
         + "--output <file>";
   }
 
@@ -84,10 +84,8 @@ public class ValidateCommand implements Command {
   }
 
   /**
-   * Accepts an input state and the following command line arguments: --owl: an ontology file,
-   * --csv: a comma delimited data file, --output (optional): the name of the file to write the
-   * results of validation to (if not specified, output is sent to STDOUT). The result of this
-   * script is a validation report for the data in the given CSV file.
+   * Accepts an input state and command line arguments and outputs a CSV table reporting the
+   * validation results. Returns the final state of the command.
    *
    * @param state the state from the previous command, or null
    * @param args the command-line arguments
@@ -106,32 +104,27 @@ public class ValidateCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
+    // Load the command line arguments:
     String csvPath = CommandLineHelper.getOptionalValue(line, "csv");
     List<List<String>> csvData = ioHelper.readCSV(csvPath);
-
     String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
     OWLOntology owlData = ioHelper.loadOntology(owlPath);
-
-    String colToValidate = CommandLineHelper.getOptionalValue(line, "validate");
-    String ancestorCol = CommandLineHelper.getOptionalValue(line, "ancestor");
-
-    Writer writer;
+    String childCol = CommandLineHelper.getOptionalValue(line, "child");
+    String parentCol = CommandLineHelper.getOptionalValue(line, "parent");
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
+
+    // Initialise the writer to be the given output path, or STDOUT if that is left unspecified:
+    Writer writer;
     if (outputPath != null) {
       writer = new FileWriter(outputPath);
     } else {
       writer = new PrintWriter(System.out);
     }
 
+    // We should eventually make the reasoner configurable, as we do for the 'reason' command,
+    // but for now just use ELK.
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    boolean valid =
-        ValidateOperation.validate(
-            csvData, owlData, reasonerFactory, colToValidate, ancestorCol, writer);
-    if (valid) {
-      writer.write("The input was valid!\n");
-    } else {
-      writer.write("Argh! The input was not valid!\n");
-    }
+    ValidateOperation.validate(csvData, owlData, reasonerFactory, childCol, parentCol, writer);
 
     writer.flush();
     writer.close();
