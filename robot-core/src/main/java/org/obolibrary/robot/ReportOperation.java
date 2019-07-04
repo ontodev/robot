@@ -155,7 +155,8 @@ public class ReportOperation {
 
   /**
    * Report on the ontology using the rules within the profile and print results. Prefer
-   * report(OWLOntology ontology, IOHelper ioHelper, String outputPath, Map<String,String> options).
+   * report(OWLOntology ontology, IOHelper ioHelper, String outputPath, Map&lt;String,String&gt;
+   * options).
    *
    * @param ontology the OWLOntology to report
    * @param ioHelper IOHelper to work with ontology
@@ -221,6 +222,7 @@ public class ReportOperation {
    * @param ioHelper IOHelper to work with ontology
    * @param outputPath string path to write report file to, or null
    * @param options map of report options
+   * @return false if there are violations at or above the fail-on level, true otherwise
    * @throws Exception on any reporting error
    */
   public static boolean report(

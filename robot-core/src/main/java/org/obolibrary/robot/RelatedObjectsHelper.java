@@ -80,6 +80,19 @@ public class RelatedObjectsHelper {
     return axioms;
   }
 
+  public static Set<OWLAxiom> getAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean partial,
+      boolean signature) {
+    if (partial) {
+      return RelatedObjectsHelper.getPartialAxioms(ontology, objects, axiomTypes, signature);
+    } else {
+      return RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes, signature);
+    }
+  }
+
   /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
    * the objects in those axioms are in the set of objects.
@@ -91,20 +104,47 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    if (axiomTypes == null) {
-      axiomTypes = new HashSet<>();
-      axiomTypes.add(OWLAxiom.class);
-    }
+    return getCompleteAxioms(ontology, objects, axiomTypes, false);
+  }
+
+  /**
+   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
+   * the objects in those axioms are in the set of objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, consider only named OWLObjects
+   * @return Set of OWLAxioms containing only the OWLObjects
+   */
+  public static Set<OWLAxiom> getCompleteAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
+    axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Check both the full annotated axiom and axiom without annotations (if annotated)
-        Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+        Set<OWLObject> axiomObjects = null;
+        if (namedOnly) {
+          axiomObjects = OntologyHelper.getNamedObjects(axiom);
+        } else {
+          axiomObjects = OntologyHelper.getObjects(axiom);
+        }
+
         Set<OWLObject> partialAxiomObjects = null;
         if (axiom.isAnnotated()) {
-          partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+          if (namedOnly) {
+            partialAxiomObjects =
+                OntologyHelper.getNamedObjects(axiom.getAxiomWithoutAnnotations());
+          } else {
+            partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+          }
         }
+
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
           // Again, check full annotated axiom and axiom without annotations
@@ -146,10 +186,25 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    if (axiomTypes == null) {
-      axiomTypes = new HashSet<>();
-      axiomTypes.add(OWLAxiom.class);
-    }
+    return getPartialAxioms(ontology, objects, axiomTypes, false);
+  }
+
+  /**
+   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
+   * least one object in those axioms is also in the set of objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, only consider named OWLObjects
+   * @return Set of OWLAxioms containing at least one of the OWLObjects
+   */
+  public static Set<OWLAxiom> getPartialAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
+    axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
@@ -170,7 +225,12 @@ public class RelatedObjectsHelper {
             axioms.add(axiom);
           }
         } else {
-          Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+          Set<OWLObject> axiomObjects = null;
+          if (namedOnly) {
+            axiomObjects = OntologyHelper.getNamedObjects(axiom);
+          } else {
+            axiomObjects = OntologyHelper.getObjects(axiom);
+          }
           for (OWLObject axiomObject : axiomObjects) {
             if (objects.contains(axiomObject)) {
               axioms.add(axiom);
@@ -969,6 +1029,22 @@ public class RelatedObjectsHelper {
       superclasses.add(expr);
     }
     return superclasses;
+  }
+
+  /**
+   * Given a set of axiom classes (or null), set OWLAxiom as the only entry if the set is empty or
+   * null. Otherwise return the original set.
+   *
+   * @param axiomTypes set of OWLAxiom classes
+   * @return set of OWLAxiom classes
+   */
+  private static Set<Class<? extends OWLAxiom>> setDefaultAxiomType(
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
+    if (axiomTypes == null || axiomTypes.isEmpty()) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
+    }
+    return axiomTypes;
   }
 
   /**

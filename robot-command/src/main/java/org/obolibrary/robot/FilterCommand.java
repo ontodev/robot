@@ -36,7 +36,9 @@ public class FilterCommand implements Command {
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
-    o.addOption("r", "trim", true, "if true, keep axioms containing only selected terms");
+    o.addOption("r", "trim", true, "if true, keep axioms containing only selected objects");
+    o.addOption(
+        "S", "signature", true, "if true, keep axioms with any selected entity in their signature");
     options = o;
   }
 
@@ -131,7 +133,6 @@ public class FilterCommand implements Command {
     if (selects.isEmpty()) {
       selects.add("self");
     }
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
 
     // Get the output IRI for the new ontology
     IRI outputIRI;
@@ -153,7 +154,13 @@ public class FilterCommand implements Command {
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
+
+    // Track if 'annotations' selection is included
     boolean includeAnnotations = false;
+
+    // Track if selection was 'imports' or 'ontology'
+    // These get processed separately and then removed
+    // If no other select options are provided, we save and quit after that
     boolean hadSelection = false;
 
     for (String select : selects) {
@@ -184,12 +191,9 @@ public class FilterCommand implements Command {
       }
     }
 
+    // If filtering imports or ontology annotations,
+    // and there are no other selects, save and return
     if (hadSelection && selectGroups.isEmpty() && objects.isEmpty()) {
-      // Maybe return the ontology at this point if there was a previous selection (such as
-      // ontology)
-      if (trim) {
-        OntologyHelper.trimOntology(outputOntology);
-      }
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
@@ -206,18 +210,18 @@ public class FilterCommand implements Command {
       objects.addAll(OntologyHelper.getObjects(inputOntology));
     }
 
-    // Get a set of axioms to copy over
+    // Use the select statements to get a set of objects to remove
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(inputOntology, ioHelper, objects, selectGroups);
 
-    Set<OWLAxiom> axiomsToAdd;
-    if (trim) {
-      axiomsToAdd =
-          RelatedObjectsHelper.getCompleteAxioms(inputOntology, relatedObjects, axiomTypes);
-    } else {
-      axiomsToAdd =
-          RelatedObjectsHelper.getPartialAxioms(inputOntology, relatedObjects, axiomTypes);
-    }
+    // Use these two options to determine which axioms to remove
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
+    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
+
+    // Get the axioms
+    // Use !trim for the 'partial' option in getAxioms
+    Set<OWLAxiom> axiomsToAdd =
+        RelatedObjectsHelper.getAxioms(inputOntology, relatedObjects, axiomTypes, !trim, signature);
 
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);

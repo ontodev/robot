@@ -138,6 +138,7 @@ public class QueryOperation {
    * @param inputPath input path of RDF/XML or TTL file
    * @param tdbDir location to put TDB mappings
    * @return Dataset instantiated with triples
+   * @throws IOException if TDB directory can't be written to
    */
   public static Dataset loadTriplesAsDataset(String inputPath, String tdbDir) throws IOException {
     // Dataset backed by a temp dir
