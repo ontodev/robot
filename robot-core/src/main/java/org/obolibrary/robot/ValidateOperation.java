@@ -32,6 +32,7 @@ public class ValidateOperation {
   private static void write_row(List<String> row, String comment, Writer writer)
       throws Exception, IOException {
 
+    // Comma-delimit every cell:
     for (String cell : row) {
       writer.write(String.format("\"%s\",", cell));
     }
@@ -62,7 +63,7 @@ public class ValidateOperation {
 
     // Extract the header row from the CSV data:
     List<String> header = csvData.remove(0);
-    // Get the index numbers for the parent column and the column to validate:
+    // Get the index numbers for the parent and child columns:
     int parentColIndex = header.indexOf(parentCol);
     int childColIndex = header.indexOf(childCol);
     if ((parentColIndex == -1) || (childColIndex == -1)) {
@@ -71,10 +72,9 @@ public class ValidateOperation {
       throw new Exception(err);
     }
 
-    // The cell in the parent column of the first row should indicate the ancestor which every
-    // other row's parent column should be an instance of.
+    // The cell in the parent column of the first 'global' row should indicate the ancestor which
+    // every other row's parent column should be an instance of.
     List<String> globalRow = csvData.remove(0);
-    // Get and check the global ancestor:
     String ancestor = globalRow.get(parentColIndex);
     // Make sure the ancestor is in the ontology:
     if (!labelToIriMap.containsKey(ancestor)) {
@@ -104,11 +104,13 @@ public class ValidateOperation {
       String parent = row.get(parentColIndex);
       if (!labelToIriMap.containsKey(parent)) {
         comment = String.format(": '%s' not found in ontology", parent);
-        // In this case, we can't do any further processing, so write what we have and continue:
+        // In this case, we can't do any further processing for this row, so write what we have and
+        // continue:
         write_row(row, comment, writer);
         continue;
       }
 
+      // If the child is not in the ontology, comment on it:
       comment = "";
       String child = row.get(childColIndex);
       if (!labelToIriMap.containsKey(child)) {
@@ -120,12 +122,12 @@ public class ValidateOperation {
           OntologyHelper.getEntity(ontology, labelToIriMap.get(parent)).asOWLClass();
       NodeSet<OWLClass> parentAncestors = reasoner.getSuperClasses(parentClass, false);
 
-      // Check if the parent's ancestors include the global ancestor:
+      // Check if the parent's ancestors include the global ancestor, and comment on it if it isn't:
       if (!parentAncestors.containsEntity(ancestorClass)) {
         comment += String.format(": Parent '%s' is not a descendant of '%s'", parent, ancestor);
       }
 
-      // Write the row with comment:
+      // Write the row with (possibly empty) comment:
       write_row(row, comment, writer);
     }
     reasoner.dispose();

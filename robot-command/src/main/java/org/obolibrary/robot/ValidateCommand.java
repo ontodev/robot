@@ -48,7 +48,7 @@ public class ValidateCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "validate stuff";
+    return "validate 'child' and 'parent' data in the given file";
   }
 
   /**
@@ -121,7 +121,7 @@ public class ValidateCommand implements Command {
       writer = new PrintWriter(System.out);
     }
 
-    // We should eventually make the reasoner configurable, as we do for the 'reason' command,
+    // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
     // but for now just use ELK.
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     ValidateOperation.validate(csvData, owlData, reasonerFactory, childCol, parentCol, writer);

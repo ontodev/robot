@@ -1,0 +1,6 @@
+"ID","Parent IRI",""
+"","organelle",""
+"nuclear lumen","intracellular organelles",": 'intracellular organelles' not found in ontology"
+"nuclear part","membrane-bounded organelle",""
+"nucleus","intracellular membrane-bounded organelle",""
+"nucleus","organelle",": Parent 'organelle' is not a descendant of 'organelle'"
