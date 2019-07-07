@@ -19,6 +19,7 @@ public class CommandLineInterface {
    */
   private static CommandManager initManager() {
     CommandManager m = new CommandManager();
+    m.addCommand("analyze", new AnalyzeCommand());
     m.addCommand("annotate", new AnnotateCommand());
     m.addCommand("convert", new ConvertCommand());
     m.addCommand("diff", new DiffCommand());

@@ -494,7 +494,7 @@ public class ReasonOperation {
    * @param options map of reason options
    * @throws InvalidReferenceException on invalid reference, if prevent-invalid-references
    */
-  private static void checkReferenceViolations(OWLOntology ontology, Map<String, String> options)
+  static void checkReferenceViolations(OWLOntology ontology, Map<String, String> options)
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);

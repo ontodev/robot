@@ -1,0 +1,40 @@
+Prefix: : <http://x.org/>
+
+Ontology: <http://x.org>
+
+##
+
+Class: A
+  SubClassOf: B
+
+Class: B
+  SubClassOf: C
+
+Class: C
+
+ObjectProperty: p        
+
+## These axioms have more power        
+Class: X
+
+Class: XA
+  SubClassOf: XB
+  EquivalentTo: X and p some A
+Class: XB
+  SubClassOf: XC
+  EquivalentTo: X and p some B
+Class: XC
+  EquivalentTo: X and p some C
+
+
+## These axioms have less power        
+Class: Y
+
+Class: YA
+  EquivalentTo: YB and p some A
+Class: YB
+  EquivalentTo: YC and p some B
+Class: YC
+  EquivalentTo: Y and p some C
+
+        
