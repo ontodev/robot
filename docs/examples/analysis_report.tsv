@@ -1,12 +1,13 @@
 # |Removed_redundant_axioms| = 2
-SubClassOf	1	SubClassOf(<http://x.org/A> <http://x.org/B>)
-SubClassOf	1	SubClassOf(<http://x.org/B> <http://x.org/C>)
-EquivalentClasses	0	EquivalentClasses(<http://x.org/YB> ObjectIntersectionOf(<http://x.org/YC> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/B>)) )
-EquivalentClasses	1	EquivalentClasses(<http://x.org/XC> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/C>)) )
-EquivalentClasses	2	EquivalentClasses(<http://x.org/XB> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/B>)) )
-EquivalentClasses	0	EquivalentClasses(<http://x.org/YC> ObjectIntersectionOf(<http://x.org/Y> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/C>)) )
-EquivalentClasses	1	EquivalentClasses(<http://x.org/XA> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/A>)) )
-EquivalentClasses	0	EquivalentClasses(<http://x.org/YA> ObjectIntersectionOf(<http://x.org/YB> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/A>)) )
+AxiomType	Power	About	InRoot	Axiom
+SubClassOf	1	<http://x.org/B>	true	SubClassOf(<http://x.org/B> <http://x.org/C>)
+SubClassOf	1	<http://x.org/A>	true	SubClassOf(<http://x.org/A> <http://x.org/B>)
+EquivalentClasses	0	<http://x.org/YC>	true	EquivalentClasses(<http://x.org/YC> ObjectIntersectionOf(<http://x.org/Y> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/C>)) )
+EquivalentClasses	1	<http://x.org/XC>	true	EquivalentClasses(<http://x.org/XC> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/C>)) )
+EquivalentClasses	2	<http://x.org/XB>	true	EquivalentClasses(<http://x.org/XB> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/B>)) )
+EquivalentClasses	0	<http://x.org/YA>	true	EquivalentClasses(<http://x.org/YA> ObjectIntersectionOf(<http://x.org/YB> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/A>)) )
+EquivalentClasses	1	<http://x.org/XA>	true	EquivalentClasses(<http://x.org/XA> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/A>)) )
+EquivalentClasses	0	<http://x.org/YB>	true	EquivalentClasses(<http://x.org/YB> ObjectIntersectionOf(<http://x.org/YC> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/B>)) )
 # Total_power = 6
 # Average_power = 0.75
 # Most_powerful_axioms = 2 Axioms: [EquivalentClasses(<http://x.org/XB> ObjectIntersectionOf(<http://x.org/X> ObjectSomeValuesFrom(<http://x.org/p> <http://x.org/B>)) )]
