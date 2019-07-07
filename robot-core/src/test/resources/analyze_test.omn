@@ -27,7 +27,8 @@ Class: XC
   EquivalentTo: X and p some C
 
 
-## These axioms have less power        
+## These axioms have less power,
+## Due to the fact they overstate the genus
 Class: Y
 
 Class: YA

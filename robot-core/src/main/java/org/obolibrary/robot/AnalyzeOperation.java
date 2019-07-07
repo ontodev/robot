@@ -5,18 +5,33 @@ import com.google.common.collect.Sets.SetView;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
-import org.obolibrary.robot.exceptions.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import org.obolibrary.robot.ReasonOperation;
+import org.obolibrary.robot.RelaxOperation;
+import org.obolibrary.robot.exceptions.InvalidReferenceException;
+import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasoner;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLLogicalAxiom;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
-import org.semanticweb.owlapi.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Analyze logical axioms in an ontology
+ * Analyze logical axioms in an ontology.
+ *
+ * <p>For complete documentation, see http://robot.obolibrary.org/analyze
  *
  * @author <a href="mailto:cjmungall@lbl.gov">Chris Mungall</a>
  */
@@ -33,8 +48,6 @@ public class AnalyzeOperation {
    */
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
-    options.put("foo", "false");
-
     return options;
   }
 
@@ -74,8 +87,6 @@ public class AnalyzeOperation {
       Map<String, String> options)
       throws Exception {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
-
-    List<String> reportLines = new ArrayList<>();
 
     BufferedWriter bw = null;
     if (outputPath != null) {
@@ -139,13 +150,21 @@ public class AnalyzeOperation {
   }
 
   /**
-   * Power = | E(O) - E(O-A) |
-   * 
-   * The power of a logical axiom is the number of entailments it contributes to
-   * 
-   * @param axiom
+   * <code>Power = | E(O) - E(O-A) |</code>
+   *
+   * <p>The power of a logical axiom is the number of entailments it contributes to
+   *
+   * <p>Algorithm:
+   *
+   * <ul>
+   * <li> E(O) is assumed to be calculated in advance. 
+   * <li> A is removed from O - Each axiom in E(O) is tested to see if it can still be entailed 
+   * <li> if it can, it is added to E(O-A) - A is added back to O
+   * </ul>
+   *
+   * @param axiom - axiom to be tested
    * @param reasoner
-   * @param infAxioms
+   * @param infAxioms - axioms inferred from whole ontology, i.e. E(O)
    * @return axiom power calculation
    */
   public static int getLogicalAxiomPower(
@@ -154,18 +173,32 @@ public class AnalyzeOperation {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     manager.removeAxiom(ontology, axiom);
     reasoner.flush();
-    Set<OWLLogicalAxiom> infAxiomsPostRemoval = getInferredAxioms(reasoner);
+
+    Set<OWLLogicalAxiom> infAxiomsPostRemoval = new HashSet<>();
+    for (OWLLogicalAxiom a : infAxioms) {
+      if (isEntailed(reasoner, a)) {
+        infAxiomsPostRemoval.add(a);
+      }
+    }
+
     SetView<OWLLogicalAxiom> remaining = Sets.difference(infAxioms, infAxiomsPostRemoval);
 
-    for (OWLAxiom a : remaining) {
-      logger.info(" R=" + a);
-    }
+    // for (OWLAxiom a : remaining) {
+    //  logger.info(" R=" + a);
+    // }
+    
     // restore
     manager.addAxiom(ontology, axiom);
-    logger.info("Base=" + infAxioms.size() + " Rem=" + remaining.size());
+    logger.info("Base=" + infAxioms.size() + " Rem=" + remaining.size()+" Axiom:"+axiom);
     return remaining.size();
   }
 
+  /**
+   * Remove any logical axioms that can be inferred, if they were to be removed
+   * 
+   * @param reasoner
+   * @return removed axioms
+   */
   public static Set<OWLAxiom> removeRedundantAxioms(OWLReasoner reasoner) {
     OWLOntology ontology = reasoner.getRootOntology();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
@@ -185,8 +218,20 @@ public class AnalyzeOperation {
     return redundantAxioms;
   }
 
+  /**
+   * 
+   * Note that the owlapi reasoner API provides this method, but Elk does not implement.
+   * 
+   * Here we wrap that API, but if the reasoner is Elk, we only test for SubClassOf
+   * 
+   * @param reasoner
+   * @param axiom
+   * @return true if axiom is entailed
+   */
   public static boolean isEntailed(OWLReasoner reasoner, OWLLogicalAxiom axiom) {
-    logger.info("Testing: " + axiom);
+    logger.debug("Testing: " + axiom);
+    
+    // test for trivial case, no need to invoke reasoner
     if (axiom instanceof OWLSubClassOfAxiom) {
       OWLSubClassOfAxiom sca = (OWLSubClassOfAxiom) axiom;
       if (sca.getSuperClass().isOWLThing()) {
@@ -212,6 +257,20 @@ public class AnalyzeOperation {
     }
   }
 
+  /**
+   * Gets non-redundant logical axioms that are inferred by a reasoner, excluding
+   * those that are currently asserted
+   * 
+   * Currently only implemented for SubClassOf
+   * 
+   * This excludes trivial axioms: SubClassOf(?x, Thing) and SubClassOf(Nothing ?x)
+   * 
+   * Note: in theory the owlapi InferredAxiomGenerator can provide this functionality,
+   * but I was not able to get this to work to my satisfaction
+   * 
+   * @param reasoner
+   * @return all inferred axioms (currently SubClassOf only)
+   */
   public static Set<OWLLogicalAxiom> getInferredAxioms(OWLReasoner reasoner) {
     // can't seem to get InferredAxiomGenerator to work...
     OWLOntology ontology = reasoner.getRootOntology();
