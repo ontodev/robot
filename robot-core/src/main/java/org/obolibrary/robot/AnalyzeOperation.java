@@ -9,8 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.obolibrary.robot.ReasonOperation;
-import org.obolibrary.robot.RelaxOperation;
+import org.apache.commons.lang.StringUtils;
 import org.obolibrary.robot.exceptions.InvalidReferenceException;
 import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.elk.owlapi.ElkReasoner;
@@ -23,6 +22,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
@@ -104,10 +104,12 @@ public class AnalyzeOperation {
 
     Set<OWLAxiom> removedAxioms = removeRedundantAxioms(reasoner);
     report("# |Removed_redundant_axioms| = " + removedAxioms.size(), bw);
-    Set<OWLLogicalAxiom> originalAxioms = ontology.getLogicalAxioms();
+    Set<OWLLogicalAxiom> axiomsToTest = ontology.getLogicalAxioms(Imports.INCLUDED);
+    Set<OWLLogicalAxiom> axiomsToTestInRoot = ontology.getLogicalAxioms(Imports.EXCLUDED);
 
     // we are uninterested in trivial inferences, so first relax
-    // so that trivial axioms are asserted alreadt
+    // so that trivial axioms are asserted already.
+    // note we do not test these axioms, as we know already they have power=0
     RelaxOperation.relax(ontology, options);
 
     Set<OWLLogicalAxiom> infAxioms = getInferredAxioms(reasoner);
@@ -120,11 +122,15 @@ public class AnalyzeOperation {
     int tPower = 0;
     Set<OWLLogicalAxiom> mostPowerfulAxioms = null;
     int maxPower = 0;
-    for (OWLLogicalAxiom axiom : originalAxioms) {
+    report("AxiomType\tPower\tAbout\tInRoot\tAxiom", bw);
+    for (OWLLogicalAxiom axiom : axiomsToTest) {
+      boolean isInRoot = axiomsToTestInRoot.contains(axiom);
       AxiomType<?> atype = axiom.getAxiomType();
+      Set<OWLClass> about = getClassesAxiomIsAbout(ontology, axiom);
+      String aboutStr = StringUtils.join(about, "|");
       int power = getLogicalAxiomPower(axiom, reasoner, infAxioms);
       tPower += power;
-      report(atype + "\t" + power + "\t" + axiom, bw);
+      report(atype + "\t" + power + "\t" + aboutStr + "\t" + isInRoot + "\t" + axiom, bw);
       if (power > maxPower) {
         maxPower = power;
         mostPowerfulAxioms = new HashSet<>();
@@ -144,6 +150,20 @@ public class AnalyzeOperation {
     return avgPower;
   }
 
+  private static Set<OWLClass> getClassesAxiomIsAbout(OWLOntology ontology, OWLLogicalAxiom axiom) {
+    Set<OWLClass> clzs = axiom.getClassesInSignature();
+    Set<OWLClass> about = new HashSet<>();
+    for (OWLClass c : clzs) {
+      for (OWLAxiom a : ontology.getAxioms(c, Imports.INCLUDED)) {
+        if (a.equals(axiom)) {
+          about.add(c);
+          break;
+        }
+      }
+    }
+    return about;
+  }
+
   private static void report(String line, BufferedWriter bw) throws IOException {
     if (bw != null) bw.write(line + "\n");
     else System.out.println(line);
@@ -157,9 +177,9 @@ public class AnalyzeOperation {
    * <p>Algorithm:
    *
    * <ul>
-   * <li> E(O) is assumed to be calculated in advance. 
-   * <li> A is removed from O - Each axiom in E(O) is tested to see if it can still be entailed 
-   * <li> if it can, it is added to E(O-A) - A is added back to O
+   *   <li>E(O) is assumed to be calculated in advance.
+   *   <li>A is removed from O - Each axiom in E(O) is tested to see if it can still be entailed
+   *   <li>if it can, it is added to E(O-A) - A is added back to O
    * </ul>
    *
    * @param axiom - axiom to be tested
@@ -186,16 +206,16 @@ public class AnalyzeOperation {
     // for (OWLAxiom a : remaining) {
     //  logger.info(" R=" + a);
     // }
-    
+
     // restore
     manager.addAxiom(ontology, axiom);
-    logger.info("Base=" + infAxioms.size() + " Rem=" + remaining.size()+" Axiom:"+axiom);
+    logger.info("Base=" + infAxioms.size() + " Rem=" + remaining.size() + " Axiom:" + axiom);
     return remaining.size();
   }
 
   /**
    * Remove any logical axioms that can be inferred, if they were to be removed
-   * 
+   *
    * @param reasoner
    * @return removed axioms
    */
@@ -219,18 +239,17 @@ public class AnalyzeOperation {
   }
 
   /**
-   * 
    * Note that the owlapi reasoner API provides this method, but Elk does not implement.
-   * 
-   * Here we wrap that API, but if the reasoner is Elk, we only test for SubClassOf
-   * 
+   *
+   * <p>Here we wrap that API, but if the reasoner is Elk, we only test for SubClassOf
+   *
    * @param reasoner
    * @param axiom
    * @return true if axiom is entailed
    */
   public static boolean isEntailed(OWLReasoner reasoner, OWLLogicalAxiom axiom) {
     logger.debug("Testing: " + axiom);
-    
+
     // test for trivial case, no need to invoke reasoner
     if (axiom instanceof OWLSubClassOfAxiom) {
       OWLSubClassOfAxiom sca = (OWLSubClassOfAxiom) axiom;
@@ -258,16 +277,16 @@ public class AnalyzeOperation {
   }
 
   /**
-   * Gets non-redundant logical axioms that are inferred by a reasoner, excluding
-   * those that are currently asserted
-   * 
-   * Currently only implemented for SubClassOf
-   * 
-   * This excludes trivial axioms: SubClassOf(?x, Thing) and SubClassOf(Nothing ?x)
-   * 
-   * Note: in theory the owlapi InferredAxiomGenerator can provide this functionality,
-   * but I was not able to get this to work to my satisfaction
-   * 
+   * Gets non-redundant logical axioms that are inferred by a reasoner, excluding those that are
+   * currently asserted
+   *
+   * <p>Currently only implemented for SubClassOf
+   *
+   * <p>This excludes trivial axioms: SubClassOf(?x, Thing) and SubClassOf(Nothing ?x)
+   *
+   * <p>Note: in theory the owlapi InferredAxiomGenerator can provide this functionality, but I was
+   * not able to get this to work to my satisfaction
+   *
    * @param reasoner
    * @return all inferred axioms (currently SubClassOf only)
    */
