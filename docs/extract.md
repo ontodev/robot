@@ -59,6 +59,8 @@ The MIREOT method preserves the hierarchy of the input ontology (subclass and su
 
 To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. The upper terms are the upper boundaries of what will be extracted. If no upper term is specified, all terms up to the root (`owl:Thing`) will be returned. The lower term (or terms) is required; this is the limit to what will be extracted, e.g. no descendants of the lower term will be included in the result.
 
+To include all ancestors **and** all descendants of a term or set of terms, use `--branch-from-term` or `--branch-from-terms`, respectively. `--lower-term` or `--lower-terms` are not required when using this option.
+
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
 ### Intermediates
