@@ -8,9 +8,7 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.InferredClassAxiomGenerator;
 
-/**
- * An InferredAxiomGenerator which returns both direct and indirect inferred subclass axioms.
- */
+/** An InferredAxiomGenerator which returns both direct and indirect inferred subclass axioms. */
 public class InferredSubClassAxiomGeneratorIncludingIndirect
     extends InferredClassAxiomGenerator<OWLSubClassOfAxiom> {
 

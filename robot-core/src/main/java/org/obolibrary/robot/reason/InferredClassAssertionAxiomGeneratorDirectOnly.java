@@ -9,9 +9,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.InferredIndividualAxiomGenerator;
 
-/**
- * An InferredAxiomGenerator which returns only direct class assettion axioms.
- */
+/** An InferredAxiomGenerator which returns only direct class assettion axioms. */
 public class InferredClassAssertionAxiomGeneratorDirectOnly
     extends InferredIndividualAxiomGenerator<OWLClassAssertionAxiom> {
 

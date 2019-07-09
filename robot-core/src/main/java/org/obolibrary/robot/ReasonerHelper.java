@@ -236,7 +236,8 @@ public class ReasonerHelper {
    * Given a list of axiom generator strings, return a list of InferredAxiomGenerator objects.
    *
    * @param axGenerators list of strings to get InferredAxiomGenerators
-   * @param direct return axiom generators which include only direct superclass/superproperties/types
+   * @param direct return axiom generators which include only direct
+   *     superclass/superproperties/types
    * @return list of InferredAxiomGenerators
    */
   public static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
@@ -282,7 +283,8 @@ public class ReasonerHelper {
    * Given an axiom generator as a string, return the InferredAxiomGenerator object.
    *
    * @param axGenerator name of InferredAxiomGenerator
-   * @param direct return axiom generators which include only direct superclass/superproperties/types
+   * @param direct return axiom generators which include only direct
+   *     superclass/superproperties/types
    * @return InferredAxiomGenerator
    */
   public static InferredAxiomGenerator<? extends OWLAxiom> getInferredAxiomGenerator(

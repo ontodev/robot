@@ -2,14 +2,11 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
-import org.obolibrary.robot.exceptions.InvalidReferenceException;
-import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.*;
@@ -367,37 +364,23 @@ public class ReasonOperationTest extends CoreTest {
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
     ReasonOperation.reason(ontology, reasonerFactory, options);
     assertTrue(
-      checkContains(
-        ontology,
-        "ClassAssertion(<http://example.org/C> <http://example.org/c>)"));
+        checkContains(ontology, "ClassAssertion(<http://example.org/C> <http://example.org/c>)"));
     assertFalse(
-      checkContains(
-        ontology,
-        "ClassAssertion(<http://example.org/B> <http://example.org/c>)"));
+        checkContains(ontology, "ClassAssertion(<http://example.org/B> <http://example.org/c>)"));
     assertFalse(
-      checkContains(
-        ontology,
-        "ClassAssertion(<http://example.org/A> <http://example.org/c>)"));
+        checkContains(ontology, "ClassAssertion(<http://example.org/A> <http://example.org/c>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubClassOf(<http://example.org/C> <http://example.org/B>)"));
+        checkContains(ontology, "SubClassOf(<http://example.org/C> <http://example.org/B>)"));
     assertFalse(
-      checkContains(
-        ontology,
-        "SubClassOf(<http://example.org/C> <http://example.org/A>)"));
+        checkContains(ontology, "SubClassOf(<http://example.org/C> <http://example.org/A>)"));
     assertFalse(
-      checkContains(
-        ontology,
-        "SubClassOf(<http://example.org/C> <http://example.org/D>)"));
+        checkContains(ontology, "SubClassOf(<http://example.org/C> <http://example.org/D>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/s>)"));
+        checkContains(
+            ontology, "SubObjectPropertyOf(<http://example.org/t> <http://example.org/s>)"));
     assertFalse(
-      checkContains(
-        ontology,
-        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/r>)"));
+        checkContains(
+            ontology, "SubObjectPropertyOf(<http://example.org/t> <http://example.org/r>)"));
   }
 
   /**
@@ -415,37 +398,23 @@ public class ReasonOperationTest extends CoreTest {
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
     ReasonOperation.reason(ontology, reasonerFactory, options);
     assertTrue(
-      checkContains(
-        ontology,
-        "ClassAssertion(<http://example.org/C> <http://example.org/c>)"));
+        checkContains(ontology, "ClassAssertion(<http://example.org/C> <http://example.org/c>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "ClassAssertion(<http://example.org/B> <http://example.org/c>)"));
+        checkContains(ontology, "ClassAssertion(<http://example.org/B> <http://example.org/c>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "ClassAssertion(<http://example.org/A> <http://example.org/c>)"));
+        checkContains(ontology, "ClassAssertion(<http://example.org/A> <http://example.org/c>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubClassOf(<http://example.org/C> <http://example.org/B>)"));
+        checkContains(ontology, "SubClassOf(<http://example.org/C> <http://example.org/B>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubClassOf(<http://example.org/C> <http://example.org/A>)"));
+        checkContains(ontology, "SubClassOf(<http://example.org/C> <http://example.org/A>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubClassOf(<http://example.org/C> <http://example.org/D>)"));
+        checkContains(ontology, "SubClassOf(<http://example.org/C> <http://example.org/D>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/s>)"));
+        checkContains(
+            ontology, "SubObjectPropertyOf(<http://example.org/t> <http://example.org/s>)"));
     assertTrue(
-      checkContains(
-        ontology,
-        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/r>)"));
+        checkContains(
+            ontology, "SubObjectPropertyOf(<http://example.org/t> <http://example.org/r>)"));
   }
 
   private boolean checkContains(OWLOntology reasoned, String axStr) {
