@@ -51,7 +51,7 @@ public class RepairOperation {
   /**
    * Repairs ontology
    *
-   * @param ontology the OWLOntology to reapir
+   * @param ontology the OWLOntology to repair
    * @param ioHelper IOHelper to work with the ontology
    * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
    * @param migrateAnnotations set of annotation properties for which to migrate values
@@ -78,7 +78,7 @@ public class RepairOperation {
   /**
    * Repairs ontology
    *
-   * @param ontology the OWLOntology to reapir
+   * @param ontology the OWLOntology to repair
    * @param ioHelper IOHelper to work with the ontology
    * @param options map of repair options
    * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
@@ -94,7 +94,7 @@ public class RepairOperation {
   /**
    * Repairs ontology
    *
-   * @param ontology the OWLOntology to reapir
+   * @param ontology the OWLOntology to repair
    * @param ioHelper IOHelper to work with the ontology
    * @param options map of repair options
    * @param mergeAxiomAnnotations if true, merge annotations on duplicate axioms
