@@ -10,6 +10,7 @@ import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.obolibrary.robot.exceptions.*;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
+import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -233,8 +234,9 @@ public class ReasonOperation {
       Map<String, String> options) {
     String axGeneratorString = OptionsHelper.getOption(options, "axiom-generators", "subclass");
     List<String> axGenerators = Arrays.asList(axGeneratorString.split(" "));
+    boolean direct = !OptionsHelper.optionIsTrue(options, "include-indirect");
     List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
-        ReasonerHelper.getInferredAxiomGenerators(axGenerators);
+        ReasonerHelper.getInferredAxiomGenerators(axGenerators, direct);
     logger.info("Using these axiom generators:");
     for (InferredAxiomGenerator<?> inf : gens) {
       logger.info("    " + inf);
@@ -263,38 +265,28 @@ public class ReasonOperation {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
     boolean direct = !OptionsHelper.optionIsTrue(options, "include-indirect");
-
-    boolean subClass = false;
-    boolean classAssertion = false;
-    boolean subObjectProperty = false;
-    for (InferredAxiomGenerator g : gens) {
-      if (g instanceof InferredSubClassAxiomGenerator) {
-        subClass = true;
-      } else if (g instanceof InferredClassAssertionAxiomGenerator) {
-        classAssertion = true;
-      } else if (g instanceof InferredSubObjectPropertyAxiomGenerator) {
-        subObjectProperty = true;
-      }
-    }
+    boolean subClass =
+        gens.stream()
+            .anyMatch(
+                g ->
+                    (g instanceof InferredSubClassAxiomGenerator)
+                        || (g instanceof InferredSubClassAxiomGeneratorIncludingIndirect));
 
     // we first place all inferred axioms into a new ontology;
     // these will be later transferred into the main ontology,
     // unless the create new ontology option is passed
-    OWLOntology newAxiomOntology;
-    newAxiomOntology = manager.createOntology();
-
+    OWLOntology newAxiomOntology = manager.createOntology();
     InferredOntologyGenerator generator = new InferredOntologyGenerator(reasoner, gens);
     generator.fillOntology(dataFactory, newAxiomOntology);
 
     // If EMR, add expressions instead of just classes, etc...
-    ExpressionMaterializingReasoner emr = null;
     if (reasoner instanceof ExpressionMaterializingReasoner) {
       logger.info("Creating expression materializing reasoner...");
-      emr = (ExpressionMaterializingReasoner) reasoner;
+      ExpressionMaterializingReasoner emr = (ExpressionMaterializingReasoner) reasoner;
       emr.materializeExpressions();
       // Maybe add direct/indirect class expressions
       if (subClass) {
-        for (OWLClass c : ontology.getClassesInSignature()) {
+        for (OWLClass c : ontology.getClassesInSignature(Imports.INCLUDED)) {
           // Look at the superclasses because otherwise we would lose the anonymous exprs
           Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, direct);
           for (OWLClassExpression sce : sces) {
@@ -303,50 +295,6 @@ public class ReasonOperation {
               logger.debug("NEW:" + ax);
               manager.addAxiom(newAxiomOntology, ax);
             }
-          }
-        }
-      }
-    } else if (subClass) {
-      // if not EMR and still using subclasses, do not use expressions
-      for (OWLClass c : ontology.getClassesInSignature()) {
-        Set<OWLClass> scs = reasoner.getSubClasses(c, direct).getFlattened();
-        for (OWLClass sc : scs) {
-          if (!sc.isOWLNothing()) {
-            OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(sc, c);
-            logger.debug("NEW:" + ax);
-            manager.addAxiom(newAxiomOntology, ax);
-          }
-        }
-      }
-    }
-
-    // Maybe add direct/indirect class assertions
-    if (classAssertion) {
-      for (OWLClass c : ontology.getClassesInSignature()) {
-        Set<OWLNamedIndividual> inds = reasoner.getInstances(c, direct).getFlattened();
-        for (OWLNamedIndividual i : inds) {
-          OWLAxiom ax = dataFactory.getOWLClassAssertionAxiom(c, i);
-          logger.debug("NEW:" + ax);
-          manager.addAxiom(newAxiomOntology, ax);
-        }
-      }
-    }
-
-    // Maybe add direct/indirect object property expressions
-    if (subObjectProperty) {
-      for (OWLObjectProperty op : ontology.getObjectPropertiesInSignature()) {
-        // Look at superproperties so we can get the expressions
-        Set<OWLObjectPropertyExpression> sopes;
-        if (emr != null) {
-          sopes = emr.getSuperObjectProperties(op, direct).getFlattened();
-        } else {
-          sopes = reasoner.getSuperObjectProperties(op, direct).getFlattened();
-        }
-        for (OWLObjectPropertyExpression sope : sopes) {
-          if (!sope.getSignature().contains(dataFactory.getOWLTopObjectProperty())) {
-            OWLAxiom ax = dataFactory.getOWLSubObjectPropertyOfAxiom(op, sope);
-            logger.debug("NEW:" + ax);
-            manager.addAxiom(newAxiomOntology, ax);
           }
         }
       }

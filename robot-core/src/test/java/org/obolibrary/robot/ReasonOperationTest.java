@@ -2,18 +2,17 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.junit.Test;
+import org.obolibrary.robot.exceptions.InvalidReferenceException;
+import org.obolibrary.robot.exceptions.OntologyLogicException;
+import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
-import org.semanticweb.owlapi.model.AddImport;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
 
@@ -351,6 +350,102 @@ public class ReasonOperationTest extends CoreTest {
         checkContains(
             ontology,
             "ObjectPropertyAssertion(<http://purl.obolibrary.org/obo/OP_08> <http://purl.obolibrary.org/obo/IND_02> <http://purl.obolibrary.org/obo/IND_03>)"));
+  }
+
+  /**
+   * Test direct axiom generators.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testDirectAxiomGenerators() throws Exception {
+    OWLOntology ontology = loadOntology("/reason-direct-indirect.ofn");
+    Map<String, String> options = ReasonOperation.getDefaultOptions();
+    options.put("axiom-generators", "Subclass SubObjectProperty ClassAssertion");
+    options.put("include-indirect", "false");
+    options.put("remove-redundant-subclass-axioms", "false");
+    OWLReasonerFactory reasonerFactory = new ReasonerFactory();
+    ReasonOperation.reason(ontology, reasonerFactory, options);
+    assertTrue(
+      checkContains(
+        ontology,
+        "ClassAssertion(<http://example.org/C> <http://example.org/c>)"));
+    assertFalse(
+      checkContains(
+        ontology,
+        "ClassAssertion(<http://example.org/B> <http://example.org/c>)"));
+    assertFalse(
+      checkContains(
+        ontology,
+        "ClassAssertion(<http://example.org/A> <http://example.org/c>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubClassOf(<http://example.org/C> <http://example.org/B>)"));
+    assertFalse(
+      checkContains(
+        ontology,
+        "SubClassOf(<http://example.org/C> <http://example.org/A>)"));
+    assertFalse(
+      checkContains(
+        ontology,
+        "SubClassOf(<http://example.org/C> <http://example.org/D>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/s>)"));
+    assertFalse(
+      checkContains(
+        ontology,
+        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/r>)"));
+  }
+
+  /**
+   * Test indirect axiom generators.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testIndirectAxiomGenerators() throws Exception {
+    OWLOntology ontology = loadOntology("/reason-direct-indirect.ofn");
+    Map<String, String> options = ReasonOperation.getDefaultOptions();
+    options.put("axiom-generators", "Subclass SubObjectProperty ClassAssertion");
+    options.put("include-indirect", "true");
+    options.put("remove-redundant-subclass-axioms", "false");
+    OWLReasonerFactory reasonerFactory = new ReasonerFactory();
+    ReasonOperation.reason(ontology, reasonerFactory, options);
+    assertTrue(
+      checkContains(
+        ontology,
+        "ClassAssertion(<http://example.org/C> <http://example.org/c>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "ClassAssertion(<http://example.org/B> <http://example.org/c>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "ClassAssertion(<http://example.org/A> <http://example.org/c>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubClassOf(<http://example.org/C> <http://example.org/B>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubClassOf(<http://example.org/C> <http://example.org/A>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubClassOf(<http://example.org/C> <http://example.org/D>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/s>)"));
+    assertTrue(
+      checkContains(
+        ontology,
+        "SubObjectPropertyOf(<http://example.org/t> <http://example.org/r>)"));
   }
 
   private boolean checkContains(OWLOntology reasoned, String axStr) {
