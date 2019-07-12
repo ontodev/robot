@@ -167,7 +167,7 @@ public class ExtractOperation {
       // Make sure to completely remove individuals
       Set<OWLObject> indivs = new HashSet<>(outputOntology.getIndividualsInSignature());
       Set<OWLAxiom> indivAxioms =
-          RelatedObjectsHelper.getCompleteAxioms(outputOntology, indivs, null);
+          RelatedObjectsHelper.getCompleteAxioms(outputOntology, indivs, null, true);
       manager.removeAxioms(outputOntology, indivAxioms);
     }
 

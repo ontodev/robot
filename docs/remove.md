@@ -146,6 +146,12 @@ robot remove --input obi.owl \
   --select "owl:deprecated='true'^^xsd:boolean"
 ```
 
+Remove the annotated definition from one class (using `--signature` to ignore non-named objects):
+
+    robot remove --input simple.owl \
+      --term obo:FBcv_0000002 --term IAO:0000115 --term oboInOwl:hasDbXref \
+      --trim false --signature true --output simple-removed.owl
+
 *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
     robot remove --input uberon_module.owl \
