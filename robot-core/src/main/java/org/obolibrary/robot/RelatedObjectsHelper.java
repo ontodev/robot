@@ -832,10 +832,6 @@ public class RelatedObjectsHelper {
             }
           }
         } else {
-          System.out.println(axiom);
-          OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations())
-              .forEach(System.out::println);
-          System.out.println("\n\n");
           if (objects.containsAll(OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations()))) {
             axiomMatch = true;
           }
