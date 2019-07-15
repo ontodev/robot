@@ -80,6 +80,16 @@ public class RelatedObjectsHelper {
     return axioms;
   }
 
+  /**
+   * Given an ontology, a set of objects, a set of axiom types, boolean to return partial axioms, and a boolean to use the signature (IRIs only), return the axioms containing those objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects OWLObjects to use to get axioms
+   * @param axiomTypes types of OWLAxioms to return
+   * @param partial if true, return axioms that include at least one object
+   * @param signature if true, use the signature (IRIs only)
+   * @return set of axioms containing the OWLObjects
+   */
   public static Set<OWLAxiom> getAxioms(
       OWLOntology ontology,
       Set<OWLObject> objects,
@@ -808,25 +818,36 @@ public class RelatedObjectsHelper {
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> axioms = new HashSet<>();
 
+    // Use the IRIs to compare named objects
     Set<IRI> iris = getIRIs(objects);
 
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        // Track if the axiom, without annotations, contains the objects
         boolean axiomMatch = false;
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
+          // Special handler for OWLAnnotationAssertionAxiom
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+          // First look at the subject
+          // Its probably an IRI, in which case see if it is in the set of IRIs
           boolean subjectMatch = false;
           if (a.getSubject().isAnonymous() && objects.contains(a.getSubject())) {
             subjectMatch = true;
           } else if (a.getSubject().isIRI() && iris.contains(a.getSubject())) {
             subjectMatch = true;
           }
+          // If the subject matches, look at the property and value
           if (subjectMatch) {
+            // Property will always compare IRI
             if (iris.contains(a.getProperty().getIRI())) {
               if (a.getValue().isLiteral()) {
+                // Value might be literal
+                // In this case, ignore it
                 axiomMatch = true;
               } else if (objects.contains(a.getValue())
                   || iris.contains(a.getValue().asIRI().orNull())) {
+                // If the objects contain the value (e.g. an anonymous object)
+                // or if its an IRI and it is in the set of IRIs, its a match
                 axiomMatch = true;
               }
             }
@@ -837,7 +858,8 @@ public class RelatedObjectsHelper {
           }
         }
 
-        // Handle annotations on the axiom
+        // Handle annotations on the axiom by looking at the property and value
+        // Ignore all literal values (if the property matches, add it)
         boolean annotationMatch = true;
         if (axiomMatch && axiom.isAnnotated()) {
           for (OWLAnnotation annotation : axiom.getAnnotations()) {
@@ -854,6 +876,7 @@ public class RelatedObjectsHelper {
         if (axiomMatch && annotationMatch) {
           axioms.add(axiom);
         } else if (axiomMatch) {
+          // If only the axiom matches, add the axiom without annotations
           axioms.add(axiom.getAxiomWithoutAnnotations());
         }
       }

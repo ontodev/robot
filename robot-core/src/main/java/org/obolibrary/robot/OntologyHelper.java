@@ -360,8 +360,10 @@ public class OntologyHelper {
   }
 
   /**
-   * @param axiom
-   * @return
+   * Given an OWLAxiom, return all the IRIs in the signature. This is an add-on to the getSignature method to include OWLAnnotationAssertionAxioms.
+   *
+   * @param axiom OWLAxiom to get signature of
+   * @return IRIs used in OWLAxiom
    */
   public static Set<IRI> getIRIsInSignature(OWLAxiom axiom) {
     Set<IRI> sigIRIs = new HashSet<>();
