@@ -1121,7 +1121,7 @@ public class IOHelper {
 
   /**
    * Given a URL, check if the URL returns a redirect and return that new URL. Continue following
-   * redirects until status is HTTP_OK.
+   * redirects until there are no more redirects.
    *
    * @param url URL to follow redirects
    * @return URL after all redirects
@@ -1129,6 +1129,10 @@ public class IOHelper {
    */
   private URL followRedirects(URL url) throws IOException {
     // Check if the URL redirects
+    if (url.toString().startsWith("ftp")) {
+      // Trying to open HttpURLConnection on FTP will throw exception
+      return url;
+    }
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     int status = conn.getResponseCode();
     boolean redirect = false;
@@ -1144,7 +1148,13 @@ public class IOHelper {
       // Get the new URL and then check that for redirect
       String newURL = conn.getHeaderField("Location");
       logger.info(String.format("<%s> redirecting to <%s>...", url.toString(), newURL));
-      return followRedirects(new URL(newURL));
+      if (newURL.startsWith("ftp")) {
+        // No more redirects
+        return new URL(newURL);
+      } else {
+        // Check again if there is another redirect
+        return followRedirects(new URL(newURL));
+      }
     } else {
       // Otherwise just return the URL
       return url;
