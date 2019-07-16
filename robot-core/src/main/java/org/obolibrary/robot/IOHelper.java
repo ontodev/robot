@@ -8,6 +8,7 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.google.common.collect.Sets;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1119,6 +1120,38 @@ public class IOHelper {
   }
 
   /**
+   * Given a URL, check if the URL returns a redirect and return that new URL. Continue following
+   * redirects until status is HTTP_OK.
+   *
+   * @param url URL to follow redirects
+   * @return URL after all redirects
+   * @throws IOException on issue making URL connection
+   */
+  private URL followRedirects(URL url) throws IOException {
+    // Check if the URL redirects
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    int status = conn.getResponseCode();
+    boolean redirect = false;
+    if (status != HttpURLConnection.HTTP_OK) {
+      if (status == HttpURLConnection.HTTP_MOVED_TEMP
+          || status == HttpURLConnection.HTTP_MOVED_PERM
+          || status == HttpURLConnection.HTTP_SEE_OTHER) {
+        redirect = true;
+      }
+    }
+
+    if (redirect) {
+      // Get the new URL and then check that for redirect
+      String newURL = conn.getHeaderField("Location");
+      logger.info(String.format("<%s> redirecting to <%s>...", url.toString(), newURL));
+      return followRedirects(new URL(newURL));
+    } else {
+      // Otherwise just return the URL
+      return url;
+    }
+  }
+
+  /**
    * Given an ontology, a document format, and a boolean indicating to check OBO formatting, return
    * the ontology file in the OWLDocumentFormat as a byte array.
    *
@@ -1184,6 +1217,10 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   private OWLOntology loadCompressedOntology(URL url, String catalogPath) throws IOException {
+    // Check for redirects
+    url = followRedirects(url);
+
+    // Open an input stream
     InputStream is;
     try {
       is = new BufferedInputStream(url.openStream(), 1024);
