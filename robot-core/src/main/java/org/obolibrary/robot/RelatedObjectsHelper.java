@@ -81,7 +81,8 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Given an ontology, a set of objects, a set of axiom types, boolean to return partial axioms, and a boolean to use the signature (IRIs only), return the axioms containing those objects.
+   * Given an ontology, a set of objects, a set of axiom types, boolean to return partial axioms,
+   * and a boolean to use the signature (IRIs only), return the axioms containing those objects.
    *
    * @param ontology OWLOntology to get axioms from
    * @param objects OWLObjects to use to get axioms
