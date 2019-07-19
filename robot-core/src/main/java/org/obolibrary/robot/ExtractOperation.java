@@ -142,10 +142,13 @@ public class ExtractOperation {
       type = ModuleType.STAR;
     }
 
-    // Get all axioms from the ontology and its imports
+    // Get all axioms from the ontology
     Set<OWLAxiom> axs = new HashSet<>(inputOntology.getAxioms());
-    for (OWLOntology importedOnt : inputOntology.getImportsClosure()) {
-      axs.addAll(importedOnt.getAxioms());
+    if (imports.equals(Imports.INCLUDED)) {
+      // Maybe get the axioms from the imported ontologies
+      for (OWLOntology importedOnt : inputOntology.getImportsClosure()) {
+        axs.addAll(importedOnt.getAxioms());
+      }
     }
     // Maybe get an IRI
     IRI ontIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();

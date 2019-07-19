@@ -9,8 +9,6 @@ The reuse of ontology terms creates links between data, making the ontology and 
 
 See <a href="/examples/uberon_module.txt" target="_blank">`uberon_module.txt`</a> for an example of a term file. Terms should be listed line by line, and comments can be included with `#`. Individual terms can be specified with `--term` followed by the CURIE.
 
-NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first [merge](/merge).
-
 The `--method` options fall into two groups: Syntactic Locality Module Extractor (SLME) and Minimum Information to Reference an External Ontology Term (MIREOT).
 
 - STAR: use the SLME to extract a fixpoint-nested module
@@ -18,7 +16,25 @@ The `--method` options fall into two groups: Syntactic Locality Module Extractor
 - BOT: use the SLME to extract a bottom module
 - MIREOT: extract a simple hierarchy of terms
 
-By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method.
+## Imports
+
+By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method:
+
+    robot extract --method BOT \
+      --input imports-nucleus.owl \
+      --term GO:0005739 \
+      --imports exclude \
+      --output mitochondrion.owl
+
+This only includes what is asserted in `imports-nucleus.owl`, which imports `nucleus.owl`. `imports-nucleus.owl` only includes the term 'mitochondrion' (`GO:0005739`) and links it to its parent class, 'intracellular membrane-bounded organelle' (`GO:0043231`). `nucleus.owl` contains the full hierarchy down to 'intracellular membrane-bounded organelle'. The output module, `mitochondrion.owl`, only includes the term 'mitochondrion' and this subClassOf statement.
+
+By contrast, including imports returns the full hierarchy down to 'mitochondrion', which is asserted in `nucleus.owl`:
+
+    robot extract --method BOT \
+      --input imports-nucleus.owl \
+      --term GO:0005739 \
+      --imports include \
+      --output mitochondrion-full.owl
 
 ## Syntactic Locality Module Extractor (SLME)
 
