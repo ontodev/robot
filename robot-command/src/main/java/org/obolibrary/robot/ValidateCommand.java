@@ -27,8 +27,8 @@ public class ValidateCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("c", "csv", true, "CSV file containing the data to validate");
     o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
-    o.addOption("l", "child", true, "Name of column in CSV containing the child info");
-    o.addOption("a", "parent", true, "Name of column in CSV containing the parent info");
+    o.addOption("t", "type", true, "Whether we are validating a parent-child report or an immune " +
+                "exposures report");
     o.addOption("o", "output", true, "Save results to file (if unspecified, output to STDOUT)");
     options = o;
   }
@@ -48,7 +48,7 @@ public class ValidateCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "validate 'child' and 'parent' data in the given file";
+    return "validate the data in the given file";
   }
 
   /**
@@ -57,8 +57,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> --child <COLNAME> --parent <COLNAME> "
-        + "--output <file>";
+    return "validate --csv <CSV> --owl <OWL> --type <immexp|pc> --output <file>";
   }
 
   /**
@@ -109,8 +108,7 @@ public class ValidateCommand implements Command {
     List<List<String>> csvData = ioHelper.readCSV(csvPath);
     String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
     OWLOntology owlData = ioHelper.loadOntology(owlPath);
-    String childCol = CommandLineHelper.getOptionalValue(line, "child");
-    String parentCol = CommandLineHelper.getOptionalValue(line, "parent");
+    String type = CommandLineHelper.getOptionalValue(line, "type");
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
     // Initialise the writer to be the given output path, or STDOUT if that is left unspecified:
@@ -124,7 +122,15 @@ public class ValidateCommand implements Command {
     // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
     // but for now just use ELK.
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    ValidateOperation.validate(csvData, owlData, reasonerFactory, childCol, parentCol, writer);
+    if (type.equals("pc")) {
+      ValidateOperation.validate_pc(csvData, owlData, reasonerFactory, writer);
+    }
+    else if (type.equals("immexp")) {
+      ValidateOperation.validate_immexp(csvData, owlData, reasonerFactory, writer);
+    }
+    else {
+      throw new Exception("I don't know what you want me to do.");
+    }
 
     writer.flush();
     writer.close();

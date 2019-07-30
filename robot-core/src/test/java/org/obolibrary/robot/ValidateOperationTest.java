@@ -39,7 +39,7 @@ public class ValidateOperationTest extends CoreTest {
 
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     StringWriter writer = new StringWriter();
-    ValidateOperation.validate(csvData, ontology, reasonerFactory, "ID", "Parent IRI", writer);
+    ValidateOperation.validate(csvData, ontology, reasonerFactory, "ID", "Parent IRI", "true", writer);
 
     String expectedPath =
         this.getClass().getResource("/nucleus-ancestor-validate-result.csv").getPath();

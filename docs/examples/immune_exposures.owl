@@ -1,0 +1,387 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#"
+     xml:base="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDisease -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDisease">
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isDiseaseOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDiseaseStage -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDiseaseStage">
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isDiseaseStageOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasExposureMaterial -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasExposureMaterial">
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isExposureMaterialOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isDiseaseOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isDiseaseOf">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isDiseaseStageOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isDiseaseStageOf">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isExposureMaterialOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#isExposureMaterialOf">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage"/>
+        <rdfs:label>acute/recent onset</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasExposureMaterial"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>administration</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AllergicDisease -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AllergicDisease">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasExposureMaterial"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>occurrence of allergic disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AsymptomaticInfectionOrColonization -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AsymptomaticInfectionOrColonization">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease"/>
+        <rdfs:label>exposure to asymptomatic infection/colonization without evidence for disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AutoImmuneDisease -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AutoImmuneDisease">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure"/>
+        <rdfs:label>occurrence of autoimmune disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Cancer -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Cancer">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure"/>
+        <rdfs:label>occurrence of cancer</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage"/>
+        <rdfs:label>chronic</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1881 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1881">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:label>Hepatitis A</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1882 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1882">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:label>Hepatitis B</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1883 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1883">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:label>Hepatitis C</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease">
+        <rdfs:label>disease reported</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDisease"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDiseaseStage"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage">
+        <rdfs:label>disease stage reported</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial">
+        <rdfs:label>exposure material reported</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess">
+        <rdfs:label>exposure process reported</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureToEndemicOrUbiquitousAgent -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureToEndemicOrUbiquitousAgent">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease"/>
+        <rdfs:label>exposure to endemic/ubiquitous agent without evidence for disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithDocumentation -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithDocumentation">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease"/>
+        <rdfs:label>exposure with documentation without evidence for disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithImmuneReactivity -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithImmuneReactivity">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease"/>
+        <rdfs:label>exposure with existing immune reactivity without evidence for disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasExposureMaterial"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>exposure (without disease)</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_A_Virus -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_A_Virus">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Hepatitis A Virus</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_B_Virus -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_B_Virus">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Hepatitis B Virus</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_C_Virus -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_C_Virus">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Hepatitis C Virus</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure"/>
+        <rdfs:label>infectious challenge</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasExposureMaterial"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>occurrence of infectious disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NoExposure -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NoExposure">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess"/>
+        <rdfs:label>none</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Post -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Post">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage"/>
+        <rdfs:label>post</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#TransplantOrTransfusion -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#TransplantOrTransfusion">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure"/>
+        <rdfs:label>transplant / transfusion</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#UnknownExposure -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#UnknownExposure">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess"/>
+        <rdfs:label>unknown</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Vaccination -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Vaccination">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure"/>
+        <rdfs:label>vaccination</rdfs:label>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+

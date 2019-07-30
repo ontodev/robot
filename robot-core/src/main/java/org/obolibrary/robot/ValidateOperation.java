@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -39,22 +40,146 @@ public class ValidateOperation {
     writer.write(String.format("\"%s\"\n", comment));
   }
 
+  private static IRI getIriFromShortForm(String shortIriStr, HashMap<IRI, String> iriToLabelMap) {
+    for (IRI iri : iriToLabelMap.keySet()) {
+      if (iri.getShortForm().equals(shortIriStr)) {
+        return iri;
+      }
+    }
+    return null;
+  }
+
+  private static void validate_owl(
+      IRI child, String childLabel, IRI parent, String parentLabel, OWLOntology ontology,
+      OWLReasoner reasoner) throws Exception {
+
+    // Get the OWLClass corresponding to the parent:
+    OWLClass parentClass =
+        OntologyHelper.getEntity(ontology, parent).asOWLClass();
+
+    // Get the OWLClass corresponding to the child, and its super classes:
+    OWLClass childClass =
+        OntologyHelper.getEntity(ontology, child).asOWLClass();
+    NodeSet<OWLClass> childAncestors = reasoner.getSuperClasses(childClass, false);
+
+    // Check if the child's ancestors include the parent:
+    if (!childAncestors.containsEntity(parentClass)) {
+      System.out.println(
+          String.format(
+              "'%s' (%s) is not a descendant of '%s' (%s)",
+              childLabel, child.getShortForm(), parentLabel, parent.getShortForm()));
+    }
+  }
+
+  /**
+   * INSERT DESCRIPTION HERE
+   *
+   * @param csvData a list of rows extracted from a CSV file to be validated
+   * @param ontology the ontology to use for validation
+   * @param reasonerFactory the reasoner factory to use for validation
+   * @param writer the Writer instance to write output to
+   */
+  public static void validate_immexp(
+      List<List<String>> csvData,
+      OWLOntology ontology,
+      OWLReasonerFactory reasonerFactory,
+      Writer writer)
+      throws Exception, IOException {
+
+    // Extract the header row from the CSV data and map the column names to their respective
+    // ordering (i.e. their position in the row).
+    // TODO: These strings should be defined in the template file instead of here:
+    List<String> header = csvData.remove(0);
+    HashMap<String, Integer> headerToIndexMap = new HashMap();
+    for (String colName : new String [] {"Exposure Process Reported", "Exposure Material Reported",
+                                         "Exposure Material ID", "Disease Reported",
+                                         "Disease Ontology ID", "Disease Stage Reported"}) {
+      // Make sure all of the column names were actually found in the CSV's header:
+      if (header.indexOf(colName) == -1) {
+        throw new Exception(String.format("FATAL: column '%s' is missing", colName));
+      }
+      headerToIndexMap.put(colName, header.indexOf(colName));
+    }
+
+    // Extract from the ontology a map from (lowercase) rdfs:label strings to IRIs:
+    Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology, true);
+    // Generate the reverse map: -- MAYBE WE DON'T NEED THIS:
+    HashMap<IRI, String> iriToLabelMap = new HashMap();
+    for (Map.Entry<String, IRI> entry : labelToIriMap.entrySet()) {
+      iriToLabelMap.put(entry.getValue(), entry.getKey());
+    }
+    // Create a new reasoner, from the reasoner factory, based on the ontology data:
+    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+
+    // Validate the data rows:
+    for (List<String> row : csvData) {
+      for (String colName : new String [] {"Exposure Process Reported",
+                                           "Exposure Material Reported",
+                                           "Disease Reported",
+                                           "Disease Stage Reported"}) {
+        int colIndex = headerToIndexMap.get(colName);
+        String childLabel = row.get(colIndex);
+        IRI child = labelToIriMap.get(childLabel.toLowerCase());
+        if (child == null) {
+          System.out.println(String.format("Child '%s' (%s) is not in label->iri map",
+                                           childLabel, child));
+          continue;
+        }
+        // TODO: The template should define, for each column heading, the associated parent. In this
+        // case the parent just happens to identical to the column heading, but not always.
+        String parentLabel = colName;
+        IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
+        if (parent == null) {
+          System.out.println(String.format("Parent '%s' (%s) is not in label->iri map",
+                                           parentLabel, parent));
+          continue;
+        }
+        validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
+      }
+
+      for (String colName : new String [] {"Disease Ontology ID"}) {
+        int colIndex = headerToIndexMap.get(colName);
+        String childIriShortForm = row.get(colIndex);
+        IRI child = getIriFromShortForm(childIriShortForm, iriToLabelMap);
+        if (child == null) {
+          System.out.println(
+              String.format("Could not determine child IRI from short form: '%s'", childIriShortForm));
+          continue;
+        }
+        String childLabel = iriToLabelMap.get(child);
+        if (childLabel == null) {
+          System.out.println(
+              String.format("Could not determine label for child '%s' (not in map)",
+                            childIriShortForm));
+          continue;
+        }
+        // TODO: The template should define, for each column heading, the associated parent.
+        String parentLabel = "Disease Reported";
+        IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
+        if (parent == null) {
+          System.out.println(String.format("Parent '%s' (%s) is not in iri->label map",
+                                           parentLabel, parent));
+          continue;
+        }
+        validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
+      }
+
+      // validate_ncbi("Exposure Material ID", diseaseOnologyId, ncbiTaxon);
+    }
+  }
+
   /**
    * Generates a validation report for the given CSV data, writing output to the given writer.
    *
    * @param csvData a list of rows extracted from a CSV file to be validated
    * @param ontology the ontology to use for validation
    * @param reasonerFactory the reasoner factory to use for validation
-   * @param childCol the column of the CSV file containing child information
-   * @param parentCol the column of the CSV file containing parent information
    * @param writer the Writer instance to write output to
    */
-  public static void validate(
+  public static void validate_pc(
       List<List<String>> csvData,
       OWLOntology ontology,
       OWLReasonerFactory reasonerFactory,
-      String childCol,
-      String parentCol,
       Writer writer)
       throws Exception, IOException {
 
@@ -64,6 +189,8 @@ public class ValidateOperation {
     // Extract the header row from the CSV data:
     List<String> header = csvData.remove(0);
     // Get the index numbers for the parent and child columns:
+    String childCol = "ID";
+    String parentCol = "Parent IRI";
     int parentColIndex = header.indexOf(parentCol);
     int childColIndex = header.indexOf(childCol);
     if ((parentColIndex == -1) || (childColIndex == -1)) {
