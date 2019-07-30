@@ -1,5 +1,18 @@
 # Template
 
+## Contents
+
+1. [Overview](/template#overview)
+2. [Template Strings](/template#template-strings)
+    1. [Generic Template Strings](/template#generic-template-strings)
+    2. [Class Template Strings](/template#class-template-strings)
+    3. [Property Template Strings](/template#property-template-strings)
+    4. [Individual Template Strings](/template#individual-template-strings)
+3. [Merging (`--merge-before`, `--merge-after`)](/template#merging)
+4. [Examples](/template#examples)
+
+## Overview
+
 ROBOT can convert tables to OWL format using templates. See [`template.csv`](/examples/template.csv) for an example. The approach extends the QTT method described in [Overcoming the ontology enrichment bottleneck with Quick Term Templates](http://dx.doi.org/10.3233/AO-2011-0086).
 
 ROBOT can read comma-separated values (`.csv`) or tab-separated values (`.tsv` or `.tab`):

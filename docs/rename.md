@@ -1,5 +1,12 @@
 # Rename
 
+## Contents
+
+1. [Overview](/rename#overview)
+2. [Mapping Files (`--mappings`)](/rename#mapping-files)
+
+## Overview
+
 The `rename` command allows you to rename entity IRIs in an ontology in two ways:
 
 #### Full
@@ -24,7 +31,7 @@ Renames the base IRIs of all matching entites (e.g. change the prefix `http://pu
 
 More information on the `--add-prefix` option can be found in [Global Options](/global#prefixes).
 
-### Mappings Files
+## Mappings Files
 
 The mappings for renaming should be specified with the `--mappings` (for full renames) or `--prefix-mappings` (for renaming prefixes) option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with. 
 

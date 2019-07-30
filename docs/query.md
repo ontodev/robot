@@ -1,5 +1,14 @@
 # Query
 
+## Contents
+
+1. [Overview](/query#overview)
+2. [Handling Imports (`--use-graphs`)](/query#handling-imports)
+3. [SPARQL UPDATE (`--update`)](/query#sparql-update)
+4. [Executing on Disk (`--tdb`)](/query#executing-on-disk)
+
+## Overview
+
 ROBOT can execute <a href="https://www.w3.org/TR/rdf-sparql-query/" target="_blank">SPARQL</a>
 queries against an ontology. The [verify](/verify) command is similar, but is used to test that an ontology conforms to the specified rules.
 
@@ -28,7 +37,7 @@ Instead of specifying one or more pairs (query file, output file), you can speci
       --queries cell_part_ask.sparql \
       --output-dir results/
 
-## Imports
+## Handling Imports
 
 By default, `query` ignores import statements. To include all imports as named graphs, add `--use-graphs true`. 
 
@@ -40,9 +49,9 @@ The example above also uses the [global](/global)  `--catalog` option to specify
 
 The names of the graphs correspond to the ontology IRIs of the imports. If the import does not have an ontology IRI, one will be automatically generated. Running `query` with the `-vv` flag will print the names of all graphs as they are added.
 
-## Update
+## SPARQL UPDATE
 
-The `query` command also supports [SPARQL Update](https://www.w3.org/TR/sparql11-update/) to insert and delete triples.
+The `query` command also supports [SPARQL UPDATE](https://www.w3.org/TR/sparql11-update/) to insert and delete triples.
 
     robot query --input nucleus.owl \
       --update update.ru \

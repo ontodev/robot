@@ -1,5 +1,15 @@
 # Report
 
+## Contents
+
+1. [Overview](/report#overview)
+2. [Labels (`--labels`)](/report#labels)
+3. [Failing (`--fail-on`)](/report#failing)
+4. [Queries](/report#queries)
+5. [Profiles (`--profile`)](/report#profiles)
+
+## Overview
+
 The `report` command runs a series of quality control SPARQL queries over the input ontology and generates a TSV or YAML report file based on the results. Each query has a logging level to define the severity of the issue: ERROR, WARN, or INFO.
 * `ERROR`: Must be fixed before releasing the ontology. These issues will cause problems for users, such as classes with multiple labels.
 * `WARN`: Should be fixed as soon as possible. These will not cause problems for *all* users, but may not be what they expect. For example, a class that is inferred to be equivalent to another named class.
