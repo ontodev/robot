@@ -39,7 +39,7 @@ public class ValidateOperationTest extends CoreTest {
 
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
     StringWriter writer = new StringWriter();
-    ValidateOperation.validate(csvData, ontology, reasonerFactory, "ID", "Parent IRI", "true", writer);
+    ValidateOperation.validate_pc(csvData, ontology, reasonerFactory, writer);
 
     String expectedPath =
         this.getClass().getResource("/nucleus-ancestor-validate-result.csv").getPath();
@@ -47,5 +47,7 @@ public class ValidateOperationTest extends CoreTest {
     String expectedResult =
         FileUtils.readFileToString(new File(expectedPath), StandardCharsets.UTF_8);
     assertEquals(writer.toString(), expectedResult);
+
+    // TODO: Add another TC for validate_immexp
   }
 }

@@ -13,11 +13,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
@@ -443,6 +445,80 @@ public class IOHelper {
       throw new IOException(e);
     }
     return ontology;
+  }
+
+  /** INSERT DOCUMENTATION HERE */
+  public HashMap<String, String> loadNCBITaxonomyNodes(String path) throws IOException {
+    FileInputStream inputStream = null;
+    Scanner sc = null;
+    HashMap<String, String> nodes = new HashMap();
+    try {
+      inputStream = new FileInputStream(path);
+      sc = new Scanner(inputStream);
+      while (sc.hasNextLine()) {
+        String line = StringUtils.strip(sc.nextLine(), "|\n\t ");
+        String[] tokens = line.split("\\s*\\|\\s*", 3);
+        String taxid = tokens[0], parent = tokens[1];
+        nodes.put(taxid, parent);
+      }
+      if (sc.ioException() != null) {
+        throw sc.ioException();
+      }
+    } finally {
+      if (inputStream != null) {
+        inputStream.close();
+      }
+      if (sc != null) {
+        sc.close();
+      }
+    }
+
+    return nodes;
+  }
+
+  /** INSERT DOCUMENTATION HERE */
+  public HashMap<String, HashMap<String, String>> loadNCBITaxonomyNames(String path)
+      throws IOException {
+    FileInputStream inputStream = null;
+    Scanner sc = null;
+    HashMap<String, HashMap<String, String>> names = new HashMap();
+    HashMap<String, String> taxidNames = new HashMap();
+    HashMap<String, String> scientificNames = new HashMap();
+    HashMap<String, String> synonyms = new HashMap();
+    HashMap<String, String> lowercaseNames = new HashMap();
+    try {
+      inputStream = new FileInputStream(path);
+      sc = new Scanner(inputStream);
+      while (sc.hasNextLine()) {
+        String line = StringUtils.strip(sc.nextLine(), "|\n\t ");
+        String[] tokens = line.split("\\s*\\|\\s*", 4);
+        String taxid = tokens[0], name = tokens[1], unique = tokens[2], kind = tokens[3];
+        if (kind.equals("scientific name")) {
+          taxidNames.put(taxid, name);
+          scientificNames.put(name, taxid);
+        } else {
+          synonyms.put(name, taxid);
+        }
+        lowercaseNames.put(name.toLowerCase(), taxid);
+      }
+      if (sc.ioException() != null) {
+        throw sc.ioException();
+      }
+    } finally {
+      if (inputStream != null) {
+        inputStream.close();
+      }
+      if (sc != null) {
+        sc.close();
+      }
+    }
+
+    names.put("taxidNames", taxidNames);
+    names.put("scientificNames", scientificNames);
+    names.put("synonyms", synonyms);
+    names.put("lowercaseNames", lowercaseNames);
+
+    return names;
   }
 
   /**

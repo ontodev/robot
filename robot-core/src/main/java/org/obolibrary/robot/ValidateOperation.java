@@ -2,9 +2,11 @@ package org.obolibrary.robot;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -25,22 +27,27 @@ public class ValidateOperation {
 
   // ***************************************************************************
   // TODO: These strings should be defined in the template file instead of here:
-  private static final String [] allColumns = new String [] {
-    "Exposure Process Reported",
-    "Exposure Material Reported",
-    "Exposure Material ID",
-    "Disease Reported",
-    "Disease Ontology ID",
-    "Disease Stage Reported"};
+  private static final String[] allColumns =
+      new String[] {
+        "Exposure Process Reported",
+        "Exposure Material Reported",
+        "Exposure Material ID",
+        "Disease Reported",
+        "Disease Ontology ID",
+        "Disease Stage Reported"
+      };
 
-  private static final String [] columnsWithLabels = new String [] {
-    "Exposure Process Reported",
-    "Exposure Material Reported",
-    "Disease Reported",
-    "Disease Stage Reported"};
+  private static final String[] columnsWithLabels =
+      new String[] {
+        "Exposure Process Reported",
+        "Exposure Material Reported",
+        "Disease Reported",
+        "Disease Stage Reported"
+      };
 
-  private static final String [] columnsWithIris = new String [] {
-    "Disease Ontology ID"};
+  private static final String[] columnsWithIris = new String[] {"Disease Ontology ID"};
+
+  private static final String[] columnsWithNcbiLabels = new String[] {"Exposure Material ID"};
 
   private static final HashMap<String, String> columnParentsMap = get_column_parents_map();
 
@@ -82,16 +89,19 @@ public class ValidateOperation {
   }
 
   private static void validate_owl(
-      IRI child, String childLabel, IRI parent, String parentLabel, OWLOntology ontology,
-      OWLReasoner reasoner) throws Exception {
+      IRI child,
+      String childLabel,
+      IRI parent,
+      String parentLabel,
+      OWLOntology ontology,
+      OWLReasoner reasoner)
+      throws Exception {
 
     // Get the OWLClass corresponding to the parent:
-    OWLClass parentClass =
-        OntologyHelper.getEntity(ontology, parent).asOWLClass();
+    OWLClass parentClass = OntologyHelper.getEntity(ontology, parent).asOWLClass();
 
     // Get the OWLClass corresponding to the child, and its super classes:
-    OWLClass childClass =
-        OntologyHelper.getEntity(ontology, child).asOWLClass();
+    OWLClass childClass = OntologyHelper.getEntity(ontology, child).asOWLClass();
     NodeSet<OWLClass> childAncestors = reasoner.getSuperClasses(childClass, false);
 
     // Check if the child's ancestors include the parent:
@@ -100,6 +110,81 @@ public class ValidateOperation {
           String.format(
               "'%s' (%s) is not a descendant of '%s' (%s)",
               childLabel, child.getShortForm(), parentLabel, parent.getShortForm()));
+    }
+  }
+
+  private static boolean is_virus(String taxid, Map<String, String> parents) {
+    return (taxid != null && !taxid.isEmpty())
+        && !taxid.equals("1")
+        && (taxid.equals("10239") || is_virus(parents.get(taxid), parents));
+  }
+
+  private static void validate_ncbi_label(
+      String name,
+      Map<String, String> parents,
+      Map<String, String> taxidNames,
+      Map<String, String> scientificNames,
+      Map<String, String> synonyms,
+      Map<String, String> lowercaseNames)
+      throws Exception {
+
+    String taxid = null;
+    String scientificName = null;
+    boolean automaticReplacement = false;
+    String iname = "";
+    if (name != null && name.isEmpty()) {
+      iname = name.trim().toLowerCase().replace("  ", " ");
+    }
+
+    if (name != null && name.isEmpty()) {
+      if (scientificNames.containsKey(name)) {
+        // 1. 'name' matches the scientific name of a virus:
+        taxid = scientificNames.get(name);
+        scientificName = name;
+      } else if (lowercaseNames.containsKey(iname)) {
+        // 2. 'name' is a close case-insensitive match for a virus:
+        taxid = lowercaseNames.get(iname);
+        scientificName = taxidNames.get(taxid);
+        automaticReplacement = true;
+      } else if (synonyms.containsKey(name)) {
+        // 3. 'name' is the exact synonym of some taxon
+        taxid = synonyms.get(name);
+        scientificName = taxidNames.get(taxid);
+      } else {
+        ArrayList<String> matches = new ArrayList<String>();
+        for (String key : scientificNames.keySet()) {
+          if (key.indexOf(name) != -1) {
+            matches.add(key);
+            if (matches.size() > 1) {
+              break;
+            }
+          }
+        }
+        if (matches.size() == 1) {
+          scientificName = matches.get(0);
+          taxid = scientificNames.get(scientificName);
+        }
+      }
+    }
+
+    if (is_virus(taxid, parents)) {
+      if (automaticReplacement) {
+        System.out.println(
+            String.format("Automatically replaced '%s' with '%s'.", name, scientificName));
+      } else {
+        System.out.println(String.format("Suggestion for %s: %s", name, scientificName));
+      }
+    } else if (taxid != null && !taxid.isEmpty()) {
+      System.out.println(name + " is not the name of a virus");
+    } else {
+      System.out.println(name + " was not found in NCBI Taxonomy");
+    }
+  }
+
+  private static void validate_ncbi_id(String taxid, Map<String, String> taxidNames)
+      throws Exception {
+    if (!taxidNames.containsKey(taxid)) {
+      System.out.println("Did not find " + taxid + " in NCBI db");
     }
   }
 
@@ -114,6 +199,8 @@ public class ValidateOperation {
   public static void validate_immexp(
       List<List<String>> csvData,
       OWLOntology ontology,
+      Map<String, String> nodes,
+      Map<String, HashMap<String, String>> names,
       OWLReasonerFactory reasonerFactory,
       Writer writer)
       throws Exception, IOException {
@@ -137,6 +224,7 @@ public class ValidateOperation {
     for (Map.Entry<String, IRI> entry : labelToIriMap.entrySet()) {
       iriToLabelMap.put(entry.getValue(), entry.getKey());
     }
+
     // Create a new reasoner, from the reasoner factory, based on the ontology data:
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
 
@@ -147,8 +235,8 @@ public class ValidateOperation {
         String childLabel = row.get(colIndex);
         IRI child = labelToIriMap.get(childLabel.toLowerCase());
         if (child == null) {
-          System.out.println(String.format("Child '%s' (%s) is not in label->iri map",
-                                           childLabel, child));
+          System.out.println(
+              String.format("Child '%s' (%s) is not in label->iri map", childLabel, child));
           continue;
         }
         // TODO: The template should define, for each column heading, the associated parent. In this
@@ -156,8 +244,8 @@ public class ValidateOperation {
         String parentLabel = colName;
         IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
         if (parent == null) {
-          System.out.println(String.format("Parent '%s' (%s) is not in label->iri map",
-                                           parentLabel, parent));
+          System.out.println(
+              String.format("Parent '%s' (%s) is not in label->iri map", parentLabel, parent));
           continue;
         }
         validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
@@ -169,27 +257,32 @@ public class ValidateOperation {
         IRI child = getIriFromShortForm(childIriShortForm, iriToLabelMap);
         if (child == null) {
           System.out.println(
-              String.format("Could not determine child IRI from short form: '%s'", childIriShortForm));
+              String.format(
+                  "Could not determine child IRI from short form: '%s'", childIriShortForm));
           continue;
         }
         String childLabel = iriToLabelMap.get(child);
         if (childLabel == null) {
           System.out.println(
-              String.format("Could not determine label for child '%s' (not in map)",
-                            childIriShortForm));
+              String.format(
+                  "Could not determine label for child '%s' (not in map)", childIriShortForm));
           continue;
         }
         String parentLabel = columnParentsMap.get("Disease Ontology ID");
         IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
         if (parent == null) {
-          System.out.println(String.format("Parent '%s' (%s) is not in iri->label map",
-                                           parentLabel, parent));
+          System.out.println(
+              String.format("Parent '%s' (%s) is not in iri->label map", parentLabel, parent));
           continue;
         }
         validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
       }
 
-      // validate_ncbi("Exposure Material ID", diseaseOnologyId, ncbiTaxon);
+      for (String colName : columnsWithNcbiLabels) {
+        int colIndex = headerToIndexMap.get(colName);
+        String ncbiTaxonId = StringUtils.replaceOnce(row.get(colIndex), "NCBI:txid", "");
+        validate_ncbi_id(ncbiTaxonId, names.get("taxidNames"));
+      }
     }
   }
 
