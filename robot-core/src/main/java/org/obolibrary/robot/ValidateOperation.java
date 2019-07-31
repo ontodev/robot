@@ -23,6 +23,38 @@ public class ValidateOperation {
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
+  // ***************************************************************************
+  // TODO: These strings should be defined in the template file instead of here:
+  private static final String [] allColumns = new String [] {
+    "Exposure Process Reported",
+    "Exposure Material Reported",
+    "Exposure Material ID",
+    "Disease Reported",
+    "Disease Ontology ID",
+    "Disease Stage Reported"};
+
+  private static final String [] columnsWithLabels = new String [] {
+    "Exposure Process Reported",
+    "Exposure Material Reported",
+    "Disease Reported",
+    "Disease Stage Reported"};
+
+  private static final String [] columnsWithIris = new String [] {
+    "Disease Ontology ID"};
+
+  private static final HashMap<String, String> columnParentsMap = get_column_parents_map();
+
+  private static HashMap<String, String> get_column_parents_map() {
+    HashMap<String, String> returnMap = new HashMap<>();
+    returnMap.put("Exposure Process Reported", "Exposure Process Reported");
+    returnMap.put("Exposure Material Reported", "Exposure Material Reported");
+    returnMap.put("Disease Reported", "Disease Reported");
+    returnMap.put("Disease Ontology ID", "Disease Reported");
+    returnMap.put("Disease Stage Reported", "Disease Stage Reported");
+    return returnMap;
+  }
+  // ***************************************************************************
+
   /**
    * Writes a row of data to the given writer, with a comment appended.
    *
@@ -88,12 +120,9 @@ public class ValidateOperation {
 
     // Extract the header row from the CSV data and map the column names to their respective
     // ordering (i.e. their position in the row).
-    // TODO: These strings should be defined in the template file instead of here:
     List<String> header = csvData.remove(0);
     HashMap<String, Integer> headerToIndexMap = new HashMap();
-    for (String colName : new String [] {"Exposure Process Reported", "Exposure Material Reported",
-                                         "Exposure Material ID", "Disease Reported",
-                                         "Disease Ontology ID", "Disease Stage Reported"}) {
+    for (String colName : allColumns) {
       // Make sure all of the column names were actually found in the CSV's header:
       if (header.indexOf(colName) == -1) {
         throw new Exception(String.format("FATAL: column '%s' is missing", colName));
@@ -103,7 +132,7 @@ public class ValidateOperation {
 
     // Extract from the ontology a map from (lowercase) rdfs:label strings to IRIs:
     Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology, true);
-    // Generate the reverse map: -- MAYBE WE DON'T NEED THIS:
+    // Generate the reverse map:
     HashMap<IRI, String> iriToLabelMap = new HashMap();
     for (Map.Entry<String, IRI> entry : labelToIriMap.entrySet()) {
       iriToLabelMap.put(entry.getValue(), entry.getKey());
@@ -113,10 +142,7 @@ public class ValidateOperation {
 
     // Validate the data rows:
     for (List<String> row : csvData) {
-      for (String colName : new String [] {"Exposure Process Reported",
-                                           "Exposure Material Reported",
-                                           "Disease Reported",
-                                           "Disease Stage Reported"}) {
+      for (String colName : columnsWithLabels) {
         int colIndex = headerToIndexMap.get(colName);
         String childLabel = row.get(colIndex);
         IRI child = labelToIriMap.get(childLabel.toLowerCase());
@@ -137,7 +163,7 @@ public class ValidateOperation {
         validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
       }
 
-      for (String colName : new String [] {"Disease Ontology ID"}) {
+      for (String colName : columnsWithIris) {
         int colIndex = headerToIndexMap.get(colName);
         String childIriShortForm = row.get(colIndex);
         IRI child = getIriFromShortForm(childIriShortForm, iriToLabelMap);
@@ -153,8 +179,7 @@ public class ValidateOperation {
                             childIriShortForm));
           continue;
         }
-        // TODO: The template should define, for each column heading, the associated parent.
-        String parentLabel = "Disease Reported";
+        String parentLabel = columnParentsMap.get("Disease Ontology ID");
         IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
         if (parent == null) {
           System.out.println(String.format("Parent '%s' (%s) is not in iri->label map",
