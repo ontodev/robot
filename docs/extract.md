@@ -1,5 +1,16 @@
 # Extract
 
+## Contents
+
+1. [Overview](#overview)
+2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
+3. [Extraction method: MIREOT](#mireot)
+4. [Handling Imports (`--imports`)](#handling-imports)
+5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
+6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
+
+## Overview
+
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
 
     robot extract --method STAR \
@@ -15,26 +26,6 @@ The `--method` options fall into two groups: Syntactic Locality Module Extractor
 - TOP: use the SLME to extract a top module
 - BOT: use the SLME to extract a bottom module
 - MIREOT: extract a simple hierarchy of terms
-
-## Imports
-
-By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method:
-
-    robot extract --method BOT \
-      --input imports-nucleus.owl \
-      --term GO:0005739 \
-      --imports exclude \
-      --output mitochondrion.owl
-
-This only includes what is asserted in `imports-nucleus.owl`, which imports `nucleus.owl`. `imports-nucleus.owl` only includes the term 'mitochondrion' (`GO:0005739`) and links it to its parent class, 'intracellular membrane-bounded organelle' (`GO:0043231`). `nucleus.owl` contains the full hierarchy down to 'intracellular membrane-bounded organelle'. The output module, `mitochondrion.owl`, only includes the term 'mitochondrion' and this subClassOf statement.
-
-By contrast, including imports returns the full hierarchy down to 'mitochondrion', which is asserted in `nucleus.owl`:
-
-    robot extract --method BOT \
-      --input imports-nucleus.owl \
-      --term GO:0005739 \
-      --imports include \
-      --output mitochondrion-full.owl
 
 ## Syntactic Locality Module Extractor (SLME)
 
@@ -137,7 +128,27 @@ Would result in:
 
 Any term specified as an input term will not be pruned.
 
-## Ontology Annotations
+## Handling Imports
+
+By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method:
+
+    robot extract --method BOT \
+      --input imports-nucleus.owl \
+      --term GO:0005739 \
+      --imports exclude \
+      --output mitochondrion.owl
+
+This only includes what is asserted in `imports-nucleus.owl`, which imports `nucleus.owl`. `imports-nucleus.owl` only includes the term 'mitochondrion' (`GO:0005739`) and links it to its parent class, 'intracellular membrane-bounded organelle' (`GO:0043231`). `nucleus.owl` contains the full hierarchy down to 'intracellular membrane-bounded organelle'. The output module, `mitochondrion.owl`, only includes the term 'mitochondrion' and this subClassOf statement.
+
+By contrast, including imports returns the full hierarchy down to 'mitochondrion', which is asserted in `nucleus.owl`:
+
+    robot extract --method BOT \
+      --input imports-nucleus.owl \
+      --term GO:0005739 \
+      --imports include \
+      --output mitochondrion-full.owl
+
+## Extracting Ontology Annotations
 
 You can also include ontology annotations from the input ontology with `--copy-ontology-annotations true`. By default, this is false.
 
@@ -147,7 +158,7 @@ You can also include ontology annotations from the input ontology with `--copy-o
       --copy-ontology-annotations true \
       --output results/annotated_module.owl
       
-## Source Annotations
+## Adding Source Annotations
 
 `extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`. If the term already has an annotation using this property, the existing annotation will be copied and no new annotation will be added.
 

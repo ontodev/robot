@@ -14,7 +14,7 @@ Sometimes when working with very large ontologies, the JVM will run out of memor
 
 ---
 
-## Command & Option Errors
+## Command and Option Errors
 
 ### Boolean Value Error
 

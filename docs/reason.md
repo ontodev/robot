@@ -1,5 +1,14 @@
 # Reason
 
+## Contents
+
+1. [Overview](#overview)
+2. [Logical Validation](#logical-validation)
+3. [Equivalent Classes (`--equivalent-classes-allowed`)](#equivalent-class-axioms)
+4. [Generated Axioms(`--axiom-generators`)](#generated-axioms)
+
+## Overview
+
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. Reasoning involves two steps: logical validation (described in detail below) and automatic classification. Automatic classification involves asserting all inferred superclasses.
 
 There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using <a href="https://code.google.com/p/elk-reasoner/" target="_blank">ELK</a>, a very fast reasoner that supports the EL subset of OWL 2.
@@ -114,9 +123,9 @@ You must select between `--create-new-ontology-with-annotations` (`-m`) and `--c
 
 ### Axiom Generator Error
 
-The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](/reason#axiom-generators).
+The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](#axiom-generators).
 
 ### Equivalent Class Axiom Error
 
-ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](/reason#equivalent-class-axioms).
+ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](#equivalent-class-axioms).
 

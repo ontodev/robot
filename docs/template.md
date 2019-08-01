@@ -1,5 +1,18 @@
 # Template
 
+## Contents
+
+1. [Overview](#overview)
+2. [Template Strings](#template-strings)
+    1. [Generic Template Strings](#generic-template-strings)
+    2. [Class Template Strings](#class-template-strings)
+    3. [Property Template Strings](#property-template-strings)
+    4. [Individual Template Strings](#individual-template-strings)
+3. [Merging (`--merge-before`, `--merge-after`)](#merging)
+4. [Examples](#examples)
+
+## Overview
+
 ROBOT can convert tables to OWL format using templates. See [`template.csv`](/examples/template.csv) for an example. The approach extends the QTT method described in [Overcoming the ontology enrichment bottleneck with Quick Term Templates](http://dx.doi.org/10.3233/AO-2011-0086).
 
 ROBOT can read comma-separated values (`.csv`) or tab-separated values (`.tsv` or `.tab`):
@@ -17,7 +30,7 @@ Each template file must be set up in the following format:
 
 ### Template Options
 
-The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its `rdfs:label`s will be used when parsing the template. The `--template` or `-t` option specifies the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See [Merging](/template#merging) for the three different merge options, and details on how they control the output of the command.
+The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its `rdfs:label`s will be used when parsing the template. The `--template` or `-t` option specifies the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See [Merging](#merging) for the three different merge options, and details on how they control the output of the command.
 
 A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms.
 
