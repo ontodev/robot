@@ -2,10 +2,10 @@
 
 ## Contents
 
-1. [Overview](/query#overview)
-2. [Handling Imports (`--use-graphs`)](/query#handling-imports)
-3. [SPARQL UPDATE (`--update`)](/query#sparql-update)
-4. [Executing on Disk (`--tdb`)](/query#executing-on-disk)
+1. [Overview](#overview)
+2. [Handling Imports (`--use-graphs`)](#handling-imports)
+3. [SPARQL UPDATE (`--update`)](#sparql-update)
+4. [Executing on Disk (`--tdb`)](#executing-on-disk)
 
 ## Overview
 
@@ -77,7 +77,7 @@ For very large ontologies, it may be beneficial to load the ontology to a mappin
     robot query --input nucleus.ttl --tdb true \
      --query cell_part.sparql results/cell_part.csv
  
-Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`). Attempting to load an ontology in a different syntax will result in a [Syntax Error](/query#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
+Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`). Attempting to load an ontology in a different syntax will result in a [Syntax Error](#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
 
 Once the query operation is complete, ROBOT will remove the TDB directory. If you are performing many query commands on one ontology, you can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory. This will greatly reduce the execution time of subsequent queries.
 

@@ -2,9 +2,9 @@
 
 ## Contents
 
-1. [Overview](/make#overview)
-2. [Releases](/make#releases)
-3. [Modular Development](/make#modular-development)
+1. [Overview](#overview)
+2. [Releases](#releases)
+3. [Modular Development](#modular-development)
 
 ## Overview
 

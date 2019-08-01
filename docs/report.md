@@ -2,11 +2,11 @@
 
 ## Contents
 
-1. [Overview](/report#overview)
-2. [Labels (`--labels`)](/report#labels)
-3. [Failing (`--fail-on`)](/report#failing)
-4. [Queries](/report#queries)
-5. [Profiles (`--profile`)](/report#profiles)
+1. [Overview](#overview)
+2. [Labels (`--labels`)](#labels)
+3. [Failing (`--fail-on`)](#failing)
+4. [Queries](#queries)
+5. [Profiles (`--profile`)](#profiles)
 
 ## Overview
 

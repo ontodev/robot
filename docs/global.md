@@ -2,11 +2,11 @@
 
 ## Contents
 
-1. [Java Options](/global#java-options)
-2. [Prefixes (`--prefix`, `--add-prefix`)](/global#prefixes)
-3. [XML Catalogs (`--catalog`)](/global#xml-catalogs)
-4. [Logging (`-v`, `-vv`, `-vvv`)](/global#logging)
-5. [XML Entities (`--xml-entities`)](/global#xml-entities)
+1. [Java Options](#java-options)
+2. [Prefixes (`--prefix`, `--add-prefix`)](#prefixes)
+3. [XML Catalogs (`--catalog`)](#xml-catalogs)
+4. [Logging (`-v`, `-vv`, `-vvv`)](#logging)
+5. [XML Entities (`--xml-entities`)](#xml-entities)
 
 ## Java Options
 

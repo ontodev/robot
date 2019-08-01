@@ -2,11 +2,11 @@
 
 ## Contents
 
-1. [Overview](/remove#overview)
-2. [Preserving the Structure (`--preserve-structure`)](/remove#preserving-the-structure)
-2. [Selectors (`--select`)](/remove#selectors)
-3. [Axioms (`--aximos`)](/remove#axioms)
-4. [Examples](/remove#examples)
+1. [Overview](#overview)
+2. [Preserving the Structure (`--preserve-structure`)](#preserving-the-structure)
+2. [Selectors (`--select`)](#selectors)
+3. [Axioms (`--aximos`)](#axioms)
+4. [Examples](#examples)
 
 ## Overview
 

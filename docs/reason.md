@@ -2,10 +2,10 @@
 
 ## Contents
 
-1. [Overview](/reason#overview)
-2. [Logical Validation](/reason#logical-validation)
-3. [Equivalent Classes (`--equivalent-classes-allowed`)](/reason#equivalent-class-axioms)
-4. [Generated Axioms(`--axiom-generators`)](/reason#generated-axioms)
+1. [Overview](#overview)
+2. [Logical Validation](#logical-validation)
+3. [Equivalent Classes (`--equivalent-classes-allowed`)](#equivalent-class-axioms)
+4. [Generated Axioms(`--axiom-generators`)](#generated-axioms)
 
 ## Overview
 
@@ -123,9 +123,9 @@ You must select between `--create-new-ontology-with-annotations` (`-m`) and `--c
 
 ### Axiom Generator Error
 
-The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](/reason#axiom-generators).
+The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](#axiom-generators).
 
 ### Equivalent Class Axiom Error
 
-ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](/reason#equivalent-class-axioms).
+ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](#equivalent-class-axioms).
 

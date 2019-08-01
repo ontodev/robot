@@ -2,8 +2,8 @@
 
 ## Contents
 
-1. [Overview](/rename#overview)
-2. [Mapping Files (`--mappings`)](/rename#mapping-files)
+1. [Overview](#overview)
+2. [Mapping Files (`--mappings`)](#mapping-files)
 
 ## Overview
 

@@ -2,12 +2,12 @@
 
 ## Contents
 
-1. [Overview](/extract#overview)
-2. [Extraction method: SLME](/extract#syntactic-locality-module-extractor-slme)
-3. [Extraction method: MIREOT](/extract#mireot)
-4. [Handling Imports (`--imports`)](/extract#handling-imports)
-5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](/extract#extracting-ontology-annotations)
-6. [Adding Source Annotations (`--annotate-with-source`)](/extract#adding-source-annotations)
+1. [Overview](#overview)
+2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
+3. [Extraction method: MIREOT](#mireot)
+4. [Handling Imports (`--imports`)](#handling-imports)
+5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
+6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
 
 ## Overview
 
