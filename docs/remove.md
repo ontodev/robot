@@ -108,6 +108,7 @@ The `--axioms` option allows you to specify the type of OWLAxiom to remove. More
 - `tbox` (classes and class axioms)
 - `abox` (instances and instance-level axioms)
 - `rbox` (object properties, aka relations)
+- [OWLAPI AxiomType](http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/model/AxiomType.html) name (e.g., `ObjectPropertyRange`)
 
 ## Examples
 
