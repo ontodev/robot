@@ -626,6 +626,9 @@ public class ReportOperation {
    * @param n number of lines to print
    */
   private static void printNViolations(String[] lines, int n) {
+    if (lines.length <= n) {
+      n = lines.length - 1;
+    }
     System.out.println(String.format("\nFirst %d violations:", n));
     for (int i = 0; i < n; i++) {
       // i + 1 to skip headers
