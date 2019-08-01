@@ -770,10 +770,10 @@ public class RelatedObjectsHelper {
    * @return set of OWLAxioms to maintain hierarchy
    */
   public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
-    List<Map<String, OWLAnnotationProperty>> aPropPairs = new ArrayList<>();
-    List<Map<String, OWLClassExpression>> classPairs = new ArrayList<>();
-    List<Map<String, OWLDataPropertyExpression>> dPropPairs = new ArrayList<>();
-    List<Map<String, OWLObjectPropertyExpression>> oPropPairs = new ArrayList<>();
+    Set<Map<String, OWLAnnotationProperty>> aPropPairs = new HashSet<>();
+    Set<Map<String, OWLClassExpression>> classPairs = new HashSet<>();
+    Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
+    Set<Map<String, OWLObjectPropertyExpression>> oPropPairs = new HashSet<>();
     Set<OWLAxiom> axioms = new HashSet<>();
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
@@ -1342,7 +1342,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLAnnotationProperty>> propPairs,
+      Set<Map<String, OWLAnnotationProperty>> propPairs,
       OWLAnnotationProperty property,
       Collection<OWLAnnotationProperty> superProperties) {
     for (OWLAnnotationProperty sp : superProperties) {
@@ -1351,14 +1351,15 @@ public class RelatedObjectsHelper {
           Map<String, OWLAnnotationProperty> propertyPair = new HashMap<>();
           propertyPair.put(SUB, property);
           propertyPair.put(SUPER, sp);
-          propPairs.add(propertyPair);
-          property = sp;
-          spanGapsHelper(
-              ontology,
-              objects,
-              propPairs,
-              property,
-              EntitySearcher.getSuperProperties(property, ontology));
+          if (propPairs.add(propertyPair)) {
+            property = sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
@@ -1385,7 +1386,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLClassExpression>> classPairs,
+      Set<Map<String, OWLClassExpression>> classPairs,
       OWLClass cls,
       Collection<OWLClassExpression> superClasses) {
     for (OWLClassExpression sc : superClasses) {
@@ -1393,14 +1394,16 @@ public class RelatedObjectsHelper {
         Map<String, OWLClassExpression> classPair = new HashMap<>();
         classPair.put(SUB, cls);
         classPair.put(SUPER, sc);
-        classPairs.add(classPair);
-        if (!sc.isAnonymous()) {
-          spanGapsHelper(
-              ontology,
-              objects,
-              classPairs,
-              sc.asOWLClass(),
-              getSuperClasses(ontology, sc.asOWLClass()));
+        if (classPairs.add(classPair)) {
+          // only recurse if the pair just added was not already present in the set.
+          if (!sc.isAnonymous()) {
+            spanGapsHelper(
+                ontology,
+                objects,
+                classPairs,
+                sc.asOWLClass(),
+                getSuperClasses(ontology, sc.asOWLClass()));
+          }
         }
       } else if (!sc.isAnonymous()) {
         spanGapsHelper(
@@ -1423,7 +1426,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLDataPropertyExpression>> propPairs,
+      Set<Map<String, OWLDataPropertyExpression>> propPairs,
       OWLDataProperty property,
       Collection<OWLDataPropertyExpression> superProperties) {
     for (OWLDataPropertyExpression sp : superProperties) {
@@ -1431,15 +1434,16 @@ public class RelatedObjectsHelper {
         Map<String, OWLDataPropertyExpression> propertyPair = new HashMap<>();
         propertyPair.put(SUB, property);
         propertyPair.put(SUPER, sp);
-        propPairs.add(propertyPair);
-        if (!sp.isAnonymous()) {
-          property = (OWLDataProperty) sp;
-          spanGapsHelper(
-              ontology,
-              objects,
-              propPairs,
-              property,
-              EntitySearcher.getSuperProperties(property, ontology));
+        if (propPairs.add(propertyPair)) {
+          if (!sp.isAnonymous()) {
+            property = (OWLDataProperty) sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
@@ -1466,7 +1470,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLObjectPropertyExpression>> propPairs,
+      Set<Map<String, OWLObjectPropertyExpression>> propPairs,
       OWLObjectProperty property,
       Collection<OWLObjectPropertyExpression> superProperties) {
     for (OWLObjectPropertyExpression sp : superProperties) {
@@ -1474,15 +1478,16 @@ public class RelatedObjectsHelper {
         Map<String, OWLObjectPropertyExpression> propertyPair = new HashMap<>();
         propertyPair.put(SUB, property);
         propertyPair.put(SUPER, sp);
-        propPairs.add(propertyPair);
-        if (!sp.isAnonymous()) {
-          property = (OWLObjectProperty) sp;
-          spanGapsHelper(
-              ontology,
-              objects,
-              propPairs,
-              property,
-              EntitySearcher.getSuperProperties(property, ontology));
+        if (propPairs.add(propertyPair)) {
+          if (!sp.isAnonymous()) {
+            property = (OWLObjectProperty) sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
