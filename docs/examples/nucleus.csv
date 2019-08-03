@@ -1,5 +1,5 @@
-ID,Parent IRI
-,organelle
+ID,Parent
+type: label; sc-label: %2,type: label; sc-label: organelle
 nuclear lumen,intracellular organelles
 nuclear part,membrane-bounded organelle
 nucleus,intracellular membrane-bounded organelle

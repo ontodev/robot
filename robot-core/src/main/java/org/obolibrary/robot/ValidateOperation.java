@@ -25,43 +25,6 @@ public class ValidateOperation {
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
-  // ***************************************************************************
-  // TODO: These strings should be defined in the template file instead of here:
-  private static final String[] allColumns =
-      new String[] {
-        "Exposure Process Reported",
-        "Exposure Material Reported",
-        "Exposure Material ID",
-        "Disease Reported",
-        "Disease Ontology ID",
-        "Disease Stage Reported"
-      };
-
-  private static final String[] columnsWithLabels =
-      new String[] {
-        "Exposure Process Reported",
-        "Exposure Material Reported",
-        "Disease Reported",
-        "Disease Stage Reported"
-      };
-
-  private static final String[] columnsWithIris = new String[] {"Disease Ontology ID"};
-
-  private static final String[] columnsWithNcbiLabels = new String[] {"Exposure Material ID"};
-
-  private static final HashMap<String, String> columnParentsMap = get_column_parents_map();
-
-  private static HashMap<String, String> get_column_parents_map() {
-    HashMap<String, String> returnMap = new HashMap<>();
-    returnMap.put("Exposure Process Reported", "Exposure Process Reported");
-    returnMap.put("Exposure Material Reported", "Exposure Material Reported");
-    returnMap.put("Disease Reported", "Disease Reported");
-    returnMap.put("Disease Ontology ID", "Disease Reported");
-    returnMap.put("Disease Stage Reported", "Disease Stage Reported");
-    return returnMap;
-  }
-  // ***************************************************************************
-
   /**
    * Writes a row of data to the given writer, with a comment appended.
    *
@@ -79,6 +42,42 @@ public class ValidateOperation {
     writer.write(String.format("\"%s\"\n", comment));
   }
 
+  private static HashMap<String, String> parse_rules(String ruleString) {
+    HashMap<String, String> ruleMap = new HashMap();
+    String[] rules = ruleString.split("\\s*;\\s*");
+    for (String rule : rules) {
+      String[] ruleParts = rule.split("\\s*:\\s*", 2);
+      ruleMap.put(ruleParts[0], ruleParts[1]);
+    }
+    return ruleMap;
+  }
+
+  private static ArrayList<String> get_columns_with_given_type(
+      Map<String, Map<String, String>> headerToRuleMap, String colType) {
+
+    ArrayList<String> retList = new ArrayList();
+    for (String header : headerToRuleMap.keySet()) {
+      for (Map.Entry<String, String> entry : headerToRuleMap.get(header).entrySet()) {
+        if (entry.getKey().toLowerCase().equals("type") &&
+            entry.getValue().toLowerCase().equals(colType.toLowerCase())) {
+          retList.add(header);
+        }
+      }
+    }
+    return retList;
+  }
+
+  // REMOVE
+  private static HashMap<String, String> get_column_parents_map() {
+    HashMap<String, String> returnMap = new HashMap<>();
+    returnMap.put("Exposure Process Reported", "Exposure Process Reported");
+    returnMap.put("Exposure Material Reported", "Exposure Material Reported");
+    returnMap.put("Disease Reported", "Disease Reported");
+    returnMap.put("Disease Ontology ID", "Disease Reported");
+    returnMap.put("Disease Stage Reported", "Disease Stage Reported");
+    return returnMap;
+  }
+  
   private static IRI getIriFromShortForm(String shortIriStr, HashMap<IRI, String> iriToLabelMap) {
     for (IRI iri : iriToLabelMap.keySet()) {
       if (iri.getShortForm().equals(shortIriStr)) {
@@ -113,80 +112,6 @@ public class ValidateOperation {
     }
   }
 
-  private static boolean is_virus(String taxid, Map<String, String> parents) {
-    return (taxid != null && !taxid.isEmpty())
-        && !taxid.equals("1")
-        && (taxid.equals("10239") || is_virus(parents.get(taxid), parents));
-  }
-
-  private static void validate_ncbi_label(
-      String name,
-      Map<String, String> parents,
-      Map<String, String> taxidNames,
-      Map<String, String> scientificNames,
-      Map<String, String> synonyms,
-      Map<String, String> lowercaseNames)
-      throws Exception {
-
-    String taxid = null;
-    String scientificName = null;
-    boolean automaticReplacement = false;
-    String iname = "";
-    if (name != null && name.isEmpty()) {
-      iname = name.trim().toLowerCase().replace("  ", " ");
-    }
-
-    if (name != null && name.isEmpty()) {
-      if (scientificNames.containsKey(name)) {
-        // 1. 'name' matches the scientific name of a virus:
-        taxid = scientificNames.get(name);
-        scientificName = name;
-      } else if (lowercaseNames.containsKey(iname)) {
-        // 2. 'name' is a close case-insensitive match for a virus:
-        taxid = lowercaseNames.get(iname);
-        scientificName = taxidNames.get(taxid);
-        automaticReplacement = true;
-      } else if (synonyms.containsKey(name)) {
-        // 3. 'name' is the exact synonym of some taxon
-        taxid = synonyms.get(name);
-        scientificName = taxidNames.get(taxid);
-      } else {
-        ArrayList<String> matches = new ArrayList<String>();
-        for (String key : scientificNames.keySet()) {
-          if (key.indexOf(name) != -1) {
-            matches.add(key);
-            if (matches.size() > 1) {
-              break;
-            }
-          }
-        }
-        if (matches.size() == 1) {
-          scientificName = matches.get(0);
-          taxid = scientificNames.get(scientificName);
-        }
-      }
-    }
-
-    if (is_virus(taxid, parents)) {
-      if (automaticReplacement) {
-        System.out.println(
-            String.format("Automatically replaced '%s' with '%s'.", name, scientificName));
-      } else {
-        System.out.println(String.format("Suggestion for %s: %s", name, scientificName));
-      }
-    } else if (taxid != null && !taxid.isEmpty()) {
-      System.out.println(name + " is not the name of a virus");
-    } else {
-      System.out.println(name + " was not found in NCBI Taxonomy");
-    }
-  }
-
-  private static void validate_ncbi_id(String taxid, Map<String, String> taxidNames)
-      throws Exception {
-    if (!taxidNames.containsKey(taxid)) {
-      System.out.println("Did not find " + taxid + " in NCBI db");
-    }
-  }
 
   /**
    * INSERT DESCRIPTION HERE
@@ -199,23 +124,24 @@ public class ValidateOperation {
   public static void validate_immexp(
       List<List<String>> csvData,
       OWLOntology ontology,
-      Map<String, String> nodes,
-      Map<String, HashMap<String, String>> names,
       OWLReasonerFactory reasonerFactory,
       Writer writer)
       throws Exception, IOException {
 
-    // Extract the header row from the CSV data and map the column names to their respective
-    // ordering (i.e. their position in the row).
+    // Extract the header and rules rows from the CSV data and map the column names to their
+    // associated rules:
     List<String> header = csvData.remove(0);
-    HashMap<String, Integer> headerToIndexMap = new HashMap();
-    for (String colName : allColumns) {
-      // Make sure all of the column names were actually found in the CSV's header:
-      if (header.indexOf(colName) == -1) {
-        throw new Exception(String.format("FATAL: column '%s' is missing", colName));
-      }
-      headerToIndexMap.put(colName, header.indexOf(colName));
+    List<String> rules = csvData.remove(0);
+    HashMap<String, Map<String, String>> headerToRuleMap = new HashMap();
+    for (int i = 0; i < header.size(); i++) {
+      headerToRuleMap.put(header.get(i), parse_rules(rules.get(i)));
     }
+
+    // Based on the rules, determine which columns have labels and which have IRIs:
+    ArrayList<String> columnsWithLabels = get_columns_with_given_type(headerToRuleMap, "label");
+    ArrayList<String> columnsWithIris = get_columns_with_given_type(headerToRuleMap, "short iri");
+    // REMOVE:
+    Map<String, String> columnParentsMap = get_column_parents_map();
 
     // Extract from the ontology a map from (lowercase) rdfs:label strings to IRIs:
     Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology, true);
@@ -231,7 +157,7 @@ public class ValidateOperation {
     // Validate the data rows:
     for (List<String> row : csvData) {
       for (String colName : columnsWithLabels) {
-        int colIndex = headerToIndexMap.get(colName);
+        int colIndex = header.indexOf(colName);
         String childLabel = row.get(colIndex);
         IRI child = labelToIriMap.get(childLabel.toLowerCase());
         if (child == null) {
@@ -252,7 +178,7 @@ public class ValidateOperation {
       }
 
       for (String colName : columnsWithIris) {
-        int colIndex = headerToIndexMap.get(colName);
+        int colIndex = header.indexOf(colName);
         String childIriShortForm = row.get(colIndex);
         IRI child = getIriFromShortForm(childIriShortForm, iriToLabelMap);
         if (child == null) {
@@ -277,15 +203,10 @@ public class ValidateOperation {
         }
         validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
       }
-
-      for (String colName : columnsWithNcbiLabels) {
-        int colIndex = headerToIndexMap.get(colName);
-        String ncbiTaxonId = StringUtils.replaceOnce(row.get(colIndex), "NCBI:txid", "");
-        validate_ncbi_id(ncbiTaxonId, names.get("taxidNames"));
-      }
     }
   }
 
+  /* THIS FUNCTION SHOULD BE COMBINED WITH THE OTHER ONE */
   /**
    * Generates a validation report for the given CSV data, writing output to the given writer.
    *

@@ -1,21 +1,22 @@
 "Exposure Process Reported","Exposure Material Reported","Exposure Material ID","Disease Reported","Disease Ontology ID","Disease Stage Reported"
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"exposure with existing immune reactivity without evidence for disease","Hepatitis C Virus","NCBI:txid399129",,,
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
-"occurrence of infectious disease","Hepatitis C Virus","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"type: label; sc-label: exposure process reported;","type: label; sc-label: exposure material reported;","type: short iri; sc-label: exposure material reported;","type: label; sc-label: disease reported;","type: short iri; sc-label: disease reported;","type: label; sc-label: disease stage reported;"
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"exposure with existing immune reactivity without evidence for disease","Cryphonectriaceae","NCBI:txid399129",,,
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"
+"occurrence of infectious disease","Cryphonectriaceae","NCBI:txid399129","Hepatitis C","DOID_1883","Chronic"

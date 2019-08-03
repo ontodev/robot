@@ -29,13 +29,7 @@ public class ValidateCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("c", "csv", true, "CSV file containing the data to validate");
     o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
-    o.addOption("n", "names", true, "DMP file containing NCBI taxonomy names to validate against");
-    o.addOption("d", "nodes", true, "DMP file containing NCBI taxonomy nodes to validate against");
-    o.addOption(
-        "t",
-        "type",
-        true,
-        "Whether we are validating a parent-child report or an immune " + "exposures report");
+    o.addOption("t", "type", true, "Validate either a pc or an immexp report");
     o.addOption("o", "output", true, "Save results to file (if unspecified, output to STDOUT)");
     options = o;
   }
@@ -64,8 +58,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> --names <DMP> --nodes <DMP> --type <immexp|pc> "
-        + "--output <file>";
+    return "validate --csv <CSV> --owl <OWL> --output <file> --type <pc|immexp>";
   }
 
   /**
@@ -116,11 +109,6 @@ public class ValidateCommand implements Command {
     List<List<String>> csvData = ioHelper.readCSV(csvPath);
     String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
     OWLOntology owlData = ioHelper.loadOntology(owlPath);
-    String ncbiNodesPath = CommandLineHelper.getOptionalValue(line, "nodes");
-    Map<String, String> ncbiNodesData = ioHelper.loadNCBITaxonomyNodes(ncbiNodesPath);
-    String ncbiNamesPath = CommandLineHelper.getOptionalValue(line, "names");
-    Map<String, HashMap<String, String>> ncbiNamesData =
-        ioHelper.loadNCBITaxonomyNames(ncbiNamesPath);
     String type = CommandLineHelper.getOptionalValue(line, "type");
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
@@ -139,7 +127,7 @@ public class ValidateCommand implements Command {
       ValidateOperation.validate_pc(csvData, owlData, reasonerFactory, writer);
     } else if (type.equals("immexp")) {
       ValidateOperation.validate_immexp(
-          csvData, owlData, ncbiNodesData, ncbiNamesData, reasonerFactory, writer);
+          csvData, owlData, reasonerFactory, writer);
     } else {
       throw new Exception("I don't know what you want me to do.");
     }
