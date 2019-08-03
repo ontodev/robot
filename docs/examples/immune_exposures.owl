@@ -164,33 +164,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1881 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1881">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
-        <rdfs:label>Hepatitis A</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1882 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1882">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
-        <rdfs:label>Hepatitis B</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1883 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1883">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
-        <rdfs:label>Hepatitis C</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease">
@@ -286,33 +259,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_A_Virus -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_A_Virus">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>Hepatitis A Virus</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_B_Virus -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_B_Virus">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>Hepatitis B Virus</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_C_Virus -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Hepatitis_C_Virus">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>Hepatitis C Virus</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge">
@@ -333,6 +279,46 @@
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:label>occurrence of infectious disease</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Hepatitis B</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Hepacivirus C</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_208726 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_208726">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Hepatitis A</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_399129 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_399129">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>Cryphonectriaceae</rdfs:label>
     </owl:Class>
     
 
