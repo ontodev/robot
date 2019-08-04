@@ -3,9 +3,7 @@ package org.obolibrary.robot;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -29,7 +27,6 @@ public class ValidateCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("c", "csv", true, "CSV file containing the data to validate");
     o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
-    o.addOption("t", "type", true, "Validate either a pc or an immexp report");
     o.addOption("o", "output", true, "Save results to file (if unspecified, output to STDOUT)");
     options = o;
   }
@@ -58,7 +55,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> --output <file> --type <pc|immexp>";
+    return "validate --csv <CSV> --owl <OWL> --output <file>";
   }
 
   /**
@@ -109,7 +106,6 @@ public class ValidateCommand implements Command {
     List<List<String>> csvData = ioHelper.readCSV(csvPath);
     String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
     OWLOntology owlData = ioHelper.loadOntology(owlPath);
-    String type = CommandLineHelper.getOptionalValue(line, "type");
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
     // Initialise the writer to be the given output path, or STDOUT if that is left unspecified:
@@ -123,14 +119,7 @@ public class ValidateCommand implements Command {
     // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
     // but for now just use ELK.
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    if (type.equals("pc")) {
-      ValidateOperation.validate_pc(csvData, owlData, reasonerFactory, writer);
-    } else if (type.equals("immexp")) {
-      ValidateOperation.validate_immexp(
-          csvData, owlData, reasonerFactory, writer);
-    } else {
-      throw new Exception("I don't know what you want me to do.");
-    }
+    ValidateOperation.validate_immexp(csvData, owlData, reasonerFactory, writer);
 
     writer.flush();
     writer.close();

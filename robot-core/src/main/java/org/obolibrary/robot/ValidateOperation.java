@@ -2,11 +2,9 @@ package org.obolibrary.robot;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -15,6 +13,10 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+// TODO:
+// - ALLOW FOR EXTRA LEADING OR TRAILING WHITESPACE IN CSV CELLS
+// - LABEL MATCHING SHOULD BE CASE INSENSITIVE, MAYBE ALSO FOR IRIS (THOUGH THIS IS HARDER)
 
 /**
  * Validator for Immune Exposures data
@@ -32,6 +34,7 @@ public class ValidateOperation {
    * @param comment the comment to append to the end of the row
    * @param writer the Writer instance to write output to
    */
+  // DO WE STILL NEED THIS?
   private static void write_row(List<String> row, String comment, Writer writer)
       throws Exception, IOException {
 
@@ -52,33 +55,8 @@ public class ValidateOperation {
     return ruleMap;
   }
 
-  private static ArrayList<String> get_columns_with_given_type(
-      Map<String, Map<String, String>> headerToRuleMap, String colType) {
-
-    ArrayList<String> retList = new ArrayList();
-    for (String header : headerToRuleMap.keySet()) {
-      for (Map.Entry<String, String> entry : headerToRuleMap.get(header).entrySet()) {
-        if (entry.getKey().toLowerCase().equals("type") &&
-            entry.getValue().toLowerCase().equals(colType.toLowerCase())) {
-          retList.add(header);
-        }
-      }
-    }
-    return retList;
-  }
-
-  // REMOVE
-  private static HashMap<String, String> get_column_parents_map() {
-    HashMap<String, String> returnMap = new HashMap<>();
-    returnMap.put("Exposure Process Reported", "Exposure Process Reported");
-    returnMap.put("Exposure Material Reported", "Exposure Material Reported");
-    returnMap.put("Disease Reported", "Disease Reported");
-    returnMap.put("Disease Ontology ID", "Disease Reported");
-    returnMap.put("Disease Stage Reported", "Disease Stage Reported");
-    return returnMap;
-  }
-  
-  private static IRI getIriFromShortForm(String shortIriStr, HashMap<IRI, String> iriToLabelMap) {
+  private static IRI get_iri_from_short_form(
+      String shortIriStr, HashMap<IRI, String> iriToLabelMap) {
     for (IRI iri : iriToLabelMap.keySet()) {
       if (iri.getShortForm().equals(shortIriStr)) {
         return iri;
@@ -93,7 +71,8 @@ public class ValidateOperation {
       IRI parent,
       String parentLabel,
       OWLOntology ontology,
-      OWLReasoner reasoner)
+      OWLReasoner reasoner,
+      Writer writer)
       throws Exception {
 
     // Get the OWLClass corresponding to the parent:
@@ -105,13 +84,12 @@ public class ValidateOperation {
 
     // Check if the child's ancestors include the parent:
     if (!childAncestors.containsEntity(parentClass)) {
-      System.out.println(
+      writer.write(
           String.format(
               "'%s' (%s) is not a descendant of '%s' (%s)",
               childLabel, child.getShortForm(), parentLabel, parent.getShortForm()));
     }
   }
-
 
   /**
    * INSERT DESCRIPTION HERE
@@ -128,23 +106,8 @@ public class ValidateOperation {
       Writer writer)
       throws Exception, IOException {
 
-    // Extract the header and rules rows from the CSV data and map the column names to their
-    // associated rules:
-    List<String> header = csvData.remove(0);
-    List<String> rules = csvData.remove(0);
-    HashMap<String, Map<String, String>> headerToRuleMap = new HashMap();
-    for (int i = 0; i < header.size(); i++) {
-      headerToRuleMap.put(header.get(i), parse_rules(rules.get(i)));
-    }
-
-    // Based on the rules, determine which columns have labels and which have IRIs:
-    ArrayList<String> columnsWithLabels = get_columns_with_given_type(headerToRuleMap, "label");
-    ArrayList<String> columnsWithIris = get_columns_with_given_type(headerToRuleMap, "short iri");
-    // REMOVE:
-    Map<String, String> columnParentsMap = get_column_parents_map();
-
-    // Extract from the ontology a map from (lowercase) rdfs:label strings to IRIs:
-    Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology, true);
+    // Extract from the ontology a map from rdfs:label strings to IRIs:
+    Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology);
     // Generate the reverse map:
     HashMap<IRI, String> iriToLabelMap = new HashMap();
     for (Map.Entry<String, IRI> entry : labelToIriMap.entrySet()) {
@@ -154,147 +117,88 @@ public class ValidateOperation {
     // Create a new reasoner, from the reasoner factory, based on the ontology data:
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
 
+    // Extract the header and rules rows from the CSV data and map the column names to their
+    // associated rules:
+    List<String> header = csvData.remove(0);
+    List<String> allRules = csvData.remove(0);
+    HashMap<String, Map<String, String>> headerToRuleMap = new HashMap();
+    for (int i = 0; i < header.size(); i++) {
+      headerToRuleMap.put(header.get(i), parse_rules(allRules.get(i)));
+    }
+
     // Validate the data rows:
     for (List<String> row : csvData) {
-      for (String colName : columnsWithLabels) {
+      for (String colName : header) {
         int colIndex = header.indexOf(colName);
-        String childLabel = row.get(colIndex);
-        IRI child = labelToIriMap.get(childLabel.toLowerCase());
-        if (child == null) {
-          System.out.println(
-              String.format("Child '%s' (%s) is not in label->iri map", childLabel, child));
-          continue;
+        Map<String, String> colRules = headerToRuleMap.get(colName);
+        String childLabel = "";
+        IRI child = null;
+
+        // Get the contents of the current cell (the 'child data')
+        String cellContents = row.get(colIndex).trim();
+        if (cellContents.equals("")) continue;
+
+        if (!colRules.containsKey("type") || colRules.get("type").equals("label")) {
+          childLabel = cellContents;
+          child = labelToIriMap.get(childLabel);
+          if (child == null) {
+            writer.write(
+                String.format("Child '%s' (%s) is not in label->iri map", childLabel, child));
+            continue;
+          }
+        } else if (colRules.get("type").equals("iri")) {
+          String childIriShortForm = cellContents;
+          child = get_iri_from_short_form(childIriShortForm, iriToLabelMap);
+          if (child == null) {
+            writer.write(
+                String.format(
+                    "Could not determine child IRI from short form: '%s'", childIriShortForm));
+            continue;
+          }
+          childLabel = iriToLabelMap.get(child);
+          if (childLabel == null) {
+            writer.write(
+                String.format(
+                    "Could not determine label for child '%s' (not in map)", childIriShortForm));
+            continue;
+          }
         }
-        // TODO: The template should define, for each column heading, the associated parent. In this
-        // case the parent just happens to identical to the column heading, but not always.
-        String parentLabel = colName;
-        IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
+
+        String parentLabel = "";
+        // See if the cell is a subclass of any 'parent':
+        if (colRules.containsKey("sc-iri")) {
+          // To be implemented
+        } else if (colRules.containsKey("sc-label")) {
+          String parentCode = colRules.get("sc-label");
+          try {
+            if (parentCode.equals("@@")) {
+              parentLabel = colName;
+            } else if (parentCode.startsWith("@")) {
+              int parentColIndex = Integer.parseInt(parentCode.substring(1)) - 1;
+              parentLabel = header.get(parentColIndex);
+            } else if (parentCode.startsWith("%")) {
+              int parentColIndex = Integer.parseInt(parentCode.substring(1)) - 1;
+              parentLabel = row.get(parentColIndex);
+            } else {
+              parentLabel = parentCode;
+            }
+          } catch (Exception e) {
+            writer.write("Unable to parse code: " + parentCode);
+            // COULD WE DO SOMETHING BETTER HERE?
+            e.printStackTrace();
+            continue;
+          }
+        }
+
+        IRI parent = labelToIriMap.get(parentLabel);
         if (parent == null) {
-          System.out.println(
+          writer.write(
               String.format("Parent '%s' (%s) is not in label->iri map", parentLabel, parent));
           continue;
         }
-        validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
+
+        validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner, writer);
       }
-
-      for (String colName : columnsWithIris) {
-        int colIndex = header.indexOf(colName);
-        String childIriShortForm = row.get(colIndex);
-        IRI child = getIriFromShortForm(childIriShortForm, iriToLabelMap);
-        if (child == null) {
-          System.out.println(
-              String.format(
-                  "Could not determine child IRI from short form: '%s'", childIriShortForm));
-          continue;
-        }
-        String childLabel = iriToLabelMap.get(child);
-        if (childLabel == null) {
-          System.out.println(
-              String.format(
-                  "Could not determine label for child '%s' (not in map)", childIriShortForm));
-          continue;
-        }
-        String parentLabel = columnParentsMap.get("Disease Ontology ID");
-        IRI parent = labelToIriMap.get(parentLabel.toLowerCase());
-        if (parent == null) {
-          System.out.println(
-              String.format("Parent '%s' (%s) is not in iri->label map", parentLabel, parent));
-          continue;
-        }
-        validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner);
-      }
-    }
-  }
-
-  /* THIS FUNCTION SHOULD BE COMBINED WITH THE OTHER ONE */
-  /**
-   * Generates a validation report for the given CSV data, writing output to the given writer.
-   *
-   * @param csvData a list of rows extracted from a CSV file to be validated
-   * @param ontology the ontology to use for validation
-   * @param reasonerFactory the reasoner factory to use for validation
-   * @param writer the Writer instance to write output to
-   */
-  public static void validate_pc(
-      List<List<String>> csvData,
-      OWLOntology ontology,
-      OWLReasonerFactory reasonerFactory,
-      Writer writer)
-      throws Exception, IOException {
-
-    // Extract from the ontology a map from rdfs:label strings to IRIs:
-    Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology);
-
-    // Extract the header row from the CSV data:
-    List<String> header = csvData.remove(0);
-    // Get the index numbers for the parent and child columns:
-    String childCol = "ID";
-    String parentCol = "Parent IRI";
-    int parentColIndex = header.indexOf(parentCol);
-    int childColIndex = header.indexOf(childCol);
-    if ((parentColIndex == -1) || (childColIndex == -1)) {
-      String err = String.format("\'%s\' or \'%s\' not found in CSV header: ", parentCol, childCol);
-      for (String column : header) err += (column + ", ");
-      throw new Exception(err);
-    }
-
-    // The cell in the parent column of the first 'global' row should indicate the ancestor which
-    // every other row's parent column should be an instance of.
-    List<String> globalRow = csvData.remove(0);
-    String ancestor = globalRow.get(parentColIndex);
-    // Make sure the ancestor is in the ontology:
-    if (!labelToIriMap.containsKey(ancestor)) {
-      throw new Exception(String.format("Global ancestor: '%s' not found in ontology", ancestor));
-    }
-
-    // Now write the header and global rows to the output file:
-    write_row(header, "", writer);
-    // The cell in the child column of the global row should be blank, so add a comment about this
-    // if the child is non-empty, but don't fail since it is not a showstopper:
-    String comment = "";
-    String globalChild = globalRow.get(childColIndex);
-    if (!globalChild.equals("")) {
-      comment =
-          String.format(
-              ": Non-empty child: %s in column %d of global row", globalChild, childColIndex);
-    }
-    write_row(globalRow, comment, writer);
-
-    // Get the OWLClass corresponding to the ancestor:
-    OWLClass ancestorClass =
-        OntologyHelper.getEntity(ontology, labelToIriMap.get(ancestor)).asOWLClass();
-
-    // Create a new reasoner, from the reasoner factory, based on the ontology data:
-    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-    for (List<String> row : csvData) {
-      String parent = row.get(parentColIndex);
-      if (!labelToIriMap.containsKey(parent)) {
-        comment = String.format(": '%s' not found in ontology", parent);
-        // In this case, we can't do any further processing for this row, so write what we have and
-        // continue:
-        write_row(row, comment, writer);
-        continue;
-      }
-
-      // If the child is not in the ontology, comment on it:
-      comment = "";
-      String child = row.get(childColIndex);
-      if (!labelToIriMap.containsKey(child)) {
-        comment += String.format(" : Child: '%s' not found in ontology", child);
-      }
-
-      // Get the OWLClass corresponding to the parent, and its super classes:
-      OWLClass parentClass =
-          OntologyHelper.getEntity(ontology, labelToIriMap.get(parent)).asOWLClass();
-      NodeSet<OWLClass> parentAncestors = reasoner.getSuperClasses(parentClass, false);
-
-      // Check if the parent's ancestors include the global ancestor, and comment on it if it isn't:
-      if (!parentAncestors.containsEntity(ancestorClass)) {
-        comment += String.format(": Parent '%s' is not a descendant of '%s'", parent, ancestor);
-      }
-
-      // Write the row with (possibly empty) comment:
-      write_row(row, comment, writer);
     }
     reasoner.dispose();
   }
