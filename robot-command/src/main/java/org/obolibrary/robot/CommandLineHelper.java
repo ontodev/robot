@@ -311,7 +311,13 @@ public class CommandLineHelper {
       } else if (axiom.equalsIgnoreCase("declaration")) {
         axiomTypes.add(OWLDeclarationAxiom.class);
       } else {
-        throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+        AxiomType<?> at = AxiomType.getAxiomType(axiom);
+        if (at != null) {
+          // Attempt to get the axiom type based on AxiomType names
+          axiomTypes.add(at.getActualClass());
+        } else {
+          throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+        }
       }
     }
     return axiomTypes;
