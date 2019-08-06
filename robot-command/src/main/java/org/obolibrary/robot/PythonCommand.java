@@ -41,7 +41,7 @@ public class PythonCommand implements Command {
    * @return description
    */
   public String getDescription() {
-    return "run ROBOT via python";
+    return "start a server to run ROBOT with Py4J";
   }
 
   /**
