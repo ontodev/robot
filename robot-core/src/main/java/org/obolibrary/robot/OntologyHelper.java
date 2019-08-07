@@ -1110,14 +1110,13 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, return a map from rdfs:label to IRIs. Optionally convert labels to
-   * lowercase. Includes labels asserted in for all imported ontologies. Duplicates overwrite
-   * existing with a warning.
+   * Given an ontology, return a map from rdfs:label to IRIs. Includes labels asserted in for all
+   * imported ontologies. Duplicates overwrite existing with a warning.
    *
    * @param ontology the ontology to use
    * @return a map from label strings to IRIs
    */
-  public static Map<String, IRI> getLabelIRIs(OWLOntology ontology, boolean lowercase) {
+  public static Map<String, IRI> getLabelIRIs(OWLOntology ontology) {
     Map<String, IRI> results = new HashMap<>();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
@@ -1126,9 +1125,6 @@ public class OntologyHelper {
       String value = getValue(axiom);
       if (value == null) {
         continue;
-      }
-      if (lowercase) {
-        value = value.toLowerCase();
       }
       OWLAnnotationSubject subject = axiom.getSubject();
       if (!(subject instanceof IRI)) {
@@ -1143,24 +1139,13 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, return a map from rdfs:label to IRIs. Includes labels asserted in for all
-   * imported ontologies. Duplicates overwrite existing with a warning.
-   *
-   * @param ontology the ontology to use
-   * @return a map from label strings to IRIs
-   */
-  public static Map<String, IRI> getLabelIRIs(OWLOntology ontology) {
-    return getLabelIRIs(ontology, false);
-  }
-
-  /**
    * Given an ontology, return a map from IRIs to rdfs:labels. Includes labels asserted in for all
    * imported ontologies. If there are multiple labels, use the alphanumerically first.
    *
    * @param ontology the ontology to use
    * @return a map from IRIs to label strings
    */
-  public static Map<IRI, String> getLabels(OWLOntology ontology) {
+  public static Map<IRI, String> getIRILabels(OWLOntology ontology) {
     logger.info("Fetching labels for " + ontology.getOntologyID());
     Map<IRI, String> results = new HashMap<>();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();

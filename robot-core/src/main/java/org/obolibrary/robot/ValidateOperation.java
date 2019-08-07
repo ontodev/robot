@@ -14,12 +14,9 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO:
-// - ALLOW FOR EXTRA LEADING OR TRAILING WHITESPACE IN CSV CELLS
-// - LABEL MATCHING SHOULD BE CASE INSENSITIVE, MAYBE ALSO FOR IRIS (THOUGH THIS IS HARDER)
 
 /**
- * Validator for Immune Exposures data
+ * Implements the validate operation for a given CSV file and ontology.
  *
  * @author <a href="mailto:consulting@michaelcuffaro.com">Michael E. Cuffaro</a>
  */
@@ -28,44 +25,88 @@ public class ValidateOperation {
   private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
   /**
-   * Writes a row of data to the given writer, with a comment appended.
-   *
-   * @param row the row of data to write (a list of strings)
-   * @param comment the comment to append to the end of the row
-   * @param writer the Writer instance to write output to
+   * INSERT DOC HERE
    */
-  // DO WE STILL NEED THIS?
-  private static void write_row(List<String> row, String comment, Writer writer)
-      throws Exception, IOException {
-
-    // Comma-delimit every cell:
-    for (String cell : row) {
-      writer.write(String.format("\"%s\",", cell));
+  private static Map<String, IRI> reverse_iri_label_map(Map<IRI, String> iriToLabelMap) {
+    HashMap<String, IRI> labelToIriMap = new HashMap();
+    for (Map.Entry<IRI, String> entry : iriToLabelMap.entrySet()) {
+      String reverseKey = entry.getValue();
+      IRI reverseValue = entry.getKey();
+      if (labelToIriMap.containsKey(reverseKey)) {
+        logger.warn(
+            String.format(
+                "Duplicate rdfs:label '%s'. Overwriting value '%s' with '%s'",
+                reverseKey, labelToIriMap.get(reverseKey), reverseValue));
+      }
+      labelToIriMap.put(reverseKey, reverseValue);
     }
-    writer.write(String.format("\"%s\"\n", comment));
+    return labelToIriMap;
   }
 
-  private static HashMap<String, String> parse_rules(String ruleString) {
+  /**
+   * INSERT DOC HERE
+   */
+  private static Map<String, String> parse_rules(String ruleString) {
     HashMap<String, String> ruleMap = new HashMap();
     String[] rules = ruleString.split("\\s*;\\s*");
     for (String rule : rules) {
       String[] ruleParts = rule.split("\\s*:\\s*", 2);
-      ruleMap.put(ruleParts[0], ruleParts[1]);
+      ruleMap.put(ruleParts[0].trim(), ruleParts[1].trim());
     }
     return ruleMap;
   }
 
-  private static IRI get_iri_from_short_form(
-      String shortIriStr, HashMap<IRI, String> iriToLabelMap) {
+  /**
+   * INSERT DOC HERE
+   */
+  private static String get_label_from_term(
+      String term,
+      Map<String, IRI> labelToIriMap,
+      Map<IRI, String> iriToLabelMap) {
+
+    // If the term is already a recognised label, then just send it back:
+    if (labelToIriMap.containsKey(term)) {
+      return term;
+    }
+
+    // Check to see if the term is a recognised IRI (possibly in short form), and if so return its
+    // corresponding label:
     for (IRI iri : iriToLabelMap.keySet()) {
-      if (iri.getShortForm().equals(shortIriStr)) {
-        return iri;
+      if (iri.toString().equals(term) || iri.getShortForm().equals(term)) {
+        return iriToLabelMap.get(iri);
       }
     }
+
+    // If the label isn't recognised, just return null:
     return null;
   }
 
-  private static void validate_owl(
+  /**
+   * INSERT DOC HERE
+   */
+  private static String find_parent_label_from_rule(
+      String parentRule,
+      List<String> row,
+      Map<String, IRI> labelToIriMap,
+      Map<IRI, String> iriToLabelMap) {
+
+    String parentTerm = null;
+    if (parentRule.startsWith("%")) {
+      int parentColIndex = Integer.parseInt(parentRule.substring(1)) - 1;
+      parentTerm = row.get(parentColIndex).trim();
+    }
+    else {
+      parentTerm = parentRule;
+    }
+
+    return (parentTerm != null && !parentTerm.equals("")) ?
+        get_label_from_term(parentTerm, labelToIriMap, iriToLabelMap) : null;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void validate_ancestry(
       IRI child,
       String childLabel,
       IRI parent,
@@ -84,35 +125,33 @@ public class ValidateOperation {
 
     // Check if the child's ancestors include the parent:
     if (!childAncestors.containsEntity(parentClass)) {
-      writer.write(
+      logger.error(
           String.format(
-              "'%s' (%s) is not a descendant of '%s' (%s)",
+              "'%s' (%s) is not a descendant of '%s' (%s)\n",
               childLabel, child.getShortForm(), parentLabel, parent.getShortForm()));
     }
+    System.out.println(
+        String.format("Relationship between '%s' and '%s' is valid.", childLabel, parentLabel));
   }
 
   /**
-   * INSERT DESCRIPTION HERE
+   * INSERT DOC HERE
    *
    * @param csvData a list of rows extracted from a CSV file to be validated
    * @param ontology the ontology to use for validation
    * @param reasonerFactory the reasoner factory to use for validation
    * @param writer the Writer instance to write output to
    */
-  public static void validate_immexp(
+  public static void validate(
       List<List<String>> csvData,
       OWLOntology ontology,
       OWLReasonerFactory reasonerFactory,
       Writer writer)
       throws Exception, IOException {
 
-    // Extract from the ontology a map from rdfs:label strings to IRIs:
-    Map<String, IRI> labelToIriMap = OntologyHelper.getLabelIRIs(ontology);
-    // Generate the reverse map:
-    HashMap<IRI, String> iriToLabelMap = new HashMap();
-    for (Map.Entry<String, IRI> entry : labelToIriMap.entrySet()) {
-      iriToLabelMap.put(entry.getValue(), entry.getKey());
-    }
+    // Extract from the ontology two maps from rdfs:labels to IRIs and vice versa:
+    Map<IRI, String> iriToLabelMap = OntologyHelper.getIRILabels(ontology);
+    Map<String, IRI> labelToIriMap = reverse_iri_label_map(iriToLabelMap);
 
     // Create a new reasoner, from the reasoner factory, based on the ontology data:
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
@@ -131,73 +170,34 @@ public class ValidateOperation {
       for (String colName : header) {
         int colIndex = header.indexOf(colName);
         Map<String, String> colRules = headerToRuleMap.get(colName);
-        String childLabel = "";
-        IRI child = null;
 
         // Get the contents of the current cell (the 'child data')
-        String cellContents = row.get(colIndex).trim();
-        if (cellContents.equals("")) continue;
+        String childCell = row.get(colIndex).trim();
+        if (childCell.equals("")) continue;
 
-        if (!colRules.containsKey("type") || colRules.get("type").equals("label")) {
-          childLabel = cellContents;
-          child = labelToIriMap.get(childLabel);
-          if (child == null) {
-            writer.write(
-                String.format("Child '%s' (%s) is not in label->iri map", childLabel, child));
-            continue;
-          }
-        } else if (colRules.get("type").equals("iri")) {
-          String childIriShortForm = cellContents;
-          child = get_iri_from_short_form(childIriShortForm, iriToLabelMap);
-          if (child == null) {
-            writer.write(
-                String.format(
-                    "Could not determine child IRI from short form: '%s'", childIriShortForm));
-            continue;
-          }
-          childLabel = iriToLabelMap.get(child);
-          if (childLabel == null) {
-            writer.write(
-                String.format(
-                    "Could not determine label for child '%s' (not in map)", childIriShortForm));
-            continue;
-          }
-        }
-
-        String parentLabel = "";
-        // See if the cell is a subclass of any 'parent':
-        if (colRules.containsKey("sc-iri")) {
-          // To be implemented
-        } else if (colRules.containsKey("sc-label")) {
-          String parentCode = colRules.get("sc-label");
-          try {
-            if (parentCode.equals("@@")) {
-              parentLabel = colName;
-            } else if (parentCode.startsWith("@")) {
-              int parentColIndex = Integer.parseInt(parentCode.substring(1)) - 1;
-              parentLabel = header.get(parentColIndex);
-            } else if (parentCode.startsWith("%")) {
-              int parentColIndex = Integer.parseInt(parentCode.substring(1)) - 1;
-              parentLabel = row.get(parentColIndex);
-            } else {
-              parentLabel = parentCode;
-            }
-          } catch (Exception e) {
-            writer.write("Unable to parse code: " + parentCode);
-            // COULD WE DO SOMETHING BETTER HERE?
-            e.printStackTrace();
-            continue;
-          }
-        }
-
-        IRI parent = labelToIriMap.get(parentLabel);
-        if (parent == null) {
-          writer.write(
-              String.format("Parent '%s' (%s) is not in label->iri map", parentLabel, parent));
+        // Get the rdfs:label and IRI corresponding to the child:
+        String childLabel = get_label_from_term(childCell, labelToIriMap, iriToLabelMap);
+        if (childLabel == null) {
+          logger.error("Could not find '" + childCell + "' in ontology.");
           continue;
         }
+        IRI child = labelToIriMap.get(childLabel);
+        System.out.println("Found child: " + child.toString() + " with label: " + childLabel);
 
-        validate_owl(child, childLabel, parent, parentLabel, ontology, reasoner, writer);
+        // If the child is supposed to be a subclass of something, get the rdfs:label and IRI of
+        // the indicated parent:
+        if (colRules.containsKey("sc")) {
+          String parentLabel = find_parent_label_from_rule(
+              colRules.get("sc"), row, labelToIriMap, iriToLabelMap);
+          if (parentLabel == null) {
+            logger.error("Could not determine parent from rule '" + colRules.get("sc") + "'");
+            continue;
+          }
+          IRI parent = labelToIriMap.get(parentLabel);
+          System.out.println("Found parent: " + parent.toString() + " with label: " + parentLabel);
+          // Validate the parent-child relationship:
+          validate_ancestry(child, childLabel, parent, parentLabel, ontology, reasoner, writer);
+        }
       }
     }
     reasoner.dispose();

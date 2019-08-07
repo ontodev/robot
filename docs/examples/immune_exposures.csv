@@ -1,5 +1,5 @@
 exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported
-type: label; sc-label: @@;,type: label; sc-label: @@;,type: iri; sc-label: @2;,type: label; sc-label: @@;,type: iri; sc-label: @4;,type: label; sc-label: @@;
+sc: exposure process reported;,sc: exposure material reported;,sc: exposure material reported;,sc: disease reported;,sc: disease reported;,sc: disease stage reported;
 exposure with existing immune reactivity without evidence for disease,cryphonectriaceae,NCBITaxon_399129,,,
 exposure with existing immune reactivity without evidence for disease,cryphonectriaceae,NCBITaxon_399129,,,
 exposure with existing immune reactivity without evidence for disease,cryphonectriaceae,NCBITaxon_399129,,,
@@ -10,13 +10,13 @@ exposure with existing immune reactivity without evidence for disease,cryphonect
 exposure with existing immune reactivity without evidence for disease,cryphonectriaceae,NCBITaxon_399129,,,
 exposure with existing immune reactivity without evidence for disease,cryphonectriaceae,NCBITaxon_399129,,,
 exposure with existing immune reactivity without evidence for disease,cryphonectriaceae,NCBITaxon_399129,,,
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
-occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepacivirus c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic
+occurrence of infectious disease,cryphonectriaceae,NCBITaxon_399129,hepatitis c,NCBITaxon_11103,chronic

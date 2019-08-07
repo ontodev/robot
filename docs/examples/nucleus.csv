@@ -1,4 +1,4 @@
 ID,Parent
-type: label; sc-label: %2,type: label; sc-label: organelle
+sc: %2,sc: organelle
 nucleus,intracellular organelle
 intracellular membrane-bounded organelle,membrane-bounded organelle

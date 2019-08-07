@@ -119,7 +119,7 @@ public class ValidateCommand implements Command {
     // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
     // but for now just use ELK.
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    ValidateOperation.validate_immexp(csvData, owlData, reasonerFactory, writer);
+    ValidateOperation.validate(csvData, owlData, reasonerFactory, writer);
 
     writer.flush();
     writer.close();
