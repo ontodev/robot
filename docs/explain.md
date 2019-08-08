@@ -39,9 +39,11 @@ number of explanations to output (the default is `1`).
 
 Explain can be very useful for debugging unsatisfiable classes. This can be done with the following command:
 
-    robot explain --input uvula.ofn --reasoner ELK \
+    robot explain --input uvula-unsat.ofn --reasoner ELK \
       --axiom "'uvular muscle' EquivalentTo owl:Nothing" \
       annotate --annotation rdfs:label "Explanation for unsatisfiability of Uvular Muscle" \
       --ontology-iri "https://github.com/ontodev/robot/examples/uvular_muscle_unsat.ofn" \
-      --output results/uvular_muscle_unsat.ofn
+      --output results/uvular_unsat.ofn
 
+
+This is particularly useful when dealing with ontologies that are too large for an ordinary desktop machine with Protege.
