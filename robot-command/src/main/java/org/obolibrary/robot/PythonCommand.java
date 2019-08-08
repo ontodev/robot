@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
-/**
- * Starts a gateway server for Py4J to execute ROBOT operations via Python.
- */
+/** Starts a gateway server for Py4J to execute ROBOT operations via Python. */
 public class PythonCommand implements Command {
 
   /** Logger. */
@@ -21,7 +19,7 @@ public class PythonCommand implements Command {
   public PythonCommand() {
     // No common options
     // Options o = CommandLineHelper.getCommonOptions();
-    Options o =  new Options();
+    Options o = new Options();
     o.addOption(null, "port", true, "port number for Py4J");
     options = o;
   }
@@ -97,8 +95,6 @@ public class PythonCommand implements Command {
 
     GatewayServer gs = new GatewayServer(port);
     gs.start();
-    System.out.println(
-        String.format("Gateway server started on port %d - stop server with ctrl+c", port));
 
     // Ignore this
     // you can't chain commands with the python command

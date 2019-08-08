@@ -228,41 +228,30 @@ public class ReportOperation {
   public static boolean report(
       OWLOntology ontology, IOHelper ioHelper, String outputPath, Map<String, String> options)
       throws Exception {
+    // Generate the report object with violation details
+    Report report = getReport(ontology, ioHelper, options);
+    return processReport(report, outputPath, options);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, and a map of options, create a Report object and run the report
+   * queries specified in a profile (from options, or default). Return the completed Report object.
+   *
+   * @param ontology OWLOntology to report on
+   * @param ioHelper IOHelper to resolve labels
+   * @param options Map of report options
+   * @return Report object with violation details
+   * @throws Exception on any reporting error
+   */
+  public static Report getReport(
+      OWLOntology ontology, IOHelper ioHelper, Map<String, String> options) throws Exception {
     // Get options specified in map or default options
     if (options == null) {
       options = getDefaultOptions();
     }
-    String failOn = OptionsHelper.getOption(options, "fail-on", "error");
+
     String profilePath = OptionsHelper.getOption(options, "profile", "0");
-    String printString = OptionsHelper.getOption(options, "print").trim();
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
-
-    // Format is determined either by --format or the extension of the output path
-    String format = OptionsHelper.getOption(options, "format");
-    if (format == null && outputPath != null) {
-      format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
-      if (!format.equalsIgnoreCase("csv") && !format.equalsIgnoreCase("yaml")) {
-        // Anything other than .yaml or .csv is written as TSV
-        format = "tsv";
-      }
-    } else if (format == null) {
-      // Null format means no output file, will be printed as TSV
-      format = "tsv";
-    }
-
-    // Parse print N lines option to an int
-    int print;
-    try {
-      print = Integer.parseInt(printString);
-    } catch (NumberFormatException e) {
-      // Not a number
-      throw new IllegalArgumentException(String.format(printNumberError, printString));
-    }
-
-    // Set failOn if null to default
-    if (failOn == null) {
-      failOn = ERROR;
-    }
 
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
@@ -299,6 +288,22 @@ public class ReportOperation {
       report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
     }
 
+    return report;
+  }
+
+  /**
+   * Given a Report, an output path, and a map of report options, process the Report results and
+   * save the report to the output path.
+   *
+   * @param report completed Report object
+   * @param outputPath path to save report to
+   * @param options Map of report options
+   * @return true if report passed, false if it failed
+   * @throws IOException on issue writing to file
+   */
+  public static boolean processReport(Report report, String outputPath, Map<String, String> options)
+      throws IOException {
+    // Print violations to terminal
     Integer violationCount = report.getTotalViolations();
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
@@ -308,6 +313,30 @@ public class ReportOperation {
       System.out.println(INFO + ":       " + report.getTotalViolations(INFO));
     } else {
       System.out.println("No violations found.");
+    }
+
+    // Maybe print some of the lines
+    String printString = OptionsHelper.getOption(options, "print", "0").trim();
+    // Parse print N lines option to an int
+    int print;
+    try {
+      print = Integer.parseInt(printString);
+    } catch (NumberFormatException e) {
+      // Not a number
+      throw new IllegalArgumentException(String.format(printNumberError, printString));
+    }
+
+    // Format is determined either by --format or the extension of the output path
+    String format = OptionsHelper.getOption(options, "format");
+    if (format == null && outputPath != null) {
+      format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
+      if (!format.equalsIgnoreCase("csv") && !format.equalsIgnoreCase("yaml")) {
+        // Anything other than .yaml or .csv is written as TSV
+        format = "tsv";
+      }
+    } else if (format == null) {
+      // Null format means no output file, will be printed as TSV
+      format = "tsv";
     }
 
     String result;
@@ -338,6 +367,12 @@ public class ReportOperation {
       } else {
         System.out.println(result);
       }
+    }
+
+    String failOn = OptionsHelper.getOption(options, "fail-on", "error");
+    // Set failOn if null to default
+    if (failOn == null) {
+      failOn = ERROR;
     }
 
     // If a fail-on is provided, return false if there are violations of the given level

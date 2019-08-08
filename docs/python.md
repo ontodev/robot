@@ -7,6 +7,11 @@ By default, the `python` command starts a Py4J gateway server on port `25333` (t
 robot python --port 8000
 ```
 
+To run this command in the background (Unix, Linux, MacOS), use:
+```
+robot python &
+```
+
 Once the server has started, you can dynamically access ROBOT through the gateway in a Python script. You can access any ROBOT objects through the gateway, for example, the `IOHelper` to load an ontology:
 ```
 from py4j.java_gateway import JavaGateway
@@ -20,4 +25,7 @@ ont = io_helper.loadOntology('my-ontology.owl')
 
 Objects must start with `gateway.jvm` followed by the package name (e.g., `org.obolibrary.robot`).
 
-Once finished, you can stop the gateway server from the command line with Ctrl+C.
+Once finished, you can stop the gateway server from the command line with Ctrl+C. If you are running it in the background, first run the following command to bring it back to the foreground (Unix, Linux, MacOS):
+```
+fg
+```
