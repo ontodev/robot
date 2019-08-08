@@ -15,11 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-/*
-  TODO:
-  - Columns B and C should be asserted to match with one another, and also columns D and E
- */
-
 /**
  * Implements the validate operation for a given CSV file and ontology.
  *
@@ -71,9 +66,10 @@ public class ValidateOperation {
     }
 
     // Validate the data rows:
-    for (List<String> row : csvData) {
-      for (String colName : header) {
-        int colIndex = header.indexOf(colName);
+    for (int rowIndex = 0; rowIndex < csvData.size(); rowIndex++) {
+      List<String> row = csvData.get(rowIndex);
+      for (int colIndex = 0; colIndex < header.size(); colIndex++) {
+        String colName = header.get(colIndex);
         Map<String, String> colRules = headerToRuleMap.get(colName);
 
         // Get the contents of the current cell (the 'child data')
@@ -83,7 +79,8 @@ public class ValidateOperation {
         // Get the rdfs:label and IRI corresponding to the child:
         String childLabel = get_label_from_term(childCell);
         if (childLabel == null) {
-          logger.error("Could not find '" + childCell + "' in ontology.");
+          log_error_with_coords(
+              "Could not find '" + childCell + "' in ontology", rowIndex, colIndex);
           continue;
         }
         IRI child = ValidateOperation.labelToIriMap.get(childLabel);
@@ -91,7 +88,13 @@ public class ValidateOperation {
 
         // Perform further validation depending on any rules that have been defined for this column:
         if (colRules.containsKey("sc")) {
-          validate_ancestry(child, childLabel, colRules.get("sc"), reasoner, row);
+          validate_ancestry(
+              child, childLabel, colRules.get("sc"), reasoner, row, rowIndex, colIndex);
+        }
+
+        if (colRules.containsKey("same-as")) {
+          validate_twin_cells(
+              child, childLabel, colRules.get("same-as"), reasoner, row, rowIndex, colIndex);
         }
       }
     }
@@ -113,6 +116,13 @@ public class ValidateOperation {
     // Extract from the ontology two maps from rdfs:labels to IRIs and vice versa:
     ValidateOperation.iriToLabelMap = OntologyHelper.getIRILabels(ValidateOperation.ontology);
     ValidateOperation.labelToIriMap = reverse_iri_label_map(ValidateOperation.iriToLabelMap);
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void log_error_with_coords(String msg, int rowIndex, int colIndex) {
+    logger.error(String.format("At row: %d, column: %d: %s", rowIndex + 1, colIndex + 1, msg));
   }
 
   /**
@@ -171,17 +181,17 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String find_parent_label_from_rule(String parentRule, List<String> row) {
-    String parentTerm = null;
-    if (parentRule.startsWith("%")) {
-      int parentColIndex = Integer.parseInt(parentRule.substring(1)) - 1;
-      parentTerm = row.get(parentColIndex).trim();
+  private static String construct_label_from_rule(String rule, List<String> row) {
+    String term = null;
+    if (rule.startsWith("%")) {
+      int colIndex = Integer.parseInt(rule.substring(1)) - 1;
+      term = row.get(colIndex).trim();
     }
     else {
-      parentTerm = parentRule;
+      term = rule;
     }
 
-    return (parentTerm != null && !parentTerm.equals("")) ? get_label_from_term(parentTerm) : null;
+    return (term != null && !term.equals("")) ? get_label_from_term(term) : null;
   }
 
   /**
@@ -192,12 +202,15 @@ public class ValidateOperation {
       String childLabel,
       String parentRule,
       OWLReasoner reasoner,
-      List<String> row)
+      List<String> row,
+      int rowIndex,
+      int colIndex)
       throws Exception {
 
-    String parentLabel = find_parent_label_from_rule(parentRule, row);
+    String parentLabel = construct_label_from_rule(parentRule, row);
     if (parentLabel == null) {
-      logger.error("Could not determine parent from rule '" + parentRule + "'");
+      log_error_with_coords(
+          "Could not determine parent from rule '" + parentRule + "'", rowIndex, colIndex);
       return;
     }
 
@@ -213,12 +226,44 @@ public class ValidateOperation {
 
     // Check if the child's ancestors include the parent:
     if (!childAncestors.containsEntity(parentClass)) {
-      logger.error(
+      log_error_with_coords(
           String.format(
               "'%s' (%s) is not a descendant of '%s' (%s)\n",
-              childLabel, child.getShortForm(), parentLabel, parent.getShortForm()));
+              childLabel, child.toString(), parentLabel, parent.toString()),
+          rowIndex, colIndex);
     }
     logger.info(
         String.format("Relationship between '%s' and '%s' is valid.", childLabel, parentLabel));
+  }
+
+  private static void validate_twin_cells(
+      IRI jacob,
+      String jacobLabel,
+      String esauRule,
+      OWLReasoner reasoner,
+      List<String> row,
+      int rowIndex,
+      int colIndex) {
+
+    String esauLabel = construct_label_from_rule(esauRule, row);
+    if (esauLabel == null) {
+      log_error_with_coords(
+          "Could not determine twin cell from rule '" + esauRule + "'", rowIndex, colIndex);
+      return;
+    }
+
+    IRI esau = ValidateOperation.labelToIriMap.get(esauLabel);
+    if (!esau.equals(jacob)) {
+      log_error_with_coords(
+          String.format(
+              "IRI '%s' inferred from rule '%s' does not match this column's contents: '%s'",
+              esau.toString(), esauRule, jacob.toString()),
+          rowIndex, colIndex);
+    }
+
+    logger.info(
+        String.format(
+            "Validated that the content identified by '%s' identifies the same entity as '%s'",
+            esauRule, jacob.toString()));
   }
 }
