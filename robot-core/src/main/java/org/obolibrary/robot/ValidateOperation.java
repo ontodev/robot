@@ -62,7 +62,7 @@ public class ValidateOperation {
     List<String> allRules = csvData.remove(0);
     HashMap<String, Map<String, String>> headerToRuleMap = new HashMap();
     for (int i = 0; i < header.size(); i++) {
-      headerToRuleMap.put(header.get(i), parse_rules(allRules.get(i)));
+      headerToRuleMap.put(header.get(i), parse_rules(i, allRules.get(i)));
     }
 
     // Validate the data rows:
@@ -79,7 +79,7 @@ public class ValidateOperation {
         // Get the rdfs:label and IRI corresponding to the child:
         String childLabel = get_label_from_term(childCell);
         if (childLabel == null) {
-          log_error_with_coords(
+          writeout(
               "Could not find '" + childCell + "' in ontology", rowIndex, colIndex);
           continue;
         }
@@ -121,8 +121,8 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static void log_error_with_coords(String msg, int rowIndex, int colIndex) {
-    logger.error(String.format("At row: %d, column: %d: %s", rowIndex + 1, colIndex + 1, msg));
+  private static void writeout(String msg, int rowIndex, int colIndex) throws IOException {
+    writer.write(String.format("At row: %d, column: %d: %s\n", rowIndex + 1, colIndex + 1, msg));
   }
 
   /**
@@ -147,12 +147,17 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static Map<String, String> parse_rules(String ruleString) {
+  private static Map<String, String> parse_rules(int colIndex, String ruleString) {
     HashMap<String, String> ruleMap = new HashMap();
     String[] rules = ruleString.split("\\s*;\\s*");
     for (String rule : rules) {
       String[] ruleParts = rule.split("\\s*:\\s*", 2);
-      ruleMap.put(ruleParts[0].trim(), ruleParts[1].trim());
+      String ruleKey = ruleParts[0].trim();
+      String ruleVal = ruleParts[1].trim();
+      if (ruleMap.containsKey(ruleKey)) {
+        logger.warn("Duplicate rule: '" + ruleKey + "' in column " + (colIndex + 1));
+      }
+      ruleMap.put(ruleKey, ruleVal);
     }
     return ruleMap;
   }
@@ -185,6 +190,13 @@ public class ValidateOperation {
     String term = null;
     if (rule.startsWith("%")) {
       int colIndex = Integer.parseInt(rule.substring(1)) - 1;
+      if (colIndex >= row.size()) {
+        logger.error(
+            String.format(
+                "Rule: '%s' indicates a column number that is greater than the row length (%d)",
+                rule, row.size()));
+        return null;
+      }
       term = row.get(colIndex).trim();
     }
     else {
@@ -209,7 +221,7 @@ public class ValidateOperation {
 
     String parentLabel = construct_label_from_rule(parentRule, row);
     if (parentLabel == null) {
-      log_error_with_coords(
+      writeout(
           "Could not determine parent from rule '" + parentRule + "'", rowIndex, colIndex);
       return;
     }
@@ -226,10 +238,10 @@ public class ValidateOperation {
 
     // Check if the child's ancestors include the parent:
     if (!childAncestors.containsEntity(parentClass)) {
-      log_error_with_coords(
+      writeout(
           String.format(
-              "'%s' (%s) is not a descendant of '%s' (%s)\n",
-              childLabel, child.toString(), parentLabel, parent.toString()),
+              "%s (%s) is not a descendant of %s (%s)\n",
+              child.toString(), childLabel, parent.toString(), parentLabel),
           rowIndex, colIndex);
     }
     logger.info(
@@ -243,21 +255,21 @@ public class ValidateOperation {
       OWLReasoner reasoner,
       List<String> row,
       int rowIndex,
-      int colIndex) {
+      int colIndex) throws IOException {
 
     String esauLabel = construct_label_from_rule(esauRule, row);
     if (esauLabel == null) {
-      log_error_with_coords(
+      writeout(
           "Could not determine twin cell from rule '" + esauRule + "'", rowIndex, colIndex);
       return;
     }
 
     IRI esau = ValidateOperation.labelToIriMap.get(esauLabel);
     if (!esau.equals(jacob)) {
-      log_error_with_coords(
+      writeout(
           String.format(
-              "IRI '%s' inferred from rule '%s' does not match this column's contents: '%s'",
-              esau.toString(), esauRule, jacob.toString()),
+              "Cell's IRI: %s (%s) does not match IRI: %s (%s) inferred from rule '%s'",
+              jacob.toString(), jacobLabel, esau.toString(), esauLabel, esauRule),
           rowIndex, colIndex);
     }
 
