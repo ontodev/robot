@@ -105,7 +105,7 @@ public class ValidateCommand implements Command {
     String csvPath = CommandLineHelper.getOptionalValue(line, "csv");
     List<List<String>> csvData = ioHelper.readCSV(csvPath);
     String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
-    OWLOntology owlData = ioHelper.loadOntology(owlPath);
+    OWLOntology ontology = ioHelper.loadOntology(owlPath);
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
     // Initialise the writer to be the given output path, or STDOUT if that is left unspecified:
@@ -119,7 +119,9 @@ public class ValidateCommand implements Command {
     // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
     // but for now just use ELK.
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
-    ValidateOperation.validate(csvData, owlData, reasonerFactory, writer);
+
+    // Finally call the validator:
+    ValidateOperation.validate(csvData, ontology, reasonerFactory, writer);
 
     writer.flush();
     writer.close();
