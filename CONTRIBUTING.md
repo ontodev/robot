@@ -2,6 +2,15 @@
 
 ROBOT is fully open to contributions from anyone! To get started, check the [issues](https://github.com/ontodev/robot/issues) and look for `good first issue`.
 
+### Contents
+
+1. [Getting Started](#getting-started)
+2. [Making Changes](#making-changes)
+3. [Writing Code](#writing-code)
+4. [Writing Unit Tests](#writing-unit-tests)
+5. [Writing Integration Tests](#writing-integration-tests)
+6. [Documenting Errors](#documenting-errors)
+
 ### Getting Started
 
 [Fork](https://help.github.com/articles/fork-a-repo/) the ROBOT repo, and then [clone](https://help.github.com/articles/cloning-a-repository/) it to create a local copy for development. If your desired changes aren't already in the tracker, [create a new issue](https://github.com/ontodev/robot/issues/new).
@@ -23,6 +32,55 @@ Before changing anything, make sure the tests pass:
 The source code consists of two main directories: `robot-command` and `robot-core`. The core files contain code for the bulk of the operation, while the command files add command line functionality. When implementing a new feature, make sure the operation has both `*Operation.java` and `*Command.java` files. The operation methods should not be dependent on the command methods.
 
 ROBOT follows the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html), which is auto-enforced by [google java format](https://github.com/google/google-java-format) during builds. Make sure to add doc comments for any new methods - for specifications see [JavaDocs](http://www.oracle.com/technetwork/java/javase/documentation/index-137868.html).
+
+Each new operation must have a corresponding unit test file (see **Writing Unit Tests**). Each new command must have a corresponding markdown documentation file with embedded examples (see [Writing Integration Tests](#writing-integration-tests)).
+
+### Writing Unit Tests
+
+Each operation has a set of unit tests built with [JUnit](https://junit.org/junit5/) that are executed each time the JAR is generated. These are located in [`robot-core/src/main/test/java/org/obolibrary/robot/`](https://github.com/ontodev/robot/tree/master/robot-core/src/test/java/org/obolibrary/robot). The test file name corresponds to the operation name, e.g. `ExtractOperationTest.java`. Each test class extends the `CoreTest` class:
+
+```
+public class ExtractOperationTest extends CoreTest {
+  ...
+}
+```
+
+[`CoreTest.java`](https://github.com/ontodev/robot/blob/master/robot-core/src/test/java/org/obolibrary/robot/CoreTest.java) provides ontology loading and comparison methods for the tests. Each test within a test class is a public method annotated with `@Test` (from JUnit):
+
+```
+@Test
+public void testExtractStar() {
+  ...
+}
+```
+
+Tests can be structured in different ways as long as there is a [JUnit assertion](http://junit.sourceforge.net/javadoc/org/junit/Assert.html) in tests in the method. We recommend the following - the test loads an ontology, runs an operation, and then compares to a known-good output (the expected output):
+
+```
+OWLOntology input = loadOntology("/resource.owl");
+OWLOntology output = MyOperation.operation(input);
+assertIdentical("/known-good.owl", output);
+```
+
+This method uses [`DiffOperation.compare(...)`](https://github.com/ontodev/robot/blob/master/robot-core/src/main/java/org/obolibrary/robot/DiffOperation.java#L74) functionality to ensure ontologies are identical. If the assertion fails, the test fails. Make sure your output ontology IRI is the same as the known-good ontology's IRI, otherwise the test will fail.
+
+Resource files (e.g., `resource.owl` and `known-good.owl`) are stored in `robot-core/src/test/resources/`. When using the `loadOntology(...)` and `assertIdentical(...)` methods, do not use the full path. Use the name of the file prefixed by a forward slash, as shown above.
+
+### Writing Integration Tests
+
+Each command is documented in its own markdown file in [`docs/`](https://github.com/ontodev/robot/tree/master/docs). These files are used to generate the [documentation](http://robot.obolibrary.org/). The embedded examples in these markdown files are parsed and executed as part of our integration tests, with the results compared against a known-good set of outputs. The [`diff`](http://robot.obolibrary.org/diff) functionality is used when comparing ontology files.
+
+The integration tests are executed with `mvn verify` and on all pull requests via Travis CI.
+
+Embedded examples must use the markdown code formating beginning with four spaces, not surrounded by the three backticks (\`). To provide code examples that *will not* be tested, use the backticks instead of the whitespace.
+
+Each integration test should have two corresponding files in the [`docs/examples/`](https://github.com/ontodev/robot/tree/master/docs/examples) directory: an input file and a known-good output file. When writing the example in the documentation, the input must be the file name (no directory) and the output should be the known-good file name prefixed by `results/`:
+
+```
+robot my-command --input my-file.owl --output results/known-good.owl
+```
+
+The `results/known-good.owl` file will be compared to the file with the same name in the `docs/examples/` directory.
 
 ### Documenting Errors
 
