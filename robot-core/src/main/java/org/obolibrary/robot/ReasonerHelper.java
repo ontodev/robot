@@ -1,18 +1,18 @@
 package org.obolibrary.robot;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
+import org.obolibrary.robot.reason.InferredClassAssertionAxiomGeneratorDirectOnly;
+import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
+import org.obolibrary.robot.reason.InferredSubObjectPropertyAxiomGeneratorIncludingIndirect;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
@@ -23,6 +23,13 @@ import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
  * @author cjm
  */
 public class ReasonerHelper {
+
+  /** Namespace for error messages. */
+  private static final String NS = "reason#";
+
+  /** Error message when an unknown axiom generator is provided. */
+  private static final String axiomGeneratorError =
+      NS + "UNKNOWN AXIOM GENERATOR %s is not a valid inferred axiom generator";
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReasonerHelper.class);
@@ -223,6 +230,106 @@ public class ReasonerHelper {
       manager.addAxioms(module, newAxioms);
     }
     return module;
+  }
+
+  /**
+   * Given a list of axiom generator strings, return a list of InferredAxiomGenerator objects.
+   *
+   * @param axGenerators list of strings to get InferredAxiomGenerators
+   * @param direct return axiom generators which include only direct
+   *     superclass/superproperties/types
+   * @return list of InferredAxiomGenerators
+   */
+  public static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
+      List<String> axGenerators, boolean direct) {
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
+    if (axGenerators == null || axGenerators.isEmpty()) {
+      if (direct) {
+        gens.add(new InferredSubClassAxiomGenerator());
+      } else {
+        gens.add(new InferredSubClassAxiomGeneratorIncludingIndirect());
+      }
+      return gens;
+    }
+    for (String ax : axGenerators) {
+      gens.add(getInferredAxiomGenerator(ax, direct));
+    }
+    return gens;
+  }
+
+  /**
+   * Given a list of axiom generator strings, return a list of InferredAxiomGenerator objects.
+   *
+   * @param axGenerators list of strings to get InferredAxiomGenerators
+   * @return list of InferredAxiomGenerators
+   */
+  public static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
+      List<String> axGenerators) {
+    return getInferredAxiomGenerators(axGenerators, true);
+  }
+
+  /**
+   * Given an axiom generator as a string, return the InferredAxiomGenerator object.
+   *
+   * @param axGenerator name of InferredAxiomGenerator
+   * @return InferredAxiomGenerator
+   */
+  public static InferredAxiomGenerator<? extends OWLAxiom> getInferredAxiomGenerator(
+      String axGenerator) {
+    return getInferredAxiomGenerator(axGenerator, true);
+  }
+
+  /**
+   * Given an axiom generator as a string, return the InferredAxiomGenerator object.
+   *
+   * @param axGenerator name of InferredAxiomGenerator
+   * @param direct return axiom generators which include only direct
+   *     superclass/superproperties/types
+   * @return InferredAxiomGenerator
+   */
+  public static InferredAxiomGenerator<? extends OWLAxiom> getInferredAxiomGenerator(
+      String axGenerator, boolean direct) {
+    switch (axGenerator.toLowerCase()) {
+      case "subclass":
+      case "":
+        if (direct) {
+          return new InferredSubClassAxiomGenerator();
+        } else {
+          return new InferredSubClassAxiomGeneratorIncludingIndirect();
+        }
+      case "disjointclasses":
+        return new InferredDisjointClassesAxiomGenerator();
+      case "equivalentclass":
+        return new InferredEquivalentClassAxiomGenerator();
+      case "datapropertycharacteristic":
+        return new InferredDataPropertyCharacteristicAxiomGenerator();
+      case "equivalentdataproperties":
+        return new InferredEquivalentDataPropertiesAxiomGenerator();
+      case "subdataproperty":
+        return new InferredSubDataPropertyAxiomGenerator();
+      case "classassertion":
+        if (direct) {
+          return new InferredClassAssertionAxiomGeneratorDirectOnly();
+        } else {
+          return new InferredClassAssertionAxiomGenerator();
+        }
+      case "propertyassertion":
+        return new InferredPropertyAssertionGenerator();
+      case "equivalentobjectproperty":
+        return new InferredEquivalentObjectPropertyAxiomGenerator();
+      case "inverseobjectproperties":
+        return new InferredInverseObjectPropertiesAxiomGenerator();
+      case "objectpropertycharacteristic":
+        return new InferredObjectPropertyCharacteristicAxiomGenerator();
+      case "subobjectproperty":
+        if (direct) {
+          return new InferredSubObjectPropertyAxiomGenerator();
+        } else {
+          return new InferredSubObjectPropertyAxiomGeneratorIncludingIndirect();
+        }
+      default:
+        throw new IllegalArgumentException(String.format(axiomGeneratorError, axGenerator));
+    }
   }
 
   /**

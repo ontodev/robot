@@ -94,21 +94,95 @@ public class TemplateOperation {
           + "%7$s";
 
   /**
-   * Error message when a template cannot be understood. Expects: table name, column number, column
-   * name, template.
-   */
-  private static String unknownTemplateError =
-      NS
-          + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" "
-          + "for column %2$d (\"%3$s\") "
-          + "in table \"%1$s\".";
-
-  /**
    * Error message when a class type is not recognized. Should be "subclass" or "equivalent".
    * Expects: table name, row number, row id, value.
    */
   private static String unknownTypeError =
       NS + "UNKNOWN TYPE ERROR \"%4$s\" for row %2$d (\"%3$s\") in table \"%1$s\".";
+
+  /**
+   * Get the default template options.
+   *
+   * @return map of template options
+   */
+  public static Map<String, String> getDefaultOptions() {
+    Map<String, String> options = new HashMap<>();
+    options.put("force", "false");
+    return options;
+  }
+
+  /**
+   * Given an OWLOntology, an IOHelper, a table name, and the table contents, use the table as the
+   * template to generate an output OWLOntology.
+   *
+   * @param inputOntology OWLOntology to use to get existing entities
+   * @param ioHelper IOHelper to resolve prefixes
+   * @param tableName name of the table for error reporting
+   * @param table List of rows (lists of cells) in the template
+   * @return new OWLOntology created from the template
+   * @throws Exception on any issue
+   */
+  public static OWLOntology template(
+      OWLOntology inputOntology, IOHelper ioHelper, String tableName, List<List<String>> table)
+      throws Exception {
+    return template(inputOntology, ioHelper, tableName, table, getDefaultOptions());
+  }
+
+  /**
+   * Given an OWLOntology, an IOHelper, a table name, the table contents, and a map of template
+   * options, use the table as the template to generate an output OWLOntology.
+   *
+   * @param inputOntology OWLOntology to use to get existing entities
+   * @param ioHelper IOHelper to resolve prefixes
+   * @param tableName name of the table for error reporting
+   * @param table List of rows (lists of cells) in the template
+   * @param options map of template options
+   * @return new OWLOntology created from the template
+   * @throws Exception on any issue
+   */
+  public static OWLOntology template(
+      OWLOntology inputOntology,
+      IOHelper ioHelper,
+      String tableName,
+      List<List<String>> table,
+      Map<String, String> options)
+      throws Exception {
+    Template template = new Template(tableName, table, inputOntology, ioHelper);
+    boolean force = OptionsHelper.optionIsTrue(options, "force");
+    return template.generateOutputOntology(null, force);
+  }
+
+  /**
+   * Given an OWLOntology, an IOHelper, a map of table names to table contents, and a map of
+   * template options, use the tables as templates to generate a merged output ontology.
+   *
+   * @param inputOntology OWLOntology to use to get existing entities
+   * @param ioHelper IOHelper to resolve prefixes
+   * @param tables table names to table contents
+   * @param options map of template options
+   * @return new OWLOntology created from merged template ontologies
+   * @throws Exception on any issue
+   */
+  public static OWLOntology template(
+      OWLOntology inputOntology,
+      IOHelper ioHelper,
+      Map<String, List<List<String>>> tables,
+      Map<String, String> options)
+      throws Exception {
+    QuotedEntityChecker checker = null;
+    OWLOntology intermediate = inputOntology;
+    List<OWLOntology> outputOntologies = new ArrayList<>();
+    for (Map.Entry<String, List<List<String>>> t : tables.entrySet()) {
+      Template template = new Template(t.getKey(), t.getValue(), intermediate, ioHelper, checker);
+      // Update the checker with new labels
+      checker = template.getChecker();
+      boolean force = OptionsHelper.optionIsTrue(options, "force");
+      // Update the intermediate ontology as the generated ontology
+      intermediate = template.generateOutputOntology(null, force);
+      outputOntologies.add(intermediate);
+    }
+    return MergeOperation.merge(outputOntologies);
+  }
 
   /**
    * Find an annotation property with the given name or create one.
@@ -118,6 +192,7 @@ public class TemplateOperation {
    * @return an annotation property
    * @throws Exception if the name cannot be resolved
    */
+  @Deprecated
   public static OWLAnnotationProperty getAnnotationProperty(
       QuotedEntityChecker checker, String name) throws Exception {
     return TemplateHelper.getAnnotationProperty(checker, name);
@@ -131,8 +206,14 @@ public class TemplateOperation {
    * @return a datatype
    * @throws Exception if the name cannot be resolved
    */
+  @Deprecated
   public static OWLDatatype getDatatype(QuotedEntityChecker checker, String name) throws Exception {
-    return TemplateHelper.getDatatype(checker, name);
+    OWLDatatype datatype = TemplateHelper.getDatatype(checker, name);
+    if (datatype == null) {
+      throw new Exception(
+          String.format("%sDATATYPE ERROR could not find datatype for '%s'", NS, name));
+    }
+    return datatype;
   }
 
   /**
@@ -144,6 +225,7 @@ public class TemplateOperation {
    * @return a new annotation with property and string literal value
    * @throws Exception if the annotation property cannot be found
    */
+  @Deprecated
   public static OWLAnnotation getStringAnnotation(
       QuotedEntityChecker checker, String template, String value) throws Exception {
     return TemplateHelper.getStringAnnotation(checker, template, value);
@@ -159,6 +241,7 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and typed literal value
    * @throws Exception if the annotation property cannot be found
    */
+  @Deprecated
   public static OWLAnnotation getTypedAnnotation(
       QuotedEntityChecker checker, String template, String value) throws Exception {
     return TemplateHelper.getTypedAnnotation(checker, template, value);
@@ -174,6 +257,7 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and language tagged literal
    * @throws Exception if the annotation property cannot be found
    */
+  @Deprecated
   public static OWLAnnotation getLanguageAnnotation(
       QuotedEntityChecker checker, String template, String value) throws Exception {
     return TemplateHelper.getLanguageAnnotation(checker, template, value);
@@ -189,6 +273,7 @@ public class TemplateOperation {
    * @return a new annotation axiom with property and an IRI value
    * @throws Exception if the annotation property cannot be found
    */
+  @Deprecated
   public static OWLAnnotation getIRIAnnotation(
       QuotedEntityChecker checker, String template, IRI value) throws Exception {
     return TemplateHelper.getIRIAnnotation(checker, template, value);
@@ -204,6 +289,7 @@ public class TemplateOperation {
    * @param label the label for this entity, or null
    * @return the entity or null
    */
+  @Deprecated
   public static OWLEntity getEntity(
       QuotedEntityChecker checker, IRI type, String id, String label) {
     return TemplateHelper.getEntity(checker, type, id, label);
@@ -217,6 +303,7 @@ public class TemplateOperation {
    * @return a list of IRIs
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static List<IRI> getIRIs(Map<String, List<List<String>>> tables, IOHelper ioHelper)
       throws Exception {
     return TemplateHelper.getIRIs(tables, ioHelper);
@@ -231,35 +318,10 @@ public class TemplateOperation {
    * @return a list of IRIs
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static List<IRI> getIRIs(String tableName, List<List<String>> rows, IOHelper ioHelper)
       throws Exception {
     return TemplateHelper.getIRIs(tableName, rows, ioHelper);
-  }
-
-  /**
-   * Return true if the template string is valid, false otherwise.
-   *
-   * @param template the template string to check
-   * @return true if valid, false otherwise
-   */
-  public static boolean validateTemplateString(String template) {
-    template = template.trim();
-    if (template.equals("ID")) {
-      return true;
-    }
-    if (template.equals("LABEL")) {
-      return true;
-    }
-    if (template.equals("TYPE")) {
-      return true;
-    }
-    if (template.equals("CLASS_TYPE")) {
-      return true;
-    }
-    if (template.matches("^(>?C|>{0,2}A[LTI]?) .*")) {
-      return true;
-    }
-    return template.equals("CI");
   }
 
   /**
@@ -269,6 +331,7 @@ public class TemplateOperation {
    * @return a new ontology generated from the table
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static OWLOntology template(Map<String, List<List<String>>> tables) throws Exception {
     return template(tables, null, null, null);
   }
@@ -281,6 +344,7 @@ public class TemplateOperation {
    * @return a new ontology generated from the table
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static OWLOntology template(
       Map<String, List<List<String>>> tables, OWLOntology inputOntology) throws Exception {
     return template(tables, inputOntology, null, null);
@@ -295,6 +359,7 @@ public class TemplateOperation {
    * @return a new ontology generated from the table
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static OWLOntology template(
       Map<String, List<List<String>>> tables,
       OWLOntology inputOntology,
@@ -312,6 +377,7 @@ public class TemplateOperation {
    * @return a new ontology generated from the table
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static OWLOntology template(
       Map<String, List<List<String>>> tables, OWLOntology inputOntology, IOHelper ioHelper)
       throws Exception {
@@ -332,6 +398,7 @@ public class TemplateOperation {
    * @return a new ontology generated from the table
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   public static OWLOntology template(
       Map<String, List<List<String>>> tables,
       OWLOntology inputOntology,
@@ -365,11 +432,7 @@ public class TemplateOperation {
         if (template.isEmpty()) {
           continue;
         }
-        if (!validateTemplateString(template)) {
-          throw new Exception(
-              String.format(
-                  unknownTemplateError, tableName, column + 1, headers.get(column), template));
-        }
+
         if (template.equals("ID")) {
           idColumn = column;
         }
@@ -441,6 +504,7 @@ public class TemplateOperation {
    * @param checker used to find annotation properties by name
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   private static void addAnnotations(
       OWLOntology outputOntology,
       String tableName,
@@ -515,7 +579,6 @@ public class TemplateOperation {
         if (template.equals("LABEL")) {
           label = value;
           lastAxiomAnnotation = null;
-          lastAnnotation = TemplateHelper.getStringAnnotation(checker, "A rdfs:label", value);
           annotations.add(lastAnnotation);
         } else if (template.equals("TYPE")) {
           OWLEntity entity = checker.getOWLEntity(value);
@@ -615,6 +678,7 @@ public class TemplateOperation {
    * @param parser used parse expressions
    * @throws Exception when names or templates cannot be handled
    */
+  @Deprecated
   private static void addLogic(
       OWLOntology ontology,
       String tableName,
@@ -725,8 +789,8 @@ public class TemplateOperation {
           } else {
             annotations = new HashSet<>();
           }
-          annotations.add(
-              TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
+          // annotations.add(
+          // TemplateHelper.getStringAnnotation(checker, template.substring(1).trim(), cell));
           annotatedExpressions.put(lastExpression, annotations);
           // Remove to prevent duplication
           classExpressions.remove(lastExpression);
@@ -761,5 +825,15 @@ public class TemplateOperation {
     } else {
       ontology.getOWLOntologyManager().addAxioms(ontology, axioms);
     }
+  }
+  /**
+   * Return true if the template string is valid, false otherwise.
+   *
+   * @param template the template string to check
+   * @return true if valid, false otherwise
+   */
+  @Deprecated
+  public static boolean validateTemplateString(String template) {
+    return TemplateHelper.validateTemplateString(template);
   }
 }

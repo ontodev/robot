@@ -48,12 +48,6 @@
     
 
 
-    <!-- http://purl.obolibrary.org/obo/RO_0002175 -->
-
-    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/RO_0002175"/>
-    
-
-
     <!-- http://purl.obolibrary.org/obo/UBPROP_0000001 -->
 
     <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/UBPROP_0000001"/>
@@ -177,12 +171,6 @@
     <!-- http://www.geneontology.org/formats/oboInOwl#ontology -->
 
     <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#ontology"/>
-    
-
-
-    <!-- http://www.geneontology.org/formats/oboInOwl#shorthand -->
-
-    <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#shorthand"/>
     
 
 

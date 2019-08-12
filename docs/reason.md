@@ -1,5 +1,14 @@
 # Reason
 
+## Contents
+
+1. [Overview](#overview)
+2. [Logical Validation](#logical-validation)
+3. [Equivalent Classes (`--equivalent-classes-allowed`)](#equivalent-class-axioms)
+4. [Generated Axioms(`--axiom-generators`)](#generated-axioms)
+
+## Overview
+
 One of the main benefits of working with OWL is the availability of powerful automated reasoners. Reasoning involves two steps: logical validation (described in detail below) and automatic classification. Automatic classification involves asserting all inferred superclasses.
 
 There are several reasoners available, and each has different capabilities and characteristics. For this example we'll be using <a href="https://code.google.com/p/elk-reasoner/" target="_blank">ELK</a>, a very fast reasoner that supports the EL subset of OWL 2.
@@ -26,9 +35,9 @@ robot reason --reasoner ELK \
   --output results/reasoned.owl
 ```
 
-Finally, `reason` includes two more options to help clean the reasoned output (by default, these are `false`):
-* `--exclude-duplicate-axioms`: if set to true, the axioms will not be added to the output if they exist in an import.
-* `--remove-redundant-subclass-axioms`: if set to true, any redundant axioms (those that have been asserted and were also inferred) will be removed from the output.
+Finally, `reason` includes two more options to help clean the reasoned output:
+* `--exclude-duplicate-axioms`: if set to true, the axioms will not be added to the output if they exist in an import (default `false`).
+* `--remove-redundant-subclass-axioms`: if set to false, redundant axioms (those that have been asserted and were also inferred) are included in the output (default `true`).
 
 If no `--reasoner` is provided, ROBOT will default to ELK. The following other reasoner options are supported:
   
@@ -53,6 +62,57 @@ robot reason --reasoner ELK \
 
 If the input module contains at least one import, axioms in the debug module will be tagged with the source ontology, to assist in debugging.
 
+## Equivalent Class Axioms
+
+By default, ROBOT ignores one-to-one equivalent classes (e.g. `A EquivalentTo B`). But, in many cases, inferring equivalence between two classes is usually a sign that something has gone wrong. 
+
+Sometimes we want to avoid equivalence between named classes at all (in the case of OBO, where we strive for orthogonality). This can be done through `--equivalent-classes-allowed <arg>` (shorthand `-e`). 
+
+The `<arg>` options are:
+
+ * `all`: always allow (default behavior)
+ * `none`: never allow
+ * `asserted-only`: allow asserted equivalence, but throw an error if equivalence is inferred
+ 
+## Generated Axioms
+
+By default, the `reason` operation will only assert inferred subclass axioms. This can be configured with the `--axiom-generators` option. OWLAPI provides the following inferred axiom generators:
+
+  * Class axiom generators
+    * `SubClass`
+    * `EquivalentClass`
+    * `DisjointClasses`
+  * Data property axiom generators
+    * `DataPropertyCharacteristic`
+    * `EquivalentDataProperties`
+    * `SubDataProperty`
+  * Individual axiom generators
+    * `ClassAssertion`
+    * `PropertyAssertion`
+  * Object property axiom generators
+    * `EquivalentObjectProperty`
+    * `InverseObjectProperties`
+    * `ObjectPropertyCharacteristic`
+    * `SubObjectProperty`
+  
+One or more of these axiom generators can be passed into the option (separated by spaces). For example, to generate both subclass and disjoint class axioms:
+
+```
+robot reason --input unreasoned.owl
+  --axiom-generators "SubClass DisjointClasses"
+  --output reasoned.owl
+```
+
+If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
+
+The axioms that are generated for subclasses, class assertions, and sub-object properties can be either direct or indirect. By default, the operation will only generate direct axioms (`--include-indirect false`). It is recommended to pipe to `reduce` after to remove any redundant axioms. For example, to generate all direct and indirect superclass expressions:
+```
+robot reason --input unreasoned.owl
+  --reasoner emr
+  --include-indirect true
+  reduce --output reasoned.owl
+```
+
 ---
 
 ## Error Messages
@@ -60,3 +120,12 @@ If the input module contains at least one import, axioms in the debug module wil
 ### Create Ontology Error
 
 You must select between `--create-new-ontology-with-annotations` (`-m`) and `--create-new-ontology` (`-n`). Both cannot be passed in as `true` to one reason command, as they have opposite results.
+
+### Axiom Generator Error
+
+The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](#axiom-generators).
+
+### Equivalent Class Axiom Error
+
+ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](#equivalent-class-axioms).
+

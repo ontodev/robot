@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -60,6 +61,10 @@ public class ReportOperation {
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR query at '%s' does not exist.";
 
+  /** Error message when 'print' is not a number. */
+  private static final String printNumberError =
+      NS + "PRINT NUMBER ERROR --print argument '%s' must be an integer.";
+
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
@@ -79,7 +84,13 @@ public class ReportOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    return new HashMap<>();
+    Map<String, String> options = new HashMap<>();
+    options.put("print", "0");
+    options.put("fail-on", "error");
+    options.put("labels", "false");
+    options.put("format", "tsv");
+    options.put("profile", null);
+    return options;
   }
 
   /**
@@ -88,26 +99,11 @@ public class ReportOperation {
    * failOn).
    *
    * @param ontology the OWLOntology to report
-   * @param iohelper IOHelper to work with ontology
+   * @param ioHelper IOHelper to work with ontology
    * @throws Exception on any reporting error
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper) throws Exception {
-    report(ontology, null, null, null, null);
-  }
-
-  /**
-   * Report on the ontology using the rules within the profile and print results. Prefer
-   * report(OWLOntology ontology, String profilePath, String outputPath, String format, String
-   * failOn).
-   *
-   * @param ontology the OWLOntology to report
-   * @param iohelper IOHelper to work with ontology
-   * @param options map of report options
-   * @throws Exception on any reporting error
-   */
-  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options)
-      throws Exception {
-    report(ontology, null, null, null, null);
+  public static void report(OWLOntology ontology, IOHelper ioHelper) throws Exception {
+    report(ontology, ioHelper, null, null, null, null);
   }
 
   /**
@@ -130,6 +126,22 @@ public class ReportOperation {
     return report(ontology, null, profilePath, outputPath, format, failOn, false);
   }
 
+  /**
+   * Given an ontology, an IOHelper, a profile path (or null), an output path (or null), a report
+   * format (or null), and a level to fail on, report on the ontology using the rules within the
+   * profile and write results to the output path. If profile is null, use the default profile in
+   * resources. If the output path is null, write results to console. If the format is null, write
+   * results in TSV format. Exit with status 1 if any violations of fail-on level are found.
+   *
+   * @param ontology OWLOntology to report on
+   * @param ioHelper IOHelper to use
+   * @param profilePath user profile file path to use, or null
+   * @param outputPath string path to write report file to, or null
+   * @param format string format for the output report (TSV or YAML), or null
+   * @param failOn logging level to fail execution
+   * @return true if successful, false if failed
+   * @throws Exception on any error
+   */
   public static boolean report(
       OWLOntology ontology,
       IOHelper ioHelper,
@@ -142,10 +154,27 @@ public class ReportOperation {
   }
 
   /**
-   * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
-   * null) report on the ontology using the rules within the profile and write results to the output
-   * path. If profile is null, use the default profile in resources. If the output path is null,
-   * write results to console. If the format is null, write results in TSV format.
+   * Report on the ontology using the rules within the profile and print results. Prefer
+   * report(OWLOntology ontology, IOHelper ioHelper, String outputPath, Map&lt;String,String&gt;
+   * options).
+   *
+   * @param ontology the OWLOntology to report
+   * @param ioHelper IOHelper to work with ontology
+   * @param options map of report options
+   * @throws Exception on any reporting error
+   */
+  public static void report(OWLOntology ontology, IOHelper ioHelper, Map<String, String> options)
+      throws Exception {
+    report(ontology, ioHelper, null, options);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, a profile path (or null), an output path (or null), a report
+   * format (or null), a level to fail on, and a boolean indicating to use labels, report on the
+   * ontology using the rules within the profile and write results to the output path. If profile is
+   * null, use the default profile in resources. If the output path is null, write results to
+   * console. If the format is null, write results in TSV format. Exit with status 1 if any
+   * violations of fail-on level are found.
    *
    * @param ontology OWLOntology to report on
    * @param ioHelper IOHelper to use
@@ -166,10 +195,75 @@ public class ReportOperation {
       String failOn,
       boolean useLabels)
       throws Exception {
+    Map<String, String> options = getDefaultOptions();
+    if (profilePath != null) {
+      options.put("profile", profilePath);
+    }
+    if (format != null) {
+      options.put("format", format);
+    }
+    if (failOn != null) {
+      options.put("fail-on", failOn);
+    }
+    if (useLabels) {
+      options.put("labels", "true");
+    }
+    return report(ontology, ioHelper, outputPath, options);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, an output path (or null), and a map of options (or null),
+   * report on the ontology using the rules within the profile specified by the options and write
+   * results to the output path. If profile is null, use the default profile in resources. If the
+   * output path is null, write results to console. If the format is null, write results in TSV
+   * format.
+   *
+   * @param ontology the OWLOntology to report
+   * @param ioHelper IOHelper to work with ontology
+   * @param outputPath string path to write report file to, or null
+   * @param options map of report options
+   * @return false if there are violations at or above the fail-on level, true otherwise
+   * @throws Exception on any reporting error
+   */
+  public static boolean report(
+      OWLOntology ontology, IOHelper ioHelper, String outputPath, Map<String, String> options)
+      throws Exception {
+    // Get options specified in map or default options
+    if (options == null) {
+      options = getDefaultOptions();
+    }
+    String failOn = OptionsHelper.getOption(options, "fail-on", "error");
+    String profilePath = OptionsHelper.getOption(options, "profile", "0");
+    String printString = OptionsHelper.getOption(options, "print").trim();
+    boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+
+    // Format is determined either by --format or the extension of the output path
+    String format = OptionsHelper.getOption(options, "format");
+    if (format == null && outputPath != null) {
+      format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
+      if (!format.equalsIgnoreCase("csv") && !format.equalsIgnoreCase("yaml")) {
+        // Anything other than .yaml or .csv is written as TSV
+        format = "tsv";
+      }
+    } else if (format == null) {
+      // Null format means no output file, will be printed as TSV
+      format = "tsv";
+    }
+
+    // Parse print N lines option to an int
+    int print;
+    try {
+      print = Integer.parseInt(printString);
+    } catch (NumberFormatException e) {
+      // Not a number
+      throw new IllegalArgumentException(String.format(printNumberError, printString));
+    }
+
     // Set failOn if null to default
     if (failOn == null) {
       failOn = ERROR;
     }
+
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
@@ -216,11 +310,10 @@ public class ReportOperation {
       System.out.println("No violations found.");
     }
 
-    // System.out.println(report.getIRIs());
     String result;
-    if (format != null && format.equalsIgnoreCase("yaml")) {
+    if (format.equalsIgnoreCase("yaml")) {
       result = report.toYAML();
-    } else if (format != null && format.equalsIgnoreCase("csv")) {
+    } else if (format.equalsIgnoreCase("csv")) {
       result = report.toCSV();
     } else {
       result = report.toTSV();
@@ -232,9 +325,19 @@ public class ReportOperation {
         logger.debug("Writing report to: " + outputPath);
         bw.write(result);
       }
+      // Maybe print the first N lines
+      if (print > 0) {
+        String[] lines = getLinesToPrint(report, result, format);
+        printNViolations(lines, print);
+      }
     } else {
-      // Otherwise output to terminal
-      System.out.println(result);
+      // Output goes to terminal
+      if (print > 0) {
+        String[] lines = getLinesToPrint(report, result, format);
+        printNViolations(lines, print);
+      } else {
+        System.out.println(result);
+      }
     }
 
     // If a fail-on is provided, return false if there are violations of the given level
@@ -249,6 +352,26 @@ public class ReportOperation {
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
+  }
+
+  /**
+   * Given a Report, a result, and a format, return the array of lines in TSV format to be printed
+   * to terminal. The written output of the report will still be in the specified format.
+   *
+   * @param report Report object
+   * @param result string result of the report
+   * @param format format of the string result
+   * @return array of TSV format lines
+   */
+  private static String[] getLinesToPrint(Report report, String result, @NotNull String format) {
+    String[] lines;
+    if (format.equalsIgnoreCase("yaml") || format.equalsIgnoreCase("csv")) {
+      // Print YAML as TSV for this (output will still be YAML)
+      lines = report.toTSV().split("\n");
+    } else {
+      lines = result.split("\n");
+    }
+    return lines;
   }
 
   /**
@@ -493,5 +616,23 @@ public class ReportOperation {
       violations.add(violation);
     }
     return violations;
+  }
+
+  /**
+   * Given an array of lines and a number of lines to print, print that number of violations (one
+   * per line).
+   *
+   * @param lines array of lines to print
+   * @param n number of lines to print
+   */
+  private static void printNViolations(String[] lines, int n) {
+    if (lines.length <= n) {
+      n = lines.length - 1;
+    }
+    System.out.println(String.format("\nFirst %d violations:", n));
+    for (int i = 0; i < n; i++) {
+      // i + 1 to skip headers
+      System.out.println(lines[i + 1]);
+    }
   }
 }

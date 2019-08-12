@@ -1,5 +1,15 @@
 # Report
 
+## Contents
+
+1. [Overview](#overview)
+2. [Labels (`--labels`)](#labels)
+3. [Failing (`--fail-on`)](#failing)
+4. [Queries](#queries)
+5. [Profiles (`--profile`)](#profiles)
+
+## Overview
+
 The `report` command runs a series of quality control SPARQL queries over the input ontology and generates a TSV or YAML report file based on the results. Each query has a logging level to define the severity of the issue: ERROR, WARN, or INFO.
 * `ERROR`: Must be fixed before releasing the ontology. These issues will cause problems for users, such as classes with multiple labels.
 * `WARN`: Should be fixed as soon as possible. These will not cause problems for *all* users, but may not be what they expect. For example, a class that is inferred to be equivalent to another named class.
@@ -17,6 +27,16 @@ ERROR:      109
 WARN:       572
 INFO:       29
 ```
+
+If you do not provide an `--output`, all violations will be printed to the terminal in either the specified format or TSV (if no format is specified). You can also choose to print the details of the first `n` number of violations using `--print <n>`:
+<!-- DO NOT TEST -->
+```
+robot report --input edit.owl \
+ --print 5 \
+ --output report.tsv
+```
+
+This will print the first five violations and also write the report to `report.tsv`. If you do not provide an `--output` while using `--print <n>`, *only* the first `n` violations will be printed to the terminal.
 
 ## Labels
 
@@ -87,6 +107,10 @@ Only `info`, `warn`, and `error` are valid inputs for `--fail-on`.
 ### Missing Entity Binding
 
 All queries must bind `?entity ?property ?value` for correct formatting. If `?entity` is ever `null`, the query cannot be reported on.
+
+### Print Number Error
+
+The argument for the `--print` option must be a number. 
 
 ### Report Level Error
 

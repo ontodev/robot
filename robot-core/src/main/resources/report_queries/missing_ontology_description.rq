@@ -1,8 +1,8 @@
 # # Missing Ontology Description
 #
-# Problem: The ontology header is missing required metadata: [description](http://dublincore.org/documents/dcmi-terms/#elements-description).
+# **Problem:** The ontology header is missing required metadata: [description](http://dublincore.org/documents/dcmi-terms/#elements-description).
 #
-# Solution: Add the missing description. See link for appropriate property.
+# **Solution:** Add the missing description. See link for appropriate property.
 
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>

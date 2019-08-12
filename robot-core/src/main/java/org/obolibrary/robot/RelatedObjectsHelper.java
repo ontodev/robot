@@ -37,6 +37,11 @@ public class RelatedObjectsHelper {
   private static final String invalidIRIError =
       NS + "INVALID IRI ERROR %1$s \"%2$s\" is not a valid CURIE or IRI";
 
+  /** Error message when an IRI pattern to match does not have a wildcard character. */
+  private static final String invalidIRIPatternError =
+      NS
+          + "INVALID IRI PATTERN ERROR the pattern '%s' must contain at least one wildcard character.";
+
   /** String for subclass/property mapping */
   private static final String SUB = "sub";
   /** String for superclass/property mapping */
@@ -75,6 +80,19 @@ public class RelatedObjectsHelper {
     return axioms;
   }
 
+  public static Set<OWLAxiom> getAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean partial,
+      boolean signature) {
+    if (partial) {
+      return RelatedObjectsHelper.getPartialAxioms(ontology, objects, axiomTypes, signature);
+    } else {
+      return RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes, signature);
+    }
+  }
+
   /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
    * the objects in those axioms are in the set of objects.
@@ -86,29 +104,47 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    if (axiomTypes == null) {
-      axiomTypes = new HashSet<>();
-      axiomTypes.add(OWLAxiom.class);
-    }
+    return getCompleteAxioms(ontology, objects, axiomTypes, false);
+  }
 
+  /**
+   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
+   * the objects in those axioms are in the set of objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, consider only named OWLObjects
+   * @return Set of OWLAxioms containing only the OWLObjects
+   */
+  public static Set<OWLAxiom> getCompleteAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
+    axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
-
-    Set<IRI> iris = new HashSet<>();
-    for (OWLObject object : objects) {
-      if (OWLNamedObject.class.isInstance(object)) {
-        OWLNamedObject namedObject = (OWLNamedObject) object;
-        iris.add(namedObject.getIRI());
-      }
-    }
-
+    Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Check both the full annotated axiom and axiom without annotations (if annotated)
-        Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+        Set<OWLObject> axiomObjects = null;
+        if (namedOnly) {
+          axiomObjects = OntologyHelper.getNamedObjects(axiom);
+        } else {
+          axiomObjects = OntologyHelper.getObjects(axiom);
+        }
+
         Set<OWLObject> partialAxiomObjects = null;
         if (axiom.isAnnotated()) {
-          partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+          if (namedOnly) {
+            partialAxiomObjects =
+                OntologyHelper.getNamedObjects(axiom.getAxiomWithoutAnnotations());
+          } else {
+            partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
+          }
         }
+
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
           // Again, check full annotated axiom and axiom without annotations
@@ -150,21 +186,27 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    if (axiomTypes == null) {
-      axiomTypes = new HashSet<>();
-      axiomTypes.add(OWLAxiom.class);
-    }
+    return getPartialAxioms(ontology, objects, axiomTypes, false);
+  }
 
+  /**
+   * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
+   * least one object in those axioms is also in the set of objects.
+   *
+   * @param ontology OWLOntology to get axioms from
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, only consider named OWLObjects
+   * @return Set of OWLAxioms containing at least one of the OWLObjects
+   */
+  public static Set<OWLAxiom> getPartialAxioms(
+      OWLOntology ontology,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
+    axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
-
-    Set<IRI> iris = new HashSet<>();
-    for (OWLObject object : objects) {
-      if (OWLNamedObject.class.isInstance(object)) {
-        OWLNamedObject namedObject = (OWLNamedObject) object;
-        iris.add(namedObject.getIRI());
-      }
-    }
-
+    Set<IRI> iris = getIRIs(objects);
     for (OWLAxiom axiom : ontology.getAxioms()) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
@@ -183,7 +225,12 @@ public class RelatedObjectsHelper {
             axioms.add(axiom);
           }
         } else {
-          Set<OWLObject> axiomObjects = OntologyHelper.getObjects(axiom);
+          Set<OWLObject> axiomObjects = null;
+          if (namedOnly) {
+            axiomObjects = OntologyHelper.getNamedObjects(axiom);
+          } else {
+            axiomObjects = OntologyHelper.getObjects(axiom);
+          }
           for (OWLObject axiomObject : axiomObjects) {
             if (objects.contains(axiomObject)) {
               axioms.add(axiom);
@@ -294,8 +341,14 @@ public class RelatedObjectsHelper {
       return objects;
     } else if (selector.equals("types")) {
       return selectTypes(ontology, objects);
+    } else if (selector.equals("ranges")) {
+      return selectRanges(ontology, objects);
+    } else if (selector.equals("domains")) {
+      return selectDomains(ontology, objects);
     } else if (selector.contains("=")) {
       return selectPattern(ontology, ioHelper, objects, selector);
+    } else if (Pattern.compile("<.*>").matcher(selector).find()) {
+      return selectIRI(objects, selector);
     } else {
       logger.error(String.format("%s is not a valid selector and will be ignored", selector));
       return new HashSet<>();
@@ -458,6 +511,27 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an ontology and a set of objects, return all domains of any properties in the set.
+   *
+   * @param ontology OWLOntology to retrieve domains from
+   * @param objects OWLObjects to retrieve domains of
+   * @return set of domains of the starting set
+   */
+  public static Set<OWLObject> selectDomains(OWLOntology ontology, Set<OWLObject> objects) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLAnnotationProperty) {
+        relatedObjects.addAll(EntitySearcher.getDomains((OWLAnnotationProperty) object, ontology));
+      } else if (object instanceof OWLDataProperty) {
+        relatedObjects.addAll(EntitySearcher.getDomains((OWLDataProperty) object, ontology));
+      } else if (object instanceof OWLObjectProperty) {
+        relatedObjects.addAll(EntitySearcher.getDomains((OWLObjectProperty) object, ontology));
+      }
+    }
+    return relatedObjects;
+  }
+
+  /**
    * Given an ontology and a set of objects, return all equivalent objects of the starting set.
    *
    * @param ontology OWLOntology to retrieve equivalents from
@@ -496,11 +570,61 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
+  /**
+   * Given an ontology and a set of objects, select all the instances of the classes in the set of
+   * objects.
+   *
+   * @param ontology OWLOntology to retrieve instances from
+   * @param objects Set of OWLObjects to get instances of
+   * @return set of instances as OWLObjects
+   */
   public static Set<OWLObject> selectInstances(OWLOntology ontology, Set<OWLObject> objects) {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLClass) {
         relatedObjects.addAll(EntitySearcher.getIndividuals((OWLClass) object, ontology));
+      }
+    }
+    return relatedObjects;
+  }
+
+  /**
+   * Given a set of objects, and a selector string (IRI pattern in angle brackets), select all the
+   * objects that have an IRI matching that pattern.
+   *
+   * @param objects Set of OWLObjects to look through
+   * @param selector IRI pattern to match (enclosed in angle brackets, using ? or * wildcards)
+   * @return set of IRIs that match the selector pattern
+   */
+  public static Set<OWLObject> selectIRI(Set<OWLObject> objects, String selector) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+
+    // Check that we're matching a pattern here
+    // --term should be used for full IRIs
+    if (!selector.contains("~") && !selector.contains("*") && !selector.contains("?")) {
+      throw new IllegalArgumentException(String.format(invalidIRIPatternError, selector));
+    }
+    // Get rid of brackets
+    if (selector.startsWith("<") && selector.endsWith(">")) {
+      selector = selector.substring(1, selector.length() - 1);
+    }
+    if (!selector.startsWith("~")) {
+      // Transform wildcards into regex patterns and escape periods
+      selector = selector.replace(".", "\\.").replace("?", ".?").replace("*", ".*");
+    } else {
+      // Otherwise, it is already a regex pattern
+      // Just remove the tilde
+      selector = selector.substring(1);
+    }
+    Pattern pattern = Pattern.compile(selector);
+    for (OWLObject object : objects) {
+      if (object instanceof OWLEntity) {
+        OWLEntity entity = (OWLEntity) object;
+        // Determine if IRI matches the pattern
+        String iri = entity.getIRI().toString();
+        if (pattern.matcher(iri).matches()) {
+          relatedObjects.add(object);
+        }
       }
     }
     return relatedObjects;
@@ -599,6 +723,27 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an ontology and a set of objects, return all ranges of any properties in the set.
+   *
+   * @param ontology OWLOntology to retrieve ranges from
+   * @param objects OWLObjects to retrieve ranges of
+   * @return set of ranges of the starting set
+   */
+  public static Set<OWLObject> selectRanges(OWLOntology ontology, Set<OWLObject> objects) {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLAnnotationProperty) {
+        relatedObjects.addAll(EntitySearcher.getRanges((OWLAnnotationProperty) object, ontology));
+      } else if (object instanceof OWLDataProperty) {
+        relatedObjects.addAll(EntitySearcher.getRanges((OWLDataProperty) object, ontology));
+      } else if (object instanceof OWLObjectProperty) {
+        relatedObjects.addAll(EntitySearcher.getRanges((OWLObjectProperty) object, ontology));
+      }
+    }
+    return relatedObjects;
+  }
+
+  /**
    * Given an ontology and a set of objects, return a set of all the types of the individuals in
    * that set.
    *
@@ -625,10 +770,10 @@ public class RelatedObjectsHelper {
    * @return set of OWLAxioms to maintain hierarchy
    */
   public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
-    List<Map<String, OWLAnnotationProperty>> aPropPairs = new ArrayList<>();
-    List<Map<String, OWLClassExpression>> classPairs = new ArrayList<>();
-    List<Map<String, OWLDataPropertyExpression>> dPropPairs = new ArrayList<>();
-    List<Map<String, OWLObjectPropertyExpression>> oPropPairs = new ArrayList<>();
+    Set<Map<String, OWLAnnotationProperty>> aPropPairs = new HashSet<>();
+    Set<Map<String, OWLClassExpression>> classPairs = new HashSet<>();
+    Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
+    Set<Map<String, OWLObjectPropertyExpression>> oPropPairs = new HashSet<>();
     Set<OWLAxiom> axioms = new HashSet<>();
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
@@ -640,8 +785,7 @@ public class RelatedObjectsHelper {
             ontology, objects, aPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
       } else if (object instanceof OWLClass) {
         OWLClass cls = (OWLClass) object;
-        spanGapsHelper(
-            ontology, objects, classPairs, cls, EntitySearcher.getSuperClasses(cls, ontology));
+        spanGapsHelper(ontology, objects, classPairs, cls, getSuperClasses(ontology, cls));
       } else if (object instanceof OWLDataProperty) {
         OWLDataProperty p = (OWLDataProperty) object;
         spanGapsHelper(
@@ -726,6 +870,23 @@ public class RelatedObjectsHelper {
       }
       return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
     }
+  }
+
+  /**
+   * Given a set of OWLObjects, return the set of IRIs for those objects.
+   *
+   * @param objects OWLObjects to get IRIs of
+   * @return IRIs of the given objects
+   */
+  private static Set<IRI> getIRIs(Set<OWLObject> objects) {
+    Set<IRI> iris = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLNamedObject) {
+        OWLNamedObject namedObject = (OWLNamedObject) object;
+        iris.add(namedObject.getIRI());
+      }
+    }
+    return iris;
   }
 
   /**
@@ -836,7 +997,8 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Given an ontology and a class expression, return the set of superclasses while removing any circular subclass definitions. Warn on any circular subclasses.
+   * Given an ontology and a class expression, return the set of superclasses while removing any
+   * circular subclass definitions. Warn on any circular subclasses.
    *
    * @param ontology OWLOntology to get superclasses
    * @param cls OWLClass to get superclasses of
@@ -844,18 +1006,45 @@ public class RelatedObjectsHelper {
    */
   private static Set<OWLClassExpression> getSuperClasses(OWLOntology ontology, OWLClass cls) {
     Set<OWLClassExpression> superclasses = new HashSet<>();
+
+    // We might get stuck if a class is both subclass and equivalent
+    // So compare the eqs to the superclasses and don't add a super if it's also an eq
+    Collection<OWLClassExpression> eqs = EntitySearcher.getEquivalentClasses(cls, ontology);
+
     for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, ontology)) {
       if (expr.isAnonymous()) {
         superclasses.add(expr);
         continue;
       }
-      if (expr.asOWLClass().getIRI() != cls.getIRI()) {
-        superclasses.add(expr);
-      } else {
-        logger.warn("Circular subclass definition: " + cls.getIRI());
+      if (eqs.contains(expr)) {
+        logger.warn(
+            String.format(
+                "Class '%s' has equivalent class and superclass '%s'", cls.getIRI(), expr));
+        continue;
       }
+      if (expr.asOWLClass().getIRI() == cls.getIRI()) {
+        logger.warn("Circular subclass definition: " + cls.getIRI());
+        continue;
+      }
+      superclasses.add(expr);
     }
     return superclasses;
+  }
+
+  /**
+   * Given a set of axiom classes (or null), set OWLAxiom as the only entry if the set is empty or
+   * null. Otherwise return the original set.
+   *
+   * @param axiomTypes set of OWLAxiom classes
+   * @return set of OWLAxiom classes
+   */
+  private static Set<Class<? extends OWLAxiom>> setDefaultAxiomType(
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
+    if (axiomTypes == null || axiomTypes.isEmpty()) {
+      axiomTypes = new HashSet<>();
+      axiomTypes.add(OWLAxiom.class);
+    }
+    return axiomTypes;
   }
 
   /**
@@ -1153,7 +1342,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLAnnotationProperty>> propPairs,
+      Set<Map<String, OWLAnnotationProperty>> propPairs,
       OWLAnnotationProperty property,
       Collection<OWLAnnotationProperty> superProperties) {
     for (OWLAnnotationProperty sp : superProperties) {
@@ -1162,14 +1351,15 @@ public class RelatedObjectsHelper {
           Map<String, OWLAnnotationProperty> propertyPair = new HashMap<>();
           propertyPair.put(SUB, property);
           propertyPair.put(SUPER, sp);
-          propPairs.add(propertyPair);
-          property = sp;
-          spanGapsHelper(
-              ontology,
-              objects,
-              propPairs,
-              property,
-              EntitySearcher.getSuperProperties(property, ontology));
+          if (propPairs.add(propertyPair)) {
+            property = sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
@@ -1196,7 +1386,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLClassExpression>> classPairs,
+      Set<Map<String, OWLClassExpression>> classPairs,
       OWLClass cls,
       Collection<OWLClassExpression> superClasses) {
     for (OWLClassExpression sc : superClasses) {
@@ -1204,22 +1394,20 @@ public class RelatedObjectsHelper {
         Map<String, OWLClassExpression> classPair = new HashMap<>();
         classPair.put(SUB, cls);
         classPair.put(SUPER, sc);
-        classPairs.add(classPair);
-        if (!sc.isAnonymous()) {
+        if (classPairs.add(classPair)) {
+          // only recurse if the pair just added was not already present in the set.
+          if (!sc.isAnonymous()) {
             spanGapsHelper(
                 ontology,
                 objects,
                 classPairs,
                 sc.asOWLClass(),
                 getSuperClasses(ontology, sc.asOWLClass()));
+          }
         }
       } else if (!sc.isAnonymous()) {
         spanGapsHelper(
-            ontology,
-            objects,
-            classPairs,
-            cls,
-            getSuperClasses(ontology, sc.asOWLClass()));
+            ontology, objects, classPairs, cls, getSuperClasses(ontology, sc.asOWLClass()));
       }
     }
   }
@@ -1238,7 +1426,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLDataPropertyExpression>> propPairs,
+      Set<Map<String, OWLDataPropertyExpression>> propPairs,
       OWLDataProperty property,
       Collection<OWLDataPropertyExpression> superProperties) {
     for (OWLDataPropertyExpression sp : superProperties) {
@@ -1246,15 +1434,16 @@ public class RelatedObjectsHelper {
         Map<String, OWLDataPropertyExpression> propertyPair = new HashMap<>();
         propertyPair.put(SUB, property);
         propertyPair.put(SUPER, sp);
-        propPairs.add(propertyPair);
-        if (!sp.isAnonymous()) {
-          property = (OWLDataProperty) sp;
-          spanGapsHelper(
-              ontology,
-              objects,
-              propPairs,
-              property,
-              EntitySearcher.getSuperProperties(property, ontology));
+        if (propPairs.add(propertyPair)) {
+          if (!sp.isAnonymous()) {
+            property = (OWLDataProperty) sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
@@ -1281,7 +1470,7 @@ public class RelatedObjectsHelper {
   private static void spanGapsHelper(
       OWLOntology ontology,
       Set<OWLObject> objects,
-      List<Map<String, OWLObjectPropertyExpression>> propPairs,
+      Set<Map<String, OWLObjectPropertyExpression>> propPairs,
       OWLObjectProperty property,
       Collection<OWLObjectPropertyExpression> superProperties) {
     for (OWLObjectPropertyExpression sp : superProperties) {
@@ -1289,15 +1478,16 @@ public class RelatedObjectsHelper {
         Map<String, OWLObjectPropertyExpression> propertyPair = new HashMap<>();
         propertyPair.put(SUB, property);
         propertyPair.put(SUPER, sp);
-        propPairs.add(propertyPair);
-        if (!sp.isAnonymous()) {
-          property = (OWLObjectProperty) sp;
-          spanGapsHelper(
-              ontology,
-              objects,
-              propPairs,
-              property,
-              EntitySearcher.getSuperProperties(property, ontology));
+        if (propPairs.add(propertyPair)) {
+          if (!sp.isAnonymous()) {
+            property = (OWLObjectProperty) sp;
+            spanGapsHelper(
+                ontology,
+                objects,
+                propPairs,
+                property,
+                EntitySearcher.getSuperProperties(property, ontology));
+          }
         }
       } else if (!sp.isAnonymous()) {
         spanGapsHelper(
