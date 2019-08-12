@@ -227,6 +227,26 @@ public class Report {
   }
 
   /**
+   * Given a rule name, return the violation count for that rule. Throw exception if rule does not exists.
+   *
+   * @param ruleName rule name to get number of violations for
+   * @return
+   */
+  public Integer getViolationCount(String ruleName) throws Exception {
+    if (info.containsKey(ruleName)) {
+      List<Violation> v = info.get(ruleName);
+      return v.size();
+    } else if (warn.containsKey(ruleName)) {
+      List<Violation> v = warn.get(ruleName);
+      return v.size();
+    } else if (error.containsKey(ruleName)) {
+      List<Violation> v = error.get(ruleName);
+      return v.size();
+    }
+    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
+  }
+
+  /**
    * Return the report in CSV format.
    *
    * @return CSV string
