@@ -22,10 +22,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.*;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
@@ -90,6 +87,9 @@ public class ReportOperation {
     options.put("labels", "false");
     options.put("format", "tsv");
     options.put("profile", null);
+    options.put("tdb", "false");
+    options.put("tdb-directory", ".tdb");
+    options.put("keep-tdb-mappings", "false");
     return options;
   }
 
@@ -234,6 +234,23 @@ public class ReportOperation {
   }
 
   /**
+   * Given an input path, an output path (or null), and a map of options, report on the ontology
+   * using the rules within the profile specified by the options and write results to the output
+   * path. Ontology is loaded to dataset backed on disk. The labels option is not supported with TDB.
+   *
+   * @param inputPath String path of ontology to load
+   * @param outputPath String path to write report file to, or null
+   * @param options map of report options
+   * @return false if there are violations at or above the fail-on level, true otherwise
+   * @throws Exception on any reporting error
+   */
+  public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
+      throws Exception {
+    Report report = getTDBReport(inputPath, options);
+    return processReport(report, outputPath, options);
+  }
+
+  /**
    * Given an ontology, an IOHelper, and a map of options, create a Report object and run the report
    * queries specified in a profile (from options, or default). Return the completed Report object.
    *
@@ -266,7 +283,6 @@ public class ReportOperation {
       report = new Report(ontology, useLabels);
     }
 
-    // Load into dataset without imports
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
@@ -280,12 +296,101 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations = getViolations(dataset, queryString);
+      List<Violation> violations = getViolations(dataset, queryString, false);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
+      report.addViolations(
+          queryName, profile.get(queryName), getViolations(dataset, queryString, false));
+    }
+
+    return report;
+  }
+
+  /**
+   * Given an input path to an ontology and a map of options, create a Report object and run (on TDB dataset) the report
+   * queries specified in a profile (from options, or default). Return the completed Report object. The labels option is not supported with TDB.
+   *
+   * @param inputPath path to load triples to TDB
+   * @param options map of report options
+   * @return Report object with violation details
+   * @throws Exception on any query or reporting error
+   */
+  public static Report getTDBReport(String inputPath, Map<String, String> options)
+      throws Exception {
+    String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
+    System.out.println("Loading to " + tdbDir);
+    Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
+
+    Report report;
+    boolean keepMappings = OptionsHelper.optionIsTrue(options, "keep-tdb-mappings");
+    try {
+      report = getTDBReport(dataset, options);
+    } finally {
+      // Close and release
+      dataset.close();
+      // TODO: ??? TDBFactory.release(dataset);
+      if (!keepMappings) {
+        // Maybe delete
+        boolean success = IOHelper.cleanTDB(tdbDir);
+        if (!success) {
+          logger.error(String.format("Unable to remove directory '%s'", tdbDir));
+        }
+      }
+    }
+
+    return report;
+  }
+
+  /**
+   * Given a dataset and a map of options, create a Report object and run (on TDB dataset) the report
+   * queries specified in a profile (from options, or default). Return the completed Report object. The labels option is not supported with TDB.
+   *
+   * @param dataset TDB Dataset to perform Report operation on
+   * @param options Map of report options
+   * @return Report object with violation details
+   * @throws Exception on any reporting error
+   */
+  public static Report getTDBReport(Dataset dataset, Map<String, String> options) throws Exception {
+    // Get options specified in map or default options
+    if (options == null) {
+      options = getDefaultOptions();
+    }
+
+    String profilePath = OptionsHelper.getOption(options, "profile", "0");
+    boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+    if (useLabels) {
+      logger.warn("Cannot use labels with TDB - ignoring labels option.");
+    }
+
+    // The profile is a map of rule name and reporting level
+    Map<String, String> profile = getProfile(profilePath);
+    // The queries is a map of rule name and query string
+    Map<String, String> queries = getQueryStrings(profile.keySet());
+
+    // Create the report object
+    Report report = new Report();
+
+    for (String queryName : queries.keySet()) {
+      String fullQueryString = queries.get(queryName);
+      String queryString;
+      // Remove any comments
+      List<String> lines = new ArrayList<>();
+      for (String line : fullQueryString.split("\n")) {
+        if (!line.startsWith("#")) {
+          lines.add(line);
+        }
+      }
+      queryString = String.join("\n", lines);
+      // Use the query to get violations
+      List<Violation> violations = getViolations(dataset, queryString, true);
+      // If violations is not returned properly, the query did not have the correct format
+      if (violations == null) {
+        throw new Exception(String.format(missingEntityBinding, queryName));
+      }
+      report.addViolations(
+          queryName, profile.get(queryName), getViolations(dataset, queryString, true));
     }
 
     return report;
@@ -605,7 +710,7 @@ public class ReportOperation {
   /**
    * Given an ontology as a DatasetGraph and a query, return the violations found by that query.
    *
-   * @deprecated use {@link #getViolations(Dataset, String)} instead.
+   * @deprecated use {@link #getViolations(Dataset, String, boolean)} instead.
    * @param dsg the ontology as a graph
    * @param query the query
    * @return List of Violations
@@ -613,7 +718,7 @@ public class ReportOperation {
    */
   @Deprecated
   private static List<Violation> getViolations(DatasetGraph dsg, String query) throws IOException {
-    return getViolations(DatasetFactory.wrap(dsg), query);
+    return getViolations(DatasetFactory.wrap(dsg), query, false);
   }
 
   /**
@@ -624,8 +729,20 @@ public class ReportOperation {
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(Dataset dataset, String query) throws IOException {
-    ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+  private static List<Violation> getViolations(Dataset dataset, String query, boolean tdb)
+      throws IOException {
+    ResultSet violationSet;
+    if (tdb) {
+      // If using TDB we must be in a read transaction to query
+      dataset.begin(ReadWrite.READ);
+      try {
+        violationSet = QueryOperation.execQuery(dataset, query);
+      } finally {
+        dataset.end();
+      }
+    } else {
+      violationSet = QueryOperation.execQuery(dataset, query);
+    }
 
     List<Violation> violations = new ArrayList<>();
 

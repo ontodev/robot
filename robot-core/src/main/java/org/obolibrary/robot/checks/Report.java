@@ -36,31 +36,31 @@ public class Report {
   private static final String NEW_LINE = System.getProperty("line.separator");
 
   /** Map of rules and the violations for INFO level. */
-  public Map<String, List<Violation>> info;
+  public Map<String, List<Violation>> info = new HashMap<>();
 
   /** Map of rules and the violations for WARN level. */
-  public Map<String, List<Violation>> warn;
+  public Map<String, List<Violation>> warn = new HashMap<>();
 
   /** Map of rules and the violations for ERROR level. */
-  public Map<String, List<Violation>> error;
+  public Map<String, List<Violation>> error = new HashMap<>();
 
   /** Boolean to use labels for output - defaults to false. */
   private boolean useLabels = false;
 
   /** Count of violations for INFO. */
-  private Integer infoCount;
+  private Integer infoCount = 0;
 
   /** Count of violations for WARN. */
-  private Integer warnCount;
+  private Integer warnCount = 0;
 
   /** Count of violations for ERROR. */
-  private Integer errorCount;
+  private Integer errorCount = 0;
 
   /** IOHelper to use. */
   private IOHelper ioHelper;
 
   /** QuotedEntityChecker to use. */
-  private QuotedEntityChecker checker;
+  private QuotedEntityChecker checker = null;
 
   /**
    * Create a new report object without an ontology or predefined IOHelper.
@@ -68,42 +68,32 @@ public class Report {
    * @throws IOException on problem creating IOHelper
    */
   public Report() throws IOException {
-    new Report(null, new IOHelper(), false);
+    ioHelper = new IOHelper();
   }
 
   /**
-   * Create a new report object with an ontology and a new IOHelper.
-   *
-   * @param ontology OWLOntology to get labels from
-   * @throws IOException on problem creating IOHelper
-   */
-  public Report(OWLOntology ontology) throws IOException {
-    new Report(ontology, new IOHelper(), false);
-  }
-
-  /**
-   * Create a new report object with an ontology using labels for output.
+   * Create a new report object with an ontology (maybe) using labels for output.
    *
    * @param ontology OWLOntology to get labels from
    * @param useLabels if true, use labels for output
    * @throws IOException on problem creating IOHelper
    */
   public Report(OWLOntology ontology, boolean useLabels) throws IOException {
-    new Report(ontology, new IOHelper(), false);
+    ioHelper = new IOHelper();
+
+    if (useLabels) {
+      checker = new QuotedEntityChecker();
+      checker.setIOHelper(this.ioHelper);
+      checker.addProvider(new SimpleShortFormProvider());
+      checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
+      if (ontology != null) {
+        checker.addAll(ontology);
+      }
+    }
   }
 
   /**
-   * Create a new report object with an ontology and an IOHelper.
-   *
-   * @param ontology OWLOntology to get labels from
-   * @param ioHelper IOHelper to use
-   */
-  public Report(OWLOntology ontology, IOHelper ioHelper) {
-    new Report(ontology, ioHelper, false);
-  }
-
-  /**
-   * Create a new report object with an ontology to get labels from and a defined IOHelper.
+   * Create a new report object with an ontology to (maybe) get labels from and a defined IOHelper.
    *
    * @param ontology OWLOntology to get labels from
    * @param ioHelper IOHelper to use
@@ -120,16 +110,36 @@ public class Report {
         checker.addAll(ontology);
       }
     }
-
     this.useLabels = useLabels;
+  }
 
-    info = new HashMap<>();
-    warn = new HashMap<>();
-    error = new HashMap<>();
+  /**
+   * Create a new report object with an ontology and a new IOHelper.
+   *
+   * @deprecated Report will not do anything with the ontology when not using labels. Use either
+   *     {@link #Report()} or {@link #Report(OWLOntology, boolean)} or {@link #Report(OWLOntology,
+   *     IOHelper, boolean)}.
+   * @param ontology OWLOntology to get labels from
+   * @throws IOException on problem creating IOHelper
+   */
+  @Deprecated
+  public Report(OWLOntology ontology) throws IOException {
+    // Ontology doesn't do anything without labels
+    ioHelper = new IOHelper();
+  }
 
-    infoCount = 0;
-    warnCount = 0;
-    errorCount = 0;
+  /**
+   * Create a new report object with an ontology and an IOHelper.
+   *
+   * @deprecated Report will not do anything with the ontology when not using labels. Use either
+   *     {@link #Report(OWLOntology, boolean)} or {@link #Report(OWLOntology, IOHelper, boolean)}.
+   * @param ontology OWLOntology object
+   * @param ioHelper IOHelper to use
+   */
+  @Deprecated
+  public Report(OWLOntology ontology, IOHelper ioHelper) {
+    // Ontology doesn't do anything without labels
+    this.ioHelper = ioHelper;
   }
 
   /**
@@ -227,7 +237,8 @@ public class Report {
   }
 
   /**
-   * Given a rule name, return the violation count for that rule. Throw exception if rule does not exists.
+   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
+   * exists.
    *
    * @param ruleName rule name to get number of violations for
    * @return
@@ -362,16 +373,19 @@ public class Report {
    */
   private String maybeGetLabel(String iriString) {
     IRI iri = IRI.create(iriString);
-    String label = checker.getLabel(iri);
-    if (label == null || label.equals("")) {
-      if (iriString.matches("[a-z0-9]{32}")) {
-        // Label blank nodes
-        return "blank node";
-      } else {
-        return null;
+    if (checker != null) {
+      String label = checker.getLabel(iri);
+      if (label == null || label.equals("")) {
+        if (iriString.matches("[a-z0-9]{32}")) {
+          // Label blank nodes
+          return "blank node";
+        } else {
+          return null;
+        }
       }
+      return label;
     }
-    return label;
+    return null;
   }
 
   /**
