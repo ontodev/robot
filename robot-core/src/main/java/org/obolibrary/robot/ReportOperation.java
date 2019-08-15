@@ -23,7 +23,6 @@ import java.util.jar.JarFile;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
-import org.apache.jena.sparql.core.DatasetGraph;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -49,6 +48,10 @@ public class ReportOperation {
 
   /** Error message when user profiles an invalid fail-on level. */
   private static final String failOnError = NS + "FAIL ON ERROR '%s' is not a valid fail-on level.";
+
+  /** Error message when 'limit' is not a number. */
+  private static final String limitNumberError =
+      NS + "LIMIT NUMBER ERROR --limit argument '%s' must be an integer.";
 
   /** Error message when the query does not have ?entity. */
   private static final String missingEntityBinding =
@@ -236,7 +239,8 @@ public class ReportOperation {
   /**
    * Given an input path, an output path (or null), and a map of options, report on the ontology
    * using the rules within the profile specified by the options and write results to the output
-   * path. Ontology is loaded to dataset backed on disk. The labels option is not supported with TDB.
+   * path. Ontology is loaded to dataset backed on disk. The labels option is not supported with
+   * TDB.
    *
    * @param inputPath String path of ontology to load
    * @param outputPath String path to write report file to, or null
@@ -296,21 +300,24 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations = getViolations(dataset, queryString, false);
+      List<Violation> violations = getViolations(dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
       report.addViolations(
-          queryName, profile.get(queryName), getViolations(dataset, queryString, false));
+          queryName,
+          profile.get(queryName),
+          getViolations(dataset, queryName, queryString, options));
     }
 
     return report;
   }
 
   /**
-   * Given an input path to an ontology and a map of options, create a Report object and run (on TDB dataset) the report
-   * queries specified in a profile (from options, or default). Return the completed Report object. The labels option is not supported with TDB.
+   * Given an input path to an ontology and a map of options, create a Report object and run (on TDB
+   * dataset) the report queries specified in a profile (from options, or default). Return the
+   * completed Report object. The labels option is not supported with TDB.
    *
    * @param inputPath path to load triples to TDB
    * @param options map of report options
@@ -320,7 +327,6 @@ public class ReportOperation {
   public static Report getTDBReport(String inputPath, Map<String, String> options)
       throws Exception {
     String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
-    System.out.println("Loading to " + tdbDir);
     Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
 
     Report report;
@@ -344,8 +350,9 @@ public class ReportOperation {
   }
 
   /**
-   * Given a dataset and a map of options, create a Report object and run (on TDB dataset) the report
-   * queries specified in a profile (from options, or default). Return the completed Report object. The labels option is not supported with TDB.
+   * Given a dataset and a map of options, create a Report object and run (on TDB dataset) the
+   * report queries specified in a profile (from options, or default). Return the completed Report
+   * object. The labels option is not supported with TDB.
    *
    * @param dataset TDB Dataset to perform Report operation on
    * @param options Map of report options
@@ -357,6 +364,8 @@ public class ReportOperation {
     if (options == null) {
       options = getDefaultOptions();
     }
+    // Make sure TDB is true here
+    options.put("tdb", "true");
 
     String profilePath = OptionsHelper.getOption(options, "profile", "0");
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
@@ -384,13 +393,15 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations = getViolations(dataset, queryString, true);
+      List<Violation> violations = getViolations(dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
       report.addViolations(
-          queryName, profile.get(queryName), getViolations(dataset, queryString, true));
+          queryName,
+          profile.get(queryName),
+          getViolations(dataset, queryName, queryString, options));
     }
 
     return report;
@@ -708,20 +719,6 @@ public class ReportOperation {
   }
 
   /**
-   * Given an ontology as a DatasetGraph and a query, return the violations found by that query.
-   *
-   * @deprecated use {@link #getViolations(Dataset, String, boolean)} instead.
-   * @param dsg the ontology as a graph
-   * @param query the query
-   * @return List of Violations
-   * @throws IOException on issue parsing query
-   */
-  @Deprecated
-  private static List<Violation> getViolations(DatasetGraph dsg, String query) throws IOException {
-    return getViolations(DatasetFactory.wrap(dsg), query, false);
-  }
-
-  /**
    * Given an ontology as a Dataset and a query, return the violations found by that query.
    *
    * @param dataset the ontology/ontologies as a dataset
@@ -729,34 +726,86 @@ public class ReportOperation {
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(Dataset dataset, String query, boolean tdb)
-      throws IOException {
+  private static List<Violation> getViolations(
+      Dataset dataset, String queryName, String query, Map<String, String> options)
+      throws Exception {
+    boolean tdb = OptionsHelper.optionIsTrue(options, "tdb");
+    String limitString = OptionsHelper.getOption(options, "limit", null);
+    Integer limit = null;
+    if (limitString != null) {
+      try {
+        limit = Integer.parseInt(limitString);
+      } catch (NumberFormatException e) {
+        throw new Exception(String.format(limitNumberError, limitString));
+      }
+    }
+
     ResultSet violationSet;
     if (tdb) {
       // If using TDB we must be in a read transaction to query
       dataset.begin(ReadWrite.READ);
       try {
         violationSet = QueryOperation.execQuery(dataset, query);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return null;
       } finally {
+        // Always end the transaction
         dataset.end();
       }
     } else {
-      violationSet = QueryOperation.execQuery(dataset, query);
+      try {
+        violationSet = QueryOperation.execQuery(dataset, query);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return null;
+      }
     }
 
     List<Violation> violations = new ArrayList<>();
 
+    // Counter for stopping at limit
+    int c = 0;
     while (violationSet.hasNext()) {
-      QuerySolution qs = violationSet.next();
-      // entity should never be null
+      if (limit != null && limit <= c) {
+        // Stop checking violations
+        break;
+      }
+
+      // Wrap in try catch in case GC overflows
+      // Will return results up to this point with warning that report may be incomplete
+      QuerySolution qs;
+      try {
+        qs = violationSet.next();
+      } catch (Exception e) {
+        logger.error(
+            String.format(
+                "Could not retrieve all results for query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return violations;
+      }
+
+      // entity should never be null (missing entity binding error)
       String entity = getQueryResultOrNull(qs, "entity");
       if (entity == null) {
-        return null;
+        throw new Exception(String.format(missingEntityBinding, queryName));
       }
+
       // skip RDFS and OWL terms
       if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
         continue;
       }
+
       Violation violation = new Violation(entity);
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
@@ -766,6 +815,9 @@ public class ReportOperation {
         violation.addStatement(property, value);
       }
       violations.add(violation);
+
+      // Increase counter
+      c++;
     }
     return violations;
   }

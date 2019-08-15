@@ -47,6 +47,10 @@ public class QueryOperation {
    */
   private static final String syntaxError = NS + "SYNTAX ERROR %s cannot be read:\n%s";
 
+  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
+  protected static final String tdbFormatError =
+      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
+
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
    *
@@ -142,6 +146,10 @@ public class QueryOperation {
    */
   public static Dataset loadTriplesAsDataset(String inputPath, String tdbDir) throws IOException {
     // Dataset backed by a temp dir
+    if (!inputPath.endsWith(".rdf") && !inputPath.endsWith(".owl") && !inputPath.endsWith(".ttl")) {
+      throw new IllegalArgumentException(tdbFormatError);
+    }
+
     Dataset dataset;
     if (new File(tdbDir).isDirectory()) {
       dataset = TDBFactory.createDataset(tdbDir);

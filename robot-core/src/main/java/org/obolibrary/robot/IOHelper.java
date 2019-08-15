@@ -31,15 +31,7 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -200,6 +192,32 @@ public class IOHelper {
 
     addPrefixes(df, prefixMap);
     saveOntology(ontology, df, IRI.create(outputFile));
+  }
+
+  /**
+   * Given a directory containing TDB mappings, remove the files and directory. If successful,
+   * return true.
+   *
+   * @param tdbDir directory to remove
+   * @return boolean indicating success
+   */
+  public static boolean cleanTDB(String tdbDir) {
+    File dir = new File(tdbDir);
+    boolean success = true;
+    if (dir.exists()) {
+      String[] files = dir.list();
+      if (files != null) {
+        for (String file : files) {
+          File f = new File(dir.getPath(), file);
+          success = f.delete();
+        }
+      }
+      // Only delete if all the files in dir were deleted
+      if (success) {
+        success = dir.delete();
+      }
+    }
+    return success;
   }
 
   /**
@@ -443,6 +461,7 @@ public class IOHelper {
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
     }
+
     return ontology;
   }
 

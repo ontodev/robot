@@ -33,6 +33,7 @@ public class ReportCommand implements Command {
     o.addOption("t", "tdb", true, "if true, load RDF/XML or TTL onto disk");
     o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
     o.addOption("d", "tdb-directory", true, "directory to put TDB mappings (default: .tdb)");
+    o.addOption("L", "limit", true, "specify a number of results to limit queries to");
     options = o;
   }
 
