@@ -5,14 +5,32 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.obolibrary.macro.ManchesterSyntaxTool;
+import org.semanticweb.owlapi.manchestersyntax.renderer.ParserException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.util.ShortFormProvider;
+import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
+/**
+ * TODO:
+ * - Put in the right cases in the ontology and in the csv (e.g. 'Hepatitis C' instead of 'hepatitis c')
+ * - Allow for multiple subclasses and axioms in the 'sc' and 'has-axiom' rule types. We will implement this
+ *   by allowing a separator.
+ *   E.g.
+ *     sc: %3 & organelle; has-axiom: hasMaterialBasisIn some %2 & isCousinOf any %3
+ */
 
 
 /**
@@ -84,16 +102,27 @@ public class ValidateOperation {
           continue;
         }
         IRI child = ValidateOperation.labelToIriMap.get(childLabel);
-        logger.info("Found child: " + child.toString() + " with label: " + childLabel);
+        logger.debug("Found child: " + child.toString() + " with label: " + childLabel);
 
-        // Perform further validation depending on any rules that have been defined for this column:
+        // Below, perform further validation depending on any rules that have been defined for this
+        // column.
+
+        // The 'the entity in this column has the following axiom' rule:
+        if (colRules.containsKey("has-axiom")) {
+          validate_axioms(
+              child, childLabel, colRules.get("has-axiom"), reasoner, row, rowIndex, colIndex);
+        }
+
+        // The 'the entity in this column has the following subclasses' rule:
+        // NOTE: Possibly this validator can be subsumed under validate_axioms
         if (colRules.containsKey("sc")) {
           validate_ancestry(
               child, childLabel, colRules.get("sc"), reasoner, row, rowIndex, colIndex);
         }
 
+        // The 'the entity in this column is the same as the one in that column' rule:
         if (colRules.containsKey("same-as")) {
-          validate_twin_cells(
+          validate_twins(
               child, childLabel, colRules.get("same-as"), reasoner, row, rowIndex, colIndex);
         }
       }
@@ -209,6 +238,58 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+  private static void validate_axioms(
+      IRI child,
+      String childLabel,
+      String axiom,
+      OWLReasoner reasoner,
+      List<String> row,
+      int rowIndex,
+      int colIndex) throws Exception, IOException {
+
+    // TODO: Add a debug statement like this one to every validate_ function.
+    logger.debug(String.format(
+        "validate_axioms(): Called with parameters: " +
+        "child: '%s', " +
+        "childLabel: '%s', " +
+        "axiom: '%s', " +
+        "reasoner: '%s', " +
+        "row: '%s', " +
+        "rowIndex: '%s', " +
+        "colIndex: '%s'. ",
+        child.getShortForm(), childLabel, axiom, reasoner.getClass().getSimpleName(), row,
+        rowIndex, colIndex));
+
+    OWLClass childClass = OntologyHelper.getEntity(ValidateOperation.ontology, child).asOWLClass();
+    ManchesterSyntaxTool parser = new ManchesterSyntaxTool(ontology);
+    OWLClassExpression ce;
+    try {
+      ce = parser.parseManchesterExpression(axiom);
+    }
+    catch (ParserException e) {
+      writeout("Unable to parse axiom: '" + axiom + "'", rowIndex, colIndex);
+      return;
+    }
+    logger.debug("Class expression: " + ce);
+
+    // Check to see if the child is a direct subclass of the given axiom:
+    NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, true);
+    logger.debug("Found subclasses: " + subClassesFound);
+
+    if (!subClassesFound.containsEntity(childClass)) {
+      writeout(
+          String.format(
+              "%s (%s) is not a direct descendant of '%s'\n",
+              child.getShortForm(), childLabel, axiom),
+          rowIndex, colIndex);
+    }
+
+    parser.dispose();
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
   private static void validate_ancestry(
       IRI child,
       String childLabel,
@@ -227,7 +308,7 @@ public class ValidateOperation {
     }
 
     IRI parent = ValidateOperation.labelToIriMap.get(parentLabel);
-    logger.info("Found parent: " + parent.toString() + " with label: " + parentLabel);
+    logger.debug("Found parent: " + parent.toString() + " with label: " + parentLabel);
 
     // Get the OWLClass corresponding to the parent:
     OWLClass parentClass = OntologyHelper.getEntity(ValidateOperation.ontology, parent).asOWLClass();
@@ -241,14 +322,17 @@ public class ValidateOperation {
       writeout(
           String.format(
               "%s (%s) is not a descendant of %s (%s)\n",
-              child.toString(), childLabel, parent.toString(), parentLabel),
+              child.getShortForm(), childLabel, parent.getShortForm(), parentLabel),
           rowIndex, colIndex);
     }
     logger.info(
         String.format("Relationship between '%s' and '%s' is valid.", childLabel, parentLabel));
   }
 
-  private static void validate_twin_cells(
+  /**
+   * INSERT DOC HERE
+   */
+  private static void validate_twins(
       IRI jacob,
       String jacobLabel,
       String esauRule,
@@ -269,13 +353,13 @@ public class ValidateOperation {
       writeout(
           String.format(
               "Cell's IRI: %s (%s) does not match IRI: %s (%s) inferred from rule '%s'",
-              jacob.toString(), jacobLabel, esau.toString(), esauLabel, esauRule),
+              jacob.getShortForm(), jacobLabel, esau.getShortForm(), esauLabel, esauRule),
           rowIndex, colIndex);
     }
 
     logger.info(
         String.format(
             "Validated that the content identified by '%s' identifies the same entity as '%s'",
-            esauRule, jacob.toString()));
+            esauRule, jacob.getShortForm()));
   }
 }
