@@ -334,6 +334,15 @@
     
 
 
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#MADEUPID -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#MADEUPID">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_12549"/>
+        <rdfs:label>hepatitis a variant</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407">
