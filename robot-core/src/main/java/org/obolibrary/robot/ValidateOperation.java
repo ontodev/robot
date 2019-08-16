@@ -26,10 +26,10 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO:
  * - Put in the right cases in the ontology and in the csv (e.g. 'Hepatitis C' instead of 'hepatitis c')
- * - Allow for multiple subclasses and axioms in the 'sc' and 'has-axiom' rule types. We will implement this
- *   by allowing a separator.
+ * - When encountering an unrecognised rule type, emit a warning.
+ * - Allow for more than one restriction under a given rule type by using a separator:
  *   E.g.
- *     sc: %3 & organelle; has-axiom: hasMaterialBasisIn some %2 & isCousinOf any %3
+ *     sc: %3 & organelle; falls-directly-under: hasMaterialBasisIn some %2 & isCousinOf any %3
  */
 
 
@@ -65,6 +65,10 @@ public class ValidateOperation {
 
   /** The column of CSV data currently being processed */
   private static int csv_col_index;
+
+  /** An enum representation of the type of query to make. Note that enums in Java are implicitly
+      static and final */
+  private enum QEnum { DIRECT_SUPER, SUPER, EQUIV, DIRECT_SUB, SUB, INSTANCE; }
 
   /**
    * INSERT DOC HERE
@@ -116,13 +120,40 @@ public class ValidateOperation {
         // Below, perform further validation depending on any rules that have been defined for this
         // column.
 
-        // The 'the entity in this column has the following axiom' rule:
-        if (colRules.containsKey("has-axiom")) {
-          validate_axioms(child, childLabel, colRules.get("has-axiom"), reasoner, row);
+        // The various 'the entity in this column has the following axiom' rules:
+        if (colRules.containsKey("falls-under")) {
+          validate_axiom(
+              child, childLabel, colRules.get("falls-under"), reasoner, row, QEnum.SUB);
+        }
+
+        if (colRules.containsKey("falls-directly-under")) {
+          validate_axiom(
+              child, childLabel, colRules.get("falls-directly-under"), reasoner, row,
+              QEnum.DIRECT_SUB);
+        }
+
+        if (colRules.containsKey("subsumes")) {
+          validate_axiom(
+              child, childLabel, colRules.get("subsumes"), reasoner, row, QEnum.SUPER);
+        }
+
+        if (colRules.containsKey("directly-subsumes")) {
+          validate_axiom(
+              child, childLabel, colRules.get("directly-subsumes"), reasoner, row,
+              QEnum.DIRECT_SUPER);
+        }
+
+        if (colRules.containsKey("equivalent-to")) {
+          validate_axiom(
+              child, childLabel, colRules.get("equivalent-to"), reasoner, row, QEnum.EQUIV);
+        }
+
+        if (colRules.containsKey("instance-of")) {
+          validate_axiom(
+              child, childLabel, colRules.get("instance-of"), reasoner, row, QEnum.INSTANCE);
         }
 
         // The 'the entity in this column has the following subclasses' rule:
-        // NOTE: Possibly this validator can be subsumed under validate_axioms
         if (colRules.containsKey("sc")) {
           validate_ancestry(child, childLabel, colRules.get("sc"), reasoner, row);
         }
@@ -276,22 +307,23 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static void validate_axioms(
-      IRI child,
-      String childLabel,
+  private static void validate_axiom(
+      IRI iri,
+      String label,
       String axiom,
       OWLReasoner reasoner,
-      List<String> row) throws Exception, IOException {
+      List<String> row,
+      QEnum qType) throws Exception, IOException {
 
     // TODO: Add a debug statement like this one to every validate_ function.
     logger.debug(String.format(
-        "validate_axioms(): Called with parameters: " +
-        "child: '%s', " +
-        "childLabel: '%s', " +
+        "validate_axiom(): Called with parameters: " +
+        "iri: '%s', " +
+        "label: '%s', " +
         "axiom: '%s', " +
         "reasoner: '%s', " +
         "row: '%s'.",
-        child.getShortForm(), childLabel, axiom, reasoner.getClass().getSimpleName(), row));
+        iri.getShortForm(), label, axiom, reasoner.getClass().getSimpleName(), row));
 
     // Interpolate any wildcards in the axiom into rdfs:label strings and then try to parse it:
     String interpolatedAxiom = interpolate_axiom(axiom, row);
@@ -305,14 +337,26 @@ public class ValidateOperation {
       return;
     }
 
-    // Check to see if the child is a direct subclass of the given axiom:
-    NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, true);
-    OWLClass childClass = OntologyHelper.getEntity(ontology, child).asOWLClass();
-    if (!subClassesFound.containsEntity(childClass)) {
-      writeout(
-          String.format(
-              "%s (%s) is not a direct descendant of '%s'\n",
-              child.getShortForm(), childLabel, interpolatedAxiom));
+    OWLClass iriClass = OntologyHelper.getEntity(ontology, iri).asOWLClass();
+
+    if (qType == QEnum.SUB || qType == QEnum.DIRECT_SUB) {
+      // Check to see if the iri is a (direct) subclass of the given axiom:
+      NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, qType == QEnum.DIRECT_SUB);
+      if (!subClassesFound.containsEntity(iriClass)) {
+        writeout(
+            String.format(
+                "%s (%s) is not a%s descendant of '%s'",
+                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", interpolatedAxiom));
+      }
+      else {
+        logger.info(
+            String.format(
+                "Validated that %s (%s) is a%s descendant of '%s'",
+                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", interpolatedAxiom));
+      }
+    }
+    else {
+      logger.error("Only subclass queries are currently implemented");
     }
 
     parser.dispose();
@@ -349,7 +393,7 @@ public class ValidateOperation {
     if (!childAncestors.containsEntity(parentClass)) {
       writeout(
           String.format(
-              "%s (%s) is not a descendant of %s (%s)\n",
+              "%s (%s) is not a descendant of %s (%s)",
               child.getShortForm(), childLabel, parent.getShortForm(), parentLabel));
     }
     logger.info(
