@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.obolibrary.macro.ManchesterSyntaxTool;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ParserException;
 import org.semanticweb.owlapi.model.IRI;
@@ -220,7 +222,7 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String construct_label_from_rule(String rule, List<String> row) {
+  private static String wildcard_to_label(String rule, List<String> row) {
     String term = null;
     if (rule.startsWith("%")) {
       int colIndex = Integer.parseInt(rule.substring(1)) - 1;
@@ -243,6 +245,37 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+  private static String interpolate_axiom(String axiom, List<String> row) throws IOException {
+    Matcher m = Pattern.compile("%\\d+").matcher(axiom);
+    String interpolatedAxiom = "";
+    int currIndex = 0;
+    while (m.find()) {
+      String label = wildcard_to_label(m.group(), row);
+      // If there is a problem finding the label for one of the wildcards, then just send back the
+      // axiom as is:
+      if (label == null) {
+        logger.error("Could not find a label corresponding to: '" + m.group() + "'");
+        return axiom;
+      }
+
+      // Enclose the label in single quotes if it contains whitespace:
+      if (label.contains(" ") || label.contains("\t")) {
+        label = "'" + label + "'";
+      }
+
+      // Iteratively build the interpolated axiom up to the current label:
+      interpolatedAxiom = interpolatedAxiom + axiom.substring(currIndex, m.start()) + label;
+      currIndex = m.end();
+    }
+    // There may be text after the final wildcard, so add it now:
+    interpolatedAxiom += axiom.substring(currIndex);
+    logger.debug(String.format("Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom));
+    return interpolatedAxiom;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
   private static void validate_axioms(
       IRI child,
       String childLabel,
@@ -257,34 +290,29 @@ public class ValidateOperation {
         "childLabel: '%s', " +
         "axiom: '%s', " +
         "reasoner: '%s', " +
-        "row: '%s', " +
-        "csv_row_index: '%s', " +
-        "csv_col_index: '%s'. ",
-        child.getShortForm(), childLabel, axiom, reasoner.getClass().getSimpleName(), row,
-        csv_row_index, csv_col_index));
+        "row: '%s'.",
+        child.getShortForm(), childLabel, axiom, reasoner.getClass().getSimpleName(), row));
 
-    OWLClass childClass = OntologyHelper.getEntity(ontology, child).asOWLClass();
-
+    // Interpolate any wildcards in the axiom into rdfs:label strings and then try to parse it:
+    String interpolatedAxiom = interpolate_axiom(axiom, row);
     ManchesterSyntaxTool parser = new ManchesterSyntaxTool(ontology);
     OWLClassExpression ce;
     try {
-      ce = parser.parseManchesterExpression(axiom);
+      ce = parser.parseManchesterExpression(interpolatedAxiom);
     }
     catch (ParserException e) {
-      writeout("Unable to parse axiom: '" + axiom + "'");
+      logger.error("Unable to parse axiom: '" + interpolatedAxiom + "'");
       return;
     }
-    logger.debug("Class expression: " + ce);
 
     // Check to see if the child is a direct subclass of the given axiom:
     NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, true);
-    logger.debug("Found subclasses: " + subClassesFound);
-
+    OWLClass childClass = OntologyHelper.getEntity(ontology, child).asOWLClass();
     if (!subClassesFound.containsEntity(childClass)) {
       writeout(
           String.format(
               "%s (%s) is not a direct descendant of '%s'\n",
-              child.getShortForm(), childLabel, axiom));
+              child.getShortForm(), childLabel, interpolatedAxiom));
     }
 
     parser.dispose();
@@ -301,9 +329,9 @@ public class ValidateOperation {
       List<String> row)
       throws Exception {
 
-    String parentLabel = construct_label_from_rule(parentRule, row);
+    String parentLabel = wildcard_to_label(parentRule, row);
     if (parentLabel == null) {
-      writeout("Could not determine parent from rule '" + parentRule + "'");
+      logger.error("Could not determine parent from rule '" + parentRule + "'");
       return;
     }
 
@@ -338,9 +366,9 @@ public class ValidateOperation {
       OWLReasoner reasoner,
       List<String> row) throws IOException {
 
-    String esauLabel = construct_label_from_rule(esauRule, row);
+    String esauLabel = wildcard_to_label(esauRule, row);
     if (esauLabel == null) {
-      writeout("Could not determine twin cell from rule '" + esauRule + "'");
+      logger.error("Could not determine twin cell from rule '" + esauRule + "'");
       return;
     }
 

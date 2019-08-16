@@ -1,5 +1,5 @@
 exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported
-sc: exposure process;,sc: exposure material; same-as: %3,sc: exposure material,sc: disease; same-as: %5,sc: disease,sc: disease stage;
+sc: exposure process;,sc: exposure material; same-as: %3,sc: exposure material,sc: disease; same-as: %5; has-axiom: hasMaterialBasisIn some %3,sc: disease,sc: disease stage;
 exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
 exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
 exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
