@@ -14,7 +14,10 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -26,10 +29,13 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO:
  * - Put in the right cases in the ontology and in the csv (e.g. 'Hepatitis C' instead of 'hepatitis c')
- * - When encountering an unrecognised rule type, emit a warning.
  * - Allow for more than one restriction under a given rule type by using a separator:
  *   E.g.
- *     sc: %3 & organelle; falls-directly-under: hasMaterialBasisIn some %2 & isCousinOf any %3
+ *     sc: %3 & organelle; subsumed-directly-by: hasMaterialBasisIn some %2 & isCousinOf any %3
+ * - Make sure that quotes are treated consistently and correctly when parsing rules. Right now it (seems)
+ *   that literal labels are parsed correctly as long as they are in single quotes (even if they consist
+ *   of only one word. Everything else should not be enclosed in quotes.
+ * - In rules, we currently only accept labels. Should we accept IRIs too?
  */
 
 
@@ -66,9 +72,34 @@ public class ValidateOperation {
   /** The column of CSV data currently being processed */
   private static int csv_col_index;
 
-  /** An enum representation of the type of query to make. Note that enums in Java are implicitly
-      static and final */
-  private enum QEnum { DIRECT_SUPER, SUPER, EQUIV, DIRECT_SUB, SUB, INSTANCE; }
+  /** An enum representation of the type of query to make. */
+  private enum QEnum {
+    DIRECT_SUPER("directly-subsumes"),
+    SUPER("subsumes"),
+    EQUIV("equivalent-to"),
+    DIRECT_SUB("directly-subsumed-by"),
+    SUB("subsumed-by"),
+    DIRECT_INSTANCE("direct-instance-of"),
+    INSTANCE("instance-of");
+
+    private String ruleName;
+
+    QEnum(String ruleName) {
+      this.ruleName = ruleName;
+    }
+
+    public String getRuleName() {
+      return ruleName;
+    }
+  }
+
+  /** Reverse map from QEnum rule names to QEnums, populated at load time */
+  private static final Map<String, QEnum> ruleNameToQEnumMap = new HashMap<>();
+  static {
+    for (QEnum q : QEnum.values()) {
+      ruleNameToQEnumMap.put(q.getRuleName(), q);
+    }
+  }
 
   /**
    * INSERT DOC HERE
@@ -103,64 +134,26 @@ public class ValidateOperation {
         String colName = header.get(csv_col_index);
         Map<String, String> colRules = headerToRuleMap.get(colName);
 
-        // Get the contents of the current cell (the 'child data')
-        String childCell = row.get(csv_col_index).trim();
-        if (childCell.equals("")) continue;
+        // Get the contents of the current cell (skip any empty ones)
+        String cell = row.get(csv_col_index).trim();
+        if (cell.equals("")) continue;
 
-        // Get the rdfs:label and IRI corresponding to the child:
-        String childLabel = get_label_from_term(childCell);
-        if (childLabel == null) {
+        // Get the rdfs:label and IRI corresponding to the cell:
+        String cellLabel = get_label_from_term(cell);
+        if (cellLabel == null) {
           writeout(
-              "Could not find '" + childCell + "' in ontology");
+              "Could not find '" + cell + "' in ontology");
           continue;
         }
-        IRI child = label_to_iri_map.get(childLabel);
-        logger.debug("Found child: " + child.toString() + " with label: " + childLabel);
+        IRI iri = label_to_iri_map.get(cellLabel);
+        logger.debug("Found IRI: " + iri.toString() + " with label: " + cellLabel);
 
-        // Below, perform further validation depending on any rules that have been defined for this
-        // column.
-
-        // The various 'the entity in this column has the following axiom' rules:
-        if (colRules.containsKey("falls-under")) {
-          validate_axiom(
-              child, childLabel, colRules.get("falls-under"), reasoner, row, QEnum.SUB);
-        }
-
-        if (colRules.containsKey("falls-directly-under")) {
-          validate_axiom(
-              child, childLabel, colRules.get("falls-directly-under"), reasoner, row,
-              QEnum.DIRECT_SUB);
-        }
-
-        if (colRules.containsKey("subsumes")) {
-          validate_axiom(
-              child, childLabel, colRules.get("subsumes"), reasoner, row, QEnum.SUPER);
-        }
-
-        if (colRules.containsKey("directly-subsumes")) {
-          validate_axiom(
-              child, childLabel, colRules.get("directly-subsumes"), reasoner, row,
-              QEnum.DIRECT_SUPER);
-        }
-
-        if (colRules.containsKey("equivalent-to")) {
-          validate_axiom(
-              child, childLabel, colRules.get("equivalent-to"), reasoner, row, QEnum.EQUIV);
-        }
-
-        if (colRules.containsKey("instance-of")) {
-          validate_axiom(
-              child, childLabel, colRules.get("instance-of"), reasoner, row, QEnum.INSTANCE);
-        }
-
-        // The 'the entity in this column has the following subclasses' rule:
-        if (colRules.containsKey("sc")) {
-          validate_ancestry(child, childLabel, colRules.get("sc"), reasoner, row);
-        }
-
-        // The 'the entity in this column is the same as the one in that column' rule:
-        if (colRules.containsKey("same-as")) {
-          validate_twins(child, childLabel, colRules.get("same-as"), reasoner, row);
+        // Validate the various 'the entity in this column has the following axiom' rules:
+        for (QEnum queryType : QEnum.values()) {
+          if (colRules.containsKey(queryType.getRuleName())) {
+            validate_axiom(
+                iri, cellLabel, colRules.get(queryType.getRuleName()), reasoner, row, queryType);
+          }
         }
       }
     }
@@ -216,15 +209,20 @@ public class ValidateOperation {
    */
   private static Map<String, String> parse_rules(String ruleString) {
     HashMap<String, String> ruleMap = new HashMap();
-    String[] rules = ruleString.split("\\s*;\\s*");
-    for (String rule : rules) {
-      String[] ruleParts = rule.split("\\s*:\\s*", 2);
-      String ruleKey = ruleParts[0].trim();
-      String ruleVal = ruleParts[1].trim();
-      if (ruleMap.containsKey(ruleKey)) {
-        logger.warn("Duplicate rule: '" + ruleKey + "' in column " + (csv_col_index + 1));
+    if (!ruleString.trim().equals("")) {
+      String[] rules = ruleString.split("\\s*;\\s*");
+      for (String rule : rules) {
+        String[] ruleParts = rule.split("\\s*:\\s*", 2);
+        String ruleKey = ruleParts[0].trim();
+        String ruleVal = ruleParts[1].trim();
+        if (ruleMap.containsKey(ruleKey)) {
+          logger.warn("Duplicate rule: '" + ruleKey + "' in column " + (csv_col_index + 1));
+        }
+        if (!ruleNameToQEnumMap.containsKey(ruleKey)) {
+          logger.warn("Unrecognised rule type: " + ruleKey);
+        }
+        ruleMap.put(ruleKey, ruleVal);
       }
-      ruleMap.put(ruleKey, ruleVal);
     }
     return ruleMap;
   }
@@ -289,13 +287,10 @@ public class ValidateOperation {
         return axiom;
       }
 
-      // Enclose the label in single quotes if it contains whitespace:
-      if (label.contains(" ") || label.contains("\t")) {
-        label = "'" + label + "'";
-      }
-
-      // Iteratively build the interpolated axiom up to the current label:
-      interpolatedAxiom = interpolatedAxiom + axiom.substring(currIndex, m.start()) + label;
+      // Iteratively build the interpolated axiom up to the current label, which we enclose in
+      // single quotes:
+      interpolatedAxiom =
+          interpolatedAxiom + axiom.substring(currIndex, m.start()) + "'" + label + "'";
       currIndex = m.end();
     }
     // There may be text after the final wildcard, so add it now:
@@ -322,8 +317,9 @@ public class ValidateOperation {
         "label: '%s', " +
         "axiom: '%s', " +
         "reasoner: '%s', " +
-        "row: '%s'.",
-        iri.getShortForm(), label, axiom, reasoner.getClass().getSimpleName(), row));
+        "row: '%s', " +
+        "query type: '%s'.",
+        iri.getShortForm(), label, axiom, reasoner.getClass().getSimpleName(), row, qType.name()));
 
     // Interpolate any wildcards in the axiom into rdfs:label strings and then try to parse it:
     String interpolatedAxiom = interpolate_axiom(axiom, row);
@@ -337,12 +333,12 @@ public class ValidateOperation {
       return;
     }
 
-    OWLClass iriClass = OntologyHelper.getEntity(ontology, iri).asOWLClass();
+    OWLEntity iriEntity = OntologyHelper.getEntity(ontology, iri);
 
     if (qType == QEnum.SUB || qType == QEnum.DIRECT_SUB) {
       // Check to see if the iri is a (direct) subclass of the given axiom:
       NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, qType == QEnum.DIRECT_SUB);
-      if (!subClassesFound.containsEntity(iriClass)) {
+      if (!subClassesFound.containsEntity(iriEntity.asOWLClass())) {
         writeout(
             String.format(
                 "%s (%s) is not a%s descendant of '%s'",
@@ -355,78 +351,62 @@ public class ValidateOperation {
                 iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", interpolatedAxiom));
       }
     }
+    else if (qType == QEnum.SUPER || qType == QEnum.DIRECT_SUPER) {
+      // Check to see if the iri is a (direct) superclass of the given axiom:
+      NodeSet<OWLClass> superClassesFound =
+          reasoner.getSuperClasses(ce, qType == QEnum.DIRECT_SUPER);
+      if (!superClassesFound.containsEntity(iriEntity.asOWLClass())) {
+        writeout(
+            String.format(
+                "%s (%s) does not%s subsume '%s'",
+                iri.getShortForm(), label, qType == QEnum.SUPER ? "" : " directly",
+                interpolatedAxiom));
+      }
+      else {
+        logger.info(
+            String.format(
+                "Validated that %s (%s)%s subsumes '%s'",
+                iri.getShortForm(), label, qType == QEnum.SUPER ? "" : " directly",
+                interpolatedAxiom));
+      }
+    }
+    else if (qType == QEnum.INSTANCE || qType == QEnum.DIRECT_INSTANCE) {
+      NodeSet<OWLNamedIndividual> instancesFound = reasoner.getInstances(
+          ce, qType == QEnum.DIRECT_INSTANCE);
+      if (!instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
+        writeout(
+            String.format(
+                "%s (%s) is not a%s instance of '%s'",
+                iri.getShortForm(), label,
+                qType == QEnum.INSTANCE ? "n" : " direct", interpolatedAxiom));
+      }
+      else {
+        logger.info(
+            String.format(
+                "Validated that %s (%s) is a%s instance of '%s'",
+                iri.getShortForm(), label,
+                qType == QEnum.INSTANCE ? "n" : " direct", interpolatedAxiom));
+      }
+    }
+    else if (qType == QEnum.EQUIV) {
+      Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
+      if (!equivClassesFound.contains(iriEntity.asOWLClass())) {
+        writeout(
+            String.format(
+                "%s (%s) is not equivalent to '%s'",
+                iri.getShortForm(), label, interpolatedAxiom));
+      }
+      else {
+        logger.info(
+            String.format(
+                "Validated that %s (%s) is equivalent to '%s'",
+                iri.getShortForm(), label, interpolatedAxiom));
+      }
+    }
     else {
-      logger.error("Only subclass queries are currently implemented");
+      logger.error("Unrecognised/unimplemented query type: " + qType.name());
     }
 
     parser.dispose();
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static void validate_ancestry(
-      IRI child,
-      String childLabel,
-      String parentRule,
-      OWLReasoner reasoner,
-      List<String> row)
-      throws Exception {
-
-    String parentLabel = wildcard_to_label(parentRule, row);
-    if (parentLabel == null) {
-      logger.error("Could not determine parent from rule '" + parentRule + "'");
-      return;
-    }
-
-    IRI parent = label_to_iri_map.get(parentLabel);
-    logger.debug("Found parent: " + parent.toString() + " with label: " + parentLabel);
-
-    // Get the OWLClass corresponding to the parent:
-    OWLClass parentClass = OntologyHelper.getEntity(ontology, parent).asOWLClass();
-
-    // Get the OWLClass corresponding to the child, and its super classes:
-    OWLClass childClass = OntologyHelper.getEntity(ontology, child).asOWLClass();
-    NodeSet<OWLClass> childAncestors = reasoner.getSuperClasses(childClass, false);
-
-    // Check if the child's ancestors include the parent:
-    if (!childAncestors.containsEntity(parentClass)) {
-      writeout(
-          String.format(
-              "%s (%s) is not a descendant of %s (%s)",
-              child.getShortForm(), childLabel, parent.getShortForm(), parentLabel));
-    }
-    logger.info(
-        String.format("Relationship between '%s' and '%s' is valid.", childLabel, parentLabel));
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static void validate_twins(
-      IRI jacob,
-      String jacobLabel,
-      String esauRule,
-      OWLReasoner reasoner,
-      List<String> row) throws IOException {
-
-    String esauLabel = wildcard_to_label(esauRule, row);
-    if (esauLabel == null) {
-      logger.error("Could not determine twin cell from rule '" + esauRule + "'");
-      return;
-    }
-
-    IRI esau = label_to_iri_map.get(esauLabel);
-    if (!esau.equals(jacob)) {
-      writeout(
-          String.format(
-              "Cell's IRI: %s (%s) does not match IRI: %s (%s) inferred from rule '%s'",
-              jacob.getShortForm(), jacobLabel, esau.getShortForm(), esauLabel, esauRule));
-    }
-
-    logger.info(
-        String.format(
-            "Validated that the content identified by '%s' identifies the same entity as '%s'",
-            esauRule, jacob.getShortForm()));
   }
 }

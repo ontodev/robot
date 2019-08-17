@@ -1,22 +1,22 @@
-exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported
-sc: exposure process;,sc: exposure material; same-as: %3,sc: exposure material,sc: disease; same-as: %5; falls-directly-under: hasMaterialBasisIn some %3,sc: disease,sc: disease stage;
-exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,hepatovirus a,NCBITaxon_12092,,,
-exposure with existing immune reactivity without evidence for disease,hepatovirus a,NCBITaxon_12092,,,
-exposure with existing immune reactivity without evidence for disease,hepatitis b virus,NCBITaxon_10407,,,
-exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,hepatitis b virus,NCBITaxon_10407,,,
-occurrence of infectious disease,hepatitis b virus,NCBITaxon_10407,hepatitis b,DOID_2043,acute/recent onset
-occurrence of infectious disease,hepatitis b virus,NCBITaxon_10407,hepatitis b,DOID_2043,chronic
-occurrence of infectious disease,hepatitis b virus,NCBITaxon_10407,hepatitis b,DOID_2043,chronic
-occurrence of infectious disease,hepatovirus a,NCBITaxon_12092,hepatitis a variant,DOID_12549,acute/recent onset
-occurrence of infectious disease,hepatovirus a,NCBITaxon_12092,hepatitis a,DOID_12549,chronic
-occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic
-occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic
-occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,post
-occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic
-occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic
+exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported,doctor responsible
+subsumed-by: 'exposure process';,directly-subsumed-by: 'exposure material'; equivalent-to: %3,directly-subsumed-by: 'exposure material',directly-subsumed-by: 'disease'; equivalent-to: %5; directly-subsumed-by: hasMaterialBasisIn some %3,directly-subsumed-by: 'disease',directly-subsumed-by: 'disease stage';,instance-of: 'doctor'
+exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,,Travis Semenko
+exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,,Travis Semenko
+exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,,Travis Semenko
+exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,,Jolin Wu
+exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,,Pele
+exposure with existing immune reactivity without evidence for disease,hepatovirus a,NCBITaxon_12092,,,,Pele
+exposure with existing immune reactivity without evidence for disease,hepatovirus a,NCBITaxon_12092,,,,Harry Smith
+exposure with existing immune reactivity without evidence for disease,hepatitis b virus,NCBITaxon_10407,,,,Harry Smith
+exposure with existing immune reactivity without evidence for disease,hepacivirus c,NCBITaxon_11103,,,,Jolin Wu
+exposure with existing immune reactivity without evidence for disease,hepatitis b virus,NCBITaxon_10407,,,,Jolin Wu
+occurrence of infectious disease,hepatitis b virus,NCBITaxon_10407,hepatitis b,DOID_2043,acute/recent onset,Pele
+occurrence of infectious disease,hepatitis b virus,NCBITaxon_10407,hepatitis b,DOID_2043,chronic,Pele
+occurrence of infectious disease,hepatitis b virus,NCBITaxon_10407,hepatitis b,DOID_2043,chronic,Pele
+occurrence of infectious disease,hepatovirus a,NCBITaxon_12092,hepatitis a,DOID_12549,acute/recent onset,Jolin Wu
+occurrence of infectious disease,hepatovirus a,NCBITaxon_12092,hepatitis a,DOID_12549,chronic,Travis Semenko
+occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic,Travis Semenko
+occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic,Harry Smith
+occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,post,Harry Smith
+occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic,Travis Semenko
+occurrence of infectious disease,hepacivirus c,NCBITaxon_11103,hepatitis c,DOID_1883,chronic,Travis Semenko

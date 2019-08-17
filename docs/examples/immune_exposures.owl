@@ -170,6 +170,24 @@
     
 
 
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor"/>
+        <rdfs:label>general doctor</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor"/>
+        <rdfs:label>virologist</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_12549 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_12549">
@@ -248,6 +266,14 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage">
         <rdfs:label>disease stage</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor">
+        <rdfs:label>doctor</rdfs:label>
     </owl:Class>
     
 
@@ -334,15 +360,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#MADEUPID -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#MADEUPID">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_12549"/>
-        <rdfs:label>hepatitis a variant</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407">
@@ -412,6 +429,53 @@
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure"/>
         <rdfs:label>vaccination</rdfs:label>
     </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID1 -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID1">
+        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1"/>
+        <rdfs:label>Harry Smith</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID2 -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID2">
+        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2"/>
+        <rdfs:label>Jolin Wu</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID3 -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID3">
+        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2"/>
+        <rdfs:label>Pele</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID4 -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID4">
+        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1"/>
+        <rdfs:label>Travis Semenko</rdfs:label>
+    </owl:NamedIndividual>
 </rdf:RDF>
 
 
