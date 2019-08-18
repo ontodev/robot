@@ -47,7 +47,7 @@ ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ont
 
 ### Instances
 
-When using the SLME method of extraction, all individuals (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--individuals` option to specify what (if any) individuals are included in the output ontology:
+__Important note for ontologies that include individuals:__ When using the SLME method of extraction, all individuals (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--individuals` option to specify what (if any) individuals are included in the output ontology:
 * `--individuals include`: all individuals in the input ontology and their class types (default)
 * `--individuals minimal`: only the individuals that are a type of a class in the extracted module
 * `--individuals definitions`: only the individuals that are used in logical definitions of classes
