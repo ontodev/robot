@@ -23,6 +23,7 @@ import java.util.jar.JarFile;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
+import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
@@ -308,7 +309,17 @@ public class ReportOperation {
    */
   public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
       throws Exception {
-    Report report = getTDBReport(inputPath, options);
+    // Validate that the input can be loaded to TDB
+    if (!inputPath.endsWith(".rdf") && !inputPath.endsWith(".owl") && !inputPath.endsWith(".ttl")) {
+      throw new IllegalArgumentException(IOHelper.tdbFormatError);
+    }
+
+    Report report;
+    try {
+      report = getTDBReport(inputPath, options);
+    } catch (JenaException e) {
+      throw new IOException(String.format(IOHelper.syntaxError, inputPath, e.getMessage()));
+    }
     return processReport(report, outputPath, options);
   }
 
@@ -320,12 +331,14 @@ public class ReportOperation {
    * @param inputPath path to load triples to TDB
    * @param options map of report options
    * @return Report object with violation details
-   * @throws Exception on any query or reporting error
+   * @throws Exception on any loading, query, or reporting error
    */
   public static Report getTDBReport(String inputPath, Map<String, String> options)
       throws Exception {
     String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
-    Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
+
+    // May throw JenaException if syntax is bad
+    Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
 
     Report report;
     boolean keepMappings = OptionsHelper.optionIsTrue(options, "keep-tdb-mappings");

@@ -9,13 +9,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.resultset.ResultSetLang;
-import org.apache.jena.shared.JenaException;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.tdb.TDB;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.update.UpdateAction;
-import org.apache.jena.util.FileManager;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -40,16 +38,6 @@ public class QueryOperation {
 
   /** Error message when query type is illegal. Expects: query type. */
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
-
-  /**
-   * Error message when a JenaException is thrown from reading file to model due to a syntax error.
-   * Expects: file name, error message.
-   */
-  private static final String syntaxError = NS + "SYNTAX ERROR %s cannot be read:\n%s";
-
-  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
-  protected static final String tdbFormatError =
-      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
 
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
@@ -131,53 +119,6 @@ public class QueryOperation {
     String content = new String(os.toByteArray(), StandardCharsets.UTF_8);
     RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(model);
     return model;
-  }
-
-  /**
-   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
-   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
-   *
-   * <p>WARNING - this creates a directory at given tdbDir location!
-   *
-   * @param inputPath input path of RDF/XML or TTL file
-   * @param tdbDir location to put TDB mappings
-   * @return Dataset instantiated with triples
-   * @throws IOException if TDB directory can't be written to
-   */
-  public static Dataset loadTriplesAsDataset(String inputPath, String tdbDir) throws IOException {
-    // Dataset backed by a temp dir
-    if (!inputPath.endsWith(".rdf") && !inputPath.endsWith(".owl") && !inputPath.endsWith(".ttl")) {
-      throw new IllegalArgumentException(tdbFormatError);
-    }
-
-    Dataset dataset;
-    if (new File(tdbDir).isDirectory()) {
-      dataset = TDBFactory.createDataset(tdbDir);
-      if (!dataset.isEmpty()) {
-        return dataset;
-      }
-    }
-    dataset = TDBFactory.createDataset(tdbDir);
-    logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
-    // Track parsing time
-    long start = System.nanoTime();
-    Model m;
-    dataset.begin(ReadWrite.WRITE);
-    try {
-      m = dataset.getDefaultModel();
-      FileManager.get().readModel(m, inputPath);
-      dataset.commit();
-    } catch (JenaException e) {
-      dataset.abort();
-      dataset.end();
-      dataset.close();
-      throw new IOException(String.format(syntaxError, inputPath, e.getMessage()));
-    } finally {
-      dataset.end();
-    }
-    long time = (System.nanoTime() - start) / 1000000000;
-    logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
-    return dataset;
   }
 
   /**

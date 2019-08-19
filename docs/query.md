@@ -102,11 +102,3 @@ The query was not able to be parsed. Often, this is as a result of an undefined 
 ### Query Type Error
 
 Each SPARQL query should be a SELECT, ASK, DESCRIBE, or CONSTRUCT.
-
-### Syntax Error
-
-This error occurs when an ontology cannot be loaded from file to a TDB dataset. Review your ontology to ensure it is valid RDF/XML or TTL syntax.
-
-### TDB Format Error
-
-`--tdb true` can only be used with RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`).

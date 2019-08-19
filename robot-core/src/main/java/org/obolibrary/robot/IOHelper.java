@@ -19,8 +19,13 @@ import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.shared.JenaException;
+import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.util.FileManager;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
@@ -100,6 +105,16 @@ public class IOHelper {
   /** Error message when a prefix cannot be loaded. Expects the prefix and target. */
   private static final String prefixLoadError =
       NS + "PREFIX LOAD ERROR Could not load prefix '%s' for '%s'";
+
+  /**
+   * Error message when a JenaException is thrown from reading file to model due to a syntax error.
+   * Expects: file name, error message.
+   */
+  protected static final String syntaxError = NS + "SYNTAX ERROR %s cannot be read:\n%s";
+
+  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
+  protected static final String tdbFormatError =
+      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -470,6 +485,48 @@ public class IOHelper {
       throw new IOException(e);
     }
     return ontology;
+  }
+
+  /**
+   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
+   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
+   *
+   * <p>WARNING - this creates a directory at given tdbDir location!
+   *
+   * @param inputPath input path of RDF/XML or TTL file
+   * @param tdbDir location to put TDB mappings
+   * @return Dataset instantiated with triples
+   * @throws JenaException if TDB directory can't be written to
+   */
+  public static Dataset loadToTDBDataset(String inputPath, String tdbDir) throws JenaException {
+    Dataset dataset;
+    if (new File(tdbDir).isDirectory()) {
+      dataset = TDBFactory.createDataset(tdbDir);
+      if (!dataset.isEmpty()) {
+        return dataset;
+      }
+    }
+    dataset = TDBFactory.createDataset(tdbDir);
+    logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
+    // Track parsing time
+    long start = System.nanoTime();
+    Model m;
+    dataset.begin(ReadWrite.WRITE);
+    try {
+      m = dataset.getDefaultModel();
+      FileManager.get().readModel(m, inputPath);
+      dataset.commit();
+    } catch (JenaException e) {
+      dataset.abort();
+      dataset.end();
+      dataset.close();
+      throw e;
+    } finally {
+      dataset.end();
+    }
+    long time = (System.nanoTime() - start) / 1000000000;
+    logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
+    return dataset;
   }
 
   /**

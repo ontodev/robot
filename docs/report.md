@@ -8,6 +8,7 @@
 4. [Queries](#queries)
 5. [Profiles (`--profile`)](#profiles)
 6. [Executing on Disk (`--tdb`)](#executing-on-disk)
+7. [Limiting Results (`--limit`)](#limiting-results)
 
 ## Overview
 
@@ -112,6 +113,8 @@ robot report --input edit.owl \
 Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`). Attempting to load an ontology in a different syntax will result in a [Syntax Error](#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
 
 Once the report is complete, ROBOT will remove the TDB directory. You can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory (which may be beneficial if you want to reuse it with [query](/query#executing-on-disk)). This will greatly reduce the execution time of subsequent TDB-based operations on the ontology.
+
+The `--labels` option cannot be used with TDB, as the ontology is never loaded as an OWL API object.
 
 ## Limiting Results
 
