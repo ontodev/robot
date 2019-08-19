@@ -100,7 +100,7 @@ INFO    file:./relative/path/to/other_query.rq
 
 ## Executing on Disk
 
-`report` may fail on some very large ontologies, due to ROBOT loading the entire ontology into memory.
+`report` may fail on some very large ontologies of ROBOT cannot fit the entire ontology into memory.
 
 `report` allows you to load the ontology to a mapping file on disk with the `--tdb true` option. This is supported by [Jena TDB Datasets](http://jena.apache.org/documentation/tdb/datasets.html):
 
