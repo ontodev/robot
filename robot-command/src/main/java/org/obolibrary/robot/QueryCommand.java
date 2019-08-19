@@ -34,11 +34,7 @@ public class QueryCommand implements Command {
 
   /** Error message when a query is not provided */
   private static final String missingQueryError =
-      NS + "MISSING QUERY ERROR at least one query must be provided";
-
-  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
-  protected static final String tdbFormatError =
-      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
+    NS + "MISSING QUERY ERROR at least one query must be provided";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -184,7 +180,7 @@ public class QueryCommand implements Command {
    * @throws Exception on issue loading ontology or running queries
    */
   private static void executeInMemory(
-      CommandLine line, OWLOntology inputOntology, List<List<String>> queries) throws Exception {
+    CommandLine line, OWLOntology inputOntology, List<List<String>> queries) throws Exception {
     boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology, useGraphs);
     try {
@@ -204,26 +200,19 @@ public class QueryCommand implements Command {
    * @throws IOException on problem running queries
    */
   private static void executeOnDisk(CommandLine line, List<List<String>> queries)
-      throws IOException {
+    throws IOException {
     String inputPath =
-        CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
+      CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
-    Dataset dataset;
-    if (inputPath.endsWith(".rdf") || inputPath.endsWith(".owl")) {
-      dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
-    } else if (inputPath.endsWith(".ttl")) {
-      dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
-    } else {
-      throw new IllegalArgumentException(tdbFormatError);
-    }
+    Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
     try {
       runQueries(line, dataset, queries);
     } finally {
       dataset.close();
       TDBFactory.release(dataset);
       if (!keepMappings) {
-        boolean success = clean(tdbDir);
+        boolean success = IOHelper.cleanTDB(tdbDir);
         if (!success) {
           logger.error(String.format("Unable to remove directory '%s'", tdbDir));
         }
@@ -243,8 +232,8 @@ public class QueryCommand implements Command {
    * @throws Exception on file or ontology loading issues
    */
   private static OWLOntology executeUpdate(
-      CommandState state, OWLOntology inputOntology, IOHelper ioHelper, List<String> updatePaths)
-      throws Exception {
+    CommandState state, OWLOntology inputOntology, IOHelper ioHelper, List<String> updatePaths)
+    throws Exception {
     Map<String, String> updates = new LinkedHashMap<>();
     for (String updatePath : updatePaths) {
       File f = new File(updatePath);
@@ -270,15 +259,9 @@ public class QueryCommand implements Command {
     String catalogPath = state.getCatalogPath();
     if (catalogPath == null) {
       String ontologyPath = state.getOntologyPath();
-      // If loading from IRI, ontologyPath might be null
-      // In which case, we cannot get a catalog
-      if (ontologyPath == null) {
-        catalogPath = null;
-      } else {
-        File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
-        if (catalogFile != null) {
-          catalogPath = catalogFile.getPath();
-        }
+      File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
+      if (catalogFile != null) {
+        catalogPath = catalogFile.getPath();
       }
     }
     // Make sure the file exists
@@ -336,7 +319,7 @@ public class QueryCommand implements Command {
    * @throws IOException on issue reading or writing files
    */
   private static void runQueries(CommandLine line, Dataset dataset, List<List<String>> queries)
-      throws IOException {
+    throws IOException {
     String format = CommandLineHelper.getOptionalValue(line, "format");
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
 
@@ -363,31 +346,5 @@ public class QueryCommand implements Command {
       OutputStream output = new FileOutputStream(outputPath);
       QueryOperation.runSparqlQuery(dataset, query, formatName, output);
     }
-  }
-
-  /**
-   * Given a directory containing TDB mappings, remove the files and directory. If successful,
-   * return true.
-   *
-   * @param tdbDir directory to remove
-   * @return boolean indicating success
-   */
-  protected static boolean clean(String tdbDir) {
-    File dir = new File(tdbDir);
-    boolean success = true;
-    if (dir.exists()) {
-      String[] files = dir.list();
-      if (files != null) {
-        for (String file : files) {
-          File f = new File(dir.getPath(), file);
-          success = f.delete();
-        }
-      }
-      // Only delete if all the files in dir were deleted
-      if (success) {
-        success = dir.delete();
-      }
-    }
-    return success;
   }
 }

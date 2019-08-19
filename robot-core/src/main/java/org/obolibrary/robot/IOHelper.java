@@ -203,6 +203,32 @@ public class IOHelper {
   }
 
   /**
+   * Given a directory containing TDB mappings, remove the files and directory. If successful,
+   * return true.
+   *
+   * @param tdbDir directory to remove
+   * @return boolean indicating success
+   */
+  protected static boolean cleanTDB(String tdbDir) {
+    File dir = new File(tdbDir);
+    boolean success = true;
+    if (dir.exists()) {
+      String[] files = dir.list();
+      if (files != null) {
+        for (String file : files) {
+          File f = new File(dir.getPath(), file);
+          success = f.delete();
+        }
+      }
+      // Only delete if all the files in dir were deleted
+      if (success) {
+        success = dir.delete();
+      }
+    }
+    return success;
+  }
+
+  /**
    * Try to guess the location of the catalog.xml file. Looks in the directory of the given ontology
    * file for a catalog file.
    *
