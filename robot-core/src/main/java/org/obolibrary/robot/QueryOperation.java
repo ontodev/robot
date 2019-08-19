@@ -36,7 +36,7 @@ public class QueryOperation {
 
   /** Error message when query parsing fails. Expects: error message from parse. */
   private static final String queryParseError =
-    NS + "QUERY PARSE ERROR query cannot be parsed:\n%s";
+      NS + "QUERY PARSE ERROR query cannot be parsed:\n%s";
 
   /** Error message when query type is illegal. Expects: query type. */
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
@@ -49,7 +49,7 @@ public class QueryOperation {
 
   /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
   protected static final String tdbFormatError =
-    NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
+      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
 
   /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
@@ -76,7 +76,7 @@ public class QueryOperation {
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology)
-    throws OWLOntologyStorageException {
+      throws OWLOntologyStorageException {
     return loadOntologyAsDataset(ontology, false);
   }
 
@@ -90,7 +90,7 @@ public class QueryOperation {
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
-    throws OWLOntologyStorageException {
+      throws OWLOntologyStorageException {
     Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
     if (useGraphs) {
@@ -207,7 +207,7 @@ public class QueryOperation {
    * @throws IOException on issue loading ontology
    */
   public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
-    throws IOException {
+      throws IOException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     RDFDataMgr.write(os, model, Lang.TTL);
     return ioHelper.loadOntology(new ByteArrayInputStream(os.toByteArray()), catalogPath);
@@ -309,14 +309,14 @@ public class QueryOperation {
    */
   @Deprecated
   public static boolean execVerify(
-    Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
+      Map<File, Tuple<ResultSetRewindable, OutputStream>> queriesResults) throws IOException {
     boolean isViolation = false;
     for (File outFile : queriesResults.keySet()) {
       Tuple<ResultSetRewindable, OutputStream> resultAndStream = queriesResults.get(outFile);
       ResultSetRewindable results = resultAndStream.left();
       OutputStream outStream = resultAndStream.right();
       System.out.println(
-        "Rule " + outFile.getCanonicalPath() + ": " + results.size() + " violation(s)");
+          "Rule " + outFile.getCanonicalPath() + ": " + results.size() + " violation(s)");
       if (results.size() > 0) {
         isViolation = true;
         ResultSetMgr.write(System.err, results, Lang.CSV);
@@ -340,7 +340,7 @@ public class QueryOperation {
    */
   @Deprecated
   public static boolean execVerify(DatasetGraph dsg, String ruleName, String query)
-    throws IOException {
+      throws IOException {
     return execVerify(DatasetFactory.wrap(dsg), ruleName, query);
   }
 
@@ -355,7 +355,7 @@ public class QueryOperation {
    * @throws IOException on query parse error
    */
   public static boolean execVerify(Dataset dataset, String ruleName, String query)
-    throws IOException {
+      throws IOException {
     ResultSetRewindable results = ResultSetFactory.copyResults(execQuery(dataset, query));
     System.out.println("Rule " + ruleName + ": " + results.size() + " violation(s)");
     if (results.size() == 0) {
@@ -542,7 +542,7 @@ public class QueryOperation {
    * @throws FileNotFoundException if output file is not found
    */
   public static void runConstruct(Dataset dataset, String query, File output, Lang outputFormat)
-    throws FileNotFoundException {
+      throws FileNotFoundException {
     writeResult(execConstruct(dataset, query), outputFormat, new FileOutputStream(output));
   }
 
@@ -558,7 +558,7 @@ public class QueryOperation {
    */
   @Deprecated
   public static void runQuery(DatasetGraph dsg, String query, File output, Lang outputFormat)
-    throws IOException {
+      throws IOException {
     runQuery(DatasetFactory.wrap(dsg), query, output, outputFormat);
   }
 
@@ -572,7 +572,7 @@ public class QueryOperation {
    * @throws IOException if output file is not found or query cannot be parsed
    */
   public static void runQuery(Dataset dataset, String query, File output, Lang outputFormat)
-    throws IOException {
+      throws IOException {
     if (outputFormat == null) {
       outputFormat = Lang.CSV;
     }
@@ -592,7 +592,7 @@ public class QueryOperation {
    */
   @Deprecated
   public static boolean runSparqlQuery(
-    DatasetGraph dsg, String query, String formatName, OutputStream output) throws IOException {
+      DatasetGraph dsg, String query, String formatName, OutputStream output) throws IOException {
     return runSparqlQuery(DatasetFactory.wrap(dsg), query, formatName, output);
   }
 
@@ -608,8 +608,8 @@ public class QueryOperation {
    * @throws IOException on issue parsing query
    */
   public static boolean runSparqlQuery(
-    Dataset dataset, String queryString, String formatName, OutputStream output)
-    throws IOException {
+      Dataset dataset, String queryString, String formatName, OutputStream output)
+      throws IOException {
     dataset.begin(ReadWrite.READ);
     boolean result;
     try (QueryExecution qExec = QueryExecutionFactory.create(queryString, dataset)) {
@@ -632,7 +632,7 @@ public class QueryOperation {
    * @return true if there are results
    */
   public static boolean runSparqlQuery(
-    QueryExecution qExec, String formatName, OutputStream output) {
+      QueryExecution qExec, String formatName, OutputStream output) {
     Query query = qExec.getQuery();
     if (formatName == null) {
       formatName = getDefaultFormatName(query);
@@ -663,7 +663,7 @@ public class QueryOperation {
    * @throws FileNotFoundException if output file cannot be found
    */
   public static void runUpdate(Model model, String updateString, File output, Lang outputFormat)
-    throws FileNotFoundException {
+      throws FileNotFoundException {
     if (outputFormat == null) {
       outputFormat = Lang.TTL;
     }
@@ -685,8 +685,8 @@ public class QueryOperation {
    */
   @Deprecated
   public static boolean runVerify(
-    DatasetGraph dsg, String ruleName, String query, Path outputPath, Lang outputFormat)
-    throws IOException {
+      DatasetGraph dsg, String ruleName, String query, Path outputPath, Lang outputFormat)
+      throws IOException {
     return runVerify(DatasetFactory.wrap(dsg), ruleName, query, outputPath, outputFormat);
   }
 
@@ -703,8 +703,8 @@ public class QueryOperation {
    * @return true if the are results (so file is written), false otherwise
    */
   public static boolean runVerify(
-    Dataset dataset, String ruleName, String query, Path outputPath, Lang outputFormat)
-    throws IOException {
+      Dataset dataset, String ruleName, String query, Path outputPath, Lang outputFormat)
+      throws IOException {
     if (outputFormat == null) {
       outputFormat = Lang.CSV;
     }

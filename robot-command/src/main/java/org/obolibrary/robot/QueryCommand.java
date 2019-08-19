@@ -34,7 +34,7 @@ public class QueryCommand implements Command {
 
   /** Error message when a query is not provided */
   private static final String missingQueryError =
-    NS + "MISSING QUERY ERROR at least one query must be provided";
+      NS + "MISSING QUERY ERROR at least one query must be provided";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -180,7 +180,7 @@ public class QueryCommand implements Command {
    * @throws Exception on issue loading ontology or running queries
    */
   private static void executeInMemory(
-    CommandLine line, OWLOntology inputOntology, List<List<String>> queries) throws Exception {
+      CommandLine line, OWLOntology inputOntology, List<List<String>> queries) throws Exception {
     boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology, useGraphs);
     try {
@@ -200,9 +200,9 @@ public class QueryCommand implements Command {
    * @throws IOException on problem running queries
    */
   private static void executeOnDisk(CommandLine line, List<List<String>> queries)
-    throws IOException {
+      throws IOException {
     String inputPath =
-      CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
+        CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
@@ -232,8 +232,8 @@ public class QueryCommand implements Command {
    * @throws Exception on file or ontology loading issues
    */
   private static OWLOntology executeUpdate(
-    CommandState state, OWLOntology inputOntology, IOHelper ioHelper, List<String> updatePaths)
-    throws Exception {
+      CommandState state, OWLOntology inputOntology, IOHelper ioHelper, List<String> updatePaths)
+      throws Exception {
     Map<String, String> updates = new LinkedHashMap<>();
     for (String updatePath : updatePaths) {
       File f = new File(updatePath);
@@ -319,7 +319,7 @@ public class QueryCommand implements Command {
    * @throws IOException on issue reading or writing files
    */
   private static void runQueries(CommandLine line, Dataset dataset, List<List<String>> queries)
-    throws IOException {
+      throws IOException {
     String format = CommandLineHelper.getOptionalValue(line, "format");
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
 

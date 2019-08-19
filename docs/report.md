@@ -113,6 +113,18 @@ Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf
 
 Once the report is complete, ROBOT will remove the TDB directory. You can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory (which may be beneficial if you want to reuse it with [query](/query#executing-on-disk)). This will greatly reduce the execution time of subsequent TDB-based operations on the ontology.
 
+## Limiting Results
+
+Large numbers of results from the report queries may cause an `OutOfMemoryError`. To prevent this, you can limit the number of results with `--limit <INTEGER>`:
+
+```
+robot report --input edit.owl \
+  --limit 10000 \
+  --output my-report.tsv
+```
+
+This example will only include the first 10,000 results for each report query, meaning that some violation counts may be incomplete. Typically, you should not need to include a limit, but when working with large ontologies (using TDB), there may be hundreds of thousands of results.
+
 ---
 
 ## Error Messages
@@ -120,6 +132,10 @@ Once the report is complete, ROBOT will remove the TDB directory. You can includ
 ### Fail On Error
 
 Only `info`, `warn`, and `error` are valid inputs for `--fail-on`.
+
+### Limit Number Error
+
+The argument for the `--limit` option must be a number.
 
 ### Missing Entity Binding
 

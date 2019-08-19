@@ -121,7 +121,7 @@ public class ReportCommand implements Command {
       // TDB is backed on disk and loads directly from path
       // Avoids extra time loading OWLOntology object for big ontologies
       String inputPath =
-        CommandLineHelper.getRequiredValue(line, "input", "An input ontology is required");
+          CommandLineHelper.getRequiredValue(line, "input", "An input ontology is required");
       success = ReportOperation.tdbReport(inputPath, outputPath, reportOptions);
     } else {
       state = CommandLineHelper.updateInputOntology(ioHelper, state, line);

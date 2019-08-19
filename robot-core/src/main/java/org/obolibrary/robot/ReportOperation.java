@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -53,23 +52,23 @@ public class ReportOperation {
 
   /** Error message when 'limit' is not a number. */
   private static final String limitNumberError =
-    NS + "LIMIT NUMBER ERROR --limit argument '%s' must be an integer.";
+      NS + "LIMIT NUMBER ERROR --limit argument '%s' must be an integer.";
 
   /** Error message when the query does not have ?entity. */
   private static final String missingEntityBinding =
-    NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
+      NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
 
   /** Error message when a user-provided report query does not exist. */
   private static final String missingQueryError =
-    NS + "MISSING QUERY ERROR query at '%s' does not exist.";
+      NS + "MISSING QUERY ERROR query at '%s' does not exist.";
 
   /** Error message when 'print' is not a number. */
   private static final String printNumberError =
-    NS + "PRINT NUMBER ERROR --print argument '%s' must be an integer.";
+      NS + "PRINT NUMBER ERROR --print argument '%s' must be an integer.";
 
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
-    NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
+      NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
 
   /** Reporting level INFO. */
   private static final String INFO = "INFO";
@@ -126,8 +125,8 @@ public class ReportOperation {
    * @throws Exception on any error
    */
   public static boolean report(
-    OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
-    throws Exception {
+      OWLOntology ontology, String profilePath, String outputPath, String format, String failOn)
+      throws Exception {
     return report(ontology, null, profilePath, outputPath, format, failOn, false);
   }
 
@@ -148,13 +147,13 @@ public class ReportOperation {
    * @throws Exception on any error
    */
   public static boolean report(
-    OWLOntology ontology,
-    IOHelper ioHelper,
-    String profilePath,
-    String outputPath,
-    String format,
-    String failOn)
-    throws Exception {
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn)
+      throws Exception {
     return report(ontology, ioHelper, profilePath, outputPath, format, failOn, false);
   }
 
@@ -169,7 +168,7 @@ public class ReportOperation {
    * @throws Exception on any reporting error
    */
   public static void report(OWLOntology ontology, IOHelper ioHelper, Map<String, String> options)
-    throws Exception {
+      throws Exception {
     report(ontology, ioHelper, null, options);
   }
 
@@ -192,14 +191,14 @@ public class ReportOperation {
    * @throws Exception on any error
    */
   public static boolean report(
-    OWLOntology ontology,
-    IOHelper ioHelper,
-    String profilePath,
-    String outputPath,
-    String format,
-    String failOn,
-    boolean useLabels)
-    throws Exception {
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      String profilePath,
+      String outputPath,
+      String format,
+      String failOn,
+      boolean useLabels)
+      throws Exception {
     Map<String, String> options = getDefaultOptions();
     if (profilePath != null) {
       options.put("profile", profilePath);
@@ -231,8 +230,8 @@ public class ReportOperation {
    * @throws Exception on any reporting error
    */
   public static boolean report(
-    OWLOntology ontology, IOHelper ioHelper, String outputPath, Map<String, String> options)
-    throws Exception {
+      OWLOntology ontology, IOHelper ioHelper, String outputPath, Map<String, String> options)
+      throws Exception {
     // Generate the report object with violation details
     Report report = getReport(ontology, ioHelper, options);
     return processReport(report, outputPath, options);
@@ -249,7 +248,7 @@ public class ReportOperation {
    * @throws Exception on any reporting error
    */
   public static Report getReport(
-    OWLOntology ontology, IOHelper ioHelper, Map<String, String> options) throws Exception {
+      OWLOntology ontology, IOHelper ioHelper, Map<String, String> options) throws Exception {
     // Get options specified in map or default options
     if (options == null) {
       options = getDefaultOptions();
@@ -308,7 +307,7 @@ public class ReportOperation {
    * @throws Exception on any reporting error
    */
   public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
-    throws Exception {
+      throws Exception {
     Report report = getTDBReport(inputPath, options);
     return processReport(report, outputPath, options);
   }
@@ -324,7 +323,7 @@ public class ReportOperation {
    * @throws Exception on any query or reporting error
    */
   public static Report getTDBReport(String inputPath, Map<String, String> options)
-    throws Exception {
+      throws Exception {
     String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
     Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
 
@@ -414,7 +413,7 @@ public class ReportOperation {
    * @throws IOException on issue writing to file
    */
   public static boolean processReport(Report report, String outputPath, Map<String, String> options)
-    throws IOException {
+      throws IOException {
     // Print violations to terminal
     Integer violationCount = report.getTotalViolations();
     if (violationCount != 0) {
@@ -462,7 +461,7 @@ public class ReportOperation {
     if (outputPath != null) {
       // If output is provided, write to that file
       try (FileWriter fw = new FileWriter(outputPath);
-           BufferedWriter bw = new BufferedWriter(fw)) {
+          BufferedWriter bw = new BufferedWriter(fw)) {
         logger.debug("Writing report to: " + outputPath);
         bw.write(result);
       }
@@ -531,7 +530,7 @@ public class ReportOperation {
    * @throws URISyntaxException on issue converting URL to URI
    */
   private static Map<String, String> getQueryStrings(Set<String> rules)
-    throws IOException, URISyntaxException {
+      throws IOException, URISyntaxException {
     Set<String> defaultRules = new HashSet<>();
     Set<String> userRules = new HashSet<>();
     Map<String, String> queries = new HashMap<>();
@@ -557,7 +556,7 @@ public class ReportOperation {
    * @throws IOException on any issue reading the file
    */
   private static Map<String, String> getUserQueryStrings(Set<String> rules)
-    throws URISyntaxException, IOException {
+      throws URISyntaxException, IOException {
     Map<String, String> queries = new HashMap<>();
     for (String rule : rules) {
       if (rule.startsWith("file:///")) {
@@ -590,7 +589,7 @@ public class ReportOperation {
    * @throws IOException on any issue with accessing files or file contents
    */
   private static Map<String, String> getDefaultQueryStrings(Set<String> rules)
-    throws IOException, URISyntaxException {
+      throws IOException, URISyntaxException {
     URL dirURL = ReportOperation.class.getClassLoader().getResource(queryDir);
     Map<String, String> queries = new HashMap<>();
     // Handle simple file path, probably accessed during testing
@@ -598,7 +597,7 @@ public class ReportOperation {
       String[] queryFilePaths = new File(dirURL.toURI()).list();
       if (queryFilePaths == null || queryFilePaths.length == 0) {
         throw new IOException(
-          "Cannot access report query files. There are no files in the directory.");
+            "Cannot access report query files. There are no files in the directory.");
       }
       for (String qPath : queryFilePaths) {
         String ruleName = qPath.substring(qPath.lastIndexOf("/")).split(".")[0];
@@ -618,7 +617,7 @@ public class ReportOperation {
     }
     if (dirURL == null) {
       throw new IOException(
-        "Cannot access report query files in JAR. The resource does not exist.");
+          "Cannot access report query files in JAR. The resource does not exist.");
     }
     String protocol = dirURL.getProtocol();
     if (protocol.equals("jar")) {
@@ -629,7 +628,7 @@ public class ReportOperation {
         entries = jar.entries();
         if (!entries.hasMoreElements()) {
           throw new IOException(
-            "Cannot access report query files in JAR. There are no entries in the JAR.");
+              "Cannot access report query files in JAR. There are no entries in the JAR.");
         }
         // Track rules that have successfully been retrieved
         while (entries.hasMoreElements()) {
@@ -638,8 +637,8 @@ public class ReportOperation {
           if (resourceName.startsWith(queryDir) && !resourceName.endsWith("/")) {
             // Get just the rule name
             String ruleName =
-              resourceName.substring(
-                resourceName.lastIndexOf("/") + 1, resourceName.indexOf(".rq"));
+                resourceName.substring(
+                    resourceName.lastIndexOf("/") + 1, resourceName.indexOf(".rq"));
             // Only add it to the queries if the rule set contains that rule
             // If rules == null, include all rules
             if (rules == null || rules.contains(ruleName)) {
@@ -723,8 +722,8 @@ public class ReportOperation {
    * @throws IOException on issue parsing query
    */
   private static List<Violation> getViolations(
-    Dataset dataset, String queryName, String query, Map<String, String> options)
-    throws Exception {
+      Dataset dataset, String queryName, String query, Map<String, String> options)
+      throws Exception {
     boolean tdb = OptionsHelper.optionIsTrue(options, "tdb");
     String limitString = OptionsHelper.getOption(options, "limit", null);
     Integer limit = null;
@@ -746,9 +745,9 @@ public class ReportOperation {
         // If query fails, return null
         // And warn that report may be incomplete
         logger.error(
-          String.format(
-            "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
-            queryName, e.getMessage()));
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
         return null;
       } finally {
         // Always end the transaction
@@ -762,16 +761,17 @@ public class ReportOperation {
         // If query fails, return null
         // And warn that report may be incomplete
         logger.error(
-          String.format(
-            "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
-            queryName, e.getMessage()));
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
         return null;
       }
     }
   }
 
   /**
-   * Given a query name, a result set, and a limit for results, return a list of Violation objects for those results.
+   * Given a query name, a result set, and a limit for results, return a list of Violation objects
+   * for those results.
    *
    * @param queryName name of query that produced result set
    * @param violationSet ResultSet of query results
@@ -780,7 +780,7 @@ public class ReportOperation {
    * @throws Exception on malformed query
    */
   private static List<Violation> getViolationsFromResults(
-    String queryName, ResultSet violationSet, Integer limit) throws Exception {
+      String queryName, ResultSet violationSet, Integer limit) throws Exception {
     List<Violation> violations = new ArrayList<>();
 
     // Counter for stopping at limit
@@ -798,9 +798,9 @@ public class ReportOperation {
         qs = violationSet.next();
       } catch (Exception e) {
         logger.error(
-          String.format(
-            "Could not retrieve all results for query '%s' - report may be incomplete.\nCause:\n%s",
-            queryName, e.getMessage()));
+            String.format(
+                "Could not retrieve all results for query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
         return violations;
       }
 
