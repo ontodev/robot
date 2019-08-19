@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -23,6 +24,7 @@ import java.util.jar.JarFile;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
+import org.apache.jena.tdb.TDBFactory;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -271,7 +273,7 @@ public class ReportOperation {
       options = getDefaultOptions();
     }
 
-    String profilePath = OptionsHelper.getOption(options, "profile", "0");
+    String profilePath = OptionsHelper.getOption(options, "profile", null);
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
 
     // The profile is a map of rule name and reporting level
@@ -305,10 +307,7 @@ public class ReportOperation {
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      report.addViolations(
-          queryName,
-          profile.get(queryName),
-          getViolations(dataset, queryName, queryString, options));
+      report.addViolations(queryName, profile.get(queryName), violations);
     }
 
     return report;
@@ -327,7 +326,12 @@ public class ReportOperation {
   public static Report getTDBReport(String inputPath, Map<String, String> options)
       throws Exception {
     String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
+    System.out.println(String.format("Loading dataset to %s", tdbDir));
+    long start = System.currentTimeMillis();
     Dataset dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
+    long finish = System.currentTimeMillis();
+    long delta = finish - start;
+    System.out.println(String.format("Dataset loaded in %d seconds", delta));
 
     Report report;
     boolean keepMappings = OptionsHelper.optionIsTrue(options, "keep-tdb-mappings");
@@ -336,7 +340,7 @@ public class ReportOperation {
     } finally {
       // Close and release
       dataset.close();
-      // TODO: ??? TDBFactory.release(dataset);
+      TDBFactory.release(dataset);
       if (!keepMappings) {
         // Maybe delete
         boolean success = IOHelper.cleanTDB(tdbDir);
@@ -347,6 +351,10 @@ public class ReportOperation {
     }
 
     return report;
+  }
+
+  public static float round(float d, int decimalPlace) {
+    return BigDecimal.valueOf(d).setScale(decimalPlace, BigDecimal.ROUND_HALF_UP).floatValue();
   }
 
   /**
@@ -367,7 +375,7 @@ public class ReportOperation {
     // Make sure TDB is true here
     options.put("tdb", "true");
 
-    String profilePath = OptionsHelper.getOption(options, "profile", "0");
+    String profilePath = OptionsHelper.getOption(options, "profile", null);
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
     if (useLabels) {
       logger.warn("Cannot use labels with TDB - ignoring labels option.");
@@ -381,7 +389,10 @@ public class ReportOperation {
     // Create the report object
     Report report = new Report();
 
+    int c = 0;
+    int queryCount = queries.keySet().size();
     for (String queryName : queries.keySet()) {
+      c++;
       String fullQueryString = queries.get(queryName);
       String queryString;
       // Remove any comments
@@ -393,15 +404,19 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
+      long start = System.currentTimeMillis();
       List<Violation> violations = getViolations(dataset, queryName, queryString, options);
+      long finish = System.currentTimeMillis();
+      long delta = finish - start;
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      report.addViolations(
-          queryName,
-          profile.get(queryName),
-          getViolations(dataset, queryName, queryString, options));
+      System.out.println(
+          String.format(
+              "Query '%s' (%d/%d) completed in %d ms with %d violations",
+              queryName, c, queryCount, delta, violations.size()));
+      report.addViolations(queryName, profile.get(queryName), violations);
     }
 
     return report;
@@ -740,12 +755,12 @@ public class ReportOperation {
       }
     }
 
-    ResultSet violationSet;
     if (tdb) {
       // If using TDB we must be in a read transaction to query
       dataset.begin(ReadWrite.READ);
       try {
-        violationSet = QueryOperation.execQuery(dataset, query);
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolations(queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
         // And warn that report may be incomplete
@@ -760,7 +775,8 @@ public class ReportOperation {
       }
     } else {
       try {
-        violationSet = QueryOperation.execQuery(dataset, query);
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolations(queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
         // And warn that report may be incomplete
@@ -771,13 +787,23 @@ public class ReportOperation {
         return null;
       }
     }
+  }
 
+  /**
+   * @param queryName
+   * @param violationSet
+   * @param limit
+   * @return
+   * @throws Exception
+   */
+  private static List<Violation> getViolations(
+      String queryName, ResultSet violationSet, Integer limit) throws Exception {
     List<Violation> violations = new ArrayList<>();
 
     // Counter for stopping at limit
     int c = 0;
     while (violationSet.hasNext()) {
-      if (limit != null && limit <= c) {
+      if (limit != null && limit < c) {
         // Stop checking violations
         break;
       }
