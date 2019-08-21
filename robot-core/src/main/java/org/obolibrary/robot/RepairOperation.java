@@ -109,7 +109,9 @@ public class RepairOperation {
     Set<InvalidReferenceViolation> violations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, true);
     repairInvalidReferences(ioHelper, ontology, violations, migrateAnnotations);
-    mergeAxiomAnnotations(ontology);
+    if (mergeAxiomAnnotations) {
+      mergeAxiomAnnotations(ontology);
+    }
   }
 
   /**
