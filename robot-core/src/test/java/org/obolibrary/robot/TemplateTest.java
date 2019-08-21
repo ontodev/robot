@@ -44,6 +44,8 @@ public class TemplateTest extends CoreTest {
 
     Template t = new Template(path, rows, simpleParts);
     OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false);
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.saveOntology(template, "test-2.owl");
     assertIdentical("/template.owl", template);
   }
 
