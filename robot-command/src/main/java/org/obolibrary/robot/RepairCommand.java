@@ -130,7 +130,7 @@ public class RepairCommand implements Command {
             .map(factory::getOWLAnnotationProperty)
             .collect(Collectors.toSet());
 
-    RepairOperation.repair(inputOntology, ioHelper, mergeAxiomAnnotations);
+    RepairOperation.repair(inputOntology, ioHelper, mergeAxiomAnnotations, properties);
     outputOntology = inputOntology;
     if (outputIRI != null) {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
