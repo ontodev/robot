@@ -88,7 +88,7 @@ public class RepairOperation {
       IOHelper ioHelper,
       Map<String, String> options,
       boolean mergeAxiomAnnotations) {
-    repair(ontology, ioHelper, options, false, Collections.emptySet());
+    repair(ontology, ioHelper, options, mergeAxiomAnnotations, Collections.emptySet());
   }
 
   /**
