@@ -11,6 +11,7 @@ import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /** Tests for ReasonOperation. */
@@ -148,6 +149,19 @@ public class ReasonOperationTest extends CoreTest {
     reasoned = loadOntology("/redundant_subclasses.owl");
     ReasonOperation.reason(reasoned, reasonerFactory, options);
     assertIdentical("/without_redundant_subclasses.owl", reasoned);
+  }
+
+  @Test
+  public void testExcludeTautologies() throws Exception {
+    OWLOntology input = loadOntology("/reason_exclude_tautologies.ofn");
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+    Map<String, String> options = new HashMap<>();
+    options.put("exclude-tautologies", "true");
+    ReasonOperation.reason(input, reasonerFactory, options);
+    assertFalse(
+        EntitySearcher.getSuperClasses(
+                dataFactory.getOWLClass(IRI.create("http://example.org/B")), input)
+            .contains(dataFactory.getOWLThing()));
   }
 
   /**

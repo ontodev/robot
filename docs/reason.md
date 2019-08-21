@@ -35,9 +35,10 @@ robot reason --reasoner ELK \
   --output results/reasoned.owl
 ```
 
-Finally, `reason` includes two more options to help clean the reasoned output:
+Finally, `reason` includes three more options to help clean the reasoned output:
 * `--exclude-duplicate-axioms`: if set to true, the axioms will not be added to the output if they exist in an import (default `false`).
 * `--remove-redundant-subclass-axioms`: if set to false, redundant axioms (those that have been asserted and were also inferred) are included in the output (default `true`).
+* `--exclude-tautologies`: if set to true, certain axioms that are always entailed will not be added to the output: e.g., X SubClassOf owl:Thing, owl:Nothing SubClassOf X, X SubClassOf X (default `false`).
 
 If no `--reasoner` is provided, ROBOT will default to ELK. The following other reasoner options are supported:
   

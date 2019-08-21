@@ -70,6 +70,11 @@ public class ReasonCommand implements Command {
         "exclude-external-entities",
         true,
         "if true, do not add an axiom if it is about classes in external ontologies");
+    o.addOption(
+        "t",
+        "exclude-tautologies",
+        true,
+        "if true, do not add tautological inferences, even if asserted by an axiom generator (e.g., subclass of owl:Thing, superclass of owl:Nothing, X subclass of X)");
     o.addOption("T", "exclude-owl-thing", true, "if true, exclude inferences to owl:Thing");
     o.addOption(
         "e",

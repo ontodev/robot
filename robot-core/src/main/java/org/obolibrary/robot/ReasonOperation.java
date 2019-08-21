@@ -56,6 +56,7 @@ public class ReasonOperation {
     options.put("dump-unsatisfiable", null);
     options.put("axiom-generators", "subclass");
     options.put("include-indirect", "false");
+    options.put("exclude-tautologies", "false");
 
     return options;
   }
@@ -421,6 +422,19 @@ public class ReasonOperation {
           // If axiom contains owl:Thing, skip it
           logger.debug("Ignoring trivial axioms with " + "OWLThing in signature: " + a);
           continue;
+        }
+      }
+
+      if (OptionsHelper.optionIsTrue(options, "exclude-tautologies")) {
+        if (a instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
+          if (subClassOfAxiom.getSuperClass().isOWLThing()) {
+            continue;
+          } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
+            continue;
+          } else if (subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass())) {
+            continue;
+          }
         }
       }
 
