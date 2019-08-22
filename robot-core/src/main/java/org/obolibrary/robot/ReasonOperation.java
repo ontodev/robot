@@ -11,6 +11,7 @@ import org.obolibrary.robot.exceptions.*;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
+import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -379,6 +380,20 @@ public class ReasonOperation {
       value = dataFactory.getOWLLiteral("true");
     }
 
+    // If we will need a tautology checker, create it only once
+    String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
+    OWLReasoner tautologyChecker;
+    if (tautologiesOption.equalsIgnoreCase("all")) {
+      try {
+        OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
+        tautologyChecker = new ReasonerFactory().createReasoner(empty);
+      } catch (OWLOntologyCreationException e) {
+        tautologyChecker = null;
+      }
+    } else {
+      tautologyChecker = null;
+    }
+
     // Look at each inferred axiom
     // Check the options, and maybe add the inferred axiom to the ontology
     for (OWLAxiom a : newAxiomOntology.getAxioms()) {
@@ -425,7 +440,7 @@ public class ReasonOperation {
         }
       }
 
-      if (OptionsHelper.optionIsTrue(options, "exclude-tautologies")) {
+      if (tautologiesOption.equalsIgnoreCase("structural")) {
         if (a instanceof OWLSubClassOfAxiom) {
           OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
           if (subClassOfAxiom.getSuperClass().isOWLThing()) {
@@ -435,6 +450,30 @@ public class ReasonOperation {
           } else if (subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass())) {
             continue;
           }
+        } else if (a instanceof OWLEquivalentClassesAxiom) {
+          OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) a;
+          if (equivAxiom.getClassExpressions().size() < 2) {
+            continue;
+          }
+        } else if (a instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) a;
+          if (classAssertion.getClassExpression().isOWLThing()) {
+            continue;
+          }
+        } else if (a instanceof OWLObjectPropertyAssertionAxiom) {
+          OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) a;
+          if (assertion.getProperty().isOWLTopObjectProperty()) {
+            continue;
+          }
+        } else if (a instanceof OWLDataPropertyAssertionAxiom) {
+          OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) a;
+          if (assertion.getProperty().isOWLTopDataProperty()) {
+            continue;
+          }
+        }
+      } else if (tautologiesOption.equalsIgnoreCase("all")) {
+        if (tautologyChecker.isEntailed(a)) {
+          continue;
         }
       }
 

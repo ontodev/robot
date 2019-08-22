@@ -156,7 +156,7 @@ public class ReasonOperationTest extends CoreTest {
     OWLOntology input = loadOntology("/reason_exclude_tautologies.ofn");
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
     Map<String, String> options = new HashMap<>();
-    options.put("exclude-tautologies", "true");
+    options.put("exclude-tautologies", "structural");
     ReasonOperation.reason(input, reasonerFactory, options);
     assertFalse(
         EntitySearcher.getSuperClasses(
