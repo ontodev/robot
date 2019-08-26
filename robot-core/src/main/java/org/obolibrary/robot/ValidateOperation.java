@@ -3,6 +3,8 @@ package org.obolibrary.robot;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,14 +30,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Put in the right cases in the ontology and in the csv (e.g. 'Hepatitis C' instead of 'hepatitis c')
- * - Allow for more than one restriction under a given rule type by using a separator:
- *   E.g.
- *     sc: %3 & organelle; subsumed-directly-by: hasMaterialBasisIn some %2 & isCousinOf any %3
- * - Make sure that quotes are treated consistently and correctly when parsing rules. Right now it (seems)
- *   that literal labels are parsed correctly as long as they are in single quotes (even if they consist
- *   of only one word. Everything else should not be enclosed in quotes.
- * - In rules, we currently only accept labels. Should we accept IRIs too?
+ * Implement a when-then rule, e.g.:
+ *   when: %1 subclass-of: particularTypeOfExposureProcess then: %2 particularTypeOfExposureMaterial superclass-of ...
  */
 
 
@@ -74,30 +70,30 @@ public class ValidateOperation {
 
   /** An enum representation of the type of query to make. */
   private enum QEnum {
-    DIRECT_SUPER("directly-subsumes"),
-    SUPER("subsumes"),
+    DIRECT_SUPER("direct-superclass-of"),
+    SUPER("superclass-of"),
     EQUIV("equivalent-to"),
-    DIRECT_SUB("directly-subsumed-by"),
-    SUB("subsumed-by"),
+    DIRECT_SUB("direct-subclass-of"),
+    SUB("subclass-of"),
     DIRECT_INSTANCE("direct-instance-of"),
     INSTANCE("instance-of");
 
-    private String ruleName;
+    private String ruleType;
 
-    QEnum(String ruleName) {
-      this.ruleName = ruleName;
+    QEnum(String ruleType) {
+      this.ruleType = ruleType;
     }
 
-    public String getRuleName() {
-      return ruleName;
+    public String getRuleType() {
+      return ruleType;
     }
   }
 
-  /** Reverse map from QEnum rule names to QEnums, populated at load time */
-  private static final Map<String, QEnum> ruleNameToQEnumMap = new HashMap<>();
+  /** Reverse map from QEnum rule types to QEnums, populated at load time */
+  private static final Map<String, QEnum> rule_type_to_qenum_map = new HashMap<>();
   static {
     for (QEnum q : QEnum.values()) {
-      ruleNameToQEnumMap.put(q.getRuleName(), q);
+      rule_type_to_qenum_map.put(q.getRuleType(), q);
     }
   }
 
@@ -122,7 +118,7 @@ public class ValidateOperation {
     // associated rules:
     List<String> header = csvData.remove(0);
     List<String> allRules = csvData.remove(0);
-    HashMap<String, Map<String, String>> headerToRuleMap = new HashMap();
+    HashMap<String, Map<String, List<String>>> headerToRuleMap = new HashMap();
     for (int i = 0; i < header.size(); i++) {
       headerToRuleMap.put(header.get(i), parse_rules(allRules.get(i)));
     }
@@ -132,11 +128,18 @@ public class ValidateOperation {
       List<String> row = csvData.get(csv_row_index);
       for (csv_col_index = 0; csv_col_index < header.size(); csv_col_index++) {
         String colName = header.get(csv_col_index);
-        Map<String, String> colRules = headerToRuleMap.get(colName);
+        Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
-        // Get the contents of the current cell (skip any empty ones)
+        // Get the contents of the current cell. If it is empty then report on this if it is a
+        // required column, and skip it in any case.
         String cell = row.get(csv_col_index).trim();
-        if (cell.equals("")) continue;
+        if (cell.equals("")) {
+          // Note that the list corresponding to the "required" rule always has only one element.
+          if (colRules.containsKey("required") && is_required(colRules.get("required").get(0))) {
+            writeout("Empty field in a required column");
+          }
+          continue;
+        }
 
         // Get the rdfs:label and IRI corresponding to the cell:
         String cellLabel = get_label_from_term(cell);
@@ -146,13 +149,12 @@ public class ValidateOperation {
           continue;
         }
         IRI iri = label_to_iri_map.get(cellLabel);
-        logger.debug("Found IRI: " + iri.toString() + " with label: " + cellLabel);
 
-        // Validate the various 'the entity in this column has the following axiom' rules:
+        // Validate the various 'the entity in this column has the following axiom' rules. For each
+        // type of rule there will in general be multiple particular rules.
         for (QEnum queryType : QEnum.values()) {
-          if (colRules.containsKey(queryType.getRuleName())) {
-            validate_axiom(
-                iri, cellLabel, colRules.get(queryType.getRuleName()), reasoner, row, queryType);
+          for (String axiom : colRules.getOrDefault(queryType.getRuleType(), Arrays.asList())) {
+            validate_axiom(iri, cellLabel, axiom, reasoner, row, queryType);
           }
         }
       }
@@ -181,8 +183,20 @@ public class ValidateOperation {
    * INSERT DOC HERE
    */
   private static void writeout(String msg) throws IOException {
-    writer.write(String.format("At row: %d, column: %d: %s\n",
-                               csv_row_index + 1, csv_col_index + 1, msg));
+    writer.write(
+        String.format("At row: %d, column: %d: %s\n", csv_row_index + 1, csv_col_index + 1, msg));
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void writeout(String msg, boolean showCoords) throws IOException {
+    if (showCoords) {
+      writeout(msg);
+    }
+    else {
+      writer.write(msg + "\n");
+    }
   }
 
   /**
@@ -207,24 +221,33 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static Map<String, String> parse_rules(String ruleString) {
-    HashMap<String, String> ruleMap = new HashMap();
+  private static Map<String, List<String>> parse_rules(String ruleString) throws IOException {
+    HashMap<String, List<String>> ruleMap = new HashMap();
     if (!ruleString.trim().equals("")) {
       String[] rules = ruleString.split("\\s*;\\s*");
       for (String rule : rules) {
         String[] ruleParts = rule.split("\\s*:\\s*", 2);
         String ruleKey = ruleParts[0].trim();
         String ruleVal = ruleParts[1].trim();
-        if (ruleMap.containsKey(ruleKey)) {
-          logger.warn("Duplicate rule: '" + ruleKey + "' in column " + (csv_col_index + 1));
+        if (!ruleKey.equals("required") && !rule_type_to_qenum_map.containsKey(ruleKey)) {
+          writeout("Unrecognised rule type '" + ruleKey + "' in rule '" + rule + "'", false);
+          continue;
         }
-        if (!ruleNameToQEnumMap.containsKey(ruleKey)) {
-          logger.warn("Unrecognised rule type: " + ruleKey);
+        if (!ruleMap.containsKey(ruleKey)) {
+          ruleMap.put(ruleKey, new ArrayList<String>());
         }
-        ruleMap.put(ruleKey, ruleVal);
+        ruleMap.get(ruleKey).add(ruleVal);
       }
     }
     return ruleMap;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static boolean is_required(String reqStr) {
+    reqStr = reqStr.toLowerCase();
+    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(reqStr) != -1;
   }
 
   /**
@@ -251,12 +274,12 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String wildcard_to_label(String rule, List<String> row) {
+  private static String wildcard_to_label(String rule, List<String> row) throws IOException {
     String term = null;
     if (rule.startsWith("%")) {
       int colIndex = Integer.parseInt(rule.substring(1)) - 1;
       if (colIndex >= row.size()) {
-        logger.error(
+        writeout(
             String.format(
                 "Rule: '%s' indicates a column number that is greater than the row length (%d)",
                 rule, row.size()));
@@ -275,15 +298,25 @@ public class ValidateOperation {
    * INSERT DOC HERE
    */
   private static String interpolate_axiom(String axiom, List<String> row) throws IOException {
-    Matcher m = Pattern.compile("%\\d+").matcher(axiom);
     String interpolatedAxiom = "";
+
+    // If the axiom consists in a single word without any occurrences of single or double quotes or
+    // wildcard symbols (%), then assume it is a literal label, enclose it in single quotes and
+    // return it:
+    if (Pattern.matches("^[^\\s'\"%]+$", axiom)) {
+      interpolatedAxiom = "'" + axiom + "'";
+      logger.info(String.format("Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom));
+      return interpolatedAxiom;
+    }
+
+    Matcher m = Pattern.compile("%\\d+").matcher(axiom);
     int currIndex = 0;
     while (m.find()) {
       String label = wildcard_to_label(m.group(), row);
       // If there is a problem finding the label for one of the wildcards, then just send back the
       // axiom as is:
       if (label == null) {
-        logger.error("Could not find a label corresponding to: '" + m.group() + "'");
+        writeout("Unable to interpolate '" + m.group() + "' in axiom '" + axiom + "'");
         return axiom;
       }
 
@@ -295,7 +328,7 @@ public class ValidateOperation {
     }
     // There may be text after the final wildcard, so add it now:
     interpolatedAxiom += axiom.substring(currIndex);
-    logger.debug(String.format("Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom));
+    logger.info(String.format("Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom));
     return interpolatedAxiom;
   }
 
@@ -310,7 +343,6 @@ public class ValidateOperation {
       List<String> row,
       QEnum qType) throws Exception, IOException {
 
-    // TODO: Add a debug statement like this one to every validate_ function.
     logger.debug(String.format(
         "validate_axiom(): Called with parameters: " +
         "iri: '%s', " +
@@ -329,7 +361,7 @@ public class ValidateOperation {
       ce = parser.parseManchesterExpression(interpolatedAxiom);
     }
     catch (ParserException e) {
-      logger.error("Unable to parse axiom: '" + interpolatedAxiom + "'");
+      writeout("Unable to parse axiom: '" + interpolatedAxiom + "': " + e.getMessage());
       return;
     }
 

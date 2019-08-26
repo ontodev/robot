@@ -198,7 +198,7 @@
                 <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_12092"/>
             </owl:Restriction>
         </rdfs:subClassOf>
-        <rdfs:label>hepatitis a</rdfs:label>
+        <rdfs:label>hepatitis A</rdfs:label>
     </owl:Class>
     
 
@@ -213,7 +213,7 @@
                 <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103"/>
             </owl:Restriction>
         </rdfs:subClassOf>
-        <rdfs:label>hepatitis c</rdfs:label>
+        <rdfs:label>hepatitis C</rdfs:label>
     </owl:Class>
     
 
@@ -228,7 +228,7 @@
                 <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407"/>
             </owl:Restriction>
         </rdfs:subClassOf>
-        <rdfs:label>hepatitis b</rdfs:label>
+        <rdfs:label>hepatitis B</rdfs:label>
     </owl:Class>
     
 
@@ -364,7 +364,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>hepatitis b virus</rdfs:label>
+        <rdfs:label>Hepatitis B virus</rdfs:label>
     </owl:Class>
     
 
@@ -373,7 +373,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>hepacivirus c</rdfs:label>
+        <rdfs:label>Hepacivirus C</rdfs:label>
     </owl:Class>
     
 
@@ -382,7 +382,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_12092">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>hepatovirus a</rdfs:label>
+        <rdfs:label>Hepatovirus A</rdfs:label>
     </owl:Class>
     
 

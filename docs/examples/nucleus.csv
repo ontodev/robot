@@ -1,4 +1,4 @@
 ID,Parent
-sc: %2,sc: organelle
+subclass-of: %2,subclass-of: 'organelle'; superclass-of: %1
 nucleus,intracellular organelle
 intracellular membrane-bounded organelle,membrane-bounded organelle
