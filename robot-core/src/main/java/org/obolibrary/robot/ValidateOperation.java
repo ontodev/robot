@@ -361,7 +361,9 @@ public class ValidateOperation {
       ce = parser.parseManchesterExpression(interpolatedAxiom);
     }
     catch (ParserException e) {
-      writeout("Unable to parse axiom: '" + interpolatedAxiom + "': " + e.getMessage());
+      writeout(
+          String.format("Unable to parse rule '%s: %s'. %s",
+                        qType.getRuleType(), axiom, e.getMessage()));
       return;
     }
 

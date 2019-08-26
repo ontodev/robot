@@ -1,22 +1,23 @@
-exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported,doctor responsible
-required: t; subclass-of: 'exposure process',direct-subclass-of: 'exposure material'; equivalent-to: %3,direct-subclass-of: 'exposure material',direct-subclass-of: disease; equivalent-to: %5; direct-subclass-of: hasMaterialBasisIn some %3,direct-subclass-of: disease;,direct-subclass-of: 'disease stage';,instance-of: doctor
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,,Travis Semenko
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,,Travis Semenko
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,,Travis Semenko
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,,Jolin Wu
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,,Pele
-exposure with existing immune reactivity without evidence for disease,Hepatovirus A,NCBITaxon_12092,,,,Pele
-exposure with existing immune reactivity without evidence for disease,Hepatovirus A,NCBITaxon_12092,,,,Harry Smith
-exposure with existing immune reactivity without evidence for disease,Hepatitis B virus,NCBITaxon_10407,,,,Harry Smith
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,,Jolin Wu
-exposure with existing immune reactivity without evidence for disease,Hepatitis B virus,NCBITaxon_10407,,,,Jolin Wu
-occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,acute/recent onset,Pele
-occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,chronic,Pele
-occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,chronic,Pele
-occurrence of infectious disease,Hepatovirus A,NCBITaxon_12092,hepatitis A,DOID_12549,acute/recent onset,Jolin Wu
-occurrence of infectious disease,Hepatovirus A,NCBITaxon_12092,hepatitis A,DOID_12549,chronic,Travis Semenko
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,chronic,Travis Semenko
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,chronic,Harry Smith
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,post,Harry Smith
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,chronic,Travis Semenko
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,chronic,Travis Semenko
+exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported
+required: t; subclass-of: 'exposure process',direct-subclass-of: 'exposure material'; equivalent-to: %3,direct-subclass-of: 'exposure material'; equivalent-to: %2,direct-subclass-of: disease; equivalent-to: %5; direct-subclass-of: hasMaterialBasisIn some %2,direct-subclass-of: disease;,direct-subclass-of: 'disease stage';
+vaccination,Hepatovirus A,NCBITaxon_12092,,,
+infectious challenge,Hepacivirus C,NCBITaxon_11103,,,
+transplant / transfusion,Blood,NCIT_C12434,,,
+occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,acute/recent onset
+occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,chronic
+occurrence of infectious disease,Hepatovirus A,NCBITaxon_12092,hepatitis A,DOID_12549,acute/recent onset
+occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,post
+occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,chronic
+occurrence of allergic disease,wheat,FOODON_03315184,"
+wheat allergic disease",MONDO_0007021,acute/recent onset
+occurrence of autoimmune disease,,,AIDS,EFO_0000765,chronic
+occurrence of cancer,,,Colon cancer,HP_0003003,chronic
+exposure to asymptomatic infection/colonization without evidence for disease,asymptomatic dengue,DOID_0050143,,,
+exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,
+exposure with existing immune reactivity without evidence for disease,Hepatovirus A,NCBITaxon_12092,,,
+exposure with existing immune reactivity without evidence for disease,Hepatitis B virus,NCBITaxon_10407,,,
+exposure with documentation without evidence for disease,Vendor Documentation,NCIT_C115742,,,
+exposure to endemic/ubiquitous agent without evidence for disease,ancient ubiquitous protein 1,PR_000004514,,,
+vaccination,Hepatitis A virus,NCBITaxon_12092,,,
+occurrence of infectious disease,Hepatitis B virus,,hepatitis B,DOID_2043,chronic
+exposure to asymptomatic infection/colonization without evidence for disease,,DOID_0050143,,,
