@@ -881,16 +881,15 @@ public class Template {
       throws Exception {
     Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
     Set<OWLClassExpression> expressions = new HashSet<>();
+    expressions.add(cls);
     for (int column : expressionColumns.keySet()) {
       // Maybe get an annotation on the expression (all annotations will be on the one intersection)
       axiomAnnotations.addAll(maybeGetAxiomAnnotations(row, column));
       // Add all expressions to the set of expressions
       expressions.addAll(expressionColumns.get(column));
     }
-    // Each expression will be its own equivalent class statement
-    for (OWLClassExpression expr : expressions) {
-      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, expr, axiomAnnotations));
-    }
+    // Create the axiom as an intersection of the provided expressions
+    axioms.add(dataFactory.getOWLEquivalentClassesAxiom(expressions, axiomAnnotations));
   }
 
   /**
