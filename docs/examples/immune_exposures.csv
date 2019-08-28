@@ -1,23 +1,20 @@
-exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported
-required: t; subclass-of: 'exposure process',direct-subclass-of: 'exposure material'; equivalent-to: %3,direct-subclass-of: 'exposure material'; equivalent-to: %2,direct-subclass-of: disease; equivalent-to: %5; direct-subclass-of: hasMaterialBasisIn some %2,direct-subclass-of: disease;,direct-subclass-of: 'disease stage';
-vaccination,Hepatovirus A,NCBITaxon_12092,,,
-infectious challenge,Hepacivirus C,NCBITaxon_11103,,,
-transplant / transfusion,Blood,NCIT_C12434,,,
-occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,acute/recent onset
-occurrence of infectious disease,Hepatitis B virus,NCBITaxon_10407,hepatitis B,DOID_2043,chronic
-occurrence of infectious disease,Hepatovirus A,NCBITaxon_12092,hepatitis A,DOID_12549,acute/recent onset
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,post
-occurrence of infectious disease,Hepacivirus C,NCBITaxon_11103,hepatitis C,DOID_1883,chronic
-occurrence of allergic disease,wheat,FOODON_03315184,"
-wheat allergic disease",MONDO_0007021,acute/recent onset
-occurrence of autoimmune disease,,,AIDS,EFO_0000765,chronic
-occurrence of cancer,,,Colon cancer,HP_0003003,chronic
-exposure to asymptomatic infection/colonization without evidence for disease,asymptomatic dengue,DOID_0050143,,,
-exposure with existing immune reactivity without evidence for disease,Hepacivirus C,NCBITaxon_11103,,,
-exposure with existing immune reactivity without evidence for disease,Hepatovirus A,NCBITaxon_12092,,,
-exposure with existing immune reactivity without evidence for disease,Hepatitis B virus,NCBITaxon_10407,,,
-exposure with documentation without evidence for disease,Vendor Documentation,NCIT_C115742,,,
-exposure to endemic/ubiquitous agent without evidence for disease,ancient ubiquitous protein 1,PR_000004514,,,
-vaccination,Hepatitis A virus,NCBITaxon_12092,,,
-occurrence of infectious disease,Hepatitis B virus,,hepatitis B,DOID_2043,chronic
-exposure to asymptomatic infection/colonization without evidence for disease,,DOID_0050143,,,
+exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported,comment
+required: t; subclass-of: 'exposure process',subclass-of: 'exposure material'; equivalent-to: %3,subclass-of: 'exposure material'; equivalent-to: %2,subclass-of: disease; equivalent-to: %5; subclass-of: hasMaterialBasisIn some %2,subclass-of: disease;,direct-subclass-of: 'disease stage';,
+vaccination,Varicella-zoster virus vaccine,VO_0000669,,,,PASS: vacciniation has only material
+infectious challenge,Hepacivirus C,NCBITaxon_11103,,,,PASS: infectious challenge requires only material
+transplant/transfusion,blood,UBERON_0000178,,,,PASS: transplant requires only material
+occurrence of infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever,DOID_12206,acute/recent onset,"PASS: infectious disease requires material, disease, stage"
+occurrence of allergic disease,Triticum aestivum ,NCBITaxon_4565,wheat allergy,DOID_3660,post,"PASS: allergic disease requires material, disease, stage"
+occurrence of autoimmune disease,,,acquired immunodeficiency syndrome,DOID_635,chronic,"PASS: autoimmune disease requires disease, state; excludes material"
+occurrence of cancer,,,colon cancer,DOID_219,chronic,"PASS: cancer requires disease, state; excludes material"
+exposure to asymptomatic infection/colonization without evidence for disease,Dengue virus,NCBITaxon_12637,,,,PASS: asymptomatic requires only material
+exposure with existing immune reactivity without evidence for disease,Dengue virus 2,NCBITaxon_11060,,,,PASS: exposure with immune reactivity requires only material
+exposure with documentation without evidence for disease,Dengue virus,NCBITaxon_12637,,,,PASS: exposure with documentation requires only material
+exposure to endemic/ubiquitous agent without evidence for disease,Dengue virus,NCBITaxon_12637,,,,PASS: exposure to endemic requires only material
+none,,,,,,PASS: none requires no fields
+unknown,,,,,,PASS: unknown requires no fields
+occurrence of infectious disease,,,dengue hemorrhagic fever,DOID_12206,acute/recent onset,FAIL: material required
+occurrence of infectious disease,Dengue virus,NCBITaxon_12637,,,acute/recent onset,FAIL: disease required
+occurrence of infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever,DOID_12206,,FAIL: stage required
+occurrence of infectious disease,Dengue virus,NCBITaxon_11060,dengue hemorrhagic fever,DOID_12206,acute/recent onset,FAIL: exposure material must match exposure material ID
+occurrence of infectious disease,Dengue virus,NCBITaxon_12637,Dengue virus 2,NCBITaxon_11060,acute/recent onset,FAIL: disease value must be a disease

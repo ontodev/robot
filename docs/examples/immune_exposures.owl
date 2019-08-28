@@ -95,6 +95,126 @@
     
 
 
+    <!-- http://purl.obolibrary.org/obo/CORE_0000100 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CORE_0000100">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label xml:lang="en">organism</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_12206 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/DOID_12206">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasMaterialBasisIn"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_12637"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>dengue hemorrhagic fever</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_219 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/DOID_219">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:label>colon cancer</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_3660 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/DOID_3660">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasMaterialBasisIn"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_4565"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>wheat allergy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_635 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/DOID_635">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:label>acquired immunodeficiency syndrome</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_11060 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_11060">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_12637"/>
+        <rdfs:label>Dengue virus 2</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_12637 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_12637">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CORE_0000100"/>
+        <rdfs:label>Dengue virus</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_4565 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_4565">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CORE_0000100"/>
+        <rdfs:label>Triticum aestivum</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000178 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000178">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/UBERON_0001062"/>
+        <rdfs:label>blood</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0001062 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0001062">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>anatomical entity</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000001 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/VO_0000001">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:label>vaccine</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000669 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/VO_0000669">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_0000001"/>
+        <rdfs:label>Varicella-zoster virus vaccine</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">
@@ -170,37 +290,10 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor"/>
-        <rdfs:label>general doctor</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor"/>
-        <rdfs:label>virologist</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_0050143 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_0050143">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>asymptomatic dengue</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_12549 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_12549">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasMaterialBasisIn"/>
@@ -215,7 +308,7 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1883 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_1883">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasMaterialBasisIn"/>
@@ -230,7 +323,7 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_2043 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOID_2043">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasMaterialBasisIn"/>
@@ -242,14 +335,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease">
-        <rdfs:label>disease</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure">
@@ -257,7 +342,7 @@
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasDisease"/>
-                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
+                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4"/>
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:subClassOf>
@@ -275,23 +360,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseStage">
         <rdfs:label>disease stage</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Doctor">
-        <rdfs:label>doctor</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#EFO_0000765 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#EFO_0000765">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
-        <rdfs:label>AIDS</rdfs:label>
     </owl:Class>
     
 
@@ -354,24 +422,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#FOODON_03315184 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#FOODON_03315184">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>wheat</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#HP_0003003 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#HP_0003003">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
-        <rdfs:label>Colon cancer</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge">
@@ -396,25 +446,10 @@
     
 
 
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#MONDO_0007021 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#MONDO_0007021">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Disease"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#hasMaterialBasisIn"/>
-                <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#FOODON_03315184"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:label>wheat allergic disease</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_10407">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CORE_0000100"/>
         <rdfs:label>Hepatitis B virus</rdfs:label>
     </owl:Class>
     
@@ -423,7 +458,7 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CORE_0000100"/>
         <rdfs:label>Hepacivirus C</rdfs:label>
     </owl:Class>
     
@@ -432,26 +467,8 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_12092 -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_12092">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CORE_0000100"/>
         <rdfs:label>Hepatovirus A</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCIT_C115742 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCIT_C115742">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>Vendor Documentation</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCIT_C12434 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCIT_C12434">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>Blood</rdfs:label>
     </owl:Class>
     
 
@@ -461,15 +478,6 @@
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NoExposure">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureProcess"/>
         <rdfs:label>none</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#PR_000004514 -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#PR_000004514">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureMaterial"/>
-        <rdfs:label>ancient ubiquitous protein 1</rdfs:label>
     </owl:Class>
     
 
@@ -487,7 +495,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#TransplantOrTransfusion">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure"/>
-        <rdfs:label>transplant / transfusion</rdfs:label>
+        <rdfs:label>transplant/transfusion</rdfs:label>
     </owl:Class>
     
 
@@ -510,6 +518,14 @@
     
 
 
+    <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4 -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#http://purl.obolibrary.org/obo/DOID_4">
+        <rdfs:label>disease</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -524,7 +540,6 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID1 -->
 
     <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID1">
-        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1"/>
         <rdfs:label>Harry Smith</rdfs:label>
     </owl:NamedIndividual>
     
@@ -533,7 +548,6 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID2 -->
 
     <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID2">
-        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2"/>
         <rdfs:label>Jolin Wu</rdfs:label>
     </owl:NamedIndividual>
     
@@ -542,7 +556,6 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID3 -->
 
     <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID3">
-        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID2"/>
         <rdfs:label>Pele</rdfs:label>
     </owl:NamedIndividual>
     
@@ -551,7 +564,6 @@
     <!-- http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID4 -->
 
     <owl:NamedIndividual rdf:about="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCID4">
-        <rdf:type rdf:resource="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DOCTYPEID1"/>
         <rdfs:label>Travis Semenko</rdfs:label>
     </owl:NamedIndividual>
 </rdf:RDF>
