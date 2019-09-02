@@ -139,7 +139,7 @@ public class Template {
    * Error message when a template cannot be understood. Expects: table name, column number, column
    * name, template.
    */
-  private static final String unknownTemplateError =
+  protected static final String unknownTemplateError =
       NS
           + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" for column %2$d (\"%3$s\") in table \"%1$s\".";
 
@@ -1971,29 +1971,20 @@ public class Template {
 
     // Maybe get an annotation on the annotation
     String nextTemplate;
+    int nextColumn = column + 1;
     try {
-      nextTemplate = templates.get(column + 1);
+      nextTemplate = templates.get(nextColumn);
     } catch (IndexOutOfBoundsException e) {
       nextTemplate = null;
     }
 
-    // Handle axiom annotations
-    if (nextTemplate != null && !nextTemplate.trim().isEmpty() && nextTemplate.startsWith(">A")) {
-      nextTemplate = nextTemplate.substring(1);
-      String nextValue;
-      try {
-        nextValue = row.get(column + 1);
-      } catch (IndexOutOfBoundsException e) {
-        nextValue = null;
-      }
-      if (nextValue != null && !nextValue.trim().equals("")) {
-        Set<OWLAnnotation> nextAnnotations =
-            TemplateHelper.getAnnotations(name, checker, nextTemplate, nextValue, rowNum, column);
+    if (nextTemplate != null) {
+      Set<OWLAnnotation> axiomAnnotations = getAxiomAnnotations(row, nextTemplate, nextColumn);
+      if (axiomAnnotations != null) {
         Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
         for (OWLAnnotation annotation : annotations) {
-          fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextAnnotations));
+          fixedAnnotations.add(annotation.getAnnotatedAnnotation(axiomAnnotations));
         }
-        // Replace the annotation set with the annotated annotations
         annotations = fixedAnnotations;
       }
     }
@@ -2006,33 +1997,51 @@ public class Template {
    * get axiom annotations on existing axiom annotations.
    *
    * @param row list of strings
-   * @param template template string for the column
+   * @param nextTemplate template string for the column
    * @param nextColumn next column number
    * @return set of OWLAnnotations, or an empty set
    * @throws Exception on issue getting the OWLAnnotations
    */
-  private Set<OWLAnnotation> getAxiomAnnotations(List<String> row, String template, int nextColumn)
-      throws Exception {
-    Set<OWLAnnotation> annotations = new HashSet<>();
-    if (template.startsWith(">C")) {
-      logger.warn(
-          String.format(
-              ">A* should be used for all axiom annotations\n(Template '%s' in column %d)",
-              template, nextColumn));
+  private Set<OWLAnnotation> getAxiomAnnotations(
+      List<String> row, String nextTemplate, int nextColumn) throws Exception {
+    // Handle axiom annotations
+    if (!nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
+      nextTemplate = nextTemplate.substring(1);
+      String nextValue;
+      try {
+        nextValue = row.get(nextColumn);
+      } catch (IndexOutOfBoundsException e) {
+        nextValue = null;
+      }
+
+      if (nextValue != null && !nextValue.trim().equals("")) {
+        Set<OWLAnnotation> nextAnnotations =
+            TemplateHelper.getAnnotations(
+                name, checker, nextTemplate, nextValue, rowNum, nextColumn);
+        String nextNextTemplate;
+        try {
+          nextNextTemplate = templates.get(nextColumn + 1);
+        } catch (IndexOutOfBoundsException e) {
+          nextNextTemplate = null;
+        }
+        if (nextNextTemplate != null) {
+          Set<OWLAnnotation> nextNextAnnotations =
+              getAxiomAnnotations(row, nextNextTemplate, nextColumn + 1);
+          if (nextNextAnnotations != null) {
+            Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
+            for (OWLAnnotation annotation : nextAnnotations) {
+              fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextNextAnnotations));
+            }
+            return fixedAnnotations;
+          } else {
+            return nextAnnotations;
+          }
+        } else {
+          return nextAnnotations;
+        }
+      }
     }
-    template = template.substring(1);
-    String nextValue;
-    try {
-      nextValue = row.get(nextColumn);
-    } catch (IndexOutOfBoundsException e) {
-      nextValue = null;
-    }
-    if (nextValue == null || nextValue.trim().equals("")) {
-      return annotations;
-    }
-    annotations.addAll(
-        TemplateHelper.getAnnotations(name, checker, template, nextValue, rowNum, nextColumn));
-    return annotations;
+    return null;
   }
 
   /**
