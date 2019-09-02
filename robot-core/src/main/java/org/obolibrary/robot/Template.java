@@ -139,7 +139,7 @@ public class Template {
    * Error message when a template cannot be understood. Expects: table name, column number, column
    * name, template.
    */
-  protected static final String unknownTemplateError =
+  private static final String unknownTemplateError =
       NS
           + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" for column %2$d (\"%3$s\") in table \"%1$s\".";
 
