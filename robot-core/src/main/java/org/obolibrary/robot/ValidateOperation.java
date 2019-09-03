@@ -31,12 +31,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Get the requirements in the immune exposures document implemented
+ * - Make the optional when clause applicable to 'required'
+ * - Add an 'excluded' rule which is the mirror image of the 'required' rule
  * - Allow multiple query types in a single clause (e.g. subclass-of-equivalent-to), i.e. the
  *   equivalent of checking multiple tickboxes in the dl query editor
- * - Add an 'excluded' rule which is the mirror image of the 'required' rule
- * - Make the optional when clause applicable to 'required' and 'excluded'
+ * - Get the requirements in the immune exposures document implemented
  * - Make sure rule parsing is as robust as possible
+ *   - In when clause, allow a colon after the query type
  * - Add more logging statements and make them and the error messages more user-friendly
  * - Eventually write a report to Excel.
  */
@@ -137,27 +138,17 @@ public class ValidateOperation {
         String colName = header.get(csv_col_index);
         Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
-        // If there are no rules for this column, then skip this cell
+        // If there are no rules for this column, then skip this cell (this a "comment" column).
         if (colRules.isEmpty()) continue;
 
-        // Get the contents of the current cell. If it is empty then report on this if it is a
-        // required column, and skip it in any case.
+        // Get the contents of the current cell.
         String cell = row.get(csv_col_index).trim();
-        if (cell.equals("")) {
-          // Note that the list corresponding to the "required" rule always has only one element.
-          if (colRules.containsKey("required") && is_required(colRules.get("required").get(0))) {
-            writeout("Empty field in a required column");
-          }
-          // TODO: Maybe we should not always (or ever?) skip empty cells ...
-          // TODO: Maybe eliminate the required keyword, although 'excluded' will probably still be
-          // needed ... for now do not skip empty cells:
-          //continue;
-        }
 
-        // Validate the various 'the entity in this column has the following constraint' rules. For each
-        // type of rule there will in general be multiple particular rules.
+        // For each of the defined query types ...
         for (QEnum queryType : QEnum.values()) {
+          // For each rule of that type that is constraining this column ...
           for (String rule : colRules.getOrDefault(queryType.getRuleType(), Arrays.asList())) {
+            // Validate the cell against it:
             validate_rule(cell, rule, reasoner, row, queryType);
           }
         }
@@ -245,7 +236,7 @@ public class ValidateOperation {
         String[] ruleParts = rule.split("\\s*:\\s*", 2);
         String ruleKey = ruleParts[0].trim();
         String ruleVal = ruleParts[1].trim();
-        if (!ruleKey.equals("required") && !rule_type_to_qenum_map.containsKey(ruleKey)) {
+        if (!rule_type_to_qenum_map.containsKey(ruleKey)) {
           writeout("Unrecognised rule type \"" + ruleKey + "\" in rule \"" + rule + "\"", false);
           continue;
         }
@@ -256,15 +247,6 @@ public class ValidateOperation {
       }
     }
     return ruleMap;
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-
-  private static boolean is_required(String reqStr) {
-    reqStr = reqStr.toLowerCase();
-    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(reqStr) != -1;
   }
 
   /**
