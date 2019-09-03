@@ -55,7 +55,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> --output <file>";
+    return "validate --csv <CSV> --owl <OWL> [--output <file>]";
   }
 
   /**

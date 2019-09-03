@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.obolibrary.macro.ManchesterSyntaxTool;
@@ -30,8 +31,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * Implement a when-then rule, e.g.:
- *   when: %1 subclass-of: particularTypeOfExposureProcess then: %2 particularTypeOfExposureMaterial superclass-of ...
+ * - Maybe remove the "required" rule
+ * - Add more logging statements
+ * - Handle syntax errors in rules gracefully
  */
 
 
@@ -50,11 +52,14 @@ public class ValidateOperation {
   /** Output writer */
   private static Writer writer;
 
-  /** The reasoner factory to use for validation */
-  private static OWLReasonerFactory reasoner_factory;
-
   /** The ontology to use for validation */
   private static OWLOntology ontology;
+
+  /** The reasoner to use for validation */
+  private static OWLReasoner reasoner;
+
+  /** The parser to use for evaluating class expressions */
+  private static ManchesterSyntaxTool parser;
 
   /** A map from rdfs:labels to IRIs */
   private static Map<String, IRI> label_to_iri_map;
@@ -111,9 +116,6 @@ public class ValidateOperation {
     // Initialize the shared variables:
     initialize(ontology, reasonerFactory, writer);
 
-    // Create a new reasoner, from the reasoner factory, based on the ontology data:
-    OWLReasoner reasoner = reasoner_factory.createReasoner(ontology);
-
     // Extract the header and rules rows from the CSV data and map the column names to their
     // associated rules:
     List<String> header = csvData.remove(0);
@@ -130,6 +132,9 @@ public class ValidateOperation {
         String colName = header.get(csv_col_index);
         Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
+        // If there are no rules for this column, then skip this cell
+        if (colRules.isEmpty()) continue;
+
         // Get the contents of the current cell. If it is empty then report on this if it is a
         // required column, and skip it in any case.
         String cell = row.get(csv_col_index).trim();
@@ -145,21 +150,21 @@ public class ValidateOperation {
         String cellLabel = get_label_from_term(cell);
         if (cellLabel == null) {
           writeout(
-              "Could not find '" + cell + "' in ontology");
+              "Could not find \"" + cell + "\" in ontology");
           continue;
         }
         IRI iri = label_to_iri_map.get(cellLabel);
 
-        // Validate the various 'the entity in this column has the following axiom' rules. For each
+        // Validate the various 'the entity in this column has the following constraint' rules. For each
         // type of rule there will in general be multiple particular rules.
         for (QEnum queryType : QEnum.values()) {
-          for (String axiom : colRules.getOrDefault(queryType.getRuleType(), Arrays.asList())) {
-            validate_axiom(iri, cellLabel, axiom, reasoner, row, queryType);
+          for (String rule : colRules.getOrDefault(queryType.getRuleType(), Arrays.asList())) {
+            validate_rule(iri, rule, reasoner, row, queryType);
           }
         }
       }
     }
-    reasoner.dispose();
+    tearDown();
   }
 
   /**
@@ -171,12 +176,24 @@ public class ValidateOperation {
       Writer writer) {
 
     ValidateOperation.ontology = ontology;
-    ValidateOperation.reasoner_factory = reasonerFactory;
     ValidateOperation.writer = writer;
+
+    // Initialise the parser based on the given ontology:
+    parser = new ManchesterSyntaxTool(ontology);
+    // Use the given reasonerFactory to initialise the reasoner based on the given ontology:
+    reasoner = reasonerFactory.createReasoner(ontology);
 
     // Extract from the ontology two maps from rdfs:labels to IRIs and vice versa:
     ValidateOperation.iri_to_label_map = OntologyHelper.getIRILabels(ValidateOperation.ontology);
     ValidateOperation.label_to_iri_map = reverse_iri_label_map(ValidateOperation.iri_to_label_map);
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void tearDown() {
+    parser.dispose();
+    reasoner.dispose();
   }
 
   /**
@@ -210,7 +227,7 @@ public class ValidateOperation {
       if (target.containsKey(reverseKey)) {
         logger.warn(
             String.format(
-                "Duplicate rdfs:label '%s'. Overwriting value '%s' with '%s'",
+                "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
                 reverseKey, target.get(reverseKey), reverseValue));
       }
       target.put(reverseKey, reverseValue);
@@ -230,7 +247,7 @@ public class ValidateOperation {
         String ruleKey = ruleParts[0].trim();
         String ruleVal = ruleParts[1].trim();
         if (!ruleKey.equals("required") && !rule_type_to_qenum_map.containsKey(ruleKey)) {
-          writeout("Unrecognised rule type '" + ruleKey + "' in rule '" + rule + "'", false);
+          writeout("Unrecognised rule type \"" + ruleKey + "\" in rule \"" + rule + "\"", false);
           continue;
         }
         if (!ruleMap.containsKey(ruleKey)) {
@@ -245,6 +262,7 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+
   private static boolean is_required(String reqStr) {
     reqStr = reqStr.toLowerCase();
     return Arrays.asList("true", "t", "1", "yes", "y").indexOf(reqStr) != -1;
@@ -281,7 +299,7 @@ public class ValidateOperation {
       if (colIndex >= row.size()) {
         writeout(
             String.format(
-                "Rule: '%s' indicates a column number that is greater than the row length (%d)",
+                "Rule: \"%s\" indicates a column number that is greater than the row length (%d)",
                 rule, row.size()));
         return null;
       }
@@ -297,111 +315,240 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String interpolate_axiom(String axiom, List<String> row) throws IOException {
-    String interpolatedAxiom = "";
+  private static String interpolate(String str, List<String> row) throws IOException {
+    String interpolatedString = "";
 
-    // If the axiom consists in a single word without any occurrences of single or double quotes or
+    // If the string consists in a single word without any occurrences of single or double quotes or
     // wildcard symbols (%), then assume it is a literal label, enclose it in single quotes and
     // return it:
-    if (Pattern.matches("^[^\\s'\"%]+$", axiom)) {
-      interpolatedAxiom = "'" + axiom + "'";
-      logger.info(String.format("Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom));
-      return interpolatedAxiom;
+    if (Pattern.matches("^[^\\s'\"%]+$", str)) {
+      interpolatedString = "'" + str + "'";
+      logger.info(String.format("Interpolated: \"%s\" into \"%s\"", str, interpolatedString));
+      return interpolatedString;
     }
 
-    Matcher m = Pattern.compile("%\\d+").matcher(axiom);
+    Matcher m = Pattern.compile("%\\d+").matcher(str);
     int currIndex = 0;
     while (m.find()) {
       String label = wildcard_to_label(m.group(), row);
       // If there is a problem finding the label for one of the wildcards, then just send back the
-      // axiom as is:
+      // string as is:
       if (label == null) {
-        writeout("Unable to interpolate '" + m.group() + "' in axiom '" + axiom + "'");
-        return axiom;
+        writeout("Unable to interpolate \"" + m.group() + "\" in string \"" + str + "\"");
+        return str;
       }
 
-      // Iteratively build the interpolated axiom up to the current label, which we enclose in
+      // Iteratively build the interpolated string up to the current label, which we enclose in
       // single quotes:
-      interpolatedAxiom =
-          interpolatedAxiom + axiom.substring(currIndex, m.start()) + "'" + label + "'";
+      interpolatedString =
+          interpolatedString + str.substring(currIndex, m.start()) + "'" + label + "'";
       currIndex = m.end();
     }
     // There may be text after the final wildcard, so add it now:
-    interpolatedAxiom += axiom.substring(currIndex);
-    logger.info(String.format("Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom));
-    return interpolatedAxiom;
+    interpolatedString += str.substring(currIndex);
+    logger.info(String.format("Interpolated: \"%s\" into \"%s\"", str, interpolatedString));
+    return interpolatedString;
+  }
+
+  /**
+   * INSERT DOC HERE
+   // Parses the given rule into a main part and optional when clause.
+   */
+  private static SimpleEntry<String, List<String[]>> separate_rule(String rule) throws IOException {
+    // By default return the rule as it was given (unseparatedRule) plus an
+    // empty list of when-clauses:
+    SimpleEntry<String, List<String[]>> unseparatedRule =
+        new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
+
+    // Check if there are any when clauses
+    Matcher m = Pattern.compile("(\\(\\s*(when:?)\\s+.+?\\))(.*)").matcher(rule);
+    String whenClauseStr = null;
+    if (!m.find()) {
+      // If there is no when clause, then just return back the rule as it was passed with an empty
+      // when clause:
+      return unseparatedRule;
+    }
+
+    if (m.start() == 0) {
+      writeout("Rule: \"" + rule + "\" has when clause but no main clause.");
+      return unseparatedRule;
+    }
+
+    whenClauseStr = m.group(1);
+    // Extract the actual content of the clause. m.group(2) is the "when" (or alternately "when:")
+    // that opens the when-clause. We add 2 to the length to account for the leading '(' and the
+    // succeeding space, e.g., "(when ", "(when: "
+    whenClauseStr = whenClauseStr.substring(m.group(2).length() + 2, whenClauseStr.length() - 1);
+
+    // Don't fail just because there is some extra garbage at the end of the rule, but notify
+    // about it:
+    if (!m.group(3).trim().equals("")) {
+      writeout("Ignoring string \"" + m.group(3).trim() + "\" at end of rule \"" + rule + "\".");
+    }
+
+    // Within each when clause, multiple subclauses separated by ampersands are allowed. Each
+    // subclass must be of the form: <Entity> <Query-Type> <Axiom>.
+    // Entity is in the form of a (not necessaruly interpolated) label: either a contiguous string
+    // or a string with whitespace enclosed in single quotes. <Query-Type> is a hyphenated
+    // alphanumeric string. <Axiom> can take any form. Here we resolve each sub-clause of the
+    // when statement into a list of such triples.
+    ArrayList<String[]> whenClauses = new ArrayList();
+    for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
+      m = Pattern.compile(
+          "^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-]+:?)\\s+(.*)$")
+          .matcher(whenClause);
+
+      if (m.find()) {
+        whenClauses.add(new String[] {m.group(1), m.group(2), m.group(3)});
+      }
+      else {
+        writeout("Unable to decompose when-clause: \"" + whenClause + "\".");
+        return unseparatedRule;
+      }
+    }
+
+    // Now get the main part of the rule (i.e. the part before the when clause):
+    m = Pattern.compile("^(.+)\\s+\\(when:?\\s").matcher(rule);
+    if (!m.find()) {
+      writeout("Encountered unknown error while looking for main clause of rule \"" + rule + "\"");
+      return unseparatedRule;
+    }
+
+    return new SimpleEntry<String, List<String[]>>(m.group(1), whenClauses);
   }
 
   /**
    * INSERT DOC HERE
    */
-  private static void validate_axiom(
+  private static void validate_rule(
       IRI iri,
-      String label,
-      String axiom,
+      String rule,
       OWLReasoner reasoner,
       List<String> row,
       QEnum qType) throws Exception, IOException {
 
     logger.debug(String.format(
-        "validate_axiom(): Called with parameters: " +
-        "iri: '%s', " +
-        "label: '%s', " +
-        "axiom: '%s', " +
-        "reasoner: '%s', " +
-        "row: '%s', " +
-        "query type: '%s'.",
-        iri.getShortForm(), label, axiom, reasoner.getClass().getSimpleName(), row, qType.name()));
+        "validate_rule(): Called with parameters: " +
+        "iri: \"%s\", " +
+        "rule: \"%s\", " +
+        "reasoner: \"%s\", " +
+        "row: \"%s\", " +
+        "query type: \"%s\".",
+        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, qType.name()));
 
-    // Interpolate any wildcards in the axiom into rdfs:label strings and then try to parse it:
-    String interpolatedAxiom = interpolate_axiom(axiom, row);
-    ManchesterSyntaxTool parser = new ManchesterSyntaxTool(ontology);
+    // Separate the given rule into its main clause and optional when clauses:
+    SimpleEntry<String, List<String[]>> separatedRule = separate_rule(rule);
+
+    // Evaluate and validate any when clauses for this rule:
+    boolean whenIsSatisfied = true;
+    for (String[] whenClause : separatedRule.getValue()) {
+      String interpolatedSubject = interpolate(whenClause[0], row);
+      // Get the IRI for the interpolated subject, first removing any surrounding single quotes
+      // from the label:
+      IRI subjectIri = label_to_iri_map.get(interpolatedSubject.replaceAll("^\'|\'$", ""));
+      if (subjectIri == null) {
+        writeout("Could not determine IRI for label: " + interpolatedSubject);
+        continue;
+      }
+
+      // Determine the kind of query this is supposed to be:
+      QEnum whenQType = rule_type_to_qenum_map.get(whenClause[1]);
+      if (whenQType == null) {
+        writeout("Could not determine query type of: " + whenClause[1]);
+        continue;
+      }
+
+      // Finally get the axiom to validate:
+      String interpolatedAxiom = interpolate(whenClause[2], row);
+
+      // Execute the query. If any of the when clauses fail to be satisfied, then we can skip
+      // evaluating the others.
+      if (!execute_query(subjectIri, interpolatedAxiom, reasoner, row, whenQType)) {
+        whenIsSatisfied = false;
+        logger.info(
+            String.format(
+                "When clause: \"%s (%s) %s %s\" is not satisfied",
+                interpolatedSubject, subjectIri.getShortForm(), whenQType, interpolatedAxiom));
+        break;
+      }
+    }
+
+    // If all when clauses have been satisfied, then we can execute the rule's main clause:
+    if (whenIsSatisfied) {
+      String interpolatedMainAxiom = interpolate(separatedRule.getKey(), row);
+      execute_query(iri, interpolatedMainAxiom, reasoner, row, qType);
+    }
+  }
+
+  private static boolean execute_query(
+      IRI iri,
+      String rule,
+      OWLReasoner reasoner,
+      List<String> row,
+      QEnum qType) throws Exception, IOException {
+
+    logger.debug(String.format(
+        "execute_query(): Called with parameters: " +
+        "iri: \"%s\", " +
+        "rule: \"%s\", " +
+        "reasoner: \"%s\", " +
+        "row: \"%s\", " +
+        "query type: \"%s\".",
+        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, qType.name()));
+
+    boolean returnValue = false;
+
     OWLClassExpression ce;
     try {
-      ce = parser.parseManchesterExpression(interpolatedAxiom);
+      ce = parser.parseManchesterExpression(rule);
     }
     catch (ParserException e) {
       writeout(
-          String.format("Unable to parse rule '%s: %s'. %s",
-                        qType.getRuleType(), axiom, e.getMessage()));
-      return;
+          String.format("Unable to parse rule \"%s: %s\". %s",
+                        qType.getRuleType(), rule, e.getMessage()));
+      return returnValue;
     }
 
     OWLEntity iriEntity = OntologyHelper.getEntity(ontology, iri);
+    String label = iri_to_label_map.get(iri);
 
     if (qType == QEnum.SUB || qType == QEnum.DIRECT_SUB) {
-      // Check to see if the iri is a (direct) subclass of the given axiom:
+      // Check to see if the iri is a (direct) subclass of the given rule:
       NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, qType == QEnum.DIRECT_SUB);
       if (!subClassesFound.containsEntity(iriEntity.asOWLClass())) {
         writeout(
             String.format(
-                "%s (%s) is not a%s descendant of '%s'",
-                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", interpolatedAxiom));
+                "%s (%s) is not a%s descendant of \"%s\"",
+                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", rule));
+        returnValue = false;
       }
       else {
         logger.info(
             String.format(
-                "Validated that %s (%s) is a%s descendant of '%s'",
-                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", interpolatedAxiom));
+                "Validated that %s (%s) is a%s descendant of \"%s\"",
+                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", rule));
+        returnValue = true;
       }
     }
     else if (qType == QEnum.SUPER || qType == QEnum.DIRECT_SUPER) {
-      // Check to see if the iri is a (direct) superclass of the given axiom:
+      // Check to see if the iri is a (direct) superclass of the given rule:
       NodeSet<OWLClass> superClassesFound =
           reasoner.getSuperClasses(ce, qType == QEnum.DIRECT_SUPER);
       if (!superClassesFound.containsEntity(iriEntity.asOWLClass())) {
         writeout(
             String.format(
-                "%s (%s) does not%s subsume '%s'",
+                "%s (%s) does not%s subsume \"%s\"",
                 iri.getShortForm(), label, qType == QEnum.SUPER ? "" : " directly",
-                interpolatedAxiom));
+                rule));
+        returnValue = false;
       }
       else {
         logger.info(
             String.format(
-                "Validated that %s (%s)%s subsumes '%s'",
+                "Validated that %s (%s)%s subsumes \"%s\"",
                 iri.getShortForm(), label, qType == QEnum.SUPER ? "" : " directly",
-                interpolatedAxiom));
+                rule));
+        returnValue = true;
       }
     }
     else if (qType == QEnum.INSTANCE || qType == QEnum.DIRECT_INSTANCE) {
@@ -410,16 +557,18 @@ public class ValidateOperation {
       if (!instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
         writeout(
             String.format(
-                "%s (%s) is not a%s instance of '%s'",
+                "%s (%s) is not a%s instance of \"%s\"",
                 iri.getShortForm(), label,
-                qType == QEnum.INSTANCE ? "n" : " direct", interpolatedAxiom));
+                qType == QEnum.INSTANCE ? "n" : " direct", rule));
+        returnValue = false;
       }
       else {
         logger.info(
             String.format(
-                "Validated that %s (%s) is a%s instance of '%s'",
+                "Validated that %s (%s) is a%s instance of \"%s\"",
                 iri.getShortForm(), label,
-                qType == QEnum.INSTANCE ? "n" : " direct", interpolatedAxiom));
+                qType == QEnum.INSTANCE ? "n" : " direct", rule));
+        returnValue = true;
       }
     }
     else if (qType == QEnum.EQUIV) {
@@ -427,20 +576,23 @@ public class ValidateOperation {
       if (!equivClassesFound.contains(iriEntity.asOWLClass())) {
         writeout(
             String.format(
-                "%s (%s) is not equivalent to '%s'",
-                iri.getShortForm(), label, interpolatedAxiom));
+                "%s (%s) is not equivalent to \"%s\"",
+                iri.getShortForm(), label, rule));
+        returnValue = false;
       }
       else {
         logger.info(
             String.format(
-                "Validated that %s (%s) is equivalent to '%s'",
-                iri.getShortForm(), label, interpolatedAxiom));
+                "Validated that %s (%s) is equivalent to \"%s\"",
+                iri.getShortForm(), label, rule));
+        returnValue = true;
       }
     }
     else {
       logger.error("Unrecognised/unimplemented query type: " + qType.name());
+      returnValue = false;
     }
 
-    parser.dispose();
+    return returnValue;
   }
 }
