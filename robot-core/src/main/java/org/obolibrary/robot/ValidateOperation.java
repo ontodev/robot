@@ -31,9 +31,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Maybe remove the "required" rule
- * - Add more logging statements
- * - Handle syntax errors in rules gracefully
+ * - Get the requirements in the immune exposures document implemented
+ * - Allow multiple query types in a single clause (e.g. subclass-of-equivalent-to), i.e. the
+ *   equivalent of checking multiple tickboxes in the dl query editor
+ * - Add an 'excluded' rule which is the mirror image of the 'required' rule
+ * - Make the optional when clause applicable to 'required' and 'excluded'
+ * - Make sure rule parsing is as robust as possible
+ * - Add more logging statements and make them and the error messages more user-friendly
+ * - Eventually write a report to Excel.
  */
 
 
@@ -143,23 +148,17 @@ public class ValidateOperation {
           if (colRules.containsKey("required") && is_required(colRules.get("required").get(0))) {
             writeout("Empty field in a required column");
           }
-          continue;
+          // TODO: Maybe we should not always (or ever?) skip empty cells ...
+          // TODO: Maybe eliminate the required keyword, although 'excluded' will probably still be
+          // needed ... for now do not skip empty cells:
+          //continue;
         }
-
-        // Get the rdfs:label and IRI corresponding to the cell:
-        String cellLabel = get_label_from_term(cell);
-        if (cellLabel == null) {
-          writeout(
-              "Could not find \"" + cell + "\" in ontology");
-          continue;
-        }
-        IRI iri = label_to_iri_map.get(cellLabel);
 
         // Validate the various 'the entity in this column has the following constraint' rules. For each
         // type of rule there will in general be multiple particular rules.
         for (QEnum queryType : QEnum.values()) {
           for (String rule : colRules.getOrDefault(queryType.getRuleType(), Arrays.asList())) {
-            validate_rule(iri, rule, reasoner, row, queryType);
+            validate_rule(cell, rule, reasoner, row, queryType);
           }
         }
       }
@@ -361,7 +360,7 @@ public class ValidateOperation {
         new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
 
     // Check if there are any when clauses
-    Matcher m = Pattern.compile("(\\(\\s*(when:?)\\s+.+?\\))(.*)").matcher(rule);
+    Matcher m = Pattern.compile("(\\(\\s*(when:?)\\s+.+\\))(.*)").matcher(rule);
     String whenClauseStr = null;
     if (!m.find()) {
       // If there is no when clause, then just return back the rule as it was passed with an empty
@@ -421,7 +420,7 @@ public class ValidateOperation {
    * INSERT DOC HERE
    */
   private static void validate_rule(
-      IRI iri,
+      String cell,
       String rule,
       OWLReasoner reasoner,
       List<String> row,
@@ -429,12 +428,12 @@ public class ValidateOperation {
 
     logger.debug(String.format(
         "validate_rule(): Called with parameters: " +
-        "iri: \"%s\", " +
+        "cell: \"%s\", " +
         "rule: \"%s\", " +
         "reasoner: \"%s\", " +
         "row: \"%s\", " +
         "query type: \"%s\".",
-        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, qType.name()));
+        cell, rule, reasoner.getClass().getSimpleName(), row, qType.name()));
 
     // Separate the given rule into its main clause and optional when clauses:
     SimpleEntry<String, List<String[]>> separatedRule = separate_rule(rule);
@@ -473,10 +472,35 @@ public class ValidateOperation {
       }
     }
 
-    // If all when clauses have been satisfied, then we can execute the rule's main clause:
-    if (whenIsSatisfied) {
-      String interpolatedMainAxiom = interpolate(separatedRule.getKey(), row);
-      execute_query(iri, interpolatedMainAxiom, reasoner, row, qType);
+    // If any of the when clauses have not been satisfied, just exit:
+    if (!whenIsSatisfied) {
+      logger.debug("Not running main rule clause: When clauses have not been satisfied.");
+      return;
+    }
+
+    // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
+    String cellLabel = get_label_from_term(cell);
+    if (cellLabel == null) {
+      writeout(
+          "Could not find \"" + cell + "\" in ontology");
+      return;
+    }
+
+    // Get the cell's IRI, interpolate the axiom, and execute the query:
+    IRI cellIri = label_to_iri_map.get(cellLabel);
+    String interpolatedMainAxiom = interpolate(separatedRule.getKey(), row);
+    boolean result = execute_query(cellIri, interpolatedMainAxiom, reasoner, row, qType);
+    if (!result) {
+      writeout(
+          String.format(
+              "Rule: \"%s (%s) %s %s\" is not satisfied",
+              cellLabel, cellIri.getShortForm(), qType, interpolatedMainAxiom));
+    }
+    else {
+      logger.info(
+          String.format(
+              "Rule: \"%s (%s) %s %s\" is satisfied",
+              cellLabel, cellIri.getShortForm(), qType, interpolatedMainAxiom));
     }
   }
 
@@ -515,78 +539,22 @@ public class ValidateOperation {
     if (qType == QEnum.SUB || qType == QEnum.DIRECT_SUB) {
       // Check to see if the iri is a (direct) subclass of the given rule:
       NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, qType == QEnum.DIRECT_SUB);
-      if (!subClassesFound.containsEntity(iriEntity.asOWLClass())) {
-        writeout(
-            String.format(
-                "%s (%s) is not a%s descendant of \"%s\"",
-                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", rule));
-        returnValue = false;
-      }
-      else {
-        logger.info(
-            String.format(
-                "Validated that %s (%s) is a%s descendant of \"%s\"",
-                iri.getShortForm(), label, qType == QEnum.SUB ? "" : " direct", rule));
-        returnValue = true;
-      }
+      return subClassesFound.containsEntity(iriEntity.asOWLClass());
     }
     else if (qType == QEnum.SUPER || qType == QEnum.DIRECT_SUPER) {
       // Check to see if the iri is a (direct) superclass of the given rule:
       NodeSet<OWLClass> superClassesFound =
           reasoner.getSuperClasses(ce, qType == QEnum.DIRECT_SUPER);
-      if (!superClassesFound.containsEntity(iriEntity.asOWLClass())) {
-        writeout(
-            String.format(
-                "%s (%s) does not%s subsume \"%s\"",
-                iri.getShortForm(), label, qType == QEnum.SUPER ? "" : " directly",
-                rule));
-        returnValue = false;
-      }
-      else {
-        logger.info(
-            String.format(
-                "Validated that %s (%s)%s subsumes \"%s\"",
-                iri.getShortForm(), label, qType == QEnum.SUPER ? "" : " directly",
-                rule));
-        returnValue = true;
-      }
+      return superClassesFound.containsEntity(iriEntity.asOWLClass());
     }
     else if (qType == QEnum.INSTANCE || qType == QEnum.DIRECT_INSTANCE) {
       NodeSet<OWLNamedIndividual> instancesFound = reasoner.getInstances(
           ce, qType == QEnum.DIRECT_INSTANCE);
-      if (!instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
-        writeout(
-            String.format(
-                "%s (%s) is not a%s instance of \"%s\"",
-                iri.getShortForm(), label,
-                qType == QEnum.INSTANCE ? "n" : " direct", rule));
-        returnValue = false;
-      }
-      else {
-        logger.info(
-            String.format(
-                "Validated that %s (%s) is a%s instance of \"%s\"",
-                iri.getShortForm(), label,
-                qType == QEnum.INSTANCE ? "n" : " direct", rule));
-        returnValue = true;
-      }
+      return instancesFound.containsEntity(iriEntity.asOWLNamedIndividual());
     }
     else if (qType == QEnum.EQUIV) {
       Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
-      if (!equivClassesFound.contains(iriEntity.asOWLClass())) {
-        writeout(
-            String.format(
-                "%s (%s) is not equivalent to \"%s\"",
-                iri.getShortForm(), label, rule));
-        returnValue = false;
-      }
-      else {
-        logger.info(
-            String.format(
-                "Validated that %s (%s) is equivalent to \"%s\"",
-                iri.getShortForm(), label, rule));
-        returnValue = true;
-      }
+      return equivClassesFound.contains(iriEntity.asOWLClass());
     }
     else {
       logger.error("Unrecognised/unimplemented query type: " + qType.name());

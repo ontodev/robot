@@ -6,7 +6,7 @@ import java.io.Writer;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
@@ -117,8 +117,8 @@ public class ValidateCommand implements Command {
     }
 
     // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
-    // but for now just use ELK.
-    OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
+    // but for now just use HermiT.
+    OWLReasonerFactory reasonerFactory = new ReasonerFactory();
 
     // Finally call the validator:
     ValidateOperation.validate(csvData, ontology, reasonerFactory, writer);
