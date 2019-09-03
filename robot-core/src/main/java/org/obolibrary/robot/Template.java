@@ -1970,26 +1970,18 @@ public class Template {
         TemplateHelper.getAnnotations(name, checker, template, value, rowNum, column);
 
     // Maybe get an annotation on the annotation
-    String nextTemplate;
-    int nextColumn = column + 1;
-    try {
-      nextTemplate = templates.get(nextColumn);
-    } catch (IndexOutOfBoundsException e) {
-      nextTemplate = null;
+    Set<OWLAnnotation> axiomAnnotations = maybeGetAxiomAnnotations(row, column);
+    if (axiomAnnotations.isEmpty()) {
+      // No annotations to add
+      return annotations;
     }
 
-    if (nextTemplate != null) {
-      Set<OWLAnnotation> axiomAnnotations = getAxiomAnnotations(row, nextTemplate, nextColumn);
-      if (axiomAnnotations != null) {
-        Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
-        for (OWLAnnotation annotation : annotations) {
-          fixedAnnotations.add(annotation.getAnnotatedAnnotation(axiomAnnotations));
-        }
-        annotations = fixedAnnotations;
-      }
+    // Add annotations and return fixed set
+    Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
+    for (OWLAnnotation annotation : annotations) {
+      fixedAnnotations.add(annotation.getAnnotatedAnnotation(axiomAnnotations));
     }
-
-    return annotations;
+    return fixedAnnotations;
   }
 
   /**
@@ -2004,44 +1996,47 @@ public class Template {
    */
   private Set<OWLAnnotation> getAxiomAnnotations(
       List<String> row, String nextTemplate, int nextColumn) throws Exception {
-    // Handle axiom annotations
+    // template must not be blank
+    // and it must start with >
     if (!nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
-      nextTemplate = nextTemplate.substring(1);
+      // Remove unknown number of >
+      while (nextTemplate.startsWith(">")) {
+        nextTemplate = nextTemplate.substring(1);
+      }
+
       String nextValue;
       try {
         nextValue = row.get(nextColumn);
       } catch (IndexOutOfBoundsException e) {
-        nextValue = null;
+        // No value, nothing else to add
+        return new HashSet<>();
       }
 
-      if (nextValue != null && !nextValue.trim().equals("")) {
+      if (!nextValue.trim().isEmpty()) {
+        // First get the set of axiom annotations
         Set<OWLAnnotation> nextAnnotations =
             TemplateHelper.getAnnotations(
                 name, checker, nextTemplate, nextValue, rowNum, nextColumn);
-        String nextNextTemplate;
-        try {
-          nextNextTemplate = templates.get(nextColumn + 1);
-        } catch (IndexOutOfBoundsException e) {
-          nextNextTemplate = null;
-        }
-        if (nextNextTemplate != null) {
-          Set<OWLAnnotation> nextNextAnnotations =
-              getAxiomAnnotations(row, nextNextTemplate, nextColumn + 1);
-          if (nextNextAnnotations != null) {
-            Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
-            for (OWLAnnotation annotation : nextAnnotations) {
-              fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextNextAnnotations));
-            }
-            return fixedAnnotations;
-          } else {
-            return nextAnnotations;
-          }
-        } else {
+
+        // Maybe get another level of axiom annotations
+        Set<OWLAnnotation> nextNextAnnotations = maybeGetAxiomAnnotations(row, nextColumn);
+        if (nextNextAnnotations.isEmpty()) {
+          // Empty means nothing to add
           return nextAnnotations;
         }
+
+        // Add those additional axiom annotations
+        Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
+        for (OWLAnnotation annotation : nextAnnotations) {
+          fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextNextAnnotations));
+        }
+        return fixedAnnotations;
       }
     }
-    return null;
+    // if the template doesn't start with >, it is not an axiom annotation
+    // or maybe the value cell was empty
+    // return an empty set
+    return new HashSet<>();
   }
 
   /**
@@ -2061,16 +2056,16 @@ public class Template {
     try {
       nextTemplate = templates.get(column + 1);
     } catch (IndexOutOfBoundsException e) {
-      nextTemplate = null;
+      return new HashSet<>();
     }
 
-    Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
     // If the next template string is not null, not empty, and it starts with >
     // Get the axiom annotations from the row
-    if (nextTemplate != null && !nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
-      axiomAnnotations = getAxiomAnnotations(row, nextTemplate, column + 1);
+    if (!nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
+      return getAxiomAnnotations(row, nextTemplate, column + 1);
+    } else {
+      return new HashSet<>();
     }
-    return axiomAnnotations;
   }
 
   /**
