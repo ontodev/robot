@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
  *   equivalent of checking multiple tickboxes in the dl query editor
  * - Get the requirements in the immune exposures document implemented
  * - Make sure rule parsing is as robust as possible
- *   - In when clause, allow a colon after the rule type
  * - Add more logging statements and make them and the error messages more user-friendly
  * - Eventually write a report to Excel.
  */
@@ -259,7 +258,7 @@ public class ValidateOperation {
         String ruleKey = ruleParts[0].trim();
         String ruleVal = ruleParts[1].trim();
         if (!rule_type_to_rtenum_map.containsKey(ruleKey)) {
-          writeout(false, "Unrecognised rule type \"" + ruleKey + "\" in rule \"" + rule + "\"");
+          writeout(false, "Unrecognised rule type \"%s\" in rule \"%s\"", ruleKey, rule);
           continue;
         }
         if (!ruleMap.containsKey(ruleKey)) {
@@ -349,7 +348,7 @@ public class ValidateOperation {
       // If there is a problem finding the label for one of the wildcards, then just send back the
       // string as is:
       if (label == null) {
-        writeout("Unable to interpolate \"" + m.group() + "\" in string \"" + str + "\"");
+        writeout("Unable to interpolate \"%s\" in string \"%s\"", m.group(), str);
         return str;
       }
 
@@ -385,7 +384,7 @@ public class ValidateOperation {
     }
 
     if (m.start() == 0) {
-      writeout("Rule: \"" + rule + "\" has when clause but no main clause.");
+      writeout("Rule: \"%s\" has when clause but no main clause.", rule);
       return unseparatedRule;
     }
 
@@ -398,7 +397,7 @@ public class ValidateOperation {
     // Don't fail just because there is some extra garbage at the end of the rule, but notify
     // about it:
     if (!m.group(3).trim().equals("")) {
-      writeout("Ignoring string \"" + m.group(3).trim() + "\" at end of rule \"" + rule + "\".");
+      writeout("Ignoring string \"%s\" at end of rule \"%s\".", m.group(3).trim(), rule);
     }
 
     // Within each when clause, multiple subclauses separated by ampersands are allowed. Each
@@ -410,14 +409,14 @@ public class ValidateOperation {
     ArrayList<String[]> whenClauses = new ArrayList();
     for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
       m = Pattern.compile(
-          "^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-]+:?)\\s+(.*)$")
+          "^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-]+):?\\s+(.*)$")
           .matcher(whenClause);
 
       if (m.find()) {
         whenClauses.add(new String[] {m.group(1), m.group(2), m.group(3)});
       }
       else {
-        writeout("Unable to decompose when-clause: \"" + whenClause + "\".");
+        writeout("Unable to decompose when-clause: \"%s\".", whenClause);
         return unseparatedRule;
       }
     }
@@ -425,7 +424,7 @@ public class ValidateOperation {
     // Now get the main part of the rule (i.e. the part before the when clause):
     m = Pattern.compile("^(.+)\\s+\\(when:?\\s").matcher(rule);
     if (!m.find()) {
-      writeout("Encountered unknown error while looking for main clause of rule \"" + rule + "\"");
+      writeout("Encountered unknown error while looking for main clause of rule \"%s\".", rule);
       return unseparatedRule;
     }
 
@@ -457,19 +456,20 @@ public class ValidateOperation {
     // Evaluate and validate any when clauses for this rule:
     boolean whenIsSatisfied = true;
     for (String[] whenClause : separatedRule.getValue()) {
+      //System.out.println(whenClause);
       String interpolatedSubject = interpolate(whenClause[0], row);
       // Get the IRI for the interpolated subject, first removing any surrounding single quotes
       // from the label:
       IRI subjectIri = label_to_iri_map.get(interpolatedSubject.replaceAll("^\'|\'$", ""));
       if (subjectIri == null) {
-        writeout("Could not determine IRI for label: " + interpolatedSubject);
+        writeout("Could not determine IRI for label: \"%s\".", interpolatedSubject);
         continue;
       }
 
       // Determine the kind of rule this is supposed to be:
       RTypeEnum whenRType = rule_type_to_rtenum_map.get(whenClause[1]);
       if (whenRType == null) {
-        writeout("Could not determine rule type of: " + whenClause[1]);
+        writeout("Could not determine rule type of: \"%s\".", whenClause[1]);
         continue;
       }
 
@@ -509,7 +509,7 @@ public class ValidateOperation {
     // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
     String cellLabel = get_label_from_term(cell);
     if (cellLabel == null) {
-      writeout("Could not find \"" + cell + "\" in ontology");
+      writeout("Could not find \"%s\" in ontology.", cell);
       return;
     }
 
