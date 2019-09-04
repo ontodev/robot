@@ -31,13 +31,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Make the optional when clause applicable to 'required'
- * - Add an 'excluded' rule which is the mirror image of the 'required' rule
- * - Allow multiple query types in a single clause (e.g. subclass-of-equivalent-to), i.e. the
+ * - Allow multiple rule types in a single clause (e.g. subclass-of-equivalent-to), i.e. the
  *   equivalent of checking multiple tickboxes in the dl query editor
  * - Get the requirements in the immune exposures document implemented
  * - Make sure rule parsing is as robust as possible
- *   - In when clause, allow a colon after the query type
+ *   - In when clause, allow a colon after the rule type
  * - Add more logging statements and make them and the error messages more user-friendly
  * - Eventually write a report to Excel.
  */
@@ -79,32 +77,55 @@ public class ValidateOperation {
   /** The column of CSV data currently being processed */
   private static int csv_col_index;
 
-  /** An enum representation of the type of query to make. */
-  private enum QEnum {
-    DIRECT_SUPER("direct-superclass-of"),
-    SUPER("superclass-of"),
-    EQUIV("equivalent-to"),
-    DIRECT_SUB("direct-subclass-of"),
-    SUB("subclass-of"),
-    DIRECT_INSTANCE("direct-instance-of"),
-    INSTANCE("instance-of");
+  /** An enum representation of the different categories of rules. We distinguish between queries,
+      which involve queries to a reasoner, and other rules */
+  private enum RCatEnum { QUERY, OTHER }
 
-    private String ruleType;
+  /** An enum representation of the type rule to query. */
+  private enum RTypeEnum {
+    DIRECT_SUPER("direct-superclass-of", RCatEnum.QUERY),
+    SUPER("superclass-of", RCatEnum.QUERY),
+    EQUIV("equivalent-to", RCatEnum.QUERY),
+    DIRECT_SUB("direct-subclass-of", RCatEnum.QUERY),
+    SUB("subclass-of", RCatEnum.QUERY),
+    DIRECT_INSTANCE("direct-instance-of", RCatEnum.QUERY),
+    INSTANCE("instance-of", RCatEnum.QUERY),
+    REQUIRED("is-required", RCatEnum.OTHER),
+    EXCLUDED("is-excluded", RCatEnum.OTHER);
 
-    QEnum(String ruleType) {
+    private final String ruleType;
+    private final RCatEnum ruleCat;
+
+    RTypeEnum(String ruleType, RCatEnum ruleCat) {
       this.ruleType = ruleType;
+      this.ruleCat = ruleCat;
     }
 
     public String getRuleType() {
       return ruleType;
     }
+
+    public RCatEnum getRuleCat() {
+      return ruleCat;
+    }
   }
 
-  /** Reverse map from QEnum rule types to QEnums, populated at load time */
-  private static final Map<String, QEnum> rule_type_to_qenum_map = new HashMap<>();
+  /** Reverse map from RTypeEnum rule types to RTypeEnums, populated at load time */
+  private static final Map<String, RTypeEnum> rule_type_to_rtenum_map = new HashMap<>();
   static {
-    for (QEnum q : QEnum.values()) {
-      rule_type_to_qenum_map.put(q.getRuleType(), q);
+    for (RTypeEnum r : RTypeEnum.values()) {
+      rule_type_to_rtenum_map.put(r.getRuleType(), r);
+    }
+  }
+
+  /** Reverse map from RTypeEnum rule types in the QUERY category to RTypeEnums, populated at load
+      time */
+  private static final Map<String, RTypeEnum> query_type_to_rtenum_map = new HashMap<>();
+  static {
+    for (RTypeEnum r : RTypeEnum.values()) {
+      if (r.getRuleCat() == RCatEnum.QUERY) {
+        query_type_to_rtenum_map.put(r.getRuleType(), r);
+      }
     }
   }
 
@@ -144,12 +165,12 @@ public class ValidateOperation {
         // Get the contents of the current cell.
         String cell = row.get(csv_col_index).trim();
 
-        // For each of the defined query types ...
-        for (QEnum queryType : QEnum.values()) {
+        // For each of the defined rule types ...
+        for (RTypeEnum ruleType : RTypeEnum.values()) {
           // For each rule of that type that is constraining this column ...
-          for (String rule : colRules.getOrDefault(queryType.getRuleType(), Arrays.asList())) {
+          for (String rule : colRules.getOrDefault(ruleType.getRuleType(), Arrays.asList())) {
             // Validate the cell against it:
-            validate_rule(cell, rule, reasoner, row, queryType);
+            validate_rule(cell, rule, reasoner, row, ruleType);
           }
         }
       }
@@ -189,21 +210,22 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static void writeout(String msg) throws IOException {
-    writer.write(
-        String.format("At row: %d, column: %d: %s\n", csv_row_index + 1, csv_col_index + 1, msg));
+  private static void writeout(boolean showCoords, String format, Object... positionalArgs)
+      throws IOException {
+
+    String outStr = "";
+    if (showCoords) {
+      outStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
+    }
+    outStr += String.format(format, positionalArgs);
+    writer.write(outStr + "\n");
   }
 
   /**
    * INSERT DOC HERE
    */
-  private static void writeout(String msg, boolean showCoords) throws IOException {
-    if (showCoords) {
-      writeout(msg);
-    }
-    else {
-      writer.write(msg + "\n");
-    }
+  private static void writeout(String format, Object... positionalArgs) throws IOException {
+    writeout(true, format, positionalArgs);
   }
 
   /**
@@ -236,8 +258,8 @@ public class ValidateOperation {
         String[] ruleParts = rule.split("\\s*:\\s*", 2);
         String ruleKey = ruleParts[0].trim();
         String ruleVal = ruleParts[1].trim();
-        if (!rule_type_to_qenum_map.containsKey(ruleKey)) {
-          writeout("Unrecognised rule type \"" + ruleKey + "\" in rule \"" + rule + "\"", false);
+        if (!rule_type_to_rtenum_map.containsKey(ruleKey)) {
+          writeout(false, "Unrecognised rule type \"" + ruleKey + "\" in rule \"" + rule + "\"");
           continue;
         }
         if (!ruleMap.containsKey(ruleKey)) {
@@ -247,6 +269,20 @@ public class ValidateOperation {
       }
     }
     return ruleMap;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static boolean is_required(String reqStr) {
+    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(reqStr.toLowerCase()) != -1;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static boolean is_excluded(String exclStr) {
+    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(exclStr.toLowerCase()) != -1;
   }
 
   /**
@@ -278,10 +314,8 @@ public class ValidateOperation {
     if (rule.startsWith("%")) {
       int colIndex = Integer.parseInt(rule.substring(1)) - 1;
       if (colIndex >= row.size()) {
-        writeout(
-            String.format(
-                "Rule: \"%s\" indicates a column number that is greater than the row length (%d)",
-                rule, row.size()));
+        writeout("Rule: \"%s\" indicates a column number that is greater than the row length (%d)",
+                 rule, row.size());
         return null;
       }
       term = row.get(colIndex).trim();
@@ -368,9 +402,9 @@ public class ValidateOperation {
     }
 
     // Within each when clause, multiple subclauses separated by ampersands are allowed. Each
-    // subclass must be of the form: <Entity> <Query-Type> <Axiom>.
+    // subclass must be of the form: <Entity> <Rule-Type> <Axiom>.
     // Entity is in the form of a (not necessaruly interpolated) label: either a contiguous string
-    // or a string with whitespace enclosed in single quotes. <Query-Type> is a hyphenated
+    // or a string with whitespace enclosed in single quotes. <Rule-Type> is a hyphenated
     // alphanumeric string. <Axiom> can take any form. Here we resolve each sub-clause of the
     // when statement into a list of such triples.
     ArrayList<String[]> whenClauses = new ArrayList();
@@ -406,7 +440,7 @@ public class ValidateOperation {
       String rule,
       OWLReasoner reasoner,
       List<String> row,
-      QEnum qType) throws Exception, IOException {
+      RTypeEnum rType) throws Exception, IOException {
 
     logger.debug(String.format(
         "validate_rule(): Called with parameters: " +
@@ -414,8 +448,8 @@ public class ValidateOperation {
         "rule: \"%s\", " +
         "reasoner: \"%s\", " +
         "row: \"%s\", " +
-        "query type: \"%s\".",
-        cell, rule, reasoner.getClass().getSimpleName(), row, qType.name()));
+        "rule type: \"%s\".",
+        cell, rule, reasoner.getClass().getSimpleName(), row, rType.getRuleType()));
 
     // Separate the given rule into its main clause and optional when clauses:
     SimpleEntry<String, List<String[]>> separatedRule = separate_rule(rule);
@@ -432,24 +466,29 @@ public class ValidateOperation {
         continue;
       }
 
-      // Determine the kind of query this is supposed to be:
-      QEnum whenQType = rule_type_to_qenum_map.get(whenClause[1]);
-      if (whenQType == null) {
-        writeout("Could not determine query type of: " + whenClause[1]);
+      // Determine the kind of rule this is supposed to be:
+      RTypeEnum whenRType = rule_type_to_rtenum_map.get(whenClause[1]);
+      if (whenRType == null) {
+        writeout("Could not determine rule type of: " + whenClause[1]);
         continue;
       }
 
-      // Finally get the axiom to validate:
-      String interpolatedAxiom = interpolate(whenClause[2], row);
+      // Make sure the rule is of the right category for a when clause:
+      if (whenRType.getRuleCat() != RCatEnum.QUERY) {
+        writeout("Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\"",
+                 query_type_to_rtenum_map.keySet(), whenClause[1]);
+        continue;
+      }
 
-      // Execute the query. If any of the when clauses fail to be satisfied, then we can skip
-      // evaluating the others.
-      if (!execute_query(subjectIri, interpolatedAxiom, reasoner, row, whenQType)) {
+      // Interpolate the axiom to validate and send the query to the reasoner:
+      String interpolatedAxiom = interpolate(whenClause[2], row);
+      if (!execute_query(subjectIri, interpolatedAxiom, reasoner, row, whenRType)) {
         whenIsSatisfied = false;
         logger.info(
             String.format(
                 "When clause: \"%s (%s) %s %s\" is not satisfied",
-                interpolatedSubject, subjectIri.getShortForm(), whenQType, interpolatedAxiom));
+                interpolatedSubject, subjectIri.getShortForm(), whenRType, interpolatedAxiom));
+        // If any of the when clauses fail to be satisfied, then we can skip evaluating the others:
         break;
       }
     }
@@ -460,29 +499,33 @@ public class ValidateOperation {
       return;
     }
 
+    // If this rule is not in the QUERY category, process it at this step and return from this
+    // function. The further steps below are only needed for queries to the reasoner.
+    if (rType.getRuleCat() != RCatEnum.QUERY) {
+      validate_generic_rule(rule, rType, cell, row);
+      return;
+    }
+
     // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
     String cellLabel = get_label_from_term(cell);
     if (cellLabel == null) {
-      writeout(
-          "Could not find \"" + cell + "\" in ontology");
+      writeout("Could not find \"" + cell + "\" in ontology");
       return;
     }
 
     // Get the cell's IRI, interpolate the axiom, and execute the query:
     IRI cellIri = label_to_iri_map.get(cellLabel);
     String interpolatedMainAxiom = interpolate(separatedRule.getKey(), row);
-    boolean result = execute_query(cellIri, interpolatedMainAxiom, reasoner, row, qType);
+    boolean result = execute_query(cellIri, interpolatedMainAxiom, reasoner, row, rType);
     if (!result) {
-      writeout(
-          String.format(
-              "Rule: \"%s (%s) %s %s\" is not satisfied",
-              cellLabel, cellIri.getShortForm(), qType, interpolatedMainAxiom));
+      writeout("Rule: \"%s (%s) %s %s\" is not satisfied",
+               cellLabel, cellIri.getShortForm(), rType, interpolatedMainAxiom);
     }
     else {
       logger.info(
           String.format(
               "Rule: \"%s (%s) %s %s\" is satisfied",
-              cellLabel, cellIri.getShortForm(), qType, interpolatedMainAxiom));
+              cellLabel, cellIri.getShortForm(), rType, interpolatedMainAxiom));
     }
   }
 
@@ -491,7 +534,7 @@ public class ValidateOperation {
       String rule,
       OWLReasoner reasoner,
       List<String> row,
-      QEnum qType) throws Exception, IOException {
+      RTypeEnum rType) throws Exception, IOException {
 
     logger.debug(String.format(
         "execute_query(): Called with parameters: " +
@@ -500,7 +543,7 @@ public class ValidateOperation {
         "reasoner: \"%s\", " +
         "row: \"%s\", " +
         "query type: \"%s\".",
-        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, qType.name()));
+        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, rType.getRuleType()));
 
     boolean returnValue = false;
 
@@ -509,40 +552,70 @@ public class ValidateOperation {
       ce = parser.parseManchesterExpression(rule);
     }
     catch (ParserException e) {
-      writeout(
-          String.format("Unable to parse rule \"%s: %s\". %s",
-                        qType.getRuleType(), rule, e.getMessage()));
+      writeout("Unable to parse rule \"%s: %s\". %s", rType.getRuleType(), rule, e.getMessage());
       return returnValue;
     }
 
     OWLEntity iriEntity = OntologyHelper.getEntity(ontology, iri);
     String label = iri_to_label_map.get(iri);
 
-    if (qType == QEnum.SUB || qType == QEnum.DIRECT_SUB) {
+    if (rType == RTypeEnum.SUB || rType == RTypeEnum.DIRECT_SUB) {
       // Check to see if the iri is a (direct) subclass of the given rule:
-      NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, qType == QEnum.DIRECT_SUB);
+      NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ce, rType == RTypeEnum.DIRECT_SUB);
       return subClassesFound.containsEntity(iriEntity.asOWLClass());
     }
-    else if (qType == QEnum.SUPER || qType == QEnum.DIRECT_SUPER) {
+    else if (rType == RTypeEnum.SUPER || rType == RTypeEnum.DIRECT_SUPER) {
       // Check to see if the iri is a (direct) superclass of the given rule:
       NodeSet<OWLClass> superClassesFound =
-          reasoner.getSuperClasses(ce, qType == QEnum.DIRECT_SUPER);
+          reasoner.getSuperClasses(ce, rType == RTypeEnum.DIRECT_SUPER);
       return superClassesFound.containsEntity(iriEntity.asOWLClass());
     }
-    else if (qType == QEnum.INSTANCE || qType == QEnum.DIRECT_INSTANCE) {
+    else if (rType == RTypeEnum.INSTANCE || rType == RTypeEnum.DIRECT_INSTANCE) {
       NodeSet<OWLNamedIndividual> instancesFound = reasoner.getInstances(
-          ce, qType == QEnum.DIRECT_INSTANCE);
+          ce, rType == RTypeEnum.DIRECT_INSTANCE);
       return instancesFound.containsEntity(iriEntity.asOWLNamedIndividual());
     }
-    else if (qType == QEnum.EQUIV) {
+    else if (rType == RTypeEnum.EQUIV) {
       Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
       return equivClassesFound.contains(iriEntity.asOWLClass());
     }
     else {
-      logger.error("Unrecognised/unimplemented query type: " + qType.name());
+      logger.error("Unrecognised/unimplemented rule type: " + rType.getRuleType());
       returnValue = false;
     }
 
     return returnValue;
+  }
+
+  private static void validate_generic_rule(
+      String rule,
+      RTypeEnum rType,
+      String cell,
+      List<String> row) throws Exception, IOException {
+
+    logger.debug(String.format(
+        "validate_generic_rule(): Called with parameters: " +
+        "rule: \"%s\", " +
+        "rule type: \"%s\", " +
+        "cell: \"%s\", " +
+        "row: \"%s\".",
+        rule, rType.getRuleType(), cell, row));
+
+    switch (rType) {
+      case REQUIRED:
+        if (cell.trim().equals("")) {
+          writeout("Empty cell in a required column.");
+        }
+        break;
+      case EXCLUDED:
+        if (!cell.trim().equals("")) {
+          writeout("Non-empty cell (%s) in an excluded column.", cell.trim());
+        }
+        break;
+      default:
+        writeout("Generic validation of rule type: \"%s\" is not yet implemented",
+                 rType.getRuleType());
+        break;
+    }
   }
 }
