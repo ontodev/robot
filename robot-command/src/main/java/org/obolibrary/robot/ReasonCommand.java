@@ -74,10 +74,7 @@ public class ReasonCommand implements Command {
         "t",
         "exclude-tautologies",
         true,
-        "if 'structural', exclude axioms matching a hard-coded set of tautological patterns "
-            + "(e.g., subclass of owl:Thing, superclass of owl:Nothing, X subclass of X); if 'all', use the HermiT reasoner "
-            + "to exclude any inferred axioms that would be entailed by an empty ontology; if 'false' (default), include any "
-            + "tautological inferences that may be asserted by an axiom generator");
+        "specify approach for excluding tautologies: 'structural' (fast), 'all' (use HermiT, slower), 'false' (allow tautologies)");
     o.addOption("T", "exclude-owl-thing", true, "if true, exclude inferences to owl:Thing");
     o.addOption(
         "e",
