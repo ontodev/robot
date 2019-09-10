@@ -27,6 +27,7 @@ import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +91,7 @@ public class ReportOperation {
     options.put("print", "0");
     options.put("fail-on", "error");
     options.put("labels", "false");
-    options.put("format", "tsv");
+    options.put("format", null);
     options.put("profile", null);
     options.put("tdb", "false");
     options.put("tdb-directory", ".tdb");
@@ -379,9 +380,21 @@ public class ReportOperation {
     options.put("tdb", "true");
 
     String profilePath = OptionsHelper.getOption(options, "profile", null);
+
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+    Map<IRI, String> labelMap = null;
     if (useLabels) {
-      logger.warn("Cannot use labels with TDB - ignoring labels option.");
+      labelMap = new HashMap<>();
+      // Run query over dataset to retrive all labels
+      String query =
+          "SELECT ?s ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }";
+      ResultSet labelResults = QueryOperation.execQuery(dataset, query);
+      while (labelResults.hasNext()) {
+        QuerySolution qs = labelResults.next();
+        IRI iri = IRI.create(qs.getResource("s").getURI());
+        String label = qs.getLiteral("label").getString();
+        labelMap.put(iri, label);
+      }
     }
 
     // The profile is a map of rule name and reporting level
@@ -389,8 +402,8 @@ public class ReportOperation {
     // The queries is a map of rule name and query string
     Map<String, String> queries = getQueryStrings(profile.keySet());
 
-    // Create the report object
-    Report report = new Report();
+    // Create the report object (maybe using labels)
+    Report report = new Report(labelMap);
 
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
@@ -471,6 +484,7 @@ public class ReportOperation {
     } else {
       result = report.toTSV();
     }
+
     if (outputPath != null) {
       // If output is provided, write to that file
       try (FileWriter fw = new FileWriter(outputPath);

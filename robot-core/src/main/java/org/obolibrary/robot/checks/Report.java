@@ -11,9 +11,7 @@ import java.util.Set;
 import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.QuotedEntityChecker;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,25 +34,25 @@ public class Report {
   private static final String NEW_LINE = System.getProperty("line.separator");
 
   /** Map of rules and the violations for INFO level. */
-  public Map<String, List<Violation>> info;
+  public Map<String, List<Violation>> info = new HashMap<>();
 
   /** Map of rules and the violations for WARN level. */
-  public Map<String, List<Violation>> warn;
+  public Map<String, List<Violation>> warn = new HashMap<>();
 
   /** Map of rules and the violations for ERROR level. */
-  public Map<String, List<Violation>> error;
+  public Map<String, List<Violation>> error = new HashMap<>();
 
   /** Boolean to use labels for output - defaults to false. */
   private boolean useLabels = false;
 
   /** Count of violations for INFO. */
-  private Integer infoCount;
+  private Integer infoCount = 0;
 
   /** Count of violations for WARN. */
-  private Integer warnCount;
+  private Integer warnCount = 0;
 
   /** Count of violations for ERROR. */
-  private Integer errorCount;
+  private Integer errorCount = 0;
 
   /** IOHelper to use. */
   private IOHelper ioHelper;
@@ -93,6 +91,29 @@ public class Report {
   }
 
   /**
+   * Create a new report object with a QuotedEntityChecker loaded with entries from the label map.
+   * Use labels for report output.
+   *
+   * @param labelMap Map of IRI to label for all entities in the ontology
+   */
+  public Report(Map<IRI, String> labelMap) throws IOException {
+    this.ioHelper = new IOHelper();
+    checker = new QuotedEntityChecker();
+    checker.setIOHelper(ioHelper);
+    checker.addProvider(new SimpleShortFormProvider());
+    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
+    if (labelMap != null) {
+      useLabels = true;
+      OWLDataFactory df = OWLManager.getOWLDataFactory();
+      for (Entry<IRI, String> entry : labelMap.entrySet()) {
+        // Set all the entities as class - will not matter for retrieving label
+        OWLEntity e = df.getOWLEntity(EntityType.CLASS, entry.getKey());
+        checker.add(e, entry.getValue());
+      }
+    }
+  }
+
+  /**
    * Create a new report object with an ontology and an IOHelper.
    *
    * @param ontology OWLOntology to get labels from
@@ -120,16 +141,7 @@ public class Report {
         checker.addAll(ontology);
       }
     }
-
     this.useLabels = useLabels;
-
-    info = new HashMap<>();
-    warn = new HashMap<>();
-    error = new HashMap<>();
-
-    infoCount = 0;
-    warnCount = 0;
-    errorCount = 0;
   }
 
   /**
