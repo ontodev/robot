@@ -352,7 +352,8 @@ public class ReasonOperation {
    * @param options Map of reason options
    */
   private static void addInferredAxioms(
-      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options) {
+      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options)
+      throws OWLOntologyCreationException {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
@@ -384,12 +385,8 @@ public class ReasonOperation {
     String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
     OWLReasoner tautologyChecker;
     if (tautologiesOption.equalsIgnoreCase("all")) {
-      try {
-        OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
-        tautologyChecker = new ReasonerFactory().createReasoner(empty);
-      } catch (OWLOntologyCreationException e) {
-        tautologyChecker = null;
-      }
+      OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
+      tautologyChecker = new ReasonerFactory().createReasoner(empty);
     } else {
       tautologyChecker = null;
     }
@@ -471,7 +468,7 @@ public class ReasonOperation {
             continue;
           }
         }
-      } else if (tautologiesOption.equalsIgnoreCase("all")) {
+      } else if (tautologiesOption.equalsIgnoreCase("all") && (tautologyChecker != null)) {
         if (tautologyChecker.isEntailed(a)) {
           continue;
         }
