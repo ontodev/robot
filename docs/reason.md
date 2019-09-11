@@ -82,9 +82,9 @@ of their output. The ROBOT `reason` command provides an option for filtering out
 
 The options for `<arg>` are:
 
- * `false`: allow any generated tautologies in the output.
- * `all`: use the HermiT reasoner to exclude any inferred axioms that would be entailed by an empty ontology.
- * `structural`: exclude axioms matching a hard-coded set of tautological patterns (e.g., `X SubClassOf owl:Thing`, `owl:Nothing SubClassOf X`, `X SubClassOf X`). Much faster than `all`.
+ * `false` (default): allow any generated tautologies in the output.
+ * `all` (recommended): use the HermiT reasoner to exclude any inferred axioms that would be entailed by an empty ontology.
+ * `structural` (fast): exclude axioms matching a hard-coded set of tautological patterns (e.g., `X SubClassOf owl:Thing`, `owl:Nothing SubClassOf X`, `X SubClassOf X`). Much faster than `all`.
  
 ## Generated Axioms
 
