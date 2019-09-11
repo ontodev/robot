@@ -100,9 +100,7 @@ INFO    file:./relative/path/to/other_query.rq
 
 ## Executing on Disk
 
-`report` may fail on some very large ontologies of ROBOT cannot fit the entire ontology into memory.
-
-`report` allows you to load the ontology to a mapping file on disk with the `--tdb true` option. This is supported by [Jena TDB Datasets](http://jena.apache.org/documentation/tdb/datasets.html):
+`report` may fail on some very large ontologies when ROBOT cannot fit the entire ontology into memory. You can either increase the available memory (see [Java Options](global#java-options)), or use the `--tdb true` option to load the ontology as an [Apache Jena TDB Dataset](http://jena.apache.org/documentation/tdb/datasets.html) instead of with OWL API:
 
 ```
 robot report --input edit.owl \
@@ -110,11 +108,9 @@ robot report --input edit.owl \
   --output my-report.tsv
 ```
 
-Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`). Attempting to load an ontology in a different syntax will result in a [Syntax Error](#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
+Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
 
-Once the report is complete, ROBOT will remove the TDB directory. You can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory (which may be beneficial if you want to reuse it with [query](/query#executing-on-disk)). This will greatly reduce the execution time of subsequent TDB-based operations on the ontology.
-
-The `--labels` option cannot be used with TDB, as the ontology is never loaded as an OWL API object.
+Once the report is complete, ROBOT will remove the TDB directory. You can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory (which may be beneficial if you want to reuse it with [query](query#executing-on-disk)). This will greatly reduce the execution time of subsequent TDB-based operations on the ontology.
 
 ## Limiting Results
 
