@@ -11,6 +11,7 @@ import org.obolibrary.robot.exceptions.*;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
+import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -56,6 +57,7 @@ public class ReasonOperation {
     options.put("dump-unsatisfiable", null);
     options.put("axiom-generators", "subclass");
     options.put("include-indirect", "false");
+    options.put("exclude-tautologies", "false");
 
     return options;
   }
@@ -350,7 +352,8 @@ public class ReasonOperation {
    * @param options Map of reason options
    */
   private static void addInferredAxioms(
-      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options) {
+      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options)
+      throws OWLOntologyCreationException {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
@@ -376,6 +379,16 @@ public class ReasonOperation {
       // the property is_inferred with a literal (note: not xsd) "true"
       propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
       value = dataFactory.getOWLLiteral("true");
+    }
+
+    // If we will need a tautology checker, create it only once
+    String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
+    OWLReasoner tautologyChecker;
+    if (tautologiesOption.equalsIgnoreCase("all")) {
+      OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
+      tautologyChecker = new ReasonerFactory().createReasoner(empty);
+    } else {
+      tautologyChecker = null;
     }
 
     // Look at each inferred axiom
@@ -420,6 +433,43 @@ public class ReasonOperation {
         if (a.containsEntityInSignature(dataFactory.getOWLThing())) {
           // If axiom contains owl:Thing, skip it
           logger.debug("Ignoring trivial axioms with " + "OWLThing in signature: " + a);
+          continue;
+        }
+      }
+
+      if (tautologiesOption.equalsIgnoreCase("structural")) {
+        if (a instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
+          if (subClassOfAxiom.getSuperClass().isOWLThing()) {
+            continue;
+          } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
+            continue;
+          } else if (subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass())) {
+            continue;
+          }
+        } else if (a instanceof OWLEquivalentClassesAxiom) {
+          OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) a;
+          if (equivAxiom.getClassExpressions().size() < 2) {
+            continue;
+          }
+        } else if (a instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) a;
+          if (classAssertion.getClassExpression().isOWLThing()) {
+            continue;
+          }
+        } else if (a instanceof OWLObjectPropertyAssertionAxiom) {
+          OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) a;
+          if (assertion.getProperty().isOWLTopObjectProperty()) {
+            continue;
+          }
+        } else if (a instanceof OWLDataPropertyAssertionAxiom) {
+          OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) a;
+          if (assertion.getProperty().isOWLTopDataProperty()) {
+            continue;
+          }
+        }
+      } else if (tautologiesOption.equalsIgnoreCase("all") && (tautologyChecker != null)) {
+        if (tautologyChecker.isEntailed(a)) {
           continue;
         }
       }
