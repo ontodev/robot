@@ -122,6 +122,22 @@ public class QueryOperation {
   }
 
   /**
+   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
+   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
+   *
+   * <p>WARNING - this creates a directory at given tdbDir location!
+   *
+   * @deprecated moved to {@link org.obolibrary.robot.IOHelper#loadToTDBDataset(String, String)}
+   * @param inputPath input path of RDF/XML or TTL file
+   * @param tdbDir location to put TDB mappings
+   * @return Dataset instantiated with triples
+   */
+  @Deprecated
+  public static Dataset loadTriplesAsDataset(String inputPath, String tdbDir) {
+    return IOHelper.loadToTDBDataset(inputPath, tdbDir);
+  }
+
+  /**
    * Given a Model, return the OWLOntology representation of the axioms.
    *
    * @deprecated Use {@link #convertModel(Model, IOHelper, String)}
