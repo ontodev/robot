@@ -23,7 +23,6 @@ import java.util.jar.JarFile;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
-import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
@@ -310,17 +309,7 @@ public class ReportOperation {
    */
   public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
       throws Exception {
-    // Validate that the input can be loaded to TDB
-    if (!inputPath.endsWith(".rdf") && !inputPath.endsWith(".owl") && !inputPath.endsWith(".ttl")) {
-      throw new IllegalArgumentException(IOHelper.tdbFormatError);
-    }
-
-    Report report;
-    try {
-      report = getTDBReport(inputPath, options);
-    } catch (JenaException e) {
-      throw new IOException(String.format(IOHelper.syntaxError, inputPath, e.getMessage()));
-    }
+    Report report = getTDBReport(inputPath, options);
     return processReport(report, outputPath, options);
   }
 
@@ -338,7 +327,8 @@ public class ReportOperation {
       throws Exception {
     String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
 
-    // May throw JenaException if syntax is bad
+    // Load dataset
+    // Fail if the input path is not in RDF/XML or TTL
     Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
 
     Report report;

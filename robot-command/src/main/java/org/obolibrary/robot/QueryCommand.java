@@ -12,7 +12,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
@@ -207,16 +206,7 @@ public class QueryCommand implements Command {
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
 
-    if (!inputPath.endsWith(".rdf") && !inputPath.endsWith(".owl") && !inputPath.endsWith(".ttl")) {
-      throw new IllegalArgumentException(IOHelper.tdbFormatError);
-    }
-
-    Dataset dataset;
-    try {
-      dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
-    } catch (JenaException e) {
-      throw new IOException(String.format(IOHelper.syntaxError, inputPath, e.getMessage()));
-    }
+    Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
 
     try {
       runQueries(line, dataset, queries);

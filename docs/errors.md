@@ -117,10 +117,6 @@ If a prefix is incorrectly formatted, or if the prefix target does not point to 
 robot -p "robot: http://purl.obolibrary.org/robot/"
 ```
 
-### TDB Format Error
-
-`--tdb true` can only be used with RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`).
-
 ### Unknown Arg Error
 
 This error message may appear for one of two common reasons:
@@ -161,4 +157,4 @@ Occurs when an import ontology does not have a valid IRI.
 
 ### Syntax Error
 
-This error occurs when an ontology cannot be loaded from file to a TDB dataset (using `--tdb true`). Review your ontology to ensure it is valid RDF/XML or TTL syntax.
+This error occurs when an ontology cannot be loaded from file to a TDB dataset (using `--tdb true`). Review your ontology to ensure it is valid RDF/XML or TTL syntax. Jena also supports [some other formats](https://jena.apache.org/documentation/io/#formats).

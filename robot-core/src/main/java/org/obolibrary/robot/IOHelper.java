@@ -107,14 +107,13 @@ public class IOHelper {
       NS + "PREFIX LOAD ERROR Could not load prefix '%s' for '%s'";
 
   /**
-   * Error message when a JenaException is thrown from reading file to model due to a syntax error.
-   * Expects: file name, error message.
+   * Error message when Jena cannot load a file to a dataset, probably not RDF/XML (including OWL)
+   * or TTL.
    */
-  protected static final String syntaxError = NS + "SYNTAX ERROR %s cannot be read:\n%s";
-
-  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
-  protected static final String tdbFormatError =
-      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
+  private static final String syntaxError =
+      NS
+          + "SYNTAX ERROR unable to load '%s' with Jena - "
+          + "check that this file is in RDF/XML or TTL syntax and try again.";
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -520,7 +519,7 @@ public class IOHelper {
       dataset.abort();
       dataset.end();
       dataset.close();
-      throw e;
+      throw new JenaException(String.format(syntaxError, inputPath));
     } finally {
       dataset.end();
     }
