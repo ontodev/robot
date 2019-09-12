@@ -496,16 +496,60 @@ public class ReasonOperation {
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
+    Set<InvalidReferenceViolation> filteredViolations = new HashSet();
+
     if (referenceViolations.size() > 0) {
+      for (InvalidReferenceViolation v : referenceViolations) {
+        // Don't log errors for:
+        // - annotations
+        // - subclass of ObsoleteClass
+        // - subproperty of ObsoleteProperty
+        // - rdf:type owl:Thing
+        if (v.getAxiom() instanceof OWLAnnotationAxiom) {
+          continue;
+        }
+        if (v.getAxiom() instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom sub = (OWLSubClassOfAxiom) v.getAxiom();
+          OWLClassExpression sup = sub.getSuperClass();
+          if (!sup.isAnonymous()
+              && sup.asOWLClass()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteClass")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLSubObjectPropertyOfAxiom) {
+          OWLSubObjectPropertyOfAxiom sub = (OWLSubObjectPropertyOfAxiom) v.getAxiom();
+          OWLObjectPropertyExpression sup = sub.getSuperProperty();
+          if (!sup.isAnonymous()
+              && sup.asOWLObjectProperty()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteProperty")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom sub = (OWLClassAssertionAxiom) v.getAxiom();
+          if (sub.getClassExpression().isOWLThing()) {
+            continue;
+          }
+        }
+
+        filteredViolations.add(v);
+      }
+    }
+
+    if (filteredViolations.size() > 0) {
       logger.error(
           "Reference violations found: "
-              + referenceViolations.size()
+              + filteredViolations.size()
               + " - reasoning may be incomplete");
 
       int maxDanglings = 10;
       int danglings = 0;
-      for (InvalidReferenceViolation v : referenceViolations) {
-
+      for (InvalidReferenceViolation v : filteredViolations) {
         if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
             && danglings < maxDanglings) {
           logger.error("Reference violation: " + v);
