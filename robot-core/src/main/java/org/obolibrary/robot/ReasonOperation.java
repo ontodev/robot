@@ -496,14 +496,9 @@ public class ReasonOperation {
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
-    if (referenceViolations.size() > 0) {
-      logger.error(
-          "Reference violations found: "
-              + referenceViolations.size()
-              + " - reasoning may be incomplete");
+    Set<InvalidReferenceViolation> filteredViolations = new HashSet();
 
-      int maxDanglings = 10;
-      int danglings = 0;
+    if (referenceViolations.size() > 0) {
       for (InvalidReferenceViolation v : referenceViolations) {
         // Don't log errors for:
         // - annotations
@@ -537,16 +532,24 @@ public class ReasonOperation {
         }
         if (v.getAxiom() instanceof OWLClassAssertionAxiom) {
           OWLClassAssertionAxiom sub = (OWLClassAssertionAxiom) v.getAxiom();
-          OWLClassExpression sup = sub.getClassExpression();
-          if (!sup.isAnonymous()
-              && sup.asOWLClass()
-                  .getIRI()
-                  .toString()
-                  .equals("http://www.w3.org/2002/07/owl#Thing")) {
+          if (sub.getClassExpression().isOWLThing()) {
             continue;
           }
         }
 
+        filteredViolations.add(v);
+      }
+    }
+
+    if (filteredViolations.size() > 0) {
+      logger.error(
+          "Reference violations found: "
+              + filteredViolations.size()
+              + " - reasoning may be incomplete");
+
+      int maxDanglings = 10;
+      int danglings = 0;
+      for (InvalidReferenceViolation v : filteredViolations) {
         if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
             && danglings < maxDanglings) {
           logger.error("Reference violation: " + v);
