@@ -505,6 +505,47 @@ public class ReasonOperation {
       int maxDanglings = 10;
       int danglings = 0;
       for (InvalidReferenceViolation v : referenceViolations) {
+        // Don't log errors for:
+        // - annotations
+        // - subclass of ObsoleteClass
+        // - subproperty of ObsoleteProperty
+        // - rdf:type owl:Thing
+        if (v.getAxiom() instanceof OWLAnnotationAxiom) {
+          continue;
+        }
+        if (v.getAxiom() instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom sub = (OWLSubClassOfAxiom) v.getAxiom();
+          OWLClassExpression sup = sub.getSuperClass();
+          if (!sup.isAnonymous()
+              && sup.asOWLClass()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteClass")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLSubObjectPropertyOfAxiom) {
+          OWLSubObjectPropertyOfAxiom sub = (OWLSubObjectPropertyOfAxiom) v.getAxiom();
+          OWLObjectPropertyExpression sup = sub.getSuperProperty();
+          if (!sup.isAnonymous()
+              && sup.asOWLObjectProperty()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteProperty")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom sub = (OWLClassAssertionAxiom) v.getAxiom();
+          OWLClassExpression sup = sub.getClassExpression();
+          if (!sup.isAnonymous()
+              && sup.asOWLClass()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.w3.org/2002/07/owl#Thing")) {
+            continue;
+          }
+        }
 
         if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
             && danglings < maxDanglings) {
