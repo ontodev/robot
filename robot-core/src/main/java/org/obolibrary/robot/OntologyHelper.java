@@ -1145,7 +1145,7 @@ public class OntologyHelper {
    * @param ontology the ontology to use
    * @return a map from IRIs to label strings
    */
-  public static Map<IRI, String> getIRILabels(OWLOntology ontology) {
+  public static Map<IRI, String> getLabels(OWLOntology ontology) {
     logger.info("Fetching labels for " + ontology.getOntologyID());
     Map<IRI, String> results = new HashMap<>();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
