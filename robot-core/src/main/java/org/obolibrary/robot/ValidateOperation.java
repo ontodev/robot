@@ -135,58 +135,61 @@ public class ValidateOperation {
     DEBUG,
     ERROR,
     INFO,
-    TRACE,
     WARN;
   }
 
   /**
    * INSERT DOC HERE
-   *
-   * @param csvData a list of rows extracted from a CSV file to be validated
    */
-  public static void validate(
-      List<List<String>> csvData,
-      OWLOntology ontology,
-      OWLReasonerFactory reasonerFactory,
-      Writer writer) throws Exception, IOException {
-
-    // Initialize the shared variables:
-    initialize(ontology, reasonerFactory, writer);
-
-    // Extract the header and rules rows from the CSV data and map the column names to their
-    // associated lists of rules:
-    List<String> header = csvData.remove(0);
-    List<String> allRules = csvData.remove(0);
-    HashMap<String, Map<String, List<String>>> headerToRuleMap = new HashMap();
-    for (int i = 0; i < header.size(); i++) {
-      headerToRuleMap.put(header.get(i), parse_rules(allRules.get(i)));
+  private static void writelog(boolean showCoords, LogLevel logLevel, String format,
+                               Object... positionalArgs) {
+    String logStr = "";
+    if (showCoords) {
+      logStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
     }
-
-    // Validate the data row by row, and column by column by column within a row. csv_row_index and
-    // csv_col_index are class variables that will later be used to provide information to the user
-    // about the location of any errors encountered.
-    for (csv_row_index = 0; csv_row_index < csvData.size(); csv_row_index++) {
-      List<String> row = csvData.get(csv_row_index);
-      for (csv_col_index = 0; csv_col_index < header.size(); csv_col_index++) {
-        // Get the rules for the current column:
-        String colName = header.get(csv_col_index);
-        Map<String, List<String>> colRules = headerToRuleMap.get(colName);
-
-        // If there are no rules for this column, then skip this cell (this a "comment" column):
-        if (colRules.isEmpty()) continue;
-
-        // Get the contents of the current cell:
-        String cell = row.get(csv_col_index).trim();
-
-        // For each of the rules applicable to this column, validate the cell against it:
-        for (String ruleType : colRules.keySet()) {
-          for (String rule : colRules.get(ruleType)) {
-            validate_rule(cell, rule, reasoner, row, ruleType);
-          }
-        }
-      }
+    logStr += String.format(format, positionalArgs);
+    switch (logLevel) {
+      case DEBUG:
+        logger.debug(logStr);
+        break;
+      case ERROR:
+        logger.error(logStr);
+        break;
+      case INFO:
+        logger.info(logStr);
+        break;
+      case WARN:
+        logger.warn(logStr);
+        break;
     }
-    tearDown();
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void writelog(LogLevel logLevel, String format, Object... positionalArgs) {
+    writelog(true, logLevel, format, positionalArgs);
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void writeout(boolean showCoords, String format, Object... positionalArgs)
+      throws IOException {
+
+    String outStr = "";
+    if (showCoords) {
+      outStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
+    }
+    outStr += String.format(format, positionalArgs);
+    writer.write(outStr + "\n");
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void writeout(String format, Object... positionalArgs) throws IOException {
+    writeout(true, format, positionalArgs);
   }
 
   /**
@@ -216,63 +219,6 @@ public class ValidateOperation {
   private static void tearDown() {
     parser.dispose();
     reasoner.dispose();
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static void writeout(boolean showCoords, String format, Object... positionalArgs)
-      throws IOException {
-
-    String outStr = "";
-    if (showCoords) {
-      outStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
-    }
-    outStr += String.format(format, positionalArgs);
-    writer.write(outStr + "\n");
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static void writeout(String format, Object... positionalArgs) throws IOException {
-    writeout(true, format, positionalArgs);
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static void writelog(boolean showCoords, LogLevel logLevel, String format,
-                               Object... positionalArgs) {
-    String logStr = "";
-    if (showCoords) {
-      logStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
-    }
-    logStr += String.format(format, positionalArgs);
-    switch (logLevel) {
-      case DEBUG:
-        logger.debug(logStr);
-        break;
-      case ERROR:
-        logger.error(logStr);
-        break;
-      case INFO:
-        logger.info(logStr);
-        break;
-      case TRACE:
-        logger.trace(logStr);
-        break;
-      case WARN:
-        logger.warn(logStr);
-        break;
-    }
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static void writelog(LogLevel logLevel, String format, Object... positionalArgs) {
-    writelog(true, logLevel, format, positionalArgs);
   }
 
   /**
@@ -348,20 +294,6 @@ public class ValidateOperation {
    */
   private static boolean rule_type_recognised(String ruleType) {
     return rule_type_to_rtenum_map.containsKey(get_primary_rule_type(ruleType));
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static boolean is_required(String reqStr) {
-    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(reqStr.toLowerCase()) != -1;
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
-  private static boolean is_excluded(String exclStr) {
-    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(exclStr.toLowerCase()) != -1;
   }
 
   /**
@@ -527,6 +459,136 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+  private static boolean execute_query(
+      IRI iri,
+      String rule,
+      OWLReasoner reasoner,
+      List<String> row,
+      String unsplitQueryType) throws Exception, IOException {
+
+    writelog(
+        LogLevel.DEBUG,
+        "execute_query(): Called with parameters: " +
+        "iri: \"%s\", " +
+        "rule: \"%s\", " +
+        "reasoner: \"%s\", " +
+        "row: \"%s\", " +
+        "query type: \"%s\".",
+        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, unsplitQueryType);
+
+    OWLClassExpression ce;
+    try {
+      ce = parser.parseManchesterExpression(rule);
+    }
+    catch (ParserException e) {
+      writeout("Unable to parse rule \"%s: %s\".\n\t%s.",
+               unsplitQueryType, rule, e.getMessage().trim());
+      return false;
+    }
+
+    OWLEntity iriEntity = OntologyHelper.getEntity(ontology, iri);
+    String label = iri_to_label_map.get(iri);
+
+    // For each of the query types associated with the rule, check to see if the rule is satisfied
+    // thus interpreted. If it is, then we return true, since multiple query types are interpreted
+    // as a disjunction. If a query types is unrecognised, inform the user but ignore it.
+    String[] queryTypes = split_rule_type(unsplitQueryType);
+    for (String queryType : queryTypes) {
+      if (!rule_type_recognised(queryType)) {
+        writeout("Query type \"%s\" not recognised in rule \"%s\".", queryType, unsplitQueryType);
+        continue;
+      }
+
+      RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
+      if (qType == RTypeEnum.SUB || qType == RTypeEnum.DIRECT_SUB) {
+        // Check to see if the iri is a (direct) subclass of the given rule:
+        NodeSet<OWLClass> subClassesFound =
+            reasoner.getSubClasses(ce, qType == RTypeEnum.DIRECT_SUB);
+        if (subClassesFound.containsEntity(iriEntity.asOWLClass())) {
+          return true;
+        }
+      }
+      else if (qType == RTypeEnum.SUPER || qType == RTypeEnum.DIRECT_SUPER) {
+        // Check to see if the iri is a (direct) superclass of the given rule:
+        NodeSet<OWLClass> superClassesFound =
+            reasoner.getSuperClasses(ce, qType == RTypeEnum.DIRECT_SUPER);
+        if (superClassesFound.containsEntity(iriEntity.asOWLClass())) {
+          return true;
+        }
+      }
+      else if (qType == RTypeEnum.INSTANCE || qType == RTypeEnum.DIRECT_INSTANCE) {
+        NodeSet<OWLNamedIndividual> instancesFound = reasoner.getInstances(
+            ce, qType == RTypeEnum.DIRECT_INSTANCE);
+        if (instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
+          return true;
+        }
+      }
+      else if (qType == RTypeEnum.EQUIV) {
+        Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
+        if (equivClassesFound.contains(iriEntity.asOWLClass())) {
+          return true;
+        }
+      }
+      else {
+        writelog(LogLevel.ERROR, "Validation for query type: \"%s\" not yet implemented.", qType);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static boolean is_required(String reqStr) {
+    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(reqStr.toLowerCase()) != -1;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static boolean is_excluded(String exclStr) {
+    return Arrays.asList("true", "t", "1", "yes", "y").indexOf(exclStr.toLowerCase()) != -1;
+  }
+
+  private static void validate_generic_rule(
+      String rule,
+      RTypeEnum rType,
+      String cell,
+      List<String> row) throws Exception, IOException {
+
+    writelog(
+        LogLevel.DEBUG,
+        "validate_generic_rule(): Called with parameters: " +
+        "rule: \"%s\", " +
+        "rule type: \"%s\", " +
+        "cell: \"%s\", " +
+        "row: \"%s\".",
+        rule, rType.getRuleType(), cell, row);
+
+    switch (rType) {
+      case REQUIRED:
+        if (cell.trim().equals("")) {
+          writeout("Cell is empty but rule: \"%s: %s\" does not allow this.",
+                   rType.getRuleType(), rule);
+        }
+        break;
+      case EXCLUDED:
+        if (!cell.trim().equals("")) {
+          writeout("Cell is non-empty (\"%s\") but rule: \"%s: %s\" does not allow this.",
+                   cell, rType.getRuleType(), rule);
+        }
+        break;
+      default:
+        writeout("Generic validation of rule type: \"%s\" is not yet implemented.",
+                 rType.getRuleType());
+        break;
+    }
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
   private static void validate_rule(
       String cell,
       String rule,
@@ -633,116 +695,53 @@ public class ValidateOperation {
     }
   }
 
-  private static boolean execute_query(
-      IRI iri,
-      String rule,
-      OWLReasoner reasoner,
-      List<String> row,
-      String unsplitQueryType) throws Exception, IOException {
+  /**
+   * INSERT DOC HERE
+   *
+   * @param csvData a list of rows extracted from a CSV file to be validated
+   */
+  public static void validate(
+      List<List<String>> csvData,
+      OWLOntology ontology,
+      OWLReasonerFactory reasonerFactory,
+      Writer writer) throws Exception, IOException {
 
-    writelog(
-        LogLevel.DEBUG,
-        "execute_query(): Called with parameters: " +
-        "iri: \"%s\", " +
-        "rule: \"%s\", " +
-        "reasoner: \"%s\", " +
-        "row: \"%s\", " +
-        "query type: \"%s\".",
-        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, unsplitQueryType);
+    // Initialize the shared variables:
+    initialize(ontology, reasonerFactory, writer);
 
-    OWLClassExpression ce;
-    try {
-      ce = parser.parseManchesterExpression(rule);
-    }
-    catch (ParserException e) {
-      writeout("Unable to parse rule \"%s: %s\".\n\t%s.",
-               unsplitQueryType, rule, e.getMessage().trim());
-      return false;
+    // Extract the header and rules rows from the CSV data and map the column names to their
+    // associated lists of rules:
+    List<String> header = csvData.remove(0);
+    List<String> allRules = csvData.remove(0);
+    HashMap<String, Map<String, List<String>>> headerToRuleMap = new HashMap();
+    for (int i = 0; i < header.size(); i++) {
+      headerToRuleMap.put(header.get(i), parse_rules(allRules.get(i)));
     }
 
-    OWLEntity iriEntity = OntologyHelper.getEntity(ontology, iri);
-    String label = iri_to_label_map.get(iri);
+    // Validate the data row by row, and column by column by column within a row. csv_row_index and
+    // csv_col_index are class variables that will later be used to provide information to the user
+    // about the location of any errors encountered.
+    for (csv_row_index = 0; csv_row_index < csvData.size(); csv_row_index++) {
+      List<String> row = csvData.get(csv_row_index);
+      for (csv_col_index = 0; csv_col_index < header.size(); csv_col_index++) {
+        // Get the rules for the current column:
+        String colName = header.get(csv_col_index);
+        Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
-    // For each of the query types associated with the rule, check to see if the rule is satisfied
-    // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query types is unrecognised, inform the user but ignore it.
-    String[] queryTypes = split_rule_type(unsplitQueryType);
-    for (String queryType : queryTypes) {
-      if (!rule_type_recognised(queryType)) {
-        writeout("Query type \"%s\" not recognised in rule \"%s\".", queryType, unsplitQueryType);
-        continue;
-      }
+        // If there are no rules for this column, then skip this cell (this a "comment" column):
+        if (colRules.isEmpty()) continue;
 
-      RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
-      if (qType == RTypeEnum.SUB || qType == RTypeEnum.DIRECT_SUB) {
-        // Check to see if the iri is a (direct) subclass of the given rule:
-        NodeSet<OWLClass> subClassesFound =
-            reasoner.getSubClasses(ce, qType == RTypeEnum.DIRECT_SUB);
-        if (subClassesFound.containsEntity(iriEntity.asOWLClass())) {
-          return true;
+        // Get the contents of the current cell:
+        String cell = row.get(csv_col_index).trim();
+
+        // For each of the rules applicable to this column, validate the cell against it:
+        for (String ruleType : colRules.keySet()) {
+          for (String rule : colRules.get(ruleType)) {
+            validate_rule(cell, rule, reasoner, row, ruleType);
+          }
         }
-      }
-      else if (qType == RTypeEnum.SUPER || qType == RTypeEnum.DIRECT_SUPER) {
-        // Check to see if the iri is a (direct) superclass of the given rule:
-        NodeSet<OWLClass> superClassesFound =
-            reasoner.getSuperClasses(ce, qType == RTypeEnum.DIRECT_SUPER);
-        if (superClassesFound.containsEntity(iriEntity.asOWLClass())) {
-          return true;
-        }
-      }
-      else if (qType == RTypeEnum.INSTANCE || qType == RTypeEnum.DIRECT_INSTANCE) {
-        NodeSet<OWLNamedIndividual> instancesFound = reasoner.getInstances(
-            ce, qType == RTypeEnum.DIRECT_INSTANCE);
-        if (instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
-          return true;
-        }
-      }
-      else if (qType == RTypeEnum.EQUIV) {
-        Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
-        if (equivClassesFound.contains(iriEntity.asOWLClass())) {
-          return true;
-        }
-      }
-      else {
-        writelog(LogLevel.ERROR, "Validation for query type: \"%s\" not yet implemented.", qType);
-        return false;
       }
     }
-    return false;
-  }
-
-  private static void validate_generic_rule(
-      String rule,
-      RTypeEnum rType,
-      String cell,
-      List<String> row) throws Exception, IOException {
-
-    writelog(
-        LogLevel.DEBUG,
-        "validate_generic_rule(): Called with parameters: " +
-        "rule: \"%s\", " +
-        "rule type: \"%s\", " +
-        "cell: \"%s\", " +
-        "row: \"%s\".",
-        rule, rType.getRuleType(), cell, row);
-
-    switch (rType) {
-      case REQUIRED:
-        if (cell.trim().equals("")) {
-          writeout("Cell is empty but rule: \"%s: %s\" does not allow this.",
-                   rType.getRuleType(), rule);
-        }
-        break;
-      case EXCLUDED:
-        if (!cell.trim().equals("")) {
-          writeout("Cell is non-empty (\"%s\") but rule: \"%s: %s\" does not allow this.",
-                   cell, rType.getRuleType(), rule);
-        }
-        break;
-      default:
-        writeout("Generic validation of rule type: \"%s\" is not yet implemented.",
-                 rType.getRuleType());
-        break;
-    }
+    tearDown();
   }
 }
