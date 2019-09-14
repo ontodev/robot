@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Make sure that rule parsing is as robust as possble (also test that quoting is ok)
  * - Add more and better logging statements and user-friendly error messages
+ * - Make sure that rule parsing is as robust as possble (also test that quoting is ok)
  * - Document the code
  * - Make the reasoner choice configurable via the command line (see the way other commands do it)
  * - Write unit test(s)
@@ -128,6 +128,15 @@ public class ValidateOperation {
         query_type_to_rtenum_map.put(r.getRuleType(), r);
       }
     }
+  }
+
+  /** Enum used with the writelog() method */
+  private enum LogLevel {
+    DEBUG,
+    ERROR,
+    INFO,
+    TRACE,
+    WARN;
   }
 
   /**
@@ -233,16 +242,51 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+  private static void writelog(boolean showCoords, LogLevel logLevel, String format,
+                               Object... positionalArgs) {
+    String logStr = "";
+    if (showCoords) {
+      logStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
+    }
+    logStr += String.format(format, positionalArgs);
+    switch (logLevel) {
+      case DEBUG:
+        logger.debug(logStr);
+        break;
+      case ERROR:
+        logger.error(logStr);
+        break;
+      case INFO:
+        logger.info(logStr);
+        break;
+      case TRACE:
+        logger.trace(logStr);
+        break;
+      case WARN:
+        logger.warn(logStr);
+        break;
+    }
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void writelog(LogLevel logLevel, String format, Object... positionalArgs) {
+    writelog(true, logLevel, format, positionalArgs);
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
   private static Map<String, IRI> reverse_iri_label_map(Map<IRI, String> source) {
     HashMap<String, IRI> target = new HashMap();
     for (Map.Entry<IRI, String> entry : source.entrySet()) {
       String reverseKey = entry.getValue();
       IRI reverseValue = entry.getKey();
       if (target.containsKey(reverseKey)) {
-        logger.warn(
-            String.format(
-                "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
-                reverseKey, target.get(reverseKey), reverseValue));
+        writelog(LogLevel.WARN,
+                 "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
+                 reverseKey, target.get(reverseKey), reverseValue);
       }
       target.put(reverseKey, reverseValue);
     }
@@ -344,22 +388,33 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String wildcard_to_label(String str, List<String> row) throws IOException {
-    String term = null;
-    if (str.startsWith("%")) {
-      int colIndex = Integer.parseInt(str.substring(1)) - 1;
-      if (colIndex >= row.size()) {
-        writeout("Rule: \"%s\" indicates a column number that is greater than the row length (%d)",
-                 str, row.size());
-        return null;
-      }
-      term = row.get(colIndex).trim();
-    }
-    else {
-      term = str;
+  private static String wildcard_to_label(String wildcard, List<String> row) throws IOException {
+    if (!wildcard.startsWith("%")) {
+      writelog(LogLevel.ERROR, "Invalid wildcard: \"%s\".", wildcard);
+      return null;
     }
 
-    return (term != null && !term.equals("")) ? get_label_from_term(term) : null;
+    int colIndex = Integer.parseInt(wildcard.substring(1)) - 1;
+    if (colIndex >= row.size()) {
+      writeout("Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
+               wildcard, row.size());
+      return null;
+    }
+
+    String term = row.get(colIndex).trim();
+    if (term == null) {
+      writeout("Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
+               wildcard, colIndex + 1);
+      return null;
+    }
+
+    if (term.equals("")) {
+      writeout("Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
+               wildcard, colIndex + 1);
+      return null;
+    }
+
+    return get_label_from_term(term);
   }
 
   /**
@@ -373,7 +428,7 @@ public class ValidateOperation {
     // return it:
     if (Pattern.matches("^[^\\s'\"%]+$", str)) {
       interpolatedString = "'" + str + "'";
-      logger.info(String.format("Interpolated: \"%s\" into \"%s\"", str, interpolatedString));
+      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", str, interpolatedString);
       return interpolatedString;
     }
 
@@ -386,7 +441,7 @@ public class ValidateOperation {
       // If there is a problem finding the label for one of the wildcards, then just send back the
       // string as is:
       if (label == null) {
-        writeout("Unable to interpolate \"%s\" in string \"%s\"", m.group(), str);
+        writeout("Unable to interpolate \"%s\" in string \"%s\".", m.group(), str);
         return str;
       }
 
@@ -398,7 +453,7 @@ public class ValidateOperation {
     }
     // There may be text after the final wildcard, so add it now:
     interpolatedString += str.substring(currIndex);
-    logger.info(String.format("Interpolated: \"%s\" into \"%s\"", str, interpolatedString));
+    writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", str, interpolatedString);
     return interpolatedString;
   }
 
@@ -479,17 +534,18 @@ public class ValidateOperation {
       List<String> row,
       String ruleType) throws Exception, IOException {
 
-    logger.debug(String.format(
+    writelog(
+        LogLevel.DEBUG,
         "validate_rule(): Called with parameters: " +
         "cell: \"%s\", " +
         "rule: \"%s\", " +
         "reasoner: \"%s\", " +
         "row: \"%s\", " +
         "rule type: \"%s\".",
-        cell, rule, reasoner.getClass().getSimpleName(), row, ruleType));
+        cell, rule, reasoner.getClass().getSimpleName(), row, ruleType);
 
     if (!rule_type_recognised(ruleType)) {
-      writeout("Unrecognised rule type \"%s\"", ruleType);
+      writeout("Unrecognised rule type \"%s\".", ruleType);
       return;
     }
 
@@ -511,14 +567,14 @@ public class ValidateOperation {
       // type "subclass-of|equivalent-to" has a primary rule type of "subclass-of"
       String whenRuleType = whenClause[1];
       if (!rule_type_recognised(whenRuleType)) {
-        writeout("Unrecognised rule type \"%s\"", whenRuleType);
+        writeout("Unrecognised rule type \"%s\".", whenRuleType);
         continue;
       }
       RTypeEnum whenPrimRType = rule_type_to_rtenum_map.get(get_primary_rule_type(whenRuleType));
 
       // Use the primary rule type to make sure the rule is of the right category for a when clause:
       if (whenPrimRType.getRuleCat() != RCatEnum.QUERY) {
-        writeout("Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\"",
+        writeout("Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
                  query_type_to_rtenum_map.keySet(), whenRuleType);
         continue;
       }
@@ -529,10 +585,10 @@ public class ValidateOperation {
         // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
         // of the other when clauses, or the main clause, since the main clause may only be
         // evaluated when all of the when clauses are satisfied.
-        logger.info(
-            String.format(
-                "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause",
-                subject, subjectIri.getShortForm(), whenRuleType, axiom));
+        writelog(
+            LogLevel.INFO,
+            "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause.",
+            subject, subjectIri.getShortForm(), whenRuleType, axiom);
         return;
       }
     }
@@ -566,14 +622,14 @@ public class ValidateOperation {
     String axiom = interpolate(separatedRule.getKey(), row);
     boolean result = execute_query(cellIri, axiom, reasoner, row, ruleType);
     if (!result) {
-      writeout("Rule: \"%s (%s) %s %s\" is not satisfied",
+      writeout("Rule: \"%s (%s) %s %s\" is not satisfied.",
                cellLabel, cellIri.getShortForm(), ruleType, axiom);
     }
     else {
-      logger.info(
-          String.format(
-              "Rule: \"%s (%s) %s %s\" is satisfied",
-              cellLabel, cellIri.getShortForm(), ruleType, axiom));
+      writelog(
+          LogLevel.INFO,
+          "Rule: \"%s (%s) %s %s\" is satisfied",
+          cellLabel, cellIri.getShortForm(), ruleType, axiom);
     }
   }
 
@@ -584,21 +640,23 @@ public class ValidateOperation {
       List<String> row,
       String unsplitQueryType) throws Exception, IOException {
 
-    logger.debug(String.format(
+    writelog(
+        LogLevel.DEBUG,
         "execute_query(): Called with parameters: " +
         "iri: \"%s\", " +
         "rule: \"%s\", " +
         "reasoner: \"%s\", " +
         "row: \"%s\", " +
         "query type: \"%s\".",
-        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, unsplitQueryType));
+        iri.getShortForm(), rule, reasoner.getClass().getSimpleName(), row, unsplitQueryType);
 
     OWLClassExpression ce;
     try {
       ce = parser.parseManchesterExpression(rule);
     }
     catch (ParserException e) {
-      writeout("Unable to parse rule \"%s: %s\". %s", unsplitQueryType, rule, e.getMessage());
+      writeout("Unable to parse rule \"%s: %s\".\n\t%s.",
+               unsplitQueryType, rule, e.getMessage().trim());
       return false;
     }
 
@@ -611,7 +669,7 @@ public class ValidateOperation {
     String[] queryTypes = split_rule_type(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
-        writeout("Query type \"%s\" not recognised in rule \"%s\"", queryType, unsplitQueryType);
+        writeout("Query type \"%s\" not recognised in rule \"%s\".", queryType, unsplitQueryType);
         continue;
       }
 
@@ -646,7 +704,7 @@ public class ValidateOperation {
         }
       }
       else {
-        logger.error("Validation for querty type: '" + qType + "' not yet implemented.");
+        writelog(LogLevel.ERROR, "Validation for query type: \"%s\" not yet implemented.", qType);
         return false;
       }
     }
@@ -659,27 +717,30 @@ public class ValidateOperation {
       String cell,
       List<String> row) throws Exception, IOException {
 
-    logger.debug(String.format(
+    writelog(
+        LogLevel.DEBUG,
         "validate_generic_rule(): Called with parameters: " +
         "rule: \"%s\", " +
         "rule type: \"%s\", " +
         "cell: \"%s\", " +
         "row: \"%s\".",
-        rule, rType.getRuleType(), cell, row));
+        rule, rType.getRuleType(), cell, row);
 
     switch (rType) {
       case REQUIRED:
         if (cell.trim().equals("")) {
-          writeout("Empty cell in a required column.");
+          writeout("Cell is empty but rule: \"%s: %s\" does not allow this.",
+                   rType.getRuleType(), rule);
         }
         break;
       case EXCLUDED:
         if (!cell.trim().equals("")) {
-          writeout("Non-empty cell (%s) in an excluded column.", cell.trim());
+          writeout("Cell is non-empty (\"%s\") but rule: \"%s: %s\" does not allow this.",
+                   cell, rType.getRuleType(), rule);
         }
         break;
       default:
-        writeout("Generic validation of rule type: \"%s\" is not yet implemented",
+        writeout("Generic validation of rule type: \"%s\" is not yet implemented.",
                  rType.getRuleType());
         break;
     }
