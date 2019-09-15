@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Add more and better logging statements and user-friendly error messages
  * - Make sure that rule parsing is as robust as possble (also test that quoting is ok)
  * - Document the code
  * - Make the reasoner choice configurable via the command line (see the way other commands do it)
@@ -242,7 +241,7 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static Map<String, List<String>> parse_rules(String ruleString) throws IOException {
+  private static Map<String, List<String>> parse_rules(String ruleString) {
     HashMap<String, List<String>> ruleMap = new HashMap();
     // Skip over empty strings and strings that start with "##". In a rule string, there may
     // be multiple rules separated by semicolons. To comment out any one of them, add a #
@@ -320,29 +319,35 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String wildcard_to_label(String wildcard, List<String> row) throws IOException {
+  private static String wildcard_to_label(String wildcard, List<String> row) {
     if (!wildcard.startsWith("%")) {
-      writelog(LogLevel.ERROR, "Invalid wildcard: \"%s\".", wildcard);
+      writelog(LogLevel.WARN, "Invalid wildcard: \"%s\".", wildcard);
       return null;
     }
 
     int colIndex = Integer.parseInt(wildcard.substring(1)) - 1;
     if (colIndex >= row.size()) {
-      writeout("Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
-               wildcard, row.size());
+      writelog(
+          LogLevel.WARN,
+          "Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
+          wildcard, row.size());
       return null;
     }
 
     String term = row.get(colIndex).trim();
     if (term == null) {
-      writeout("Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
-               wildcard, colIndex + 1);
+      writelog(
+          LogLevel.WARN,
+          "Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
+          wildcard, colIndex + 1);
       return null;
     }
 
     if (term.equals("")) {
-      writeout("Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
-               wildcard, colIndex + 1);
+      writelog(
+          LogLevel.WARN,
+          "Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
+          wildcard, colIndex + 1);
       return null;
     }
 
@@ -352,7 +357,7 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static String interpolate(String str, List<String> row) throws IOException {
+  private static String interpolate(String str, List<String> row) {
     String interpolatedString = "";
 
     // If the string consists in a single word without any occurrences of single or double quotes or
@@ -373,7 +378,7 @@ public class ValidateOperation {
       // If there is a problem finding the label for one of the wildcards, then just send back the
       // string as is:
       if (label == null) {
-        writeout("Unable to interpolate \"%s\" in string \"%s\".", m.group(), str);
+        writelog(LogLevel.WARN, "Unable to interpolate \"%s\" in string \"%s\".", m.group(), str);
         return str;
       }
 
@@ -393,7 +398,7 @@ public class ValidateOperation {
    * INSERT DOC HERE
    // Parses the given rule into a main part and optional when clause.
    */
-  private static SimpleEntry<String, List<String[]>> separate_rule(String rule) throws IOException {
+  private static SimpleEntry<String, List<String[]>> separate_rule(String rule) {
     // Check if there are any when clauses:
     Matcher m = Pattern.compile("(\\(\\s*(when:?)\\s+.+\\))(.*)").matcher(rule);
     String whenClauseStr = null;
@@ -406,7 +411,7 @@ public class ValidateOperation {
     // If there is no main clause, inform the user of the problem and return the rule string as it
     // was passed with an empty when clause list:
     if (m.start() == 0) {
-      writeout("Rule: \"%s\" has when clause but no main clause.", rule);
+      writelog(LogLevel.WARN, "Rule: \"%s\" has when clause but no main clause.", rule);
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
@@ -419,7 +424,8 @@ public class ValidateOperation {
     // Don't fail just because there is some extra garbage at the end of the rule, but notify
     // the user about it:
     if (!m.group(3).trim().equals("")) {
-      writeout("Ignoring string \"%s\" at end of rule \"%s\".", m.group(3).trim(), rule);
+      writelog(
+          LogLevel.WARN, "Ignoring string \"%s\" at end of rule \"%s\".", m.group(3).trim(), rule);
     }
 
     // Within each when clause, multiple subclauses separated by ampersands are allowed. Each
@@ -435,7 +441,7 @@ public class ValidateOperation {
           .matcher(whenClause);
 
       if (!m.find()) {
-        writeout("Unable to decompose when-clause: \"%s\".", whenClause);
+        writelog(LogLevel.WARN, "Unable to decompose when-clause: \"%s\".", whenClause);
         // Return the rule as passed with an empty when clause list:
         return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
       }
@@ -447,7 +453,9 @@ public class ValidateOperation {
     m = Pattern.compile("^(.+)\\s+\\(when:?\\s").matcher(rule);
     if (!m.find()) {
       // This shouldn't really ever happen ...
-      writeout("Encountered unknown error while looking for main clause of rule \"%s\".", rule);
+      writelog(
+          LogLevel.WARN,
+          "Encountered unknown error while looking for main clause of rule \"%s\".", rule);
       // Return the rule as passed with an empty when clause list:
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
@@ -464,7 +472,7 @@ public class ValidateOperation {
       String rule,
       OWLReasoner reasoner,
       List<String> row,
-      String unsplitQueryType) throws Exception, IOException {
+      String unsplitQueryType) throws Exception {
 
     writelog(
         LogLevel.DEBUG,
@@ -481,7 +489,7 @@ public class ValidateOperation {
       ce = parser.parseManchesterExpression(rule);
     }
     catch (ParserException e) {
-      writeout("Unable to parse rule \"%s: %s\".\n\t%s.",
+      writelog(LogLevel.WARN, "Unable to parse rule \"%s: %s\".\n\t%s.",
                unsplitQueryType, rule, e.getMessage().trim());
       return false;
     }
@@ -495,7 +503,8 @@ public class ValidateOperation {
     String[] queryTypes = split_rule_type(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
-        writeout("Query type \"%s\" not recognised in rule \"%s\".", queryType, unsplitQueryType);
+        writelog(LogLevel.WARN,
+                 "Query type \"%s\" not recognised in rule \"%s\".", queryType, unsplitQueryType);
         continue;
       }
 
@@ -555,7 +564,7 @@ public class ValidateOperation {
       String rule,
       RTypeEnum rType,
       String cell,
-      List<String> row) throws Exception, IOException {
+      List<String> row) throws IOException {
 
     writelog(
         LogLevel.DEBUG,
@@ -580,7 +589,7 @@ public class ValidateOperation {
         }
         break;
       default:
-        writeout("Generic validation of rule type: \"%s\" is not yet implemented.",
+        writelog(LogLevel.WARN, "Generic validation of rule type: \"%s\" is not yet implemented.",
                  rType.getRuleType());
         break;
     }
@@ -606,8 +615,9 @@ public class ValidateOperation {
         "rule type: \"%s\".",
         cell, rule, reasoner.getClass().getSimpleName(), row, ruleType);
 
+    writelog(LogLevel.INFO, "Validating rule \"%s: %s\" against \"%s\".", ruleType, rule, cell);
     if (!rule_type_recognised(ruleType)) {
-      writeout("Unrecognised rule type \"%s\".", ruleType);
+      writelog(LogLevel.WARN, "Unrecognised rule type \"%s\".", ruleType);
       return;
     }
 
@@ -621,7 +631,7 @@ public class ValidateOperation {
       // from the label:
       IRI subjectIri = label_to_iri_map.get(subject.replaceAll("^\'|\'$", ""));
       if (subjectIri == null) {
-        writeout("Could not determine IRI for label: \"%s\".", subject);
+        writelog(LogLevel.WARN, "Could not determine IRI for label: \"%s\".", subject);
         continue;
       }
 
@@ -629,21 +639,23 @@ public class ValidateOperation {
       // type "subclass-of|equivalent-to" has a primary rule type of "subclass-of"
       String whenRuleType = whenClause[1];
       if (!rule_type_recognised(whenRuleType)) {
-        writeout("Unrecognised rule type \"%s\".", whenRuleType);
+        writelog(LogLevel.WARN, "Unrecognised rule type \"%s\".", whenRuleType);
         continue;
       }
       RTypeEnum whenPrimRType = rule_type_to_rtenum_map.get(get_primary_rule_type(whenRuleType));
 
       // Use the primary rule type to make sure the rule is of the right category for a when clause:
       if (whenPrimRType.getRuleCat() != RCatEnum.QUERY) {
-        writeout("Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
+        writelog(LogLevel.WARN,
+                 "Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
                  query_type_to_rtenum_map.keySet(), whenRuleType);
         continue;
       }
 
       // Interpolate the axiom to validate and send the query to the reasoner:
-      String axiom = interpolate(whenClause[2], row);
-      if (!execute_query(subjectIri, axiom, reasoner, row, whenRuleType)) {
+      String axiom = whenClause[2];
+      String interpolatedAxiom = interpolate(axiom, row);
+      if (!execute_query(subjectIri, interpolatedAxiom, reasoner, row, whenRuleType)) {
         // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
         // of the other when clauses, or the main clause, since the main clause may only be
         // evaluated when all of the when clauses are satisfied.
@@ -652,6 +664,11 @@ public class ValidateOperation {
             "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause.",
             subject, subjectIri.getShortForm(), whenRuleType, axiom);
         return;
+      }
+      else {
+        writelog(
+            LogLevel.INFO, "Validated when clause \"%s (%s) %s %s\"",
+            subject, subjectIri.getShortForm(), whenRuleType, axiom);
       }
     }
 
@@ -675,23 +692,22 @@ public class ValidateOperation {
     // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
     String cellLabel = get_label_from_term(cell);
     if (cellLabel == null) {
-      writeout("Could not find \"%s\" in ontology.", cell);
+      writelog(LogLevel.WARN, "Could not find \"%s\" in ontology.", cell);
       return;
     }
 
     // Get the cell's IRI, interpolate the axiom, and execute the query:
     IRI cellIri = label_to_iri_map.get(cellLabel);
-    String axiom = interpolate(separatedRule.getKey(), row);
-    boolean result = execute_query(cellIri, axiom, reasoner, row, ruleType);
+    String axiom = separatedRule.getKey();
+    String interpolatedAxiom = interpolate(axiom, row);
+    boolean result = execute_query(cellIri, interpolatedAxiom, reasoner, row, ruleType);
     if (!result) {
-      writeout("Rule: \"%s (%s) %s %s\" is not satisfied.",
+      writeout("Validation failed for rule: \"%s (%s) %s %s\".",
                cellLabel, cellIri.getShortForm(), ruleType, axiom);
     }
     else {
-      writelog(
-          LogLevel.INFO,
-          "Rule: \"%s (%s) %s %s\" is satisfied",
-          cellLabel, cellIri.getShortForm(), ruleType, axiom);
+      writelog(LogLevel.INFO, "Validated: \"%s (%s) %s %s\".",
+               cellLabel, cellIri.getShortForm(), ruleType, axiom);
     }
   }
 
@@ -704,7 +720,7 @@ public class ValidateOperation {
       List<List<String>> csvData,
       OWLOntology ontology,
       OWLReasonerFactory reasonerFactory,
-      Writer writer) throws Exception, IOException {
+      Writer writer) throws Exception {
 
     // Initialize the shared variables:
     initialize(ontology, reasonerFactory, writer);
