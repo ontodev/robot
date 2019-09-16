@@ -321,14 +321,14 @@ public class ValidateOperation {
    */
   private static String wildcard_to_label(String wildcard, List<String> row) {
     if (!wildcard.startsWith("%")) {
-      writelog(LogLevel.WARN, "Invalid wildcard: \"%s\".", wildcard);
+      writelog(LogLevel.ERROR, "Invalid wildcard: \"%s\".", wildcard);
       return null;
     }
 
     int colIndex = Integer.parseInt(wildcard.substring(1)) - 1;
     if (colIndex >= row.size()) {
       writelog(
-          LogLevel.WARN,
+          LogLevel.ERROR,
           "Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
           wildcard, row.size());
       return null;
@@ -337,7 +337,7 @@ public class ValidateOperation {
     String term = row.get(colIndex).trim();
     if (term == null) {
       writelog(
-          LogLevel.WARN,
+          LogLevel.ERROR,
           "Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
           wildcard, colIndex + 1);
       return null;
@@ -345,7 +345,7 @@ public class ValidateOperation {
 
     if (term.equals("")) {
       writelog(
-          LogLevel.WARN,
+          LogLevel.ERROR,
           "Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
           wildcard, colIndex + 1);
       return null;
@@ -357,19 +357,43 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+  private static String quote_entities(String axiom) {
+    String quotedAxiom = new String();
+
+    // Distinguish quoted from non-quoted parts of the string. The former are in the odd-numbered
+    // indices, and the latter are in the even-numbered indices.
+    String[] parts = axiom.split("'");
+    for (int i = 0; i < parts.length; i++) {
+      if (i % 2 == 1) {
+        // This part is already quoted; just replace the quotes and add it to the string to return:
+        quotedAxiom += "'" + parts[i] + "'" + " ";
+      }
+      else {
+        String[] unquotedWords = parts[i].split("\\s+");
+        for (String word : unquotedWords) {
+          Matcher m = Pattern.compile(
+              "([\\(\\)\\{\\}]*)([^\\(\\)\\{\\}]+)([\\(\\)\\{\\}]*)").matcher(word);
+          // We only quote labels, not keywords such as 'and', not relations such as
+          // 'hasMaterialBasisIn', not groups of parentheses such as '((', etc.
+          if (m.find() && label_to_iri_map.containsKey(m.group(2))) {
+            quotedAxiom += m.group(1) + "'" + m.group(2) + "'" + m.group(3) + " ";
+          }
+          else {
+            quotedAxiom += word + " ";
+          }
+        }
+      }
+    }
+    return quotedAxiom.trim();
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
   private static String interpolate(String str, List<String> row) {
     String interpolatedString = "";
 
-    // If the string consists in a single word without any occurrences of single or double quotes or
-    // wildcard symbols (%), then assume it is a literal label, enclose it in single quotes and
-    // return it:
-    if (Pattern.matches("^[^\\s'\"%]+$", str)) {
-      interpolatedString = "'" + str + "'";
-      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", str, interpolatedString);
-      return interpolatedString;
-    }
-
-    // Otherwise look for any substrings starting with a percent-symbol and followed by a number:
+    // Look for any substrings starting with a percent-symbol and followed by a number:
     Matcher m = Pattern.compile("%\\d+").matcher(str);
     int currIndex = 0;
     while (m.find()) {
@@ -378,7 +402,7 @@ public class ValidateOperation {
       // If there is a problem finding the label for one of the wildcards, then just send back the
       // string as is:
       if (label == null) {
-        writelog(LogLevel.WARN, "Unable to interpolate \"%s\" in string \"%s\".", m.group(), str);
+        writelog(LogLevel.ERROR, "Unable to interpolate \"%s\" in string \"%s\".", m.group(), str);
         return str;
       }
 
@@ -390,6 +414,8 @@ public class ValidateOperation {
     }
     // There may be text after the final wildcard, so add it now:
     interpolatedString += str.substring(currIndex);
+    // Add any further single quotes to the interpolated string that are necessary for parsing:
+    interpolatedString = quote_entities(interpolatedString);
     writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", str, interpolatedString);
     return interpolatedString;
   }
@@ -411,7 +437,7 @@ public class ValidateOperation {
     // If there is no main clause, inform the user of the problem and return the rule string as it
     // was passed with an empty when clause list:
     if (m.start() == 0) {
-      writelog(LogLevel.WARN, "Rule: \"%s\" has when clause but no main clause.", rule);
+      writelog(LogLevel.ERROR, "Rule: \"%s\" has when clause but no main clause.", rule);
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
@@ -441,7 +467,7 @@ public class ValidateOperation {
           .matcher(whenClause);
 
       if (!m.find()) {
-        writelog(LogLevel.WARN, "Unable to decompose when-clause: \"%s\".", whenClause);
+        writelog(LogLevel.ERROR, "Unable to decompose when-clause: \"%s\".", whenClause);
         // Return the rule as passed with an empty when clause list:
         return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
       }
@@ -454,7 +480,7 @@ public class ValidateOperation {
     if (!m.find()) {
       // This shouldn't really ever happen ...
       writelog(
-          LogLevel.WARN,
+          LogLevel.ERROR,
           "Encountered unknown error while looking for main clause of rule \"%s\".", rule);
       // Return the rule as passed with an empty when clause list:
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
@@ -489,7 +515,7 @@ public class ValidateOperation {
       ce = parser.parseManchesterExpression(rule);
     }
     catch (ParserException e) {
-      writelog(LogLevel.WARN, "Unable to parse rule \"%s: %s\".\n\t%s.",
+      writelog(LogLevel.ERROR, "Unable to parse rule \"%s: %s\".\n\t%s.",
                unsplitQueryType, rule, e.getMessage().trim());
       return false;
     }
@@ -503,7 +529,7 @@ public class ValidateOperation {
     String[] queryTypes = split_rule_type(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
-        writelog(LogLevel.WARN,
+        writelog(LogLevel.ERROR,
                  "Query type \"%s\" not recognised in rule \"%s\".", queryType, unsplitQueryType);
         continue;
       }
@@ -589,7 +615,7 @@ public class ValidateOperation {
         }
         break;
       default:
-        writelog(LogLevel.WARN, "Generic validation of rule type: \"%s\" is not yet implemented.",
+        writelog(LogLevel.ERROR, "Generic validation of rule type: \"%s\" is not yet implemented.",
                  rType.getRuleType());
         break;
     }
@@ -617,7 +643,7 @@ public class ValidateOperation {
 
     writelog(LogLevel.INFO, "Validating rule \"%s: %s\" against \"%s\".", ruleType, rule, cell);
     if (!rule_type_recognised(ruleType)) {
-      writelog(LogLevel.WARN, "Unrecognised rule type \"%s\".", ruleType);
+      writelog(LogLevel.ERROR, "Unrecognised rule type \"%s\".", ruleType);
       return;
     }
 
@@ -631,7 +657,7 @@ public class ValidateOperation {
       // from the label:
       IRI subjectIri = label_to_iri_map.get(subject.replaceAll("^\'|\'$", ""));
       if (subjectIri == null) {
-        writelog(LogLevel.WARN, "Could not determine IRI for label: \"%s\".", subject);
+        writelog(LogLevel.ERROR, "Could not determine IRI for label: \"%s\".", subject);
         continue;
       }
 
@@ -639,14 +665,14 @@ public class ValidateOperation {
       // type "subclass-of|equivalent-to" has a primary rule type of "subclass-of"
       String whenRuleType = whenClause[1];
       if (!rule_type_recognised(whenRuleType)) {
-        writelog(LogLevel.WARN, "Unrecognised rule type \"%s\".", whenRuleType);
+        writelog(LogLevel.ERROR, "Unrecognised rule type \"%s\".", whenRuleType);
         continue;
       }
       RTypeEnum whenPrimRType = rule_type_to_rtenum_map.get(get_primary_rule_type(whenRuleType));
 
       // Use the primary rule type to make sure the rule is of the right category for a when clause:
       if (whenPrimRType.getRuleCat() != RCatEnum.QUERY) {
-        writelog(LogLevel.WARN,
+        writelog(LogLevel.ERROR,
                  "Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
                  query_type_to_rtenum_map.keySet(), whenRuleType);
         continue;
@@ -692,7 +718,7 @@ public class ValidateOperation {
     // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
     String cellLabel = get_label_from_term(cell);
     if (cellLabel == null) {
-      writelog(LogLevel.WARN, "Could not find \"%s\" in ontology.", cell);
+      writelog(LogLevel.ERROR, "Could not find \"%s\" in ontology.", cell);
       return;
     }
 
@@ -700,6 +726,7 @@ public class ValidateOperation {
     IRI cellIri = label_to_iri_map.get(cellLabel);
     String axiom = separatedRule.getKey();
     String interpolatedAxiom = interpolate(axiom, row);
+    writelog(LogLevel.INFO, "Querying axiom: %s", interpolatedAxiom);
     boolean result = execute_query(cellIri, interpolatedAxiom, reasoner, row, ruleType);
     if (!result) {
       writeout("Validation failed for rule: \"%s (%s) %s %s\".",
