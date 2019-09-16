@@ -8,10 +8,10 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <Ontology rdf:about="http://test.com/template.owl"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Classes
@@ -19,7 +19,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://purl.obolibrary.org/obo/GO_1234 -->
@@ -54,13 +54,14 @@
                 <annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#label"/>
                 <annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test 3</annotatedTarget>
                 <rdfs:comment xml:lang="en">test 3 comment</rdfs:comment>
+                <rdfs:seeAlso rdf:resource="http://robot.obolibrary.org/"/>
             </Axiom>
         </annotatedSource>
         <annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#comment"/>
         <annotatedTarget xml:lang="en">test 3 comment</annotatedTarget>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test 3 comment comment</rdfs:comment>
     </Annotation>
-    
+
 
 
     <!-- http://purl.obolibrary.org/obo/GO_1235 -->
