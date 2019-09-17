@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import org.obolibrary.robot.exceptions.ColumnException;
@@ -1985,6 +1986,86 @@ public class Template {
   }
 
   /**
+   * Given a row as a list of strings and a column number, determine if the next column contains a
+   * one or more axiom annotations. If so, return the axiom annotation or annotations as a set of
+   * OWLAnnotations.
+   *
+   * @param row list of strings
+   * @param column column number
+   * @return set of OWLAnnotations, maybe empty
+   * @throws Exception on issue getting the OWLAnnotations
+   */
+  private Set<OWLAnnotation> maybeGetAxiomAnnotations(List<String> row, int column)
+      throws Exception {
+    Map<Integer, List<Integer>> annotationsPlusAnnotations = new HashMap<>();
+    int lastAnnotation = -1;
+    while (column < row.size() - 1) {
+      column++;
+      String template = templates.get(column);
+      Matcher m = Pattern.compile("^>.*").matcher(template);
+      if (m.matches()) {
+
+        m = Pattern.compile("^>[^>].*").matcher(template);
+        if (m.matches()) {
+          // This is an annotation on the original axiom
+          lastAnnotation = column;
+          annotationsPlusAnnotations.put(column, new ArrayList<>());
+        }
+
+        m = Pattern.compile("^>>.*").matcher(template);
+        if (m.matches()) {
+          // This is an annotation on the last axiom annotation
+          // Update the map
+          List<Integer> cols = annotationsPlusAnnotations.get(lastAnnotation);
+          cols.add(column);
+          annotationsPlusAnnotations.put(lastAnnotation, cols);
+        }
+      } else {
+        // We are done getting the annotations
+        break;
+      }
+    }
+
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    for (Map.Entry<Integer, List<Integer>> annPlusAnns : annotationsPlusAnnotations.entrySet()) {
+      int annColumn = annPlusAnns.getKey();
+      List<Integer> moreAnns = annPlusAnns.getValue();
+
+      String template = templates.get(annColumn);
+      String value = row.get(annColumn).trim();
+      if (value.isEmpty()) {
+        continue;
+      }
+      Set<OWLAnnotation> firstAnnotations =
+          TemplateHelper.getAnnotations(name, checker, template, value, rowNum, annColumn);
+
+      if (moreAnns.isEmpty()) {
+        annotations.addAll(firstAnnotations);
+        continue;
+      }
+
+      Set<OWLAnnotation> moreAnnotations = new HashSet<>();
+      for (int m : moreAnns) {
+        template = templates.get(m);
+        while (template.startsWith(">")) {
+          template = template.substring(1);
+        }
+        value = row.get(m).trim();
+        if (value.isEmpty()) {
+          continue;
+        }
+        moreAnnotations.addAll(
+            TemplateHelper.getAnnotations(name, checker, template, value, rowNum, annColumn));
+      }
+
+      for (OWLAnnotation f : firstAnnotations) {
+        annotations.add(f.getAnnotatedAnnotation(moreAnnotations));
+      }
+    }
+    return annotations;
+  }
+
+  /**
    * Given a row as a list of strings, the template string, and the number of the next column, maybe
    * get axiom annotations on existing axiom annotations.
    *
@@ -2037,35 +2118,6 @@ public class Template {
     // or maybe the value cell was empty
     // return an empty set
     return new HashSet<>();
-  }
-
-  /**
-   * Given a row as a list of strings and a column number, determine if the next column contains a
-   * one or more axiom annotations. If so, return the axiom annotation or annotations as a set of
-   * OWLAnnotations.
-   *
-   * @param row list of strings
-   * @param column column number
-   * @return set of OWLAnnotations, maybe empty
-   * @throws Exception on issue getting the OWLAnnotations
-   */
-  private Set<OWLAnnotation> maybeGetAxiomAnnotations(List<String> row, int column)
-      throws Exception {
-    // Look at the template string of the next column
-    String nextTemplate;
-    try {
-      nextTemplate = templates.get(column + 1);
-    } catch (IndexOutOfBoundsException e) {
-      return new HashSet<>();
-    }
-
-    // If the next template string is not null, not empty, and it starts with >
-    // Get the axiom annotations from the row
-    if (!nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
-      return getAxiomAnnotations(row, nextTemplate, column + 1);
-    } else {
-      return new HashSet<>();
-    }
   }
 
   /**
