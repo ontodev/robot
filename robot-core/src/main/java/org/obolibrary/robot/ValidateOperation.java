@@ -49,12 +49,107 @@ import org.slf4j.LoggerFactory;
 /**
  * Implements the validate operation for a given CSV file and ontology.
  *
+ * Validation rules are read from the second row of the CSV file as follows:
+ *
+ * header A                        header B                        header C ...
+ * rule A1; rule A2; rule A3 ...   rule B1; rule B2; rule B3 ...   rule C1; rule C2; rule C3 ...
+ * data                            data                            data
+ * data                            data                            data
+ * ...
+ *
+ * Rules for a given column must be separated by semicolons. To comment out all of the rules for
+ * a given column, the list should be prefixed by '##'. To comment out individual rules from
+ * the rules belonging to a given column, prefix the rule with '#'.
+ * E.g.:
+ *   "## rule 1; rule 2" comments out rule 1 and rule 2.
+ *   "# rule 1; rule 2" comments out rule 1 but not rule 2.
+ *   "rule 1; # rule 2" comments out only rule 2.
+ *
+ * Individual rules must be of the form:
+ * <main-rule-type> <rule> [(when <when-class-expr-1> <when-rule-type-1> <when-rule-1> & ...)]
+ *
+ * <main-rule-type> can be one of:
+ *   is-required
+ *   is-excluded
+ *   subclass-of
+ *   direct-subclass-of
+ *   superclass-of
+ *   direct-superclass-of
+ *   equivalent-to
+ *   instance-of
+ *   direct-instance-of
+ *
+ * <when-rule-type> can be one of:
+ *   subclass-of
+ *   direct-subclass-of
+ *   superclass-of
+ *   direct-superclass-of
+ *   equivalent-to
+ *   instance-of
+ *   direct-instance-of
+ *
+ * <rule> and <when-rule>
+ *   For rule types: is-required and is-excluded, <rule> is optional and if not specified defaults
+ *     to true.
+ *   For other rules types, <rule> is mandatory and must be in the form of a description logic (DL)
+ *     class expression query, in Manchester syntax.
+ *
+ * <when-class-expr> must describe an individual class, and can be in the form of an rdfs:label, an
+ *   IRI, an abbreviated IRI, or a wildcard.
+ *
+ * Wildcards:
+ * ---------
+ * Wildcards of the form "%n" can be specified with <rule>, <when-rule>, and <when-class-expr>
+ * clauses, and are used to indicate the class described by the  of the nth cell of a given
+ * row. E.g. the rule:
+ *   subclass-of hasBasisIn in some %2 (when %1 subclass-of ('Dengue virus' or 'Dengue virus 2'))
+ *
+ * requires that, whenever the class indicated in column %1 of the current row is a subclass of the
+ * class consisting of 'Dengue virus' and 'Dengue virus 2', the data in the current cell must be a
+ * subclass of the set of classes that bear the relation hasBasisIn to the class indicated in column
+ * 2 of the same row.
+ *
+ * When-clauses:
+ * ------------
+ * The optional when-clause indicates that the rule given in the main clause should be validated
+ * only when the when-clause is satisfied. If multiple when-clauses are specified (separated by
+ * '&', then each when-clause must evaluate to true in order for the main validation rule to
+ * execute. E.g.:
+ *   direct-subclass-of %2 (when %5 superclass-of 'exposure process' & %2 superclass-of vaccine)
+ *
+ * indicates that the validation rule 'direct-subclass-of %2' should only be run against the
+ * current cell when both the cell in column 5 is a superclass of 'exposure process' and the cell in
+ * column 2 is a superclass of vaccine.
+ *
+ * Compound rule-types:
+ * -------------------
+ * <rule-type> and <when-rule-type> can take the form: rule-type-1|rule-type-2|rule-type-3|...
+ * E.g.
+ *   subclass-of: %3 (when %4 subclass-of|equivalent-to %2)
+ *
+ * requires that, whenever the contents of the cell in column 4 of the given row are either a
+ * subclass-of or equivalent-to the contents of the cell in column 2, then the contents of the
+ * current cell must be a subclass-of the contents of the cell in column 3.
+ *
+ * Literals:
+ * --------
+ * Literal rdfs:label expressions must be enclosed in single quotes if they contain spaces.
+ * E.g.
+ *   subclass-of 'Dengue virus'      (single quotes required here)
+ *   hasBasisIn some vaccination     (no single quotes required here)
+ *
+ * is-required and is-excluded:
+ * ---------------------------
+ * is-required indicates that the given cell must be non-empty, while is-excluded requires that
+ * it be empty. These rules can be used with an optional when-clause. E.g.:
+ *   is-required (when %1 subclass-of 'exposure process)
+ *
+ * indicates that the current cell must be non-empty whenever the cell in column 1 of the current
+ * row is a subclass of 'exposure process'.
+ *
  * @author <a href="mailto:consulting@michaelcuffaro.com">Michael E. Cuffaro</a>
  */
 public class ValidateOperation {
-  // Naming convention: methods and static variables are named using the underscore convention,
-  // local (method-internal) variables are named using camelCase
-
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
@@ -136,14 +231,21 @@ public class ValidateOperation {
     }
   }
 
+  /** Enum used with the writelog() method */
+  private enum LogLevel {
+    DEBUG,
+    ERROR,
+    INFO,
+    WARN;
+  }
+
   /**
-   * Given the string `format`, a severity from 1 through 4 (with 1 being the most severe),
-   * and a number of formatting variables, use the formating variables to fill in the format
-   * string in the manner of C's printf function, and write to the log file at the appropriate
-   * log level for the given severity. If the parameter `showCoords` is true, then include the
-   * current row and column number in the output string.
+   * Given the string `format`, a logging level specification, and a number of formatting variables,
+   * use the formating variables to fill in the format string in the manner of C's printf function,
+   * and write to the log at the appropriate log level. If the parameter `showCoords` is true, then
+   * include the current row and column number in the output string.
    */
-  private static void writelog(boolean showCoords, int severity, String format,
+  private static void writelog(boolean showCoords, LogLevel logLevel, String format,
                                Object... positionalArgs) {
     String logStr = "";
     if (showCoords) {
@@ -151,29 +253,30 @@ public class ValidateOperation {
     }
 
     logStr += String.format(format, positionalArgs);
-    if (severity <= 1) {
+    switch (logLevel) {
+      case ERROR:
         logger.error(logStr);
-    }
-    else if (severity == 2) {
-      logger.warn(logStr);
-    }
-    else if (severity == 3) {
-      logger.info(logStr);
-    }
-    else {
-      logger.debug(logStr);
+        break;
+      case WARN:
+        logger.warn(logStr);
+        break;
+      case INFO:
+        logger.info(logStr);
+        break;
+      case DEBUG:
+        logger.debug(logStr);
+        break;
     }
   }
 
   /**
-   * Given the string `format`, a severity from 1 through 4 (with 1 being the most severe),
-   * and a number of formatting variables, use the formating variables to fill in the format
-   * string in the manner of C's printf function, and write to the log file at the appropriate
-   * log level for the given severity, including the current row and column number in the output
-   * string.
+   * Given the string `format`, a logging level specification, and a number of formatting variables,
+   * use the formating variables to fill in the format string in the manner of C's printf function,
+   * and write to the log at the appropriate log level, including the current row and column number
+   * in the output string.
    */
-  private static void writelog(int severity, String format, Object... positionalArgs) {
-    writelog(true, severity, format, positionalArgs);
+  private static void writelog(LogLevel logLevel, String format, Object... positionalArgs) {
+    writelog(true, logLevel, format, positionalArgs);
   }
 
   /**
@@ -218,8 +321,8 @@ public class ValidateOperation {
 
     // Robot's custom quoted entity checker will be used for parsing class expressions:
     QuotedEntityChecker checker = new QuotedEntityChecker();
-    // Add the class that will be used for IO and for handling short-form IRIs by the quoted entity
-    // checker:
+    // Add the class that will be used for IO and for handling short-form IRIs by the quoted entity 
+   // checker:
     checker.setIOHelper(new IOHelper());
     checker.addProvider(new SimpleShortFormProvider());
 
@@ -229,7 +332,7 @@ public class ValidateOperation {
     checker.addProperty(dataFactory.getRDFSLabel());
     checker.addAll(ValidateOperation.ontology);
 
-    // Finally create the parser using the data factory and entity checker.
+    // Create the parser using the data factory and entity checker.
     ValidateOperation.parser = new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
 
     // Use the given reasonerFactory to initialise the reasoner based on the given ontology:
@@ -256,7 +359,7 @@ public class ValidateOperation {
       String reverseKey = entry.getValue();
       IRI reverseValue = entry.getKey();
       if (target.containsKey(reverseKey)) {
-        writelog(2, "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
+        writelog(LogLevel.WARN, "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
                  reverseKey, target.get(reverseKey), reverseValue);
       }
       target.put(reverseKey, reverseValue);
@@ -271,11 +374,7 @@ public class ValidateOperation {
    */
   private static Map<String, List<String>> parse_rules(String ruleString) {
     HashMap<String, List<String>> ruleMap = new HashMap();
-    // Skip over empty strings and strings that start with "##". In a rule string, there may
-    // be multiple rules separated by semicolons. To comment out any one of them, add a #
-    // to the beginning of it. To comment all of them out, add ## to the beginning of the string
-    // as a whole. E.g.: "## rule 1; rule 2" comments out everything, while "# rule 1; rule 2"
-    // only comments out only rule 1 and "rule 1; # rule 2" comments out only rule 2.
+    // Skip over empty strings and strings that start with "##".
     if (!ruleString.trim().equals("") && !ruleString.trim().startsWith("##")) {
       // Rules are separated by semicolons:
       String[] rules = ruleString.split("\\s*;\\s*");
@@ -298,7 +397,7 @@ public class ValidateOperation {
             ruleContent = "true";
           }
           else {
-            writelog(1, "Invalid rule: %s", rule.trim());
+            writelog(LogLevel.ERROR, "Invalid rule: %s", rule.trim());
             continue;
           }
         }
@@ -368,14 +467,15 @@ public class ValidateOperation {
    */
   private static String wildcard_to_label(String wildcard, List<String> row) {
     if (!wildcard.startsWith("%")) {
-      writelog(1, "Invalid wildcard: \"%s\".", wildcard);
+      writelog(LogLevel.ERROR, "Invalid wildcard: \"%s\".", wildcard);
       return null;
     }
 
     int colIndex = Integer.parseInt(wildcard.substring(1)) - 1;
     if (colIndex >= row.size()) {
       writelog(
-          1, "Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
+          LogLevel.ERROR,
+          "Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
           wildcard, row.size());
       return null;
     }
@@ -383,14 +483,16 @@ public class ValidateOperation {
     String term = row.get(colIndex).trim();
     if (term == null) {
       writelog(
-          2, "Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
+          LogLevel.WARN,
+          "Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
           wildcard, colIndex + 1);
       return null;
     }
 
     if (term.equals("")) {
       writelog(
-          2, "Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
+          LogLevel.WARN,
+          "Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
           wildcard, colIndex + 1);
       return null;
     }
@@ -443,14 +545,14 @@ public class ValidateOperation {
     if (!m.find()) {
       // If there is no when clause, then just return back the rule string as it was passed with an
       // empty when clause list:
-      writelog(3, "No when-clauses found in rule: \"%s\".", rule);
+      writelog(LogLevel.INFO, "No when-clauses found in rule: \"%s\".", rule);
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
     // If there is no main clause and this is not a PRESENCE rule, inform the user of the problem
     // and return the rule string as it was passed with an empty when clause list:
     if (m.start() == 0  && rule_type_to_rtenum_map.get(ruleType).getRuleCat() != RCatEnum.PRESENCE) {
-      writelog(1, "Rule: \"%s\" has when clause but no main clause.", rule);
+      writelog(LogLevel.ERROR, "Rule: \"%s\" has when clause but no main clause.", rule);
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
@@ -461,7 +563,8 @@ public class ValidateOperation {
     // Don't fail just because there is some extra garbage at the end of the rule, but notify
     // the user about it:
     if (!m.group(2).trim().equals("")) {
-      writelog(2, "Ignoring string \"%s\" at end of rule \"%s\".", m.group(2).trim(), rule);
+      writelog(
+          LogLevel.WARN, "Ignoring string \"%s\" at end of rule \"%s\".", m.group(2).trim(), rule);
     }
 
     // Within each when clause, multiple subclauses separated by ampersands are allowed. Each
@@ -477,7 +580,7 @@ public class ValidateOperation {
           .matcher(whenClause);
 
       if (!m.find()) {
-        writelog(1, "Unable to decompose when-clause: \"%s\".", whenClause);
+        writelog(LogLevel.ERROR, "Unable to decompose when-clause: \"%s\".", whenClause);
         // Return the rule as passed with an empty when clause list:
         return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
       }
@@ -499,7 +602,8 @@ public class ValidateOperation {
 
     // We should never get here since we have already checked for an empty main clause earlier ...
     writelog(
-        1, "Encountered unknown error while looking for main clause of rule \"%s\".", rule);
+        LogLevel.ERROR,
+        "Encountered unknown error while looking for main clause of rule \"%s\".", rule);
     // Return the rule as passed with an empty when clause list:
     return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());    
   }
@@ -518,7 +622,7 @@ public class ValidateOperation {
       String unsplitQueryType) throws Exception {
 
     writelog(
-        4,
+        LogLevel.DEBUG,
         "execute_query(): Called with parameters: " +
         "iri: \"%s\", " +
         "rule: \"%s\", " +
@@ -531,7 +635,7 @@ public class ValidateOperation {
       ce = parser.parse(rule);
     }
     catch (OWLParserException e) {
-      writelog(1, "Unable to parse rule \"%s %s\".\n\t%s.",
+      writelog(LogLevel.ERROR, "Unable to parse rule \"%s %s\".\n\t%s.",
                unsplitQueryType, rule, e.getMessage().trim());
       return false;
     }
@@ -544,7 +648,7 @@ public class ValidateOperation {
     String[] queryTypes = split_rule_type(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
-        writelog(1, "Query type \"%s\" not recognised in rule \"%s\".",
+        writelog(LogLevel.ERROR, "Query type \"%s\" not recognised in rule \"%s\".",
                  queryType, unsplitQueryType);
         continue;
       }
@@ -580,7 +684,7 @@ public class ValidateOperation {
         }
       }
       else {
-        writelog(1, "Validation for query type: \"%s\" not yet implemented.", qType);
+        writelog(LogLevel.ERROR, "Validation for query type: \"%s\" not yet implemented.", qType);
         return false;
       }
     }
@@ -599,7 +703,7 @@ public class ValidateOperation {
       String cell) throws IOException {
 
     writelog(
-        4,
+        LogLevel.DEBUG,
         "validate_presence_rule(): Called with parameters: " +
         "rule: \"%s\", " +
         "rule type: \"%s\", " +
@@ -609,14 +713,14 @@ public class ValidateOperation {
     // Presence-type rules (is-required, is-excluded) must be in the form of a truth value:
     if ((Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1) &&
         (Arrays.asList("false", "f", "0", "no", "n").indexOf(rule.toLowerCase()) == -1)) {
-      writelog(1, "Invalid rule: \"%s\" for rule type: %s. Must be one of: " +
+      writelog(LogLevel.ERROR, "Invalid rule: \"%s\" for rule type: %s. Must be one of: " +
                "true, t, 1, yes, y, false, f, 0, no, n", rule, rType.getRuleType());
       return;
     }
 
     // If the restriction isn't "true" then there is nothing to do. Just return:
     if (Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1) {
-      writelog(3, "Nothing to validate for rule: \"%s %s\"", rType.getRuleType(), rule);
+      writelog(LogLevel.INFO, "Nothing to validate for rule: \"%s %s\"", rType.getRuleType(), rule);
       return;
     }
 
@@ -634,7 +738,7 @@ public class ValidateOperation {
         }
         break;
       default:
-        writelog(1, "Presence validation of rule type: \"%s\" is not yet implemented.",
+        writelog(LogLevel.ERROR, "Presence validation of rule type: \"%s\" is not yet implemented.",
                  rType.getRuleType());
         break;
     }
@@ -653,7 +757,7 @@ public class ValidateOperation {
       String ruleType) throws Exception, IOException {
 
     writelog(
-        4,
+        LogLevel.DEBUG,
         "validate_rule(): Called with parameters: " +
         "cell: \"%s\", " +
         "rule: \"%s\", " +
@@ -661,9 +765,9 @@ public class ValidateOperation {
         "rule type: \"%s\".",
         cell, rule, row, ruleType);
 
-    writelog(3, "Validating rule \"%s %s\" against \"%s\".", ruleType, rule, cell);
+    writelog(LogLevel.INFO, "Validating rule \"%s %s\" against \"%s\".", ruleType, rule, cell);
     if (!rule_type_recognised(ruleType)) {
-      writelog(1, "Unrecognised rule type \"%s\".", ruleType);
+      writelog(LogLevel.ERROR, "Unrecognised rule type \"%s\".", ruleType);
       return;
     }
 
@@ -674,16 +778,16 @@ public class ValidateOperation {
     for (String[] whenClause : separatedRule.getValue()) {
       String subject = interpolate(whenClause[0], row);
       if (subject == null) {
-        writelog(2, "Unable to interpolate \"%s\" in when clause.", whenClause[0]);
+        writelog(LogLevel.WARN, "Unable to interpolate \"%s\" in when clause.", whenClause[0]);
         continue;
       }
-      writelog(3, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
+      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
 
       // Get the IRI for the interpolated subject, first removing any surrounding single quotes
       // from the label:
       IRI subjectIri = label_to_iri_map.get(subject.replaceAll("^\'|\'$", ""));
       if (subjectIri == null) {
-        writelog(3, "Could not determine IRI for label: \"%s\".", subject);
+        writelog(LogLevel.INFO, "Could not determine IRI for label: \"%s\".", subject);
         continue;
       }
 
@@ -691,15 +795,17 @@ public class ValidateOperation {
       // type "subclass-of|equivalent-to" has a primary rule type of "subclass-of"
       String whenRuleType = whenClause[1];
       if (!rule_type_recognised(whenRuleType)) {
-        writelog(1, "Unrecognised rule type \"%s\".", whenRuleType);
+        writelog(LogLevel.ERROR, "Unrecognised rule type \"%s\".", whenRuleType);
         continue;
       }
       RTypeEnum whenPrimRType = rule_type_to_rtenum_map.get(get_primary_rule_type(whenRuleType));
 
       // Use the primary rule type to make sure the rule is of the right category for a when clause:
       if (whenPrimRType.getRuleCat() != RCatEnum.QUERY) {
-        writelog(1, "Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
-                 query_type_to_rtenum_map.keySet(), whenRuleType);
+        writelog(
+            LogLevel.ERROR,
+            "Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
+            query_type_to_rtenum_map.keySet(), whenRuleType);
         continue;
       }
 
@@ -707,23 +813,24 @@ public class ValidateOperation {
       String axiom = whenClause[2];
       String interpolatedAxiom = interpolate(axiom, row);
       if (interpolatedAxiom == null) {
-        writelog(2, "Unable to interpolate \"%s\" in when clause.", axiom);
+        writelog(LogLevel.WARN, "Unable to interpolate \"%s\" in when clause.", axiom);
         continue;
       }
-      writelog(3, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
+      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
       if (!execute_query(subjectIri, interpolatedAxiom, row, whenRuleType)) {
         // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
         // of the other when clauses, or the main clause, since the main clause may only be
         // evaluated when all of the when clauses are satisfied.
         writelog(
-            3, "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause.",
+            LogLevel.INFO,
+            "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause.",
             subject, subjectIri.getShortForm(), whenRuleType, axiom);
         return;
       }
       else {
         writelog(
-            3, "Validated when clause \"%s (%s) %s %s\"",
+            LogLevel.INFO, "Validated when clause \"%s (%s) %s %s\"",
             subject, subjectIri.getShortForm(), whenRuleType, axiom);
       }
     }
@@ -748,7 +855,7 @@ public class ValidateOperation {
     // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
     String cellLabel = get_label_from_term(cell);
     if (cellLabel == null) {
-      writelog(1, "Could not find \"%s\" in ontology.", cell);
+      writelog(LogLevel.ERROR, "Could not find \"%s\" in ontology.", cell);
       return;
     }
 
@@ -757,19 +864,19 @@ public class ValidateOperation {
     String axiom = separatedRule.getKey();
     String interpolatedAxiom = interpolate(axiom, row);
     if (interpolatedAxiom == null) {
-      writelog(1, "Unable to interpolate \"%s\" in rule \"%s\".", axiom, rule);
+      writelog(LogLevel.ERROR, "Unable to interpolate \"%s\" in rule \"%s\".", axiom, rule);
       return;
     }
-    writelog(3, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
+    writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
-    writelog(3, "Querying axiom: %s", interpolatedAxiom);
+    writelog(LogLevel.INFO, "Querying axiom: %s", interpolatedAxiom);
     boolean result = execute_query(cellIri, interpolatedAxiom, row, ruleType);
     if (!result) {
       writeout("Validation failed for rule: \"%s (%s) %s %s\".",
                cellLabel, cellIri.getShortForm(), ruleType, axiom);
     }
     else {
-      writelog(3, "Validated: \"%s (%s) %s %s\".",
+      writelog(LogLevel.INFO, "Validated: \"%s (%s) %s %s\".",
                cellLabel, cellIri.getShortForm(), ruleType, axiom);
     }
   }
@@ -809,7 +916,8 @@ public class ValidateOperation {
         String colName = header.get(csv_col_index);
         Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
-        // If there are no rules for this column, then skip this cell (this a "comment" column):
+        // If there are no rules for this column, then skip this cell (the cell is part of a
+        // "comment" column):
         if (colRules.isEmpty()) continue;
 
         // Get the contents of the current cell:
