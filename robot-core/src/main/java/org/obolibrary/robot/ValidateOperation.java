@@ -36,7 +36,8 @@ import org.slf4j.LoggerFactory;
  * TODO:
  * - Go through the code carefully and add any needed comments
  * - Implement the rules required for the new csv that James sent
- * - Follow logging conventions in: https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
+ * - Follow logging conventions in:
+ *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
  * - Take a look at the deprecation warnings for ValidateCommand
  * - Make the reasoner choice configurable via the command line (see the way other commands do it)
  * - Write unit test(s)
@@ -514,8 +515,7 @@ public class ValidateOperation {
     while (m.find()) {
       // Get the label corresponding to the wildcard:
       String label = wildcard_to_label(m.group(), row);
-      // If there is a problem finding the label for one of the wildcards, then just send back the
-      // string as is:
+      // If there is a problem finding the label for one of the wildcards, then return null:
       if (label == null) {
         return null;
       }
@@ -534,9 +534,9 @@ public class ValidateOperation {
   /**
    * Given a string describing the content of a rule and a string describing its rule type, return a
    * simple map entry such that the `key` for the entry is the main clause of the rule, and the
-   * `value` for the entry is a list of the rule's when-clauses. Each when-clause is itself an array
-   * of three strings, including the IRI to which the when-clause is to be applied, the rule type
-   * for the when clause, and the actual axiom to be validated against that IRI.
+   * `value` for the entry is a list of the rule's when-clauses. Each when-clause is itself stored
+   * as an array of three strings, including the class to which the when-clause is to be applied,
+   * the rule type for the when clause, and the actual axiom to be validated against the class.
    */
   private static SimpleEntry<String, List<String[]>> separate_rule(String rule, String ruleType) {
     // Check if there are any when clauses:
@@ -557,7 +557,7 @@ public class ValidateOperation {
     }
 
     whenClauseStr = m.group(1);
-    // Extract the actual content of the clause.
+    // Extract the actual content of the when-clause.
     whenClauseStr = whenClauseStr.substring("(when ".length(), whenClauseStr.length() - 1);
 
     // Don't fail just because there is some extra garbage at the end of the rule, but notify
@@ -644,7 +644,7 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query types is unrecognised, inform the user but ignore it.
+    // as a disjunction. If a query types is unrecognised, inform the user but continue on.
     String[] queryTypes = split_rule_type(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
@@ -791,22 +791,17 @@ public class ValidateOperation {
         continue;
       }
 
-      // Determine the rule type and primary rule type of this when clause. For example, a rule of
-      // type "subclass-of|equivalent-to" has a primary rule type of "subclass-of"
+      // Make sure all of the rule types in the when clause are of the right category:
       String whenRuleType = whenClause[1];
-      if (!rule_type_recognised(whenRuleType)) {
-        writelog(LogLevel.ERROR, "Unrecognised rule type \"%s\".", whenRuleType);
-        continue;
-      }
-      RTypeEnum whenPrimRType = rule_type_to_rtenum_map.get(get_primary_rule_type(whenRuleType));
-
-      // Use the primary rule type to make sure the rule is of the right category for a when clause:
-      if (whenPrimRType.getRuleCat() != RCatEnum.QUERY) {
+      for (String whenRuleSubType : split_rule_type(whenRuleType)) {
+       RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
+        if (whenSubRType == null || whenSubRType.getRuleCat() != RCatEnum.QUERY) {
         writelog(
             LogLevel.ERROR,
-            "Only rules of type: %s are allowed in a when clause. Skipping clause: \"%s\".",
-            query_type_to_rtenum_map.keySet(), whenRuleType);
-        continue;
+            "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
+            whenRuleType, query_type_to_rtenum_map.keySet());
+        return;
+        }
       }
 
       // Interpolate the axiom to validate and send the query to the reasoner:
