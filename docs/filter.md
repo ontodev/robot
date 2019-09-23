@@ -80,3 +80,13 @@ Copy a class, all axioms that a class appears in, annotations on all classes use
       --signature true \
       --output results/uberon_annotated.owl
 
+Copy just the external terms and the axioms that they are used in (alternatively, use `remove --select foreign --select complement`):
+
+    robot --base "http://example.com/" \
+      filter --input template.owl \
+      --select foreign \
+      --exclude-term IAO:0000117 \
+      --exclude-term IAO:0000119 \
+      --trim false \
+      --output results/template-ext.owl
+

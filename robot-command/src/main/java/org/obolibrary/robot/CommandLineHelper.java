@@ -407,7 +407,7 @@ public class CommandLineHelper {
 
   /**
    * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
-   * --add-prefixes, --noprefixes and --xml-entities options are handled.
+   * --add-prefixes, --noprefixes, --xml-entities, and --base options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper
@@ -435,6 +435,10 @@ public class CommandLineHelper {
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
+
+    for (String base : getOptionalValues(line, "base")) {
+      ioHelper.addBaseNamespace(base);
+    }
 
     return ioHelper;
   }
@@ -907,6 +911,7 @@ public class CommandLineHelper {
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
     o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
+    o.addOption(null, "base", true, "specify a base namespace");
     o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");

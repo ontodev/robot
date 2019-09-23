@@ -23,6 +23,8 @@ Here is how each step works in more detail:
 
 1. The `--term` and `--term-file` options let you specify the initial target set. You can specify zero or more `--term` options (one term each), and zero or more `--term-file` options (with one term per line). You can specify terms by IRI or CURIE. If no terms are specified, then the initial target set consists of all the objects in the ontology.
 
+    * If you wish to exclude a term or set of terms that would be removed otherwise, you can do so with `--exclude-term <term>` or `--exclude-terms <term-file>`.
+
 2. The `--select` option lets you specify "selectors" that broaden or narrow the target set of objects. Some selectors such as `classes` take the target set and return a subset, i.e. all the classes in the target set. Other selectors such as `parents` return a new target set of related objects. The `parents` selector gets the parents of each object in the target set. Note that the `parents` set does not include the original target set, just the parents. Use the `self` selector to return the same target set. You can use multiple selectors together to get their union, so `--select "self parents"` will return the target set (`self`) and all the parents. You can use `--select` multiple times to modify the target set in several stages, so `--select parents --select children` will get the parents and then all their children, effectively returning the target set objects and all their siblings.
 
 3. The `--axioms` option lets you specify which axiom types to consider. By default, all axioms are considered, but this can be restricted to annotation axioms, logical axioms, more specific subtypes, or any combination.
@@ -47,6 +49,9 @@ Then `remove --term A --term R --term C --select "self parents" --axioms all --s
     - the objects for `ax2` are `{A, R, C}` (with `R some C` excluded), and at least one of these is in the target set, so `ax2` is matched and removed
     - the objects for `ax3` are `{D, E}`, and none of these are in the target set, so `ax3` is not matched and is not removed
 
+## Excluding Terms
+
+
 ## Preserving the Structure
 
 The `remove` and `filter` operations maintains structural integrity by default: lineage is maintained, and gaps will be filled where classes have been removed. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
@@ -68,6 +73,10 @@ These selectors take a target set and return a subset:
 - `individuals`
 - `named` -- named entities have an IRI
 - `anonymous` -- anonymous entities do not have an IRI, e.g. class expressions
+- `foreign`
+  - this special selector uses the `--base` namespace declaration to select everything outside that namsspace or set of namespaces
+  - the following namespaces are also ignored: `oboInOwl`, `owl`, `rdf`, `rdfs`, and `xsd`
+  - you can use the `--exclude-term`/`--exclude-terms` options to make sure certain outside-namespace terms do not get removed
 
 ### Relation Selectors
 
@@ -158,6 +167,15 @@ Remove all deprecated classes from OBI:
 robot remove --input obi.owl \
   --select "owl:deprecated='true'^^xsd:boolean"
 ```
+
+Create a "base" subset:
+
+    robot --base "http://example.com/" \
+      remove --input template.owl \
+      --select foreign \
+      --exclude-term IAO:0000117 \
+      --exclude-term IAO:0000119 \
+      --output results/template-base.owl
 
 *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 

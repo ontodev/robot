@@ -32,6 +32,8 @@ public class FilterCommand implements Command {
     o.addOption("O", "ontology-iri", true, "set OntologyIRI for output");
     o.addOption("t", "term", true, "term to filter");
     o.addOption("T", "term-file", true, "load terms from a file");
+    o.addOption("e", "exclude-term", true, "term to exclude from filtering");
+    o.addOption("E", "exclude-terms", true, "set of terms in text file to exclude from filtering");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
@@ -178,7 +180,8 @@ public class FilterCommand implements Command {
         }
         hadSelection = true;
         selectGroup.remove("imports");
-      } else if (selectGroup.contains("ontology")) {
+      }
+      if (selectGroup.contains("ontology")) {
         // The ontology keyword retrieves the ontology annotations
         for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
           OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
@@ -213,6 +216,15 @@ public class FilterCommand implements Command {
     // Use the select statements to get a set of objects to remove
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(inputOntology, ioHelper, objects, selectGroups);
+
+    // Remove all the excluded terms from that set
+    if (line.hasOption("exclude-term") || line.hasOption("exclude-terms")) {
+      Set<IRI> excludeIRIs =
+          CommandLineHelper.getTerms(ioHelper, line, "exclude-term", "exclude-terms");
+      Set<OWLObject> excludeObjects =
+          new HashSet<>(OntologyHelper.getEntities(inputOntology, excludeIRIs));
+      relatedObjects.removeAll(excludeObjects);
+    }
 
     // Use these two options to determine which axioms to remove
     boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);

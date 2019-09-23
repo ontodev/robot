@@ -325,6 +325,8 @@ public class RelatedObjectsHelper {
       return selectDescendants(ontology, objects);
     } else if (selector.equals("equivalents")) {
       return selectEquivalents(ontology, objects);
+    } else if (selector.equals("foreign")) {
+      return selectForeign(objects, ioHelper.getBaseNamespaces());
     } else if (selector.equals("individuals")) {
       return selectIndividuals(objects);
     } else if (selector.equals("instances")) {
@@ -555,6 +557,126 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given a set of objects and a set of base namespaces, select all named objects that are not
+   * within the base namespaces. This will not select objects from the following namespaces:
+   *
+   * <p>* oboInOwl: http://www.geneontology.org/formats/oboInOwl# * owl:
+   * http://www.w3.org/2002/07/owl# * rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# * rdfs:
+   * http://www.w3.org/2000/01/rdf-schema# * xsd: http://www.w3.org/2001/XMLSchema
+   *
+   * <p>It also will not select IAO:0000115 as this is the commonly-used definition annotation
+   * property.
+   *
+   * @param objects Set of OWLObjects to get foreign objects from
+   * @param bases Set of strings representing added base namespaces
+   * @return set of foreign OWLObjects
+   */
+  public static Set<OWLObject> selectForeign(Set<OWLObject> objects, Set<String> bases) {
+    if (bases.isEmpty()) {
+      logger.error("No 'base' namespace has been specified - 'foreign' selector will be ignored");
+      return objects;
+    }
+
+    // Defaults
+    String oboInOwlBase = "http://www.geneontology.org/formats/oboInOwl#";
+    String owlBase = "http://www.w3.org/2002/07/owl#";
+    String rdfBase = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    String rdfsBase = "http://www.w3.org/2000/01/rdf-schema#";
+    String xsdBase = "http://www.w3.org/2001/XMLSchema";
+
+    // TODO - specify other annotation properties to keep? Not all of IAO?
+    // Get the ones from the ontology metadata IAO file?
+
+    Set<String> allBases = Sets.newHashSet(oboInOwlBase, owlBase, rdfBase, rdfsBase, xsdBase);
+    allBases.addAll(bases);
+
+    Set<OWLObject> foreignObjects = new HashSet<>();
+    for (OWLObject object : objects) {
+      if (object instanceof OWLClass) {
+        OWLClass cls = (OWLClass) object;
+        if (cls.isAnonymous()) {
+          continue;
+        }
+        String iri = cls.getIRI().toString();
+        boolean match = false;
+        for (String b : allBases) {
+          if (iri.startsWith(b)) {
+            match = true;
+          }
+        }
+        if (!match) {
+          foreignObjects.add(object);
+        }
+      } else if (object instanceof OWLAnnotationProperty) {
+        OWLAnnotationProperty ap = (OWLAnnotationProperty) object;
+        String iri = ap.getIRI().toString();
+        boolean match = false;
+        for (String b : allBases) {
+          if (iri.startsWith(b)) {
+            match = true;
+          }
+          if (iri.equals("http://purl.obolibrary.org/obo/IAO_0000115")) {
+            // do not remove definitions
+            match = true;
+          }
+        }
+        if (!match) {
+          foreignObjects.add(object);
+        }
+      } else if (object instanceof OWLDataProperty) {
+        OWLDataProperty dp = (OWLDataProperty) object;
+        String iri = dp.getIRI().toString();
+        boolean match = false;
+        for (String b : allBases) {
+          if (iri.startsWith(b)) {
+            match = true;
+          }
+        }
+        if (!match) {
+          foreignObjects.add(object);
+        }
+      } else if (object instanceof OWLDatatype) {
+        OWLDatatype dt = (OWLDatatype) object;
+        String iri = dt.getIRI().toString();
+        boolean match = false;
+        for (String b : allBases) {
+          if (iri.startsWith(b)) {
+            match = true;
+          }
+        }
+        if (!match) {
+          foreignObjects.add(object);
+        }
+      } else if (object instanceof OWLNamedIndividual) {
+        OWLNamedIndividual ind = (OWLNamedIndividual) object;
+        String iri = ind.getIRI().toString();
+        boolean match = false;
+        for (String b : allBases) {
+          if (iri.startsWith(b)) {
+            match = true;
+          }
+        }
+        if (!match) {
+          foreignObjects.add(object);
+        }
+      } else if (object instanceof OWLObjectProperty) {
+        OWLObjectProperty op = (OWLObjectProperty) object;
+        String iri = op.getIRI().toString();
+        boolean match = false;
+        for (String b : allBases) {
+          if (iri.startsWith(b)) {
+            match = true;
+          }
+        }
+        if (!match) {
+          foreignObjects.add(object);
+        }
+      }
+    }
+    return foreignObjects;
+  }
+
+  /**
    * Given a set of objects, return a set of OWLIndividuals from the starting set.
    *
    * @param objects Set of OWLObjects to filter
@@ -761,6 +883,10 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
+  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+    return spanGaps(ontology, objects, false);
+  }
+
   /**
    * Given an ontology and a set of objects, construct a set of subClassOf axioms that span the gaps
    * between classes to maintain a hierarchy.
@@ -769,7 +895,8 @@ public class RelatedObjectsHelper {
    * @param objects set of Objects to build hierarchy
    * @return set of OWLAxioms to maintain hierarchy
    */
-  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+  public static Set<OWLAxiom> spanGaps(
+      OWLOntology ontology, Set<OWLObject> objects, boolean excludeAnonymous) {
     Set<Map<String, OWLAnnotationProperty>> aPropPairs = new HashSet<>();
     Set<Map<String, OWLClassExpression>> classPairs = new HashSet<>();
     Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
@@ -806,7 +933,10 @@ public class RelatedObjectsHelper {
     for (Map<String, OWLClassExpression> classPair : classPairs) {
       OWLClass subClass = classPair.get(SUB).asOWLClass();
       OWLClassExpression superClass = classPair.get(SUPER);
-      axioms.add(dataFactory.getOWLSubClassOfAxiom(subClass, superClass));
+      if (superClass.isAnonymous() && !excludeAnonymous || !superClass.isAnonymous()) {
+        // Anonymous axioms may have been removed so we don't want to add them back
+        axioms.add(dataFactory.getOWLSubClassOfAxiom(subClass, superClass));
+      }
     }
     for (Map<String, OWLDataPropertyExpression> propPair : dPropPairs) {
       OWLDataProperty subProperty = propPair.get(SUB).asOWLDataProperty();

@@ -30,6 +30,8 @@ public class RemoveCommand implements Command {
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("t", "term", true, "term to remove");
     o.addOption("T", "term-file", true, "load terms from a file");
+    o.addOption("e", "exclude-term", true, "term to exclude from removal");
+    o.addOption("E", "exclude-terms", true, "set of terms in text file to exclude from removal");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
     o.addOption("r", "trim", true, "if true, remove axioms containing any selected object");
@@ -146,6 +148,7 @@ public class RemoveCommand implements Command {
 
     // Selects should be processed in order, allowing unions in one --select
     List<List<String>> selectGroups = new ArrayList<>();
+    boolean anonymous = false;
     for (String select : selects) {
       // The single group is a split of the one --select
       List<String> selectGroup = CommandLineHelper.splitSelects(select);
@@ -158,6 +161,8 @@ public class RemoveCommand implements Command {
         OntologyHelper.removeOntologyAnnotations(ontology);
         hadSelection = true;
         selectGroup.remove("ontology");
+      } else if (selectGroup.contains("anonymous")) {
+        anonymous = true;
       }
       if (!selectGroup.isEmpty()) {
         selectGroups.add(selectGroup);
@@ -186,6 +191,16 @@ public class RemoveCommand implements Command {
     // Use the select statements to get a set of objects to remove
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(ontology, ioHelper, objects, selectGroups);
+    System.out.println(relatedObjects.size());
+
+    // Remove all the excluded terms from that set
+    if (line.hasOption("exclude-term") || line.hasOption("exclude-terms")) {
+      Set<IRI> excludeIRIs =
+          CommandLineHelper.getTerms(ioHelper, line, "exclude-term", "exclude-terms");
+      Set<OWLObject> excludeObjects =
+          new HashSet<>(OntologyHelper.getEntities(ontology, excludeIRIs));
+      relatedObjects.removeAll(excludeObjects);
+    }
 
     // Use these two options to determine which axioms to remove
     boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
@@ -201,8 +216,10 @@ public class RemoveCommand implements Command {
     if (preserveStructure) {
       // Since we are preserving the structure between the objects that were NOT removed, we need to
       // get the complement of the removed object set and build relationships between those objects.
-      relatedObjects = RelatedObjectsHelper.select(ontology, ioHelper, objects, "complement");
-      manager.addAxioms(ontology, RelatedObjectsHelper.spanGaps(copy, relatedObjects));
+      Set<OWLObject> complementObjects =
+          RelatedObjectsHelper.select(ontology, ioHelper, relatedObjects, "complement");
+      manager.addAxioms(
+          ontology, RelatedObjectsHelper.spanGaps(copy, complementObjects, anonymous));
     }
 
     // Save the changed ontology and return the state
