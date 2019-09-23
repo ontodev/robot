@@ -157,11 +157,13 @@ public class RemoveCommand implements Command {
         OntologyHelper.removeImports(ontology);
         hadSelection = true;
         selectGroup.remove("imports");
-      } else if (selectGroup.contains("ontology")) {
+      }
+      if (selectGroup.contains("ontology")) {
         OntologyHelper.removeOntologyAnnotations(ontology);
         hadSelection = true;
         selectGroup.remove("ontology");
-      } else if (selectGroup.contains("anonymous")) {
+      }
+      if (selectGroup.contains("anonymous")) {
         anonymous = true;
       }
       if (!selectGroup.isEmpty()) {
