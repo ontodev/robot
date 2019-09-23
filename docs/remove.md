@@ -49,9 +49,6 @@ Then `remove --term A --term R --term C --select "self parents" --axioms all --s
     - the objects for `ax2` are `{A, R, C}` (with `R some C` excluded), and at least one of these is in the target set, so `ax2` is matched and removed
     - the objects for `ax3` are `{D, E}`, and none of these are in the target set, so `ax3` is not matched and is not removed
 
-## Excluding Terms
-
-
 ## Preserving the Structure
 
 The `remove` and `filter` operations maintains structural integrity by default: lineage is maintained, and gaps will be filled where classes have been removed. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
