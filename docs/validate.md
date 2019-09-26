@@ -1,31 +1,112 @@
 # Validate
 
-OWL 2 has a number of <a href="https://www.w3.org/TR/owl2-profiles/" target="_blank">profiles</a> that strike different balances between expressive power and reasoning efficiency. ROBOT can validate an input ontology against a profile (EL, DL, RL, QL, and Full) and generate a report. For example:
 
-    robot validate-profile --profile EL \
-      --input merged.owl \
-      --output results/merged-validation.txt
+## Validation rules
 
-## Profiles
+### Data file organisation
 
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_EL" target="_blank">EL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_RL" target="_blank">RL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_QL">QL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full" target="_blank">DL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full" target="_blank">Full</a>
+Validation rules are read from the second row of the CSV file as follows:
 
----
+|header A                        |header B                        |header C ...                 |
+|--------------------------------|--------------------------------|-----------------------------|
+|rule A1; rule A2; rule A3 ...   |rule B1; rule B2; rule B3 ...   |rule C1; rule C2; rule C3 ...|
+|data                            |data                            |data                         |
+|data                            |data                            |data                         |
+|...                             |                                |                             |
 
-## Error Messages
+Rules for a given column must be separated by semicolons. To comment out all of the rules for a given column, the list should be prefixed by '##'. To comment out individual rules from the rules belonging to a given column, prefix the rule with '#'. For example:
 
-### Missing Profile Error
+_To comment out all rules:_
 
-Occurs when a `--profile` option is not provided.
+	## rule 1; rule 2; rule 3
 
-### Invalid Profile Error
+_To comment out rule 1 but not rule 2:_
 
-Occurs when the argument to `--profile` is not one of the following: EL, DL, RL, QL, or Full. See the above documentation for more details.
+	# rule 1; rule 2
 
-### Profile Violation Error
+_To comment out rule 2 but not rule 1:_
 
-Occurs when the `--input` ontology does not conform to the `--profile`. See the profile descriptions for more details.
+	rule 1; # rule 2
+
+### Validation rule syntax
+
+Individual rules must be of the form:
+
+	<main-rule-type> <rule> [(when <when-class-expr-1> <when-rule-type-1> <when-rule-1> & ...)]
+
+Where:
+
+* `<main-rule-type>` can be one of:
+
+    * is-required
+    * is-excluded
+    * subclass-of
+    * direct-subclass-of
+    * superclass-of
+    * direct-superclass-of
+    * equivalent-to
+    * instance-of
+    * direct-instance-of
+
+* `<when-rule-type>` can be one of:
+
+    * subclass-of
+    * direct-subclass-of
+    * superclass-of
+    * direct-superclass-of
+    * equivalent-to
+    * instance-of
+    * direct-instance-of
+
+#### Further notes on `<rule>` and `<when-rule>`
+
+* For the rule types: `is-required` and `is-excluded`, `<rule>` is _optional_ and if not specified defaults to _true_.
+
+* For other rules types, `<rule>` is _mandatory_ and must be in the form of a description logic (DL) class expression query, in Manchester syntax.
+
+* `<when-class-expr>` must describe an individual class, and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, or a wildcard.
+
+#### Wildcards
+
+Wildcards of the form `%n` can be specified with `<rule>`, `<when-rule>`, and `<when-class-expr>` clauses, and are used to indicate the class described by the data in the _nth_ cell of a given row. E.g. the rule:
+
+    subclass-of hasBasisIn in some %2 (when %1 subclass-of ('Dengue virus' or 'Dengue virus 2'))
+
+requires that, whenever the class indicated in column 1 of the current row is a subclass of the class consisting of the union of `'Dengue virus'` and `'Dengue virus 2'`, the data in the current cell must be a subclass of the set of classes that bear the relation `hasBasisIn` to the class indicated in column 2 of the same row.
+
+#### When-clauses
+
+The optional when-clause indicates that the rule given in the main clause should be validated only when the when-clause is satisfied. If multiple when-clauses are specified (separated by `'&'`, then each when-clause must evaluate to _true_ in order for the main validation rule to execute. E.g.:
+
+	direct-subclass-of %2 (when %5 superclass-of 'exposure process' & %2 superclass-of vaccine)
+
+indicates that the validation rule `'direct-subclass-of %2'` should only be run against the current cell when both the cell in column 5 is a superclass of `'exposure process'` and the cell in column 2 is a superclass of `vaccine`.
+
+#### Compound rule-types
+
+`<rule-type>` and `<when-rule-type>` can take the form: `rule-type-1|rule-type-2|rule-type-3|...`
+
+E.g.
+
+	subclass-of|equivalent-to %3 (when %4 subclass-of|equivalent-to %2)
+
+requires that, whenever the contents of the cell in column 4 of the given row are either a subclass-of or equivalent-to the contents of the cell in column 2, then the contents of the current cell must be a subclass-of or equivalent-to the contents of the cell in column 3.
+
+#### Literals
+
+Literal `rdfs:label` expressions must be enclosed in single quotes if they contain spaces.
+E.g. in the first example below, single quotes are required around `Dengue virus` but in the second example no single quotes are necessary around `vaccination`.
+
+	subclass-of 'Dengue virus'
+	hasBasisIn some vaccination
+
+_Note that double quotes are not allowed._
+
+#### `is-required` and `is-excluded`
+
+`is-required` indicates that the given cell must be non-empty, while `is-excluded` requires that it be empty. These rules can be used with an optional when-clause. E.g.:
+
+	is-required (when %1 subclass-of 'exposure process)
+
+indicates that the current cell must be non-empty whenever the cell in column 1 of the current
+row is a subclass of `'exposure process'`.

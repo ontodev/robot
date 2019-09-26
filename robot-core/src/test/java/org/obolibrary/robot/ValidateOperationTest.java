@@ -9,7 +9,7 @@ import java.io.StringWriter;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
-import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
+import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
