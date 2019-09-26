@@ -14,15 +14,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.shared.JenaException;
+import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.util.FileManager;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
@@ -102,6 +105,15 @@ public class IOHelper {
   /** Error message when a prefix cannot be loaded. Expects the prefix and target. */
   private static final String prefixLoadError =
       NS + "PREFIX LOAD ERROR Could not load prefix '%s' for '%s'";
+
+  /**
+   * Error message when Jena cannot load a file to a dataset, probably not RDF/XML (including OWL)
+   * or TTL.
+   */
+  private static final String syntaxError =
+      NS
+          + "SYNTAX ERROR unable to load '%s' with Jena - "
+          + "check that this file is in RDF/XML or TTL syntax and try again.";
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -202,6 +214,32 @@ public class IOHelper {
 
     addPrefixes(df, prefixMap);
     saveOntology(ontology, df, IRI.create(outputFile));
+  }
+
+  /**
+   * Given a directory containing TDB mappings, remove the files and directory. If successful,
+   * return true.
+   *
+   * @param tdbDir directory to remove
+   * @return boolean indicating success
+   */
+  protected static boolean cleanTDB(String tdbDir) {
+    File dir = new File(tdbDir);
+    boolean success = true;
+    if (dir.exists()) {
+      String[] files = dir.list();
+      if (files != null) {
+        for (String file : files) {
+          File f = new File(dir.getPath(), file);
+          success = f.delete();
+        }
+      }
+      // Only delete if all the files in dir were deleted
+      if (success) {
+        success = dir.delete();
+      }
+    }
+    return success;
   }
 
   /**
@@ -448,78 +486,46 @@ public class IOHelper {
     return ontology;
   }
 
-  /** INSERT DOCUMENTATION HERE */
-  public HashMap<String, String> loadNCBITaxonomyNodes(String path) throws IOException {
-    FileInputStream inputStream = null;
-    Scanner sc = null;
-    HashMap<String, String> nodes = new HashMap();
-    try {
-      inputStream = new FileInputStream(path);
-      sc = new Scanner(inputStream);
-      while (sc.hasNextLine()) {
-        String line = StringUtils.strip(sc.nextLine(), "|\n\t ");
-        String[] tokens = line.split("\\s*\\|\\s*", 3);
-        String taxid = tokens[0], parent = tokens[1];
-        nodes.put(taxid, parent);
-      }
-      if (sc.ioException() != null) {
-        throw sc.ioException();
-      }
-    } finally {
-      if (inputStream != null) {
-        inputStream.close();
-      }
-      if (sc != null) {
-        sc.close();
+  /**
+   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
+   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
+   *
+   * <p>WARNING - this creates a directory at given tdbDir location!
+   *
+   * @param inputPath input path of RDF/XML or TTL file
+   * @param tdbDir location to put TDB mappings
+   * @return Dataset instantiated with triples
+   * @throws JenaException if TDB directory can't be written to
+   */
+  public static Dataset loadToTDBDataset(String inputPath, String tdbDir) throws JenaException {
+    Dataset dataset;
+    if (new File(tdbDir).isDirectory()) {
+      dataset = TDBFactory.createDataset(tdbDir);
+      if (!dataset.isEmpty()) {
+        return dataset;
       }
     }
-
-    return nodes;
-  }
-
-  /** INSERT DOCUMENTATION HERE */
-  public HashMap<String, HashMap<String, String>> loadNCBITaxonomyNames(String path)
-      throws IOException {
-    FileInputStream inputStream = null;
-    Scanner sc = null;
-    HashMap<String, HashMap<String, String>> names = new HashMap();
-    HashMap<String, String> taxidNames = new HashMap();
-    HashMap<String, String> scientificNames = new HashMap();
-    HashMap<String, String> synonyms = new HashMap();
-    HashMap<String, String> lowercaseNames = new HashMap();
+    dataset = TDBFactory.createDataset(tdbDir);
+    logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
+    // Track parsing time
+    long start = System.nanoTime();
+    Model m;
+    dataset.begin(ReadWrite.WRITE);
     try {
-      inputStream = new FileInputStream(path);
-      sc = new Scanner(inputStream);
-      while (sc.hasNextLine()) {
-        String line = StringUtils.strip(sc.nextLine(), "|\n\t ");
-        String[] tokens = line.split("\\s*\\|\\s*", 4);
-        String taxid = tokens[0], name = tokens[1], unique = tokens[2], kind = tokens[3];
-        if (kind.equals("scientific name")) {
-          taxidNames.put(taxid, name);
-          scientificNames.put(name, taxid);
-        } else {
-          synonyms.put(name, taxid);
-        }
-        lowercaseNames.put(name.toLowerCase(), taxid);
-      }
-      if (sc.ioException() != null) {
-        throw sc.ioException();
-      }
+      m = dataset.getDefaultModel();
+      FileManager.get().readModel(m, inputPath);
+      dataset.commit();
+    } catch (JenaException e) {
+      dataset.abort();
+      dataset.end();
+      dataset.close();
+      throw new JenaException(String.format(syntaxError, inputPath));
     } finally {
-      if (inputStream != null) {
-        inputStream.close();
-      }
-      if (sc != null) {
-        sc.close();
-      }
+      dataset.end();
     }
-
-    names.put("taxidNames", taxidNames);
-    names.put("scientificNames", scientificNames);
-    names.put("synonyms", synonyms);
-    names.put("lowercaseNames", lowercaseNames);
-
-    return names;
+    long time = (System.nanoTime() - start) / 1000000000;
+    logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
+    return dataset;
   }
 
   /**

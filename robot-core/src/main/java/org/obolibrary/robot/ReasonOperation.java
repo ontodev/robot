@@ -11,6 +11,7 @@ import org.obolibrary.robot.exceptions.*;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
 import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
+import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -56,6 +57,7 @@ public class ReasonOperation {
     options.put("dump-unsatisfiable", null);
     options.put("axiom-generators", "subclass");
     options.put("include-indirect", "false");
+    options.put("exclude-tautologies", "false");
 
     return options;
   }
@@ -350,7 +352,8 @@ public class ReasonOperation {
    * @param options Map of reason options
    */
   private static void addInferredAxioms(
-      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options) {
+      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options)
+      throws OWLOntologyCreationException {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
@@ -376,6 +379,16 @@ public class ReasonOperation {
       // the property is_inferred with a literal (note: not xsd) "true"
       propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
       value = dataFactory.getOWLLiteral("true");
+    }
+
+    // If we will need a tautology checker, create it only once
+    String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
+    OWLReasoner tautologyChecker;
+    if (tautologiesOption.equalsIgnoreCase("all")) {
+      OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
+      tautologyChecker = new ReasonerFactory().createReasoner(empty);
+    } else {
+      tautologyChecker = null;
     }
 
     // Look at each inferred axiom
@@ -424,6 +437,43 @@ public class ReasonOperation {
         }
       }
 
+      if (tautologiesOption.equalsIgnoreCase("structural")) {
+        if (a instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
+          if (subClassOfAxiom.getSuperClass().isOWLThing()) {
+            continue;
+          } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
+            continue;
+          } else if (subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass())) {
+            continue;
+          }
+        } else if (a instanceof OWLEquivalentClassesAxiom) {
+          OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) a;
+          if (equivAxiom.getClassExpressions().size() < 2) {
+            continue;
+          }
+        } else if (a instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) a;
+          if (classAssertion.getClassExpression().isOWLThing()) {
+            continue;
+          }
+        } else if (a instanceof OWLObjectPropertyAssertionAxiom) {
+          OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) a;
+          if (assertion.getProperty().isOWLTopObjectProperty()) {
+            continue;
+          }
+        } else if (a instanceof OWLDataPropertyAssertionAxiom) {
+          OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) a;
+          if (assertion.getProperty().isOWLTopDataProperty()) {
+            continue;
+          }
+        }
+      } else if (tautologiesOption.equalsIgnoreCase("all") && (tautologyChecker != null)) {
+        if (tautologyChecker.isEntailed(a)) {
+          continue;
+        }
+      }
+
       // If the axiom has not been skipped, add it to the ontology
       manager.addAxiom(ontology, a);
       // If propertyIRI isn't null, we are annotating the inferred axioms
@@ -446,16 +496,60 @@ public class ReasonOperation {
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
+    Set<InvalidReferenceViolation> filteredViolations = new HashSet();
+
     if (referenceViolations.size() > 0) {
+      for (InvalidReferenceViolation v : referenceViolations) {
+        // Don't log errors for:
+        // - annotations
+        // - subclass of ObsoleteClass
+        // - subproperty of ObsoleteProperty
+        // - rdf:type owl:Thing
+        if (v.getAxiom() instanceof OWLAnnotationAxiom) {
+          continue;
+        }
+        if (v.getAxiom() instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom sub = (OWLSubClassOfAxiom) v.getAxiom();
+          OWLClassExpression sup = sub.getSuperClass();
+          if (!sup.isAnonymous()
+              && sup.asOWLClass()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteClass")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLSubObjectPropertyOfAxiom) {
+          OWLSubObjectPropertyOfAxiom sub = (OWLSubObjectPropertyOfAxiom) v.getAxiom();
+          OWLObjectPropertyExpression sup = sub.getSuperProperty();
+          if (!sup.isAnonymous()
+              && sup.asOWLObjectProperty()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteProperty")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom sub = (OWLClassAssertionAxiom) v.getAxiom();
+          if (sub.getClassExpression().isOWLThing()) {
+            continue;
+          }
+        }
+
+        filteredViolations.add(v);
+      }
+    }
+
+    if (filteredViolations.size() > 0) {
       logger.error(
           "Reference violations found: "
-              + referenceViolations.size()
+              + filteredViolations.size()
               + " - reasoning may be incomplete");
 
       int maxDanglings = 10;
       int danglings = 0;
-      for (InvalidReferenceViolation v : referenceViolations) {
-
+      for (InvalidReferenceViolation v : filteredViolations) {
         if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
             && danglings < maxDanglings) {
           logger.error("Reference violation: " + v);
