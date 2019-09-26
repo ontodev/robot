@@ -67,7 +67,7 @@ public class OntologyHelperTest extends CoreTest {
     OWLOntology simple = loadOntology("/simple.owl");
     Map<IRI, String> expected = new HashMap<>();
     expected.put(IRI.create(base + "simple.owl#test1"), "Test 1");
-    Map<IRI, String> actual = OntologyHelper.getIRILabels(simple);
+    Map<IRI, String> actual = OntologyHelper.getLabels(simple);
     assertEquals(expected, actual);
   }
 

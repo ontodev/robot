@@ -1,0 +1,7 @@
+At row: 17, column: 2: Cell is empty but rule: "is-required true" does not allow this.
+At row: 18, column: 4: Cell is empty but rule: "is-required true" does not allow this.
+At row: 19, column: 6: Cell is empty but rule: "is-required true" does not allow this.
+At row: 20, column: 2: Validation failed for rule: "Dengue virus (NCBITaxon_12637) equivalent-to %3".
+At row: 20, column: 3: Validation failed for rule: "Dengue virus 2 (NCBITaxon_11060) equivalent-to %2".
+At row: 21, column: 4: Validation failed for rule: "Dengue virus 2 (NCBITaxon_11060) subclass-of 'disease name'".
+At row: 21, column: 4: Validation failed for rule: "Dengue virus 2 (NCBITaxon_11060) subclass-of hasMaterialBasisIn some %2".

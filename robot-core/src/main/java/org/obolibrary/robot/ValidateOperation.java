@@ -2,27 +2,24 @@ package org.obolibrary.robot;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLParserException;
+import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -31,16 +28,15 @@ import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * TODO:
- * - Go through the code carefully and add any needed comments
+ * - Take a look at the deprecation warnings for ValidateCommand
  * - Implement the rules required for the new csv that James sent
+ *   - Hard code pipe-separation for now in cells.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
- * - Take a look at the deprecation warnings for ValidateCommand
+ * - Allow TSVs as well as CSVs to be passed.
  * - Make the reasoner choice configurable via the command line (see the way other commands do it)
- * - Write unit test(s)
  * - Eventually extend to Excel
  * - Eventually need to tweak the command line options to be more consistent with the other commands
  *   and work seamlessly with robot's chaining feature.
@@ -178,13 +174,20 @@ public class ValidateOperation {
   /** The column number of the CSV data currently being processed */
   private static int csv_col_index;
 
-  /** An enum representation of the different categories of rules. We distinguish between queries,
-      which involve queries to a reasoner, and presence rules, which check for the existence of
-      content in a cell. */
-  private enum RCatEnum { QUERY, PRESENCE }
+  /**
+   * An enum representation of the different categories of rules. We distinguish between queries,
+   * which involve queries to a reasoner, and presence rules, which check for the existence of
+   * content in a cell.
+   */
+  private enum RCatEnum {
+    QUERY,
+    PRESENCE
+  }
 
-  /** An enum representation of the different types of rules. Each rule type belongs to larger
-      category, and is identified within the CSV file by a particular string. */
+  /**
+   * An enum representation of the different types of rules. Each rule type belongs to larger
+   * category, and is identified within the CSV file by a particular string.
+   */
   private enum RTypeEnum {
     DIRECT_SUPER("direct-superclass-of", RCatEnum.QUERY),
     SUPER("superclass-of", RCatEnum.QUERY),
@@ -215,15 +218,19 @@ public class ValidateOperation {
 
   /** Reverse map from rule types (as Strings) to RTypeEnums, populated at load time */
   private static final Map<String, RTypeEnum> rule_type_to_rtenum_map = new HashMap<>();
+
   static {
     for (RTypeEnum r : RTypeEnum.values()) {
       rule_type_to_rtenum_map.put(r.getRuleType(), r);
     }
   }
 
-  /** Reverse map from rule types in the QUERY category (as Strings) to RTypeEnums, populated at
-      load time */
+  /**
+   * Reverse map from rule types in the QUERY category (as Strings) to RTypeEnums, populated at load
+   * time
+   */
   private static final Map<String, RTypeEnum> query_type_to_rtenum_map = new HashMap<>();
+
   static {
     for (RTypeEnum r : RTypeEnum.values()) {
       if (r.getRuleCat() == RCatEnum.QUERY) {
@@ -246,8 +253,8 @@ public class ValidateOperation {
    * and write to the log at the appropriate log level. If the parameter `showCoords` is true, then
    * include the current row and column number in the output string.
    */
-  private static void writelog(boolean showCoords, LogLevel logLevel, String format,
-                               Object... positionalArgs) {
+  private static void writelog(
+      boolean showCoords, LogLevel logLevel, String format, Object... positionalArgs) {
     String logStr = "";
     if (showCoords) {
       logStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
@@ -281,10 +288,10 @@ public class ValidateOperation {
   }
 
   /**
-   * Given the string `format` and a number of formatting variables, use the formatting variables
-   * to fill in the format string in the manner of C's printf function, and write the string to
-   * the Writer object that belongs to ValidateOperation. If the parameter `showCoords` is true,
-   * then include the current row and column number in the output string.
+   * Given the string `format` and a number of formatting variables, use the formatting variables to
+   * fill in the format string in the manner of C's printf function, and write the string to the
+   * Writer object that belongs to ValidateOperation. If the parameter `showCoords` is true, then
+   * include the current row and column number in the output string.
    */
   private static void writeout(boolean showCoords, String format, Object... positionalArgs)
       throws IOException {
@@ -298,10 +305,10 @@ public class ValidateOperation {
   }
 
   /**
-   * Given the string `format` and a number of formatting variables, use the formatting variables
-   * to fill in the format string in the manner of C's printf function, and write the string to
-   * the Writer object that belongs to ValidateOperation, including the current row and column
-   * number in the output string.
+   * Given the string `format` and a number of formatting variables, use the formatting variables to
+   * fill in the format string in the manner of C's printf function, and write the string to the
+   * Writer object that belongs to ValidateOperation, including the current row and column number in
+   * the output string.
    */
   private static void writeout(String format, Object... positionalArgs) throws IOException {
     writeout(true, format, positionalArgs);
@@ -313,17 +320,15 @@ public class ValidateOperation {
    * expression parser, and the teo maps from the ontology's IRIs to rdfs:labels and vice versa.
    */
   private static void initialize(
-      OWLOntology ontology,
-      OWLReasonerFactory reasonerFactory,
-      Writer writer) throws IOException {
+      OWLOntology ontology, OWLReasonerFactory reasonerFactory, Writer writer) throws IOException {
 
     ValidateOperation.ontology = ontology;
     ValidateOperation.writer = writer;
 
     // Robot's custom quoted entity checker will be used for parsing class expressions:
     QuotedEntityChecker checker = new QuotedEntityChecker();
-    // Add the class that will be used for IO and for handling short-form IRIs by the quoted entity 
-   // checker:
+    // Add the class that will be used for IO and for handling short-form IRIs by the quoted entity
+    // checker:
     checker.setIOHelper(new IOHelper());
     checker.addProvider(new SimpleShortFormProvider());
 
@@ -344,24 +349,24 @@ public class ValidateOperation {
     ValidateOperation.label_to_iri_map = reverse_iri_label_map(ValidateOperation.iri_to_label_map);
   }
 
-  /**
-   * Deallocate any static variables that need to be deallocated.
-   */
+  /** Deallocate any static variables that need to be deallocated. */
   private static void tearDown() {
     reasoner.dispose();
   }
 
-  /**
-   * Given a map from IRIs to strings, return its inverse.
-   */
+  /** Given a map from IRIs to strings, return its inverse. */
   private static Map<String, IRI> reverse_iri_label_map(Map<IRI, String> source) {
     HashMap<String, IRI> target = new HashMap();
     for (Map.Entry<IRI, String> entry : source.entrySet()) {
       String reverseKey = entry.getValue();
       IRI reverseValue = entry.getKey();
       if (target.containsKey(reverseKey)) {
-        writelog(LogLevel.WARN, "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
-                 reverseKey, target.get(reverseKey), reverseValue);
+        writelog(
+            LogLevel.WARN,
+            "Duplicate rdfs:label \"%s\". Overwriting value \"%s\" with \"%s\"",
+            reverseKey,
+            target.get(reverseKey),
+            reverseValue);
       }
       target.put(reverseKey, reverseValue);
     }
@@ -369,9 +374,8 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string specifying a list of rules of various types, return a map which contains,
-   * for each rule type present in the string, the list of rules of that type that have been
-   * specified.
+   * Given a string specifying a list of rules of various types, return a map which contains, for
+   * each rule type present in the string, the list of rules of that type that have been specified.
    */
   private static Map<String, List<String>> parse_rules(String ruleString) {
     HashMap<String, List<String>> ruleMap = new HashMap();
@@ -391,13 +395,11 @@ public class ValidateOperation {
         String ruleContent = null;
         if (ruleParts.length == 2) {
           ruleContent = ruleParts[1].trim();
-        }
-        else {
+        } else {
           RTypeEnum rTypeEnum = rule_type_to_rtenum_map.get(ruleType);
           if (rTypeEnum != null && rTypeEnum.getRuleCat() == RCatEnum.PRESENCE) {
             ruleContent = "true";
-          }
-          else {
+          } else {
             writelog(LogLevel.ERROR, "Invalid rule: %s", rule.trim());
             continue;
           }
@@ -415,8 +417,8 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string describing a compound rule type, return an array in which each component
-   * of the compound rule occupies a position in the array.
+   * Given a string describing a compound rule type, return an array in which each component of the
+   * compound rule occupies a position in the array.
    */
   private static String[] split_rule_type(String ruleType) {
     // A rule type can be of the form: ruletype1|ruletype2|ruletype3...
@@ -425,8 +427,8 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string describing a compound rule type, return the primary rule type of the
-   * compound rule type.
+   * Given a string describing a compound rule type, return the primary rule type of the compound
+   * rule type.
    */
   private static String get_primary_rule_type(String ruleType) {
     return split_rule_type(ruleType)[0];
@@ -441,8 +443,8 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string describing one of the classes in the ontology, in either the form of an IRI,
-   * an abbreviated IRI, or an rdfs:label, return the rdfs:label for that class.
+   * Given a string describing one of the classes in the ontology, in either the form of an IRI, an
+   * abbreviated IRI, or an rdfs:label, return the rdfs:label for that class.
    */
   private static String get_label_from_term(String term) {
     // If the term is already a recognised label, then just send it back:
@@ -477,7 +479,8 @@ public class ValidateOperation {
       writelog(
           LogLevel.ERROR,
           "Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
-          wildcard, row.size());
+          wildcard,
+          row.size());
       return null;
     }
 
@@ -486,7 +489,8 @@ public class ValidateOperation {
       writelog(
           LogLevel.WARN,
           "Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
-          wildcard, colIndex + 1);
+          wildcard,
+          colIndex + 1);
       return null;
     }
 
@@ -494,7 +498,8 @@ public class ValidateOperation {
       writelog(
           LogLevel.WARN,
           "Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
-          wildcard, colIndex + 1);
+          wildcard,
+          colIndex + 1);
       return null;
     }
 
@@ -551,7 +556,7 @@ public class ValidateOperation {
 
     // If there is no main clause and this is not a PRESENCE rule, inform the user of the problem
     // and return the rule string as it was passed with an empty when clause list:
-    if (m.start() == 0  && rule_type_to_rtenum_map.get(ruleType).getRuleCat() != RCatEnum.PRESENCE) {
+    if (m.start() == 0 && rule_type_to_rtenum_map.get(ruleType).getRuleCat() != RCatEnum.PRESENCE) {
       writelog(LogLevel.ERROR, "Rule: \"%s\" has when clause but no main clause.", rule);
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
@@ -575,9 +580,7 @@ public class ValidateOperation {
     // when statement into a list of such triples.
     ArrayList<String[]> whenClauses = new ArrayList();
     for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
-      m = Pattern.compile(
-          "^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-\\|]+)\\s+(.*)$")
-          .matcher(whenClause);
+      m = Pattern.compile("^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-\\|]+)\\s+(.*)$").matcher(whenClause);
 
       if (!m.find()) {
         writelog(LogLevel.ERROR, "Unable to decompose when-clause: \"%s\".", whenClause);
@@ -603,40 +606,44 @@ public class ValidateOperation {
     // We should never get here since we have already checked for an empty main clause earlier ...
     writelog(
         LogLevel.ERROR,
-        "Encountered unknown error while looking for main clause of rule \"%s\".", rule);
+        "Encountered unknown error while looking for main clause of rule \"%s\".",
+        rule);
     // Return the rule as passed with an empty when clause list:
-    return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());    
+    return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
   }
 
   /**
    * Given an IRI, a string describing a rule to query, a list of strings describing a row from the
-   * CSV, and a string representing a compound query type: Determine whether, for any of
-   * the query types specified in the compound string, the IRI is in the result set
-   * returned by a query of that type on the given rule. Return true if it is in one of these result
-   * sets, and false if it is not.
+   * CSV, and a string representing a compound query type: Determine whether, for any of the query
+   * types specified in the compound string, the IRI is in the result set returned by a query of
+   * that type on the given rule. Return true if it is in one of these result sets, and false if it
+   * is not.
    */
   private static boolean execute_query(
-      IRI iri,
-      String rule,
-      List<String> row,
-      String unsplitQueryType) throws Exception {
+      IRI iri, String rule, List<String> row, String unsplitQueryType) throws Exception {
 
     writelog(
         LogLevel.DEBUG,
-        "execute_query(): Called with parameters: " +
-        "iri: \"%s\", " +
-        "rule: \"%s\", " +
-        "row: \"%s\", " +
-        "query type: \"%s\".",
-        iri.getShortForm(), rule, row, unsplitQueryType);
+        "execute_query(): Called with parameters: "
+            + "iri: \"%s\", "
+            + "rule: \"%s\", "
+            + "row: \"%s\", "
+            + "query type: \"%s\".",
+        iri.getShortForm(),
+        rule,
+        row,
+        unsplitQueryType);
 
     OWLClassExpression ce;
     try {
       ce = parser.parse(rule);
-    }
-    catch (OWLParserException e) {
-      writelog(LogLevel.ERROR, "Unable to parse rule \"%s %s\".\n\t%s.",
-               unsplitQueryType, rule, e.getMessage().trim());
+    } catch (OWLParserException e) {
+      writelog(
+          LogLevel.ERROR,
+          "Unable to parse rule \"%s %s\".\n\t%s.",
+          unsplitQueryType,
+          rule,
+          e.getMessage().trim());
       return false;
     }
 
@@ -648,8 +655,11 @@ public class ValidateOperation {
     String[] queryTypes = split_rule_type(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
-        writelog(LogLevel.ERROR, "Query type \"%s\" not recognised in rule \"%s\".",
-                 queryType, unsplitQueryType);
+        writelog(
+            LogLevel.ERROR,
+            "Query type \"%s\" not recognised in rule \"%s\".",
+            queryType,
+            unsplitQueryType);
         continue;
       }
 
@@ -661,29 +671,25 @@ public class ValidateOperation {
         if (subClassesFound.containsEntity(iriEntity.asOWLClass())) {
           return true;
         }
-      }
-      else if (qType == RTypeEnum.SUPER || qType == RTypeEnum.DIRECT_SUPER) {
+      } else if (qType == RTypeEnum.SUPER || qType == RTypeEnum.DIRECT_SUPER) {
         // Check to see if the iri is a (direct) superclass of the given rule:
         NodeSet<OWLClass> superClassesFound =
             reasoner.getSuperClasses(ce, qType == RTypeEnum.DIRECT_SUPER);
         if (superClassesFound.containsEntity(iriEntity.asOWLClass())) {
           return true;
         }
-      }
-      else if (qType == RTypeEnum.INSTANCE || qType == RTypeEnum.DIRECT_INSTANCE) {
-        NodeSet<OWLNamedIndividual> instancesFound = reasoner.getInstances(
-            ce, qType == RTypeEnum.DIRECT_INSTANCE);
+      } else if (qType == RTypeEnum.INSTANCE || qType == RTypeEnum.DIRECT_INSTANCE) {
+        NodeSet<OWLNamedIndividual> instancesFound =
+            reasoner.getInstances(ce, qType == RTypeEnum.DIRECT_INSTANCE);
         if (instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
           return true;
         }
-      }
-      else if (qType == RTypeEnum.EQUIV) {
+      } else if (qType == RTypeEnum.EQUIV) {
         Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
         if (equivClassesFound.contains(iriEntity.asOWLClass())) {
           return true;
         }
-      }
-      else {
+      } else {
         writelog(LogLevel.ERROR, "Validation for query type: \"%s\" not yet implemented.", qType);
         return false;
       }
@@ -692,29 +698,33 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string describing a rule, a rule type of the PRESENCE type, and a string
-   * representing a cell from the CSV, determine whether the cell satisfies the given presence
-   * rule: E.g. Return false if the rule requires content to be present in the cell but the cell
-   * is empty, or if the rule requires the cell to be empty but there is content in it.
+   * Given a string describing a rule, a rule type of the PRESENCE type, and a string representing a
+   * cell from the CSV, determine whether the cell satisfies the given presence rule: E.g. Return
+   * false if the rule requires content to be present in the cell but the cell is empty, or if the
+   * rule requires the cell to be empty but there is content in it.
    */
-  private static void validate_presence_rule(
-      String rule,
-      RTypeEnum rType,
-      String cell) throws IOException {
+  private static void validate_presence_rule(String rule, RTypeEnum rType, String cell)
+      throws IOException {
 
     writelog(
         LogLevel.DEBUG,
-        "validate_presence_rule(): Called with parameters: " +
-        "rule: \"%s\", " +
-        "rule type: \"%s\", " +
-        "cell: \"%s\".",
-        rule, rType.getRuleType(), cell);
+        "validate_presence_rule(): Called with parameters: "
+            + "rule: \"%s\", "
+            + "rule type: \"%s\", "
+            + "cell: \"%s\".",
+        rule,
+        rType.getRuleType(),
+        cell);
 
     // Presence-type rules (is-required, is-excluded) must be in the form of a truth value:
-    if ((Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1) &&
-        (Arrays.asList("false", "f", "0", "no", "n").indexOf(rule.toLowerCase()) == -1)) {
-      writelog(LogLevel.ERROR, "Invalid rule: \"%s\" for rule type: %s. Must be one of: " +
-               "true, t, 1, yes, y, false, f, 0, no, n", rule, rType.getRuleType());
+    if ((Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1)
+        && (Arrays.asList("false", "f", "0", "no", "n").indexOf(rule.toLowerCase()) == -1)) {
+      writelog(
+          LogLevel.ERROR,
+          "Invalid rule: \"%s\" for rule type: %s. Must be one of: "
+              + "true, t, 1, yes, y, false, f, 0, no, n",
+          rule,
+          rType.getRuleType());
       return;
     }
 
@@ -727,43 +737,46 @@ public class ValidateOperation {
     switch (rType) {
       case REQUIRED:
         if (cell.trim().equals("")) {
-          writeout("Cell is empty but rule: \"%s %s\" does not allow this.",
-                   rType.getRuleType(), rule);
+          writeout(
+              "Cell is empty but rule: \"%s %s\" does not allow this.", rType.getRuleType(), rule);
         }
         break;
       case EXCLUDED:
         if (!cell.trim().equals("")) {
-          writeout("Cell is non-empty (\"%s\") but rule: \"%s %s\" does not allow this.",
-                   cell, rType.getRuleType(), rule);
+          writeout(
+              "Cell is non-empty (\"%s\") but rule: \"%s %s\" does not allow this.",
+              cell, rType.getRuleType(), rule);
         }
         break;
       default:
-        writelog(LogLevel.ERROR, "Presence validation of rule type: \"%s\" is not yet implemented.",
-                 rType.getRuleType());
+        writelog(
+            LogLevel.ERROR,
+            "Presence validation of rule type: \"%s\" is not yet implemented.",
+            rType.getRuleType());
         break;
     }
   }
 
   /**
-   * Given a string describing a cell from the CSV, a string describing a rule to be applied
-   * against that cell, a string describing the type of that rule, and a list of strings
-   * describing the row containing the given cell, validate the cell, indicating any validation
-   * errors via the output writer.
+   * Given a string describing a cell from the CSV, a string describing a rule to be applied against
+   * that cell, a string describing the type of that rule, and a list of strings describing the row
+   * containing the given cell, validate the cell, indicating any validation errors via the output
+   * writer.
    */
-  private static void validate_rule(
-      String cell,
-      String rule,
-      List<String> row,
-      String ruleType) throws Exception, IOException {
+  private static void validate_rule(String cell, String rule, List<String> row, String ruleType)
+      throws Exception, IOException {
 
     writelog(
         LogLevel.DEBUG,
-        "validate_rule(): Called with parameters: " +
-        "cell: \"%s\", " +
-        "rule: \"%s\", " +
-        "row: \"%s\", " +
-        "rule type: \"%s\".",
-        cell, rule, row, ruleType);
+        "validate_rule(): Called with parameters: "
+            + "cell: \"%s\", "
+            + "rule: \"%s\", "
+            + "row: \"%s\", "
+            + "rule type: \"%s\".",
+        cell,
+        rule,
+        row,
+        ruleType);
 
     writelog(LogLevel.INFO, "Validating rule \"%s %s\" against \"%s\".", ruleType, rule, cell);
     if (!rule_type_recognised(ruleType)) {
@@ -794,13 +807,14 @@ public class ValidateOperation {
       // Make sure all of the rule types in the when clause are of the right category:
       String whenRuleType = whenClause[1];
       for (String whenRuleSubType : split_rule_type(whenRuleType)) {
-       RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
+        RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
         if (whenSubRType == null || whenSubRType.getRuleCat() != RCatEnum.QUERY) {
-        writelog(
-            LogLevel.ERROR,
-            "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
-            whenRuleType, query_type_to_rtenum_map.keySet());
-        return;
+          writelog(
+              LogLevel.ERROR,
+              "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
+              whenRuleType,
+              query_type_to_rtenum_map.keySet());
+          return;
         }
       }
 
@@ -820,13 +834,19 @@ public class ValidateOperation {
         writelog(
             LogLevel.INFO,
             "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause.",
-            subject, subjectIri.getShortForm(), whenRuleType, axiom);
+            subject,
+            subjectIri.getShortForm(),
+            whenRuleType,
+            axiom);
         return;
-      }
-      else {
+      } else {
         writelog(
-            LogLevel.INFO, "Validated when clause \"%s (%s) %s %s\"",
-            subject, subjectIri.getShortForm(), whenRuleType, axiom);
+            LogLevel.INFO,
+            "Validated when clause \"%s (%s) %s %s\"",
+            subject,
+            subjectIri.getShortForm(),
+            whenRuleType,
+            axiom);
       }
     }
 
@@ -864,22 +884,26 @@ public class ValidateOperation {
     }
     writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
-    writelog(LogLevel.INFO, "Querying axiom: %s", interpolatedAxiom);
     boolean result = execute_query(cellIri, interpolatedAxiom, row, ruleType);
     if (!result) {
-      writeout("Validation failed for rule: \"%s (%s) %s %s\".",
-               cellLabel, cellIri.getShortForm(), ruleType, axiom);
-    }
-    else {
-      writelog(LogLevel.INFO, "Validated: \"%s (%s) %s %s\".",
-               cellLabel, cellIri.getShortForm(), ruleType, axiom);
+      writeout(
+          "Validation failed for rule: \"%s (%s) %s %s\".",
+          cellLabel, cellIri.getShortForm(), ruleType, axiom);
+    } else {
+      writelog(
+          LogLevel.INFO,
+          "Validated: \"%s (%s) %s %s\".",
+          cellLabel,
+          cellIri.getShortForm(),
+          ruleType,
+          axiom);
     }
   }
 
   /**
    * Given a list of lists of strings representing the rows of a CSV, an ontology, a reasoner
-   * factory, and an output writer: Extract the rules to use for validation from the CSV, create
-   * a reasoner from the given reasoner factory, and then validate the CSV using those extracted
+   * factory, and an output writer: Extract the rules to use for validation from the CSV, create a
+   * reasoner from the given reasoner factory, and then validate the CSV using those extracted
    * rules, row by row and column by column within each row, using the reasoner when required to
    * perform lookups to the ontology, indicating any validation errors via the output writer.
    */
@@ -887,7 +911,8 @@ public class ValidateOperation {
       List<List<String>> csvData,
       OWLOntology ontology,
       OWLReasonerFactory reasonerFactory,
-      Writer writer) throws Exception {
+      Writer writer)
+      throws Exception {
 
     // Initialize the shared variables:
     initialize(ontology, reasonerFactory, writer);
