@@ -20,6 +20,7 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -42,18 +43,6 @@ import org.slf4j.LoggerFactory;
  * - Eventually extend to Excel
  * - Eventually need to tweak the command line options to be more consistent with the other commands
  *   and work seamlessly with robot's chaining feature.
- */
-
-/**
- * TODO: - Allow DL class expressions in data cells. Ideally there would be a method you could call,
- * providing two class expressions, and find out whether one is subclass of the other. Something
- * like that might exist already. Take a look around OWLAPI. Another approach is to “reify” the
- * class expression, defining a new class that is equivalent to the expression. Then you could
- * proceed as before. - Allow TSVs as well as CSVs to be passed. - Follow logging conventions in:
- * https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors - Make the
- * reasoner choice configurable via the command line (see the way other commands do it) - Eventually
- * extend to Excel - Eventually need to tweak the command line options to be more consistent with
- * the other commands and work seamlessly with robot's chaining feature.
  */
 
 /**
@@ -379,6 +368,27 @@ public class ValidateOperation {
     return null;
   }
 
+  /** INSERT DOC HERE */
+  private static OWLClassExpression get_class_expression_from_string(String term) {
+    OWLClassExpression ce;
+    try {
+      ce = parser.parse(term);
+    } catch (OWLParserException e) {
+      // If the parsing fails the first time, try surrounding the term in single quotes:
+      try {
+        ce = parser.parse("'" + term + "'");
+      } catch (OWLParserException ee) {
+        writelog(
+            LogLevel.ERROR,
+            "Could not determine class expression from \"%s\".\n\t%s.",
+            term,
+            e.getMessage().trim());
+        return null;
+      }
+    }
+    return ce;
+  }
+
   /**
    * Given a string in the form of a wildcard, and a list of strings representing a row of the CSV,
    * return the rdfs:label contained in the position of the row indicated by the wildcard.
@@ -427,6 +437,10 @@ public class ValidateOperation {
    * the rdfs:labels corresponding to the content in the positions of the row that they indicate.
    */
   private static String interpolate(String str, List<String> row) {
+    if (str.trim().equals("")) {
+      return str.trim();
+    }
+
     String interpolatedString = "";
 
     // Look for any substrings starting with a percent-symbol and followed by a number:
@@ -543,11 +557,9 @@ public class ValidateOperation {
         continue;
       }
 
-      // Get the IRI for the interpolated subject, first removing any surrounding single quotes
-      // from the label. If the IRI can't be determined, generate an error and return a fail status.
-      IRI subjectIri = label_to_iri_map.get(subject.replaceAll("^\'|\'$", ""));
-      if (subjectIri == null) {
-        writelog(LogLevel.ERROR, "Could not determine IRI for label: \"%s\".", subject);
+      OWLClassExpression subjectCE = get_class_expression_from_string(subject);
+      if (subjectCE == null) {
+        writelog(LogLevel.ERROR, "Unable to parse subject \"%s\".", subject);
         return false;
       }
 
@@ -570,26 +582,20 @@ public class ValidateOperation {
       String interpolatedAxiom = interpolate(axiom, row);
       writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
-      if (!execute_query(subjectIri, interpolatedAxiom, row, whenRuleType)) {
+      if (!execute_query(subjectCE, interpolatedAxiom, row, whenRuleType)) {
         // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
         // of the other when clauses, or the main clause, since the main clause may only be
         // evaluated when all of the when clauses are satisfied.
         writelog(
             LogLevel.INFO,
-            "When clause: \"%s (%s) %s %s\" is not satisfied.",
+            "When clause: \"%s %s %s\" is not satisfied.",
             subject,
-            subjectIri.getShortForm(),
             whenRuleType,
             axiom);
         return false;
       } else {
         writelog(
-            LogLevel.INFO,
-            "Validated when clause \"%s (%s) %s %s\".",
-            subject,
-            subjectIri.getShortForm(),
-            whenRuleType,
-            axiom);
+            LogLevel.INFO, "Validated when clause \"%s %s %s\".", subject, whenRuleType, axiom);
       }
     }
     // If we get to here, then all of the when clauses have been satisfied, so return true:
@@ -604,33 +610,41 @@ public class ValidateOperation {
    * is not.
    */
   private static boolean execute_query(
-      IRI iri, String rule, List<String> row, String unsplitQueryType) throws Exception {
+      OWLClassExpression cellCE, String rule, List<String> row, String unsplitQueryType)
+      throws Exception {
 
     writelog(
         LogLevel.DEBUG,
         "execute_query(): Called with parameters: "
-            + "iri: \"%s\", "
+            + "Cell class expression: \"%s\", "
             + "rule: \"%s\", "
             + "row: \"%s\", "
             + "query type: \"%s\".",
-        iri.getShortForm(),
+        cellCE,
         rule,
         row,
         unsplitQueryType);
 
-    OWLClassExpression ce;
-    try {
-      ce = parser.parse(rule);
-    } catch (OWLParserException e) {
-      writelog(
-          LogLevel.ERROR,
-          "Unable to parse rule \"%s %s\".\n\t%s.",
-          unsplitQueryType,
-          rule,
-          e.getMessage().trim());
+    // Get the class expression corresponfing to the rule that has been passed:
+    OWLClassExpression ruleCE = get_class_expression_from_string(rule);
+    if (ruleCE == null) {
+      writelog(LogLevel.ERROR, "Unable to parse rule \"%s %s\".", unsplitQueryType, rule);
       return false;
     }
 
+    // Convert the cell that has been passed into an IRI, and get the entity corresponding to it:
+    OWLClass cellClass;
+    try {
+      cellClass = cellCE.asOWLClass();
+    } catch (OWLRuntimeException e) {
+      writelog(
+          LogLevel.ERROR,
+          "The class expression %s does not indicate a class. Validation of "
+              + "non-class class expressions is not yet implemented",
+          cellCE);
+      return false;
+    }
+    IRI iri = cellClass.getIRI();
     OWLEntity iriEntity = OntologyHelper.getEntity(ontology, iri);
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
@@ -651,25 +665,25 @@ public class ValidateOperation {
       if (qType == RTypeEnum.SUB || qType == RTypeEnum.DIRECT_SUB) {
         // Check to see if the iri is a (direct) subclass of the given rule:
         NodeSet<OWLClass> subClassesFound =
-            reasoner.getSubClasses(ce, qType == RTypeEnum.DIRECT_SUB);
+            reasoner.getSubClasses(ruleCE, qType == RTypeEnum.DIRECT_SUB);
         if (subClassesFound.containsEntity(iriEntity.asOWLClass())) {
           return true;
         }
       } else if (qType == RTypeEnum.SUPER || qType == RTypeEnum.DIRECT_SUPER) {
         // Check to see if the iri is a (direct) superclass of the given rule:
         NodeSet<OWLClass> superClassesFound =
-            reasoner.getSuperClasses(ce, qType == RTypeEnum.DIRECT_SUPER);
+            reasoner.getSuperClasses(ruleCE, qType == RTypeEnum.DIRECT_SUPER);
         if (superClassesFound.containsEntity(iriEntity.asOWLClass())) {
           return true;
         }
       } else if (qType == RTypeEnum.INSTANCE || qType == RTypeEnum.DIRECT_INSTANCE) {
         NodeSet<OWLNamedIndividual> instancesFound =
-            reasoner.getInstances(ce, qType == RTypeEnum.DIRECT_INSTANCE);
+            reasoner.getInstances(ruleCE, qType == RTypeEnum.DIRECT_INSTANCE);
         if (instancesFound.containsEntity(iriEntity.asOWLNamedIndividual())) {
           return true;
         }
       } else if (qType == RTypeEnum.EQUIV) {
-        Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ce);
+        Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ruleCE);
         if (equivClassesFound.contains(iriEntity.asOWLClass())) {
           return true;
         }
@@ -723,6 +737,7 @@ public class ValidateOperation {
         if (cell.trim().equals("")) {
           writeout(
               "Cell is empty but rule: \"%s %s\" does not allow this.", rType.getRuleType(), rule);
+          return;
         }
         break;
       case EXCLUDED:
@@ -730,6 +745,7 @@ public class ValidateOperation {
           writeout(
               "Cell is non-empty (\"%s\") but rule: \"%s %s\" does not allow this.",
               cell, rType.getRuleType(), rule);
+          return;
         }
         break;
       default:
@@ -737,8 +753,9 @@ public class ValidateOperation {
             LogLevel.ERROR,
             "Presence validation of rule type: \"%s\" is not yet implemented.",
             rType.getRuleType());
-        break;
+        return;
     }
+    writelog(LogLevel.INFO, "Validated rule \"%s %s\".", rType.getRuleType(), rule);
   }
 
   /**
@@ -794,32 +811,23 @@ public class ValidateOperation {
     // previous step, assuming such a rule exists for the column).
     if (cell.trim().equals("")) return;
 
-    // Get the rdfs:label corresponding to the cell; just exit if it can't be found:
-    String cellLabel = get_label_from_term(cell);
-    if (cellLabel == null) {
-      writelog(LogLevel.ERROR, "Could not find \"%s\" in ontology.", cell);
+    // Get the class expression corresponding to the contents of the cell
+    OWLClassExpression cellCE = get_class_expression_from_string(cell);
+    if (cellCE == null) {
       return;
     }
 
-    // Get the cell's IRI, interpolate the axiom, and execute the query:
-    IRI cellIri = label_to_iri_map.get(cellLabel);
+    // Interpolate the axiom that the cell will be validated against:
     String axiom = separatedRule.getKey();
     String interpolatedAxiom = interpolate(axiom, row);
     writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
-    boolean result = execute_query(cellIri, interpolatedAxiom, row, ruleType);
+    // Send the query to the reasoner:
+    boolean result = execute_query(cellCE, interpolatedAxiom, row, ruleType);
     if (!result) {
-      writeout(
-          "Validation failed for rule: \"%s (%s) %s %s\".",
-          cellLabel, cellIri.getShortForm(), ruleType, axiom);
+      writeout("Validation failed for rule: \"%s %s %s\".", cell, ruleType, axiom);
     } else {
-      writelog(
-          LogLevel.INFO,
-          "Validated: \"%s (%s) %s %s\".",
-          cellLabel,
-          cellIri.getShortForm(),
-          ruleType,
-          axiom);
+      writelog(LogLevel.INFO, "Validated: \"%s %s %s\".", cell, ruleType, axiom);
     }
   }
 
