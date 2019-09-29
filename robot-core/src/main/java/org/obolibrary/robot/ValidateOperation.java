@@ -372,7 +372,7 @@ public class ValidateOperation {
    * Given a string in the form of a wildcard, and a list of strings representing a row of the CSV,
    * return the rdfs:label contained in the position of the row indicated by the wildcard.
    */
-  private static String wildcard_to_label(String wildcard, List<String> row) {
+  private static String get_wildcard_contents(String wildcard, List<String> row) {
     if (!wildcard.startsWith("%")) {
       writelog(LogLevel.ERROR, "Invalid wildcard: \"%s\".", wildcard);
       return null;
@@ -407,7 +407,7 @@ public class ValidateOperation {
       return null;
     }
 
-    return get_label_from_term(term);
+    return term;
   }
 
   /**
@@ -423,7 +423,7 @@ public class ValidateOperation {
     int currIndex = 0;
     while (m.find()) {
       // Get the label corresponding to the wildcard:
-      String label = wildcard_to_label(m.group(), row);
+      String label = get_label_from_term(get_wildcard_contents(m.group(), row));
       // If there is a problem finding the label for one of the wildcards, then return null:
       if (label == null) {
         return null;
