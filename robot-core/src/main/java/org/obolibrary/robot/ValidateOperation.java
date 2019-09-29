@@ -44,6 +44,17 @@ import org.slf4j.LoggerFactory;
  *   and work seamlessly with robot's chaining feature.
  */
 
+/**
+ * TODO: - Allow DL class expressions in data cells. Ideally there would be a method you could call,
+ * providing two class expressions, and find out whether one is subclass of the other. Something
+ * like that might exist already. Take a look around OWLAPI. Another approach is to “reify” the
+ * class expression, defining a new class that is equivalent to the expression. Then you could
+ * proceed as before. - Allow TSVs as well as CSVs to be passed. - Follow logging conventions in:
+ * https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors - Make the
+ * reasoner choice configurable via the command line (see the way other commands do it) - Eventually
+ * extend to Excel - Eventually need to tweak the command line options to be more consistent with
+ * the other commands and work seamlessly with robot's chaining feature.
+ */
 
 /**
  * Implements the validate operation for a given CSV file and ontology.
@@ -422,17 +433,20 @@ public class ValidateOperation {
     Matcher m = Pattern.compile("%\\d+").matcher(str);
     int currIndex = 0;
     while (m.find()) {
-      // Get the label corresponding to the wildcard:
-      String label = get_label_from_term(get_wildcard_contents(m.group(), row));
-      // If there is a problem finding the label for one of the wildcards, then return null:
-      if (label == null) {
-        return null;
-      }
+      // Get the term from the row that corresponds to the given wildcard:
+      String term = get_wildcard_contents(m.group(), row);
 
-      // Iteratively build the interpolated string up to the current label, which we enclose in
-      // single quotes:
-      interpolatedString =
-          interpolatedString + str.substring(currIndex, m.start()) + "'" + label + "'";
+      // Iteratively build the interpolated string up to the current term, which we try to convert
+      // into a label. If conversion to a label is possible, enclose it in single quotes, otherwise
+      // enclose it in parentheses:
+      String label = get_label_from_term(term);
+      if (label != null) {
+        interpolatedString =
+            interpolatedString + str.substring(currIndex, m.start()) + "'" + label + "'";
+      } else {
+        interpolatedString =
+            interpolatedString + str.substring(currIndex, m.start()) + "(" + term + ")";
+      }
       currIndex = m.end();
     }
     // There may be text after the final wildcard, so add it now:
@@ -514,6 +528,72 @@ public class ValidateOperation {
         rule);
     // Return the rule as passed with an empty when clause list:
     return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
+  }
+
+  /** INSERT DOC HERE */
+  private static boolean validate_when_clauses(List<String[]> whenClauses, List<String> row)
+      throws Exception {
+
+    for (String[] whenClause : whenClauses) {
+      String subject = interpolate(whenClause[0], row).trim();
+      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
+
+      // If the subject term is blank, then skip this clause:
+      if (subject.equals("")) {
+        continue;
+      }
+
+      // Get the IRI for the interpolated subject, first removing any surrounding single quotes
+      // from the label. If the IRI can't be determined, generate an error and return a fail status.
+      IRI subjectIri = label_to_iri_map.get(subject.replaceAll("^\'|\'$", ""));
+      if (subjectIri == null) {
+        writelog(LogLevel.ERROR, "Could not determine IRI for label: \"%s\".", subject);
+        return false;
+      }
+
+      // Make sure all of the rule types in the when clause are of the right category:
+      String whenRuleType = whenClause[1];
+      for (String whenRuleSubType : split_on_pipes(whenRuleType)) {
+        RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
+        if (whenSubRType == null || whenSubRType.getRuleCat() != RCatEnum.QUERY) {
+          writelog(
+              LogLevel.ERROR,
+              "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
+              whenRuleType,
+              query_type_to_rtenum_map.keySet());
+          return false;
+        }
+      }
+
+      // Interpolate the axiom to validate and send the query to the reasoner:
+      String axiom = whenClause[2];
+      String interpolatedAxiom = interpolate(axiom, row);
+      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
+
+      if (!execute_query(subjectIri, interpolatedAxiom, row, whenRuleType)) {
+        // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
+        // of the other when clauses, or the main clause, since the main clause may only be
+        // evaluated when all of the when clauses are satisfied.
+        writelog(
+            LogLevel.INFO,
+            "When clause: \"%s (%s) %s %s\" is not satisfied.",
+            subject,
+            subjectIri.getShortForm(),
+            whenRuleType,
+            axiom);
+        return false;
+      } else {
+        writelog(
+            LogLevel.INFO,
+            "Validated when clause \"%s (%s) %s %s\".",
+            subject,
+            subjectIri.getShortForm(),
+            whenRuleType,
+            axiom);
+      }
+    }
+    // If we get to here, then all of the when clauses have been satisfied, so return true:
+    return true;
   }
 
   /**
@@ -692,66 +772,9 @@ public class ValidateOperation {
     SimpleEntry<String, List<String[]>> separatedRule = separate_rule(rule, ruleType);
 
     // Evaluate and validate any when clauses for this rule first:
-    for (String[] whenClause : separatedRule.getValue()) {
-      String subject = interpolate(whenClause[0], row);
-      if (subject == null) {
-        writelog(LogLevel.WARN, "Unable to interpolate \"%s\" in when clause.", whenClause[0]);
-        continue;
-      }
-      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
-
-      // Get the IRI for the interpolated subject, first removing any surrounding single quotes
-      // from the label:
-      IRI subjectIri = label_to_iri_map.get(subject.replaceAll("^\'|\'$", ""));
-      if (subjectIri == null) {
-        writelog(LogLevel.INFO, "Could not determine IRI for label: \"%s\".", subject);
-        continue;
-      }
-
-      // Make sure all of the rule types in the when clause are of the right category:
-      String whenRuleType = whenClause[1];
-      for (String whenRuleSubType : split_on_pipes(whenRuleType)) {
-        RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
-        if (whenSubRType == null || whenSubRType.getRuleCat() != RCatEnum.QUERY) {
-          writelog(
-              LogLevel.ERROR,
-              "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
-              whenRuleType,
-              query_type_to_rtenum_map.keySet());
-          return;
-        }
-      }
-
-      // Interpolate the axiom to validate and send the query to the reasoner:
-      String axiom = whenClause[2];
-      String interpolatedAxiom = interpolate(axiom, row);
-      if (interpolatedAxiom == null) {
-        writelog(LogLevel.WARN, "Unable to interpolate \"%s\" in when clause.", axiom);
-        continue;
-      }
-      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
-
-      if (!execute_query(subjectIri, interpolatedAxiom, row, whenRuleType)) {
-        // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
-        // of the other when clauses, or the main clause, since the main clause may only be
-        // evaluated when all of the when clauses are satisfied.
-        writelog(
-            LogLevel.INFO,
-            "When clause: \"%s (%s) %s %s\" is not satisfied. Not running main clause.",
-            subject,
-            subjectIri.getShortForm(),
-            whenRuleType,
-            axiom);
-        return;
-      } else {
-        writelog(
-            LogLevel.INFO,
-            "Validated when clause \"%s (%s) %s %s\"",
-            subject,
-            subjectIri.getShortForm(),
-            whenRuleType,
-            axiom);
-      }
+    if (!validate_when_clauses(separatedRule.getValue(), row)) {
+      writelog(LogLevel.INFO, "Not all when clauses have been satisfied. Not running main clause");
+      return;
     }
 
     // Once all of the when clauses have been validated, get the RTypeEnum representation of the
@@ -782,10 +805,6 @@ public class ValidateOperation {
     IRI cellIri = label_to_iri_map.get(cellLabel);
     String axiom = separatedRule.getKey();
     String interpolatedAxiom = interpolate(axiom, row);
-    if (interpolatedAxiom == null) {
-      writelog(LogLevel.ERROR, "Unable to interpolate \"%s\" in rule \"%s\".", axiom, rule);
-      return;
-    }
     writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
     boolean result = execute_query(cellIri, interpolatedAxiom, row, ruleType);

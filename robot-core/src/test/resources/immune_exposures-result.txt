@@ -1,4 +1,5 @@
 At row: 17, column: 2: Cell is empty but rule: "is-required true" does not allow this.
+At row: 17, column: 4: Validation failed for rule: "dengue hemorrhagic fever (DOID_12206) subclass-of hasMaterialBasisIn some %2".
 At row: 18, column: 4: Cell is empty but rule: "is-required true" does not allow this.
 At row: 19, column: 6: Cell is empty but rule: "is-required true" does not allow this.
 At row: 20, column: 2: Validation failed for rule: "Dengue virus (NCBITaxon_12637) equivalent-to %3".
