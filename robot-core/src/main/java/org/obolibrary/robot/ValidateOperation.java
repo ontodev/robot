@@ -30,12 +30,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Take a look at the deprecation warnings for ValidateCommand
- * - Implement the rules required for the new csv that James sent
- *   - Hard code pipe-separation for now in cells.
+ * - Allow DL class expressions in data cells. Ideally there would be a method you could call,
+     providing two class expressions, and find out whether one is subclass of the other.
+     Something like that might exist already. Take a look around OWLAPI.
+     Another approach is to “reify” the class expression, defining a new class that is
+     equivalent to the expression. Then you could proceed as before.
+ * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
- * - Allow TSVs as well as CSVs to be passed.
  * - Make the reasoner choice configurable via the command line (see the way other commands do it)
  * - Eventually extend to Excel
  * - Eventually need to tweak the command line options to be more consistent with the other commands
@@ -319,10 +321,10 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string describing a compound rule type, return an array in which each component of the
-   * compound rule occupies a position in the array.
+   * Given a string of substrings split by pipes ('|'), return an array with the first substring in
+   * the 0th position of the array, the second substring in the 1st position, and so on.
    */
-  private static String[] split_rule_type(String ruleType) {
+  private static String[] split_on_pipes(String ruleType) {
     // A rule type can be of the form: ruletype1|ruletype2|ruletype3...
     // where the first one is the primary type for lookup purposes:
     return ruleType.split("\\s*\\|\\s*");
@@ -333,7 +335,7 @@ public class ValidateOperation {
    * rule type.
    */
   private static String get_primary_rule_type(String ruleType) {
-    return split_rule_type(ruleType)[0];
+    return split_on_pipes(ruleType)[0];
   }
 
   /**
@@ -554,7 +556,7 @@ public class ValidateOperation {
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
     // as a disjunction. If a query types is unrecognised, inform the user but continue on.
-    String[] queryTypes = split_rule_type(unsplitQueryType);
+    String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
         writelog(
@@ -708,7 +710,7 @@ public class ValidateOperation {
 
       // Make sure all of the rule types in the when clause are of the right category:
       String whenRuleType = whenClause[1];
-      for (String whenRuleSubType : split_rule_type(whenRuleType)) {
+      for (String whenRuleSubType : split_on_pipes(whenRuleType)) {
         RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
         if (whenSubRType == null || whenSubRType.getRuleCat() != RCatEnum.QUERY) {
           writelog(
@@ -843,12 +845,14 @@ public class ValidateOperation {
         if (colRules.isEmpty()) continue;
 
         // Get the contents of the current cell:
-        String cell = row.get(csv_col_index).trim();
+        String[] cellData = split_on_pipes(row.get(csv_col_index).trim());
 
         // For each of the rules applicable to this column, validate the cell against it:
         for (String ruleType : colRules.keySet()) {
           for (String rule : colRules.get(ruleType)) {
-            validate_rule(cell, rule, row, ruleType);
+            for (String data : cellData) {
+              validate_rule(data, rule, row, ruleType);
+            }
           }
         }
       }
