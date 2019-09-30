@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
@@ -30,10 +29,13 @@ public class FilterCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "ontology-iri", true, "set OntologyIRI for output");
+    o.addOption(null, "base-iri", true, "specify a base namespace");
     o.addOption("t", "term", true, "term to filter");
     o.addOption("T", "term-file", true, "load terms from a file");
-    o.addOption("e", "exclude-term", true, "term to exclude from filtering");
-    o.addOption("E", "exclude-terms", true, "set of terms in text file to exclude from filtering");
+    o.addOption("e", "exclude-term", true, "term to force exclude");
+    o.addOption("E", "exclude-terms", true, "set of terms in text file to force exclude");
+    o.addOption("n", "include-term", true, "term to force include");
+    o.addOption("N", "include-terms", true, "set of terms in file to force include");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
@@ -113,20 +115,11 @@ public class FilterCommand implements Command {
     OWLOntology inputOntology = state.getOntology();
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
-    // Get a set of entities to start with
-    Set<OWLObject> objects = new HashSet<>();
-    // track if a set of input IRIs were provided
-    boolean hasInputIRIs = false;
-    if (line.hasOption("term") || line.hasOption("term-file")) {
-      Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
-      if (!entityIRIs.isEmpty()) {
-        objects.addAll(OntologyHelper.getEntities(inputOntology, entityIRIs));
-        hasInputIRIs = true;
-      }
-    }
+    // Create a new output ontology
+    OWLOntology outputOntology = getOutputOntology(line, inputOntology);
 
-    // Get a set of axiom types
-    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
+    // Selects should be processed in order, allowing unions in one --select
+    List<List<String>> selectGroups = new ArrayList<>();
 
     // Get a set of relation types, or annotations to select
     List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
@@ -136,6 +129,139 @@ public class FilterCommand implements Command {
       selects.add("self");
     }
 
+    // Track if 'annotations' selection is included
+    boolean includeAnnotations = false;
+
+    for (String select : selects) {
+      // The single group is a split of the one --select
+      List<String> selectGroup = CommandLineHelper.splitSelects(select);
+      // Annotations is a special keyword that applies to all selected objects
+      if (selectGroup.contains("annotations")) {
+        includeAnnotations = true;
+        selectGroup.remove("annotations");
+      }
+      if (selectGroup.contains("imports")) {
+        // The imports keyword copies the import declarations to the output ontology
+        for (OWLImportsDeclaration imp : inputOntology.getImportsDeclarations()) {
+          manager.applyChange(new AddImport(outputOntology, imp));
+        }
+        selectGroup.remove("imports");
+      }
+      if (selectGroup.contains("ontology")) {
+        // The ontology keyword retrieves the ontology annotations
+        for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
+          OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
+        }
+        selectGroup.remove("ontology");
+      }
+      if (!selectGroup.isEmpty()) {
+        selectGroups.add(selectGroup);
+      }
+    }
+
+    // Use the select statements to get a set of objects to filter
+    Set<OWLObject> relatedObjects =
+        RemoveCommand.getObjects(line, ioHelper, inputOntology, selectGroups);
+    if (relatedObjects.isEmpty()) {
+      // nothing to filter - save and exit
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
+
+    // Add the additional axioms to the output ontology
+    manager.addAxioms(
+        outputOntology,
+        getAxioms(line, ioHelper, inputOntology, relatedObjects, includeAnnotations));
+
+    // Save the changed ontology and return the state
+    CommandLineHelper.maybeSaveOutput(line, outputOntology);
+    state.setOntology(outputOntology);
+    return state;
+  }
+
+  /**
+   * Given a command line, an IOHelper, an input ontology, a set of objects, and a boolean
+   * indicating if annotations on objects should be included, return all axioms for the filtered
+   * output.
+   *
+   * @param line command line to use
+   * @param inputOntology input OWLOntology
+   * @param relatedObjects set of objects to filter for
+   * @param includeAnnotations if true, include all annotations on relatedObjects
+   * @return set of OWLAxioms for output ontology
+   */
+  private static Set<OWLAxiom> getAxioms(
+      CommandLine line,
+      IOHelper ioHelper,
+      OWLOntology inputOntology,
+      Set<OWLObject> relatedObjects,
+      boolean includeAnnotations) {
+    // Get a set of axiom types
+    boolean internal = false;
+    boolean external = false;
+    if (line.hasOption("axioms")) {
+      for (String ats : CommandLineHelper.getOptionalValue(line, "axioms").split(" ")) {
+        if (ats.equalsIgnoreCase("internal")) {
+          internal = true;
+        } else if (ats.equalsIgnoreCase("external")) {
+          external = true;
+        }
+      }
+    }
+    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
+
+    // Use these two options to determine which axioms to remove
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
+    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
+
+    // Get the axioms
+    // Use !trim for the 'partial' option in getAxioms
+    Set<OWLAxiom> axiomsToAdd =
+        RelatedObjectsHelper.getAxioms(inputOntology, relatedObjects, axiomTypes, !trim, signature);
+
+    // Then select internal or external, if present
+    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
+    if ((internal || external) && baseNamespaces.isEmpty()) {
+      logger.error(
+          "No '--base-iri' namespace is specified - internal/external axiom selectors will be ignored.");
+    } else {
+      if (internal && external) {
+        logger.error(
+            "Both 'internal' and 'external' axioms are selected - these axiom selectors will be ignored.");
+      } else if (internal) {
+        axiomsToAdd = RelatedObjectsHelper.getInternalAxioms(baseNamespaces, axiomsToAdd);
+      } else if (external) {
+        axiomsToAdd = RelatedObjectsHelper.getExternalAxioms(baseNamespaces, axiomsToAdd);
+      }
+    }
+
+    // Handle gaps
+    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
+    if (preserveStructure) {
+      axiomsToAdd.addAll(RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
+    }
+
+    // Handle annotations for any referenced object
+    if (includeAnnotations) {
+      axiomsToAdd.addAll(RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
+    }
+
+    return axiomsToAdd;
+  }
+
+  /**
+   * Given a command line and an input ontology, create a new output ontology to put filtered axioms
+   * in.
+   *
+   * @param line command line to use
+   * @param inputOntology input ontology to maybe copy IRI
+   * @return OWLOntology output ontology
+   * @throws OWLOntologyCreationException on problem creating a new ontology
+   */
+  private static OWLOntology getOutputOntology(CommandLine line, OWLOntology inputOntology)
+      throws OWLOntologyCreationException {
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     // Get the output IRI for the new ontology
     IRI outputIRI;
     String outputIRIString = CommandLineHelper.getOptionalValue(line, "ontology-iri");
@@ -154,109 +280,6 @@ public class FilterCommand implements Command {
       outputOntology = manager.createOntology();
     }
 
-    // Selects should be processed in order, allowing unions in one --select
-    List<List<String>> selectGroups = new ArrayList<>();
-
-    // Track if 'annotations' selection is included
-    boolean includeAnnotations = false;
-
-    // Track if selection was 'imports' or 'ontology'
-    // These get processed separately and then removed
-    // If no other select options are provided, we save and quit after that
-    boolean hadSelection = false;
-
-    for (String select : selects) {
-      // The single group is a split of the one --select
-      List<String> selectGroup = CommandLineHelper.splitSelects(select);
-      // Annotations is a special keyword that applies to all selected objects
-      if (selectGroup.contains("annotations")) {
-        includeAnnotations = true;
-        selectGroup.remove("annotations");
-      }
-      if (selectGroup.contains("imports")) {
-        // The imports keyword copies the import delcarations to the output ontology
-        for (OWLImportsDeclaration imp : inputOntology.getImportsDeclarations()) {
-          manager.applyChange(new AddImport(outputOntology, imp));
-        }
-        hadSelection = true;
-        selectGroup.remove("imports");
-      }
-      if (selectGroup.contains("ontology")) {
-        // The ontology keyword retrieves the ontology annotations
-        for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
-          OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
-        }
-        hadSelection = true;
-        selectGroup.remove("ontology");
-      }
-      if (!selectGroup.isEmpty()) {
-        selectGroups.add(selectGroup);
-      }
-    }
-
-    // If filtering imports or ontology annotations,
-    // and there are no other selects, save and return
-    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty()) {
-      CommandLineHelper.maybeSaveOutput(line, outputOntology);
-      state.setOntology(outputOntology);
-      return state;
-    } else if (objects.isEmpty() && hasInputIRIs) {
-      // if objects is empty AND there WERE input IRIs
-      // there is nothing to filter because the IRIs do not exist in the ontology
-      // save and exit with empty ontology
-      CommandLineHelper.maybeSaveOutput(line, outputOntology);
-      state.setOntology(outputOntology);
-      return state;
-    } else if (objects.isEmpty()) {
-      // if objects is empty AND there were NO input IRIs add all
-      // this means that we are adding everything to the set to start
-      objects.addAll(OntologyHelper.getObjects(inputOntology));
-    }
-
-    // Use the select statements to get a set of objects to remove
-    Set<OWLObject> relatedObjects =
-        RelatedObjectsHelper.selectGroups(inputOntology, ioHelper, objects, selectGroups);
-
-    // Remove all the excluded terms from that set
-    if (line.hasOption("exclude-term") || line.hasOption("exclude-terms")) {
-      Set<IRI> excludeIRIs =
-          CommandLineHelper.getTerms(ioHelper, line, "exclude-term", "exclude-terms");
-      Set<OWLObject> excludeObjects =
-          new HashSet<>(OntologyHelper.getEntities(inputOntology, excludeIRIs));
-      relatedObjects.removeAll(excludeObjects);
-    }
-
-    // Use these two options to determine which axioms to remove
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
-    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
-
-    // Get the axioms
-    // Use !trim for the 'partial' option in getAxioms
-    Set<OWLAxiom> axiomsToAdd =
-        RelatedObjectsHelper.getAxioms(inputOntology, relatedObjects, axiomTypes, !trim, signature);
-
-    // Handle gaps
-    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
-    if (preserveStructure) {
-      axiomsToAdd.addAll(RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
-    }
-
-    // Handle annotations for any referenced object
-    if (includeAnnotations) {
-      Set<OWLObject> referencedObjects = new HashSet<>();
-      for (OWLAxiom axiom : axiomsToAdd) {
-        referencedObjects.addAll(OntologyHelper.getObjects(axiom));
-      }
-      axiomsToAdd.addAll(
-          RelatedObjectsHelper.getAnnotationAxioms(inputOntology, referencedObjects));
-    }
-
-    // Add the additional axioms to the output ontology
-    manager.addAxioms(outputOntology, axiomsToAdd);
-
-    // Save the changed ontology and return the state
-    CommandLineHelper.maybeSaveOutput(line, outputOntology);
-    state.setOntology(outputOntology);
-    return state;
+    return outputOntology;
   }
 }

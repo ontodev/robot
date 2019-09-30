@@ -901,6 +901,25 @@ public class IOHelper {
   }
 
   /**
+   * Add a set of base namespaces to the IOHelper from file. Each base namespace should be on its
+   * own line.
+   *
+   * @param baseNamespacePath path to base namespace file
+   * @throws IOException if file does not exist
+   */
+  public void addBaseNamespaces(String baseNamespacePath) throws IOException {
+    File prefixFile = new File(baseNamespacePath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, baseNamespacePath));
+    }
+
+    List<String> lines = FileUtils.readLines(new File(baseNamespacePath));
+    for (String l : lines) {
+      baseNamespaces.add(l.trim());
+    }
+  }
+
+  /**
    * Get the base namespaces.
    *
    * @return set of base namespaces

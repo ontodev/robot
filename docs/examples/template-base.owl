@@ -55,15 +55,6 @@
     <!-- http://example.com/propery-1 -->
 
     <owl:DatatypeProperty rdf:about="http://example.com/propery-1">
-        <rdfs:domain>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://example.com/B6C3F1"/>
-                    <rdf:Description rdf:about="http://example.com/F344N"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:domain>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Weight of a mouse or rat in kilograms (kg).</obo:IAO_0000115>
         <obo:IAO_0000117 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Rebecca C Jackson</obo:IAO_0000117>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">weight in kilograms</rdfs:label>
@@ -91,6 +82,7 @@
     <!-- http://example.com/B6C3F1 -->
 
     <owl:Class rdf:about="http://example.com/B6C3F1">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_10090"/>
         <owl:disjointWith rdf:resource="http://example.com/F344N"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An inbred strain of mouse used in many scientific investigations.</obo:IAO_0000115>
         <obo:IAO_0000117 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">James A. Overton</obo:IAO_0000117>
@@ -109,6 +101,7 @@
     <!-- http://example.com/F344N -->
 
     <owl:Class rdf:about="http://example.com/F344N">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_10116"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An inbred strain of rat used in many scientific investigations.</obo:IAO_0000115>
         <obo:IAO_0000117 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">James A. Overton</obo:IAO_0000117>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">F 344/N</rdfs:label>
@@ -120,6 +113,18 @@
         <owl:annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An inbred strain of rat used in many scientific investigations.</owl:annotatedTarget>
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">James A. Overton</obo:IAO_0000119>
     </owl:Axiom>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_10090 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_10090"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_10116 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_10116"/>
     
 
 

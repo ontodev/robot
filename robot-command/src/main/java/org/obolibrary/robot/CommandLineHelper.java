@@ -225,6 +225,37 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given a command line and an IOHelper, return a list of base namespaces from the '--base-iri'
+   * option.
+   *
+   * @param line the command line to use
+   * @param ioHelper the IOHelper to resolve prefixes
+   * @return list of full base namespaces
+   */
+  public static List<String> getBaseNamespaces(CommandLine line, IOHelper ioHelper) {
+    List<String> bases = new ArrayList<>();
+    if (!line.hasOption("base-iri")) {
+      return bases;
+    }
+
+    Map<String, String> prefixMap = ioHelper.getPrefixes();
+    for (String base : line.getOptionValues("base-iri")) {
+      if (!base.contains(":")) {
+        String expanded = prefixMap.getOrDefault(base, null);
+        if (expanded != null) {
+          bases.add(expanded);
+        } else {
+          logger.error(String.format("Unknown prefix: '%s'", base));
+        }
+      } else {
+        bases.add(base);
+      }
+    }
+
+    return bases;
+  }
+
+  /**
    * Given a command line, an argument name, the boolean default value, and boolean if the arg is
    * optional, return the value of the command-line option 'name'.
    *
@@ -270,6 +301,10 @@ public class CommandLineHelper {
     }
     // Then get the actual types
     for (String axiom : axiomTypeFixedStrings) {
+      if (axiom.equalsIgnoreCase("internal") || axiom.equalsIgnoreCase("external")) {
+        // Ignore internal/external axiom options
+        continue;
+      }
       if (axiom.equalsIgnoreCase("all")) {
         axiomTypes.add(OWLAxiom.class);
       } else if (axiom.equalsIgnoreCase("logical")) {
@@ -435,10 +470,6 @@ public class CommandLineHelper {
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
-
-    for (String base : getOptionalValues(line, "base")) {
-      ioHelper.addBaseNamespace(base);
-    }
 
     return ioHelper;
   }
@@ -911,7 +942,6 @@ public class CommandLineHelper {
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
     o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
-    o.addOption(null, "base", true, "specify a base namespace");
     o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
