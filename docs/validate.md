@@ -7,7 +7,7 @@
 
 Validation rules are read from the second row of the CSV file as follows:
 
-|header A                        |header B                        |header C ...                 |
+|header A                        |header B                        |header C                     |
 |--------------------------------|--------------------------------|-----------------------------|
 |rule A1; rule A2; rule A3 ...   |rule B1; rule B2; rule B3 ...   |rule C1; rule C2; rule C3 ...|
 |data                            |data                            |data                         |
