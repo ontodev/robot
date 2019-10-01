@@ -18,9 +18,11 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLRuntimeException;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -31,16 +33,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Allow DL class expressions in data cells. Expression to use for testing:
- *   ('disease name' and (hasMaterialBasisIn some organism))
- *   - Look at the OWLDataFactory.getOWLClass(IRI iri) method, then apply a declaration axiom
- *     to that class (not 100% sure if this is needed), and also an "equivalent classes" axiom,
- *     to the ontology and inform the reasoner.
- *   - You might need to frontload all of this before initialising the reasoner.
- *     - Though try to see if updating the reasoner on the fly is not too much of a performance hit.
- *   - You should then undo the additions to the ontology, because otherwise they will exist when
- *     you chain commands.
- *     - Probably best to copy the ontology initially to avoid this.
+ * - Allow DL class expressions in data cells.
+ *   - Mostly done, but some testing needed, including basic regex parsing.
  * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
@@ -61,6 +55,9 @@ public class ValidateOperation {
 
   /** Output writer */
   private static Writer writer;
+
+  /** INSERT DOC HERE */
+  private static OWLDataFactory dataFactory;
 
   /** The ontology to use for validation */
   private static OWLOntology ontology;
@@ -241,9 +238,9 @@ public class ValidateOperation {
     checker.setIOHelper(new IOHelper());
     checker.addProvider(new SimpleShortFormProvider());
 
-    // Initialise an OWLDataFactory and add rdfs:label to the list of annotation properties which
+    // Initialise the dataFactory and add rdfs:label to the list of annotation properties which
     // will be looked up in the ontology by the quoted entity checker when finding names.
-    OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+    dataFactory = OWLManager.getOWLDataFactory();
     checker.addProperty(dataFactory.getRDFSLabel());
     checker.addAll(ValidateOperation.ontology);
 
@@ -380,9 +377,7 @@ public class ValidateOperation {
     return null;
   }
 
-  /**
-   * INSERT DOC HERE
-   */
+  /** INSERT DOC HERE */
   private static OWLClassExpression get_class_expression_from_string(String term) {
     OWLClassExpression ce;
     try {
@@ -595,8 +590,11 @@ public class ValidateOperation {
         // of the other when clauses, or the main clause, since the main clause may only be
         // evaluated when all of the when clauses are satisfied.
         writelog(
-            LogLevel.INFO, "When clause: \"%s %s %s\" is not satisfied.",
-            subject, whenRuleType, axiom);
+            LogLevel.INFO,
+            "When clause: \"%s %s %s\" is not satisfied.",
+            subject,
+            whenRuleType,
+            axiom);
         return false;
       } else {
         writelog(
@@ -607,12 +605,13 @@ public class ValidateOperation {
     return true;
   }
 
-  /**
-   * INSERT DOC HERE
-   */
+  /** INSERT DOC HERE */
   private static boolean execute_individual_query(
-      OWLNamedIndividual subjectIndividual, OWLClassExpression ruleCE, List<String> row,
-      String unsplitQueryType) throws Exception {
+      OWLNamedIndividual subjectIndividual,
+      OWLClassExpression ruleCE,
+      List<String> row,
+      String unsplitQueryType)
+      throws Exception {
 
     writelog(
         LogLevel.DEBUG,
@@ -625,7 +624,6 @@ public class ValidateOperation {
         ruleCE,
         row,
         unsplitQueryType);
-
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
@@ -650,17 +648,18 @@ public class ValidateOperation {
         }
       } else {
         // Spit out an error in this case but continue validating the other rules:
-        writelog(LogLevel.ERROR, "%s validation not possible for OWLNamedIndividual %s.",
-                 qType.getRuleType(), subjectIndividual);
+        writelog(
+            LogLevel.ERROR,
+            "%s validation not possible for OWLNamedIndividual %s.",
+            qType.getRuleType(),
+            subjectIndividual);
         continue;
       }
     }
     return false;
   }
 
-  /**
-   * INSERT DOC HERE
-   */
+  /** INSERT DOC HERE */
   private static boolean execute_class_query(
       OWLClass subjectClass, OWLClassExpression ruleCE, List<String> row, String unsplitQueryType)
       throws Exception {
@@ -676,7 +675,6 @@ public class ValidateOperation {
         ruleCE,
         row,
         unsplitQueryType);
-
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
@@ -714,22 +712,24 @@ public class ValidateOperation {
         }
       } else {
         // Spit out an error in this case but continue validating the other rules:
-        writelog(LogLevel.ERROR, "%s validation not possible for OWLClass %s.",
-                 qType.getRuleType(), subjectClass);
+        writelog(
+            LogLevel.ERROR,
+            "%s validation not possible for OWLClass %s.",
+            qType.getRuleType(),
+            subjectClass);
         continue;
       }
     }
     return false;
   }
 
-  /**
-   * INSERT DOC
-   */
+  /** INSERT DOC */
   private static boolean execute_generalized_class_query(
       OWLClassExpression subjectCE,
       OWLClassExpression ruleCE,
       List<String> row,
-      String unsplitQueryType) throws Exception {
+      String unsplitQueryType)
+      throws Exception {
 
     writelog(
         LogLevel.DEBUG,
@@ -743,21 +743,61 @@ public class ValidateOperation {
         row,
         unsplitQueryType);
 
+    // For each of the query types associated with the rule, check to see if the rule is satisfied
+    // thus interpreted. If it is, then we return true, since multiple query types are interpreted
+    // as a disjunction. If a query types is unrecognised, inform the user but continue on.
+    String[] queryTypes = split_on_pipes(unsplitQueryType);
+    for (String queryType : queryTypes) {
+      if (!rule_type_recognised(queryType)) {
+        writelog(
+            LogLevel.ERROR,
+            "Query type \"%s\" not recognised in rule \"%s\".",
+            queryType,
+            unsplitQueryType);
+        continue;
+      }
 
+      RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
+      if (qType == RTypeEnum.SUB) {
+        // Check to see if the subjectClass is a subclass of the given rule:
+        OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(subjectCE, ruleCE);
+        if (reasoner.isEntailed(axiom)) {
+          return true;
+        }
+      } else if (qType == RTypeEnum.SUPER) {
+        // Check to see if the subjectClass is a superclass of the given rule:
+        OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(ruleCE, subjectCE);
+        if (reasoner.isEntailed(axiom)) {
+          return true;
+        }
+      } else if (qType == RTypeEnum.EQUIV) {
+        OWLEquivalentClassesAxiom axiom =
+            dataFactory.getOWLEquivalentClassesAxiom(subjectCE, ruleCE);
+        if (reasoner.isEntailed(axiom)) {
+          return true;
+        }
+      } else {
+        // Spit out an error in this case but continue validating the other rules:
+        writelog(
+            LogLevel.ERROR,
+            "%s validation not possible for OWLClassExpression %s.",
+            qType.getRuleType(),
+            subjectCE);
+        continue;
+      }
+    }
     return false;
   }
 
   /**
-   * UPDATE THIS DOC:
-   * Given an IRI, a string describing a rule to query, a list of strings describing a row from the
-   * CSV, and a string representing a compound query type: Determine whether, for any of the query
-   * types specified in the compound string, the IRI is in the result set returned by a query of
-   * that type on the given rule. Return true if it is in one of these result sets, and false if it
-   * is not.
+   * UPDATE THIS DOC: Given an IRI, a string describing a rule to query, a list of strings
+   * describing a row from the CSV, and a string representing a compound query type: Determine
+   * whether, for any of the query types specified in the compound string, the IRI is in the result
+   * set returned by a query of that type on the given rule. Return true if it is in one of these
+   * result sets, and false if it is not.
    */
   private static boolean execute_query(
-      String subject, String rule, List<String> row, String unsplitQueryType)
-      throws Exception {
+      String subject, String rule, List<String> row, String unsplitQueryType) throws Exception {
 
     writelog(
         LogLevel.DEBUG,
@@ -790,17 +830,20 @@ public class ValidateOperation {
         try {
           OWLClass subjectClass = subjectEntity.asOWLClass();
           return execute_class_query(subjectClass, ruleCE, row, unsplitQueryType);
-        }
-        catch (OWLRuntimeException ee) {
+        } catch (OWLRuntimeException ee) {
           // This actually should not happen, since if the subject has a label it should either
           // be a named class or a named individual:
-          writelog(LogLevel.ERROR, "While validating \"%s\" against \"%s %s\", encountered: %s",
-                   subject, unsplitQueryType, rule, ee);
+          writelog(
+              LogLevel.ERROR,
+              "While validating \"%s\" against \"%s %s\", encountered: %s",
+              subject,
+              unsplitQueryType,
+              rule,
+              ee);
           return false;
         }
       }
-    }
-    else {
+    } else {
       // Try to get the class expression and run a generalised query on it:
       OWLClassExpression subjectCE = get_class_expression_from_string(subject);
       if (subjectCE == null) {
