@@ -226,8 +226,7 @@ public class FilterCommand implements Command {
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
     if (preserveStructure) {
-      axiomsToAdd.addAll(
-          RelatedObjectsHelper.spanGaps(inputOntology, OntologyHelper.getObjects(outputOntology)));
+      axiomsToAdd.addAll(RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
     }
 
     // Handle annotations for any referenced object

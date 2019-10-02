@@ -208,8 +208,8 @@ public class RemoveCommand implements Command {
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
     if (preserveStructure) {
-      manager.addAxioms(
-          ontology, RelatedObjectsHelper.spanGaps(copy, OntologyHelper.getObjects(ontology)));
+      relatedObjects = RelatedObjectsHelper.select(ontology, ioHelper, objects, "complement");
+      manager.addAxioms(ontology, RelatedObjectsHelper.spanGaps(copy, relatedObjects));
     }
 
     // Save the changed ontology and return the state
