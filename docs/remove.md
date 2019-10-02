@@ -96,6 +96,8 @@ Terms can also be selected from the set based on their annotations. This can be 
 - `CURIE='literal'`, e.g. `rdfs:label='example label'`
 - `CURIE='literal'^^datatype`, e.g. `rdfs:label='example label'^^xsd:string`
 - `CURIE='literal'@language`, e.g. `rdfs:label='example label'@en`
+- `CURIE=^^datatype`, e.g. `rdfs:label=^^xsd:string`
+- `CURIE=@language`, e.g. `rdfs:label=@en`
 - `CURIE=~'regex pattern'`, e.g. `rdfs:label=~'example.*'`
 
 It is also possible to select terms based on parts of their IRI. You may include an IRI pattern using one or more wildcard characters (`*` and/or `?`) enclosed in angle brackets. This MUST be enclosed in quotes to work on the command line.
