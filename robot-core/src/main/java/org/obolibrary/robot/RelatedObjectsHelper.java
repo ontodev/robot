@@ -834,6 +834,7 @@ public class RelatedObjectsHelper {
   protected static Set<OWLAnnotation> getAnnotations(
       OWLOntology ontology, IOHelper ioHelper, String annotation) throws Exception {
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+
     // Create an IRI from the CURIE
     String propertyID = annotation.split("=")[0];
     IRI propertyIRI = ioHelper.createIRI(propertyID);
@@ -841,6 +842,7 @@ public class RelatedObjectsHelper {
       throw new IllegalArgumentException(
           String.format(invalidIRIError, "annotation property", propertyID));
     }
+
     // Get the annotation property and string representation of value
     OWLAnnotationProperty annotationProperty = dataFactory.getOWLAnnotationProperty(propertyIRI);
     String value = annotation.split("=")[1];
@@ -947,12 +949,13 @@ public class RelatedObjectsHelper {
       OWLAnnotationProperty annotationProperty,
       String value)
       throws Exception {
-    // ioHelper.addPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
     OWLAnnotationValue annotationValue;
-    if (value.contains("^^")) {
+    Matcher datatypeMatcher = Pattern.compile("'(.*)'\\^\\^([a-z]*)").matcher(value);
+    Matcher langMatcher = Pattern.compile("'(.*)'@([a-z]*)").matcher(value);
+    if (datatypeMatcher.matches()) {
       // A datatype is given
-      String content = value.split("\\^\\^")[0].replace("'", "");
-      String dataTypeID = value.split("\\^\\^")[1];
+      String content = datatypeMatcher.group(1);
+      String dataTypeID = datatypeMatcher.group(2);
       IRI dataTypeIRI = ioHelper.createIRI(dataTypeID);
       if (dataTypeIRI == null) {
         throw new IllegalArgumentException(String.format(invalidIRIError, "datatype", dataTypeID));
@@ -989,8 +992,13 @@ public class RelatedObjectsHelper {
       } else {
         annotationValue = dataFactory.getOWLLiteral(content, dt);
       }
+    } else if (langMatcher.matches()) {
+      // A language is given - always a string literal
+      String content = langMatcher.group(1);
+      String lang = langMatcher.group(2);
+      annotationValue = dataFactory.getOWLLiteral(content, lang);
     } else {
-      // If a datatype isn't provided, default to string literal
+      // If a datatype isn't provided, default to string literal with no language
       annotationValue = dataFactory.getOWLLiteral(value.replace("'", ""));
     }
     return dataFactory.getOWLAnnotation(annotationProperty, annotationValue);
