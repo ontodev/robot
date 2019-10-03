@@ -21,10 +21,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
     ?entity rdfs:subPropertyOf oboInOwl:SubsetProperty .
   }
   FILTER EXISTS {
-    # some other axiom exists
     ?entity ?prop2 ?object .
     FILTER (?prop2 != rdf:type)
-    # ignore nary axioms
     FILTER (?prop2 != owl:equivalentClass)
     FILTER (?prop2 != owl:disjointWith)
     FILTER (?prop2 != owl:equivalentProperty)

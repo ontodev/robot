@@ -14,10 +14,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   FILTER NOT EXISTS { ?entity ?property ?value }
   FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER EXISTS {
-    # some other axiom exists
     ?entity ?prop2 ?object .
     FILTER (?prop2 != rdf:type)
-    # ignore nary axioms
     FILTER (?prop2 != owl:equivalentClass)
     FILTER (?prop2 != owl:disjointWith)
     FILTER (?prop2 != owl:equivalentProperty)
