@@ -17,7 +17,9 @@ administration,Hepacivirus C,NCBITaxon_11103,,,,PASS
 exposure without disease,Dengue virus,NCBITaxon_12637,,,,PASS
 disease,,,,,,PASS
 infectious disease,,,dengue hemorrhagic fever,DOID_12206,acute/recent onset,FAIL: material required
+disease or 'infectious challenge',,,'wheat allergy' or 'dengue hemorrhagic fever',DOID_12206 or DOID_3660,'acute/recent onset' or chronic,PASS
 infectious disease,Dengue virus,NCBITaxon_12637,,,acute/recent onset,FAIL: disease required
 infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever,DOID_12206,,FAIL: stage required
 infectious disease,Dengue virus,NCBITaxon_11060,dengue hemorrhagic fever,DOID_12206,acute/recent onset,FAIL: exposure material must match exposure material ID
 infectious disease,Dengue virus,NCBITaxon_12637,Dengue virus 2,NCBITaxon_11060,acute/recent onset,FAIL: disease value must be a disease
+administration or 'exposure without disease','Hepatovirus A' or blood,UBERON_0000178,,,chronic,"FAIL: exposure material must match exposure material ID, disease must be excluded when exposure process is not a subclass of disease"
