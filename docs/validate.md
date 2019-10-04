@@ -14,7 +14,9 @@ Validation rules are read from the second row of the CSV file as follows:
 |data                            |data                            |data                         |
 |...                             |                                |                             |
 
-Rules for a given column must be separated by semicolons. To comment out all of the rules for a given column, the list should be prefixed by '##'. To comment out individual rules from the rules belonging to a given column, prefix the rule with '#'. For example:
+* Data must be either a named class (e.g. 'Dengue virus'), a named individual (e.g. 'Dr. Smith'), or a general class expression (e.g. ('Dengue virus' or 'Dengue virus 2')). IRIs or short-form IRIs may be be used in lieu of labels if desired.
+
+* Rules for a given column must be separated by semicolons. To comment out all of the rules for a given column, the list should be prefixed by '##'. To comment out individual rules from the rules belonging to a given column, prefix the rule with '#'. For example:
 
 _To comment out all rules:_
 
@@ -32,7 +34,7 @@ _To comment out rule 2 but not rule 1:_
 
 Individual rules must be of the form:
 
-	<main-rule-type> <rule> [(when <when-class-expr-1> <when-rule-type-1> <when-rule-1> & ...)]
+	<main-rule-type> <rule> [(when <when-subject-expr-1> <when-rule-type-1> <when-rule-1> & ...)]
 
 Where:
 
@@ -62,13 +64,15 @@ Where:
 
 * For the rule types: `is-required` and `is-excluded`, `<rule>` is _optional_ and if not specified defaults to _true_.
 
-* For other rules types, `<rule>` is _mandatory_ and must be in the form of a description logic (DL) class expression query, in Manchester syntax.
+* For other rules types, `<rule>` is _mandatory_ and must be in the form of a description logic (DL) expression query, in Manchester syntax.
 
-* `<when-class-expr>` must describe an individual class, and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, or a wildcard.
+* `instance-of` and `direct-instance-of` may only be applied to named individuals. `subclass-of`, `direct-subclass-of`, `superclass-of`, `direct-superclass-of`, and `equivalent-to` may be applied only to classes or general class expressions.
+
+* `<when-subject-expr>` must describe an individual, a class, or generalised class expression and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, a general DL expression, or a wildcard.
 
 #### Wildcards
 
-Wildcards of the form `%n` can be specified with `<rule>`, `<when-rule>`, and `<when-class-expr>` clauses, and are used to indicate the class described by the data in the _nth_ cell of a given row. E.g. the rule:
+Wildcards of the form `%n` can be specified within `<rule>`, `<when-rule>`, and `<when-subject-expr>` clauses, and are used to indicate the entity described by the data in the _nth_ cell of a given row. E.g. the rule:
 
     subclass-of hasBasisIn in some %2 (when %1 subclass-of ('Dengue virus' or 'Dengue virus 2'))
 
