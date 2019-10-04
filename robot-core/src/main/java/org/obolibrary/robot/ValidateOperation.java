@@ -33,8 +33,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Allow DL class expressions in data cells.
- *   - Mostly done, but some testing needed, including basic regex parsing.
+ * - Update the validate.md markdown file if necessary.
  * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
@@ -222,8 +221,9 @@ public class ValidateOperation {
 
   /**
    * Given an ontology, a reasoner factory, and an output writer, initialise the static variables
-   * belonging to ValidateOperation: The shared ontology, output writer, manchester syntax class
-   * expression parser, and the teo maps from the ontology's IRIs to rdfs:labels and vice versa.
+   * belonging to ValidateOperation: The shared ontology, output writer, dataFactory, manchester
+   * syntax class expression parser, and the two maps from the ontology's IRIs to rdfs:labels and
+   * vice versa.
    */
   private static void initialize(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Writer writer) throws IOException {
@@ -233,13 +233,13 @@ public class ValidateOperation {
 
     // Robot's custom quoted entity checker will be used for parsing class expressions:
     QuotedEntityChecker checker = new QuotedEntityChecker();
-    // Add the class that will be used for IO and for handling short-form IRIs by the quoted entity
+    // Add the class that will be used for I/O and for handling short-form IRIs by the quoted entity
     // checker:
     checker.setIOHelper(new IOHelper());
     checker.addProvider(new SimpleShortFormProvider());
 
-    // Initialise the dataFactory and add rdfs:label to the list of annotation properties which
-    // will be looked up in the ontology by the quoted entity checker when finding names.
+    // Initialise the dataFactory and use it to add rdfs:label to the list of annotation properties
+    // which will be looked up in the ontology by the quoted entity checker when finding names.
     dataFactory = OWLManager.getOWLDataFactory();
     checker.addProperty(dataFactory.getRDFSLabel());
     checker.addAll(ValidateOperation.ontology);
@@ -290,7 +290,7 @@ public class ValidateOperation {
       // Rules are separated by semicolons:
       String[] rules = ruleString.split("\\s*;\\s*");
       for (String rule : rules) {
-        // Skip any rules that begin with a '#' (comments):
+        // Skip any rules that begin with a '#' (these are interpreted as commented out):
         if (rule.trim().startsWith("#")) {
           continue;
         }
@@ -311,7 +311,7 @@ public class ValidateOperation {
           }
         }
 
-        // Add, to the map, an empty list for the given ruleType if we haven't seen it before:
+        // Add, to the map, a new empty list for the given ruleType if we haven't seen it before:
         if (!ruleMap.containsKey(ruleType)) {
           ruleMap.put(ruleType, new ArrayList<String>());
         }
@@ -377,7 +377,10 @@ public class ValidateOperation {
     return null;
   }
 
-  /** INSERT DOC HERE */
+  /**
+   * Given a string describing a term from the ontology, parse it into a class expression expressed
+   * in terms of the ontology.
+   */
   private static OWLClassExpression get_class_expression_from_string(String term) {
     OWLClassExpression ce;
     try {
@@ -418,26 +421,17 @@ public class ValidateOperation {
       return null;
     }
 
-    String term = row.get(colIndex).trim();
-    if (term == null) {
+    String term = row.get(colIndex);
+    if (term == null || term.trim().equals("")) {
       writelog(
-          LogLevel.WARN,
+          LogLevel.INFO,
           "Failed to retrieve label from wildcard: %s. No term at position %d of this row.",
           wildcard,
           colIndex + 1);
       return null;
     }
 
-    if (term.equals("")) {
-      writelog(
-          LogLevel.WARN,
-          "Failed to retrieve label from wildcard: %s. Term at position %d of row is empty.",
-          wildcard,
-          colIndex + 1);
-      return null;
-    }
-
-    return term;
+    return term.trim();
   }
 
   /**
@@ -481,8 +475,8 @@ public class ValidateOperation {
    * Given a string describing the content of a rule and a string describing its rule type, return a
    * simple map entry such that the `key` for the entry is the main clause of the rule, and the
    * `value` for the entry is a list of the rule's when-clauses. Each when-clause is itself stored
-   * as an array of three strings, including the class to which the when-clause is to be applied,
-   * the rule type for the when clause, and the actual axiom to be validated against the class.
+   * as an array of three strings, including the subject to which the when-clause is to be applied,
+   * the rule type for the when clause, and the actual axiom to be validated against the subject.
    */
   private static SimpleEntry<String, List<String[]>> separate_rule(String rule, String ruleType) {
     // Check if there are any when clauses:
@@ -491,7 +485,7 @@ public class ValidateOperation {
     if (!m.find()) {
       // If there is no when clause, then just return back the rule string as it was passed with an
       // empty when clause list:
-      writelog(LogLevel.INFO, "No when-clauses found in rule: \"%s\".", rule);
+      writelog(LogLevel.DEBUG, "No when-clauses found in rule: \"%s\".", rule);
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
@@ -502,8 +496,8 @@ public class ValidateOperation {
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
-    whenClauseStr = m.group(1);
     // Extract the actual content of the when-clause.
+    whenClauseStr = m.group(1);
     whenClauseStr = whenClauseStr.substring("(when ".length(), whenClauseStr.length() - 1);
 
     // Don't fail just because there is some extra garbage at the end of the rule, but notify
@@ -514,11 +508,12 @@ public class ValidateOperation {
     }
 
     // Within each when clause, multiple subclauses separated by ampersands are allowed. Each
-    // subclass must be of the form: <Entity> <Rule-Type> <Axiom>.
-    // <Entity> is in the form of a (not necessaruly interpolated) label: either a contiguous string
-    // or a string with whitespace enclosed in single quotes. <Rule-Type> is a possibly hyphenated
-    // alphanumeric string. <Axiom> can take any form. Here we resolve each sub-clause of the
-    // when statement into a list of such triples.
+    // subclass must be of the form: <Entity> <Rule-Type> <Axiom>, where: <Entity> is a (not
+    // necessarily interpolated) string describing either a label or a generalised DL class
+    // expression involving labels, and any label names containing spaces are enclosed within
+    // single quotes; <Rule-Type> is a possibly hyphenated alphanumeric string (which corresponds
+    // to one of the rule types defined above in RTypeEnum); and <Axiom> can take any form.
+    // Here we resolve each sub-clause of the when statement into a list of such triples.
     ArrayList<String[]> whenClauses = new ArrayList();
     for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
       m = Pattern.compile("^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-\\|]+)\\s+(.*)$").matcher(whenClause);
@@ -553,13 +548,17 @@ public class ValidateOperation {
     return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
   }
 
-  /** INSERT DOC HERE */
+  /**
+   * Given a list of String arrays describing a list of when-clauses, and a list of Strings
+   * describing the row to which these when-clauses belong, validate the when-clauses one by one,
+   * returning false if any of them fails to be satisfied, and true if they are all satisfied.
+   */
   private static boolean validate_when_clauses(List<String[]> whenClauses, List<String> row)
       throws Exception {
 
     for (String[] whenClause : whenClauses) {
       String subject = interpolate(whenClause[0], row).trim();
-      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
+      writelog(LogLevel.DEBUG, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
 
       // If the subject term is blank, then skip this clause:
       if (subject.equals("")) {
@@ -574,7 +573,7 @@ public class ValidateOperation {
           writelog(
               LogLevel.ERROR,
               "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
-              whenRuleType,
+              whenClause,
               query_type_to_rtenum_map.keySet());
           return false;
         }
@@ -583,7 +582,7 @@ public class ValidateOperation {
       // Interpolate the axiom to validate and send the query to the reasoner:
       String axiom = whenClause[2];
       String interpolatedAxiom = interpolate(axiom, row);
-      writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
+      writelog(LogLevel.DEBUG, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
       if (!execute_query(subject, interpolatedAxiom, row, whenRuleType)) {
         // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
@@ -594,18 +593,29 @@ public class ValidateOperation {
             "When clause: \"%s %s %s\" is not satisfied.",
             subject,
             whenRuleType,
-            axiom);
+            interpolatedAxiom);
         return false;
       } else {
         writelog(
-            LogLevel.INFO, "Validated when clause \"%s %s %s\".", subject, whenRuleType, axiom);
+            LogLevel.INFO,
+            "Validated when clause \"%s %s %s\".",
+            subject,
+            whenRuleType,
+            interpolatedAxiom);
       }
     }
     // If we get to here, then all of the when clauses have been satisfied, so return true:
     return true;
   }
 
-  /** INSERT DOC HERE */
+  /**
+   * Given an OWLNamedIndividual describing a subject individual from the ontology, an
+   * OWLClassExpression describing a rule to query that subject individual against, a string
+   * representing the query types to use when evaluating the results of the query, and a list of
+   * strings describing a row from the CSV: Determine whether, for any of the given query types, the
+   * given subject is in the result set returned by the reasoner for that query type. Return true if
+   * it is in at least one of these result sets, and false if it is not.
+   */
   private static boolean execute_individual_query(
       OWLNamedIndividual subjectIndividual,
       OWLClassExpression ruleCE,
@@ -627,7 +637,8 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query types is unrecognised, inform the user but continue on.
+    // as a disjunction. If a query type is unrecognised or not applicable to an individual, inform
+    // the user but continue on.
     String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
@@ -659,7 +670,14 @@ public class ValidateOperation {
     return false;
   }
 
-  /** INSERT DOC HERE */
+  /**
+   * Given an OWLClass describing a subject class from the ontology, an OWLClassExpression
+   * describing a rule to query that subject class against, a string representing the query types to
+   * use when evaluating the results of the query, and a list of strings describing a row from the
+   * CSV: Determine whether, for any of the given query types, the given subject is in the result
+   * set returned by the reasoner for that query type. Return true if it is in at least one of these
+   * result sets, and false if it is not.
+   */
   private static boolean execute_class_query(
       OWLClass subjectClass, OWLClassExpression ruleCE, List<String> row, String unsplitQueryType)
       throws Exception {
@@ -678,7 +696,7 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query types is unrecognised, inform the user but continue on.
+    // as a disjunction. If a query type is unrecognised, inform the user but continue on.
     String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
@@ -723,7 +741,14 @@ public class ValidateOperation {
     return false;
   }
 
-  /** INSERT DOC */
+  /**
+   * Given an OWLClassExpression describing an unnamed subject class from the ontology, an
+   * OWLClassExpression describing a rule to query that subject class against, a string representing
+   * the query types to use when evaluating the results of the query, and a list of strings
+   * describing a row from the CSV: Determine whether, for any of the given query types, the given
+   * subject is in the result set returned by the reasoner for that query type. Return true if it is
+   * in at least one of these result sets, and false if it is not.
+   */
   private static boolean execute_generalized_class_query(
       OWLClassExpression subjectCE,
       OWLClassExpression ruleCE,
@@ -745,7 +770,7 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query types is unrecognised, inform the user but continue on.
+    // as a disjunction. If a query type is unrecognised, inform the user but continue on.
     String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
       if (!rule_type_recognised(queryType)) {
@@ -790,11 +815,11 @@ public class ValidateOperation {
   }
 
   /**
-   * UPDATE THIS DOC: Given an IRI, a string describing a rule to query, a list of strings
-   * describing a row from the CSV, and a string representing a compound query type: Determine
-   * whether, for any of the query types specified in the compound string, the IRI is in the result
-   * set returned by a query of that type on the given rule. Return true if it is in one of these
-   * result sets, and false if it is not.
+   * Given a string describing a subject term, a string describing a rule to query that subject term
+   * against, a string representing the query types to use when evaluating the results of the query,
+   * and a list of strings describing a row from the CSV: Determine whether, for any of the given
+   * query types, the given subject is in the result set returned by the reasoner for that query
+   * type. Return true if it is in at least one of these result sets, and false if it is not.
    */
   private static boolean execute_query(
       String subject, String rule, List<String> row, String unsplitQueryType) throws Exception {
@@ -818,9 +843,10 @@ public class ValidateOperation {
       return false;
     }
 
+    // Try to extract the label corresponding to the subject term:
     String subjectLabel = get_label_from_term(subject);
     if (subjectLabel != null) {
-      // figure out if it is an instance or a class and run the appropriate query
+      // Figure out if it is an instance or a class and run the appropriate query
       IRI subjectIri = label_to_iri_map.get(subjectLabel);
       OWLEntity subjectEntity = OntologyHelper.getEntity(ontology, subjectIri);
       try {
@@ -844,7 +870,8 @@ public class ValidateOperation {
         }
       }
     } else {
-      // Try to get the class expression and run a generalised query on it:
+      // If no label corresponding to the subject term can be found, then try and parse it as a
+      // class expression and run a generalised query on it:
       OWLClassExpression subjectCE = get_class_expression_from_string(subject);
       if (subjectCE == null) {
         writelog(LogLevel.ERROR, "Unable to parse subject \"%s\".", subject);
@@ -855,10 +882,9 @@ public class ValidateOperation {
   }
 
   /**
-   * Given a string describing a rule, a rule type of the PRESENCE type, and a string representing a
-   * cell from the CSV, determine whether the cell satisfies the given presence rule: E.g. Return
-   * false if the rule requires content to be present in the cell but the cell is empty, or if the
-   * rule requires the cell to be empty but there is content in it.
+   * Given a string describing a rule, a rule of the type PRESENCE, and a string representing a cell
+   * from the CSV, determine whether the cell satisfies the given presence rule (e.g. is-required,
+   * is-empty).
    */
   private static void validate_presence_rule(String rule, RTypeEnum rType, String cell)
       throws IOException {
@@ -887,7 +913,8 @@ public class ValidateOperation {
 
     // If the restriction isn't "true" then there is nothing to do. Just return:
     if (Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1) {
-      writelog(LogLevel.INFO, "Nothing to validate for rule: \"%s %s\"", rType.getRuleType(), rule);
+      writelog(
+          LogLevel.DEBUG, "Nothing to validate for rule: \"%s %s\"", rType.getRuleType(), rule);
       return;
     }
 
@@ -910,11 +937,12 @@ public class ValidateOperation {
       default:
         writelog(
             LogLevel.ERROR,
-            "Presence validation of rule type: \"%s\" is not yet implemented.",
+            "%s validation of rule type: \"%s\" is not yet implemented.",
+            rType.getRuleCat(),
             rType.getRuleType());
         return;
     }
-    writelog(LogLevel.INFO, "Validated rule \"%s %s\".", rType.getRuleType(), rule);
+    writelog(LogLevel.INFO, "Validated \"%s %s\" against \"%s\".", rType.getRuleType(), rule, cell);
   }
 
   /**
@@ -949,7 +977,7 @@ public class ValidateOperation {
 
     // Evaluate and validate any when clauses for this rule first:
     if (!validate_when_clauses(separatedRule.getValue(), row)) {
-      writelog(LogLevel.INFO, "Not all when clauses have been satisfied. Not running main clause");
+      writelog(LogLevel.DEBUG, "Not all when clauses have been satisfied. Skipping main clause");
       return;
     }
 
@@ -967,20 +995,20 @@ public class ValidateOperation {
 
     // If the cell contents are empty, just return to the caller silently (if the cell is not
     // expected to be empty, this will have been caught by one of the presence rules in the
-    // previous step, assuming such a rule exists for the column).
+    // previous step, assuming such a rule is constraining the column).
     if (cell.trim().equals("")) return;
 
     // Interpolate the axiom that the cell will be validated against:
     String axiom = separatedRule.getKey();
     String interpolatedAxiom = interpolate(axiom, row);
-    writelog(LogLevel.INFO, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
+    writelog(LogLevel.DEBUG, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
     // Send the query to the reasoner:
     boolean result = execute_query(cell, interpolatedAxiom, row, ruleType);
     if (!result) {
-      writeout("Validation failed for rule: \"%s %s %s\".", cell, ruleType, axiom);
+      writeout("Validation failed for rule: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
     } else {
-      writelog(LogLevel.INFO, "Validated: \"%s %s %s\".", cell, ruleType, axiom);
+      writelog(LogLevel.INFO, "Validated: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
     }
   }
 
@@ -1003,31 +1031,32 @@ public class ValidateOperation {
 
     // Extract the header and rules rows from the CSV data and map the column names to their
     // associated lists of rules:
-    List<String> header = csvData.remove(0);
-    List<String> allRules = csvData.remove(0);
+    List<String> headerRow = csvData.remove(0);
+    List<String> rulesRow = csvData.remove(0);
     HashMap<String, Map<String, List<String>>> headerToRuleMap = new HashMap();
-    for (int i = 0; i < header.size(); i++) {
-      headerToRuleMap.put(header.get(i), parse_rules(allRules.get(i)));
+    for (int i = 0; i < headerRow.size(); i++) {
+      headerToRuleMap.put(headerRow.get(i), parse_rules(rulesRow.get(i)));
     }
 
     // Validate the data row by row, and column by column by column within a row. csv_row_index and
     // csv_col_index are class variables that will later be used to provide information to the user
-    // about the location of any errors encountered.
+    // about the current location within the CSV file when logging info and reporting errors.
     for (csv_row_index = 0; csv_row_index < csvData.size(); csv_row_index++) {
       List<String> row = csvData.get(csv_row_index);
-      for (csv_col_index = 0; csv_col_index < header.size(); csv_col_index++) {
+      for (csv_col_index = 0; csv_col_index < headerRow.size(); csv_col_index++) {
         // Get the rules for the current column:
-        String colName = header.get(csv_col_index);
+        String colName = headerRow.get(csv_col_index);
         Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
-        // If there are no rules for this column, then skip this cell (the cell is part of a
-        // "comment" column):
+        // If there are no rules for this column, then skip this cell (the entire column to which
+        // the cell belongs is interpreted as 'commented out'):
         if (colRules.isEmpty()) continue;
 
-        // Get the contents of the current cell:
+        // Get all the data entries contained within the current cell:
         String[] cellData = split_on_pipes(row.get(csv_col_index).trim());
 
-        // For each of the rules applicable to this column, validate the cell against it:
+        // For each of the rules applicable to this column, validate each entry in the cell
+        // against it:
         for (String ruleType : colRules.keySet()) {
           for (String rule : colRules.get(ruleType)) {
             for (String data : cellData) {
