@@ -9,4 +9,10 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'bin/*.jar', fingerprint: true
+        }
+    }
 }
