@@ -1,5 +1,9 @@
 package org.obolibrary.robot;
 
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.AbstractMap.SimpleEntry;
@@ -10,6 +14,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+/*
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.XSSFComment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+*/
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
@@ -33,14 +49,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Update the validate.md markdown file if necessary.
+ * - Write output to Excel (don't remove the stdout output; the excel will be an additional option).
  * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
  * - Make the reasoner choice configurable via the command line (see the way other commands do it)
- * - Eventually extend to Excel
  * - Eventually need to tweak the command line options to be more consistent with the other commands
  *   and work seamlessly with robot's chaining feature.
+ * - * see if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
  */
 
 /**
@@ -54,6 +70,12 @@ public class ValidateOperation {
 
   /** Output writer */
   private static Writer writer;
+
+  /** Workbook for Excel (.xlsx) output */
+  private static Workbook workbook;
+
+  /** Outputstream for Excel file */
+  private static OutputStream xlsxFileOutputStream;
 
   /** INSERT DOC HERE */
   private static OWLDataFactory dataFactory;
@@ -193,20 +215,127 @@ public class ValidateOperation {
   }
 
   /**
+   * INSERT DOC HERE
+   */
+  private static void add_xlsx_row_to_top(List<String> data) throws IOException {
+    //System.out.println("The data is " + data);
+    Sheet worksheet = workbook.getSheet("Report");
+    worksheet.createRow(worksheet.getLastRowNum() + 1);
+    worksheet.shiftRows(0, worksheet.getLastRowNum(), 1);
+
+    Row row = worksheet.createRow(0);
+    for (int i = 0; i < data.size(); i++) {
+      Cell cell = row.createCell(i);
+      cell.setCellValue(data.get(i));
+      worksheet.autoSizeColumn(i);
+    }
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void write_xlsx(String cellString) throws IOException {
+    Sheet worksheet;
+    if (workbook.getNumberOfSheets() == 0) {
+      worksheet = workbook.createSheet("Report");
+    } else {
+      worksheet = workbook.getSheet("Report");
+    }
+
+    Row row = worksheet.getRow(csv_row_index);
+    if (row == null) {
+      row = worksheet.createRow(csv_row_index);
+    }
+
+    Cell cell = row.getCell(csv_col_index);
+    if (cell == null) {
+      cell = row.createCell(csv_col_index);
+    }
+
+    cell.setCellValue(cellString);
+    worksheet.autoSizeColumn(csv_col_index);
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void report_xlsx(boolean showCoords, String format, Object... positionalArgs)
+      throws IOException {
+
+    Sheet worksheet = workbook.getSheet("Report");
+    if (worksheet == null) {
+      writelog(LogLevel.ERROR, "No sheet called 'Report' in workbook.");
+      return;
+    }
+
+    Row row = worksheet.getRow(csv_row_index);
+    if (row == null) {
+      writelog(LogLevel.ERROR, "Row %d does not exist in worksheet.", csv_row_index);
+      return;
+    }
+
+    Cell cell = row.getCell(csv_col_index);
+    if (cell == null) {
+      writelog(LogLevel.ERROR, "Cell %d of row %d does not exist in worksheet.",
+               csv_col_index, csv_row_index);
+      return;
+    }
+
+    CellStyle style = workbook.createCellStyle();
+    style.setFillBackgroundColor(IndexedColors.RED.getIndex());
+    style.setFillPattern(FillPatternType.FINE_DOTS);
+    Font font = workbook.createFont();
+    font.setColor(IndexedColors.WHITE.getIndex());
+    style.setFont(font);
+    cell.setCellStyle(style);
+
+    String commentString = String.format(format, positionalArgs);
+
+    // If there is already a comment on this cell, prefix the current comment string with the old
+    // one, and then remove the Comment object from the cell:
+    Comment comment = cell.getCellComment();
+    if (comment != null) {
+      commentString = comment.getString().getString() + "; " + commentString;
+      cell.removeCellComment();
+    }
+
+    // When the comment box is visible, have it show in a 1x10 space
+    CreationHelper factory = workbook.getCreationHelper();
+    Drawing drawing = worksheet.createDrawingPatriarch();
+    ClientAnchor anchor = factory.createClientAnchor();
+    anchor.setCol1(cell.getColumnIndex());
+    anchor.setCol2(cell.getColumnIndex()+1);
+    anchor.setRow1(row.getRowNum());
+    anchor.setRow2(row.getRowNum()+10);
+
+    comment = drawing.createCellComment(anchor);
+    RichTextString str = factory.createRichTextString(commentString);
+    comment.setString(str);
+    comment.setAuthor("Apache POI");
+    // Assign the comment to the cell
+    cell.setCellComment(comment);
+  }
+
+  /**
    * Given the string `format` and a number of formatting variables, use the formatting variables to
    * fill in the format string in the manner of C's printf function, and write the string to the
    * Writer object that belongs to ValidateOperation. If the parameter `showCoords` is true, then
    * include the current row and column number in the output string.
    */
-  private static void writeout(boolean showCoords, String format, Object... positionalArgs)
+  private static void report(boolean showCoords, String format, Object... positionalArgs)
       throws IOException {
 
-    String outStr = "";
-    if (showCoords) {
-      outStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
+    if (workbook != null) {
+      report_xlsx(showCoords, format, positionalArgs);
     }
-    outStr += String.format(format, positionalArgs);
-    writer.write(outStr + "\n");
+    else {
+      String outStr = "";
+      if (showCoords) {
+        outStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
+      }
+      outStr += String.format(format, positionalArgs);
+      writer.write(outStr + "\n");
+    }
   }
 
   /**
@@ -215,8 +344,8 @@ public class ValidateOperation {
    * Writer object that belongs to ValidateOperation, including the current row and column number in
    * the output string.
    */
-  private static void writeout(String format, Object... positionalArgs) throws IOException {
-    writeout(true, format, positionalArgs);
+  private static void report(String format, Object... positionalArgs) throws IOException {
+    report(true, format, positionalArgs);
   }
 
   /**
@@ -226,10 +355,21 @@ public class ValidateOperation {
    * vice versa.
    */
   private static void initialize(
-      OWLOntology ontology, OWLReasonerFactory reasonerFactory, Writer writer) throws IOException {
+      OWLOntology ontology, OWLReasonerFactory reasonerFactory, String outputPath)
+      throws IOException {
+
+    // Initialise the writer to be the given output path, or STDOUT if that is left unspecified.
+    // If the output path ends in ".xlsx" then also initialise an excel workbook.
+    if (outputPath == null) {
+      writer = new PrintWriter(System.out);
+    } else if (outputPath.toLowerCase().endsWith(".xlsx")) {
+      workbook = new XSSFWorkbook();
+      xlsxFileOutputStream = new FileOutputStream(outputPath);
+    } else {
+      writer = new FileWriter(outputPath);
+    }
 
     ValidateOperation.ontology = ontology;
-    ValidateOperation.writer = writer;
 
     // Robot's custom quoted entity checker will be used for parsing class expressions:
     QuotedEntityChecker checker = new QuotedEntityChecker();
@@ -256,8 +396,17 @@ public class ValidateOperation {
   }
 
   /** Deallocate any static variables that need to be deallocated. */
-  private static void tearDown() {
+  private static void tearDown() throws IOException {
+    if (xlsxFileOutputStream != null) {
+      workbook.write(xlsxFileOutputStream);
+      xlsxFileOutputStream.close();
+    }
+
     reasoner.dispose();
+    if (writer != null) {
+      writer.flush();
+      writer.close();
+    }
   }
 
   /** Given a map from IRIs to strings, return its inverse. */
@@ -921,14 +1070,14 @@ public class ValidateOperation {
     switch (rType) {
       case REQUIRED:
         if (cell.trim().equals("")) {
-          writeout(
+          report(
               "Cell is empty but rule: \"%s %s\" does not allow this.", rType.getRuleType(), rule);
           return;
         }
         break;
       case EXCLUDED:
         if (!cell.trim().equals("")) {
-          writeout(
+          report(
               "Cell is non-empty (\"%s\") but rule: \"%s %s\" does not allow this.",
               cell, rType.getRuleType(), rule);
           return;
@@ -1006,7 +1155,7 @@ public class ValidateOperation {
     // Send the query to the reasoner:
     boolean result = execute_query(cell, interpolatedAxiom, row, ruleType);
     if (!result) {
-      writeout("Validation failed for rule: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
+      report("Validation failed for rule: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
     } else {
       writelog(LogLevel.INFO, "Validated: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
     }
@@ -1023,11 +1172,11 @@ public class ValidateOperation {
       List<List<String>> csvData,
       OWLOntology ontology,
       OWLReasonerFactory reasonerFactory,
-      Writer writer)
+      String outputPath)
       throws Exception {
 
     // Initialize the shared variables:
-    initialize(ontology, reasonerFactory, writer);
+    initialize(ontology, reasonerFactory, outputPath);
 
     // Extract the header and rules rows from the CSV data and map the column names to their
     // associated lists of rules:
@@ -1044,16 +1193,24 @@ public class ValidateOperation {
     for (csv_row_index = 0; csv_row_index < csvData.size(); csv_row_index++) {
       List<String> row = csvData.get(csv_row_index);
       for (csv_col_index = 0; csv_col_index < headerRow.size(); csv_col_index++) {
+        // Get the contents of the current cell:
+        String cellString = row.get(csv_col_index);
+
+        // If there is an XLSX workbook to write to, write the contents of the current cell to it:
+        if (workbook != null) {
+          write_xlsx(cellString);
+        }
+
+        // Extract all the data entries contained within the current cell:
+        String[] cellData = split_on_pipes(cellString.trim());
+
         // Get the rules for the current column:
         String colName = headerRow.get(csv_col_index);
         Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
-        // If there are no rules for this column, then skip this cell (the entire column to which
-        // the cell belongs is interpreted as 'commented out'):
+        // If there are no rules for this column, then skip the validation for this cell (the entire
+        // column to which the cell belongs is interpreted as 'commented out'):
         if (colRules.isEmpty()) continue;
-
-        // Get all the data entries contained within the current cell:
-        String[] cellData = split_on_pipes(row.get(csv_col_index).trim());
 
         // For each of the rules applicable to this column, validate each entry in the cell
         // against it:
@@ -1066,6 +1223,13 @@ public class ValidateOperation {
         }
       }
     }
+
+    // If we are writing to an XLSX file, add the rules and header rows to the top of the worksheet:
+    if (workbook != null) {
+      //add_xlsx_row_to_top(rulesRow);
+      //add_xlsx_row_to_top(headerRow);
+    }
+
     tearDown();
   }
 }

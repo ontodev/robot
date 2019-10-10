@@ -1,8 +1,5 @@
 package org.obolibrary.robot;
 
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -108,23 +105,13 @@ public class ValidateCommand implements Command {
     OWLOntology ontology = ioHelper.loadOntology(owlPath);
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
-    // Initialise the writer to be the given output path, or STDOUT if that is left unspecified:
-    Writer writer;
-    if (outputPath != null) {
-      writer = new FileWriter(outputPath);
-    } else {
-      writer = new PrintWriter(System.out);
-    }
-
     // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
     // but for now just use HermiT.
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
 
     // Finally call the validator:
-    ValidateOperation.validate(csvData, ontology, reasonerFactory, writer);
+    ValidateOperation.validate(csvData, ontology, reasonerFactory, outputPath);
 
-    writer.flush();
-    writer.close();
     return state;
   }
 }
