@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -35,13 +37,21 @@ public class ValidateOperationTest extends CoreTest {
     OWLOntology ontology = ioHelper.loadOntology(owlStream);
     assert (ontology != null);
 
-    StringWriter writer = new StringWriter();
-    OWLReasonerFactory reasonerFactory = new ReasonerFactory();
-    ValidateOperation.validate(csvData, ontology, reasonerFactory, writer);
+    // Redirect STDOUT to an OutputStream wrapped in a PrintStream:
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    PrintStream prStream = new PrintStream(outStream);
+    System.setOut(prStream);
 
-    String expectedPath = this.getClass().getResource("/immune_exposures-result.txt").getPath();
-    assertNotEquals(expectedPath, "");
-    String expectedResult = FileUtils.readFileToString(new File(expectedPath));
-    assertEquals(writer.toString(), expectedResult);
+    // Call validate() with an outputPath of null to send output to STDOUT:
+    OWLReasonerFactory reasonerFactory = new ReasonerFactory();
+    ValidateOperation.validate(csvData, ontology, reasonerFactory, null);
+
+    // Compare the output with the contents of a file in the resources directory which contains
+    // the output we expect to get:
+    String fileWithExpectedContents =
+        this.getClass().getResource("/immune_exposures-result.txt").getPath();
+    assertNotEquals(fileWithExpectedContents, "");
+    String expectedResult = FileUtils.readFileToString(new File(fileWithExpectedContents));
+    assertEquals(outStream.toString(), expectedResult);
   }
 }
