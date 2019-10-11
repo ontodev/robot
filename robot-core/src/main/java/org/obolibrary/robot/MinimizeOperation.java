@@ -10,15 +10,27 @@ import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** */
+/**
+ * Minimize a class hierarchy.
+ *
+ * @author <a href="mailto:rbca.jackson@gmail.com">Rebecca Jackson</a>
+ */
 public class MinimizeOperation {
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(MinimizeOperation.class);
 
   /**
-   * @param ontology
-   * @param threshold
+   * Given an ontology, a threshold, and a set of precious IRIs (or empty set), minimize the input
+   * ontology's class hierarchy based on the threshold. The threshold is the minimum number of child
+   * classes that an intermediate class should have. Any intermediate class that has less than the
+   * threshold number of children will be removed and its children will become children of the next
+   * level up. Bottom-level and top-level classes are not removed. Any class with an IRI in the
+   * precious set is not removed.
+   *
+   * @param ontology OWLOntology to minimize
+   * @param threshold minimum number of child classes
+   * @param precious set of IRIs to keep
    */
   public static void minimize(OWLOntology ontology, int threshold, Set<IRI> precious)
       throws OWLOntologyCreationException {
@@ -26,8 +38,21 @@ public class MinimizeOperation {
         OWLManager.createOWLOntologyManager().copyOntology(ontology, OntologyCopy.DEEP);
     logger.debug("Classes before minimizing: " + ontology.getClassesInSignature().size());
 
-    minimizeAll(ontology, threshold, precious);
+    Set<OWLObject> removeClasses = getClassesToRemove(ontology, threshold, precious);
 
+    // Remove axioms based on classes
+    // Get all axioms that involve these classes
+    // Continue to get remove classes until there's no more to remove
+    while (!removeClasses.isEmpty()) {
+      Set<OWLAxiom> axiomsToRemove =
+          RelatedObjectsHelper.getPartialAxioms(ontology, removeClasses, null);
+      OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      manager.removeAxioms(ontology, axiomsToRemove);
+      // Repeat until there's no more to remove
+      removeClasses = getClassesToRemove(ontology, threshold, precious);
+    }
+
+    // Maintain hierarchy between remaining classes
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     manager.addAxioms(
         ontology, RelatedObjectsHelper.spanGaps(copy, OntologyHelper.getObjects(ontology)));
@@ -35,22 +60,48 @@ public class MinimizeOperation {
   }
 
   /**
-   * @param ontology
-   * @param threshold
-   * @param precious
+   * Given an ontology, a threshold, and a set of precious IRIs (or empty set), return the classes
+   * to remove to minimize the class hierarchy. Top-level and bottom-level classes are not removed.
+   * Any class with a precious IRI is not removed.
+   *
+   * @param ontology OWLOntology to minimize
+   * @param threshold minimum number of child classes
+   * @param precious set of IRIs to keep
    */
-  private static void minimizeAll(OWLOntology ontology, int threshold, Set<IRI> precious) {
+  private static Set<OWLObject> getClassesToRemove(
+      OWLOntology ontology, int threshold, Set<IRI> precious) {
     Set<OWLClass> classes = ontology.getClassesInSignature();
     Set<OWLObject> remove = new HashSet<>();
 
     for (OWLClass cls : classes) {
+      if (cls.isOWLThing()) {
+        // Ignore OWL Thing
+        continue;
+      }
+
+      // Check for superclasses
+      Collection<OWLClassExpression> superclasses = EntitySearcher.getSuperClasses(cls, ontology);
+      boolean hasNamedSuperclass = false;
+      for (OWLClassExpression expr : superclasses) {
+        if (!expr.isAnonymous()) {
+          hasNamedSuperclass = true;
+          break;
+        }
+      }
+
+      if (!hasNamedSuperclass) {
+        // Also ignore if there are no named superclasses
+        // Or just no superclasses in general
+        continue;
+      }
+
       Collection<OWLClassExpression> subclasses = EntitySearcher.getSubClasses(cls, ontology);
       for (OWLClassExpression expr : subclasses) {
         if (expr.isAnonymous()) {
           continue;
         }
         if (!subclasses.isEmpty()
-            && subclasses.size() <= threshold
+            && subclasses.size() < threshold
             && !precious.contains(cls.getIRI())) {
           // If the class has subclasses, but less (or equal to) subclasses
           // than the threshold add it to the set of classes to be removed
@@ -59,56 +110,6 @@ public class MinimizeOperation {
       }
     }
 
-    if (!remove.isEmpty()) {
-      Set<OWLAxiom> axiomsToRemove = RelatedObjectsHelper.getPartialAxioms(ontology, remove, null);
-      OWLOntologyManager manager = ontology.getOWLOntologyManager();
-      manager.removeAxioms(ontology, axiomsToRemove);
-    }
-  }
-
-  /**
-   * @param ontology
-   * @param threshold
-   * @return
-   */
-  private static boolean continueMinimizing(
-      OWLOntology ontology, int threshold, Set<IRI> precious) {
-    // Find any classes that have threshold number of children
-    Set<OWLObject> classes = new HashSet<>();
-
-    // For each class in the ontology, check if it has subclasses
-    // If it has less than the threshold number of subclasses
-    // And the subclasses have NO children
-    // *THAT* class can be dissolved
-    for (OWLClass c : ontology.getClassesInSignature()) {
-      boolean cannotDelete = false;
-      Set<OWLClass> subClasses = new HashSet<>();
-      for (OWLClassExpression expr : EntitySearcher.getSubClasses(c, ontology)) {
-        if (!expr.isAnonymous()) {
-          OWLClass subSubClass = expr.asOWLClass();
-          subClasses.add(subSubClass);
-        }
-      }
-      for (OWLClass sc : subClasses) {
-        if (!EntitySearcher.getSubClasses(sc, ontology).isEmpty()) {
-          cannotDelete = true;
-        }
-      }
-      if (subClasses.size() <= threshold && !cannotDelete && !precious.contains(c.getIRI())) {
-        classes.add(c);
-      }
-    }
-
-    Set<Class<? extends OWLAxiom>> axTypes = new HashSet<>();
-    axTypes.add(OWLAxiom.class);
-    Set<OWLAxiom> axiomsToRemove =
-        RelatedObjectsHelper.getPartialAxioms(ontology, classes, axTypes);
-
-    logger.debug(String.format("Removing %d classes", classes.size()));
-
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    manager.removeAxioms(ontology, axiomsToRemove);
-
-    return !axiomsToRemove.isEmpty();
+    return remove;
   }
 }

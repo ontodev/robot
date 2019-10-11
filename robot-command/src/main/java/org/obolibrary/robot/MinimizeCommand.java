@@ -30,7 +30,8 @@ public class MinimizeCommand implements Command {
     o.addOption("i", "input", true, "mirror ontology from a file");
     o.addOption("I", "input-iri", true, "mirror ontology from an IRI");
     o.addOption("t", "threshold", true, "threshold to minimize");
-    o.addOption("r", "precious", true, "set of classes to keep");
+    o.addOption("r", "precious-term", true, "CURIE or IRI of a class to keep");
+    o.addOption("R", "precious-terms", true, "set of CURIEs or IRIs of classes to keep");
     o.addOption("o", "output", true, "save minimized ontology to a file");
     options = o;
   }
@@ -107,7 +108,8 @@ public class MinimizeCommand implements Command {
       throw new IllegalArgumentException(String.format(thresholdError, thresholdString));
     }
 
-    Set<IRI> precious = CommandLineHelper.getTerms(ioHelper, line, null, "precious");
+    Set<IRI> precious =
+        CommandLineHelper.getTerms(ioHelper, line, "precious-term", "precious-terms");
 
     MinimizeOperation.minimize(ontology, threshold, precious);
 
