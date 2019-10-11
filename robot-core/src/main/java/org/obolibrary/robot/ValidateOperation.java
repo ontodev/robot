@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 */
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -217,23 +219,6 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
-  private static void add_xlsx_row_to_top(List<String> data) throws IOException {
-    //System.out.println("The data is " + data);
-    Sheet worksheet = workbook.getSheet("Report");
-    worksheet.createRow(worksheet.getLastRowNum() + 1);
-    worksheet.shiftRows(0, worksheet.getLastRowNum(), 1);
-
-    Row row = worksheet.createRow(0);
-    for (int i = 0; i < data.size(); i++) {
-      Cell cell = row.createCell(i);
-      cell.setCellValue(data.get(i));
-      worksheet.autoSizeColumn(i);
-    }
-  }
-
-  /**
-   * INSERT DOC HERE
-   */
   private static void write_xlsx(String cellString) throws IOException {
     Sheet worksheet;
     if (workbook.getNumberOfSheets() == 0) {
@@ -253,7 +238,6 @@ public class ValidateOperation {
     }
 
     cell.setCellValue(cellString);
-    worksheet.autoSizeColumn(csv_col_index);
   }
 
   /**
@@ -1226,8 +1210,11 @@ public class ValidateOperation {
 
     // If we are writing to an XLSX file, add the rules and header rows to the top of the worksheet:
     if (workbook != null) {
-      //add_xlsx_row_to_top(rulesRow);
-      //add_xlsx_row_to_top(headerRow);
+      Sheet worksheet = workbook.getSheet("Report");
+      Row row = worksheet.getRow(0);
+      for (int i = 0; i < row.getLastCellNum(); i++) {
+        worksheet.autoSizeColumn(i);
+      }
     }
 
     tearDown();
