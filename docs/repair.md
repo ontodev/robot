@@ -6,3 +6,10 @@ ROBOT can repair certain problems encountered in ontologies. So far, this is lim
       --input need-of-repair.owl \
       --output results/repaired.owl
       
+
+By default, annotation axioms are not migrated to replacement classes. However, this can be enabled for a list of annotation properties passed either as arguments to `--annotation-property` or in a term file `--annotation-properties-file`:
+
+    robot repair \
+      --input xref-need-of-repair.obo \
+      --annotation-property oboInOwl:hasDbXref \
+      --output results/xref-repaired.obo
