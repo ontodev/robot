@@ -323,6 +323,10 @@ An IRI cannot be created from the provided ID. This is most likely because the I
 
 The valid `PROPERTY_TYPE` values are: `subproperty`, `equivalent`, `disjoint`, and (for object properties only) `inverse`.
 
+### Row Length Error
+
+A row in the template has more columns than the header row. Check the row given in the error message and make sure all columns are in the correct location.
+
 ### Template File Error
 
 The template cannot be found in the current directory. Make sure the file exists and your path is correct.

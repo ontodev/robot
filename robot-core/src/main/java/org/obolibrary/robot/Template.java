@@ -129,7 +129,12 @@ public class Template {
   /** Error message when more than one logical type is used in PROPERTY_TYPE. */
   private static final String propertyTypeSplitError =
       NS
-          + "PROPERTY TYPE SPLIT ERROR thee SPLIT functionality should not be used for PROPERTY_TYPE in column %d in table \"%s\".";
+          + "PROPERTY TYPE SPLIT ERROR the SPLIT functionality should not be used for PROPERTY_TYPE in column %d in table \"%s\".";
+
+  /** Error message when a row has more columns than the header columns. */
+  private static final String rowLengthError =
+      NS
+          + "ROW LENGTH ERROR row %d in table '%s' has %d columns, which is more than the expected %d.";
 
   /** Error message when property characteristic not valid. */
   private static final String unknownCharacteristicError =
@@ -616,6 +621,10 @@ public class Template {
    */
   private void processRow(List<String> row) throws Exception {
     rowNum++;
+    if (row.size() > headers.size()) {
+      throw new Exception(String.format(rowLengthError, rowNum, name, row.size(), headers.size()));
+    }
+
     String id = null;
     try {
       id = row.get(idColumn);
@@ -2063,61 +2072,6 @@ public class Template {
       }
     }
     return annotations;
-  }
-
-  /**
-   * Given a row as a list of strings, the template string, and the number of the next column, maybe
-   * get axiom annotations on existing axiom annotations.
-   *
-   * @param row list of strings
-   * @param nextTemplate template string for the column
-   * @param nextColumn next column number
-   * @return set of OWLAnnotations, or an empty set
-   * @throws Exception on issue getting the OWLAnnotations
-   */
-  private Set<OWLAnnotation> getAxiomAnnotations(
-      List<String> row, String nextTemplate, int nextColumn) throws Exception {
-    // template must not be blank
-    // and it must start with >
-    if (!nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
-      // Remove unknown number of >
-      while (nextTemplate.startsWith(">")) {
-        nextTemplate = nextTemplate.substring(1);
-      }
-
-      String nextValue;
-      try {
-        nextValue = row.get(nextColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // No value, nothing else to add
-        return new HashSet<>();
-      }
-
-      if (!nextValue.trim().isEmpty()) {
-        // First get the set of axiom annotations
-        Set<OWLAnnotation> nextAnnotations =
-            TemplateHelper.getAnnotations(
-                name, checker, nextTemplate, nextValue, rowNum, nextColumn);
-
-        // Maybe get another level of axiom annotations
-        Set<OWLAnnotation> nextNextAnnotations = maybeGetAxiomAnnotations(row, nextColumn);
-        if (nextNextAnnotations.isEmpty()) {
-          // Empty means nothing to add
-          return nextAnnotations;
-        }
-
-        // Add those additional axiom annotations
-        Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
-        for (OWLAnnotation annotation : nextAnnotations) {
-          fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextNextAnnotations));
-        }
-        return fixedAnnotations;
-      }
-    }
-    // if the template doesn't start with >, it is not an axiom annotation
-    // or maybe the value cell was empty
-    // return an empty set
-    return new HashSet<>();
   }
 
   /**
