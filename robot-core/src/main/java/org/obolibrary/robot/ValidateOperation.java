@@ -103,6 +103,9 @@ public class ValidateOperation {
   /** The column number of the CSV data currently being processed */
   private static int csv_col_index;
 
+  /** The number of non-data rows in the XLSX file */
+  private static int xlsx_non_data_rows = 0;
+
   /**
    * An enum representation of the different categories of rules. We distinguish between queries,
    * which involve queries to a reasoner, and presence rules, which check for the existence of
@@ -219,6 +222,26 @@ public class ValidateOperation {
   /**
    * INSERT DOC HERE
    */
+  private static void add_xlsx_non_data_row(List<String> nonDataRow) throws Exception {
+    Sheet worksheet;
+    if (workbook.getNumberOfSheets() == 0) {
+      worksheet = workbook.createSheet("Report");
+    } else {
+      worksheet = workbook.getSheet("Report");
+    }
+
+    int xlsxRowIndexToAdd = xlsx_non_data_rows;
+    Row row = worksheet.createRow(xlsxRowIndexToAdd);
+    for (int i = 0; i < nonDataRow.size(); i++) {
+      Cell cell = row.createCell(i);
+      cell.setCellValue(nonDataRow.get(i));
+    }
+    xlsx_non_data_rows++;
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
   private static void write_xlsx(String cellString) throws IOException {
     Sheet worksheet;
     if (workbook.getNumberOfSheets() == 0) {
@@ -227,9 +250,9 @@ public class ValidateOperation {
       worksheet = workbook.getSheet("Report");
     }
 
-    Row row = worksheet.getRow(csv_row_index);
+    Row row = worksheet.getRow(xlsx_non_data_rows + csv_row_index);
     if (row == null) {
-      row = worksheet.createRow(csv_row_index);
+      row = worksheet.createRow(xlsx_non_data_rows + csv_row_index);
     }
 
     Cell cell = row.getCell(csv_col_index);
@@ -252,16 +275,17 @@ public class ValidateOperation {
       return;
     }
 
-    Row row = worksheet.getRow(csv_row_index);
+    Row row = worksheet.getRow(xlsx_non_data_rows + csv_row_index);
     if (row == null) {
-      writelog(LogLevel.ERROR, "Row %d does not exist in worksheet.", csv_row_index);
+      writelog(LogLevel.ERROR, "Row %d does not exist in worksheet.",
+               xlsx_non_data_rows + csv_row_index);
       return;
     }
 
     Cell cell = row.getCell(csv_col_index);
     if (cell == null) {
       writelog(LogLevel.ERROR, "Cell %d of row %d does not exist in worksheet.",
-               csv_col_index, csv_row_index);
+               csv_col_index, xlsx_non_data_rows + csv_row_index);
       return;
     }
 
@@ -298,6 +322,17 @@ public class ValidateOperation {
     comment.setAuthor("Apache POI");
     // Assign the comment to the cell
     cell.setCellComment(comment);
+  }
+
+  /**
+   * INSERT DOC HERE
+   */
+  private static void auto_size_worksheet_columns() {
+    Sheet worksheet = workbook.getSheet("Report");
+    Row row = worksheet.getRow(0);
+    for (int i = 0; i < row.getLastCellNum(); i++) {
+      worksheet.autoSizeColumn(i);
+    }
   }
 
   /**
@@ -1171,6 +1206,12 @@ public class ValidateOperation {
       headerToRuleMap.put(headerRow.get(i), parse_rules(rulesRow.get(i)));
     }
 
+    // If we are writing to an XLSX workbook, then add the header and rule rows to it here:
+    if (workbook != null) {
+      add_xlsx_non_data_row(headerRow);
+      add_xlsx_non_data_row(rulesRow);
+    }
+
     // Validate the data row by row, and column by column by column within a row. csv_row_index and
     // csv_col_index are class variables that will later be used to provide information to the user
     // about the current location within the CSV file when logging info and reporting errors.
@@ -1210,11 +1251,7 @@ public class ValidateOperation {
 
     // If we are writing to an XLSX file, add the rules and header rows to the top of the worksheet:
     if (workbook != null) {
-      Sheet worksheet = workbook.getSheet("Report");
-      Row row = worksheet.getRow(0);
-      for (int i = 0; i < row.getLastCellNum(); i++) {
-        worksheet.autoSizeColumn(i);
-      }
+      auto_size_worksheet_columns();
     }
 
     tearDown();
