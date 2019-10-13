@@ -2,32 +2,32 @@ package org.obolibrary.robot;
 
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.IOException;
 import java.io.Writer;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-/*
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.XSSFComment;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.Comment;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Drawing;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-*/
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Write output to Excel (don't remove the stdout output; the excel will be an additional option).
  * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
@@ -104,7 +103,7 @@ public class ValidateOperation {
   private static int csv_col_index;
 
   /** The number of non-data rows in the XLSX file */
-  private static int xlsx_non_data_rows = 0;
+  private static int xlsx_non_data_row_index = 0;
 
   /**
    * An enum representation of the different categories of rules. We distinguish between queries,
@@ -219,43 +218,30 @@ public class ValidateOperation {
     writelog(true, logLevel, format, positionalArgs);
   }
 
-  /**
-   * INSERT DOC HERE
-   */
-  private static void add_xlsx_non_data_row(List<String> nonDataRow) throws Exception {
-    Sheet worksheet;
-    if (workbook.getNumberOfSheets() == 0) {
-      worksheet = workbook.createSheet("Report");
-    } else {
-      worksheet = workbook.getSheet("Report");
-    }
-
-    int xlsxRowIndexToAdd = xlsx_non_data_rows;
-    Row row = worksheet.createRow(xlsxRowIndexToAdd);
-    for (int i = 0; i < nonDataRow.size(); i++) {
+  /** Given a list of strings representing a row from the CSV, add it to the XLSX workbook. */
+  private static void add_non_data_row_to_xlsx(List<String> rowToAdd) throws Exception {
+    Sheet worksheet = workbook.getSheetAt(0);
+    Row row = worksheet.createRow(xlsx_non_data_row_index++);
+    for (int i = 0; i < rowToAdd.size(); i++) {
       Cell cell = row.createCell(i);
-      cell.setCellValue(nonDataRow.get(i));
+      cell.setCellValue(rowToAdd.get(i));
     }
-    xlsx_non_data_rows++;
   }
 
   /**
-   * INSERT DOC HERE
+   * Given a string describing the contents of a cell in the input CSV, add those contents to the
+   * corresponding cell in the XLSX workbook.
    */
   private static void write_xlsx(String cellString) throws IOException {
-    Sheet worksheet;
-    if (workbook.getNumberOfSheets() == 0) {
-      worksheet = workbook.createSheet("Report");
-    } else {
-      worksheet = workbook.getSheet("Report");
-    }
-
-    Row row = worksheet.getRow(xlsx_non_data_rows + csv_row_index);
+    Sheet worksheet = workbook.getSheetAt(0);
+    Row row = worksheet.getRow(xlsx_non_data_row_index + csv_row_index);
+    // Create a new row if the one we need to add to doesn't already exist in the XLSX workbook:
     if (row == null) {
-      row = worksheet.createRow(xlsx_non_data_rows + csv_row_index);
+      row = worksheet.createRow(xlsx_non_data_row_index + csv_row_index);
     }
 
     Cell cell = row.getCell(csv_col_index);
+    // Create a new cell if the one we need to add to doesn't already exist in the row:
     if (cell == null) {
       cell = row.createCell(csv_col_index);
     }
@@ -264,31 +250,33 @@ public class ValidateOperation {
   }
 
   /**
-   * INSERT DOC HERE
+   * Given the string `format` and a number of formatting variables, use the formatting variables to
+   * fill in the format string in the manner of C's printf function, add a comment to XLSX workbook
+   * with that string at the current location, and highlight the cell at that location in red.
    */
-  private static void report_xlsx(boolean showCoords, String format, Object... positionalArgs)
-      throws IOException {
+  private static void report_xlsx(String format, Object... positionalArgs) throws IOException {
 
-    Sheet worksheet = workbook.getSheet("Report");
-    if (worksheet == null) {
-      writelog(LogLevel.ERROR, "No sheet called 'Report' in workbook.");
-      return;
-    }
-
-    Row row = worksheet.getRow(xlsx_non_data_rows + csv_row_index);
+    Sheet worksheet = workbook.getSheetAt(0);
+    Row row = worksheet.getRow(xlsx_non_data_row_index + csv_row_index);
     if (row == null) {
-      writelog(LogLevel.ERROR, "Row %d does not exist in worksheet.",
-               xlsx_non_data_rows + csv_row_index);
+      writelog(
+          LogLevel.ERROR,
+          "Row %d does not exist in worksheet.",
+          xlsx_non_data_row_index + csv_row_index);
       return;
     }
 
     Cell cell = row.getCell(csv_col_index);
     if (cell == null) {
-      writelog(LogLevel.ERROR, "Cell %d of row %d does not exist in worksheet.",
-               csv_col_index, xlsx_non_data_rows + csv_row_index);
+      writelog(
+          LogLevel.ERROR,
+          "Cell %d of row %d does not exist in worksheet.",
+          csv_col_index,
+          xlsx_non_data_row_index + csv_row_index);
       return;
     }
 
+    // Set the style of the current cell to a red background with a white font:
     CellStyle style = workbook.createCellStyle();
     style.setFillBackgroundColor(IndexedColors.RED.getIndex());
     style.setFillPattern(FillPatternType.FINE_DOTS);
@@ -297,10 +285,10 @@ public class ValidateOperation {
     style.setFont(font);
     cell.setCellStyle(style);
 
+    // Attach a Comment object to the cell. If one for this cell already exists, extract the old
+    // comment string from it and prepend it to the new comment string, then remove the old Comment
+    // object and create a new one for the combined comment string and attach to the current cell.
     String commentString = String.format(format, positionalArgs);
-
-    // If there is already a comment on this cell, prefix the current comment string with the old
-    // one, and then remove the Comment object from the cell:
     Comment comment = cell.getCellComment();
     if (comment != null) {
       commentString = comment.getString().getString() + "; " + commentString;
@@ -312,42 +300,30 @@ public class ValidateOperation {
     Drawing drawing = worksheet.createDrawingPatriarch();
     ClientAnchor anchor = factory.createClientAnchor();
     anchor.setCol1(cell.getColumnIndex());
-    anchor.setCol2(cell.getColumnIndex()+1);
+    anchor.setCol2(cell.getColumnIndex() + 1);
     anchor.setRow1(row.getRowNum());
-    anchor.setRow2(row.getRowNum()+10);
+    anchor.setRow2(row.getRowNum() + 10);
 
     comment = drawing.createCellComment(anchor);
     RichTextString str = factory.createRichTextString(commentString);
     comment.setString(str);
-    comment.setAuthor("Apache POI");
+    comment.setAuthor("Robot Validate Operation");
     // Assign the comment to the cell
     cell.setCellComment(comment);
   }
 
   /**
-   * INSERT DOC HERE
-   */
-  private static void auto_size_worksheet_columns() {
-    Sheet worksheet = workbook.getSheet("Report");
-    Row row = worksheet.getRow(0);
-    for (int i = 0; i < row.getLastCellNum(); i++) {
-      worksheet.autoSizeColumn(i);
-    }
-  }
-
-  /**
    * Given the string `format` and a number of formatting variables, use the formatting variables to
    * fill in the format string in the manner of C's printf function, and write the string to the
-   * Writer object that belongs to ValidateOperation. If the parameter `showCoords` is true, then
-   * include the current row and column number in the output string.
+   * Writer object (or XLSX workbook) that belongs to ValidateOperation. If the parameter
+   * `showCoords` is true, then include the current row and column number in the output string.
    */
   private static void report(boolean showCoords, String format, Object... positionalArgs)
       throws IOException {
 
-    if (workbook != null) {
-      report_xlsx(showCoords, format, positionalArgs);
-    }
-    else {
+    if (workbook != null && showCoords) {
+      report_xlsx(format, positionalArgs);
+    } else {
       String outStr = "";
       if (showCoords) {
         outStr += String.format("At row: %d, column: %d: ", csv_row_index + 1, csv_col_index + 1);
@@ -368,21 +344,25 @@ public class ValidateOperation {
   }
 
   /**
-   * Given an ontology, a reasoner factory, and an output writer, initialise the static variables
-   * belonging to ValidateOperation: The shared ontology, output writer, dataFactory, manchester
-   * syntax class expression parser, and the two maps from the ontology's IRIs to rdfs:labels and
-   * vice versa.
+   * Given an ontology, a reasoner factory, and an output path, initialise the static variables
+   * belonging to ValidateOperation: The shared ontology, output writer (or XLSX workbook),
+   * dataFactory, manchester syntax class expression parser, and the two maps from the ontology's
+   * IRIs to rdfs:labels and vice versa.
    */
   private static void initialize(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, String outputPath)
       throws IOException {
 
-    // Initialise the writer to be the given output path, or STDOUT if that is left unspecified.
-    // If the output path ends in ".xlsx" then also initialise an excel workbook.
+    // If the output path ends in ".xlsx" then initialise an XLSX workbook, otherwise initialise an
+    // output writer to direct output to STDOUT if the output path is unspecified, or to the file
+    // indicated by the output path if it is specified.
     if (outputPath == null) {
       writer = new PrintWriter(System.out);
     } else if (outputPath.toLowerCase().endsWith(".xlsx")) {
       workbook = new XSSFWorkbook();
+      // Create a single worksheet inside the workbook and initialise an output stream to which we
+      // will later write the contents of the workbook.
+      workbook.createSheet();
       xlsxFileOutputStream = new FileOutputStream(outputPath);
     } else {
       writer = new FileWriter(outputPath);
@@ -1117,7 +1097,7 @@ public class ValidateOperation {
    * Given a string describing a cell from the CSV, a string describing a rule to be applied against
    * that cell, a string describing the type of that rule, and a list of strings describing the row
    * containing the given cell, validate the cell, indicating any validation errors via the output
-   * writer.
+   * writer (or XLSX workbook).
    */
   private static void validate_rule(String cell, String rule, List<String> row, String ruleType)
       throws Exception, IOException {
@@ -1182,10 +1162,11 @@ public class ValidateOperation {
 
   /**
    * Given a list of lists of strings representing the rows of a CSV, an ontology, a reasoner
-   * factory, and an output writer: Extract the rules to use for validation from the CSV, create a
+   * factory, and an output path: Extract the rules to use for validation from the CSV, create a
    * reasoner from the given reasoner factory, and then validate the CSV using those extracted
    * rules, row by row and column by column within each row, using the reasoner when required to
-   * perform lookups to the ontology, indicating any validation errors via the output writer.
+   * perform lookups to the ontology, indicating any validation errors via the output writer (or an
+   * XLSX workbook in the output path ends with the suffix ".xlsx").
    */
   public static void validate(
       List<List<String>> csvData,
@@ -1208,8 +1189,8 @@ public class ValidateOperation {
 
     // If we are writing to an XLSX workbook, then add the header and rule rows to it here:
     if (workbook != null) {
-      add_xlsx_non_data_row(headerRow);
-      add_xlsx_non_data_row(rulesRow);
+      add_non_data_row_to_xlsx(headerRow);
+      add_non_data_row_to_xlsx(rulesRow);
     }
 
     // Validate the data row by row, and column by column by column within a row. csv_row_index and
@@ -1247,11 +1228,6 @@ public class ValidateOperation {
           }
         }
       }
-    }
-
-    // If we are writing to an XLSX file, add the rules and header rows to the top of the worksheet:
-    if (workbook != null) {
-      auto_size_worksheet_columns();
     }
 
     tearDown();

@@ -2,12 +2,11 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
