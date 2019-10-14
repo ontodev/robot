@@ -40,16 +40,6 @@ public class QueryOperation {
   private static final String queryTypeError = NS + "QUERY TYPE ERROR unknown query type: %s";
 
   /**
-   * Error message when a JenaException is thrown from reading file to model due to a syntax error.
-   * Expects: file name, error message.
-   */
-  private static final String syntaxError = NS + "SYNTAX ERROR %s cannot be read:\n%s";
-
-  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
-  protected static final String tdbFormatError =
-      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
-
-  /**
    * Load an ontology into a DatasetGraph. The ontology is not changed.
    *
    * @deprecated use {@link #loadOntologyAsDataset(OWLOntology)} instead.

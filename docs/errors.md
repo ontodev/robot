@@ -14,7 +14,7 @@ Sometimes when working with very large ontologies, the JVM will run out of memor
 
 ---
 
-## Command & Option Errors
+## Command and Option Errors
 
 ### Boolean Value Error
 
@@ -154,3 +154,7 @@ If at least one term exists in the ontology, the task can still proceed, but the
 ### Null IRI Error
 
 Occurs when an import ontology does not have a valid IRI.
+
+### Syntax Error
+
+This error occurs when an ontology cannot be loaded from file to a TDB dataset (using `--tdb true`). Review your ontology to ensure it is valid RDF/XML or TTL syntax. Jena also supports [some other formats](https://jena.apache.org/documentation/io/#formats).

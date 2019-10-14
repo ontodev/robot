@@ -1,5 +1,13 @@
 # Global Options
 
+## Contents
+
+1. [Java Options](#java-options)
+2. [Prefixes (`--prefix`, `--add-prefix`)](#prefixes)
+3. [XML Catalogs (`--catalog`)](#xml-catalogs)
+4. [Logging (`-v`, `-vv`, `-vvv`)](#logging)
+5. [XML Entities (`--xml-entities`)](#xml-entities)
+
 ## Java Options
 
 Java options can be used to configure the JVM that ROBOT runs on. A full list of the Java command line options can be found by entering `java` on the command line. Non-standard options can be found by entering `java -X`.
@@ -88,7 +96,7 @@ For example, you may want to [`merge`](/merge) a set of edited import ontologies
 
 If a catalog file is specified and cannot be located, the ontology will be loaded without a catalog file. Similarly, if you do not provide a `--catalog` and the `catalog-v001.xml` file does not exist in your working directory, the ontology will be loaded without a catalog file. Finally, if the catalog specifies an import file that does not exist, the command will fail.
 
-## Verbose
+## Logging
 
 ROBOT logs a variety of messages that are typically hidden from the user. When something goes wrong, a detailed exception message is thrown. If the exception message does not provide enough details, you can run the command again with the `-vvv` (very-very-verbose) flag to see the stack trace.
 

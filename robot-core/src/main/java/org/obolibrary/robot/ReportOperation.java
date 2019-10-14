@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -240,24 +239,6 @@ public class ReportOperation {
   }
 
   /**
-   * Given an input path, an output path (or null), and a map of options, report on the ontology
-   * using the rules within the profile specified by the options and write results to the output
-   * path. Ontology is loaded to dataset backed on disk. The labels option is not supported with
-   * TDB.
-   *
-   * @param inputPath String path of ontology to load
-   * @param outputPath String path to write report file to, or null
-   * @param options map of report options
-   * @return false if there are violations at or above the fail-on level, true otherwise
-   * @throws Exception on any reporting error
-   */
-  public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
-      throws Exception {
-    Report report = getTDBReport(inputPath, options);
-    return processReport(report, outputPath, options);
-  }
-
-  /**
    * Given an ontology, an IOHelper, and a map of options, create a Report object and run the report
    * queries specified in a profile (from options, or default). Return the completed Report object.
    *
@@ -315,6 +296,24 @@ public class ReportOperation {
   }
 
   /**
+   * Given an input path, an output path (or null), and a map of options, report on the ontology
+   * using the rules within the profile specified by the options and write results to the output
+   * path. Ontology is loaded to dataset backed on disk. The labels option is not supported with
+   * TDB.
+   *
+   * @param inputPath String path of ontology to load
+   * @param outputPath String path to write report file to, or null
+   * @param options map of report options
+   * @return false if there are violations at or above the fail-on level, true otherwise
+   * @throws Exception on any reporting error
+   */
+  public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
+      throws Exception {
+    Report report = getTDBReport(inputPath, options);
+    return processReport(report, outputPath, options);
+  }
+
+  /**
    * Given an input path to an ontology and a map of options, create a Report object and run (on TDB
    * dataset) the report queries specified in a profile (from options, or default). Return the
    * completed Report object. The labels option is not supported with TDB.
@@ -322,17 +321,15 @@ public class ReportOperation {
    * @param inputPath path to load triples to TDB
    * @param options map of report options
    * @return Report object with violation details
-   * @throws Exception on any query or reporting error
+   * @throws Exception on any loading, query, or reporting error
    */
   public static Report getTDBReport(String inputPath, Map<String, String> options)
       throws Exception {
     String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
-    System.out.println(String.format("Loading dataset to %s", tdbDir));
-    long start = System.currentTimeMillis();
+
+    // Load dataset
+    // Fail if the input path is not in RDF/XML or TTL
     Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
-    long finish = System.currentTimeMillis();
-    long delta = finish - start;
-    System.out.println(String.format("Dataset loaded in %d seconds", delta));
 
     Report report;
     boolean keepMappings = OptionsHelper.optionIsTrue(options, "keep-tdb-mappings");
@@ -352,10 +349,6 @@ public class ReportOperation {
     }
 
     return report;
-  }
-
-  public static float round(float d, int decimalPlace) {
-    return BigDecimal.valueOf(d).setScale(decimalPlace, BigDecimal.ROUND_HALF_UP).floatValue();
   }
 
   /**
@@ -401,10 +394,7 @@ public class ReportOperation {
     // Create the report object (maybe using labels)
     Report report = new Report(labelMap);
 
-    int c = 0;
-    int queryCount = queries.keySet().size();
     for (String queryName : queries.keySet()) {
-      c++;
       String fullQueryString = queries.get(queryName);
       String queryString;
       // Remove any comments
@@ -416,18 +406,11 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      long start = System.currentTimeMillis();
       List<Violation> violations = getViolations(dataset, queryName, queryString, options);
-      long finish = System.currentTimeMillis();
-      long delta = finish - start;
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      System.out.println(
-          String.format(
-              "Query '%s' (%d/%d) completed in %d ms with %d violations",
-              queryName, c, queryCount, delta, violations.size()));
       report.addViolations(queryName, profile.get(queryName), violations);
     }
 
@@ -490,6 +473,7 @@ public class ReportOperation {
     } else {
       result = report.toTSV();
     }
+
     if (outputPath != null) {
       // If output is provided, write to that file
       try (FileWriter fw = new FileWriter(outputPath);
@@ -772,7 +756,7 @@ public class ReportOperation {
       dataset.begin(ReadWrite.READ);
       try {
         ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolations(queryName, violationSet, limit);
+        return getViolationsFromResults(queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
         // And warn that report may be incomplete
@@ -788,7 +772,7 @@ public class ReportOperation {
     } else {
       try {
         ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolations(queryName, violationSet, limit);
+        return getViolationsFromResults(queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
         // And warn that report may be incomplete
@@ -802,20 +786,23 @@ public class ReportOperation {
   }
 
   /**
-   * @param queryName
-   * @param violationSet
-   * @param limit
-   * @return
-   * @throws Exception
+   * Given a query name, a result set, and a limit for results, return a list of Violation objects
+   * for those results.
+   *
+   * @param queryName name of query that produced result set
+   * @param violationSet ResultSet of query results
+   * @param limit number of results to limit, or null for no limit
+   * @return list of Violation objects
+   * @throws Exception on malformed query
    */
-  private static List<Violation> getViolations(
+  private static List<Violation> getViolationsFromResults(
       String queryName, ResultSet violationSet, Integer limit) throws Exception {
     List<Violation> violations = new ArrayList<>();
 
     // Counter for stopping at limit
     int c = 0;
     while (violationSet.hasNext()) {
-      if (limit != null && limit < c) {
+      if (limit != null && limit <= c) {
         // Stop checking violations
         break;
       }

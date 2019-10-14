@@ -215,7 +215,7 @@ public class IOHelper {
    * @param tdbDir directory to remove
    * @return boolean indicating success
    */
-  public static boolean cleanTDB(String tdbDir) {
+  protected static boolean cleanTDB(String tdbDir) {
     File dir = new File(tdbDir);
     boolean success = true;
     if (dir.exists()) {

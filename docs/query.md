@@ -1,5 +1,14 @@
 # Query
 
+## Contents
+
+1. [Overview](#overview)
+2. [Handling Imports (`--use-graphs`)](#handling-imports)
+3. [SPARQL UPDATE (`--update`)](#sparql-update)
+4. [Executing on Disk (`--tdb`)](#executing-on-disk)
+
+## Overview
+
 ROBOT can execute <a href="https://www.w3.org/TR/rdf-sparql-query/" target="_blank">SPARQL</a>
 queries against an ontology. The [verify](/verify) command is similar, but is used to test that an ontology conforms to the specified rules.
 
@@ -28,7 +37,7 @@ Instead of specifying one or more pairs (query file, output file), you can speci
       --queries cell_part_ask.sparql \
       --output-dir results/
 
-## Imports
+## Handling Imports
 
 By default, `query` ignores import statements. To include all imports as named graphs, add `--use-graphs true`. 
 
@@ -40,9 +49,9 @@ The example above also uses the [global](/global)  `--catalog` option to specify
 
 The names of the graphs correspond to the ontology IRIs of the imports. If the import does not have an ontology IRI, one will be automatically generated. Running `query` with the `-vv` flag will print the names of all graphs as they are added.
 
-## Update
+## SPARQL UPDATE
 
-The `query` command also supports [SPARQL Update](https://www.w3.org/TR/sparql11-update/) to insert and delete triples.
+The `query` command also supports [SPARQL UPDATE](https://www.w3.org/TR/sparql11-update/) to insert and delete triples.
 
     robot query --input nucleus.owl \
       --update update.ru \
@@ -68,7 +77,7 @@ For very large ontologies, it may be beneficial to load the ontology to a mappin
     robot query --input nucleus.ttl --tdb true \
      --query cell_part.sparql results/cell_part.csv
  
-Please note that this will only work with ontologies in RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`). Attempting to load an ontology in a different syntax will result in a [Syntax Error](/query#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
+Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
 
 Once the query operation is complete, ROBOT will remove the TDB directory. If you are performing many query commands on one ontology, you can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory. This will greatly reduce the execution time of subsequent queries.
 
@@ -93,11 +102,3 @@ The query was not able to be parsed. Often, this is as a result of an undefined 
 ### Query Type Error
 
 Each SPARQL query should be a SELECT, ASK, DESCRIBE, or CONSTRUCT.
-
-### Syntax Error
-
-This error occurs when an ontology cannot be loaded from file to a TDB dataset. Review your ontology to ensure it is valid RDF/XML or TTL syntax.
-
-### TDB Format Error
-
-`--tdb true` can only be used with RDF/XML (`.owl` or `.rdf`) or TTL syntax (`.ttl`).

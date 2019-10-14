@@ -126,7 +126,6 @@ public class ReportCommand implements Command {
     } else {
       state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
       OWLOntology ontology = state.getOntology();
-
       success = ReportOperation.report(ontology, ioHelper, outputPath, reportOptions);
     }
 

@@ -1,5 +1,15 @@
 # Remove
 
+## Contents
+
+1. [Overview](#overview)
+2. [Preserving the Structure (`--preserve-structure`)](#preserving-the-structure)
+2. [Selectors (`--select`)](#selectors)
+3. [Axioms (`--aximos`)](#axioms)
+4. [Examples](#examples)
+
+## Overview
+
 The `remove` command allows you to remove selected axioms from an ontology. The [`filter`](/filter) command is the opposite of `remove`, allowing you to keep only selected axioms. To use these powerful commands effectively, some familiarity with OWL and OWLAPI is helpful.
 
 `remove` works in four steps:
@@ -36,6 +46,8 @@ Then `remove --term A --term R --term C --select "self parents" --axioms all --s
     - the objects for `ax1` are `{A, B}`, and at least one of these is in the target set, so `ax1` is matched and removed
     - the objects for `ax2` are `{A, R, C}` (with `R some C` excluded), and at least one of these is in the target set, so `ax2` is matched and removed
     - the objects for `ax3` are `{D, E}`, and none of these are in the target set, so `ax3` is not matched and is not removed
+
+## Preserving the Structure
 
 The `remove` and `filter` operations maintains structural integrity by default: lineage is maintained, and gaps will be filled where classes have been removed. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
 

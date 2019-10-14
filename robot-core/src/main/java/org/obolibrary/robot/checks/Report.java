@@ -145,7 +145,7 @@ public class Report {
    */
   @Deprecated
   public Report(OWLOntology ontology) throws IOException {
-    // Ontology doesn't do anything without labels
+    // Ontology input doesn't do anything without labels
     ioHelper = new IOHelper();
   }
 
@@ -159,7 +159,7 @@ public class Report {
    */
   @Deprecated
   public Report(OWLOntology ontology, IOHelper ioHelper) {
-    // Ontology doesn't do anything without labels
+    // Ontology input doesn't do anything without labels
     this.ioHelper = ioHelper;
   }
 
@@ -262,7 +262,7 @@ public class Report {
    * exists.
    *
    * @param ruleName rule name to get number of violations for
-   * @return
+   * @return number of violations for given rule name
    */
   public Integer getViolationCount(String ruleName) throws Exception {
     if (info.containsKey(ruleName)) {

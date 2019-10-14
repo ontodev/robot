@@ -206,6 +206,7 @@ public class QueryCommand implements Command {
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
+
     try {
       runQueries(line, dataset, queries);
     } finally {
@@ -259,9 +260,15 @@ public class QueryCommand implements Command {
     String catalogPath = state.getCatalogPath();
     if (catalogPath == null) {
       String ontologyPath = state.getOntologyPath();
-      File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
-      if (catalogFile != null) {
-        catalogPath = catalogFile.getPath();
+      // If loading from IRI, ontologyPath might be null
+      // In which case, we cannot get a catalog
+      if (ontologyPath == null) {
+        catalogPath = null;
+      } else {
+        File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
+        if (catalogFile != null) {
+          catalogPath = catalogFile.getPath();
+        }
       }
     }
     // Make sure the file exists
