@@ -370,6 +370,7 @@ public class ReportOperation {
     options.put("tdb", "true");
 
     String profilePath = OptionsHelper.getOption(options, "profile", null);
+
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
     Map<IRI, String> labelMap = null;
     if (useLabels) {
