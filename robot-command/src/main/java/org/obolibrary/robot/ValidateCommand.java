@@ -3,7 +3,6 @@ package org.obolibrary.robot;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
@@ -22,8 +21,9 @@ public class ValidateCommand implements Command {
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("c", "csv", true, "CSV file containing the data to validate");
-    o.addOption("w", "owl", true, "OWL file containing the ontology data to validate against");
+    o.addOption("t", "table", true, "file containing the data (in CSV or TSV format) to validate");
+    o.addOption("i", "input", true, "input file containing the ontology data to validate against");
+    o.addOption("r", "reasoner", true, "reasoner to use (structural, hermit, jfact, emr, elk)");
     o.addOption("o", "output", true, "Save results to file (if unspecified, output to STDOUT)");
     options = o;
   }
@@ -52,7 +52,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --csv <CSV> --owl <OWL> [--output <file>]";
+    return "validate --table <file> --input <file> --reasoner <name> [--output <file>]";
   }
 
   /**
@@ -78,8 +78,8 @@ public class ValidateCommand implements Command {
   }
 
   /**
-   * Accepts an input state and command line arguments and outputs a CSV table reporting the
-   * validation results. Returns the final state of the command.
+   * Accepts an input state and command line arguments and calls ValidateOperation to validate the
+   * data that has been passed. Returns the final state of the command.
    *
    * @param state the state from the previous command, or null
    * @param args the command-line arguments
@@ -99,18 +99,30 @@ public class ValidateCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
     // Load the command line arguments:
-    String csvPath = CommandLineHelper.getOptionalValue(line, "csv");
-    List<List<String>> csvData = ioHelper.readCSV(csvPath);
-    String owlPath = CommandLineHelper.getOptionalValue(line, "owl");
-    OWLOntology ontology = ioHelper.loadOntology(owlPath);
+    String tablePath = CommandLineHelper.getOptionalValue(line, "table");
+
+    // Only TSV and CSV tables are currently supported. If the path does not end in .tsv then we
+    // assume it is a CSV file:
+    List<List<String>> tableData;
+    if (tablePath.toLowerCase().endsWith(".tsv")) {
+      tableData = ioHelper.readTSV(tablePath);
+    } else {
+      tableData = ioHelper.readCSV(tablePath);
+    }
+
+    // Get the input path for the ontology and the output path to write the validation results to:
+    String inputPath = CommandLineHelper.getOptionalValue(line, "input");
+    OWLOntology ontology = ioHelper.loadOntology(inputPath);
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
-    // TODO: We should eventually make the reasoner configurable, as we do for the 'reason' command,
-    // but for now just use HermiT.
-    OWLReasonerFactory reasonerFactory = new ReasonerFactory();
+    // Get the reasoner specified by the user and if none is specified, use the default:
+    if (CommandLineHelper.getOptionalValue(line, "reasoner") == null) {
+      logger.info("No reasoner specified. Will use the default.");
+    }
+    OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line, true);
 
     // Finally call the validator:
-    ValidateOperation.validate(csvData, ontology, reasonerFactory, outputPath);
+    ValidateOperation.validate(tableData, ontology, reasonerFactory, outputPath);
 
     return state;
   }

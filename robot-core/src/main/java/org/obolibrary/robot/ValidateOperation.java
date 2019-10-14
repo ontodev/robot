@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
  * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
- * - Make the reasoner choice configurable via the command line (see the way other commands do it)
  * - Eventually need to tweak the command line options to be more consistent with the other commands
  *   and work seamlessly with robot's chaining feature.
  * - * see if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
