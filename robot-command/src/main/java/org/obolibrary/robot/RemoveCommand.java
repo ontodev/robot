@@ -185,12 +185,12 @@ public class RemoveCommand implements Command {
    * Given a command line, an IOHelper, an ontology, and a list of select groups, return the objects
    * from the ontology based on the select groups.
    *
-   * @param line
-   * @param ioHelper
-   * @param ontology
-   * @param selectGroups
-   * @return
-   * @throws Exception
+   * @param line CommandLine to get options from
+   * @param ioHelper IOHelper to get IRIs
+   * @param ontology OWLOntology to get objects from
+   * @param selectGroups List of select groups (lists of select options)
+   * @return set of selected objects from the ontology
+   * @throws Exception on issue getting terms or processing selects
    */
   protected static Set<OWLObject> getObjects(
       CommandLine line, IOHelper ioHelper, OWLOntology ontology, List<List<String>> selectGroups)
