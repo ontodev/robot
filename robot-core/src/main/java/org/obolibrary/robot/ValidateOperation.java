@@ -51,12 +51,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Allow TSVs as well as CSVs to be passed.
  * - Follow logging conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
- * - Eventually need to tweak the command line options to be more consistent with the other commands
- *   and work seamlessly with robot's chaining feature.
- * - * see if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
+ * - Eventually need to make the command line options work seamlessly with robot's chaining feature.
+ * - See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
  */
 
 /**
@@ -901,7 +899,7 @@ public class ValidateOperation {
       OWLClassExpression ruleCE,
       List<String> row,
       String unsplitQueryType)
-      throws Exception {
+      throws Exception, UnsupportedOperationException {
 
     writelog(
         LogLevel.DEBUG,
@@ -1024,7 +1022,15 @@ public class ValidateOperation {
         writelog(LogLevel.ERROR, "Unable to parse subject \"%s\".", subject);
         return false;
       }
-      return execute_generalized_class_query(subjectCE, ruleCE, row, unsplitQueryType);
+
+      try {
+        return execute_generalized_class_query(subjectCE, ruleCE, row, unsplitQueryType);
+      } catch (UnsupportedOperationException e) {
+        writelog(
+            LogLevel.ERROR,
+            "Generalized class expression queries are not supported by this reasoner.");
+        return false;
+      }
     }
   }
 
