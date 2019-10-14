@@ -113,6 +113,55 @@ public class ReasonOperation {
   }
 
   /**
+   * @param tautologyChecker
+   * @param structural
+   * @param a
+   * @return
+   */
+  public static boolean excludeTautology(
+      OWLReasoner tautologyChecker, boolean structural, OWLAxiom a) {
+    if (structural) {
+      if (a instanceof OWLSubClassOfAxiom) {
+        OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
+        if (subClassOfAxiom.getSuperClass().isOWLThing()) {
+          return true;
+        } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
+          return true;
+        } else return subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass());
+      } else if (a instanceof OWLEquivalentClassesAxiom) {
+        OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) a;
+        return equivAxiom.getClassExpressions().size() < 2;
+      } else if (a instanceof OWLClassAssertionAxiom) {
+        OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) a;
+        return classAssertion.getClassExpression().isOWLThing();
+      } else if (a instanceof OWLObjectPropertyAssertionAxiom) {
+        OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) a;
+        return assertion.getProperty().isOWLTopObjectProperty();
+      } else if (a instanceof OWLDataPropertyAssertionAxiom) {
+        OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) a;
+        return assertion.getProperty().isOWLTopDataProperty();
+      }
+    } else if (tautologyChecker != null) {
+      return tautologyChecker.isEntailed(a);
+    }
+    return false;
+  }
+
+  /**
+   * @param all
+   * @return
+   * @throws OWLOntologyCreationException
+   */
+  public static OWLReasoner getTautologyChecker(boolean all) throws OWLOntologyCreationException {
+    if (all) {
+      OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
+      return new ReasonerFactory().createReasoner(empty);
+    } else {
+      return null;
+    }
+  }
+
+  /**
    * Remove subClassAxioms where there is a more direct axiom, and the subClassAxiom does not have
    * any annotations.
    *
@@ -383,13 +432,7 @@ public class ReasonOperation {
 
     // If we will need a tautology checker, create it only once
     String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
-    OWLReasoner tautologyChecker;
-    if (tautologiesOption.equalsIgnoreCase("all")) {
-      OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
-      tautologyChecker = new ReasonerFactory().createReasoner(empty);
-    } else {
-      tautologyChecker = null;
-    }
+    OWLReasoner tautologyChecker = getTautologyChecker(tautologiesOption.equalsIgnoreCase("all"));
 
     // Look at each inferred axiom
     // Check the options, and maybe add the inferred axiom to the ontology
@@ -437,41 +480,9 @@ public class ReasonOperation {
         }
       }
 
-      if (tautologiesOption.equalsIgnoreCase("structural")) {
-        if (a instanceof OWLSubClassOfAxiom) {
-          OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
-          if (subClassOfAxiom.getSuperClass().isOWLThing()) {
-            continue;
-          } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
-            continue;
-          } else if (subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass())) {
-            continue;
-          }
-        } else if (a instanceof OWLEquivalentClassesAxiom) {
-          OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) a;
-          if (equivAxiom.getClassExpressions().size() < 2) {
-            continue;
-          }
-        } else if (a instanceof OWLClassAssertionAxiom) {
-          OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) a;
-          if (classAssertion.getClassExpression().isOWLThing()) {
-            continue;
-          }
-        } else if (a instanceof OWLObjectPropertyAssertionAxiom) {
-          OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) a;
-          if (assertion.getProperty().isOWLTopObjectProperty()) {
-            continue;
-          }
-        } else if (a instanceof OWLDataPropertyAssertionAxiom) {
-          OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) a;
-          if (assertion.getProperty().isOWLTopDataProperty()) {
-            continue;
-          }
-        }
-      } else if (tautologiesOption.equalsIgnoreCase("all") && (tautologyChecker != null)) {
-        if (tautologyChecker.isEntailed(a)) {
-          continue;
-        }
+      // Maybe exclude tautologies
+      if (excludeTautology(tautologyChecker, tautologiesOption.equalsIgnoreCase("structural"), a)) {
+        continue;
       }
 
       // If the axiom has not been skipped, add it to the ontology

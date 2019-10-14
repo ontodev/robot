@@ -162,7 +162,14 @@ public class RemoveCommand implements Command {
         OWLManager.createOWLOntologyManager().copyOntology(ontology, OntologyCopy.DEEP);
 
     // Remove specific axioms
-    manager.removeAxioms(ontology, getAxioms(line, ioHelper, ontology, relatedObjects));
+    List<String> axiomSelectors = CommandLineHelper.cleanAxiomStrings(line);
+    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
+    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
+    manager.removeAxioms(
+        ontology,
+        RelatedObjectsHelper.getAxioms(
+            ontology.getAxioms(), relatedObjects, axiomSelectors, baseNamespaces, trim, signature));
 
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
@@ -208,23 +215,23 @@ public class RemoveCommand implements Command {
     }
 
     boolean hadSelection = CommandLineHelper.hasFlagOrCommand(line, "select");
-    boolean internal = false;
-    boolean external = false;
-    if (line.hasOption("axioms")) {
-      for (String ats : CommandLineHelper.getOptionalValue(line, "axioms").split(" ")) {
-        if (ats.equalsIgnoreCase("internal")) {
-          internal = true;
-        } else if (ats.equalsIgnoreCase("external")) {
-          external = true;
-        }
+    boolean axiomSelector = false;
+    List<String> axiomSelectors = CommandLineHelper.cleanAxiomStrings(line);
+    for (String ats : axiomSelectors) {
+      if (ats.equalsIgnoreCase("internal")) {
+        axiomSelector = true;
+      } else if (ats.equalsIgnoreCase("external")) {
+        axiomSelector = true;
+      } else if (ats.contains("tautologies")) {
+        axiomSelector = true;
       }
     }
 
-    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty() && !internal && !external) {
+    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty() && !axiomSelector) {
       // If removing imports or ontology annotations
       // and there are no other selects, save and return
       return objects;
-    } else if (objects.isEmpty() && hasInputIRIs && !internal && !external) {
+    } else if (objects.isEmpty() && hasInputIRIs && !axiomSelector) {
       // if objects is empty AND there WERE input IRIs
       // there is nothing to remove because the IRIs do not exist in the ontology
       return objects;
@@ -258,53 +265,5 @@ public class RemoveCommand implements Command {
     }
 
     return relatedObjects;
-  }
-
-  /**
-   * Given a command line, an IOHelper, an ontology, and a set of objects, return the related axioms
-   * for those objects to remove from the ontology.
-   *
-   * @param line command line to use
-   * @param ioHelper IOHelper to resolve prefixes for base namespaces
-   * @param ontology ontology to select axioms from
-   * @param relatedObjects objects to select axioms for
-   * @return set of axioms to remove
-   */
-  private static Set<OWLAxiom> getAxioms(
-      CommandLine line, IOHelper ioHelper, OWLOntology ontology, Set<OWLObject> relatedObjects) {
-    // Get a set of axiom types
-    boolean internal = false;
-    boolean external = false;
-    if (line.hasOption("axioms")) {
-      for (String ats : CommandLineHelper.getOptionalValue(line, "axioms").split(" ")) {
-        if (ats.equalsIgnoreCase("internal")) {
-          internal = true;
-        } else if (ats.equalsIgnoreCase("external")) {
-          external = true;
-        }
-      }
-    }
-    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
-
-    // Use these two options to determine which axioms to remove
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
-    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
-
-    // Get the axioms and remove them
-    Set<OWLAxiom> axiomsToRemove =
-        RelatedObjectsHelper.getAxioms(ontology, relatedObjects, axiomTypes, trim, signature);
-
-    // Then select internal or external, if present
-    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
-    if (internal && external) {
-      logger.warn(
-          "Both 'internal' and 'external' axioms are selected - these axiom selectors will be ignored.");
-    } else if (internal) {
-      axiomsToRemove = RelatedObjectsHelper.getInternalAxioms(baseNamespaces, axiomsToRemove);
-    } else if (external) {
-      axiomsToRemove = RelatedObjectsHelper.getExternalAxioms(baseNamespaces, axiomsToRemove);
-    }
-
-    return axiomsToRemove;
   }
 }

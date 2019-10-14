@@ -170,84 +170,37 @@ public class FilterCommand implements Command {
     }
 
     // Add the additional axioms to the output ontology
+    List<String> axiomSelectors = CommandLineHelper.cleanAxiomStrings(line);
+    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
+    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
+    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
     manager.addAxioms(
         outputOntology,
-        getAxioms(line, ioHelper, inputOntology, relatedObjects, includeAnnotations));
+        RelatedObjectsHelper.getAxioms(
+            inputOntology.getAxioms(),
+            relatedObjects,
+            axiomSelectors,
+            baseNamespaces,
+            !trim,
+            signature));
+
+    // Handle gaps
+    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
+    if (preserveStructure) {
+      manager.addAxioms(
+          outputOntology, RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
+    }
+
+    // Maybe add annotations on the selected objects
+    if (includeAnnotations) {
+      manager.addAxioms(
+          outputOntology, RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
+    }
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     state.setOntology(outputOntology);
     return state;
-  }
-
-  /**
-   * Given a command line, an IOHelper, an input ontology, a set of objects, and a boolean
-   * indicating if annotations on objects should be included, return all axioms for the filtered
-   * output.
-   *
-   * @param line command line to use
-   * @param inputOntology input OWLOntology
-   * @param relatedObjects set of objects to filter for
-   * @param includeAnnotations if true, include all annotations on relatedObjects
-   * @return set of OWLAxioms for output ontology
-   */
-  private static Set<OWLAxiom> getAxioms(
-      CommandLine line,
-      IOHelper ioHelper,
-      OWLOntology inputOntology,
-      Set<OWLObject> relatedObjects,
-      boolean includeAnnotations) {
-    // Get a set of axiom types
-    boolean internal = false;
-    boolean external = false;
-    if (line.hasOption("axioms")) {
-      for (String ats : CommandLineHelper.getOptionalValue(line, "axioms").split(" ")) {
-        if (ats.equalsIgnoreCase("internal")) {
-          internal = true;
-        } else if (ats.equalsIgnoreCase("external")) {
-          external = true;
-        }
-      }
-    }
-    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
-
-    // Use these two options to determine which axioms to remove
-    boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
-    boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
-
-    // Get the axioms
-    // Use !trim for the 'partial' option in getAxioms
-    Set<OWLAxiom> axiomsToAdd =
-        RelatedObjectsHelper.getAxioms(inputOntology, relatedObjects, axiomTypes, !trim, signature);
-
-    // Then select internal or external, if present
-    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
-    if ((internal || external) && baseNamespaces.isEmpty()) {
-      logger.error(
-          "No '--base-iri' namespace is specified - internal/external axiom selectors will be ignored.");
-    } else {
-      if (internal && external) {
-        logger.error(
-            "Both 'internal' and 'external' axioms are selected - these axiom selectors will be ignored.");
-      } else if (internal) {
-        axiomsToAdd = RelatedObjectsHelper.getInternalAxioms(baseNamespaces, axiomsToAdd);
-      } else if (external) {
-        axiomsToAdd = RelatedObjectsHelper.getExternalAxioms(baseNamespaces, axiomsToAdd);
-      }
-    }
-
-    // Handle gaps
-    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
-    if (preserveStructure) {
-      axiomsToAdd.addAll(RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
-    }
-
-    // Handle annotations for any referenced object
-    if (includeAnnotations) {
-      axiomsToAdd.addAll(RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
-    }
-
-    return axiomsToAdd;
   }
 
   /**

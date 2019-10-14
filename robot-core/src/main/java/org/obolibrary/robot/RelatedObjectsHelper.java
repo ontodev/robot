@@ -4,9 +4,11 @@ import com.google.common.collect.Sets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,9 @@ public class RelatedObjectsHelper {
 
   /** Namespace for error messages. */
   private static final String NS = "errors#";
+
+  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
+  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /**
    * Error message when a datatype is given for an annotation, but the annotation value does not
@@ -80,6 +85,16 @@ public class RelatedObjectsHelper {
     return axioms;
   }
 
+  /**
+   * @deprecated replaced by {@link #getAxioms(Set, Set, Set, boolean, boolean)}
+   * @param ontology
+   * @param objects
+   * @param axiomTypes
+   * @param partial
+   * @param signature
+   * @return
+   */
+  @Deprecated
   public static Set<OWLAxiom> getAxioms(
       OWLOntology ontology,
       Set<OWLObject> objects,
@@ -91,6 +106,145 @@ public class RelatedObjectsHelper {
     } else {
       return RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes, signature);
     }
+  }
+
+  /**
+   * @param axioms
+   * @param objects
+   * @param axiomSelectors
+   * @param baseNamespaces
+   * @param trim
+   * @param signature
+   * @return
+   * @throws OWLOntologyCreationException
+   */
+  public static Set<OWLAxiom> getAxioms(
+      Set<OWLAxiom> axioms,
+      Set<OWLObject> objects,
+      List<String> axiomSelectors,
+      List<String> baseNamespaces,
+      boolean trim,
+      boolean signature)
+      throws OWLOntologyCreationException {
+
+    // Go through the axiom selectors in order and process selections
+    boolean internal = false;
+    boolean external = false;
+    for (String axiomSelector : axiomSelectors) {
+      if (axiomSelector.equalsIgnoreCase("internal")) {
+        if (external) {
+          logger.error(
+              "ignoring 'internal' axiom selector - 'internal' and 'external' together will remove all axioms");
+        }
+        axioms = RelatedObjectsHelper.getInternalAxioms(baseNamespaces, axioms);
+        internal = true;
+      } else if (axiomSelector.equalsIgnoreCase("external")) {
+        if (internal) {
+          logger.error(
+              "ignoring 'external' axiom selector - 'internal' and 'external' together will remove all axioms");
+        }
+        axioms = RelatedObjectsHelper.getExternalAxioms(baseNamespaces, axioms);
+        external = true;
+      } else if (axiomSelector.equalsIgnoreCase("tautologies")) {
+        axioms = RelatedObjectsHelper.getTautologicalAxioms(axioms, false);
+      } else if (axiomSelector.equalsIgnoreCase("structural-tautologies")) {
+        axioms = RelatedObjectsHelper.getTautologicalAxioms(axioms, true);
+      } else {
+        // Assume this is a normal OWLAxiom type
+        Set<Class<? extends OWLAxiom>> axiomTypes =
+            RelatedObjectsHelper.getAxiomValues(axiomSelector);
+        axioms = getAxioms(axioms, objects, axiomTypes, trim, signature);
+      }
+    }
+
+    return axioms;
+  }
+
+  /**
+   * @param axioms
+   * @param objects
+   * @param axiomTypes
+   * @param partial
+   * @param signature
+   * @return
+   */
+  public static Set<OWLAxiom> getAxioms(
+      Set<OWLAxiom> axioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean partial,
+      boolean signature) {
+    if (partial) {
+      return RelatedObjectsHelper.getPartialAxioms(axioms, objects, axiomTypes, signature);
+    } else {
+      return RelatedObjectsHelper.getCompleteAxioms(axioms, objects, axiomTypes, signature);
+    }
+  }
+
+  /**
+   * @param axiom
+   * @return
+   */
+  public static Set<Class<? extends OWLAxiom>> getAxiomValues(String axiom) {
+    Set<String> ignore =
+        new HashSet<>(
+            Arrays.asList("internal", "external", "tautologies", "structural-tautologies"));
+    if (ignore.contains(axiom)) {
+      // Ignore special axiom options
+      return null;
+    }
+
+    Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
+    if (axiom.equalsIgnoreCase("all")) {
+      axiomTypes.add(OWLAxiom.class);
+    } else if (axiom.equalsIgnoreCase("logical")) {
+      axiomTypes.add(OWLLogicalAxiom.class);
+    } else if (axiom.equalsIgnoreCase("annotation")) {
+      axiomTypes.add(OWLAnnotationAxiom.class);
+    } else if (axiom.equalsIgnoreCase("subclass")) {
+      axiomTypes.add(OWLSubClassOfAxiom.class);
+    } else if (axiom.equalsIgnoreCase("subproperty")) {
+      axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
+      axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
+      axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
+    } else if (axiom.equalsIgnoreCase("equivalent")) {
+      axiomTypes.add(OWLEquivalentClassesAxiom.class);
+      axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
+      axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
+    } else if (axiom.equalsIgnoreCase("disjoint")) {
+      axiomTypes.add(OWLDisjointClassesAxiom.class);
+      axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
+      axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
+      axiomTypes.add(OWLDisjointUnionAxiom.class);
+    } else if (axiom.equalsIgnoreCase("type")) {
+      axiomTypes.add(OWLClassAssertionAxiom.class);
+    } else if (axiom.equalsIgnoreCase("abox")) {
+      axiomTypes.addAll(
+          AxiomType.ABoxAxiomTypes.stream()
+              .map(AxiomType::getActualClass)
+              .collect(Collectors.toSet()));
+    } else if (axiom.equalsIgnoreCase("tbox")) {
+      axiomTypes.addAll(
+          AxiomType.TBoxAxiomTypes.stream()
+              .map(AxiomType::getActualClass)
+              .collect(Collectors.toSet()));
+    } else if (axiom.equalsIgnoreCase("rbox")) {
+      axiomTypes.addAll(
+          AxiomType.RBoxAxiomTypes.stream()
+              .map(AxiomType::getActualClass)
+              .collect(Collectors.toSet()));
+    } else if (axiom.equalsIgnoreCase("declaration")) {
+      axiomTypes.add(OWLDeclarationAxiom.class);
+    } else {
+      AxiomType<?> at = AxiomType.getAxiomType(axiom);
+      if (at != null) {
+        // Attempt to get the axiom type based on AxiomType names
+        axiomTypes.add(at.getActualClass());
+      } else {
+        throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+      }
+    }
+    return axiomTypes;
   }
 
   /**
@@ -122,10 +276,28 @@ public class RelatedObjectsHelper {
       Set<OWLObject> objects,
       Set<Class<? extends OWLAxiom>> axiomTypes,
       boolean namedOnly) {
+    return getCompleteAxioms(ontology.getAxioms(), objects, axiomTypes, namedOnly);
+  }
+
+  /**
+   * Given a st of axioms, a set of objects, and a set of axiom types, return a set of axioms where
+   * all the objects in those axioms are in the set of objects.
+   *
+   * @param inputAxioms
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, consider only named OWLObjects
+   * @return Set of OWLAxioms containing only the OWLObjects
+   */
+  public static Set<OWLAxiom> getCompleteAxioms(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
     axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Check both the full annotated axiom and axiom without annotations (if annotated)
         Set<OWLObject> axiomObjects;
@@ -242,10 +414,28 @@ public class RelatedObjectsHelper {
       Set<OWLObject> objects,
       Set<Class<? extends OWLAxiom>> axiomTypes,
       boolean namedOnly) {
+    return getPartialAxioms(ontology.getAxioms(), objects, axiomTypes, namedOnly);
+  }
+
+  /**
+   * Given a set of axioms, a set of objects, and a set of axiom types, return a set of axioms where
+   * at least one object in those axioms is also in the set of objects.
+   *
+   * @param inputAxioms
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, only consider named OWLObjects
+   * @return Set of OWLAxioms containing at least one of the OWLObjects
+   */
+  public static Set<OWLAxiom> getPartialAxioms(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
     axiomTypes = setDefaultAxiomType(axiomTypes);
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
           OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
@@ -280,6 +470,32 @@ public class RelatedObjectsHelper {
     }
 
     return axioms;
+  }
+
+  /**
+   * @param axioms
+   * @param structural
+   * @return
+   * @throws OWLOntologyCreationException on issue creating empty ontology for tautology checker
+   */
+  public static Set<OWLAxiom> getTautologicalAxioms(Set<OWLAxiom> axioms, boolean structural)
+      throws OWLOntologyCreationException {
+    // If we are here and it is not structural, it must be 'all'
+    OWLReasoner tautologyChecker = ReasonOperation.getTautologyChecker(!structural);
+    Set<OWLAxiom> tautologies = new HashSet<>();
+    for (OWLAxiom a : axioms) {
+      if (ReasonOperation.excludeTautology(tautologyChecker, structural, a)) {
+        tautologies.add(a);
+      } else if (a instanceof OWLDeclarationAxiom) {
+        // Also make sure to remove any built-in declarations
+        OWLDeclarationAxiom dec = (OWLDeclarationAxiom) a;
+        OWLEntity e = dec.getEntity();
+        if (e.isBuiltIn()) {
+          tautologies.add(a);
+        }
+      }
+    }
+    return tautologies;
   }
 
   /**
