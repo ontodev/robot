@@ -205,6 +205,7 @@ public class QueryCommand implements Command {
         CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
+
     Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
 
     try {

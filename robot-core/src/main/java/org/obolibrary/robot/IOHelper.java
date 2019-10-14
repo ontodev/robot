@@ -475,7 +475,6 @@ public class IOHelper {
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
     }
-
     return ontology;
   }
 
