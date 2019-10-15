@@ -22,13 +22,13 @@ public class RelatedObjectsHelperTest extends CoreTest {
   private final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
   /**
-   * Test getting complete axioms.
+   * Test filtering for complete axioms.
    *
    * @throws IOException on any problem
    */
   @Test
   @SuppressWarnings("unchecked")
-  public void testGetCompleteAxioms() throws IOException {
+  public void testFilterCompleteAxioms() throws IOException {
     IOHelper ioHelper = new IOHelper();
     String base = "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#";
     Set<OWLObject> objects;
@@ -41,25 +41,27 @@ public class RelatedObjectsHelperTest extends CoreTest {
     objects.add(df.getOWLClass(IRI.create(base + "test1")));
     objects.add(df.getOWLClass(IRI.create(base + "test2")));
     axiomTypes = Sets.newHashSet(OWLSubClassOfAxiom.class);
-    axioms = RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes);
+    axioms =
+        RelatedObjectsHelper.filterCompleteAxioms(ontology.getAxioms(), objects, axiomTypes, false);
     assertEquals(1, axioms.size());
 
     objects = new HashSet<>();
     objects.add(df.getOWLClass(IRI.create(base + "test1")));
     objects.add(df.getOWLAnnotationProperty(ioHelper.createIRI("rdfs:label")));
     axiomTypes = Sets.newHashSet(OWLAnnotationAssertionAxiom.class);
-    axioms = RelatedObjectsHelper.getCompleteAxioms(ontology, objects, axiomTypes);
+    axioms =
+        RelatedObjectsHelper.filterCompleteAxioms(ontology.getAxioms(), objects, axiomTypes, false);
     assertEquals(2, axioms.size());
   }
 
   /**
-   * Test getting partial axioms.
+   * Test filtering for partial axioms.
    *
    * @throws IOException on any problem
    */
   @Test
   @SuppressWarnings("unchecked")
-  public void testGetPartialAxioms() throws IOException {
+  public void testFilterPartialAxioms() throws IOException {
     IOHelper ioHelper = new IOHelper();
     String base = "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#";
     Set<OWLObject> objects;
@@ -71,13 +73,15 @@ public class RelatedObjectsHelperTest extends CoreTest {
     objects = new HashSet<>();
     objects.add(df.getOWLClass(IRI.create(base + "test1")));
     axiomTypes = Sets.newHashSet(OWLSubClassOfAxiom.class);
-    axioms = RelatedObjectsHelper.getPartialAxioms(ontology, objects, axiomTypes);
+    axioms =
+        RelatedObjectsHelper.filterPartialAxioms(ontology.getAxioms(), objects, axiomTypes, false);
     assertEquals(1, axioms.size());
 
     objects = new HashSet<>();
     objects.add(df.getOWLAnnotationProperty(ioHelper.createIRI("rdfs:label")));
     axiomTypes = Sets.newHashSet(OWLAnnotationAssertionAxiom.class);
-    axioms = RelatedObjectsHelper.getPartialAxioms(ontology, objects, axiomTypes);
+    axioms =
+        RelatedObjectsHelper.filterPartialAxioms(ontology.getAxioms(), objects, axiomTypes, false);
     assertEquals(2, axioms.size());
   }
 }

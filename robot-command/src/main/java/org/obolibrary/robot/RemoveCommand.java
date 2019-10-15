@@ -168,7 +168,7 @@ public class RemoveCommand implements Command {
     boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
     manager.removeAxioms(
         ontology,
-        RelatedObjectsHelper.getAxioms(
+        RelatedObjectsHelper.filterAxioms(
             ontology.getAxioms(), relatedObjects, axiomSelectors, baseNamespaces, trim, signature));
 
     // Handle gaps

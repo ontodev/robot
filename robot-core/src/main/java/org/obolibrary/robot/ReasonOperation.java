@@ -113,52 +113,72 @@ public class ReasonOperation {
   }
 
   /**
-   * @param tautologyChecker
-   * @param structural
-   * @param a
-   * @return
+   * Create a tautology checker.
+   *
+   * @param structural if true, return null - we do not need a checker for the structural patterns
+   * @return new OWLReasoner for empty ontology or null
+   * @throws OWLOntologyCreationException on issue creating empty ontology
    */
-  public static boolean excludeTautology(
-      OWLReasoner tautologyChecker, boolean structural, OWLAxiom a) {
-    if (structural) {
-      if (a instanceof OWLSubClassOfAxiom) {
-        OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) a;
-        if (subClassOfAxiom.getSuperClass().isOWLThing()) {
-          return true;
-        } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
-          return true;
-        } else return subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass());
-      } else if (a instanceof OWLEquivalentClassesAxiom) {
-        OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) a;
-        return equivAxiom.getClassExpressions().size() < 2;
-      } else if (a instanceof OWLClassAssertionAxiom) {
-        OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) a;
-        return classAssertion.getClassExpression().isOWLThing();
-      } else if (a instanceof OWLObjectPropertyAssertionAxiom) {
-        OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) a;
-        return assertion.getProperty().isOWLTopObjectProperty();
-      } else if (a instanceof OWLDataPropertyAssertionAxiom) {
-        OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) a;
-        return assertion.getProperty().isOWLTopDataProperty();
-      }
-    } else if (tautologyChecker != null) {
-      return tautologyChecker.isEntailed(a);
-    }
-    return false;
-  }
-
-  /**
-   * @param all
-   * @return
-   * @throws OWLOntologyCreationException
-   */
-  public static OWLReasoner getTautologyChecker(boolean all) throws OWLOntologyCreationException {
-    if (all) {
+  public static OWLReasoner getTautologyChecker(boolean structural)
+      throws OWLOntologyCreationException {
+    if (!structural) {
       OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
       return new ReasonerFactory().createReasoner(empty);
     } else {
       return null;
     }
+  }
+
+  /**
+   * Given an OWLAxiom, a tautology checker reasoner, and a boolean, determine if the axiom is a
+   * tautology.
+   *
+   * @param axiom OWLAxiom to check
+   * @param tautologyChecker OWLReasoner for empty ontology
+   * @param structural if true, only check for hard-coded structural patterns (checker can be null)
+   * @return true if axiom is tautological
+   */
+  public static boolean isTautological(
+      OWLAxiom axiom, OWLReasoner tautologyChecker, boolean structural) {
+    if (structural) {
+      if (axiom instanceof OWLSubClassOfAxiom) {
+        OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
+        if (subClassOfAxiom.getSuperClass().isOWLThing()) {
+          // X subClassOf owl:Thing
+          return true;
+        } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
+          // owl:Nothing subClassOf X
+          return true;
+        } else {
+          // X subClassOf X
+          return subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass());
+        }
+      } else if (axiom instanceof OWLEquivalentClassesAxiom) {
+        // X equivalentTo X
+        OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) axiom;
+        return equivAxiom.getClassExpressions().size() < 2;
+      } else if (axiom instanceof OWLClassAssertionAxiom) {
+        // X a owl:Thing
+        OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) axiom;
+        return classAssertion.getClassExpression().isOWLThing();
+      } else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
+        // X owl:topDataProperty ...
+        OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) axiom;
+        return assertion.getProperty().isOWLTopObjectProperty();
+      } else if (axiom instanceof OWLDataPropertyAssertionAxiom) {
+        // X owl:topObjectProperty ...
+        OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) axiom;
+        return assertion.getProperty().isOWLTopDataProperty();
+      } else if (axiom instanceof OWLDeclarationAxiom) {
+        // owl:Thing a owl:Class, owl:Nothing a owl:Class, etc.
+        OWLDeclarationAxiom declaration = (OWLDeclarationAxiom) axiom;
+        return declaration.getEntity().isBuiltIn();
+      }
+    } else if (tautologyChecker != null) {
+      // axiom entailed by empty ontology
+      return tautologyChecker.isEntailed(axiom);
+    }
+    return false;
   }
 
   /**
@@ -432,7 +452,9 @@ public class ReasonOperation {
 
     // If we will need a tautology checker, create it only once
     String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
-    OWLReasoner tautologyChecker = getTautologyChecker(tautologiesOption.equalsIgnoreCase("all"));
+    boolean excludeTautologies = !tautologiesOption.equalsIgnoreCase("false");
+    boolean structural = tautologiesOption.equalsIgnoreCase("structural");
+    OWLReasoner tautologyChecker = getTautologyChecker(structural);
 
     // Look at each inferred axiom
     // Check the options, and maybe add the inferred axiom to the ontology
@@ -481,7 +503,7 @@ public class ReasonOperation {
       }
 
       // Maybe exclude tautologies
-      if (excludeTautology(tautologyChecker, tautologiesOption.equalsIgnoreCase("structural"), a)) {
+      if (excludeTautologies && isTautological(a, tautologyChecker, structural)) {
         continue;
       }
 
@@ -507,7 +529,7 @@ public class ReasonOperation {
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
-    Set<InvalidReferenceViolation> filteredViolations = new HashSet();
+    Set<InvalidReferenceViolation> filteredViolations = new HashSet<>();
 
     if (referenceViolations.size() > 0) {
       for (InvalidReferenceViolation v : referenceViolations) {

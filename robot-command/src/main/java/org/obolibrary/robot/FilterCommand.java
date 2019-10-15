@@ -176,7 +176,7 @@ public class FilterCommand implements Command {
     boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
     manager.addAxioms(
         outputOntology,
-        RelatedObjectsHelper.getAxioms(
+        RelatedObjectsHelper.filterAxioms(
             inputOntology.getAxioms(),
             relatedObjects,
             axiomSelectors,
