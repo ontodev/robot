@@ -20,7 +20,7 @@ gateway = JavaGateway()
 
 io_helper = gateway.jvm.org.obolibrary.robot.IOHelper()
 
-ont = io_helper.loadOntology('my-ontology.owl')
+ont = io_helper.loadOntology('ontology.owl')
 ```
 
 Objects must start with `gateway.jvm` followed by the package name (e.g., `org.obolibrary.robot`).
