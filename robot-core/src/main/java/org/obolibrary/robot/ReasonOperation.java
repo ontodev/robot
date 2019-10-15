@@ -175,7 +175,15 @@ public class ReasonOperation {
         return declaration.getEntity().isBuiltIn();
       }
     } else if (tautologyChecker != null) {
-      // axiom entailed by empty ontology
+      if (axiom instanceof OWLAnnotationAssertionAxiom) {
+        // ignore annotation assertions
+        return false;
+      } else if (axiom instanceof OWLDeclarationAxiom) {
+        // ignore declaration UNLESS it is built in
+        OWLDeclarationAxiom declaration = (OWLDeclarationAxiom) axiom;
+        return declaration.getEntity().isBuiltIn();
+      }
+      // otherwise check if axiom is entailed by empty ontology
       return tautologyChecker.isEntailed(axiom);
     }
     return false;
