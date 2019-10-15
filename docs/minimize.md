@@ -1,6 +1,6 @@
 # Minimize
 
-Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `minimize` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold <int>` option.
+Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `minimize` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option.
 
 ```
 robot minimize \
