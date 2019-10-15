@@ -17,9 +17,7 @@ public class PythonCommand implements Command {
 
   /** Initialize the command. */
   public PythonCommand() {
-    // No common options
-    // Options o = CommandLineHelper.getCommonOptions();
-    Options o = new Options();
+    Options o = CommandLineHelper.getCommonOptions();
     o.addOption(null, "port", true, "port number for Py4J");
     options = o;
   }
@@ -92,9 +90,17 @@ public class PythonCommand implements Command {
     }
 
     int port = Integer.parseInt(CommandLineHelper.getDefaultValue(line, "port", "25333"));
+    logger.debug(String.format("Starting Py4J on port %d", port));
 
     GatewayServer gs = new GatewayServer(port);
-    gs.start();
+    try {
+      gs.start();
+    } catch (Exception e) {
+      throw new Exception(
+          String.format(
+              "Cannot start server on port %d - check if something is already running and try again",
+              port));
+    }
 
     // Ignore this
     // you can't chain commands with the python command
