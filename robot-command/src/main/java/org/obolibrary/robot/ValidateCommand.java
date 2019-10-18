@@ -96,23 +96,31 @@ public class ValidateCommand implements Command {
       state = new CommandState();
     }
 
+    // Get the input ontology either from the command line directly or as part of the command
+    // chain:
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology ontology = state.getOntology();
 
-    // Load the command line arguments:
+    // Load the table data from the file given in tablePath. Only TSV and CSV tables are currently
+    // supported.
     String tablePath = CommandLineHelper.getOptionalValue(line, "table");
+    if (tablePath == null) {
+      throw new Exception("Table file is missing.");
+    }
 
-    // Only TSV and CSV tables are currently supported. If the path does not end in .tsv then we
-    // assume it is a CSV file:
     List<List<String>> tableData;
     if (tablePath.toLowerCase().endsWith(".tsv")) {
       tableData = ioHelper.readTSV(tablePath);
-    } else {
+    } else if (tablePath.toLowerCase().endsWith(".csv")) {
       tableData = ioHelper.readCSV(tablePath);
+    } else {
+      throw new Exception("Table file must end in .csv or .tsv.");
     }
 
-    // Get the input path for the ontology and the output path to write the validation results to:
-    String inputPath = CommandLineHelper.getOptionalValue(line, "input");
-    OWLOntology ontology = ioHelper.loadOntology(inputPath);
+    // Get the output path to write the validation results to. This could be null, but we won't
+    // worry about that here (ValidateOperation should interpret that as a request to write to
+    // STDOUT.
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
     // Get the reasoner specified by the user and if none is specified, use the default:

@@ -51,9 +51,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Follow logging conventions in:
+ * - Follow logging (and error) conventions in:
  *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
- * - Eventually need to make the command line options work seamlessly with robot's chaining feature.
  * - See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
  */
 
