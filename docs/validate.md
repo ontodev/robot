@@ -114,3 +114,9 @@ _Note that double quotes are not allowed._
 
 indicates that the current cell must be non-empty whenever the cell in column 1 of the current
 row is a subclass of `'exposure process'`.
+
+## Error Messages
+
+### Malformed Rule Error
+
+The indicated rule could not be parsed. See the section on [Validation Rule Syntax](#validation-rule-syntax).
