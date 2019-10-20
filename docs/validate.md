@@ -60,6 +60,32 @@ Where:
     * instance-of
     * direct-instance-of
 
+#### Presence types and Query types
+
+* The following rule types are called _presence_ rule types. They place restrictions on whether a cell in a given column can have data or not, and may take a value of either `true` (equivalently: `t`, `yes`, `y`) or `false` (equivalently: `f`, `no`, `n`). If no truth value is supplied, `true` is assumed.
+
+    * is-required
+        * When set to `true`, this indicates that cells in this column should have data, possibly conditional upon an optional when-clause. E.g. `is-required (when %2 subclass-of 'vaccine')`
+    * is-excluded
+        * When set to `true`, this indicates that cells in this column must be empty, possibly conditional upon an optional when-clause. E.g. `is-excluded (when %2 subclass-of 'vaccine')`
+
+* The following rule types are called _query_ rule types. They involve queries to the reasoner. Consider the example rule `%2 <query-type> %3`. Given the query types below, we have the following corresponding reasoner queries:
+
+    * subclass-of
+        * queries the reasoner to verify that the class %2 is a subclass of the class %3
+    * direct-subclass-of
+        * queries the reasoner to verify that the class %2 is a direct subclass of the class %3
+    * superclass-of
+        * queries the reasoner to verify that the class %2 is a superclass of the class %3
+    * direct-superclass-of
+        * queries the reasoner to verify that the class %2 is a direct superclass of the class %3
+    * equivalent-to
+        * queries the reasoner to verify that the class %2 is equivalent to the class %3
+    * instance-of
+        * queries the reasoner to verify that the individual %2 is an instance of the class %3
+    * direct-instance-of
+        * queries the reasoner to verify that the individual %2 is a direct instance of the class %3
+
 #### Further notes on `<rule>` and `<when-rule>`
 
 * For the rule types: `is-required` and `is-excluded`, `<rule>` is _optional_ and if not specified defaults to _true_.
@@ -123,7 +149,7 @@ The indicated rule could not be parsed. See: [Validation Rule Syntax](#validatio
 
 ### Invalid Presence Rule Error
 
-A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Validation Rule Syntax](#validation-rule-syntax).
+A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Presence Types and Query Types](#presence-types-and-query-types).
 
 ### Column Out of Range Error
 
@@ -140,3 +166,11 @@ The indicated when-clause could not be parsed. See: [When-Clauses](#when-clauses
 ### Invalid When Type Error
 
 The indicated when rule type is not one of the rule types allowed in a when-clause. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Unrecognized Query Type Error
+
+The query type indicated is not one of the recognized query types. See: [Presence Types and Query Types](#presence-types-and-query-types).
+
+### Unrecognized Rule Type Error
+
+The rule type indicated is not one of the recognized rule types. See: [Validation Rule Syntax](#validation-rule-syntax).
