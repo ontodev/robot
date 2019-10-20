@@ -135,4 +135,8 @@ When a when-clause is specified, a main clause must also be specified, with the 
 
 ### Malformed When Clause Error
 
-The indicated when-clause could not be parsed. See [When-Clauses](#when-clauses).
+The indicated when-clause could not be parsed. See: [When-Clauses](#when-clauses).
+
+### Invalid When Type Error
+
+The indicated when rule type is not one of the rule types allowed in a when-clause. See: [Validation Rule Syntax](#validation-rule-syntax).
