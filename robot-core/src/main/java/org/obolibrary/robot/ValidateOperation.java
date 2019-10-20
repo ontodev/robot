@@ -51,10 +51,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * TODO:
- * - Follow logging (and error) conventions in:
- *     https://github.com/ontodev/robot/blob/master/CONTRIBUTING.md#documenting-errors
  * - See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
  */
+
 
 /**
  * Implements the validate operation for a given CSV file and ontology.
@@ -65,6 +64,54 @@ public class ValidateOperation {
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ValidateOperation.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "validate#";
+
+  /** Error message for a rule that couldn't be parsed */
+  private static String malformedRuleError = NS + "MALFORMED RULE ERROR malformed rule: %s";
+
+  /**
+   * Error message for an invalid presence rule. Presence rules must be in the form of a truth
+   * value.
+   */
+  private static String invalidPresenceRuleError =
+      NS
+          + "INVALID PRESENCE RULE ERROR in column %d: invalid rule: \"%s\" for rule type: %s. Must be "
+          + "one of: true, t, 1, yes, y, false, f, 0, no, n";
+
+  /**
+   * Error reported when a wildcard in a rule specifies a column greater than the number of columns
+   * in the table.
+   */
+  private static String columnOutOfRangeError =
+      NS
+          + "COLUMN OUT OF RANGE ERROR in column %d: rule \"%s\" indicates a column number that is "
+          + "greater than the row length (%d).";
+
+  /** Error reported when a when-clause does not have a corresponding main clause */
+  private static String noMainError =
+      NS + "NO MAIN ERROR in column %d: rule: \"%s\" has when clause but no main clause.";
+
+  /** Error reported when a when-clause can't be parsed */
+  private static String malformedWhenClauseError =
+      NS + "MALFORMED WHEN CLAUSE ERROR in column %d: unable to decompose when-clause: \"%s\".";
+
+  /** Error reported when a when-clause is of an invalid or inappropriate type */
+  private static String invalidWhenTypeError =
+      NS
+          + "INVALID WHEN TYPE ERROR in column %d: in clause: \"%s\": Only rules of type: %s are "
+          + "allowed in a when clause.";
+
+  /** Error reported when a query type is unrecognized */
+  private static String unrecognizedQueryTypeError =
+      NS
+          + "UNRECOGNIZED QUERY TYPE ERROR in column %d: query type \"%s\" not recognized in rule "
+          + "\"%s\".";
+
+  /** Error reported when a rule type is not recognized */
+  private static String unrecognizedRuleTypeError =
+      NS + "UNRECOGNIZED RULE TYPE ERROR in column %d: unrecognized rule type \"%s\".";
+
   /** Output writer */
   private static Writer writer;
 
@@ -74,7 +121,7 @@ public class ValidateOperation {
   /** Outputstream for Excel file */
   private static OutputStream xlsxFileOutputStream;
 
-  /** INSERT DOC HERE */
+  /** The data factory */
   private static OWLDataFactory dataFactory;
 
   /** The ontology to use for validation */
@@ -427,7 +474,7 @@ public class ValidateOperation {
    * Given a string specifying a list of rules of various types, return a map which contains, for
    * each rule type present in the string, the list of rules of that type that have been specified.
    */
-  private static Map<String, List<String>> parse_rules(String ruleString) {
+  private static Map<String, List<String>> parse_rules(String ruleString) throws Exception {
     HashMap<String, List<String>> ruleMap = new HashMap();
     // Skip over empty strings and strings that start with "##".
     if (!ruleString.trim().equals("") && !ruleString.trim().startsWith("##")) {
@@ -450,8 +497,7 @@ public class ValidateOperation {
           if (rTypeEnum != null && rTypeEnum.getRuleCat() == RCatEnum.PRESENCE) {
             ruleContent = "true";
           } else {
-            writelog(LogLevel.ERROR, "Invalid rule: %s", rule.trim());
-            continue;
+            throw new Exception(String.format(malformedRuleError, rule.trim()));
           }
         }
 
@@ -486,9 +532,9 @@ public class ValidateOperation {
 
   /**
    * Given a string describing a rule type, return a boolean indicating whether it is one of the
-   * rules recognised by ValidateOperation.
+   * rules recognized by ValidateOperation.
    */
-  private static boolean rule_type_recognised(String ruleType) {
+  private static boolean rule_type_recognized(String ruleType) {
     return rule_type_to_rtenum_map.containsKey(get_primary_rule_type(ruleType));
   }
 
@@ -504,12 +550,12 @@ public class ValidateOperation {
     // Remove any surrounding single quotes from the term:
     term = term.replaceAll("^\'|\'$", "");
 
-    // If the term is already a recognised label, then just send it back:
+    // If the term is already a recognized label, then just send it back:
     if (label_to_iri_map.containsKey(term)) {
       return term;
     }
 
-    // Check to see if the term is a recognised IRI (possibly in short form), and if so return its
+    // Check to see if the term is a recognized IRI (possibly in short form), and if so return its
     // corresponding label:
     for (IRI iri : iri_to_label_map.keySet()) {
       if (iri.toString().equals(term) || iri.getShortForm().equals(term)) {
@@ -517,7 +563,7 @@ public class ValidateOperation {
       }
     }
 
-    // If the label isn't recognised, just return null:
+    // If the label isn't recognized, just return null:
     return null;
   }
 
@@ -549,7 +595,7 @@ public class ValidateOperation {
    * Given a string in the form of a wildcard, and a list of strings representing a row of the CSV,
    * return the rdfs:label contained in the position of the row indicated by the wildcard.
    */
-  private static String get_wildcard_contents(String wildcard, List<String> row) {
+  private static String get_wildcard_contents(String wildcard, List<String> row) throws Exception {
     if (!wildcard.startsWith("%")) {
       writelog(LogLevel.ERROR, "Invalid wildcard: \"%s\".", wildcard);
       return null;
@@ -557,12 +603,8 @@ public class ValidateOperation {
 
     int colIndex = Integer.parseInt(wildcard.substring(1)) - 1;
     if (colIndex >= row.size()) {
-      writelog(
-          LogLevel.ERROR,
-          "Rule: \"%s\" indicates a column number that is greater than the row length (%d).",
-          wildcard,
-          row.size());
-      return null;
+      throw new Exception(
+          String.format(columnOutOfRangeError, csv_col_index + 1, wildcard, row.size()));
     }
 
     String term = row.get(colIndex);
@@ -583,7 +625,7 @@ public class ValidateOperation {
    * CSV, return a string in which all of the wildcards in the input string have been replaced by
    * the rdfs:labels corresponding to the content in the positions of the row that they indicate.
    */
-  private static String interpolate(String str, List<String> row) {
+  private static String interpolate(String str, List<String> row) throws Exception {
     if (str.trim().equals("")) {
       return str.trim();
     }
@@ -622,7 +664,9 @@ public class ValidateOperation {
    * as an array of three strings, including the subject to which the when-clause is to be applied,
    * the rule type for the when clause, and the actual axiom to be validated against the subject.
    */
-  private static SimpleEntry<String, List<String[]>> separate_rule(String rule, String ruleType) {
+  private static SimpleEntry<String, List<String[]>> separate_rule(String rule, String ruleType)
+      throws Exception {
+
     // Check if there are any when clauses:
     Matcher m = Pattern.compile("(\\(\\s*when\\s+.+\\))(.*)").matcher(rule);
     String whenClauseStr = null;
@@ -633,11 +677,9 @@ public class ValidateOperation {
       return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
     }
 
-    // If there is no main clause and this is not a PRESENCE rule, inform the user of the problem
-    // and return the rule string as it was passed with an empty when clause list:
+    // Throw an exception if there is no main clause and this is not a PRESENCE rule:
     if (m.start() == 0 && rule_type_to_rtenum_map.get(ruleType).getRuleCat() != RCatEnum.PRESENCE) {
-      writelog(LogLevel.ERROR, "Rule: \"%s\" has when clause but no main clause.", rule);
-      return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
+      throw new Exception(String.format(noMainError, csv_col_index + 1, rule));
     }
 
     // Extract the actual content of the when-clause.
@@ -663,9 +705,7 @@ public class ValidateOperation {
       m = Pattern.compile("^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-\\|]+)\\s+(.*)$").matcher(whenClause);
 
       if (!m.find()) {
-        writelog(LogLevel.ERROR, "Unable to decompose when-clause: \"%s\".", whenClause);
-        // Return the rule as passed with an empty when clause list:
-        return new SimpleEntry<String, List<String[]>>(rule, new ArrayList<String[]>());
+        throw new Exception(String.format(malformedWhenClauseError, csv_col_index + 1, whenClause));
       }
       // Add the triple to the list of when clauses:
       whenClauses.add(new String[] {m.group(1), m.group(2), m.group(3)});
@@ -714,12 +754,12 @@ public class ValidateOperation {
       for (String whenRuleSubType : split_on_pipes(whenRuleType)) {
         RTypeEnum whenSubRType = rule_type_to_rtenum_map.get(whenRuleSubType);
         if (whenSubRType == null || whenSubRType.getRuleCat() != RCatEnum.QUERY) {
-          writelog(
-              LogLevel.ERROR,
-              "In clause: \"%s\": Only rules of type: %s are allowed in a when clause.",
-              whenClause,
-              query_type_to_rtenum_map.keySet());
-          return false;
+          throw new Exception(
+              String.format(
+                  invalidWhenTypeError,
+                  csv_col_index + 1,
+                  String.join(" ", whenClause),
+                  query_type_to_rtenum_map.keySet()));
         }
       }
 
@@ -781,17 +821,14 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query type is unrecognised or not applicable to an individual, inform
+    // as a disjunction. If a query type is unrecognized or not applicable to an individual, inform
     // the user but continue on.
     String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
-      if (!rule_type_recognised(queryType)) {
-        writelog(
-            LogLevel.ERROR,
-            "Query type \"%s\" not recognised in rule \"%s\".",
-            queryType,
-            unsplitQueryType);
-        continue;
+      if (!rule_type_recognized(queryType)) {
+        throw new Exception(
+            String.format(
+                unrecognizedQueryTypeError, csv_col_index + 1, queryType, unsplitQueryType));
       }
 
       RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
@@ -840,16 +877,13 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query type is unrecognised, inform the user but continue on.
+    // as a disjunction. If a query type is unrecognized, inform the user but continue on.
     String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
-      if (!rule_type_recognised(queryType)) {
-        writelog(
-            LogLevel.ERROR,
-            "Query type \"%s\" not recognised in rule \"%s\".",
-            queryType,
-            unsplitQueryType);
-        continue;
+      if (!rule_type_recognized(queryType)) {
+        throw new Exception(
+            String.format(
+                unrecognizedQueryTypeError, csv_col_index + 1, queryType, unsplitQueryType));
       }
 
       RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
@@ -914,16 +948,13 @@ public class ValidateOperation {
 
     // For each of the query types associated with the rule, check to see if the rule is satisfied
     // thus interpreted. If it is, then we return true, since multiple query types are interpreted
-    // as a disjunction. If a query type is unrecognised, inform the user but continue on.
+    // as a disjunction. If a query type is unrecognized, inform the user but continue on.
     String[] queryTypes = split_on_pipes(unsplitQueryType);
     for (String queryType : queryTypes) {
-      if (!rule_type_recognised(queryType)) {
-        writelog(
-            LogLevel.ERROR,
-            "Query type \"%s\" not recognised in rule \"%s\".",
-            queryType,
-            unsplitQueryType);
-        continue;
+      if (!rule_type_recognized(queryType)) {
+        throw new Exception(
+            String.format(
+                unrecognizedQueryTypeError, csv_col_index + 1, queryType, unsplitQueryType));
       }
 
       RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
@@ -1039,7 +1070,7 @@ public class ValidateOperation {
    * is-empty).
    */
   private static void validate_presence_rule(String rule, RTypeEnum rType, String cell)
-      throws IOException {
+      throws Exception, IOException {
 
     writelog(
         LogLevel.DEBUG,
@@ -1054,13 +1085,8 @@ public class ValidateOperation {
     // Presence-type rules (is-required, is-excluded) must be in the form of a truth value:
     if ((Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1)
         && (Arrays.asList("false", "f", "0", "no", "n").indexOf(rule.toLowerCase()) == -1)) {
-      writelog(
-          LogLevel.ERROR,
-          "Invalid rule: \"%s\" for rule type: %s. Must be one of: "
-              + "true, t, 1, yes, y, false, f, 0, no, n",
-          rule,
-          rType.getRuleType());
-      return;
+      throw new Exception(
+          String.format(invalidPresenceRuleError, csv_col_index + 1, rule, rType.getRuleType()));
     }
 
     // If the restriction isn't "true" then there is nothing to do. Just return:
@@ -1119,9 +1145,8 @@ public class ValidateOperation {
         ruleType);
 
     writelog(LogLevel.INFO, "Validating rule \"%s %s\" against \"%s\".", ruleType, rule, cell);
-    if (!rule_type_recognised(ruleType)) {
-      writelog(LogLevel.ERROR, "Unrecognised rule type \"%s\".", ruleType);
-      return;
+    if (!rule_type_recognized(ruleType)) {
+      throw new Exception(String.format(unrecognizedRuleTypeError, csv_col_index + 1, ruleType));
     }
 
     // Separate the given rule into its main clause and optional when clauses:

@@ -18,6 +18,13 @@ public class ValidateCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "validate#";
 
+  /** Error message when user provides --merge-before and --merge-after as true. */
+  private static final String tableNotProvidedError =
+      NS + "TABLE NOT PROVIDED ERROR a table file must be specified to run this command";
+
+  private static final String incorrectTableFormatError =
+      NS + "INCORRECT TABLE FORMAT ERROR the table file must end in either .csv or .tsv";
+
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
@@ -106,7 +113,7 @@ public class ValidateCommand implements Command {
     // supported.
     String tablePath = CommandLineHelper.getOptionalValue(line, "table");
     if (tablePath == null) {
-      throw new Exception("Table file is missing.");
+      throw new IllegalArgumentException(tableNotProvidedError);
     }
 
     List<List<String>> tableData;
@@ -115,7 +122,7 @@ public class ValidateCommand implements Command {
     } else if (tablePath.toLowerCase().endsWith(".csv")) {
       tableData = ioHelper.readCSV(tablePath);
     } else {
-      throw new Exception("Table file must end in .csv or .tsv.");
+      throw new IllegalArgumentException(incorrectTableFormatError);
     }
 
     // Get the output path to write the validation results to. This could be null, but we won't
