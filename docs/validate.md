@@ -123,4 +123,8 @@ The indicated rule could not be parsed. See: [Validation Rule Syntax](#validatio
 
 ### Invalid Presence Rule Error
 
-A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Validation Rule Syntax](#validation-rule-syntax). 
+A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Column Out of Range Error
+
+When a wildcard is used as part of a rule, the column number indicated must not be greater than the number of columns that are in the table data provided. See: [Wildcards](#wildcards).
