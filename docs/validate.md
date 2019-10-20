@@ -119,4 +119,8 @@ row is a subclass of `'exposure process'`.
 
 ### Malformed Rule Error
 
-The indicated rule could not be parsed. See the section on [Validation Rule Syntax](#validation-rule-syntax).
+The indicated rule could not be parsed. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Invalid Presence Rule Error
+
+A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Validation Rule Syntax](#validation-rule-syntax). 
