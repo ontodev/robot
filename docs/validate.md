@@ -132,3 +132,7 @@ When a wildcard is used as part of a rule, the column number indicated must not 
 ### No Main Error
 
 When a when-clause is specified, a main clause must also be specified, with the latter being evaluated only when the when-clause is satisfied. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Malformed When Clause Error
+
+The indicated when-clause could not be parsed. See [When-Clauses](#when-clauses).
