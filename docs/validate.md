@@ -65,26 +65,26 @@ Where:
 * The following rule types are called _presence_ rule types. They place restrictions on whether a cell in a given column can have data or not, and may take a value of either `true` (equivalently: `t`, `yes`, `y`) or `false` (equivalently: `f`, `no`, `n`). If no truth value is supplied, `true` is assumed.
 
     * is-required
-        * When set to `true`, this indicates that cells in this column should have data, possibly conditional upon an optional when-clause. E.g. `is-required (when %2 subclass-of 'vaccine')`
+        * When set to `true`, this indicates that cells in this column should have data, possibly conditional upon an optional when-clause. E.g. `is-required (when 'Crotalus atrox' subclass-of 'vaccine')`
     * is-excluded
-        * When set to `true`, this indicates that cells in this column must be empty, possibly conditional upon an optional when-clause. E.g. `is-excluded (when %2 subclass-of 'vaccine')`
+        * When set to `true`, this indicates that cells in this column must be empty, possibly conditional upon an optional when-clause. E.g. `is-excluded (when 'Crotalus atrox' subclass-of 'vaccine')`
 
-* The following rule types are called _query_ rule types. They involve queries to the reasoner. Consider the example rule `%2 <query-type> %3`. Given the query types below, we have the following corresponding reasoner queries:
+* The following rule types are called _query_ rule types. They involve queries to the reasoner. Consider the example rule `<query-type> 'vaccine'`. Given the query types below, we have the following corresponding reasoner queries:
 
     * subclass-of
-        * queries the reasoner to verify that the class %2 is a subclass of the class %3
+        * queries the reasoner to verify that the class represented in the current cell is a subclass of the class 'vaccine'
     * direct-subclass-of
-        * queries the reasoner to verify that the class %2 is a direct subclass of the class %3
+        * queries the reasoner to verify that the class represented in the current cell is a direct subclass of the class 'vaccine'
     * superclass-of
-        * queries the reasoner to verify that the class %2 is a superclass of the class %3
+        * queries the reasoner to verify that the class represented in the current cell is a superclass of the class 'vaccine'
     * direct-superclass-of
-        * queries the reasoner to verify that the class %2 is a direct superclass of the class %3
+        * queries the reasoner to verify that the class represented in the current cell is a direct superclass of the class 'vaccine'
     * equivalent-to
-        * queries the reasoner to verify that the class %2 is equivalent to the class %3
+        * queries the reasoner to verify that the class represented in the current cell is equivalent to the class 'vaccine'
     * instance-of
-        * queries the reasoner to verify that the individual %2 is an instance of the class %3
+        * queries the reasoner to verify that the individual represented in the current cell is an instance of the class 'vaccine'
     * direct-instance-of
-        * queries the reasoner to verify that the individual %2 is a direct instance of the class %3
+        * queries the reasoner to verify that the individual represented in the current cell is a direct instance of the class 'vaccine'
 
 #### Further notes on `<rule>` and `<when-rule>`
 
@@ -174,3 +174,11 @@ The query type indicated is not one of the recognized query types. See: [Presenc
 ### Unrecognized Rule Type Error
 
 The rule type indicated is not one of the recognized rule types. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Table Not Provided Error
+
+The name of a `.csv` or `.tsv` file containing the table data to validate must be supplied using the `--table` option of the `validate` command. E.g. `robot validate --input myontology.owl --table mytable.csv`.
+
+### Incorrect Table Format Error
+
+The name of the file specified using the `--table` option must end in either `.csv` or `.tsv`.
