@@ -128,3 +128,7 @@ A rule of the presence type must be in the form of a truth value. If this is omm
 ### Column Out of Range Error
 
 When a wildcard is used as part of a rule, the column number indicated must not be greater than the number of columns that are in the table data provided. See: [Wildcards](#wildcards).
+
+### No Main Error
+
+When a when-clause is specified, a main clause must also be specified, with the latter being evaluated only when the when-clause is satisfied. See: [Validation Rule Syntax](#validation-rule-syntax).
