@@ -5,7 +5,17 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'mvn clean package'
-                sh 'ls ./bin'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'git clone https://github.com/obi-ontology/obi.git'
+                sh 'mkdir -p obi/build'
+                sh 'cp bin/robot.jar obi/build/robot.jar'
+                sh 'cd obi'
+                sh 'make test'
+                sh 'cd ..'
+                sh 'rm -rf obi'
             }
         }
     }
