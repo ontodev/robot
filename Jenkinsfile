@@ -12,9 +12,7 @@ pipeline {
                 sh 'git clone https://github.com/obi-ontology/obi.git'
                 sh 'mkdir -p obi/build'
                 sh 'cp bin/robot.jar obi/build/robot.jar'
-                sh 'cd obi'
-                sh 'make test'
-                sh 'cd ..'
+                sh 'cd obi && make test'
                 sh 'rm -rf obi'
             }
         }
