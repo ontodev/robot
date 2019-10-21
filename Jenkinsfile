@@ -9,10 +9,10 @@ pipeline {
         }
         stage('Test') {
             steps {
+                sh 'git clone https://github.com/obi-ontology/obi.git || true'
                 sh 'mkdir -p obi/build'
                 sh 'cp bin/robot.jar obi/build/robot.jar'
-                sh 'cd obi && make test'
-                sh 'rm -rf obi'
+                sh 'cd obi && make test || cd .. && rm -rf obi'
             }
         }
     }
