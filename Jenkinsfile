@@ -11,7 +11,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
+                    if (env.BRANCH_NAME == 'obi-test') {
                         try {
                             sh 'git clone https://github.com/obi-ontology/obi.git'
                             sh 'mkdir -p obi/build'
