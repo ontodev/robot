@@ -7,12 +7,23 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
+
         stage('Test') {
             steps {
-                sh 'git clone https://github.com/obi-ontology/obi.git || true'
-                sh 'mkdir -p obi/build'
-                sh 'cp bin/robot.jar obi/build/robot.jar'
-                sh 'cd obi && make test || cd .. && rm -rf obi'
+                script {
+                    if (env.BRANCH_NAME == 'obi-test') {
+                        try {
+                            sh 'git clone https://github.com/obi-ontology/obi.git'
+                            sh 'mkdir -p obi/build'
+                            sh 'cp bin/robot.jar obi/build/robot.jar'
+                            sh 'cd obi && make test'
+                        } finally {
+                            sh 'rm -rf obi'
+                        }
+                    } else {
+                        sh 'java -jar bin/robot.jar help'
+                    }
+                }
             }
         }
     }
