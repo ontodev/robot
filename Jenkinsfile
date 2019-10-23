@@ -7,14 +7,14 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                sh 'rm -rf bin/original-robot.jar'
             }
         }
 
         stage('Test') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'obi-test') {
+                    if (env.BRANCH_NAME == 'master') {
                         try {
                             sh 'git clone https://github.com/obi-ontology/obi.git'
                             sh 'mkdir -p obi/build'
