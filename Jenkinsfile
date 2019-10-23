@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        TARGET_ADMIN_EMAILS = 'james@overton.ca'
+    }
 
     stages {
         stage('Build') {
@@ -31,6 +34,10 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'bin/*.jar', fingerprint: true
+        }
+        failure {
+        echo "There has been a failure in the ${env.BRANCH_NAME} pipeline."
+        mail bcc: '', body: "There has been a pipeline failure in ${env.BRANCH_NAME}. Please see: https://build.obolibrary.io/job/ontodev/job/robot/${env.BRANCH_NAME}", cc: '', from: '', replyTo: '', subject: "ROBOT Integration Test FAIL", to: "${TARGET_ADMIN_EMAILS}"
         }
     }
 }
