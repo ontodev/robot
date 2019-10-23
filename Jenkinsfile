@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'rm -rf bin/original-robot.jar'
+                sh 'mvn clean package'
             }
         }
 
@@ -24,7 +24,7 @@ pipeline {
                             sh 'rm -rf obi'
                         }
                     } else {
-                        sh 'java -jar bin/robot.jar help'
+                        sh 'java -jar bin/robot.jar notacommand'
                     }
                 }
             }
@@ -37,7 +37,7 @@ pipeline {
         }
         failure {
         echo "There has been a failure in the ${env.BRANCH_NAME} pipeline."
-        mail bcc: '', body: "There has been a pipeline failure in ${env.BRANCH_NAME}. Please see: https://build.obolibrary.io/job/ontodev/job/robot/${env.BRANCH_NAME}", cc: '', from: '', replyTo: '', subject: "ROBOT Integration Test FAIL", to: "${TARGET_ADMIN_EMAILS}"
+        mail bcc: '', body: "There has been a pipeline failure in ${env.BRANCH_NAME}. Please see: https://build.obolibrary.io/job/ontodev/job/robot/job/${env.BRANCH_NAME}", cc: '', from: '', replyTo: '', subject: "ROBOT Integration Test FAIL", to: "${TARGET_ADMIN_EMAILS}"
         }
     }
 }
