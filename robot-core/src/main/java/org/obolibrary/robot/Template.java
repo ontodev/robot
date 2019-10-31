@@ -99,10 +99,11 @@ public class Template {
           + "CLASS TYPE SPLIT ERROR the SPLIT functionality should not be used for CLASS_TYPE in column %d in table \"%s\".";
 
   /**
-   * Error message when a template column does not have a header.
-   * Expects: column number, table name
+   * Error message when a template column does not have a header. Expects: column number, table name
    */
-  private static final String columnMismatchError = NS + "COLUMN MISMATCH ERROR the template string in column %d must have a corresponding header in table \"%s\"";
+  private static final String columnMismatchError =
+      NS
+          + "COLUMN MISMATCH ERROR the template string in column %d must have a corresponding header in table \"%s\"";
 
   /** Error message when a data property has a characteristic other than 'functional'. */
   private static final String dataPropertyCharacteristicError =
