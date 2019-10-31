@@ -254,7 +254,7 @@ A class row may only use one of: `subclass`, `equivalent`, and `disjoint`. To ad
 
 ### Column Mismatch Error
 
-There number of header columns (first row) must be equal to the number of template string columns (second row).
+Each column that has a template string in row two must have a header string in row one. It is OK to have a header string with no template string.
 
 ### Data Property Characteristic Error
 
@@ -322,10 +322,6 @@ An IRI cannot be created from the provided ID. This is most likely because the I
 ### Property Type Error
 
 The valid `PROPERTY_TYPE` values are: `subproperty`, `equivalent`, `disjoint`, and (for object properties only) `inverse`.
-
-### Row Length Error
-
-A row in the template has more columns than the header row. Check the row given in the error message and make sure all columns are in the correct location.
 
 ### Template File Error
 
