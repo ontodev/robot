@@ -12,8 +12,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplPlain;
-import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
 
 /**
  * Convenience methods to get related entities for a set of IRIs. Allowed relation options are: -
@@ -1132,6 +1130,7 @@ public class RelatedObjectsHelper {
   protected static Set<OWLAnnotation> getAnnotations(
       OWLOntology ontology, IOHelper ioHelper, String annotation) throws Exception {
     OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+
     // Create an IRI from the CURIE
     String propertyID = annotation.split("=")[0];
     IRI propertyIRI = ioHelper.createIRI(propertyID);
@@ -1139,11 +1138,22 @@ public class RelatedObjectsHelper {
       throw new IllegalArgumentException(
           String.format(invalidIRIError, "annotation property", propertyID));
     }
+
     // Get the annotation property and string representation of value
     OWLAnnotationProperty annotationProperty = dataFactory.getOWLAnnotationProperty(propertyIRI);
     String value = annotation.split("=")[1];
     // Based on the value, determine the type of annotation
-    if (value.contains("<") && value.contains(">")) {
+    if (value.startsWith("@")) {
+      String lang = value.substring(1);
+      return getLangAnnotations(ontology, annotationProperty, lang);
+
+    } else if (value.startsWith("^^")) {
+      String datatypeString = value.substring(2).replace("<", "").replace(">", "");
+      IRI datatypeIRI = ioHelper.createIRI(datatypeString);
+      OWLDatatype datatype = dataFactory.getOWLDatatype(datatypeIRI);
+      return getTypedAnnotations(ontology, annotationProperty, datatype);
+
+    } else if (value.contains("<") && value.contains(">") && !value.contains("^^")) {
       // Return an IRI annotation
       String valueID = value.substring(1, value.length() - 1);
       IRI valueIRI = ioHelper.createIRI(valueID);
@@ -1152,13 +1162,16 @@ public class RelatedObjectsHelper {
             String.format(invalidIRIError, "annotation value (IRI)", valueID));
       }
       return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+
     } else if (value.contains("~'")) {
       // Return a set of annotations in the ontology that match a regex pattern
       return getPatternAnnotations(ontology, annotationProperty, value);
+
     } else if (value.contains("'")) {
       // Return a literal (string, boolean, double, integer, float) annotation
       return Sets.newHashSet(
           getLiteralAnnotation(ioHelper, dataFactory, annotationProperty, value));
+
     } else {
       // Return an IRI annotation based on a CURIE
       IRI valueIRI = ioHelper.createIRI(value);
@@ -1166,8 +1179,56 @@ public class RelatedObjectsHelper {
         throw new IllegalArgumentException(
             String.format(invalidIRIError, "annotation value (CURIE)", value));
       }
+
       return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
     }
+  }
+
+  private static Set<OWLAnnotation> getTypedAnnotations(
+      OWLOntology ontology, OWLAnnotationProperty property, OWLDatatype datatype) {
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      if (axiom instanceof OWLAnnotationAssertionAxiom) {
+        OWLAnnotationAssertionAxiom annAxiom = (OWLAnnotationAssertionAxiom) axiom;
+        OWLAnnotation ann = annAxiom.getAnnotation();
+        OWLAnnotationProperty usedProp = ann.getProperty();
+        if (!usedProp.getIRI().toString().equals(property.getIRI().toString())) {
+          continue;
+        }
+        OWLAnnotationValue value = ann.getValue();
+        if (value.isLiteral()) {
+          OWLLiteral lit = value.asLiteral().orNull();
+          if (lit != null
+              && lit.getDatatype().getIRI().toString().equals(datatype.getIRI().toString())) {
+            annotations.add(ann);
+          }
+        }
+      }
+    }
+    return annotations;
+  }
+
+  private static Set<OWLAnnotation> getLangAnnotations(
+      OWLOntology ontology, OWLAnnotationProperty property, String lang) {
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      if (axiom instanceof OWLAnnotationAssertionAxiom) {
+        OWLAnnotationAssertionAxiom annAxiom = (OWLAnnotationAssertionAxiom) axiom;
+        OWLAnnotation ann = annAxiom.getAnnotation();
+        OWLAnnotationProperty usedProp = ann.getProperty();
+        if (!usedProp.getIRI().toString().equals(property.getIRI().toString())) {
+          continue;
+        }
+        OWLAnnotationValue value = ann.getValue();
+        if (value.isLiteral()) {
+          OWLLiteral lit = value.asLiteral().orNull();
+          if (lit != null && lit.hasLang(lang)) {
+            annotations.add(ann);
+          }
+        }
+      }
+    }
+    return annotations;
   }
 
   /**
@@ -1315,22 +1376,21 @@ public class RelatedObjectsHelper {
     Set<OWLAnnotation> annotations = new HashSet<>();
     String patternString = value.split("\'")[1];
     Pattern pattern = Pattern.compile(patternString);
-    for (OWLEntity e : OntologyHelper.getEntities(ontology)) {
-      for (OWLAnnotation a : EntitySearcher.getAnnotations(e, ontology)) {
-        if (a.getProperty().equals(annotationProperty)) {
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      if (axiom instanceof OWLAnnotationAssertionAxiom) {
+        OWLAnnotationAssertionAxiom annAxiom = (OWLAnnotationAssertionAxiom) axiom;
+        OWLAnnotation a = annAxiom.getAnnotation();
+        if (a.getProperty().getIRI().toString().equals(annotationProperty.getIRI().toString())) {
           OWLAnnotationValue av = a.getValue();
-          String annotationValue;
-          // The annotation value ONLY expects a plain or string
-          try {
-            OWLLiteralImplPlain plain = (OWLLiteralImplPlain) av;
-            annotationValue = plain.getLiteral();
-          } catch (ClassCastException ex) {
-            try {
-              OWLLiteralImplString str = (OWLLiteralImplString) av;
-              annotationValue = str.getLiteral();
-            } catch (ClassCastException ex2) {
-              continue;
+          String annotationValue = null;
+          if (av.isLiteral()) {
+            OWLLiteral lit = av.asLiteral().orNull();
+            if (lit != null) {
+              annotationValue = lit.getLiteral();
             }
+          }
+          if (annotationValue == null) {
+            continue;
           }
           Matcher matcher = pattern.matcher(annotationValue);
           if (matcher.matches()) {
@@ -1359,12 +1419,16 @@ public class RelatedObjectsHelper {
       OWLAnnotationProperty annotationProperty,
       String value)
       throws Exception {
-    // ioHelper.addPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
     OWLAnnotationValue annotationValue;
-    if (value.contains("^^")) {
+    Matcher datatypeMatcher = Pattern.compile("'(.*)'\\^\\^(.*)").matcher(value);
+    Matcher langMatcher = Pattern.compile("'(.*)'@(.*)").matcher(value);
+    if (datatypeMatcher.matches()) {
       // A datatype is given
-      String content = value.split("\\^\\^")[0].replace("'", "");
-      String dataTypeID = value.split("\\^\\^")[1];
+      String content = datatypeMatcher.group(1);
+      String dataTypeID = datatypeMatcher.group(2);
+      if (dataTypeID.startsWith("<") && dataTypeID.endsWith(">")) {
+        dataTypeID = dataTypeID.replace("<", "").replace(">", "");
+      }
       IRI dataTypeIRI = ioHelper.createIRI(dataTypeID);
       if (dataTypeIRI == null) {
         throw new IllegalArgumentException(String.format(invalidIRIError, "datatype", dataTypeID));
@@ -1401,8 +1465,13 @@ public class RelatedObjectsHelper {
       } else {
         annotationValue = dataFactory.getOWLLiteral(content, dt);
       }
+    } else if (langMatcher.matches()) {
+      // A language is given - always a string literal
+      String content = langMatcher.group(1);
+      String lang = langMatcher.group(2);
+      annotationValue = dataFactory.getOWLLiteral(content, lang);
     } else {
-      // If a datatype isn't provided, default to string literal
+      // If a datatype isn't provided, default to string literal with no language
       annotationValue = dataFactory.getOWLLiteral(value.replace("'", ""));
     }
     return dataFactory.getOWLAnnotation(annotationProperty, annotationValue);

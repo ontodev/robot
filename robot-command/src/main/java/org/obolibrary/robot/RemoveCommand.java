@@ -37,6 +37,7 @@ public class RemoveCommand implements Command {
     o.addOption("N", "include-terms", true, "set of terms in file to force include");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
+    o.addOption(null, "include-term", true, "include term");
     o.addOption("r", "trim", true, "if true, remove axioms containing any selected object");
     o.addOption(
         "S",
@@ -245,6 +246,14 @@ public class RemoveCommand implements Command {
     // Use the select statements to get a set of objects to remove
     Set<OWLObject> relatedObjects =
         RelatedObjectsHelper.selectGroups(ontology, ioHelper, objects, selectGroups);
+    // Add all the include terms
+    if (line.hasOption("include-term") || line.hasOption("include-terms")) {
+      Set<IRI> includeIRIs =
+          CommandLineHelper.getTerms(ioHelper, line, "include-term", "include-terms");
+      Set<OWLObject> includeObjects =
+          new HashSet<>(OntologyHelper.getEntities(ontology, includeIRIs));
+      relatedObjects.addAll(includeObjects);
+    }
 
     // Remove all the excluded terms from that set
     if (line.hasOption("exclude-term") || line.hasOption("exclude-terms")) {
