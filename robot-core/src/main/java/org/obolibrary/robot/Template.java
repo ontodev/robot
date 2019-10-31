@@ -2008,7 +2008,14 @@ public class Template {
     int lastAnnotation = -1;
     while (column < row.size() - 1) {
       column++;
-      String template = templates.get(column);
+      // Row might be longer than column
+      // That's OK, just skip it
+      String template;
+      try {
+        template = templates.get(column);
+      } catch (IndexOutOfBoundsException e) {
+        break;
+      }
       Matcher m = Pattern.compile("^>.*").matcher(template);
       if (m.matches()) {
 
