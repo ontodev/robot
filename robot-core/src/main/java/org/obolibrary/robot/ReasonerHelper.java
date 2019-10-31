@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
+import org.obolibrary.robot.reason.InferredClassAssertionAxiomGeneratorDirectOnly;
+import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
+import org.obolibrary.robot.reason.InferredSubObjectPropertyAxiomGeneratorIncludingIndirect;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -233,19 +236,36 @@ public class ReasonerHelper {
    * Given a list of axiom generator strings, return a list of InferredAxiomGenerator objects.
    *
    * @param axGenerators list of strings to get InferredAxiomGenerators
+   * @param direct return axiom generators which include only direct
+   *     superclass/superproperties/types
+   * @return list of InferredAxiomGenerators
+   */
+  public static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
+      List<String> axGenerators, boolean direct) {
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
+    if (axGenerators == null || axGenerators.isEmpty()) {
+      if (direct) {
+        gens.add(new InferredSubClassAxiomGenerator());
+      } else {
+        gens.add(new InferredSubClassAxiomGeneratorIncludingIndirect());
+      }
+      return gens;
+    }
+    for (String ax : axGenerators) {
+      gens.add(getInferredAxiomGenerator(ax, direct));
+    }
+    return gens;
+  }
+
+  /**
+   * Given a list of axiom generator strings, return a list of InferredAxiomGenerator objects.
+   *
+   * @param axGenerators list of strings to get InferredAxiomGenerators
    * @return list of InferredAxiomGenerators
    */
   public static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
       List<String> axGenerators) {
-    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = new ArrayList<>();
-    if (axGenerators == null || axGenerators.isEmpty()) {
-      gens.add(new InferredSubClassAxiomGenerator());
-      return gens;
-    }
-    for (String ax : axGenerators) {
-      gens.add(getInferredAxiomGenerator(ax));
-    }
-    return gens;
+    return getInferredAxiomGenerators(axGenerators, true);
   }
 
   /**
@@ -256,10 +276,27 @@ public class ReasonerHelper {
    */
   public static InferredAxiomGenerator<? extends OWLAxiom> getInferredAxiomGenerator(
       String axGenerator) {
+    return getInferredAxiomGenerator(axGenerator, true);
+  }
+
+  /**
+   * Given an axiom generator as a string, return the InferredAxiomGenerator object.
+   *
+   * @param axGenerator name of InferredAxiomGenerator
+   * @param direct return axiom generators which include only direct
+   *     superclass/superproperties/types
+   * @return InferredAxiomGenerator
+   */
+  public static InferredAxiomGenerator<? extends OWLAxiom> getInferredAxiomGenerator(
+      String axGenerator, boolean direct) {
     switch (axGenerator.toLowerCase()) {
       case "subclass":
       case "":
-        return new InferredSubClassAxiomGenerator();
+        if (direct) {
+          return new InferredSubClassAxiomGenerator();
+        } else {
+          return new InferredSubClassAxiomGeneratorIncludingIndirect();
+        }
       case "disjointclasses":
         return new InferredDisjointClassesAxiomGenerator();
       case "equivalentclass":
@@ -271,7 +308,11 @@ public class ReasonerHelper {
       case "subdataproperty":
         return new InferredSubDataPropertyAxiomGenerator();
       case "classassertion":
-        return new InferredClassAssertionAxiomGenerator();
+        if (direct) {
+          return new InferredClassAssertionAxiomGeneratorDirectOnly();
+        } else {
+          return new InferredClassAssertionAxiomGenerator();
+        }
       case "propertyassertion":
         return new InferredPropertyAssertionGenerator();
       case "equivalentobjectproperty":
@@ -281,7 +322,11 @@ public class ReasonerHelper {
       case "objectpropertycharacteristic":
         return new InferredObjectPropertyCharacteristicAxiomGenerator();
       case "subobjectproperty":
-        return new InferredSubObjectPropertyAxiomGenerator();
+        if (direct) {
+          return new InferredSubObjectPropertyAxiomGenerator();
+        } else {
+          return new InferredSubObjectPropertyAxiomGeneratorIncludingIndirect();
+        }
       default:
         throw new IllegalArgumentException(String.format(axiomGeneratorError, axGenerator));
     }

@@ -36,10 +36,6 @@ public class QueryCommand implements Command {
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR at least one query must be provided";
 
-  /** Error message when --tdb is true but the input is not RDF/XML (including OWL) or TTL */
-  protected static final String tdbFormatError =
-      NS + "TDB FORMAT ERROR input file must be owl, rdf, or ttl.";
-
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -209,21 +205,16 @@ public class QueryCommand implements Command {
         CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
-    Dataset dataset;
-    if (inputPath.endsWith(".rdf") || inputPath.endsWith(".owl")) {
-      dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
-    } else if (inputPath.endsWith(".ttl")) {
-      dataset = QueryOperation.loadTriplesAsDataset(inputPath, tdbDir);
-    } else {
-      throw new IllegalArgumentException(tdbFormatError);
-    }
+
+    Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
+
     try {
       runQueries(line, dataset, queries);
     } finally {
       dataset.close();
       TDBFactory.release(dataset);
       if (!keepMappings) {
-        boolean success = clean(tdbDir);
+        boolean success = IOHelper.cleanTDB(tdbDir);
         if (!success) {
           logger.error(String.format("Unable to remove directory '%s'", tdbDir));
         }
@@ -270,9 +261,15 @@ public class QueryCommand implements Command {
     String catalogPath = state.getCatalogPath();
     if (catalogPath == null) {
       String ontologyPath = state.getOntologyPath();
-      File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
-      if (catalogFile != null) {
-        catalogPath = catalogFile.getPath();
+      // If loading from IRI, ontologyPath might be null
+      // In which case, we cannot get a catalog
+      if (ontologyPath == null) {
+        catalogPath = null;
+      } else {
+        File catalogFile = ioHelper.guessCatalogFile(new File(ontologyPath));
+        if (catalogFile != null) {
+          catalogPath = catalogFile.getPath();
+        }
       }
     }
     // Make sure the file exists
@@ -357,31 +354,5 @@ public class QueryCommand implements Command {
       OutputStream output = new FileOutputStream(outputPath);
       QueryOperation.runSparqlQuery(dataset, query, formatName, output);
     }
-  }
-
-  /**
-   * Given a directory containing TDB mappings, remove the files and directory. If successful,
-   * return true.
-   *
-   * @param tdbDir directory to remove
-   * @return boolean indicating success
-   */
-  protected static boolean clean(String tdbDir) {
-    File dir = new File(tdbDir);
-    boolean success = true;
-    if (dir.exists()) {
-      String[] files = dir.list();
-      if (files != null) {
-        for (String file : files) {
-          File f = new File(dir.getPath(), file);
-          success = f.delete();
-        }
-      }
-      // Only delete if all the files in dir were deleted
-      if (success) {
-        success = dir.delete();
-      }
-    }
-    return success;
   }
 }

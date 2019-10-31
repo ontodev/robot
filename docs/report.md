@@ -1,5 +1,17 @@
 # Report
 
+## Contents
+
+1. [Overview](#overview)
+2. [Labels (`--labels`)](#labels)
+3. [Failing (`--fail-on`)](#failing)
+4. [Queries](#queries)
+5. [Profiles (`--profile`)](#profiles)
+6. [Executing on Disk (`--tdb`)](#executing-on-disk)
+7. [Limiting Results (`--limit`)](#limiting-results)
+
+## Overview
+
 The `report` command runs a series of quality control SPARQL queries over the input ontology and generates a TSV or YAML report file based on the results. Each query has a logging level to define the severity of the issue: ERROR, WARN, or INFO.
 * `ERROR`: Must be fixed before releasing the ontology. These issues will cause problems for users, such as classes with multiple labels.
 * `WARN`: Should be fixed as soon as possible. These will not cause problems for *all* users, but may not be what they expect. For example, a class that is inferred to be equivalent to another named class.
@@ -86,6 +98,32 @@ INFO    file:///absolute/path/to/other_query.rq
 INFO    file:./relative/path/to/other_query.rq
 ```
 
+## Executing on Disk
+
+`report` may fail on some very large ontologies when ROBOT cannot fit the entire ontology into memory. You can either increase the available memory (see [Java Options](global#java-options)), or use the `--tdb true` option to load the ontology as an [Apache Jena TDB Dataset](http://jena.apache.org/documentation/tdb/datasets.html) instead of with OWL API:
+
+```
+robot report --input edit.owl \
+  --tdb true \
+  --output my-report.tsv
+```
+
+Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
+
+Once the report is complete, ROBOT will remove the TDB directory. You can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory (which may be beneficial if you want to reuse it with [query](query#executing-on-disk)). This will greatly reduce the execution time of subsequent TDB-based operations on the ontology.
+
+## Limiting Results
+
+Large numbers of results from the report queries may cause an `OutOfMemoryError`. To prevent this, you can limit the number of results with `--limit <INTEGER>`:
+
+```
+robot report --input edit.owl \
+  --limit 10000 \
+  --output my-report.tsv
+```
+
+This example will only include the first 10,000 results for each report query, meaning that some violation counts may be incomplete. Typically, you should not need to include a limit, but when working with large ontologies (using TDB), there may be hundreds of thousands of results.
+
 ---
 
 ## Error Messages
@@ -93,6 +131,10 @@ INFO    file:./relative/path/to/other_query.rq
 ### Fail On Error
 
 Only `info`, `warn`, and `error` are valid inputs for `--fail-on`.
+
+### Limit Number Error
+
+The argument for the `--limit` option must be a number.
 
 ### Missing Entity Binding
 

@@ -1,0 +1,24 @@
+ontology: xref-need-of-repair
+
+[Term]
+id: GO:1
+name: leaf node
+is_a: GO:3
+
+[Term]
+id: GO:2
+name: original parent
+is_obsolete: true
+replaced_by: GO:3
+
+[Term]
+id: GO:3
+name: replacement parent
+xref: FOO:1
+xref: FOO:2
+
+[Term]
+id: GO:4
+name: other term
+is_obsolete: true
+replaced_by: GO:3
