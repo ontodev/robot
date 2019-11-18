@@ -1,12 +1,7 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Nonnull;
 import org.semanticweb.owlapi.expression.OWLEntityChecker;
 import org.semanticweb.owlapi.model.IRI;
@@ -225,7 +220,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       ontologies.addAll(parentOntology.getImports());
       for (OWLAnnotationProperty property : properties) {
         // Get the labels for all entities
-        for (OWLAnnotation ann : EntitySearcher.getAnnotations(entity, ontologies, property)) {
+        Collection<OWLAnnotation> anns =
+            EntitySearcher.getAnnotations(entity, ontologies, property);
+        for (OWLAnnotation ann : anns) {
           OWLLiteral value = ann.getValue().asLiteral().orNull();
           // If it has a label, add it to the map (will replace short form)
           if (value != null) {
@@ -308,6 +305,23 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return escape(labels.get(iri));
     }
     return null;
+  }
+
+  /**
+   * Get the label for the given IRI. Quotation marks will be removed if necessary. If the label is
+   * not found, use the ifNull string as label.
+   *
+   * @param iri IRI to get label of
+   * @param ifNull value to return if label is null
+   * @return the label of the entity, or ifNull value if none is found
+   */
+  public String getLabel(IRI iri, String ifNull) {
+    String label = getLabel(iri);
+    if (label == null) {
+      return ifNull;
+    } else {
+      return label;
+    }
   }
 
   /**

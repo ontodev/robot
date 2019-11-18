@@ -10,11 +10,7 @@ import com.google.common.collect.Sets;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -1135,6 +1131,26 @@ public class IOHelper {
    */
   public static List<List<String>> readCSV(Reader reader) throws IOException {
     return TemplateHelper.readCSV(reader);
+  }
+
+  /**
+   * Given a resource path (in `robot-core/src/main/resources`), return the contents of the resource
+   * as a string.
+   *
+   * @param resourcePath path to resource file (starting with `/`)
+   * @return resource contents as string
+   * @throws IOException on issue reading resource
+   */
+  public static String readResource(String resourcePath) throws IOException {
+    InputStream is = IOHelper.class.getResourceAsStream(resourcePath);
+    List<String> lines = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        lines.add(line);
+      }
+    }
+    return String.join("\n", lines);
   }
 
   /**

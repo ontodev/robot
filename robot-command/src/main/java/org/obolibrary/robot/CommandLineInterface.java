@@ -38,6 +38,7 @@ public class CommandLineInterface {
     m.addCommand("repair", new RepairCommand());
     m.addCommand("report", new ReportCommand());
     m.addCommand("template", new TemplateCommand());
+    m.addCommand("tree", new TreeCommand());
     m.addCommand("unmerge", new UnmergeCommand());
     m.addCommand("validate-profile", new ValidateProfileCommand());
     m.addCommand("verify", new VerifyCommand());
