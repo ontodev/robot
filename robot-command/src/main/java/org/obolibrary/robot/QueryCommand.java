@@ -32,6 +32,9 @@ public class QueryCommand implements Command {
   /** Error message when update file provided does not exist. */
   private static final String missingFileError = NS + "MISSING FILE ERROR file '%s' does not exist";
 
+  /** Error message when --query does not have two arguments. */
+  private static final String missingOutputError = NS + "MISSING OUTPUT ERROR --%s requires two arguments: query and output";
+
   /** Error message when a query is not provided */
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR at least one query must be provided";
@@ -294,15 +297,27 @@ public class QueryCommand implements Command {
     List<List<String>> queries = new ArrayList<>();
     List<String> qs = CommandLineHelper.getOptionalValues(line, "query");
     for (int i = 0; i < qs.size(); i += 2) {
-      queries.add(qs.subList(i, i + 2));
+      try {
+        queries.add(qs.subList(i, i + 2));
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(String.format(missingOutputError, "query"));
+      }
     }
     qs = CommandLineHelper.getOptionalValues(line, "select");
     for (int i = 0; i < qs.size(); i += 2) {
-      queries.add(qs.subList(i, i + 2));
+      try {
+        queries.add(qs.subList(i, i + 2));
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(String.format(missingOutputError, "select"));
+      }
     }
     qs = CommandLineHelper.getOptionalValues(line, "construct");
     for (int i = 0; i < qs.size(); i += 2) {
-      queries.add(qs.subList(i, i + 2));
+      try {
+        queries.add(qs.subList(i, i + 2));
+      } catch (IndexOutOfBoundsException e) {
+        throw new IllegalArgumentException(String.format(missingOutputError, "construct"));
+      }
     }
     qs = CommandLineHelper.getOptionalValues(line, "queries");
     for (String q : qs) {
