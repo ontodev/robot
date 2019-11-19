@@ -91,6 +91,10 @@ The ontology is never loaded as an `OWLOntology` object, since doing so loads th
 
 The file provided for `--update` does not exist. Check the path and try again.
 
+### Missing Output Error
+
+The `--query`, `--select`, and `--construct` options require two arguments: a query file and an output file (`--query <query> <output>`). 
+
 ### Missing Query Error
 
 You must specify a query to execute with `--query` or `--queries`.
