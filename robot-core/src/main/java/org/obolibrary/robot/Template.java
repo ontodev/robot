@@ -99,12 +99,11 @@ public class Template {
           + "CLASS TYPE SPLIT ERROR the SPLIT functionality should not be used for CLASS_TYPE in column %d in table \"%s\".";
 
   /**
-   * Error message when the number of header columns does not match the number of template columns.
-   * Expects: table name, header count, template count.
+   * Error message when a template column does not have a header. Expects: column number, table name
    */
   private static final String columnMismatchError =
       NS
-          + "COLUMN MISMATCH ERROR the number of header columns (%2$d) must match the number of template columns (%3$d) in table \"%1$s\".";
+          + "COLUMN MISMATCH ERROR the template string in column %d must have a corresponding header in table \"%s\"";
 
   /** Error message when a data property has a characteristic other than 'functional'. */
   private static final String dataPropertyCharacteristicError =
@@ -129,7 +128,7 @@ public class Template {
   /** Error message when more than one logical type is used in PROPERTY_TYPE. */
   private static final String propertyTypeSplitError =
       NS
-          + "PROPERTY TYPE SPLIT ERROR thee SPLIT functionality should not be used for PROPERTY_TYPE in column %d in table \"%s\".";
+          + "PROPERTY TYPE SPLIT ERROR the SPLIT functionality should not be used for PROPERTY_TYPE in column %d in table \"%s\".";
 
   /** Error message when property characteristic not valid. */
   private static final String unknownCharacteristicError =
@@ -398,21 +397,28 @@ public class Template {
     // Get and validate headers
     headers = rows.get(0);
     templates = rows.get(1);
-    if (headers.size() != templates.size()) {
-      throw new ColumnException(
-          String.format(columnMismatchError, name, headers.size(), templates.size()));
-    }
 
     for (int column = 0; column < templates.size(); column++) {
-      String template = templates.get(column);
-
-      // If the template is null or the column is empty, skip this column
-      if (template == null) {
+      String template = templates.get(column).trim();
+      if (template.isEmpty()) {
+        // If the template is empty, skip this column
         continue;
       }
-      template = template.trim();
-      if (template.isEmpty()) {
-        continue;
+
+      // Validate that there's a header in this column
+      // It's OK if there's a header without a template
+      String header;
+      try {
+        header = headers.get(column).trim();
+      } catch (IndexOutOfBoundsException e) {
+        // Template row is longer than header row
+        // Which means there is at least one header missing
+        throw new ColumnException(String.format(columnMismatchError, column + 1, name));
+      }
+      if (header.isEmpty()) {
+        // Template string is not empty
+        // Header string is empty
+        throw new ColumnException(String.format(columnMismatchError, column + 1, name));
       }
 
       // Validate the template string
@@ -616,6 +622,7 @@ public class Template {
    */
   private void processRow(List<String> row) throws Exception {
     rowNum++;
+
     String id = null;
     try {
       id = row.get(idColumn);
@@ -2001,7 +2008,14 @@ public class Template {
     int lastAnnotation = -1;
     while (column < row.size() - 1) {
       column++;
-      String template = templates.get(column);
+      // Row might be longer than column
+      // That's OK, just skip it
+      String template;
+      try {
+        template = templates.get(column);
+      } catch (IndexOutOfBoundsException e) {
+        break;
+      }
       Matcher m = Pattern.compile("^>.*").matcher(template);
       if (m.matches()) {
 
@@ -2063,61 +2077,6 @@ public class Template {
       }
     }
     return annotations;
-  }
-
-  /**
-   * Given a row as a list of strings, the template string, and the number of the next column, maybe
-   * get axiom annotations on existing axiom annotations.
-   *
-   * @param row list of strings
-   * @param nextTemplate template string for the column
-   * @param nextColumn next column number
-   * @return set of OWLAnnotations, or an empty set
-   * @throws Exception on issue getting the OWLAnnotations
-   */
-  private Set<OWLAnnotation> getAxiomAnnotations(
-      List<String> row, String nextTemplate, int nextColumn) throws Exception {
-    // template must not be blank
-    // and it must start with >
-    if (!nextTemplate.trim().isEmpty() && (nextTemplate.startsWith(">"))) {
-      // Remove unknown number of >
-      while (nextTemplate.startsWith(">")) {
-        nextTemplate = nextTemplate.substring(1);
-      }
-
-      String nextValue;
-      try {
-        nextValue = row.get(nextColumn);
-      } catch (IndexOutOfBoundsException e) {
-        // No value, nothing else to add
-        return new HashSet<>();
-      }
-
-      if (!nextValue.trim().isEmpty()) {
-        // First get the set of axiom annotations
-        Set<OWLAnnotation> nextAnnotations =
-            TemplateHelper.getAnnotations(
-                name, checker, nextTemplate, nextValue, rowNum, nextColumn);
-
-        // Maybe get another level of axiom annotations
-        Set<OWLAnnotation> nextNextAnnotations = maybeGetAxiomAnnotations(row, nextColumn);
-        if (nextNextAnnotations.isEmpty()) {
-          // Empty means nothing to add
-          return nextAnnotations;
-        }
-
-        // Add those additional axiom annotations
-        Set<OWLAnnotation> fixedAnnotations = new HashSet<>();
-        for (OWLAnnotation annotation : nextAnnotations) {
-          fixedAnnotations.add(annotation.getAnnotatedAnnotation(nextNextAnnotations));
-        }
-        return fixedAnnotations;
-      }
-    }
-    // if the template doesn't start with >, it is not an axiom annotation
-    // or maybe the value cell was empty
-    // return an empty set
-    return new HashSet<>();
   }
 
   /**

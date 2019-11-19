@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import org.obolibrary.robot.exceptions.OntologyLogicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,11 @@ public class ExceptionHelper {
    * @param exception the exception
    */
   public static void handleException(Exception exception) {
+    if (exception instanceof OntologyLogicException) {
+      // These are expected errors when the ontology has issues
+      // They aren't formatted like other exceptions
+      return;
+    }
     String msg = trimExceptionClass(exception);
     if (msg != null) {
       String exceptionID = getExceptionID(msg);
