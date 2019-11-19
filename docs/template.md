@@ -254,7 +254,7 @@ A class row may only use one of: `subclass`, `equivalent`, and `disjoint`. To ad
 
 ### Column Mismatch Error
 
-There number of header columns (first row) must be equal to the number of template string columns (second row).
+Each column that has a template string in row two must have a header string in row one. It is OK to have a header string with no template string.
 
 ### Data Property Characteristic Error
 

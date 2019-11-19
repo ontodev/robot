@@ -22,6 +22,9 @@ public class RelatedObjectsHelper {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(RelatedObjectsHelper.class);
 
+  /** Shared data factory. */
+  private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
+
   /** Namespace for error messages. */
   private static final String NS = "errors#";
 
@@ -707,7 +710,6 @@ public class RelatedObjectsHelper {
     Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
     Set<Map<String, OWLObjectPropertyExpression>> oPropPairs = new HashSet<>();
     Set<OWLAxiom> axioms = new HashSet<>();
-    OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
     // Iterate through objects to generate sub-super pairs
     for (OWLObject object : objects) {
@@ -724,8 +726,12 @@ public class RelatedObjectsHelper {
             ontology, objects, dPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
       } else if (object instanceof OWLObjectProperty) {
         OWLObjectProperty p = (OWLObjectProperty) object;
-        spanGapsHelper(
-            ontology, objects, oPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
+        Set<OWLObjectPropertyExpression> superProps = new HashSet<>();
+        for (OWLSubObjectPropertyOfAxiom ax :
+            ontology.getObjectSubPropertyAxiomsForSubProperty(p)) {
+          superProps.add(ax.getSuperProperty());
+        }
+        spanGapsHelper(ontology, objects, oPropPairs, p, superProps);
       }
     }
 
@@ -733,22 +739,22 @@ public class RelatedObjectsHelper {
     for (Map<String, OWLAnnotationProperty> propPair : aPropPairs) {
       OWLAnnotationProperty subProperty = propPair.get(SUB);
       OWLAnnotationProperty superProperty = propPair.get(SUPER);
-      axioms.add(dataFactory.getOWLSubAnnotationPropertyOfAxiom(subProperty, superProperty));
+      axioms.add(df.getOWLSubAnnotationPropertyOfAxiom(subProperty, superProperty));
     }
     for (Map<String, OWLClassExpression> classPair : classPairs) {
       OWLClass subClass = classPair.get(SUB).asOWLClass();
       OWLClassExpression superClass = classPair.get(SUPER);
-      axioms.add(dataFactory.getOWLSubClassOfAxiom(subClass, superClass));
+      axioms.add(df.getOWLSubClassOfAxiom(subClass, superClass));
     }
     for (Map<String, OWLDataPropertyExpression> propPair : dPropPairs) {
       OWLDataProperty subProperty = propPair.get(SUB).asOWLDataProperty();
       OWLDataPropertyExpression superProperty = propPair.get(SUPER);
-      axioms.add(dataFactory.getOWLSubDataPropertyOfAxiom(subProperty, superProperty));
+      axioms.add(df.getOWLSubDataPropertyOfAxiom(subProperty, superProperty));
     }
     for (Map<String, OWLObjectPropertyExpression> propPair : oPropPairs) {
       OWLObjectProperty subProperty = propPair.get(SUB).asOWLObjectProperty();
       OWLObjectPropertyExpression superProperty = propPair.get(SUPER);
-      axioms.add(dataFactory.getOWLSubObjectPropertyOfAxiom(subProperty, superProperty));
+      axioms.add(df.getOWLSubObjectPropertyOfAxiom(subProperty, superProperty));
     }
 
     return axioms;
@@ -765,8 +771,6 @@ public class RelatedObjectsHelper {
    */
   protected static Set<OWLAnnotation> getAnnotations(
       OWLOntology ontology, IOHelper ioHelper, String annotation) throws Exception {
-    OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
-
     // Create an IRI from the CURIE
     String propertyID = annotation.split("=")[0];
     IRI propertyIRI = ioHelper.createIRI(propertyID);
@@ -776,7 +780,7 @@ public class RelatedObjectsHelper {
     }
 
     // Get the annotation property and string representation of value
-    OWLAnnotationProperty annotationProperty = dataFactory.getOWLAnnotationProperty(propertyIRI);
+    OWLAnnotationProperty annotationProperty = df.getOWLAnnotationProperty(propertyIRI);
     String value = annotation.split("=")[1];
     // Based on the value, determine the type of annotation
     if (value.startsWith("@")) {
@@ -786,7 +790,7 @@ public class RelatedObjectsHelper {
     } else if (value.startsWith("^^")) {
       String datatypeString = value.substring(2).replace("<", "").replace(">", "");
       IRI datatypeIRI = ioHelper.createIRI(datatypeString);
-      OWLDatatype datatype = dataFactory.getOWLDatatype(datatypeIRI);
+      OWLDatatype datatype = df.getOWLDatatype(datatypeIRI);
       return getTypedAnnotations(ontology, annotationProperty, datatype);
 
     } else if (value.contains("<") && value.contains(">") && !value.contains("^^")) {
@@ -797,7 +801,7 @@ public class RelatedObjectsHelper {
         throw new IllegalArgumentException(
             String.format(invalidIRIError, "annotation value (IRI)", valueID));
       }
-      return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+      return Sets.newHashSet(df.getOWLAnnotation(annotationProperty, valueIRI));
 
     } else if (value.contains("~'")) {
       // Return a set of annotations in the ontology that match a regex pattern
@@ -805,8 +809,7 @@ public class RelatedObjectsHelper {
 
     } else if (value.contains("'")) {
       // Return a literal (string, boolean, double, integer, float) annotation
-      return Sets.newHashSet(
-          getLiteralAnnotation(ioHelper, dataFactory, annotationProperty, value));
+      return Sets.newHashSet(getLiteralAnnotation(ioHelper, annotationProperty, value));
 
     } else {
       // Return an IRI annotation based on a CURIE
@@ -815,8 +818,7 @@ public class RelatedObjectsHelper {
         throw new IllegalArgumentException(
             String.format(invalidIRIError, "annotation value (CURIE)", value));
       }
-
-      return Sets.newHashSet(dataFactory.getOWLAnnotation(annotationProperty, valueIRI));
+      return Sets.newHashSet(df.getOWLAnnotation(annotationProperty, valueIRI));
     }
   }
 
@@ -1171,22 +1173,17 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Given an OWL data factory, an annotation property, and a literal value, return the
-   * OWLAnnotation object.
+   * Given an IOHelper, an annotation property, and a literal value, return the OWLAnnotation
+   * object.
    *
    * @param ioHelper IOHelper to retrieve prefix manager
-   * @param dataFactory OWLDataFactory to create entities
    * @param annotationProperty OWLAnnotationProperty
    * @param value annotation value as string
    * @return OWLAnnotation object
    * @throws Exception on issue parsing to datatype
    */
   private static OWLAnnotation getLiteralAnnotation(
-      IOHelper ioHelper,
-      OWLDataFactory dataFactory,
-      OWLAnnotationProperty annotationProperty,
-      String value)
-      throws Exception {
+      IOHelper ioHelper, OWLAnnotationProperty annotationProperty, String value) throws Exception {
     OWLAnnotationValue annotationValue;
     Matcher datatypeMatcher = Pattern.compile("'(.*)'\\^\\^(.*)").matcher(value);
     Matcher langMatcher = Pattern.compile("'(.*)'@(.*)").matcher(value);
@@ -1201,48 +1198,48 @@ public class RelatedObjectsHelper {
       if (dataTypeIRI == null) {
         throw new IllegalArgumentException(String.format(invalidIRIError, "datatype", dataTypeID));
       }
-      OWLDatatype dt = dataFactory.getOWLDatatype(dataTypeIRI);
+      OWLDatatype dt = df.getOWLDatatype(dataTypeIRI);
       if (dt.isBoolean()) {
         if (content.equalsIgnoreCase("true")) {
-          annotationValue = dataFactory.getOWLLiteral(true);
+          annotationValue = df.getOWLLiteral(true);
         } else if (content.equalsIgnoreCase("false")) {
-          annotationValue = dataFactory.getOWLLiteral(false);
+          annotationValue = df.getOWLLiteral(false);
         } else {
           throw new Exception(String.format(literalValueError, dataTypeID, "boolean"));
         }
       } else if (dt.isDouble()) {
         try {
-          annotationValue = dataFactory.getOWLLiteral(Double.parseDouble(content));
+          annotationValue = df.getOWLLiteral(Double.parseDouble(content));
         } catch (Exception e) {
           throw new Exception(String.format(literalValueError, dataTypeID, "double"));
         }
       } else if (dt.isFloat()) {
         try {
-          annotationValue = dataFactory.getOWLLiteral(Float.parseFloat(content));
+          annotationValue = df.getOWLLiteral(Float.parseFloat(content));
         } catch (Exception e) {
           throw new Exception(String.format(literalValueError, dataTypeID, "float"));
         }
       } else if (dt.isInteger()) {
         try {
-          annotationValue = dataFactory.getOWLLiteral(Integer.parseInt(content));
+          annotationValue = df.getOWLLiteral(Integer.parseInt(content));
         } catch (Exception e) {
           throw new Exception(String.format(literalValueError, dataTypeID, "integer"));
         }
       } else if (dt.isString()) {
-        annotationValue = dataFactory.getOWLLiteral(content);
+        annotationValue = df.getOWLLiteral(content);
       } else {
-        annotationValue = dataFactory.getOWLLiteral(content, dt);
+        annotationValue = df.getOWLLiteral(content, dt);
       }
     } else if (langMatcher.matches()) {
       // A language is given - always a string literal
       String content = langMatcher.group(1);
       String lang = langMatcher.group(2);
-      annotationValue = dataFactory.getOWLLiteral(content, lang);
+      annotationValue = df.getOWLLiteral(content, lang);
     } else {
-      // If a datatype isn't provided, default to string literal with no language
-      annotationValue = dataFactory.getOWLLiteral(value.replace("'", ""));
+      // If a datatype isn't provided, default to string literal
+      annotationValue = df.getOWLLiteral(value.replace("'", ""));
     }
-    return dataFactory.getOWLAnnotation(annotationProperty, annotationValue);
+    return df.getOWLAnnotation(annotationProperty, annotationValue);
   }
 
   /**
@@ -1278,6 +1275,44 @@ public class RelatedObjectsHelper {
       superclasses.add(expr);
     }
     return superclasses;
+  }
+
+  /**
+   * Given an ontology and a class expression, return the set of superclasses while removing any
+   * circular subclass definitions. Warn on any circular subclasses.
+   *
+   * @param ontology OWLOntology to get super properties
+   * @param property OWLObjectProperty to get super properties of
+   * @return Set of OWLObjectPropertyExpressions that are super properties of property
+   */
+  private static Set<OWLObjectPropertyExpression> getSuperObjectProperties(
+      OWLOntology ontology, OWLObjectProperty property) {
+    Set<OWLObjectPropertyExpression> superProperties = new HashSet<>();
+
+    // We might get stuck if a class is both subclass and equivalent
+    // So compare the eqs to the superclasses and don't add a super if it's also an eq
+    Collection<OWLObjectPropertyExpression> eqs =
+        EntitySearcher.getEquivalentProperties(property, ontology);
+
+    for (OWLObjectPropertyExpression expr : EntitySearcher.getSuperProperties(property, ontology)) {
+      if (expr.isAnonymous()) {
+        superProperties.add(expr);
+        continue;
+      }
+      if (eqs.contains(expr)) {
+        logger.warn(
+            String.format(
+                "Class '%s' has equivalent property and super property '%s'",
+                property.getIRI(), expr));
+        continue;
+      }
+      if (expr.asOWLObjectProperty().getIRI().toString().equals(property.getIRI().toString())) {
+        logger.warn("Circular subproperty definition: " + property.getIRI());
+        continue;
+      }
+      superProperties.add(expr);
+    }
+    return superProperties;
   }
 
   /**
@@ -1722,29 +1757,29 @@ public class RelatedObjectsHelper {
       Set<Map<String, OWLObjectPropertyExpression>> propPairs,
       OWLObjectProperty property,
       Collection<OWLObjectPropertyExpression> superProperties) {
-    for (OWLObjectPropertyExpression sp : superProperties) {
-      if (objects.containsAll(sp.getSignature())) {
-        Map<String, OWLObjectPropertyExpression> propertyPair = new HashMap<>();
-        propertyPair.put(SUB, property);
-        propertyPair.put(SUPER, sp);
-        if (propPairs.add(propertyPair)) {
-          if (!sp.isAnonymous()) {
-            property = (OWLObjectProperty) sp;
+    for (OWLObjectPropertyExpression sc : superProperties) {
+      if (objects.containsAll(sc.getSignature())) {
+        Map<String, OWLObjectPropertyExpression> propPair = new HashMap<>();
+        propPair.put(SUB, property);
+        propPair.put(SUPER, sc);
+        if (propPairs.add(propPair)) {
+          // only recurse if the pair just added was not already present in the set.
+          if (!sc.isAnonymous()) {
             spanGapsHelper(
                 ontology,
                 objects,
                 propPairs,
-                property,
-                EntitySearcher.getSuperProperties(property, ontology));
+                sc.asOWLObjectProperty(),
+                getSuperObjectProperties(ontology, sc.asOWLObjectProperty()));
           }
         }
-      } else if (!sp.isAnonymous()) {
+      } else if (!sc.isAnonymous()) {
         spanGapsHelper(
             ontology,
             objects,
             propPairs,
             property,
-            EntitySearcher.getSuperProperties(sp, ontology));
+            getSuperObjectProperties(ontology, sc.asOWLObjectProperty()));
       }
     }
   }

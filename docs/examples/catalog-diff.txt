@@ -1,0 +1,5 @@
+1 axioms in Ontology 1 but not in Ontology 2:
+- Import(<https://github.com/ontodev/robot/examples/edit.owl>)
+
+1 axioms in Ontology 2 but not in Ontology 1:
++ Import(<https://github.com/ontodev/robot/examples/foo.owl>)

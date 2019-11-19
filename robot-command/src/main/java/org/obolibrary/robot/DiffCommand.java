@@ -44,8 +44,10 @@ public class DiffCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("l", "left", true, "load left ontology from file");
     o.addOption("L", "left-iri", true, "load left ontology from IRI");
+    o.addOption(null, "left-catalog", true, "catalog to use for left ontology");
     o.addOption("r", "right", true, "load right ontology from file");
     o.addOption("R", "right-iri", true, "load right ontology from IRI");
+    o.addOption(null, "right-catalog", true, "catalog to use for right ontology");
     o.addOption("o", "output", true, "save results to file");
     o.addOption(
         null, "labels", true, "if true, append labels after entity IRIs in the text format output");
@@ -130,7 +132,8 @@ public class DiffCommand implements Command {
     if (leftOntology == null) {
       String leftOntologyPath = CommandLineHelper.getOptionalValue(line, "left");
       String leftOntologyIRI = CommandLineHelper.getOptionalValue(line, "left-iri");
-      leftOntology = setOntology(ioHelper, leftOntologyPath, leftOntologyIRI);
+      String leftOntologyCatalog = CommandLineHelper.getOptionalValue(line, "left-catalog");
+      leftOntology = setOntology(ioHelper, leftOntologyPath, leftOntologyIRI, leftOntologyCatalog);
     }
     if (leftOntology == null) {
       throw new IllegalArgumentException(missingLeftError);
@@ -138,7 +141,9 @@ public class DiffCommand implements Command {
 
     String rightOntologyPath = CommandLineHelper.getOptionalValue(line, "right");
     String rightOntologyIRI = CommandLineHelper.getOptionalValue(line, "right-iri");
-    OWLOntology rightOntology = setOntology(ioHelper, rightOntologyPath, rightOntologyIRI);
+    String rightOntologyCatalog = CommandLineHelper.getOptionalValue(line, "right-catalog");
+    OWLOntology rightOntology =
+        setOntology(ioHelper, rightOntologyPath, rightOntologyIRI, rightOntologyCatalog);
     if (rightOntology == null) {
       throw new IllegalArgumentException(missingRightError);
     }
@@ -163,24 +168,33 @@ public class DiffCommand implements Command {
   }
 
   /**
-   * Given an IOHelper, a path (or null), and an IRI (or null), return the OWLOntology loaded by
-   * either path or IRI. Either path or iri must be included (not null), but both cannot be
-   * included.
+   * Given an IOHelper, a path (or null), an IRI (or null), and a catalog path (or null), return the
+   * OWLOntology loaded by either path or IRI. Either path or iri must be included (not null), but
+   * both cannot be included.
    *
    * @param ioHelper IOHelper to load ontology
    * @param path path to local ontology, or null
    * @param iri IRI to remote ontology, or null
+   * @param catalog path to catalog file, or null
    * @return loaded OWLOntology
    * @throws IOException on issue loading ontology
    */
-  private static OWLOntology setOntology(IOHelper ioHelper, String path, String iri)
+  private static OWLOntology setOntology(IOHelper ioHelper, String path, String iri, String catalog)
       throws IOException {
     if (path != null && iri != null) {
       throw new IllegalArgumentException(doubleInputError);
     } else if (path != null) {
-      return ioHelper.loadOntology(path);
+      if (catalog != null) {
+        return ioHelper.loadOntology(path, catalog);
+      } else {
+        return ioHelper.loadOntology(path);
+      }
     } else if (iri != null) {
-      return ioHelper.loadOntology(IRI.create(iri));
+      if (catalog != null) {
+        return ioHelper.loadOntology(IRI.create(iri), catalog);
+      } else {
+        return ioHelper.loadOntology(IRI.create(iri));
+      }
     } else return null;
   }
 }
