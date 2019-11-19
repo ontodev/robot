@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -30,12 +31,6 @@ public class ExtractCommand implements Command {
       NS
           + "MISSING MIREOT TERMS ERROR "
           + "either lower term(s) or branch term(s) must be specified for MIREOT";
-
-  /** Error message when only upper terms are specified with MIREOT. */
-  private static final String missingLowerTermError =
-      NS
-          + "MISSING LOWER TERMS ERROR "
-          + "lower term(s) must be specified with upper term(s) for MIREOT";
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
@@ -253,32 +248,19 @@ public class ExtractCommand implements Command {
     // Need branch IRIs or lower IRIs to proceed
     if (branchIRIs == null && lowerIRIs == null) {
       throw new IllegalArgumentException(missingMireotTermsError);
-    } else {
-      Map<IRI, IRI> sourceMap =
-          getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
-
-      // First check for lower IRIs, upper IRIs can be null or not
-      if (lowerIRIs != null) {
-        outputOntologies.add(
-            MireotOperation.getAncestors(
-                inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
-        // If there are no lower IRIs, there shouldn't be any upper IRIs
-      } else if (upperIRIs != null) {
-        throw new IllegalArgumentException(missingLowerTermError);
-      }
-      // Check for branch IRIs
-      if (branchIRIs != null) {
-        outputOntologies.add(
-            MireotOperation.getDescendants(
-                inputOntology, branchIRIs, null, extractOptions, sourceMap));
-      }
     }
+
+    Map<IRI, IRI> sourceMap =
+        getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
+
+    // Create the output ontology
+    OWLOntology outputOntology = MireotOperation.mireot(ioHelper, inputOntology, lowerIRIs, upperIRIs, branchIRIs, extractOptions, sourceMap);
+
     // Get the output IRI and create the output ontology
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
     if (outputIRI == null) {
       outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
     }
-    OWLOntology outputOntology = MergeOperation.merge(outputOntologies);
     if (outputIRI != null) {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
     }
@@ -398,5 +380,166 @@ public class ExtractCommand implements Command {
     }
 
     return sourceMap;
+  }
+
+  private static final String INPUT_OPT = "input";
+  private static final String METHOD_OPT = "method";
+  private static final String ANNOTATIONS_OPT = "annotations";
+  private static final String LOWER_TERMS_OPT = "lower-terms";
+  private static final String UPPER_TERMS_OPT = "upper-terms";
+  private static final String TERMS_OPT = "terms";
+  private static final String PARENTS_OPT = "parents";
+
+
+  private static OWLOntology parseInputConfiguration(IOHelper ioHelper, OWLOntology inputOntology, List<String> lines) throws Exception {
+
+    // Use input ontology to get labels
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.setIOHelper(ioHelper);
+    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
+    checker.addAll(inputOntology);
+
+    String currentOption = null;
+    Iterator<String> lineItr = lines.iterator();
+
+    String input = null;
+    String method = null;
+    Map<IRI, IRI> mapToAnnotations = new HashMap<>();
+    Map<IRI, IRI> copyToAnnotations = new HashMap<>();
+    Set<IRI> upperTerms = new HashSet<>();
+    Set<IRI> lowerTerms = new HashSet<>();
+    Set<IRI> terms = new HashSet<>();
+    Map<IRI, IRI> addParents = new HashMap<>();
+    Map<IRI, IRI> replaceParents = new HashMap<>();
+
+    while (lineItr.hasNext()) {
+      String line = lineItr.next();
+      if (line.startsWith("! ")) {
+        String option = line.substring(2);
+
+        switch (option.toLowerCase()) {
+          case INPUT_OPT:
+            input = lineItr.next();
+            continue;
+          case METHOD_OPT:
+            method = lineItr.next();
+            continue;
+          case ANNOTATIONS_OPT:
+          case UPPER_TERMS_OPT:
+          case LOWER_TERMS_OPT:
+          case TERMS_OPT:
+          case PARENTS_OPT:
+            currentOption = option.toLowerCase();
+            continue;
+          default:
+            // TODO - unknown option
+            throw new Exception();
+        }
+      }
+
+      if (currentOption != null) {
+        String[] split = line.split("\t");
+        String term;
+        OWLEntity entity;
+        switch (currentOption) {
+          case ANNOTATIONS_OPT:
+            String ap1 = split[0];
+            String annotationOpt = split[1];
+            String ap2 = split[2];
+
+            OWLAnnotationProperty oldAP = checker.getOWLAnnotationProperty(ap1, false);
+            if (oldAP == null) {
+              // TODO - needs to exist!
+              throw new Exception();
+            }
+
+            OWLAnnotationProperty newAP = checker.getOWLAnnotationProperty(ap2, true);
+
+            if (annotationOpt.equalsIgnoreCase("copyTo")) {
+              copyToAnnotations.put(oldAP.getIRI(), newAP.getIRI());
+            } else if (annotationOpt.equalsIgnoreCase("mapTo")) {
+              mapToAnnotations.put(oldAP.getIRI(), newAP.getIRI());
+            }
+            break;
+          case UPPER_TERMS_OPT:
+            term = split[0];
+            entity = checker.getOWLEntity(term);
+            upperTerms.add(entity.getIRI());
+            break;
+          case LOWER_TERMS_OPT:
+            term = split[0];
+            entity = checker.getOWLEntity(term);
+            lowerTerms.add(entity.getIRI());
+            break;
+          case TERMS_OPT:
+            term = split[0];
+            entity = checker.getOWLEntity(term);
+            terms.add(entity.getIRI());
+            break;
+          case PARENTS_OPT:
+            String child = split[0];
+            String parentOpt = split[1];
+            String parent = split[2];
+
+            OWLClass oldCls = checker.getOWLClass(child);
+            OWLClass newCls = checker.getOWLClass(parent);
+            if (oldCls == null || newCls == null) {
+              // TODO - could not be created
+              throw new Exception();
+            }
+
+            if (parentOpt.equalsIgnoreCase("add")) {
+              addParents.put(oldCls.getIRI(), newCls.getIRI());
+            } else if (parentOpt.equalsIgnoreCase("replace")) {
+              replaceParents.put(oldCls.getIRI(), newCls.getIRI());
+            }
+        }
+      }
+    }
+
+    // Sanity checks
+    if (input == null) {
+      throw new Exception();
+    } else if (method == null) {
+      throw new Exception();
+    }
+
+    if (method.equalsIgnoreCase("mireot") && lowerTerms.isEmpty()) {
+      throw new Exception();
+    }
+
+    if (!method.equalsIgnoreCase("mireot") && !lowerTerms.isEmpty() || !upperTerms.isEmpty()) {
+      throw new Exception();
+    }
+
+    if (!method.equalsIgnoreCase("mireot") && terms.isEmpty()) {
+      throw new Exception();
+    }
+
+    // Create the output ontology
+    OWLOntology outputOntology;
+    switch (method.toLowerCase()) {
+      case "mireot":
+        outputOntology = MireotOperation.mireot(ioHelper, inputOntology, lowerTerms, upperTerms, null, null, null);
+        break;
+      case "slme":
+      case "star":
+      case "top":
+      case "bot":
+      default:
+        throw new Exception(invalidMethodError);
+    }
+
+    // Handle annotation options
+    for (Map.Entry<IRI, IRI> copyTo : copyToAnnotations.entrySet()) {
+
+    }
+    for (Map.Entry<IRI, IRI> mapTo : mapToAnnotations.entrySet()) {
+
+    }
+
+    // Handle parent replacements/additions
+    
+
   }
 }
