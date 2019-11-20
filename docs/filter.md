@@ -75,11 +75,11 @@ Copy a subset of classes based on an annotation property (maintains hierarchy):
       --signature true \
       --output results/uberon_slim.owl
 
-Copy a class, all axioms that a class appears in, annotations on all the classes (only `UBERON:0000062` here) in the filter set, and the ontology annotations:
+Copy a class, all axioms that a class appears in and annotations on all the classes (only `UBERON:0000062` here) in the filter set:
 
     robot filter --input uberon_module.owl \
       --term UBERON:0000062 \
-      --select "ontology annotations" \
+      --select annotations \
       --trim false \
       --signature true \
       --output results/uberon_annotated.owl

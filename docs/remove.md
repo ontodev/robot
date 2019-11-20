@@ -125,22 +125,27 @@ For CURIEs, the pattern must always come after the prefix and colon.
 
 ## Axioms
 
-The `--axioms` option allows you to specify the type of OWLAxiom to remove. More than one type can be provided and the order is not significant. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
+The `--axioms` option allows you to specify the type of OWLAxiom to remove. More than one type can be provided and these will be processed **in order**. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
 
+Basic axiom selectors select the axiom(s) based on the OWLAPI AxiomType. We have included some special shortcuts to group related axiom types together.
 - `all` (default)
 - `logical`
 - `annotation`
 - `subclass`
 - `subproperty`
-- `equivalent` (classes and properties)
-- `disjoint` (classes and properties)
-- `type` (class assertions)
-- `tbox` (classes and class axioms)
-- `abox` (instances and instance-level axioms)
-- `rbox` (object properties, aka relations)
+- `equivalent`: classes and properties
+- `disjoint`: classes and properties
+- `type`: class assertions
+- `tbox`: classes and class axioms
+- `abox`: instances and instance-level axioms
+- `rbox`: object properties, i.e., relations
 - [OWLAPI AxiomType](http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/model/AxiomType.html) name (e.g., `ObjectPropertyRange`)
-- `internal` (all entities that are in one of the `--base-iri` namespaces)
-- `external` (all entities that are not in one of the `--base-iri` namespaces)
+
+There are also some special axiom selectors that use additional processing to find certain axioms:
+- `internal`: all entities that are in one of the `--base-iri` namespaces
+- `external`: all entities that are not in one of the `--base-iri` namespaces
+- `tautologies`: all axioms that are *always* true; these would be entailed in an empty ontology. WARNING: this may remove more axioms than desired.
+- `structural-tautologies`: all axioms that match a set of tautological patterns (e.g., `X SubClassOf owl:Thing`, `owl:Nothing SubClassOf X`, `X SubClassOf X`)
 
 The `--base-iri <namespace>` is a special option for use with `internal` and `external` axioms. It allows you to specify one or more "base namespaces" (e.g., `--base-iri http://purl.obolibrary.org/obo/OBI_`). You can also use any defined prefix (e.g., `--base-iri OBI`) An axiom is considered internal if the subject is in one of the base namespaces.
 
@@ -180,6 +185,12 @@ Remove all deprecated classes from OBI:
 robot remove --input obi.owl \
   --select "owl:deprecated='true'^^xsd:boolean"
 ```
+
+Remove structural tautologies (e.g., `owl:Nothing`):
+
+    robot remove --input tautologies.owl \
+      --axioms structural-tautologies \
+      --output results/no-tautologies.owl
 
 Create a "base" subset by removing external axioms (alternatively, use `filter --axioms internal`):
 
