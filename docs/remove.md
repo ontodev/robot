@@ -190,7 +190,7 @@ Remove structural tautologies (e.g., `owl:Nothing`):
 
     robot remove --input tautologies.owl \
       --axioms structural-tautologies \
-      --output no-tautologies.owl
+      --output results/no-tautologies.owl
 
 Create a "base" subset by removing external axioms (alternatively, use `filter --axioms internal`):
 
