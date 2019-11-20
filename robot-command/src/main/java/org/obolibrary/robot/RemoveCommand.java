@@ -28,8 +28,13 @@ public class RemoveCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
+    o.addOption(null, "base-iri", true, "specify a base namespace");
     o.addOption("t", "term", true, "term to remove");
     o.addOption("T", "term-file", true, "load terms from a file");
+    o.addOption("e", "exclude-term", true, "term to exclude from removal");
+    o.addOption("E", "exclude-terms", true, "set of terms in text file to exclude from removal");
+    o.addOption("n", "include-term", true, "term to force include");
+    o.addOption("N", "include-terms", true, "set of terms in file to force include");
     o.addOption("s", "select", true, "select a set of terms based on relations");
     o.addOption("a", "axioms", true, "filter only for given axiom types");
     o.addOption(null, "include-term", true, "include term");
@@ -113,6 +118,84 @@ public class RemoveCommand implements Command {
     OWLOntology ontology = state.getOntology();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
 
+    // Get a set of relation types, or annotations to select
+    List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
+
+    // If the select option wasn't provided, default to self
+    if (selects.isEmpty()) {
+      selects.add("self");
+    }
+
+    // Selects should be processed in order, allowing unions in one --select
+    List<List<String>> selectGroups = new ArrayList<>();
+    boolean anonymous = false;
+    for (String select : selects) {
+      // The single group is a split of the one --select
+      List<String> selectGroup = CommandLineHelper.splitSelects(select);
+      // Imports should be handled separately
+      if (selectGroup.contains("imports")) {
+        OntologyHelper.removeImports(ontology);
+        selectGroup.remove("imports");
+      }
+      if (selectGroup.contains("ontology")) {
+        OntologyHelper.removeOntologyAnnotations(ontology);
+        selectGroup.remove("ontology");
+      }
+      if (selectGroup.contains("anonymous")) {
+        anonymous = true;
+      }
+      if (!selectGroup.isEmpty()) {
+        selectGroups.add(selectGroup);
+      }
+    }
+
+    // Get the objects to remove
+    Set<OWLObject> relatedObjects = getObjects(line, ioHelper, ontology, selectGroups);
+    if (relatedObjects.isEmpty()) {
+      // nothing to remove - save and exit
+      CommandLineHelper.maybeSaveOutput(line, ontology);
+      state.setOntology(ontology);
+      return state;
+    }
+
+    // Copy the unchanged ontology to reserve for filling gaps later
+    OWLOntology copy =
+        OWLManager.createOWLOntologyManager().copyOntology(ontology, OntologyCopy.DEEP);
+
+    // Remove specific axioms
+    manager.removeAxioms(ontology, getAxioms(line, ioHelper, ontology, relatedObjects));
+
+    // Handle gaps
+    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
+    if (preserveStructure) {
+      // Since we are preserving the structure between the objects that were NOT removed, we need to
+      // get the complement of the removed object set and build relationships between those objects.
+      Set<OWLObject> complementObjects =
+          RelatedObjectsHelper.select(ontology, ioHelper, relatedObjects, "complement");
+      manager.addAxioms(
+          ontology, RelatedObjectsHelper.spanGaps(copy, complementObjects, anonymous));
+    }
+
+    // Save the changed ontology and return the state
+    CommandLineHelper.maybeSaveOutput(line, ontology);
+    state.setOntology(ontology);
+    return state;
+  }
+
+  /**
+   * Given a command line, an IOHelper, an ontology, and a list of select groups, return the objects
+   * from the ontology based on the select groups.
+   *
+   * @param line CommandLine to get options from
+   * @param ioHelper IOHelper to get IRIs
+   * @param ontology OWLOntology to get objects from
+   * @param selectGroups List of select groups (lists of select options)
+   * @return set of selected objects from the ontology
+   * @throws Exception on issue getting terms or processing selects
+   */
+  protected static Set<OWLObject> getObjects(
+      CommandLine line, IOHelper ioHelper, OWLOntology ontology, List<List<String>> selectGroups)
+      throws Exception {
     // Get a set of entities to start with
     Set<OWLObject> objects = new HashSet<>();
     // track if a set of input IRIs were provided
@@ -125,61 +208,30 @@ public class RemoveCommand implements Command {
       }
     }
 
-    // Get a set of axiom types
-    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
-
-    // Get a set of relation types, or annotations to select
-    List<String> selects = CommandLineHelper.getOptionalValues(line, "select");
-
-    // If the select option wasn't provided, default to self
-    if (selects.isEmpty()) {
-      selects.add("self");
-    }
-
-    // Track if selection was 'imports' or 'ontology'
-    // These get processed separately and then removed
-    // If no other select options are provided, we save and quit after that
-    boolean hadSelection = false;
-
-    // Copy the unchanged ontology to reserve for filling gaps later
-    OWLOntology copy =
-        OWLManager.createOWLOntologyManager().copyOntology(ontology, OntologyCopy.DEEP);
-
-    // Selects should be processed in order, allowing unions in one --select
-    List<List<String>> selectGroups = new ArrayList<>();
-    for (String select : selects) {
-      // The single group is a split of the one --select
-      List<String> selectGroup = CommandLineHelper.splitSelects(select);
-      // Imports should be handled separately
-      if (selectGroup.contains("imports")) {
-        OntologyHelper.removeImports(ontology);
-        hadSelection = true;
-        selectGroup.remove("imports");
-      } else if (selectGroup.contains("ontology")) {
-        OntologyHelper.removeOntologyAnnotations(ontology);
-        hadSelection = true;
-        selectGroup.remove("ontology");
-      }
-      if (!selectGroup.isEmpty()) {
-        selectGroups.add(selectGroup);
+    boolean hadSelection = CommandLineHelper.hasFlagOrCommand(line, "select");
+    boolean internal = false;
+    boolean external = false;
+    if (line.hasOption("axioms")) {
+      for (String ats : CommandLineHelper.getOptionalValue(line, "axioms").split(" ")) {
+        if (ats.equalsIgnoreCase("internal")) {
+          internal = true;
+        } else if (ats.equalsIgnoreCase("external")) {
+          external = true;
+        }
       }
     }
 
-    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty()) {
+    if (hadSelection && selectGroups.isEmpty() && objects.isEmpty() && !internal && !external) {
       // If removing imports or ontology annotations
       // and there are no other selects, save and return
-      CommandLineHelper.maybeSaveOutput(line, ontology);
-      state.setOntology(ontology);
-      return state;
-    } else if (objects.isEmpty() && hasInputIRIs) {
+      return objects;
+    } else if (objects.isEmpty() && hasInputIRIs && !internal && !external) {
       // if objects is empty AND there WERE input IRIs
       // there is nothing to remove because the IRIs do not exist in the ontology
-      // save and exit
-      CommandLineHelper.maybeSaveOutput(line, ontology);
-      state.setOntology(ontology);
-      return state;
+      return objects;
     } else if (objects.isEmpty()) {
       // if objects is empty AND there were NO input IRIs add all
+      // OR internal/external were selected
       // this means that we are adding everything to the set to start
       objects.addAll(OntologyHelper.getObjects(ontology));
     }
@@ -196,6 +248,53 @@ public class RemoveCommand implements Command {
       relatedObjects.addAll(includeObjects);
     }
 
+    // Remove all the excluded terms from that set
+    if (line.hasOption("exclude-term") || line.hasOption("exclude-terms")) {
+      Set<IRI> excludeIRIs =
+          CommandLineHelper.getTerms(ioHelper, line, "exclude-term", "exclude-terms");
+      Set<OWLObject> excludeObjects =
+          new HashSet<>(OntologyHelper.getEntities(ontology, excludeIRIs));
+      relatedObjects.removeAll(excludeObjects);
+    }
+
+    // Add all the include terms
+    if (line.hasOption("include-term") || line.hasOption("include-terms")) {
+      Set<IRI> includeIRIs =
+          CommandLineHelper.getTerms(ioHelper, line, "include-term", "include-terms");
+      Set<OWLObject> includeObjects =
+          new HashSet<>(OntologyHelper.getEntities(ontology, includeIRIs));
+      relatedObjects.addAll(includeObjects);
+    }
+
+    return relatedObjects;
+  }
+
+  /**
+   * Given a command line, an IOHelper, an ontology, and a set of objects, return the related axioms
+   * for those objects to remove from the ontology.
+   *
+   * @param line command line to use
+   * @param ioHelper IOHelper to resolve prefixes for base namespaces
+   * @param ontology ontology to select axioms from
+   * @param relatedObjects objects to select axioms for
+   * @return set of axioms to remove
+   */
+  private static Set<OWLAxiom> getAxioms(
+      CommandLine line, IOHelper ioHelper, OWLOntology ontology, Set<OWLObject> relatedObjects) {
+    // Get a set of axiom types
+    boolean internal = false;
+    boolean external = false;
+    if (line.hasOption("axioms")) {
+      for (String ats : CommandLineHelper.getOptionalValue(line, "axioms").split(" ")) {
+        if (ats.equalsIgnoreCase("internal")) {
+          internal = true;
+        } else if (ats.equalsIgnoreCase("external")) {
+          external = true;
+        }
+      }
+    }
+    Set<Class<? extends OWLAxiom>> axiomTypes = CommandLineHelper.getAxiomValues(line);
+
     // Use these two options to determine which axioms to remove
     boolean trim = CommandLineHelper.getBooleanValue(line, "trim", true);
     boolean signature = CommandLineHelper.getBooleanValue(line, "signature", false);
@@ -203,18 +302,18 @@ public class RemoveCommand implements Command {
     // Get the axioms and remove them
     Set<OWLAxiom> axiomsToRemove =
         RelatedObjectsHelper.getAxioms(ontology, relatedObjects, axiomTypes, trim, signature);
-    manager.removeAxioms(ontology, axiomsToRemove);
 
-    // Handle gaps
-    boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
-    if (preserveStructure) {
-      relatedObjects = RelatedObjectsHelper.select(ontology, ioHelper, objects, "complement");
-      manager.addAxioms(ontology, RelatedObjectsHelper.spanGaps(copy, relatedObjects));
+    // Then select internal or external, if present
+    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
+    if (internal && external) {
+      logger.warn(
+          "Both 'internal' and 'external' axioms are selected - these axiom selectors will be ignored.");
+    } else if (internal) {
+      axiomsToRemove = RelatedObjectsHelper.getInternalAxioms(baseNamespaces, axiomsToRemove);
+    } else if (external) {
+      axiomsToRemove = RelatedObjectsHelper.getExternalAxioms(baseNamespaces, axiomsToRemove);
     }
 
-    // Save the changed ontology and return the state
-    CommandLineHelper.maybeSaveOutput(line, ontology);
-    state.setOntology(ontology);
-    return state;
+    return axiomsToRemove;
   }
 }

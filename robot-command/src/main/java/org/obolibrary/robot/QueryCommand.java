@@ -33,7 +33,8 @@ public class QueryCommand implements Command {
   private static final String missingFileError = NS + "MISSING FILE ERROR file '%s' does not exist";
 
   /** Error message when --query does not have two arguments. */
-  private static final String missingOutputError = NS + "MISSING OUTPUT ERROR --%s requires two arguments: query and output";
+  private static final String missingOutputError =
+      NS + "MISSING OUTPUT ERROR --%s requires two arguments: query and output";
 
   /** Error message when a query is not provided */
   private static final String missingQueryError =

@@ -225,6 +225,37 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given a command line and an IOHelper, return a list of base namespaces from the '--base-iri'
+   * option.
+   *
+   * @param line the command line to use
+   * @param ioHelper the IOHelper to resolve prefixes
+   * @return list of full base namespaces
+   */
+  public static List<String> getBaseNamespaces(CommandLine line, IOHelper ioHelper) {
+    List<String> bases = new ArrayList<>();
+    if (!line.hasOption("base-iri")) {
+      return bases;
+    }
+
+    Map<String, String> prefixMap = ioHelper.getPrefixes();
+    for (String base : line.getOptionValues("base-iri")) {
+      if (!base.contains(":")) {
+        String expanded = prefixMap.getOrDefault(base, null);
+        if (expanded != null) {
+          bases.add(expanded);
+        } else {
+          logger.error(String.format("Unknown prefix: '%s'", base));
+        }
+      } else {
+        bases.add(base);
+      }
+    }
+
+    return bases;
+  }
+
+  /**
    * Given a command line, an argument name, the boolean default value, and boolean if the arg is
    * optional, return the value of the command-line option 'name'.
    *
@@ -270,6 +301,10 @@ public class CommandLineHelper {
     }
     // Then get the actual types
     for (String axiom : axiomTypeFixedStrings) {
+      if (axiom.equalsIgnoreCase("internal") || axiom.equalsIgnoreCase("external")) {
+        // Ignore internal/external axiom options
+        continue;
+      }
       if (axiom.equalsIgnoreCase("all")) {
         axiomTypes.add(OWLAxiom.class);
       } else if (axiom.equalsIgnoreCase("logical")) {
@@ -407,7 +442,7 @@ public class CommandLineHelper {
 
   /**
    * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
-   * --add-prefixes, --noprefixes and --xml-entities options are handled.
+   * --add-prefixes, --noprefixes, --xml-entities, and --base options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper

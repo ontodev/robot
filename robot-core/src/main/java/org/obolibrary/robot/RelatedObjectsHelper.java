@@ -177,6 +177,44 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given a list of base namespaces and a set of axioms, return only the axioms that DO NOT have a
+   * subject in the base namespaces.
+   *
+   * @param baseNamespaces list of base namespaces
+   * @param axioms set of OWLAxioms
+   * @return external OWLAxioms
+   */
+  public static Set<OWLAxiom> getExternalAxioms(List<String> baseNamespaces, Set<OWLAxiom> axioms) {
+    Set<OWLAxiom> externalAxioms = new HashSet<>();
+    for (OWLAxiom axiom : axioms) {
+      Set<IRI> subjects = getAxiomSubjects(axiom);
+      if (!isBase(baseNamespaces, subjects)) {
+        externalAxioms.add(axiom);
+      }
+    }
+    return externalAxioms;
+  }
+
+  /**
+   * Given a list of base namespaces and a set of axioms, return only the axioms that have a subject
+   * in the base namespaces.
+   *
+   * @param baseNamespaces list of base namespaces
+   * @param axioms set of OWLAxioms
+   * @return internal OWLAxioms
+   */
+  public static Set<OWLAxiom> getInternalAxioms(List<String> baseNamespaces, Set<OWLAxiom> axioms) {
+    Set<OWLAxiom> internalAxioms = new HashSet<>();
+    for (OWLAxiom axiom : axioms) {
+      Set<IRI> subjects = getAxiomSubjects(axiom);
+      if (isBase(baseNamespaces, subjects)) {
+        internalAxioms.add(axiom);
+      }
+    }
+    return internalAxioms;
+  }
+
+  /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
    * least one object in those axioms is also in the set of objects.
    *
@@ -350,6 +388,8 @@ public class RelatedObjectsHelper {
       return selectPattern(ontology, ioHelper, objects, selector);
     } else if (Pattern.compile("<.*>").matcher(selector).find()) {
       return selectIRI(objects, selector);
+    } else if (selector.contains(":")) {
+      return selectCURIE(ioHelper, objects, selector);
     } else {
       logger.error(String.format("%s is not a valid selector and will be ignored", selector));
       return new HashSet<>();
@@ -469,6 +509,24 @@ public class RelatedObjectsHelper {
     }
     relatedObjects.removeAll(objects);
     return relatedObjects;
+  }
+
+  /** */
+  public static Set<OWLObject> selectCURIE(
+      IOHelper ioHelper, Set<OWLObject> objects, String selector) {
+    String prefix = selector.split(":")[0];
+    String pattern = selector.split(":")[1];
+    Map<String, String> prefixes = ioHelper.getPrefixes();
+    String namespace = prefixes.getOrDefault(prefix, null);
+
+    if (namespace == null) {
+      logger.error(String.format("Prefix '%s' is not a loaded prefix and will be ignored", prefix));
+      return objects;
+    }
+
+    String iriPattern = namespace + pattern;
+
+    return selectIRI(objects, iriPattern);
   }
 
   /**
@@ -762,6 +820,10 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
+  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+    return spanGaps(ontology, objects, false);
+  }
+
   /**
    * Given an ontology and a set of objects, construct a set of subClassOf axioms that span the gaps
    * between classes to maintain a hierarchy.
@@ -770,7 +832,8 @@ public class RelatedObjectsHelper {
    * @param objects set of Objects to build hierarchy
    * @return set of OWLAxioms to maintain hierarchy
    */
-  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+  public static Set<OWLAxiom> spanGaps(
+      OWLOntology ontology, Set<OWLObject> objects, boolean excludeAnonymous) {
     Set<Map<String, OWLAnnotationProperty>> aPropPairs = new HashSet<>();
     Set<Map<String, OWLClassExpression>> classPairs = new HashSet<>();
     Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
@@ -810,7 +873,10 @@ public class RelatedObjectsHelper {
     for (Map<String, OWLClassExpression> classPair : classPairs) {
       OWLClass subClass = classPair.get(SUB).asOWLClass();
       OWLClassExpression superClass = classPair.get(SUPER);
-      axioms.add(df.getOWLSubClassOfAxiom(subClass, superClass));
+      if (superClass.isAnonymous() && !excludeAnonymous || !superClass.isAnonymous()) {
+        // Anonymous axioms may have been removed so we don't want to add them back
+        axioms.add(df.getOWLSubClassOfAxiom(subClass, superClass));
+      }
     }
     for (Map<String, OWLDataPropertyExpression> propPair : dPropPairs) {
       OWLDataProperty subProperty = propPair.get(SUB).asOWLDataProperty();
@@ -933,6 +999,120 @@ public class RelatedObjectsHelper {
       }
     }
     return annotations;
+  }
+
+  /**
+   * Given an OWLAxiom, return a set of subjects. Most axioms will only have one subject, but
+   * equivalent and disjoint axioms will have 2+. If the subject is anonymous, the return set will
+   * be empty.
+   *
+   * @param axiom OWLAxiom to get subject(s)
+   * @return set of zero or more IRIs for subject(s)
+   */
+  private static Set<IRI> getAxiomSubjects(OWLAxiom axiom) {
+    Set<IRI> iris = new HashSet<>();
+
+    if (axiom instanceof OWLDeclarationAxiom) {
+      OWLDeclarationAxiom decAxiom = (OWLDeclarationAxiom) axiom;
+      OWLEntity subject = decAxiom.getEntity();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.getIRI());
+      }
+    } else if (axiom instanceof OWLSubClassOfAxiom) {
+      OWLSubClassOfAxiom scAxiom = (OWLSubClassOfAxiom) axiom;
+      OWLClassExpression subject = scAxiom.getSubClass();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLClass().getIRI());
+      }
+    } else if (axiom instanceof OWLEquivalentClassesAxiom) {
+      OWLEquivalentClassesAxiom eqAxiom = (OWLEquivalentClassesAxiom) axiom;
+      for (OWLClassExpression expr : eqAxiom.getNamedClasses()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLClass().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLDisjointClassesAxiom) {
+      OWLDisjointClassesAxiom djAxiom = (OWLDisjointClassesAxiom) axiom;
+      for (OWLClassExpression expr : djAxiom.getClassExpressions()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLClass().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLSubDataPropertyOfAxiom) {
+      OWLSubDataPropertyOfAxiom spAxiom = (OWLSubDataPropertyOfAxiom) axiom;
+      OWLDataPropertyExpression subject = spAxiom.getSubProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      }
+    } else if (axiom instanceof OWLSubObjectPropertyOfAxiom) {
+      OWLSubObjectPropertyOfAxiom spAxiom = (OWLSubObjectPropertyOfAxiom) axiom;
+      OWLObjectPropertyExpression subject = spAxiom.getSubProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      }
+    } else if (axiom instanceof OWLEquivalentDataPropertiesAxiom) {
+      OWLEquivalentDataPropertiesAxiom eqAxiom = (OWLEquivalentDataPropertiesAxiom) axiom;
+      for (OWLSubDataPropertyOfAxiom spAxiom : eqAxiom.asSubDataPropertyOfAxioms()) {
+        OWLDataPropertyExpression subject = spAxiom.getSubProperty();
+        if (!subject.isAnonymous()) {
+          iris.add(subject.asOWLDataProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLEquivalentObjectPropertiesAxiom) {
+      OWLEquivalentObjectPropertiesAxiom eqAxiom = (OWLEquivalentObjectPropertiesAxiom) axiom;
+      for (OWLSubObjectPropertyOfAxiom spAxiom : eqAxiom.asSubObjectPropertyOfAxioms()) {
+        OWLObjectPropertyExpression subject = spAxiom.getSubProperty();
+        if (!subject.isAnonymous()) {
+          iris.add(subject.asOWLObjectProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLDisjointDataPropertiesAxiom) {
+      OWLDisjointDataPropertiesAxiom djAxiom = (OWLDisjointDataPropertiesAxiom) axiom;
+      for (OWLDataPropertyExpression expr : djAxiom.getProperties()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLDataProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLDisjointObjectPropertiesAxiom) {
+      OWLDisjointObjectPropertiesAxiom djAxiom = (OWLDisjointObjectPropertiesAxiom) axiom;
+      for (OWLObjectPropertyExpression expr : djAxiom.getProperties()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLObjectProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      OWLAnnotationAssertionAxiom annAxiom = (OWLAnnotationAssertionAxiom) axiom;
+      OWLAnnotationSubject subject = annAxiom.getSubject();
+      if (subject.isIRI()) {
+        return Sets.newHashSet((IRI) subject);
+      }
+    } else if (axiom instanceof OWLClassAssertionAxiom) {
+      OWLClassAssertionAxiom classAxiom = (OWLClassAssertionAxiom) axiom;
+      OWLIndividual subject = classAxiom.getIndividual();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      }
+    } else if (axiom instanceof OWLDataPropertyAssertionAxiom) {
+      OWLDataPropertyAssertionAxiom dpAxiom = (OWLDataPropertyAssertionAxiom) axiom;
+      OWLIndividual subject = dpAxiom.getSubject();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      }
+    } else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
+      OWLObjectPropertyAssertionAxiom dpAxiom = (OWLObjectPropertyAssertionAxiom) axiom;
+      OWLIndividual subject = dpAxiom.getSubject();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      }
+    }
+    // May have been anonymous, no IRI to return
+    return new HashSet<>();
   }
 
   /**
@@ -1133,6 +1313,25 @@ public class RelatedObjectsHelper {
       superProperties.add(expr);
     }
     return superProperties;
+  }
+
+  /**
+   * Given a list of base namespaces and a set of subject IRIs, determine if at least one of the
+   * subjects is in the set of base namespaces.
+   *
+   * @param baseNamespaces list of base namespaces as strings
+   * @param subjects set of IRIs to check
+   * @return true if at least one IRI is in one of the base namespaces
+   */
+  private static boolean isBase(List<String> baseNamespaces, Set<IRI> subjects) {
+    for (String base : baseNamespaces) {
+      for (IRI subject : subjects) {
+        if (subject.toString().startsWith(base)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

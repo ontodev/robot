@@ -2,6 +2,10 @@
 
 The `filter` command allows you to create a new ontology from a source ontology by copying only the selected axioms. The `remove` command is the opposite of `filter`, allowing you to remove selected axioms. `filter` accepts the same options as `remove` and processes them in the same order, with just a few differences. See [`remove`](/remove) for details on configuring the options.
 
+Including and excluding terms is the opposite of `remove`:
+* If you wish to *exclude* a term or set of terms that would be filtered for otherwise, you can do so with `--exclude-term <term>` or `--exclude-terms <term-file>`. These terms will **never** be in the output.
+* If you wish to *include* a term or set of terms that would not be filtered for otherwise, you can do so with `--include-term <term>` or `--include-terms <term-file>`. These terms will **always** be in the output.
+
 The key difference between `remove` and `filter` comes in the fourth processing step:
 
 4. The final step is to take each axiom of the specified types, and compare it to the target set. The `--signature` option works the same as `remove`, but `--trim` differs. When using `filter --trim true` (the default), if *all* objects for the axiom are in the target set then that axiom is copied to the new ontology. When using `filter --trim false`, if *any* object for the axiom are in the target set, then that axiom is copied.
@@ -71,7 +75,7 @@ Copy a subset of classes based on an annotation property (maintains hierarchy):
       --signature true \
       --output results/uberon_slim.owl
 
-Copy a class, all axioms that a class appears in, annotations on all classes used, and the ontology annotations:
+Copy a class, all axioms that a class appears in, annotations on all the classes (only `UBERON:0000062` here) in the filter set, and the ontology annotations:
 
     robot filter --input uberon_module.owl \
       --term UBERON:0000062 \
@@ -79,4 +83,15 @@ Copy a class, all axioms that a class appears in, annotations on all classes use
       --trim false \
       --signature true \
       --output results/uberon_annotated.owl
+
+Create a "base" subset that only includes internal axioms (alternatively, use `remove --axioms external`):
+
+    robot filter --input template.owl \
+      --base-iri http://example.com/ \
+      --select "annotations" \
+      --axioms internal \
+      --include-term IAO:0000117 \
+      --include-term IAO:0000119 \
+      --preserve-structure false \
+      --output results/template-base-filter.owl
 
