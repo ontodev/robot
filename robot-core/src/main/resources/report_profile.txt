@@ -1,5 +1,5 @@
 WARN	annotation_whitespace
-ERROR deprecated_boolean_datatype
+ERROR	deprecated_boolean_datatype
 ERROR	deprecated_class_reference
 ERROR	deprecated_property_reference
 ERROR	duplicate_definition
