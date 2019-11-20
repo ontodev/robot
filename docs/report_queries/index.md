@@ -7,7 +7,9 @@ See [`report`](../report) for more details.
 | Name  | Default Severity  
 |-------|-------------------
 | [annotation whitespace](annotation_whitespace)  | WARN
+| [deprecated boolean datatype](deprecated_boolean_datatype)  | ERROR
 | [deprecated class reference](deprecated_class_reference)  | ERROR
+| [deprecated property reference](deprecated_property_reference)  | ERROR
 | [duplicate definition](duplicate_definition)  | ERROR
 | [duplicate exact synonym](duplicate_exact_synonym)  | WARN
 | [duplicate label synonym](duplicate_label_synonym)  | WARN
@@ -26,7 +28,6 @@ See [`report`](../report) for more details.
 | [missing ontology title](missing_ontology_title)  | ERROR
 | [missing superclass](missing_superclass)  | INFO
 | [misused obsolete label](misused_obsolete_label)  | ERROR
-| [multiple asserted superclasses](multiple_asserted_superclasses)  | WARN
 | [multiple definitions](multiple_definitions)  | ERROR
 | [multiple equivalent classes](multiple_equivalent_classes)  | ERROR
 | [multiple labels](multiple_labels)  | ERROR
