@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
 import java.util.*;
-
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -28,9 +27,9 @@ public class MireotOperation {
 
   /** Error message when only upper terms are specified with MIREOT. */
   private static final String missingLowerTermError =
-    NS
-      + "MISSING LOWER TERMS ERROR "
-      + "lower term(s) must be specified with upper term(s) for MIREOT";
+      NS
+          + "MISSING LOWER TERMS ERROR "
+          + "lower term(s) must be specified with upper term(s) for MIREOT";
 
   /** Shared data factory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
@@ -48,7 +47,6 @@ public class MireotOperation {
   private static Map<IRI, IRI> sourceMap;
 
   /**
-   *
    * @param ioHelper
    * @param inputOntology
    * @param lowerIRIs
@@ -59,14 +57,22 @@ public class MireotOperation {
    * @return
    * @throws OWLOntologyCreationException
    */
-  public static OWLOntology mireot(IOHelper ioHelper, OWLOntology inputOntology, Set<IRI> lowerIRIs, Set<IRI> upperIRIs, Set<IRI> branchIRIs, Map<String, String> extractOptions, Map<IRI, IRI> sourceMap) throws OWLOntologyCreationException {
+  public static OWLOntology mireot(
+      IOHelper ioHelper,
+      OWLOntology inputOntology,
+      Set<IRI> lowerIRIs,
+      Set<IRI> upperIRIs,
+      Set<IRI> branchIRIs,
+      Map<String, String> extractOptions,
+      Map<IRI, IRI> sourceMap)
+      throws OWLOntologyCreationException {
     List<OWLOntology> outputOntologies = new ArrayList<>();
 
     // First check for lower IRIs, upper IRIs can be null or not
     if (lowerIRIs != null) {
       outputOntologies.add(
-        MireotOperation.getAncestors(
-          inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
+          MireotOperation.getAncestors(
+              inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
       // If there are no lower IRIs, there shouldn't be any upper IRIs
     } else if (upperIRIs != null) {
       throw new IllegalArgumentException(missingLowerTermError);
@@ -74,8 +80,8 @@ public class MireotOperation {
     // Check for branch IRIs
     if (branchIRIs != null) {
       outputOntologies.add(
-        MireotOperation.getDescendants(
-          inputOntology, branchIRIs, null, extractOptions, sourceMap));
+          MireotOperation.getDescendants(
+              inputOntology, branchIRIs, null, extractOptions, sourceMap));
     }
 
     return MergeOperation.merge(outputOntologies);

@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -7,6 +8,7 @@ import java.io.*;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -55,6 +57,7 @@ public class ExtractCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
+    o.addOption("C", "config", true, "load extract options from configuration file");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "output-iri", true, "set OntologyIRI for output");
     o.addOption("m", "method", true, "extract method to use");
@@ -146,6 +149,21 @@ public class ExtractCommand implements Command {
     }
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+
+    String configFile = CommandLineHelper.getOptionalValue(line, "config");
+    if (configFile != null) {
+      // Get everything from the config file, no need for other options
+      File c = new File(configFile);
+      if (!c.exists()) {
+        // TODO - config file does not exit
+        throw new IOException();
+      }
+      outputOntology = parseInputConfiguration(ioHelper, FileUtils.readLines(c));
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
+
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology inputOntology = state.getOntology();
 
@@ -194,7 +212,6 @@ public class ExtractCommand implements Command {
     }
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
-
     state.setOntology(outputOntology);
     return state;
   }
@@ -216,7 +233,6 @@ public class ExtractCommand implements Command {
       CommandLine line,
       Map<String, String> extractOptions)
       throws Exception {
-    List<OWLOntology> outputOntologies = new ArrayList<>();
     // Get terms from input (ensuring that they are in the input ontology)
     // It's okay for any of these to return empty (allowEmpty = true)
     // Checks for empty sets later
@@ -254,7 +270,9 @@ public class ExtractCommand implements Command {
         getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
 
     // Create the output ontology
-    OWLOntology outputOntology = MireotOperation.mireot(ioHelper, inputOntology, lowerIRIs, upperIRIs, branchIRIs, extractOptions, sourceMap);
+    OWLOntology outputOntology =
+        MireotOperation.mireot(
+            ioHelper, inputOntology, lowerIRIs, upperIRIs, branchIRIs, extractOptions, sourceMap);
 
     // Get the output IRI and create the output ontology
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
@@ -384,6 +402,7 @@ public class ExtractCommand implements Command {
 
   private static final String INPUT_OPT = "input";
   private static final String INPUT_IRI_OPT = "input-iri";
+  private static final String OUTPUT_IRI_OPT = "output-iri";
   private static final String METHOD_OPT = "method";
   private static final String ANNOTATIONS_OPT = "annotations";
   private static final String LOWER_TERMS_OPT = "lower-terms";
@@ -391,8 +410,8 @@ public class ExtractCommand implements Command {
   private static final String TERMS_OPT = "terms";
   private static final String PARENTS_OPT = "parents";
 
-
-  private static OWLOntology parseInputConfiguration(IOHelper ioHelper, List<String> lines) throws Exception {
+  private static OWLOntology parseInputConfiguration(IOHelper ioHelper, List<String> lines)
+      throws Exception {
 
     String currentOption = null;
     Iterator<String> lineItr = lines.iterator();
@@ -401,14 +420,15 @@ public class ExtractCommand implements Command {
     QuotedEntityChecker checker = new QuotedEntityChecker();
     checker.setIOHelper(ioHelper);
     checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
+
+    IRI outputIRI = null;
     String method = null;
-    Map<IRI, IRI> mapToAnnotations = new HashMap<>();
-    Map<IRI, IRI> copyToAnnotations = new HashMap<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations = new HashMap<>();
     Set<IRI> upperTerms = new HashSet<>();
     Set<IRI> lowerTerms = new HashSet<>();
     Set<IRI> terms = new HashSet<>();
-    Map<IRI, IRI> addParents = new HashMap<>();
-    Map<IRI, IRI> replaceParents = new HashMap<>();
+    Map<OWLClass, Set<OWLClass>> replaceParents = new HashMap<>();
 
     while (lineItr.hasNext()) {
       String line = lineItr.next();
@@ -442,6 +462,10 @@ public class ExtractCommand implements Command {
             checker.addAll(inputOntology);
             continue;
 
+          case OUTPUT_IRI_OPT:
+            outputIRI = IRI.create(lineItr.next());
+            continue;
+
           case METHOD_OPT:
             // Extraction method
             method = lineItr.next();
@@ -464,14 +488,18 @@ public class ExtractCommand implements Command {
 
       if (currentOption != null) {
         // Always separated by tabs
-        String[] split = line.split("\t");
+        List<String> split = Lists.newArrayList(line.split("\t"));
         String term;
         OWLEntity entity;
         switch (currentOption) {
           case ANNOTATIONS_OPT:
-            String ap1 = split[0];
-            String annotationOpt = split[1];
-            String ap2 = split[2];
+            if (split.size() < 3) {
+              // TODO - not enough entries
+              throw new Exception();
+            }
+            String ap1 = split.get(0);
+            String annotationOpt = split.get(1);
+            String ap2 = split.get(2);
 
             OWLAnnotationProperty oldAP = checker.getOWLAnnotationProperty(ap1, false);
             if (oldAP == null) {
@@ -482,43 +510,48 @@ public class ExtractCommand implements Command {
             OWLAnnotationProperty newAP = checker.getOWLAnnotationProperty(ap2, true);
 
             if (annotationOpt.equalsIgnoreCase("copyTo")) {
-              copyToAnnotations.put(oldAP.getIRI(), newAP.getIRI());
+              copyToAnnotations.put(oldAP, newAP);
             } else if (annotationOpt.equalsIgnoreCase("mapTo")) {
-              mapToAnnotations.put(oldAP.getIRI(), newAP.getIRI());
+              mapToAnnotations.put(oldAP, newAP);
             }
             break;
           case UPPER_TERMS_OPT:
-            term = split[0];
+            term = split.get(0);
             entity = checker.getOWLEntity(term);
             upperTerms.add(entity.getIRI());
             break;
           case LOWER_TERMS_OPT:
-            term = split[0];
+            term = split.get(0);
             entity = checker.getOWLEntity(term);
             lowerTerms.add(entity.getIRI());
             break;
           case TERMS_OPT:
-            term = split[0];
+            term = split.get(0);
             entity = checker.getOWLEntity(term);
             terms.add(entity.getIRI());
             break;
           case PARENTS_OPT:
-            String child = split[0];
-            String parentOpt = split[1];
-            String parent = split[2];
+            if (split.size() < 2) {
+              // TODO - not enough entries
+              throw new Exception();
+            }
+            String child = split.remove(0);
+            OWLClass childCls = checker.getOWLClass(child);
 
-            OWLClass oldCls = checker.getOWLClass(child);
-            OWLClass newCls = checker.getOWLClass(parent);
-            if (oldCls == null || newCls == null) {
+            if (childCls == null) {
               // TODO - could not be created
               throw new Exception();
             }
-
-            if (parentOpt.equalsIgnoreCase("add")) {
-              addParents.put(oldCls.getIRI(), newCls.getIRI());
-            } else if (parentOpt.equalsIgnoreCase("replace")) {
-              replaceParents.put(oldCls.getIRI(), newCls.getIRI());
+            Set<OWLClass> newParents = new HashSet<>();
+            for (String s : split) {
+              OWLClass newParent = checker.getOWLClass(s);
+              if (newParent == null) {
+                logger.error(String.format("Could not add parent '%s' to class '%s'", s, child));
+                continue;
+              }
+              newParents.add(newParent);
             }
+            replaceParents.put(childCls, newParents);
         }
       }
     }
@@ -531,46 +564,61 @@ public class ExtractCommand implements Command {
     }
 
     if (method.equalsIgnoreCase("mireot") && lowerTerms.isEmpty()) {
+      // mireot without lower terms
       throw new Exception();
     }
 
     if (!method.equalsIgnoreCase("mireot") && !lowerTerms.isEmpty() || !upperTerms.isEmpty()) {
+      // Non-mireot method with lower/upper terms
       throw new Exception();
     }
 
     if (!method.equalsIgnoreCase("mireot") && terms.isEmpty()) {
+      // Non-mireot without terms
       throw new Exception();
     }
 
     // Create the output ontology
     OWLOntology outputOntology;
+    ModuleType m;
     switch (method.toLowerCase()) {
       case "mireot":
-        outputOntology = MireotOperation.mireot(ioHelper, inputOntology, lowerTerms, upperTerms, null, null, null);
+        outputOntology =
+            MireotOperation.mireot(
+                ioHelper, inputOntology, lowerTerms, upperTerms, null, null, null);
+        if (outputIRI != null) {
+          OWLOntologyManager manager = outputOntology.getOWLOntologyManager();
+          manager.setOntologyDocumentIRI(outputOntology, outputIRI);
+        }
         break;
-      case "slme":
       case "star":
+        m = ModuleType.STAR;
+        outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, m);
+        break;
       case "top":
+        m = ModuleType.TOP;
+        outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, m);
+        break;
       case "bot":
+        m = ModuleType.BOT;
+        outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, m);
+        break;
       default:
         throw new Exception(invalidMethodError);
     }
 
     // Handle annotation options
-    for (Map.Entry<IRI, IRI> copyTo : copyToAnnotations.entrySet()) {
-
+    if (!copyToAnnotations.isEmpty()) {
+      OntologyHelper.copyAnnotationObjects(outputOntology, copyToAnnotations);
     }
-    for (Map.Entry<IRI, IRI> mapTo : mapToAnnotations.entrySet()) {
-
-    }
-
-    // Handle parent replacements/additions
-    for (Map.Entry<IRI, IRI> addParent : addParents.entrySet()) {
-
+    if (!mapToAnnotations.isEmpty()) {
+      OntologyHelper.mapAnnotationObjects(outputOntology, mapToAnnotations);
     }
 
-    for (Map.Entry<IRI, IRI> replaceParent : replaceParents.entrySet()) {
-
+    if (!replaceParents.isEmpty()) {
+      OntologyHelper.replaceParents(outputOntology, replaceParents);
     }
+
+    return outputOntology;
   }
 }

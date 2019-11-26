@@ -138,6 +138,23 @@ public class OntologyHelper {
     manager.applyChange(addition);
   }
 
+  public static void replaceParents(OWLOntology ontology, Map<OWLClass, Set<OWLClass>> addParents) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+    for (Map.Entry<OWLClass, Set<OWLClass>> addParent : addParents.entrySet()) {
+      OWLClass child = addParent.getKey();
+      Set<OWLClass> parents = addParent.getValue();
+      // Remove existing parents
+      manager.removeAxioms(ontology, ontology.getSubClassAxiomsForSubClass(child));
+      for (OWLClass p : parents) {
+        // Add the new parents
+        OWLSubClassOfAxiom ax = dataFactory.getOWLSubClassOfAxiom(child, p);
+        manager.addAxiom(ontology, ax);
+      }
+    }
+  }
+
   /**
    * Given an ontology and a set of IRIs that must be retained, remove intermediate superclasses
    * (classes that only have one child) and update the subclass relationships to preserve structure.
@@ -284,6 +301,63 @@ public class OntologyHelper {
         // Copy the annotation property and then the axiom.
         copy(inputOntology, outputOntology, axiom.getProperty(), annotationProperties);
         outputManager.addAxiom(outputOntology, axiom);
+      }
+    }
+  }
+
+  /**
+   * @param ontology
+   * @param copyToAnnotations
+   */
+  public static void copyAnnotationObjects(
+      OWLOntology ontology, Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+    Set<OWLEntity> entities = getEntities(ontology);
+    for (OWLEntity e : entities) {
+      for (Map.Entry<OWLAnnotationProperty, OWLAnnotationProperty> copyTo :
+          copyToAnnotations.entrySet()) {
+        OWLAnnotationProperty ap1 = copyTo.getKey();
+        OWLAnnotationProperty ap2 = copyTo.getValue();
+        Collection<OWLAnnotation> annotations =
+            EntitySearcher.getAnnotationObjects(e, ontology, ap1);
+        for (OWLAnnotation a : annotations) {
+          OWLAnnotationValue val = a.getValue();
+          OWLAnnotationAssertionAxiom ax =
+              dataFactory.getOWLAnnotationAssertionAxiom(ap2, e.getIRI(), val);
+          manager.addAxiom(ontology, ax);
+        }
+      }
+    }
+  }
+
+  /**
+   * @param ontology
+   * @param mapToAnnotations
+   */
+  public static void mapAnnotationObjects(
+      OWLOntology ontology, Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+    Set<OWLEntity> entities = getEntities(ontology);
+    for (OWLEntity e : entities) {
+      for (Map.Entry<OWLAnnotationProperty, OWLAnnotationProperty> mapTo :
+          mapToAnnotations.entrySet()) {
+        OWLAnnotationProperty ap1 = mapTo.getKey();
+        OWLAnnotationProperty ap2 = mapTo.getValue();
+        Collection<OWLAnnotation> annotations =
+            EntitySearcher.getAnnotationObjects(e, ontology, ap1);
+        for (OWLAnnotation a : annotations) {
+          OWLAnnotationValue val = a.getValue();
+          OWLAnnotationAssertionAxiom ax1 =
+              dataFactory.getOWLAnnotationAssertionAxiom(ap1, e.getIRI(), val);
+          OWLAnnotationAssertionAxiom ax2 =
+              dataFactory.getOWLAnnotationAssertionAxiom(ap2, e.getIRI(), val);
+          manager.removeAxiom(ontology, ax1);
+          manager.addAxiom(ontology, ax2);
+        }
       }
     }
   }
