@@ -6,7 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
-/** Starts a gateway server for Py4J to execute ROBOT operations via Python. */
+/**
+ * Starts a gateway server for Py4J to execute ROBOT operations via Python.
+ *
+ * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
+ */
 public class PythonCommand implements Command {
 
   /** Logger. */
