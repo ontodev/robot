@@ -23,6 +23,9 @@ Here is how each step works in more detail:
 
 1. The `--term` and `--term-file` options let you specify the initial target set. You can specify zero or more `--term` options (one term each), and zero or more `--term-file` options (with one term per line). You can specify terms by IRI or CURIE. If no terms are specified, then the initial target set consists of all the objects in the ontology.
 
+    * If you wish to exclude a term or set of terms that would be removed otherwise, you can do so with `--exclude-term <term>` or `--exclude-terms <term-file>`. These terms will **never** be removed.
+    * If you wish to *include* a term or set of terms that would be kept otherwise, you can do so with `--include-term <term>` or `--include-terms <term-file>`. These terms will **always** be removed.
+
 2. The `--select` option lets you specify "selectors" that broaden or narrow the target set of objects. Some selectors such as `classes` take the target set and return a subset, i.e. all the classes in the target set. Other selectors such as `parents` return a new target set of related objects. The `parents` selector gets the parents of each object in the target set. Note that the `parents` set does not include the original target set, just the parents. Use the `self` selector to return the same target set. You can use multiple selectors together to get their union, so `--select "self parents"` will return the target set (`self`) and all the parents. You can use `--select` multiple times to modify the target set in several stages, so `--select parents --select children` will get the parents and then all their children, effectively returning the target set objects and all their siblings.
 
 3. The `--axioms` option lets you specify which axiom types to consider. By default, all axioms are considered, but this can be restricted to annotation axioms, logical axioms, more specific subtypes, or any combination.
@@ -104,26 +107,47 @@ It is also possible to select terms based on parts of their IRI. You may include
 
 - `<IRI-pattern>`, e.g. `<http://purl.obolibrary.org/obo/EX_*>`
 
+If an IRI uses a literal `*` or a `?` character, these must be escaped (e.g., `http://example.com?[WILDCARD]` would become `http://example.com\?[WILDCARD]`).
+
 If you wish to match a more complicated pattern, you may also use a regex pattern here by preceding the pattern with a tilde (`~`):
 
 - `<~IRI-regex>`, e.g. `<~^.+EX_[0-9]{7}$>`
 
+If you do not want to type the full IRI out, you can also pattern match with `*` and `?` by CURIE for any [loaded prefixes](/global#prefixes). For example, to select everything in both the OBI and IAO namespaces:
+
+- `--select "OBI:* IAO:*"`
+
+For regex pattern matching with CURIEs, simply prefix the CURIE pattern with `~`, as we do for IRIs:
+
+- `--select "~EX:[0-9]{7}$`
+
+For CURIEs, the pattern must always come after the prefix and colon.
+
 ## Axioms
 
-The `--axioms` option allows you to specify the type of OWLAxiom to remove. More than one type can be provided and the order is not significant. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
+The `--axioms` option allows you to specify the type of OWLAxiom to remove. More than one type can be provided and these will be processed **in order**. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
 
+Basic axiom selectors select the axiom(s) based on the OWLAPI AxiomType. We have included some special shortcuts to group related axiom types together.
 - `all` (default)
 - `logical`
 - `annotation`
 - `subclass`
 - `subproperty`
-- `equivalent` (classes and properties)
-- `disjoint` (classes and properties)
-- `type` (class assertions)
-- `tbox` (classes and class axioms)
-- `abox` (instances and instance-level axioms)
-- `rbox` (object properties, aka relations)
+- `equivalent`: classes and properties
+- `disjoint`: classes and properties
+- `type`: class assertions
+- `tbox`: classes and class axioms
+- `abox`: instances and instance-level axioms
+- `rbox`: object properties, i.e., relations
 - [OWLAPI AxiomType](http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/model/AxiomType.html) name (e.g., `ObjectPropertyRange`)
+
+There are also some special axiom selectors that use additional processing to find certain axioms:
+- `internal`: all entities that are in one of the `--base-iri` namespaces
+- `external`: all entities that are not in one of the `--base-iri` namespaces
+- `tautologies`: all axioms that are *always* true; these would be entailed in an empty ontology. WARNING: this may remove more axioms than desired.
+- `structural-tautologies`: all axioms that match a set of tautological patterns (e.g., `X SubClassOf owl:Thing`, `owl:Nothing SubClassOf X`, `X SubClassOf X`)
+
+The `--base-iri <namespace>` is a special option for use with `internal` and `external` axioms. It allows you to specify one or more "base namespaces" (e.g., `--base-iri http://purl.obolibrary.org/obo/OBI_`). You can also use any defined prefix (e.g., `--base-iri OBI`) An axiom is considered internal if the subject is in one of the base namespaces.
 
 ## Examples
 
@@ -170,6 +194,23 @@ Remove the definitions (may be annotated with `oboInOwl:hasDbXref` or not) from 
       --trim false \
       --signature true \
       --output results/fbcv-removed.owl
+
+Remove structural tautologies (e.g., `owl:Nothing`):
+
+    robot remove --input tautologies.owl \
+      --axioms structural-tautologies \
+      --output results/no-tautologies.owl
+
+Create a "base" subset by removing external axioms (alternatively, use `filter --axioms internal`):
+
+    robot remove --input template.owl \
+      --base-iri http://example.com \
+      --axioms external \
+      --exclude-term IAO:0000117 \
+      --exclude-term IAO:0000119 \
+      --preserve-structure false \
+      --trim false \
+      --output results/template-base.owl
 
 *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 

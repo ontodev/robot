@@ -1,0 +1,15 @@
+# # Deprecated Boolean Data Type
+#
+# **Problem:** When an entity is deprecated using the owl:deprecated annotation property, the value of the annotation must be a boolean data type. 
+#
+# **Solution:** Replace deprecated value with a boolean data type.
+
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?entity ?deprecated_value
+WHERE {
+  ?entity owl:deprecated ?deprecated_value .
+  FILTER (datatype(?deprecated_value) != xsd:boolean)
+}
+ORDER BY ?entity

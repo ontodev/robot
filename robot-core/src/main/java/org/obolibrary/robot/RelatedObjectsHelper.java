@@ -4,9 +4,11 @@ import com.google.common.collect.Sets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,9 @@ public class RelatedObjectsHelper {
 
   /** Namespace for error messages. */
   private static final String NS = "errors#";
+
+  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
+  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /**
    * Error message when a datatype is given for an annotation, but the annotation value does not
@@ -82,16 +87,206 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Given an ontology, a set of objects, a set of axiom types, boolean to return partial axioms,
-   * and a boolean to use the signature (IRIs only), return the axioms containing those objects.
+   * Filter a set of OWLAxioms based on the provided arguments.
    *
-   * @param ontology OWLOntology to get axioms from
-   * @param objects OWLObjects to use to get axioms
-   * @param axiomTypes types of OWLAxioms to return
-   * @param partial if true, return axioms that include at least one object
-   * @param signature if true, use the signature (IRIs only)
-   * @return set of axioms containing the OWLObjects
+   * @param axioms Set of OWLAxioms to filter
+   * @param objects Set of OWLObjects to get axioms for
+   * @param axiomSelectors List of string selectors for types of axioms
+   * @param baseNamespaces List of string base namespaces used for internal/external selections
+   * @param partial if true, get any axiom containing at least one OWLObject from objects
+   * @param namedOnly if true, ignore anonymous OWLObjects in axioms
+   * @return set of filtered OWLAxioms
+   * @throws OWLOntologyCreationException on issue creating empty ontology for tautology checker
    */
+  public static Set<OWLAxiom> filterAxioms(
+      Set<OWLAxiom> axioms,
+      Set<OWLObject> objects,
+      List<String> axiomSelectors,
+      List<String> baseNamespaces,
+      boolean partial,
+      boolean namedOnly)
+      throws OWLOntologyCreationException {
+
+    // Go through the axiom selectors in order and process selections
+    boolean internal = false;
+    boolean external = false;
+    for (String axiomSelector : axiomSelectors) {
+      if (axiomSelector.equalsIgnoreCase("internal")) {
+        if (external) {
+          logger.error(
+              "ignoring 'internal' axiom selector - 'internal' and 'external' together will remove all axioms");
+        }
+        axioms = RelatedObjectsHelper.filterInternalAxioms(axioms, baseNamespaces);
+        internal = true;
+      } else if (axiomSelector.equalsIgnoreCase("external")) {
+        if (internal) {
+          logger.error(
+              "ignoring 'external' axiom selector - 'internal' and 'external' together will remove all axioms");
+        }
+        axioms = RelatedObjectsHelper.filterExternalAxioms(axioms, baseNamespaces);
+        external = true;
+      } else if (axiomSelector.equalsIgnoreCase("tautologies")) {
+        axioms = RelatedObjectsHelper.filterTautologicalAxioms(axioms, false);
+      } else if (axiomSelector.equalsIgnoreCase("structural-tautologies")) {
+        axioms = RelatedObjectsHelper.filterTautologicalAxioms(axioms, true);
+      } else {
+        // Assume this is a normal OWLAxiom type
+        Set<Class<? extends OWLAxiom>> axiomTypes =
+            RelatedObjectsHelper.getAxiomValues(axiomSelector);
+        axioms = filterAxiomsByAxiomType(axioms, objects, axiomTypes, partial, namedOnly);
+      }
+    }
+
+    return axioms;
+  }
+
+  /**
+   * Given a set of OWLAxioms, a set of OWLObjects, a set of OWLAxiom Classes, a partial boolean,
+   * and a named-only boolean, return a set of OWLAxioms based on OWLAxiom type. The axiom is added
+   * to the set if it is an instance of an OWLAxiom Class in the axiomTypes set. If partial, return
+   * any axioms that use at least one object from the objects set. Otherwise, only return axioms
+   * that use objects in the set. If namedOnly, only consider named OWLObjects in the axioms and
+   * ignore any anonymous objects when selecting the axioms.
+   *
+   * @param axioms set of OWLAxioms to filter
+   * @param objects set of OWLObjects to get axioms for
+   * @param axiomTypes set of OWLAxiom Classes that determines what type of axioms will be selected
+   * @param partial if true, include all axioms that use at least one OWLObject from objects
+   * @param namedOnly if true, ignore anonymous OWLObjects used in axioms
+   * @return set of filtered axioms
+   */
+  public static Set<OWLAxiom> filterAxiomsByAxiomType(
+      Set<OWLAxiom> axioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean partial,
+      boolean namedOnly) {
+    if (partial) {
+      return RelatedObjectsHelper.filterPartialAxioms(axioms, objects, axiomTypes, namedOnly);
+    } else {
+      return RelatedObjectsHelper.filterCompleteAxioms(axioms, objects, axiomTypes, namedOnly);
+    }
+  }
+
+  /**
+   * Given a st of axioms, a set of objects, and a set of axiom types, return a set of axioms where
+   * all the objects in those axioms are in the set of objects.
+   *
+   * @param inputAxioms Set of OWLAxioms to filter
+   * @param objects Set of objects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, consider only named OWLObjects
+   * @return Set of OWLAxioms containing only the OWLObjects
+   */
+  public static Set<OWLAxiom> filterCompleteAxioms(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
+    axiomTypes = setDefaultAxiomType(axiomTypes);
+    if (namedOnly) {
+      return getCompleteAxiomsNamedOnly(inputAxioms, objects, axiomTypes);
+    } else {
+      return getCompleteAxiomsIncludeAnonymous(inputAxioms, objects, axiomTypes);
+    }
+  }
+
+  /**
+   * Given a list of base namespaces and a set of axioms, return only the axioms that DO NOT have a
+   * subject in the base namespaces.
+   *
+   * @param axioms set of OWLAxioms
+   * @param baseNamespaces list of base namespaces
+   * @return external OWLAxioms
+   */
+  public static Set<OWLAxiom> filterExternalAxioms(
+      Set<OWLAxiom> axioms, List<String> baseNamespaces) {
+    Set<OWLAxiom> externalAxioms = new HashSet<>();
+    for (OWLAxiom axiom : axioms) {
+      Set<IRI> subjects = getAxiomSubjects(axiom);
+      if (!isBase(baseNamespaces, subjects)) {
+        externalAxioms.add(axiom);
+      }
+    }
+    return externalAxioms;
+  }
+
+  /**
+   * Given a list of base namespaces and a set of axioms, return only the axioms that have a subject
+   * in the base namespaces.
+   *
+   * @param axioms set of OWLAxioms
+   * @param baseNamespaces list of base namespaces
+   * @return internal OWLAxioms
+   */
+  public static Set<OWLAxiom> filterInternalAxioms(
+      Set<OWLAxiom> axioms, List<String> baseNamespaces) {
+    Set<OWLAxiom> internalAxioms = new HashSet<>();
+    for (OWLAxiom axiom : axioms) {
+      Set<IRI> subjects = getAxiomSubjects(axiom);
+      if (isBase(baseNamespaces, subjects)) {
+        internalAxioms.add(axiom);
+      }
+    }
+    return internalAxioms;
+  }
+
+  /**
+   * Given a set of axioms, a set of objects, and a set of axiom types, return a set of axioms where
+   * at least one object in those axioms is also in the set of objects.
+   *
+   * @param inputAxioms Set of OWLAxioms to filter
+   * @param objects Set of OWLObjects to match in axioms
+   * @param axiomTypes OWLAxiom types to return
+   * @param namedOnly when true, only consider named OWLObjects
+   * @return Set of OWLAxioms containing at least one of the OWLObjects
+   */
+  public static Set<OWLAxiom> filterPartialAxioms(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes,
+      boolean namedOnly) {
+    axiomTypes = setDefaultAxiomType(axiomTypes);
+    if (namedOnly) {
+      return getPartialAxiomsNamedOnly(inputAxioms, objects, axiomTypes);
+    } else {
+      return getPartialAxiomsIncludeAnonymous(inputAxioms, objects, axiomTypes);
+    }
+  }
+
+  /**
+   * Given a set of OWLAxioms and a structural boolean, filter for tautological axioms, i.e., those
+   * that would be true in any ontology.
+   *
+   * @param axioms set of OWLAxioms to filter
+   * @param structural if true, only filter for structural tautological axioms based on a hard-coded
+   *     set of patterns (e.g., X subClassOf owl:Thing, owl:Nothing subClassOf X, X subClassOf X)
+   * @return tautological OWLAxioms from original set
+   * @throws OWLOntologyCreationException on issue creating empty ontology for tautology checker
+   */
+  public static Set<OWLAxiom> filterTautologicalAxioms(Set<OWLAxiom> axioms, boolean structural)
+      throws OWLOntologyCreationException {
+    // If structural, checker will be null
+    OWLReasoner tautologyChecker = ReasonOperation.getTautologyChecker(structural);
+    Set<OWLAxiom> tautologies = new HashSet<>();
+    for (OWLAxiom a : axioms) {
+      if (ReasonOperation.isTautological(a, tautologyChecker, structural)) {
+        tautologies.add(a);
+      }
+    }
+    return tautologies;
+  }
+
+  /**
+   * @deprecated replaced by {@link #filterAxiomsByAxiomType(Set, Set, Set, boolean, boolean)}
+   * @param ontology OWLOntology to get axioms from
+   * @param objects OWLObjects to get axioms about
+   * @param axiomTypes Set of OWLAxiom Classes that are the types of OWLAxioms to return
+   * @param partial if true, return any OWLAxiom that has at least one OWLObject from objects
+   * @param signature if true, ignore anonymous OWLObjects in axioms
+   * @return axioms from ontology based on options
+   */
+  @Deprecated
   public static Set<OWLAxiom> getAxioms(
       OWLOntology ontology,
       Set<OWLObject> objects,
@@ -106,8 +301,79 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given a string axiom selector, return the OWLAxiom Class type(s) or null. The selector is
+   * either a special keyword that represents a set of axiom classes or the name of an OWLAxiom
+   * Class.
+   *
+   * @param axiomSelector string option to get the OWLAxiom Class type or types for
+   * @return set of OWLAxiom Class types based on the string option
+   */
+  public static Set<Class<? extends OWLAxiom>> getAxiomValues(String axiomSelector) {
+    Set<String> ignore =
+        new HashSet<>(
+            Arrays.asList("internal", "external", "tautologies", "structural-tautologies"));
+    if (ignore.contains(axiomSelector)) {
+      // Ignore special axiom options
+      return null;
+    }
+
+    Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
+    if (axiomSelector.equalsIgnoreCase("all")) {
+      axiomTypes.add(OWLAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("logical")) {
+      axiomTypes.add(OWLLogicalAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("annotation")) {
+      axiomTypes.add(OWLAnnotationAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("subclass")) {
+      axiomTypes.add(OWLSubClassOfAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("subproperty")) {
+      axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
+      axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
+      axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("equivalent")) {
+      axiomTypes.add(OWLEquivalentClassesAxiom.class);
+      axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
+      axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("disjoint")) {
+      axiomTypes.add(OWLDisjointClassesAxiom.class);
+      axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
+      axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
+      axiomTypes.add(OWLDisjointUnionAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("type")) {
+      axiomTypes.add(OWLClassAssertionAxiom.class);
+    } else if (axiomSelector.equalsIgnoreCase("abox")) {
+      axiomTypes.addAll(
+          AxiomType.ABoxAxiomTypes.stream()
+              .map(AxiomType::getActualClass)
+              .collect(Collectors.toSet()));
+    } else if (axiomSelector.equalsIgnoreCase("tbox")) {
+      axiomTypes.addAll(
+          AxiomType.TBoxAxiomTypes.stream()
+              .map(AxiomType::getActualClass)
+              .collect(Collectors.toSet()));
+    } else if (axiomSelector.equalsIgnoreCase("rbox")) {
+      axiomTypes.addAll(
+          AxiomType.RBoxAxiomTypes.stream()
+              .map(AxiomType::getActualClass)
+              .collect(Collectors.toSet()));
+    } else if (axiomSelector.equalsIgnoreCase("declaration")) {
+      axiomTypes.add(OWLDeclarationAxiom.class);
+    } else {
+      AxiomType<?> at = AxiomType.getAxiomType(axiomSelector);
+      if (at != null) {
+        // Attempt to get the axiom type based on AxiomType names
+        axiomTypes.add(at.getActualClass());
+      } else {
+        throw new IllegalArgumentException(String.format(axiomTypeError, axiomSelector));
+      }
+    }
+    return axiomTypes;
+  }
+
+  /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
-   * the objects in those axioms are in the set of objects.
+   * the objects in those axioms are in the set of objects. Prefer {@link #filterCompleteAxioms(Set,
+   * Set, Set, boolean)}.
    *
    * @param ontology OWLOntology to get axioms from
    * @param objects Set of objects to match in axioms
@@ -116,12 +382,13 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getCompleteAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    return getCompleteAxioms(ontology, objects, axiomTypes, false);
+    return filterCompleteAxioms(ontology.getAxioms(), objects, axiomTypes, false);
   }
 
   /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where all
-   * the objects in those axioms are in the set of objects.
+   * the objects in those axioms are in the set of objects. Prefer {@link #filterCompleteAxioms(Set,
+   * Set, Set, boolean)}.
    *
    * @param ontology OWLOntology to get axioms from
    * @param objects Set of objects to match in axioms
@@ -134,17 +401,13 @@ public class RelatedObjectsHelper {
       Set<OWLObject> objects,
       Set<Class<? extends OWLAxiom>> axiomTypes,
       boolean namedOnly) {
-    axiomTypes = setDefaultAxiomType(axiomTypes);
-    if (namedOnly) {
-      return getCompleteAxiomsNamedOnly(ontology, objects, axiomTypes);
-    } else {
-      return getCompleteAxiomsIncludeAnonymous(ontology, objects, axiomTypes);
-    }
+    return filterCompleteAxioms(ontology.getAxioms(), objects, axiomTypes, namedOnly);
   }
 
   /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
-   * least one object in those axioms is also in the set of objects.
+   * least one object in those axioms is also in the set of objects. Prefer {@link
+   * #filterPartialAxioms(Set, Set, Set, boolean)}.
    *
    * @param ontology OWLOntology to get axioms from
    * @param objects Set of objects to match in axioms
@@ -153,12 +416,13 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> getPartialAxioms(
       OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
-    return getPartialAxioms(ontology, objects, axiomTypes, false);
+    return filterPartialAxioms(ontology.getAxioms(), objects, axiomTypes, false);
   }
 
   /**
    * Given an ontology, a set of objects, and a set of axiom types, return a set of axioms where at
-   * least one object in those axioms is also in the set of objects.
+   * least one object in those axioms is also in the set of objects. Prefer {@link
+   * #filterPartialAxioms(Set, Set, Set, boolean)}.
    *
    * @param ontology OWLOntology to get axioms from
    * @param objects Set of objects to match in axioms
@@ -171,12 +435,7 @@ public class RelatedObjectsHelper {
       Set<OWLObject> objects,
       Set<Class<? extends OWLAxiom>> axiomTypes,
       boolean namedOnly) {
-    axiomTypes = setDefaultAxiomType(axiomTypes);
-    if (namedOnly) {
-      return getPartialAxiomsNamedOnly(ontology, objects, axiomTypes);
-    } else {
-      return getPartialAxiomsIncludeAnonymous(ontology, objects, axiomTypes);
-    }
+    return filterPartialAxioms(ontology.getAxioms(), objects, axiomTypes, namedOnly);
   }
 
   /**
@@ -284,6 +543,8 @@ public class RelatedObjectsHelper {
       return selectPattern(ontology, ioHelper, objects, selector);
     } else if (Pattern.compile("<.*>").matcher(selector).find()) {
       return selectIRI(objects, selector);
+    } else if (selector.contains(":")) {
+      return selectCURIE(ioHelper, objects, selector);
     } else {
       logger.error(String.format("%s is not a valid selector and will be ignored", selector));
       return new HashSet<>();
@@ -403,6 +664,24 @@ public class RelatedObjectsHelper {
     }
     relatedObjects.removeAll(objects);
     return relatedObjects;
+  }
+
+  /** */
+  public static Set<OWLObject> selectCURIE(
+      IOHelper ioHelper, Set<OWLObject> objects, String selector) {
+    String prefix = selector.split(":")[0];
+    String pattern = selector.split(":")[1];
+    Map<String, String> prefixes = ioHelper.getPrefixes();
+    String namespace = prefixes.getOrDefault(prefix, null);
+
+    if (namespace == null) {
+      logger.error(String.format("Prefix '%s' is not a loaded prefix and will be ignored", prefix));
+      return objects;
+    }
+
+    String iriPattern = namespace + pattern;
+
+    return selectIRI(objects, iriPattern);
   }
 
   /**
@@ -696,6 +975,10 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
+  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+    return spanGaps(ontology, objects, false);
+  }
+
   /**
    * Given an ontology and a set of objects, construct a set of subClassOf axioms that span the gaps
    * between classes to maintain a hierarchy.
@@ -704,7 +987,8 @@ public class RelatedObjectsHelper {
    * @param objects set of Objects to build hierarchy
    * @return set of OWLAxioms to maintain hierarchy
    */
-  public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
+  public static Set<OWLAxiom> spanGaps(
+      OWLOntology ontology, Set<OWLObject> objects, boolean excludeAnonymous) {
     Set<Map<String, OWLAnnotationProperty>> aPropPairs = new HashSet<>();
     Set<Map<String, OWLClassExpression>> classPairs = new HashSet<>();
     Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
@@ -744,7 +1028,10 @@ public class RelatedObjectsHelper {
     for (Map<String, OWLClassExpression> classPair : classPairs) {
       OWLClass subClass = classPair.get(SUB).asOWLClass();
       OWLClassExpression superClass = classPair.get(SUPER);
-      axioms.add(df.getOWLSubClassOfAxiom(subClass, superClass));
+      if (superClass.isAnonymous() && !excludeAnonymous || !superClass.isAnonymous()) {
+        // Anonymous axioms may have been removed so we don't want to add them back
+        axioms.add(df.getOWLSubClassOfAxiom(subClass, superClass));
+      }
     }
     for (Map<String, OWLDataPropertyExpression> propPair : dPropPairs) {
       OWLDataProperty subProperty = propPair.get(SUB).asOWLDataProperty();
@@ -873,19 +1160,21 @@ public class RelatedObjectsHelper {
    * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axioms in the
    * ontology that contain only objects in the object set.
    *
-   * @param ontology OWLOntology to get axioms from
+   * @param inputAxioms axioms to filter
    * @param objects OWLObjects to select
    * @param axiomTypes OWLAxiom types to select
    * @return set of complete OWLAxioms
    */
   private static Set<OWLAxiom> getCompleteAxiomsIncludeAnonymous(
-      OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> axioms = new HashSet<>();
 
     // Use the IRIs to compare named objects
     Set<IRI> iris = getIRIs(objects);
 
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         // Track if the axiom, without annotations, contains the objects
         boolean axiomMatch = false;
@@ -953,19 +1242,21 @@ public class RelatedObjectsHelper {
    * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axioms in the
    * ontology that contain only IRIs in the object set.
    *
-   * @param ontology OWLOntology to get axioms from
+   * @param inputAxioms axioms to filter
    * @param objects OWLObjects to select
    * @param axiomTypes OWLAxiom types to select
    * @return set of complete OWLAxioms
    */
   private static Set<OWLAxiom> getCompleteAxiomsNamedOnly(
-      OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> axioms = new HashSet<>();
 
     // All the IRIs of named objects in the set of OWL Objects
     Set<IRI> iris = getIRIs(objects);
 
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         Set<IRI> sigIRIs = OntologyHelper.getIRIsInSignature(axiom.getAxiomWithoutAnnotations());
 
@@ -1003,6 +1294,120 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an OWLAxiom, return a set of subjects. Most axioms will only have one subject, but
+   * equivalent and disjoint axioms will have 2+. If the subject is anonymous, the return set will
+   * be empty.
+   *
+   * @param axiom OWLAxiom to get subject(s)
+   * @return set of zero or more IRIs for subject(s)
+   */
+  private static Set<IRI> getAxiomSubjects(OWLAxiom axiom) {
+    Set<IRI> iris = new HashSet<>();
+
+    if (axiom instanceof OWLDeclarationAxiom) {
+      OWLDeclarationAxiom decAxiom = (OWLDeclarationAxiom) axiom;
+      OWLEntity subject = decAxiom.getEntity();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.getIRI());
+      }
+    } else if (axiom instanceof OWLSubClassOfAxiom) {
+      OWLSubClassOfAxiom scAxiom = (OWLSubClassOfAxiom) axiom;
+      OWLClassExpression subject = scAxiom.getSubClass();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLClass().getIRI());
+      }
+    } else if (axiom instanceof OWLEquivalentClassesAxiom) {
+      OWLEquivalentClassesAxiom eqAxiom = (OWLEquivalentClassesAxiom) axiom;
+      for (OWLClassExpression expr : eqAxiom.getNamedClasses()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLClass().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLDisjointClassesAxiom) {
+      OWLDisjointClassesAxiom djAxiom = (OWLDisjointClassesAxiom) axiom;
+      for (OWLClassExpression expr : djAxiom.getClassExpressions()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLClass().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLSubDataPropertyOfAxiom) {
+      OWLSubDataPropertyOfAxiom spAxiom = (OWLSubDataPropertyOfAxiom) axiom;
+      OWLDataPropertyExpression subject = spAxiom.getSubProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      }
+    } else if (axiom instanceof OWLSubObjectPropertyOfAxiom) {
+      OWLSubObjectPropertyOfAxiom spAxiom = (OWLSubObjectPropertyOfAxiom) axiom;
+      OWLObjectPropertyExpression subject = spAxiom.getSubProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      }
+    } else if (axiom instanceof OWLEquivalentDataPropertiesAxiom) {
+      OWLEquivalentDataPropertiesAxiom eqAxiom = (OWLEquivalentDataPropertiesAxiom) axiom;
+      for (OWLSubDataPropertyOfAxiom spAxiom : eqAxiom.asSubDataPropertyOfAxioms()) {
+        OWLDataPropertyExpression subject = spAxiom.getSubProperty();
+        if (!subject.isAnonymous()) {
+          iris.add(subject.asOWLDataProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLEquivalentObjectPropertiesAxiom) {
+      OWLEquivalentObjectPropertiesAxiom eqAxiom = (OWLEquivalentObjectPropertiesAxiom) axiom;
+      for (OWLSubObjectPropertyOfAxiom spAxiom : eqAxiom.asSubObjectPropertyOfAxioms()) {
+        OWLObjectPropertyExpression subject = spAxiom.getSubProperty();
+        if (!subject.isAnonymous()) {
+          iris.add(subject.asOWLObjectProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLDisjointDataPropertiesAxiom) {
+      OWLDisjointDataPropertiesAxiom djAxiom = (OWLDisjointDataPropertiesAxiom) axiom;
+      for (OWLDataPropertyExpression expr : djAxiom.getProperties()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLDataProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLDisjointObjectPropertiesAxiom) {
+      OWLDisjointObjectPropertiesAxiom djAxiom = (OWLDisjointObjectPropertiesAxiom) axiom;
+      for (OWLObjectPropertyExpression expr : djAxiom.getProperties()) {
+        if (!expr.isAnonymous()) {
+          iris.add(expr.asOWLObjectProperty().getIRI());
+        }
+      }
+      return iris;
+    } else if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      OWLAnnotationAssertionAxiom annAxiom = (OWLAnnotationAssertionAxiom) axiom;
+      OWLAnnotationSubject subject = annAxiom.getSubject();
+      if (subject.isIRI()) {
+        return Sets.newHashSet((IRI) subject);
+      }
+    } else if (axiom instanceof OWLClassAssertionAxiom) {
+      OWLClassAssertionAxiom classAxiom = (OWLClassAssertionAxiom) axiom;
+      OWLIndividual subject = classAxiom.getIndividual();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      }
+    } else if (axiom instanceof OWLDataPropertyAssertionAxiom) {
+      OWLDataPropertyAssertionAxiom dpAxiom = (OWLDataPropertyAssertionAxiom) axiom;
+      OWLIndividual subject = dpAxiom.getSubject();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      }
+    } else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
+      OWLObjectPropertyAssertionAxiom dpAxiom = (OWLObjectPropertyAssertionAxiom) axiom;
+      OWLIndividual subject = dpAxiom.getSubject();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      }
+    }
+    // May have been anonymous, no IRI to return
+    return new HashSet<>();
+  }
+
+  /**
    * Given a set of OWLObjects, return the set of IRIs for those objects.
    *
    * @param objects OWLObjects to get IRIs of
@@ -1023,17 +1428,19 @@ public class RelatedObjectsHelper {
    * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axiom that
    * includes at least one object.
    *
-   * @param ontology OWLOntology to get axioms from
+   * @param inputAxioms axioms to filter
    * @param objects OWLObjects to select
    * @param axiomTypes OWLAxiom types to select
    * @return set of matching OWLAxioms
    */
   private static Set<OWLAxiom> getPartialAxiomsIncludeAnonymous(
-      OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> axioms = new HashSet<>();
     Set<IRI> iris = getIRIs(objects);
 
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         boolean axiomMatch = false;
         if (axiom instanceof OWLAnnotationAssertionAxiom) {
@@ -1092,19 +1499,21 @@ public class RelatedObjectsHelper {
    * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axiom that
    * includes at least one IRI in the set of objects.
    *
-   * @param ontology OWLOntology to get axioms from
+   * @param inputAxioms axioms to filter
    * @param objects OWLObjects to select
    * @param axiomTypes OWLAxiom types to select
    * @return set of matching OWLAxioms
    */
   private static Set<OWLAxiom> getPartialAxiomsNamedOnly(
-      OWLOntology ontology, Set<OWLObject> objects, Set<Class<? extends OWLAxiom>> axiomTypes) {
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> axioms = new HashSet<>();
 
     // All the IRIs of named objects in the set of OWL Objects
     Set<IRI> iris = getIRIs(objects);
 
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
         Set<IRI> sigIRIs = OntologyHelper.getIRIsInSignature(axiom.getAxiomWithoutAnnotations());
 
@@ -1313,6 +1722,25 @@ public class RelatedObjectsHelper {
       superProperties.add(expr);
     }
     return superProperties;
+  }
+
+  /**
+   * Given a list of base namespaces and a set of subject IRIs, determine if at least one of the
+   * subjects is in the set of base namespaces.
+   *
+   * @param baseNamespaces list of base namespaces as strings
+   * @param subjects set of IRIs to check
+   * @return true if at least one IRI is in one of the base namespaces
+   */
+  private static boolean isBase(List<String> baseNamespaces, Set<IRI> subjects) {
+    for (String base : baseNamespaces) {
+      for (IRI subject : subjects) {
+        if (subject.toString().startsWith(base)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
