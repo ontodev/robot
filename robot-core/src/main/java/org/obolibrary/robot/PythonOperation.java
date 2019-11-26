@@ -45,7 +45,9 @@ public class PythonOperation {
     }
     gs.start();
     port = gs.getPort();
-    logger.debug(String.format("JVM started on port %d", port));
+    System.out.println(
+        String.format("ROBOT JVM listening for Py4j on port %d, press Ctrl-C to exit", port));
+    logger.debug(String.format("ROBOT JVM started on port %d", port));
     return gs;
   }
 }
