@@ -2,9 +2,6 @@ package org.obolibrary.robot;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import py4j.GatewayServer;
 
 /**
  * Starts a gateway server for Py4J to execute ROBOT operations via Python.
@@ -13,8 +10,11 @@ import py4j.GatewayServer;
  */
 public class PythonCommand implements Command {
 
-  /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(MirrorCommand.class);
+  /** Namespace for error messages. */
+  private static final String NS = "python#";
+
+  private static final String portNumberError =
+      NS + "PORT NUMBER ERROR port '%s' must be an integer.";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -93,21 +93,21 @@ public class PythonCommand implements Command {
       state = new CommandState();
     }
 
-    int port = Integer.parseInt(CommandLineHelper.getDefaultValue(line, "port", "25333"));
-    logger.debug(String.format("Starting Py4J on port %d", port));
-
-    GatewayServer gs = new GatewayServer(port);
-    try {
-      gs.start();
-    } catch (Exception e) {
-      throw new Exception(
-          String.format(
-              "Cannot start server on port %d - check if something is already running and try again",
-              port));
+    // Maybe get a port
+    Integer port = null;
+    String portString = CommandLineHelper.getOptionalValue(line, "port");
+    if (portString != null) {
+      try {
+        port = Integer.parseInt(portString);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException(String.format(portNumberError, portString));
+      }
     }
 
-    // Ignore this
-    // you can't chain commands with the python command
+    // This will run until killed
+    PythonOperation.run(port);
+
+    // Ignore this - we don't get here
     return state;
   }
 }
