@@ -21,7 +21,14 @@ public class PythonOperation {
    * @param args strings to use as arguments
    */
   public void main(String[] args) {
-    run(null);
+    GatewayServer gs = null;
+    try {
+      gs = run(null);
+    } finally {
+      if (gs != null) {
+        gs.shutdown();
+      }
+    }
   }
 
   /**
@@ -29,19 +36,16 @@ public class PythonOperation {
    *
    * @param port port to run JVM on, or null
    */
-  public static void run(Integer port) {
+  public static GatewayServer run(Integer port) {
     GatewayServer gs;
     if (port != null) {
       gs = new GatewayServer(null, port);
     } else {
       gs = new GatewayServer(null);
     }
-    try {
-      gs.start();
-      port = gs.getPort();
-      logger.debug(String.format("JVM started on port %d", port));
-    } finally {
-      gs.shutdown();
-    }
+    gs.start();
+    port = gs.getPort();
+    logger.debug(String.format("JVM started on port %d", port));
+    return gs;
   }
 }
