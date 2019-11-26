@@ -383,6 +383,7 @@ public class ExtractCommand implements Command {
   }
 
   private static final String INPUT_OPT = "input";
+  private static final String INPUT_IRI_OPT = "input-iri";
   private static final String METHOD_OPT = "method";
   private static final String ANNOTATIONS_OPT = "annotations";
   private static final String LOWER_TERMS_OPT = "lower-terms";
@@ -391,18 +392,15 @@ public class ExtractCommand implements Command {
   private static final String PARENTS_OPT = "parents";
 
 
-  private static OWLOntology parseInputConfiguration(IOHelper ioHelper, OWLOntology inputOntology, List<String> lines) throws Exception {
-
-    // Use input ontology to get labels
-    QuotedEntityChecker checker = new QuotedEntityChecker();
-    checker.setIOHelper(ioHelper);
-    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
-    checker.addAll(inputOntology);
+  private static OWLOntology parseInputConfiguration(IOHelper ioHelper, List<String> lines) throws Exception {
 
     String currentOption = null;
     Iterator<String> lineItr = lines.iterator();
 
-    String input = null;
+    OWLOntology inputOntology = null;
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.setIOHelper(ioHelper);
+    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
     String method = null;
     Map<IRI, IRI> mapToAnnotations = new HashMap<>();
     Map<IRI, IRI> copyToAnnotations = new HashMap<>();
@@ -419,18 +417,45 @@ public class ExtractCommand implements Command {
 
         switch (option.toLowerCase()) {
           case INPUT_OPT:
-            input = lineItr.next();
+            // Path to local ontology file
+            if (inputOntology != null) {
+              // TODO - already has input
+              throw new Exception();
+            }
+            String path = lineItr.next();
+            inputOntology = ioHelper.loadOntology(path);
+
+            // Use input ontology to get labels
+            checker.addAll(inputOntology);
             continue;
+
+          case INPUT_IRI_OPT:
+            // IRI for remote ontology file
+            if (inputOntology != null) {
+              // TODO - already has input
+              throw new Exception();
+            }
+            String iri = lineItr.next();
+            inputOntology = ioHelper.loadOntology(IRI.create(iri));
+
+            // Use input ontology to get labels
+            checker.addAll(inputOntology);
+            continue;
+
           case METHOD_OPT:
+            // Extraction method
             method = lineItr.next();
             continue;
+
           case ANNOTATIONS_OPT:
           case UPPER_TERMS_OPT:
           case LOWER_TERMS_OPT:
           case TERMS_OPT:
           case PARENTS_OPT:
+            // Configuration, hop to next section
             currentOption = option.toLowerCase();
             continue;
+
           default:
             // TODO - unknown option
             throw new Exception();
@@ -438,6 +463,7 @@ public class ExtractCommand implements Command {
       }
 
       if (currentOption != null) {
+        // Always separated by tabs
         String[] split = line.split("\t");
         String term;
         OWLEntity entity;
@@ -498,7 +524,7 @@ public class ExtractCommand implements Command {
     }
 
     // Sanity checks
-    if (input == null) {
+    if (inputOntology == null) {
       throw new Exception();
     } else if (method == null) {
       throw new Exception();
@@ -539,7 +565,12 @@ public class ExtractCommand implements Command {
     }
 
     // Handle parent replacements/additions
-    
+    for (Map.Entry<IRI, IRI> addParent : addParents.entrySet()) {
 
+    }
+
+    for (Map.Entry<IRI, IRI> replaceParent : replaceParents.entrySet()) {
+
+    }
   }
 }
