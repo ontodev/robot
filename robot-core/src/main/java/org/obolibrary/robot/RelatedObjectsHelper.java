@@ -184,56 +184,11 @@ public class RelatedObjectsHelper {
       Set<Class<? extends OWLAxiom>> axiomTypes,
       boolean namedOnly) {
     axiomTypes = setDefaultAxiomType(axiomTypes);
-    Set<OWLAxiom> axioms = new HashSet<>();
-    Set<IRI> iris = getIRIs(objects);
-    for (OWLAxiom axiom : inputAxioms) {
-      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
-        // Check both the full annotated axiom and axiom without annotations (if annotated)
-        Set<OWLObject> axiomObjects;
-        if (namedOnly) {
-          axiomObjects = OntologyHelper.getNamedObjects(axiom);
-        } else {
-          axiomObjects = OntologyHelper.getObjects(axiom);
-        }
-
-        Set<OWLObject> partialAxiomObjects = null;
-        if (axiom.isAnnotated()) {
-          if (namedOnly) {
-            partialAxiomObjects =
-                OntologyHelper.getNamedObjects(axiom.getAxiomWithoutAnnotations());
-          } else {
-            partialAxiomObjects = OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations());
-          }
-        }
-
-        if (axiom instanceof OWLAnnotationAssertionAxiom) {
-          OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
-          // Again, check full annotated axiom and axiom without annotations
-          if (a.isAnnotated()) {
-            OWLAnnotation annotation = a.getAnnotation();
-            if (iris.contains(annotation.getProperty().getIRI())
-                && objects.contains(a.getValue())) {
-              if (iris.contains(a.getSubject()) && objects.contains(a.getProperty())) {
-                // If the set contains all components, add the annotated axiom
-                axioms.add(axiom);
-              }
-            }
-          }
-          if (iris.contains(a.getSubject()) && objects.contains(a.getProperty())) {
-            // If the set only contains the un-annotated axiom, add that
-            axioms.add(axiom.getAxiomWithoutAnnotations());
-          }
-        } else if (objects.containsAll(axiomObjects)) {
-          axioms.add(axiom);
-        } else if (partialAxiomObjects != null && objects.containsAll(partialAxiomObjects)) {
-          // If all objects of the axiom are included, but not the annotation
-          // add the un-annotated axiom
-          axioms.add(axiom.getAxiomWithoutAnnotations());
-        }
-      }
+    if (namedOnly) {
+      return getCompleteAxiomsNamedOnly(inputAxioms, objects, axiomTypes);
+    } else {
+      return getCompleteAxiomsIncludeAnonymous(inputAxioms, objects, axiomTypes);
     }
-
-    return axioms;
   }
 
   /**
@@ -292,43 +247,11 @@ public class RelatedObjectsHelper {
       Set<Class<? extends OWLAxiom>> axiomTypes,
       boolean namedOnly) {
     axiomTypes = setDefaultAxiomType(axiomTypes);
-    Set<OWLAxiom> axioms = new HashSet<>();
-    Set<IRI> iris = getIRIs(objects);
-    for (OWLAxiom axiom : inputAxioms) {
-      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
-        if (axiom instanceof OWLAnnotationAssertionAxiom) {
-          OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
-          // Check if axiom is annotated
-          if (a.isAnnotated()) {
-            for (OWLAnnotation annotation : a.getAnnotations()) {
-              // If any part of the annotation is in the set, add the axiom
-              if (iris.contains(annotation.getProperty().getIRI())
-                  || objects.contains(a.getValue())) {
-                axioms.add(axiom);
-              }
-            }
-          }
-          if (iris.contains(a.getSubject()) || objects.contains(a.getProperty())) {
-            axioms.add(axiom);
-          }
-        } else {
-          Set<OWLObject> axiomObjects;
-          if (namedOnly) {
-            axiomObjects = OntologyHelper.getNamedObjects(axiom);
-          } else {
-            axiomObjects = OntologyHelper.getObjects(axiom);
-          }
-          for (OWLObject axiomObject : axiomObjects) {
-            if (objects.contains(axiomObject)) {
-              axioms.add(axiom);
-              break;
-            }
-          }
-        }
-      }
+    if (namedOnly) {
+      return getPartialAxiomsNamedOnly(inputAxioms, objects, axiomTypes);
+    } else {
+      return getPartialAxiomsIncludeAnonymous(inputAxioms, objects, axiomTypes);
     }
-
-    return axioms;
   }
 
   /**
@@ -1234,6 +1157,143 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axioms in the
+   * ontology that contain only objects in the object set.
+   *
+   * @param inputAxioms axioms to filter
+   * @param objects OWLObjects to select
+   * @param axiomTypes OWLAxiom types to select
+   * @return set of complete OWLAxioms
+   */
+  private static Set<OWLAxiom> getCompleteAxiomsIncludeAnonymous(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
+    Set<OWLAxiom> axioms = new HashSet<>();
+
+    // Use the IRIs to compare named objects
+    Set<IRI> iris = getIRIs(objects);
+
+    for (OWLAxiom axiom : inputAxioms) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        // Track if the axiom, without annotations, contains the objects
+        boolean axiomMatch = false;
+        if (axiom instanceof OWLAnnotationAssertionAxiom) {
+          // Special handler for OWLAnnotationAssertionAxiom
+          OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+          // First look at the subject
+          // Its probably an IRI, in which case see if it is in the set of IRIs
+          boolean subjectMatch = false;
+          if (a.getSubject().isAnonymous() && objects.contains(a.getSubject())) {
+            subjectMatch = true;
+          } else if (a.getSubject().isIRI() && iris.contains(a.getSubject())) {
+            subjectMatch = true;
+          }
+          // If the subject matches, look at the property and value
+          if (subjectMatch) {
+            // Property will always compare IRI
+            if (iris.contains(a.getProperty().getIRI())) {
+              if (a.getValue().isLiteral()) {
+                // Value might be literal
+                // In this case, ignore it
+                axiomMatch = true;
+              } else if (objects.contains(a.getValue())
+                  || iris.contains(a.getValue().asIRI().orNull())) {
+                // If the objects contain the value (e.g. an anonymous object)
+                // or if its an IRI and it is in the set of IRIs, its a match
+                axiomMatch = true;
+              }
+            }
+          }
+        } else {
+          if (objects.containsAll(OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations()))) {
+            axiomMatch = true;
+          }
+        }
+
+        // Handle annotations on the axiom by looking at the property and value
+        // Ignore all literal values (if the property matches, add it)
+        boolean annotationMatch = true;
+        if (axiomMatch && axiom.isAnnotated()) {
+          for (OWLAnnotation annotation : axiom.getAnnotations()) {
+            if (!objects.contains(annotation.getProperty())
+                && !iris.contains(annotation.getProperty().getIRI())) {
+              annotationMatch = false;
+            } else if (!objects.contains(annotation.getValue())
+                && !iris.contains(annotation.getValue().asIRI().orNull())) {
+              annotationMatch = false;
+            }
+          }
+        }
+
+        if (axiomMatch && annotationMatch) {
+          axioms.add(axiom);
+        } else if (axiomMatch) {
+          // If only the axiom matches, add the axiom without annotations
+          axioms.add(axiom.getAxiomWithoutAnnotations());
+        }
+      }
+    }
+
+    return axioms;
+  }
+
+  /**
+   * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axioms in the
+   * ontology that contain only IRIs in the object set.
+   *
+   * @param inputAxioms axioms to filter
+   * @param objects OWLObjects to select
+   * @param axiomTypes OWLAxiom types to select
+   * @return set of complete OWLAxioms
+   */
+  private static Set<OWLAxiom> getCompleteAxiomsNamedOnly(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
+    Set<OWLAxiom> axioms = new HashSet<>();
+
+    // All the IRIs of named objects in the set of OWL Objects
+    Set<IRI> iris = getIRIs(objects);
+
+    for (OWLAxiom axiom : inputAxioms) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        Set<IRI> sigIRIs = OntologyHelper.getIRIsInSignature(axiom.getAxiomWithoutAnnotations());
+
+        // Maybe try adding all the axiom annotations
+        // TODO - right now this is all or nothing
+        // TODO - we should be able to ONLY return the annotations that match
+        boolean unannotatedMatch = false;
+        if (axiom.isAnnotated()) {
+          if (iris.containsAll(sigIRIs)) {
+            // Check if the target axiom alone is a match
+            // If the target axiom matches, but the annotations don't
+            // we will add just the unannotated axiom
+            unannotatedMatch = true;
+          }
+          for (OWLAnnotation ann : axiom.getAnnotations()) {
+            // Add the property IRI
+            sigIRIs.add(ann.getProperty().getIRI());
+            if (ann.getValue().isIRI()) {
+              // Only add the value if its an IRI
+              sigIRIs.add((IRI) ann.getValue());
+            }
+          }
+        }
+
+        if (iris.containsAll(sigIRIs)) {
+          axioms.add(axiom);
+        } else if (unannotatedMatch) {
+          // If there are missing IRIs but the annotated axiom was a match
+          // add the axiom without annotations
+          axioms.add(axiom.getAxiomWithoutAnnotations());
+        }
+      }
+    }
+    return axioms;
+  }
+
+  /**
    * Given an OWLAxiom, return a set of subjects. Most axioms will only have one subject, but
    * equivalent and disjoint axioms will have 2+. If the subject is anonymous, the return set will
    * be empty.
@@ -1362,6 +1422,123 @@ public class RelatedObjectsHelper {
       }
     }
     return iris;
+  }
+
+  /**
+   * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axiom that
+   * includes at least one object.
+   *
+   * @param inputAxioms axioms to filter
+   * @param objects OWLObjects to select
+   * @param axiomTypes OWLAxiom types to select
+   * @return set of matching OWLAxioms
+   */
+  private static Set<OWLAxiom> getPartialAxiomsIncludeAnonymous(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
+    Set<OWLAxiom> axioms = new HashSet<>();
+    Set<IRI> iris = getIRIs(objects);
+
+    for (OWLAxiom axiom : inputAxioms) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        boolean axiomMatch = false;
+        if (axiom instanceof OWLAnnotationAssertionAxiom) {
+          // Special handler for annotations
+          OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+
+          // Check both anonymous and IRI subjects
+          if (a.getSubject().isAnonymous() && objects.contains(a.getSubject())) {
+            axiomMatch = true;
+          } else if (a.getSubject().isIRI() && iris.contains(a.getSubject())) {
+            axiomMatch = true;
+          }
+
+          // Check the property
+          if (iris.contains(a.getProperty().getIRI())) {
+            axiomMatch = true;
+          }
+
+          // Check the value
+          if (objects.contains(a.getValue()) || iris.contains(a.getValue().asIRI().orNull())) {
+            axiomMatch = true;
+          }
+
+        } else {
+          for (OWLObject o : OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations())) {
+            if (objects.contains(o)) {
+              axiomMatch = true;
+            }
+          }
+        }
+
+        // Check annotations on the axiom
+        if (axiom.isAnnotated()) {
+          for (OWLAnnotation annotation : axiom.getAnnotations()) {
+            // Check the property and value
+            if (objects.contains(annotation.getProperty())
+                || iris.contains(annotation.getProperty().getIRI())) {
+              axiomMatch = true;
+            } else if (objects.contains(annotation.getValue())
+                || iris.contains(annotation.getValue().asIRI().orNull())) {
+              axiomMatch = true;
+            }
+          }
+        }
+
+        if (axiomMatch) {
+          axioms.add(axiom);
+        }
+      }
+    }
+
+    return axioms;
+  }
+
+  /**
+   * Given an OWLOntology, a set of OWLObjects, and a set of axiom types, return any axiom that
+   * includes at least one IRI in the set of objects.
+   *
+   * @param inputAxioms axioms to filter
+   * @param objects OWLObjects to select
+   * @param axiomTypes OWLAxiom types to select
+   * @return set of matching OWLAxioms
+   */
+  private static Set<OWLAxiom> getPartialAxiomsNamedOnly(
+      Set<OWLAxiom> inputAxioms,
+      Set<OWLObject> objects,
+      Set<Class<? extends OWLAxiom>> axiomTypes) {
+    Set<OWLAxiom> axioms = new HashSet<>();
+
+    // All the IRIs of named objects in the set of OWL Objects
+    Set<IRI> iris = getIRIs(objects);
+
+    for (OWLAxiom axiom : inputAxioms) {
+      if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
+        Set<IRI> sigIRIs = OntologyHelper.getIRIsInSignature(axiom.getAxiomWithoutAnnotations());
+
+        // Maybe try adding all the axiom annotations
+        if (axiom.isAnnotated()) {
+          for (OWLAnnotation ann : axiom.getAnnotations()) {
+            // Add the property IRI
+            sigIRIs.add(ann.getProperty().getIRI());
+            if (ann.getValue().isIRI()) {
+              // Only add the value if its an IRI
+              sigIRIs.add((IRI) ann.getValue());
+            }
+          }
+        }
+
+        // Compare the signature IRIs to the set of IRIs
+        for (IRI i : sigIRIs) {
+          if (iris.contains(i)) {
+            axioms.add(axiom);
+          }
+        }
+      }
+    }
+
+    return axioms;
   }
 
   /**

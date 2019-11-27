@@ -186,6 +186,15 @@ robot remove --input obi.owl \
   --select "owl:deprecated='true'^^xsd:boolean"
 ```
 
+Remove the definitions (may be annotated with `oboInOwl:hasDbXref` or not) from a given set of terms. Note that `IAO:0000115` (definition) and `oboInOwl:hasDbXref` are included in the `--term-file`.
+ 
+    robot remove --input fbcv-module.owl \
+      --term-file fbcv-remove.txt \
+      --axioms annotation \
+      --trim false \
+      --signature true \
+      --output results/fbcv-removed.owl
+
 Remove structural tautologies (e.g., `owl:Nothing`):
 
     robot remove --input tautologies.owl \
@@ -206,7 +215,9 @@ Create a "base" subset by removing external axioms (alternatively, use `filter -
 *Filter* for only desired annotation properties (in this case, label and ID). This works by actually *removing* the opposite set of annotation properties (complement annotation-properties) from the ontology:
 
     robot remove --input uberon_module.owl \
-      --term rdfs:label --term oboInOwl:id  \
-      --select complement --select annotation-properties \
+      --term rdfs:label \
+      --term oboInOwl:id  \
+      --select complement \
+      --select annotation-properties \
       --signature true \
       --output results/filter_annotations.owl
