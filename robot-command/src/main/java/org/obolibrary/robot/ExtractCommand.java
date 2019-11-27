@@ -405,6 +405,7 @@ public class ExtractCommand implements Command {
   private static final String OUTPUT_IRI_OPT = "output-iri";
   private static final String METHOD_OPT = "method";
   private static final String ANNOTATIONS_OPT = "annotations";
+  private static final String INTERMEDIATES_OPT = "intermediates";
   private static final String LOWER_TERMS_OPT = "lower-terms";
   private static final String UPPER_TERMS_OPT = "upper-terms";
   private static final String TERMS_OPT = "terms";
@@ -423,6 +424,8 @@ public class ExtractCommand implements Command {
 
     IRI outputIRI = null;
     String method = null;
+    String intermediates = null;
+
     Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
     Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations = new HashMap<>();
     Set<IRI> upperTerms = new HashSet<>();
@@ -431,7 +434,10 @@ public class ExtractCommand implements Command {
     Map<OWLClass, Set<OWLClass>> replaceParents = new HashMap<>();
 
     while (lineItr.hasNext()) {
-      String line = lineItr.next();
+      String line = lineItr.next().trim();
+      if (line.trim().isEmpty()) {
+        continue;
+      }
       if (line.startsWith("! ")) {
         String option = line.substring(2);
 
@@ -442,7 +448,7 @@ public class ExtractCommand implements Command {
               // TODO - already has input
               throw new Exception();
             }
-            String path = lineItr.next();
+            String path = lineItr.next().trim();
             inputOntology = ioHelper.loadOntology(path);
 
             // Use input ontology to get labels
@@ -455,7 +461,7 @@ public class ExtractCommand implements Command {
               // TODO - already has input
               throw new Exception();
             }
-            String iri = lineItr.next();
+            String iri = lineItr.next().trim();
             inputOntology = ioHelper.loadOntology(IRI.create(iri));
 
             // Use input ontology to get labels
@@ -463,12 +469,16 @@ public class ExtractCommand implements Command {
             continue;
 
           case OUTPUT_IRI_OPT:
-            outputIRI = IRI.create(lineItr.next());
+            outputIRI = IRI.create(lineItr.next().trim());
             continue;
 
           case METHOD_OPT:
             // Extraction method
-            method = lineItr.next();
+            method = lineItr.next().trim();
+            continue;
+
+          case INTERMEDIATES_OPT:
+            intermediates = lineItr.next().trim();
             continue;
 
           case ANNOTATIONS_OPT:
@@ -501,12 +511,7 @@ public class ExtractCommand implements Command {
             String annotationOpt = split.get(1);
             String ap2 = split.get(2);
 
-            OWLAnnotationProperty oldAP = checker.getOWLAnnotationProperty(ap1, false);
-            if (oldAP == null) {
-              // TODO - needs to exist!
-              throw new Exception();
-            }
-
+            OWLAnnotationProperty oldAP = checker.getOWLAnnotationProperty(ap1, true);
             OWLAnnotationProperty newAP = checker.getOWLAnnotationProperty(ap2, true);
 
             if (annotationOpt.equalsIgnoreCase("copyTo")) {
@@ -563,12 +568,14 @@ public class ExtractCommand implements Command {
       throw new Exception();
     }
 
+    System.out.println(method);
+
     if (method.equalsIgnoreCase("mireot") && lowerTerms.isEmpty()) {
       // mireot without lower terms
       throw new Exception();
     }
 
-    if (!method.equalsIgnoreCase("mireot") && !lowerTerms.isEmpty() || !upperTerms.isEmpty()) {
+    if (!method.equalsIgnoreCase("mireot") && (!lowerTerms.isEmpty() || !upperTerms.isEmpty())) {
       // Non-mireot method with lower/upper terms
       throw new Exception();
     }
@@ -578,14 +585,21 @@ public class ExtractCommand implements Command {
       throw new Exception();
     }
 
+    // Create map of options
+    Map<String, String> extractOptions = new HashMap<>();
+    if (intermediates != null) {
+      extractOptions.put(INTERMEDIATES_OPT, intermediates);
+    }
+
     // Create the output ontology
     OWLOntology outputOntology;
     ModuleType m;
     switch (method.toLowerCase()) {
       case "mireot":
+        // Generate the output ontology
         outputOntology =
             MireotOperation.mireot(
-                ioHelper, inputOntology, lowerTerms, upperTerms, null, null, null);
+                ioHelper, inputOntology, lowerTerms, upperTerms, null, extractOptions, null);
         if (outputIRI != null) {
           OWLOntologyManager manager = outputOntology.getOWLOntologyManager();
           manager.setOntologyDocumentIRI(outputOntology, outputIRI);
@@ -593,15 +607,18 @@ public class ExtractCommand implements Command {
         break;
       case "star":
         m = ModuleType.STAR;
-        outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, m);
+        outputOntology =
+            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
         break;
       case "top":
         m = ModuleType.TOP;
-        outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, m);
+        outputOntology =
+            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
         break;
       case "bot":
         m = ModuleType.BOT;
-        outputOntology = ExtractOperation.extract(inputOntology, terms, outputIRI, m);
+        outputOntology =
+            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
         break;
       default:
         throw new Exception(invalidMethodError);
