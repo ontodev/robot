@@ -133,6 +133,7 @@ Any term specified as an input term will not be pruned.
 By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method:
 
     robot extract --method BOT \
+      --catalog catalog.xml \
       --input imports-nucleus.owl \
       --term GO:0005739 \
       --imports exclude \
@@ -143,6 +144,7 @@ This only includes what is asserted in `imports-nucleus.owl`, which imports `nuc
 By contrast, including imports returns the full hierarchy down to 'mitochondrion', which is asserted in `nucleus.owl`:
 
     robot extract --method BOT \
+      --catalog catalog.xml \
       --input imports-nucleus.owl \
       --term GO:0005739 \
       --imports include \
