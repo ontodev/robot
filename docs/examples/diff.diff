@@ -1,5 +1,0 @@
-1 axioms in Ontology 1 but not in Ontology 2:
-- OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/go.owl>) VersionIRI(<null>))
-
-1 axioms in Ontology 2 but not in Ontology 1:
-+ OntologyID(OntologyIRI(<http://robot.obolibrary.org/nucleus.owl>) VersionIRI(<null>))
