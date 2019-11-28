@@ -95,6 +95,7 @@ public class Report {
    * Use labels for report output.
    *
    * @param labelMap Map of IRI to label for all entities in the ontology
+   * @throws IOException on problem creating IOHelper
    */
   public Report(Map<IRI, String> labelMap) throws IOException {
     this.ioHelper = new IOHelper();
@@ -263,6 +264,7 @@ public class Report {
    *
    * @param ruleName rule name to get number of violations for
    * @return number of violations for given rule name
+   * @throws Exception if the rule name is not in this Report object
    */
   public Integer getViolationCount(String ruleName) throws Exception {
     if (info.containsKey(ruleName)) {

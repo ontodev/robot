@@ -666,7 +666,15 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
-  /** */
+  /**
+   * Given an IOHelper, a set of objects, and a selector string for CURIE pattern, return a set of
+   * objects matching that CURIE pattern.
+   *
+   * @param ioHelper the IOHelper to resolve names
+   * @param objects the set of objects to filter
+   * @param selector the CURIE selector string
+   * @return the subset of objects that match the CURIE selector
+   */
   public static Set<OWLObject> selectCURIE(
       IOHelper ioHelper, Set<OWLObject> objects, String selector) {
     String prefix = selector.split(":")[0];
@@ -985,6 +993,7 @@ public class RelatedObjectsHelper {
    *
    * @param ontology input OWLOntology
    * @param objects set of Objects to build hierarchy
+   * @param excludeAnonymous when true, span across anonymous nodes
    * @return set of OWLAxioms to maintain hierarchy
    */
   public static Set<OWLAxiom> spanGaps(

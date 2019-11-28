@@ -35,6 +35,7 @@ public class PythonOperation {
    * Run a Gateway Server.
    *
    * @param port port to run JVM on, or null
+   * @return a GatewayServer to connect to
    */
   public static GatewayServer run(Integer port) {
     GatewayServer gs;
