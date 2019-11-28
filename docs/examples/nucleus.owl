@@ -6,7 +6,7 @@ Prefix: rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 
 
-Ontology: <http://purl.obolibrary.org/obo/go.owl>
+Ontology: <http://robot.obolibrary.org/nucleus.owl>
 
 
 AnnotationProperty: rdfs:label
