@@ -225,7 +225,8 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       ontologies.addAll(parentOntology.getImports());
       for (OWLAnnotationProperty property : properties) {
         // Get the labels for all entities
-        for (OWLAnnotation ann : EntitySearcher.getAnnotations(entity, ontologies, property)) {
+        for (OWLAnnotation ann :
+            EntitySearcher.getAnnotationObjects(entity, ontologies, property)) {
           OWLLiteral value = ann.getValue().asLiteral().orNull();
           // If it has a label, add it to the map (will replace short form)
           if (value != null) {

@@ -7,7 +7,7 @@
 @base <http://robot.obolibrary.org/imports-nucleus.owl> .
 
 <http://robot.obolibrary.org/imports-nucleus.owl> rdf:type owl:Ontology ;
-                                                   owl:imports <http://purl.obolibrary.org/obo/go.owl> .
+                                                   owl:imports <http://robot.obolibrary.org/nucleus.owl> .
 
 #################################################################
 #    Classes

@@ -1,0 +1,4 @@
+obo:FBcv_0000002
+obo:FBcv_0000683
+obo:IAO_0000115
+oboInOwl:hasDbXref
