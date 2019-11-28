@@ -2,4 +2,5 @@
 <catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
   <!-- added mapping -->
   <uri name="https://github.com/ontodev/robot/examples/edit.owl" uri="./edit.owl"/>
+  <uri name="http://robot.obolibrary.org/nucleus.owl" uri="./nucleus.owl"/>
 </catalog>
