@@ -24,7 +24,7 @@ public class MinimizeOperationTest extends CoreTest {
     OWLOntology ontology = loadOntology("/uberon.owl");
     MinimizeOperation.minimize(ontology, 3, new HashSet<>());
     int after = ontology.getClassesInSignature().size();
-    assertEquals(6, after);
+    assertEquals(7, after);
   }
 
   /**
@@ -41,6 +41,6 @@ public class MinimizeOperationTest extends CoreTest {
     precious.add(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000982"));
     MinimizeOperation.minimize(ontology, 3, precious);
     int after = ontology.getClassesInSignature().size();
-    assertEquals(7, after);
+    assertEquals(8, after);
   }
 }

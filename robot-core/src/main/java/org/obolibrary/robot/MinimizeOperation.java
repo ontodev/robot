@@ -1,12 +1,10 @@
 package org.obolibrary.robot;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
-import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,21 +46,20 @@ public class MinimizeOperation {
           RelatedObjectsHelper.getPartialAxioms(ontology, removeClasses, null);
       OWLOntologyManager manager = ontology.getOWLOntologyManager();
       manager.removeAxioms(ontology, axiomsToRemove);
+      // Span gaps to maintain hierarchy
+      manager.addAxioms(
+          ontology, RelatedObjectsHelper.spanGaps(copy, OntologyHelper.getObjects(ontology)));
       // Repeat until there's no more to remove
       removeClasses = getClassesToRemove(ontology, threshold, precious);
     }
-
-    // Maintain hierarchy between remaining classes
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    manager.addAxioms(
-        ontology, RelatedObjectsHelper.spanGaps(copy, OntologyHelper.getObjects(ontology)));
     logger.debug("Classes after minimizing: " + ontology.getClassesInSignature().size());
   }
 
   /**
    * Given an ontology, a threshold, and a set of precious IRIs (or empty set), return the classes
    * to remove to minimize the class hierarchy. Top-level and bottom-level classes are not removed.
-   * Any class with a precious IRI is not removed.
+   * Any class with a precious IRI is not removed. Any class with a number of named subclasses that
+   * is less than the threshold will be removed.
    *
    * @param ontology OWLOntology to minimize
    * @param threshold minimum number of child classes
@@ -80,10 +77,11 @@ public class MinimizeOperation {
       }
 
       // Check for superclasses
-      Collection<OWLClassExpression> superclasses = EntitySearcher.getSuperClasses(cls, ontology);
+      Set<OWLSubClassOfAxiom> superAxioms = ontology.getSubClassAxiomsForSubClass(cls);
       boolean hasNamedSuperclass = false;
-      for (OWLClassExpression expr : superclasses) {
-        if (!expr.isAnonymous()) {
+      for (OWLSubClassOfAxiom superAx : superAxioms) {
+        OWLClassExpression expr = superAx.getSuperClass();
+        if (!expr.isAnonymous() && !expr.asOWLClass().isOWLThing()) {
           hasNamedSuperclass = true;
           break;
         }
@@ -92,21 +90,23 @@ public class MinimizeOperation {
       if (!hasNamedSuperclass) {
         // Also ignore if there are no named superclasses
         // Or just no superclasses in general
+        // This means it is directly placed under owl:Thing
         continue;
       }
 
-      Collection<OWLClassExpression> subclasses = EntitySearcher.getSubClasses(cls, ontology);
-      for (OWLClassExpression expr : subclasses) {
-        if (expr.isAnonymous()) {
-          continue;
+      Set<OWLSubClassOfAxiom> subAxioms = ontology.getSubClassAxiomsForSuperClass(cls);
+      int scCount = 0;
+      for (OWLSubClassOfAxiom subAx : subAxioms) {
+        OWLClassExpression expr = subAx.getSubClass();
+        if (!expr.isAnonymous()) {
+          // Only count the named subclasses
+          scCount++;
         }
-        if (!subclasses.isEmpty()
-            && subclasses.size() < threshold
-            && !precious.contains(cls.getIRI())) {
-          // If the class has subclasses, but less (or equal to) subclasses
-          // than the threshold add it to the set of classes to be removed
-          remove.add(cls);
-        }
+      }
+      if (scCount != 0 && scCount < threshold && !precious.contains(cls.getIRI())) {
+        // If the class has subclasses, but LESS subclasses than the threshold,
+        // add it to the set of classes to be removed
+        remove.add(cls);
       }
     }
 
