@@ -37,15 +37,15 @@ Becomes:
 
 `class:C` and `class:D` are removed because they each only have one subclass. `class:F` is kept because it has two subclasses, which is the threshold.
 
-If there are any classes that you don't want removed, you can keep them regardless of the number of subclasses using `--precious-term <IRI/CURIE>` (for a set of terms in a file, use `--precious-terms <term-file>`). 
+If there are any classes that you don't want removed, you can keep them regardless of the number of subclasses using `--precious <IRI/CURIE>` (for a set of terms in a file, use `--precious-terms <term-file>`). 
 
     robot minimize \
      --input uberon_module.owl \
      --threshold 3 \
-     --precious-term UBERON:0000483 \
+     --precious UBERON:0000483 \
      --output results/uberon_minimized.owl
 
-For example, given `--threshold 2` and `--precious-term class:D`, that same example from above would become:
+For example, given `--threshold 2` and `--precious class:D`, that same example from above would become:
 
 ```
 - class:A
