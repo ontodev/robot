@@ -51,6 +51,9 @@ public class TreeOperation {
   // Class attributes
   private JsonObject attributes = new JsonObject();
 
+  private String owlDeprecated;
+  private final OWLAnnotationProperty OWL_DEPRECATED = dataFactory.getOWLDeprecated();
+
   private List<OWLAnnotationProperty> orderedAnnotations;
 
   /**
@@ -75,6 +78,10 @@ public class TreeOperation {
     checker.setIOHelper(ioHelper);
     checker.addProperty(dataFactory.getRDFSLabel());
     checker.addAll(ontology);
+
+    // Set the label for owl:deprecated
+    owlDeprecated =
+        checker.getLabel(OWL_DEPRECATED.getIRI(), OWL_DEPRECATED.getIRI().getShortForm());
 
     // Expression renderer
     r = new ManchesterSyntaxOWLObjectRenderer();
@@ -176,6 +183,8 @@ public class TreeOperation {
       // Sort by label
       List<OWLClass> orderedClasses = new ArrayList<>(upperClasses);
       orderedClasses.sort(new SortByLabel());
+      // Then sort by 'obsolete'
+      orderedClasses.sort(new SortByStatus());
 
       JsonArray classes = new JsonArray();
       for (OWLClass cls : orderedClasses) {
@@ -213,7 +222,12 @@ public class TreeOperation {
       // Make sure labels are distinct and ordered
       // These are either labels or full IRIs so that they can be converted back to
       List<String> sortedTypeLabels =
-          typeLabels.stream().distinct().sorted(new SortByLabel()).collect(Collectors.toList());
+          typeLabels
+              .stream()
+              .distinct()
+              .sorted(new SortByLabel())
+              .sorted(new SortByStatus())
+              .collect(Collectors.toList());
 
       JsonArray individualsByType = new JsonArray();
       for (String typeLabel : sortedTypeLabels) {
@@ -263,6 +277,7 @@ public class TreeOperation {
         labelToAnnProperty.put(label, upper);
       }
       annPropertyLabels.sort(new SortByLabel());
+      annPropertyLabels.sort(new SortByStatus());
 
       JsonArray annProps = new JsonArray();
       for (String label : annPropertyLabels) {
@@ -302,6 +317,7 @@ public class TreeOperation {
         labelToDataProperty.put(label, upper);
       }
       dataPropertyLabels.sort(new SortByLabel());
+      dataPropertyLabels.sort(new SortByStatus());
 
       JsonArray dataProps = new JsonArray();
       for (String label : dataPropertyLabels) {
@@ -341,6 +357,7 @@ public class TreeOperation {
         labelToObjProperty.put(label, upper);
       }
       objPropertyLabels.sort(new SortByLabel());
+      objPropertyLabels.sort(new SortByStatus());
 
       JsonArray objProps = new JsonArray();
       for (String label : objPropertyLabels) {
@@ -373,6 +390,7 @@ public class TreeOperation {
         labelToDatatype.put(label, dt);
       }
       datatypeLabels.sort(new SortByLabel());
+      datatypeLabels.sort(new SortByStatus());
 
       JsonArray datatypes = new JsonArray();
       for (String label : datatypeLabels) {
@@ -551,8 +569,14 @@ public class TreeOperation {
       Map<OWLAnnotationProperty, String> annotationProperties, OWLClass cls) {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(cls);
+
     // Attributes are everything else (annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, cls);
+    // Only add to attributes once
+    String iri = cls.getIRI().toString();
+    if (attributes.get(iri) == null) {
+      attributes.add(iri, attrs);
+    }
 
     // Get superclasses (named and anonymous)
     Set<OWLObject> renderValues = new HashSet<>(EntitySearcher.getSuperClasses(cls, ontology));
@@ -565,6 +589,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superClasses::add);
       attrs.add("SubClass Of", superClasses);
@@ -599,19 +624,20 @@ public class TreeOperation {
     if (children != null) {
       treeDetails.add("children", children);
     }
-
-    // Only add to attributes once
-    String label = treeDetails.getAsJsonPrimitive("text").getAsString();
-    if (attributes.get(label) == null) {
-      attributes.add(label, attrs);
-    }
     return treeDetails;
   }
 
   private JsonObject parseIndividual(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLNamedIndividual individual) {
     JsonObject treeDetails = getBasicDetails(individual);
+
+    // Attributes are everything else (annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, individual);
+    // Only add to attributes once
+    String iri = individual.getIRI().toString();
+    if (attributes.get(iri) == null) {
+      attributes.add(iri, attrs);
+    }
 
     // TODO - other logic
 
@@ -624,16 +650,12 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
       attrs.add("Type", superProperties);
     }
 
-    // Only add to attributes once
-    String label = treeDetails.getAsJsonPrimitive("text").getAsString();
-    if (attributes.get(label) == null) {
-      attributes.add(label, attrs);
-    }
     return treeDetails;
   }
 
@@ -641,8 +663,14 @@ public class TreeOperation {
       Map<OWLAnnotationProperty, String> annotationProperties, OWLAnnotationProperty property) {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(property);
+
     // Attributes are everything else (annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, property);
+    // Only add to attributes once
+    String iri = property.getIRI().toString();
+    if (attributes.get(iri) == null) {
+      attributes.add(iri, attrs);
+    }
 
     // Get superproperties
     Set<OWLObject> renderValues =
@@ -654,6 +682,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
       attrs.add("SubProperty Of", superProperties);
@@ -665,16 +694,6 @@ public class TreeOperation {
       treeDetails.add("children", children);
     }
 
-    System.out.println("IRI: " + property.getIRI());
-    System.out.println("Short Form: " + property.getIRI().getShortForm());
-    System.out.println("Namespace: " + property.getIRI().getNamespace());
-    System.out.println("\n");
-
-    String label = treeDetails.getAsJsonPrimitive("text").getAsString();
-    // Only add to attributes once
-    if (attributes.get(label) == null) {
-      attributes.add(label, attrs);
-    }
     return treeDetails;
   }
 
@@ -682,8 +701,14 @@ public class TreeOperation {
       Map<OWLAnnotationProperty, String> annotationProperties, OWLDataProperty property) {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(property);
+
     // Attributes are everything else (annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, property);
+    // Only add to attributes once
+    String iri = property.getIRI().toString();
+    if (attributes.get(iri) == null) {
+      attributes.add(iri, attrs);
+    }
 
     // Get superproperties
     Set<OWLObject> renderValues =
@@ -695,6 +720,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
       attrs.add("SubProperty Of", superProperties);
@@ -728,11 +754,6 @@ public class TreeOperation {
       treeDetails.add("children", children);
     }
 
-    String label = treeDetails.getAsJsonPrimitive("text").getAsString();
-    // Only add to attributes once
-    if (attributes.get(label) == null) {
-      attributes.add(label, attrs);
-    }
     return treeDetails;
   }
 
@@ -740,8 +761,14 @@ public class TreeOperation {
       Map<OWLAnnotationProperty, String> annotationProperties, OWLObjectProperty property) {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(property);
+
     // Attributes are everything else (annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, property);
+    // Only add to attributes once
+    String iri = property.getIRI().toString();
+    if (attributes.get(iri) == null) {
+      attributes.add(iri, attrs);
+    }
 
     // Get superproperties
     Set<OWLObject> renderValues =
@@ -753,6 +780,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
       attrs.add("SubProperty Of", superProperties);
@@ -786,25 +814,19 @@ public class TreeOperation {
       treeDetails.add("children", children);
     }
 
-    String label = treeDetails.getAsJsonPrimitive("text").getAsString();
-    // Only add to attributes once
-    if (attributes.get(label) == null) {
-      attributes.add(label, attrs);
-    }
     return treeDetails;
   }
 
   private JsonObject parseDatatype(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLDatatype datatype) {
-    JsonObject treeDetails = getBasicDetails(datatype);
     JsonObject attrs = getAttributes(annotationProperties, datatype);
-
-    String label = treeDetails.getAsJsonPrimitive("text").getAsString();
     // Only add to attributes once
-    if (attributes.get(label) == null) {
-      attributes.add(label, attrs);
+    String iri = datatype.getIRI().toString();
+    if (attributes.get(iri) == null) {
+      attributes.add(iri, attrs);
     }
-    return treeDetails;
+
+    return getBasicDetails(datatype);
   }
 
   private JsonObject getBasicDetails(OWLEntity e) {
@@ -876,28 +898,21 @@ public class TreeOperation {
   private JsonArray getSubClassArray(
       OWLClass cls, Map<OWLAnnotationProperty, String> annotationProperties) {
     JsonArray children = new JsonArray();
-    Collection<OWLClassExpression> childrenExprs = EntitySearcher.getSubClasses(cls, ontology);
+
+    // Order alphabetically (named only)
+    List<OWLClassExpression> subClasses =
+        EntitySearcher.getSubClasses(cls, ontology)
+            .stream()
+            .filter(expr -> !expr.isAnonymous())
+            .distinct()
+            .sorted(new SortByLabel())
+            .sorted(new SortByStatus())
+            .collect(Collectors.toList());
+
+    // Parse and add to array
     int childCount = 0;
-    // First pass - order the children alphabetically
-    Map<String, OWLClass> labelToClass = new HashMap<>();
-    List<String> labelOrder = new ArrayList<>();
-    for (OWLClassExpression expr : childrenExprs) {
-      if (expr.isAnonymous()) {
-        continue;
-      }
-
-      IRI clsIRI = expr.asOWLClass().getIRI();
-      String childLabel = checker.getLabel(clsIRI, clsIRI.getShortForm());
-      labelOrder.add(childLabel);
-      labelToClass.put(childLabel, expr.asOWLClass());
-    }
-
-    // Sort the label order
-    Collections.sort(labelOrder);
-
-    for (String childLabel : labelOrder) {
-      OWLClass child = labelToClass.get(childLabel);
-      children.add(parseClass(annotationProperties, child));
+    for (OWLClassExpression child : subClasses) {
+      children.add(parseClass(annotationProperties, child.asOWLClass()));
       childCount++;
     }
 
@@ -923,6 +938,7 @@ public class TreeOperation {
 
     // Sort by label
     namedIndividuals.sort(new SortByLabel());
+    namedIndividuals.sort(new SortByStatus());
 
     int indivCount = 0;
     for (OWLNamedIndividual ni : namedIndividuals) {
@@ -960,6 +976,7 @@ public class TreeOperation {
             .stream()
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
     // Parse and add to the array
@@ -987,6 +1004,7 @@ public class TreeOperation {
             .filter(expr -> !expr.isAnonymous())
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
     // Parse and add to the array
@@ -1014,6 +1032,7 @@ public class TreeOperation {
             .filter(expr -> !expr.isAnonymous())
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
     // Parse and add to the array
@@ -1028,6 +1047,27 @@ public class TreeOperation {
     } else {
       return null;
     }
+  }
+
+  private boolean isObsolete(OWLEntity e) {
+    for (OWLAnnotation ann :
+        EntitySearcher.getAnnotationObjects(e, ontology, dataFactory.getOWLDeprecated())) {
+      OWLAnnotationValue v = ann.getValue();
+      if (!v.isLiteral()) {
+        continue;
+      }
+      OWLLiteral lit = v.asLiteral().orNull();
+      if (lit == null) {
+        continue;
+      }
+      if (lit.isBoolean()) {
+        return lit.parseBoolean();
+      } else {
+        String str = lit.getLiteral().trim().toLowerCase();
+        return str.equals("true");
+      }
+    }
+    return false;
   }
 
   private Set<String> renderExpressions(Set<OWLObject> values) {
@@ -1079,13 +1119,16 @@ public class TreeOperation {
     String attrs = g.toJson(attributes);
 
     // HTML with Inspire Tree JS
-    String html = IOHelper.readResource("/inspire-tree.html");
+    String htmlTemplate = IOHelper.readResource("/inspire-tree.html");
     // Replace with the correct data
-    html = html.replace("{DATA}", data);
-    html = html.replace("{ATTRIBUTES}", attrs);
+    String htmlOutput =
+        htmlTemplate
+            .replace("{DATA}", data)
+            .replace("{ATTRIBUTES}", attrs)
+            .replace("{OWL_DEPRECATED}", owlDeprecated);
 
     // Write the main HTML
-    FileUtils.writeStringToFile(new File(outputPath), html);
+    FileUtils.writeStringToFile(new File(outputPath), htmlOutput);
   }
 
   private void writeJSON(String outputPath) throws IOException {
@@ -1138,6 +1181,28 @@ public class TreeOperation {
       String label1 = checker.getLabel(e1.getIRI(), e1.getIRI().getShortForm());
       String label2 = checker.getLabel(e2.getIRI(), e2.getIRI().getShortForm());
       return compareStrings(label1, label2);
+    }
+
+    public int compareStrings(String s1, String s2) {
+      return s1.toLowerCase().compareTo(s2.toLowerCase());
+    }
+
+    @Override
+    public int compare(Object o1, Object o2) {
+      if (o1 instanceof OWLEntity && o2 instanceof OWLEntity) {
+        return compareEntities((OWLEntity) o1, (OWLEntity) o2);
+      } else if (o1 instanceof String && o2 instanceof String) {
+        return compareStrings((String) o1, (String) o2);
+      }
+      return 0;
+    }
+  }
+
+  class SortByStatus implements Comparator<Object> {
+    public int compareEntities(OWLEntity e1, OWLEntity e2) {
+      boolean b1 = isObsolete(e1);
+      boolean b2 = isObsolete(e2);
+      return Boolean.compare(b1, b2);
     }
 
     public int compareStrings(String s1, String s2) {

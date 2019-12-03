@@ -375,6 +375,9 @@ p {
   </div>
 </body>
 <script>
+  // Label for owl:deprecated
+  var owl_deprecated = '{OWL_DEPRECATED}';
+
 	// attributes for each class
 	var attributes = {ATTRIBUTES}
 
@@ -389,8 +392,30 @@ p {
 		target: '.tree'
 	});
 
+  // Strike out deprecated terms
+  // Iterate through the LI elements (the tree)
+  var li_elements = document.getElementsByTagName("li");
+  for (var i = 0, len = li_elements.length; i < len; i++ ) {
+    elem = li_elements[ i ];
+    if (elem.hasAttribute('data-uid')) {
+      // We know it's a tree element if it has a data-uid
+      // Which corresponds to the node ID
+      id = elem.getAttribute('data-uid');
+      if (attributes.hasOwnProperty(id)) {
+        attrs = attributes[id];
+        if (attrs.hasOwnProperty(owl_deprecated)) {
+          if (attrs.deprecated == 'true') {
+            // Only add line-through style to deprecated 'true' nodes
+            li_elements[i].style.textDecoration = 'line-through';
+          }
+        }
+      }
+    }
+  }
+
+  // Function to display info box on right side
   function displayInfo(id, text) {
-    var attrs = attributes[text];
+    var attrs = attributes[id];
     var innerHTML = '<h3>' + text + '</h3>';
     innerHTML += '<p><b>IRI:</b> <a href="' + id + '" target="_blank"/>' + id + '</a></p>';
 
@@ -421,15 +446,10 @@ p {
     displayInfo(id, text);
 	});
 
+  // Search functionality
 	$('input').on('keyup', _.debounce(function(event) {
 		tree.search(this.value);
 	}, 500));
-
-  function clickSearch(id, text) {
-    tree.search(text);
-    displayInfo(id, text);
-    document.getElementById('search').value = text;
-  }
 
   // Clear button
   var textInput = document.getElementById('search');
@@ -440,4 +460,17 @@ p {
     textInput.value = "";
     tree.search('');
   };
+
+  // Function to click an existing link to display its info box
+  function clickSearch(id, text) {
+    if (attributes.hasOwnProperty(id)) {
+      tree.search(text);
+      displayInfo(id, text);
+      document.getElementById('search').value = text;
+    } else {
+      // If the node doesn't exist, open IRI in a new tab
+      var win = window.open(id, '_blank');
+      win.focus();
+    }
+  }
 </script>
