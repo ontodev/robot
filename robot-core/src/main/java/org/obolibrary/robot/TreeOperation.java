@@ -51,7 +51,10 @@ public class TreeOperation {
   // Class attributes
   private JsonObject attributes = new JsonObject();
 
+  // Label for owl:deprecated
   private String owlDeprecated;
+
+  // Important annotation properties
   private final OWLAnnotationProperty OWL_DEPRECATED = dataFactory.getOWLDeprecated();
 
   private List<OWLAnnotationProperty> orderedAnnotations;
@@ -418,13 +421,11 @@ public class TreeOperation {
     } else {
       strIRI = "";
     }
-    ontologyObj.addProperty("id", strIRI);
-    ontologyObj.addProperty("text", "owl:Ontology");
 
-    // Annotations, etc.
+    // Used to store imports and annotations (other details)
     JsonObject ontologyAttrs = new JsonObject();
 
-    // Imports
+    // Get the imports
     Collection<IRI> importIRIs = ontology.getDirectImportsDocuments();
     if (importIRIs.size() > 1) {
       JsonArray imports = new JsonArray();
@@ -440,13 +441,14 @@ public class TreeOperation {
       ontologyAttrs.addProperty("Imports", importIRI);
     }
 
-    // Annotations
+    // Get the ontology annotations
     Map<String, List<String>> annotations = new HashMap<>();
     for (OWLAnnotation ann : ontology.getAnnotations()) {
-      // Get the property
+      // Get the property and its label
       OWLAnnotationProperty ap = ann.getProperty();
       String apLabel = checker.getLabel(ap.getIRI(), ap.getIRI().getShortForm());
 
+      // Get the value of the annotation
       OWLAnnotationValue value = ann.getValue();
       String strValue = null;
       if (value.isLiteral()) {
@@ -464,6 +466,8 @@ public class TreeOperation {
                 iri.toString().replace("<", "").replace(">", ""), label, quotedLabel);
       }
 
+      // Only add if the value is not null
+      // We iterate through here to group together mulitple annotations with the same property
       if (strValue != null) {
         List<String> values = annotations.getOrDefault(apLabel, new ArrayList<>());
         values.add(strValue);
@@ -471,6 +475,7 @@ public class TreeOperation {
       }
     }
 
+    // Add the annotation properties and their values to the attribute JSON object
     for (Map.Entry<String, List<String>> annotation : annotations.entrySet()) {
       String property = annotation.getKey();
       List<String> values = annotation.getValue();
@@ -484,8 +489,12 @@ public class TreeOperation {
       }
     }
 
-    attributes.add("owl:Ontology", ontologyAttrs);
+    // Add the ontology attribute object to all attributes
+    attributes.add(strIRI, ontologyAttrs);
 
+    // Add basic details to this JSON object
+    ontologyObj.addProperty("id", strIRI);
+    ontologyObj.addProperty("text", strIRI);
     return ontologyObj;
   }
 
