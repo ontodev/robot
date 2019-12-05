@@ -73,7 +73,6 @@ public class MinimizeOperation {
     for (OWLClass cls : classes) {
       if (cls.isOWLThing() || precious.contains(cls.getIRI())) {
         // Ignore if the IRI is in precious or is OWL Thing
-        System.out.println(cls.getIRI());
         continue;
       }
 
