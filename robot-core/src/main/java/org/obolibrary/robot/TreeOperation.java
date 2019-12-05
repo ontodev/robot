@@ -1108,7 +1108,7 @@ public class TreeOperation {
           label =
               String.format(
                   "<a href=\"javascript:clickSearch('%s', '%s')\">%s</a>",
-                  iri.toString(), label, quotedLabel);
+                  iri.toString().replace(">", "").replace("<", ""), label, quotedLabel);
           // Replace the IDs with the click to search links
           render = render.replace(shortID, label);
         }
