@@ -380,6 +380,26 @@ p {
 
 	// attributes for each class
 	var attributes = {ATTRIBUTES}
+  
+
+  // TODO - remove node.id
+  // only have node.text
+  // data structure indexed by text as well (attributes key is text)
+  // IRI can be contained in attributes
+  // address duplicate labels by appending CURIE (don't worry quite yet - handle this in ROBOT)
+
+  // information in the query string
+  // ...?term=assay
+  // onload handler:
+  //     take q string information and update the tree
+  //     term should be selected and highlighted in the tree
+  //     and term info displayed in info box
+
+  // get the node from the tree -> tree.search(term)
+  // set this node as selected
+
+  // clickSearch function will change the query param -> ...?term=next%20term
+  // click on node (node.onclick) will change the query param -> ...?term=next%20term -> then display info from that
 
 	// init a new Inspire Tree
 	var tree = new InspireTree({
@@ -391,6 +411,10 @@ p {
 	new InspireTreeDOM(tree, {
 		target: '.tree'
 	});
+
+  // Store information in a query string
+  // When doc loads, read query string and load that information
+  // 
 
   // Strike out deprecated terms
   // Iterate through the LI elements (the tree)

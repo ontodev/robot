@@ -1091,26 +1091,24 @@ public class TreeOperation {
         String shortID = m.group(1);
         IRI iri = ioHelper.createIRI(shortID);
         if (iri != null) {
-          String label = checker.getLabel(iri);
+          // Short form used if label does not exist in ontology
+          // Sometimes ends up with extra brackets
+          String shortForm = iri.getShortForm().replace(">", "").replace("<", "");
+          String label = checker.getLabel(iri, shortForm);
           String quotedLabel = label;
-          if (label != null && !label.trim().isEmpty()) {
-            if (label.contains(" ")) {
-              // add quotes to anything with more than one word
-              quotedLabel = "'" + label + "'";
-            }
-            // Escape single quotes
-            label = label.replace("'", "");
-          } else {
-            // No label, replace short ID with a link
-            label = iri.getShortForm();
-            quotedLabel = label;
+
+          if (label.contains(" ")) {
+            // add quotes to anything with more than one word
+            quotedLabel = "'" + label + "'";
           }
+          // Escape single quotes
+          label = label.replace("'", "\\'");
 
           // Click search function on click
           label =
               String.format(
                   "<a href=\"javascript:clickSearch('%s', '%s')\">%s</a>",
-                  iri.toString().replace("<", "").replace(">", ""), label, quotedLabel);
+                  iri.toString(), label, quotedLabel);
           // Replace the IDs with the click to search links
           render = render.replace(shortID, label);
         }
