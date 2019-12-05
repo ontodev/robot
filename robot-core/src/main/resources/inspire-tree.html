@@ -380,13 +380,8 @@ p {
 
 	// attributes for each class
 	var attributes = {ATTRIBUTES}
-  
 
-  // TODO - remove node.id
-  // only have node.text
-  // data structure indexed by text as well (attributes key is text)
-  // IRI can be contained in attributes
-  // address duplicate labels by appending CURIE (don't worry quite yet - handle this in ROBOT)
+  // TODO NOTES
 
   // information in the query string
   // ...?term=assay
@@ -438,13 +433,18 @@ p {
   }
 
   // Function to display info box on right side
-  function displayInfo(id, text) {
-    var attrs = attributes[id];
+  function displayInfo(text) {
+    var attrs = attributes[text];
+    var iri = attrs.iri
     var innerHTML = '<h3>' + text + '</h3>';
-    innerHTML += '<p><b>IRI:</b> <a href="' + id + '" target="_blank"/>' + id + '</a></p>';
+    innerHTML += '<p><b>IRI:</b> <a href="' + iri + '" target="_blank"/>' + iri + '</a></p>';
 
     // Generate one or more attributes
     for (let [prop, vals] of Object.entries(attrs)) {
+      if (prop == 'iri') {
+        // Skip IRI property as we already add it first
+        continue;
+      }
       if (vals.length > 1) {
         innerHTML += '<p><b>' + prop + ':</b><br><ul>'
         for (v in vals) {
@@ -466,8 +466,7 @@ p {
 	// Show info box on click
 	tree.on('node.click', function(event, node) {
     var text = node.text;
-    var id = node.id;
-    displayInfo(id, text);
+    displayInfo(text);
 	});
 
   // Search functionality
@@ -486,10 +485,10 @@ p {
   };
 
   // Function to click an existing link to display its info box
-  function clickSearch(id, text) {
-    if (attributes.hasOwnProperty(id)) {
+  function clickSearch(text) {
+    if (attributes.hasOwnProperty(text)) {
       tree.search(text);
-      displayInfo(id, text);
+      displayInfo(text);
       document.getElementById('search').value = text;
     } else {
       // If the node doesn't exist, open IRI in a new tab

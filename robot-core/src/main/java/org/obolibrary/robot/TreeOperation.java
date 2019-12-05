@@ -461,9 +461,7 @@ public class TreeOperation {
         String quotedLabel = checker.getLabel(iri, iri.getShortForm());
         String label = quotedLabel.replace("'", "");
         strValue =
-            String.format(
-                "<a href=\"javascript:clickSearch('%s', '%s')\">%s</a>",
-                iri.toString().replace("<", "").replace(">", ""), label, quotedLabel);
+            String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
       }
 
       // Only add if the value is not null
@@ -576,16 +574,11 @@ public class TreeOperation {
 
   private JsonObject parseClass(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLClass cls) {
-    // Tree details are ID, text (label), and children
+    // Tree details are text (label) and children
     JsonObject treeDetails = getBasicDetails(cls);
 
-    // Attributes are everything else (annotations, etc...)
+    // Attributes are everything else (IRI, annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, cls);
-    // Only add to attributes once
-    String iri = cls.getIRI().toString();
-    if (attributes.get(iri) == null) {
-      attributes.add(iri, attrs);
-    }
 
     // Get superclasses (named and anonymous)
     Set<OWLObject> renderValues = new HashSet<>(EntitySearcher.getSuperClasses(cls, ontology));
@@ -633,6 +626,13 @@ public class TreeOperation {
     if (children != null) {
       treeDetails.add("children", children);
     }
+
+    // Only add to attributes once
+    String label = treeDetails.get("text").getAsString();
+    if (attributes.get(label) == null) {
+      attributes.add(label, attrs);
+    }
+
     return treeDetails;
   }
 
@@ -640,13 +640,8 @@ public class TreeOperation {
       Map<OWLAnnotationProperty, String> annotationProperties, OWLNamedIndividual individual) {
     JsonObject treeDetails = getBasicDetails(individual);
 
-    // Attributes are everything else (annotations, etc...)
+    // Attributes are everything else (IRI, annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, individual);
-    // Only add to attributes once
-    String iri = individual.getIRI().toString();
-    if (attributes.get(iri) == null) {
-      attributes.add(iri, attrs);
-    }
 
     // TODO - other logic
 
@@ -665,6 +660,12 @@ public class TreeOperation {
       attrs.add("Type", superProperties);
     }
 
+    // Only add to attributes once
+    String label = treeDetails.get("text").getAsString();
+    if (attributes.get(label) == null) {
+      attributes.add(label, attrs);
+    }
+
     return treeDetails;
   }
 
@@ -673,13 +674,8 @@ public class TreeOperation {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(property);
 
-    // Attributes are everything else (annotations, etc...)
+    // Attributes are everything else (IRI, annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, property);
-    // Only add to attributes once
-    String iri = property.getIRI().toString();
-    if (attributes.get(iri) == null) {
-      attributes.add(iri, attrs);
-    }
 
     // Get superproperties
     Set<OWLObject> renderValues =
@@ -701,6 +697,12 @@ public class TreeOperation {
     JsonArray children = getSubPropertyArray(property, annotationProperties);
     if (children != null) {
       treeDetails.add("children", children);
+    }
+
+    // Only add to attributes once
+    String label = treeDetails.get("text").getAsString();
+    if (attributes.get(label) == null) {
+      attributes.add(label, attrs);
     }
 
     return treeDetails;
@@ -711,13 +713,8 @@ public class TreeOperation {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(property);
 
-    // Attributes are everything else (annotations, etc...)
+    // Attributes are everything else (IRI, annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, property);
-    // Only add to attributes once
-    String iri = property.getIRI().toString();
-    if (attributes.get(iri) == null) {
-      attributes.add(iri, attrs);
-    }
 
     // Get superproperties
     Set<OWLObject> renderValues =
@@ -761,6 +758,12 @@ public class TreeOperation {
     JsonArray children = getSubPropertyArray(property, annotationProperties);
     if (children != null) {
       treeDetails.add("children", children);
+    }
+
+    // Only add to attributes once
+    String label = treeDetails.get("text").getAsString();
+    if (attributes.get(label) == null) {
+      attributes.add(label, attrs);
     }
 
     return treeDetails;
@@ -771,13 +774,8 @@ public class TreeOperation {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = getBasicDetails(property);
 
-    // Attributes are everything else (annotations, etc...)
+    // Attributes are everything else (IRI, annotations, etc...)
     JsonObject attrs = getAttributes(annotationProperties, property);
-    // Only add to attributes once
-    String iri = property.getIRI().toString();
-    if (attributes.get(iri) == null) {
-      attributes.add(iri, attrs);
-    }
 
     // Get superproperties
     Set<OWLObject> renderValues =
@@ -823,19 +821,26 @@ public class TreeOperation {
       treeDetails.add("children", children);
     }
 
+    // Only add to attributes once
+    String label = treeDetails.get("text").getAsString();
+    if (attributes.get(label) == null) {
+      attributes.add(label, attrs);
+    }
+
     return treeDetails;
   }
 
   private JsonObject parseDatatype(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLDatatype datatype) {
+    JsonObject treeDetails = getBasicDetails(datatype);
     JsonObject attrs = getAttributes(annotationProperties, datatype);
     // Only add to attributes once
-    String iri = datatype.getIRI().toString();
-    if (attributes.get(iri) == null) {
-      attributes.add(iri, attrs);
+    String label = treeDetails.get("text").getAsString();
+    if (attributes.get(label) == null) {
+      attributes.add(label, attrs);
     }
 
-    return getBasicDetails(datatype);
+    return treeDetails;
   }
 
   private JsonObject getBasicDetails(OWLEntity e) {
@@ -844,11 +849,9 @@ public class TreeOperation {
 
     // Get basic details (ID, display label)
     IRI iri = e.getIRI();
-    String id = iri.toString();
-    String label = checker.getLabel(iri, iri.getShortForm());
+    String label = checker.getLabel(iri, iri.getShortForm().replace("<", "").replace(">", ""));
 
     // Add details for tree node
-    treeDetails.addProperty("id", id);
     treeDetails.addProperty("text", label);
 
     return treeDetails;
@@ -858,6 +861,11 @@ public class TreeOperation {
       Map<OWLAnnotationProperty, String> annotationProperties, OWLEntity e) {
     // Attributes are everything else (annotations, etc...)
     JsonObject attrs = new JsonObject();
+
+    // Add the IRI to attributes
+    // Always replace brackets in IRI
+    String strIRI = e.getIRI().toString().replace("<", "").replace(">", "");
+    attrs.addProperty("iri", strIRI);
 
     // Get ordered annotations
     for (OWLAnnotationProperty ap : orderedAnnotations) {
@@ -895,9 +903,7 @@ public class TreeOperation {
         String quotedLabel = checker.getLabel(iri, iri.getShortForm());
         String label = quotedLabel.replace("'", "");
         label =
-            String.format(
-                "<a href=\"javascript:clickSearch('%s', '%s')\">%s</a>",
-                iri.toString().replace("<", "").replace(">", ""), label, quotedLabel);
+            String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
         annArray.add(label);
       }
     }
@@ -1106,9 +1112,7 @@ public class TreeOperation {
 
           // Click search function on click
           label =
-              String.format(
-                  "<a href=\"javascript:clickSearch('%s', '%s')\">%s</a>",
-                  iri.toString().replace(">", "").replace("<", ""), label, quotedLabel);
+              String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
           // Replace the IDs with the click to search links
           render = render.replace(shortID, label);
         }
