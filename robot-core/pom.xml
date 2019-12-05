@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.obolibrary.robot</groupId>
     <artifactId>robot</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.6.0-SNAPSHOT</version>
   </parent>
   <artifactId>robot-core</artifactId>
   <name>robot-core</name>
@@ -38,7 +38,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.4.1</version>
+              <version>1.5.0</version>
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -151,7 +151,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>owl-diff_2.12</artifactId>
-      <version>1.1.1</version>
+      <version>1.1.2</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>

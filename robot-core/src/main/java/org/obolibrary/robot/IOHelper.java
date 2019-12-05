@@ -32,15 +32,7 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -110,6 +102,9 @@ public class IOHelper {
       NS
           + "SYNTAX ERROR unable to load '%s' with Jena - "
           + "check that this file is in RDF/XML or TTL syntax and try again.";
+
+  /** Optional base namespaces. */
+  private Set<String> baseNamespaces = new HashSet<>();
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -882,6 +877,43 @@ public class IOHelper {
     } catch (Exception e) {
       throw new IOException(jsonldContextParseError, e);
     }
+  }
+
+  /**
+   * Add a base namespace to the IOHelper.
+   *
+   * @param baseNamespace namespace to add to bases.
+   */
+  public void addBaseNamespace(String baseNamespace) {
+    baseNamespaces.add(baseNamespace);
+  }
+
+  /**
+   * Add a set of base namespaces to the IOHelper from file. Each base namespace should be on its
+   * own line.
+   *
+   * @param baseNamespacePath path to base namespace file
+   * @throws IOException if file does not exist
+   */
+  public void addBaseNamespaces(String baseNamespacePath) throws IOException {
+    File prefixFile = new File(baseNamespacePath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, baseNamespacePath));
+    }
+
+    List<String> lines = FileUtils.readLines(new File(baseNamespacePath));
+    for (String l : lines) {
+      baseNamespaces.add(l.trim());
+    }
+  }
+
+  /**
+   * Get the base namespaces.
+   *
+   * @return set of base namespaces
+   */
+  public Set<String> getBaseNamespaces() {
+    return baseNamespaces;
   }
 
   /**

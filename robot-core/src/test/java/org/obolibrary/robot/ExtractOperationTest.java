@@ -157,6 +157,7 @@ public class ExtractOperationTest extends CoreTest {
    *
    * @param moduleType type for the extraction
    * @param expectedPath path to the known-good file for comparison
+   * @param options map of option strings for the extraction
    * @throws IOException on IO error
    * @throws OWLOntologyCreationException on ontology error
    */
