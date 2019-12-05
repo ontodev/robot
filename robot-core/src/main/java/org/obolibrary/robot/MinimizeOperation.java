@@ -71,8 +71,9 @@ public class MinimizeOperation {
     Set<OWLObject> remove = new HashSet<>();
 
     for (OWLClass cls : classes) {
-      if (cls.isOWLThing()) {
-        // Ignore OWL Thing
+      if (cls.isOWLThing() || precious.contains(cls.getIRI())) {
+        // Ignore if the IRI is in precious or is OWL Thing
+        System.out.println(cls.getIRI());
         continue;
       }
 
@@ -103,7 +104,8 @@ public class MinimizeOperation {
           scCount++;
         }
       }
-      if (scCount != 0 && scCount < threshold && !precious.contains(cls.getIRI())) {
+
+      if (scCount != 0 && scCount < threshold) {
         // If the class has subclasses, but LESS subclasses than the threshold,
         // add it to the set of classes to be removed
         remove.add(cls);

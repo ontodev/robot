@@ -108,8 +108,7 @@ public class MinimizeCommand implements Command {
       throw new IllegalArgumentException(String.format(thresholdError, thresholdString));
     }
 
-    Set<IRI> precious =
-        CommandLineHelper.getTerms(ioHelper, line, "precious-term", "precious-terms");
+    Set<IRI> precious = CommandLineHelper.getTerms(ioHelper, line, "precious", "precious-terms");
 
     MinimizeOperation.minimize(ontology, threshold, precious);
 
