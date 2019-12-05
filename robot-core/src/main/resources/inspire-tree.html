@@ -392,9 +392,12 @@ p {
     target: '.tree'
   });
 
-  // Strike out deprecated terms
-  // Iterate through the LI elements (the tree)
+  // Document elements
   var li_elements = document.getElementsByTagName("li");
+  var textInput = document.getElementById('search');
+  var clearBtn = document.getElementById('clear');
+
+  // Strike out deprecated terms
   for (var i = 0, len = li_elements.length; i < len; i++ ) {
     elem = li_elements[ i ];
     if (elem.hasAttribute('data-uid')) {
@@ -461,7 +464,7 @@ p {
   function selectNode(text) {
     // Deselect the current node
     var last = tree.lastSelectedNode();
-    if (last != null) {
+    if (last && last != null) {
       last.deselect();
     }
     // Select the node that matches text
