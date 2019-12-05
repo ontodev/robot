@@ -98,6 +98,8 @@ public class TreeOperation {
     this.orderedAnnotations =
         Lists.newArrayList(
             dataFactory.getRDFSLabel(),
+            dataFactory.getOWLAnnotationProperty(IRI.create("http://iedb.org/epitope-link")),
+            dataFactory.getOWLAnnotationProperty(IRI.create("http://iedb.org/has-descendants")),
             dataFactory.getOWLAnnotationProperty(
                 IRI.create("http://purl.obolibrary.org/obo/IAO_0000115")));
   }
@@ -186,6 +188,7 @@ public class TreeOperation {
       // Sort by label
       List<OWLClass> orderedClasses = new ArrayList<>(upperClasses);
       orderedClasses.sort(new SortByLabel());
+      orderedClasses.sort(new SortByOther());
       // Then sort by 'obsolete'
       orderedClasses.sort(new SortByStatus());
 
@@ -229,6 +232,7 @@ public class TreeOperation {
               .stream()
               .distinct()
               .sorted(new SortByLabel())
+              .sorted(new SortByOther())
               .sorted(new SortByStatus())
               .collect(Collectors.toList());
 
@@ -280,6 +284,7 @@ public class TreeOperation {
         labelToAnnProperty.put(label, upper);
       }
       annPropertyLabels.sort(new SortByLabel());
+      annPropertyLabels.sort(new SortByOther());
       annPropertyLabels.sort(new SortByStatus());
 
       JsonArray annProps = new JsonArray();
@@ -320,6 +325,7 @@ public class TreeOperation {
         labelToDataProperty.put(label, upper);
       }
       dataPropertyLabels.sort(new SortByLabel());
+      dataPropertyLabels.sort(new SortByOther());
       dataPropertyLabels.sort(new SortByStatus());
 
       JsonArray dataProps = new JsonArray();
@@ -360,6 +366,7 @@ public class TreeOperation {
         labelToObjProperty.put(label, upper);
       }
       objPropertyLabels.sort(new SortByLabel());
+      objPropertyLabels.sort(new SortByOther());
       objPropertyLabels.sort(new SortByStatus());
 
       JsonArray objProps = new JsonArray();
@@ -393,6 +400,7 @@ public class TreeOperation {
         labelToDatatype.put(label, dt);
       }
       datatypeLabels.sort(new SortByLabel());
+      datatypeLabels.sort(new SortByOther());
       datatypeLabels.sort(new SortByStatus());
 
       JsonArray datatypes = new JsonArray();
@@ -458,7 +466,8 @@ public class TreeOperation {
         }
       } else if (value.isIRI()) {
         IRI iri = (IRI) value;
-        String quotedLabel = checker.getLabel(iri, iri.getShortForm());
+        String quotedLabel =
+            checker.getLabel(iri, iri.toString().replace("<", "").replace(">", ""));
         String label = quotedLabel.replace("'", "");
         strValue =
             String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
@@ -591,6 +600,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByOther())
           .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superClasses::add);
@@ -654,6 +664,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByOther())
           .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
@@ -687,6 +698,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByOther())
           .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
@@ -726,6 +738,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByOther())
           .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
@@ -787,6 +800,7 @@ public class TreeOperation {
       renderedValues
           .stream()
           .sorted(new SortByLabel())
+          .sorted(new SortByOther())
           .sorted(new SortByStatus())
           .iterator()
           .forEachRemaining(superProperties::add);
@@ -853,6 +867,7 @@ public class TreeOperation {
 
     // Add details for tree node
     treeDetails.addProperty("text", label);
+    treeDetails.addProperty("id", label);
 
     return treeDetails;
   }
@@ -900,7 +915,8 @@ public class TreeOperation {
         }
       } else if (val.isIRI()) {
         IRI iri = (IRI) val;
-        String quotedLabel = checker.getLabel(iri, iri.getShortForm());
+        String quotedLabel =
+            checker.getLabel(iri, iri.toString().replace("<", "").replace(">", ""));
         String label = quotedLabel.replace("'", "");
         label =
             String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
@@ -921,6 +937,7 @@ public class TreeOperation {
             .filter(expr -> !expr.isAnonymous())
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByOther())
             .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
@@ -953,6 +970,7 @@ public class TreeOperation {
 
     // Sort by label
     namedIndividuals.sort(new SortByLabel());
+    namedIndividuals.sort(new SortByOther());
     namedIndividuals.sort(new SortByStatus());
 
     int indivCount = 0;
@@ -991,6 +1009,7 @@ public class TreeOperation {
             .stream()
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByOther())
             .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
@@ -1019,6 +1038,7 @@ public class TreeOperation {
             .filter(expr -> !expr.isAnonymous())
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByOther())
             .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
@@ -1047,6 +1067,7 @@ public class TreeOperation {
             .filter(expr -> !expr.isAnonymous())
             .distinct()
             .sorted(new SortByLabel())
+            .sorted(new SortByOther())
             .sorted(new SortByStatus())
             .collect(Collectors.toList());
 
@@ -1192,6 +1213,28 @@ public class TreeOperation {
       String label1 = checker.getLabel(e1.getIRI(), e1.getIRI().getShortForm());
       String label2 = checker.getLabel(e2.getIRI(), e2.getIRI().getShortForm());
       return compareStrings(label1, label2);
+    }
+
+    public int compareStrings(String s1, String s2) {
+      return s1.toLowerCase().compareTo(s2.toLowerCase());
+    }
+
+    @Override
+    public int compare(Object o1, Object o2) {
+      if (o1 instanceof OWLEntity && o2 instanceof OWLEntity) {
+        return compareEntities((OWLEntity) o1, (OWLEntity) o2);
+      } else if (o1 instanceof String && o2 instanceof String) {
+        return compareStrings((String) o1, (String) o2);
+      }
+      return 0;
+    }
+  }
+
+  class SortByOther implements Comparator<Object> {
+    public int compareEntities(OWLEntity e1, OWLEntity e2) {
+      boolean b1 = checker.getLabel(e1.getIRI(), e1.getIRI().getShortForm()).startsWith("other");
+      boolean b2 = checker.getLabel(e2.getIRI(), e2.getIRI().getShortForm()).startsWith("other");
+      return Boolean.compare(b1, b2);
     }
 
     public int compareStrings(String s1, String s2) {
