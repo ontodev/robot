@@ -32,6 +32,12 @@ public class ValidateCommand implements Command {
     o.addOption("i", "input", true, "input file containing the ontology data to validate against");
     o.addOption("r", "reasoner", true, "reasoner to use (structural, hermit, jfact, emr, elk)");
     o.addOption("o", "output", true, "Save results to file (if unspecified, output to STDOUT)");
+    o.addOption(
+        "s",
+        "standalone",
+        true,
+        "If true, generate the HTML report as a standalone file (this option is ignored if the "
+            + "output file is unspecified or does not end in '.html')");
     options = o;
   }
 
@@ -59,7 +65,8 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --table <file> --input <file> --reasoner <name> [--output <file>]";
+    return "validate --table <file> --input <file> "
+        + "[--reasoner <name>] [--output <file>] [--standalone (true|false)]";
   }
 
   /**
@@ -130,6 +137,8 @@ public class ValidateCommand implements Command {
     // STDOUT.
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
 
+    boolean standalone = CommandLineHelper.getBooleanValue(line, "standalone", false);
+
     // Get the reasoner specified by the user and if none is specified, use the default:
     if (CommandLineHelper.getOptionalValue(line, "reasoner") == null) {
       logger.info("No reasoner specified. Will use the default.");
@@ -137,7 +146,7 @@ public class ValidateCommand implements Command {
     OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line, true);
 
     // Finally call the validator:
-    ValidateOperation.validate(tableData, ontology, reasonerFactory, outputPath);
+    ValidateOperation.validate(tableData, ontology, reasonerFactory, outputPath, standalone);
 
     return state;
   }

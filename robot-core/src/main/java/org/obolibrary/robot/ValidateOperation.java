@@ -1,11 +1,15 @@
 package org.obolibrary.robot;
 
+import com.hubspot.jinjava.Jinjava;
+import com.hubspot.jinjava.interpret.RenderResult;
+import com.hubspot.jinjava.interpret.TemplateError;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.ClientAnchor;
@@ -50,10 +55,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO:
- * - See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old code.
+ * TODO: - See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old
+ * code.
  */
-
 
 /**
  * Implements the validate operation for a given CSV file and ontology.
@@ -114,6 +118,9 @@ public class ValidateOperation {
 
   /** Output writer */
   private static Writer writer;
+
+  /** Jinja context for HTML table output */
+  private static Map<String, Object> jinjaTableContext;
 
   /** Workbook for Excel (.xlsx) output */
   private static Workbook workbook;
@@ -261,13 +268,15 @@ public class ValidateOperation {
     writelog(true, logLevel, format, positionalArgs);
   }
 
-  /** Given a list of strings representing a row from the CSV, add it to the XLSX workbook. */
-  private static void add_non_data_row_to_xlsx(List<String> rowToAdd) throws Exception {
-    Sheet worksheet = workbook.getSheetAt(0);
-    Row row = worksheet.createRow(xlsx_non_data_row_index++);
-    for (int i = 0; i < rowToAdd.size(); i++) {
-      Cell cell = row.createCell(i);
-      cell.setCellValue(rowToAdd.get(i));
+  /** Given lists of strings representing rows from the CSV, add them to the XLSX workbook. */
+  private static void add_non_data_rows_to_xlsx(List<List<String>> rowsToAdd) throws Exception {
+    for (List<String> rowToAdd : rowsToAdd) {
+      Sheet worksheet = workbook.getSheetAt(0);
+      Row row = worksheet.createRow(xlsx_non_data_row_index++);
+      for (int i = 0; i < rowToAdd.size(); i++) {
+        Cell cell = row.createCell(i);
+        cell.setCellValue(rowToAdd.get(i));
+      }
     }
   }
 
@@ -356,16 +365,117 @@ public class ValidateOperation {
   }
 
   /**
+   * Given two lists of strings representing the header and rules rows, respectively, and an integer
+   * representing the number of data rows that are going to be validated, add the header and rules
+   * rows to the jinja context, and add another subcontext for the data rows, with entries for every
+   * cell in every row of the data. These will later be written to with individual validation
+   * results.
+   */
+  private static void prepare_jinja_context(
+      List<String> headerRow, List<String> rulesRow, int numberOfDataRows) throws Exception {
+
+    // Add the header and rules rows to the jinja context
+    jinjaTableContext.put("headerRow", headerRow);
+    jinjaTableContext.put("rulesRow", rulesRow);
+
+    // Add another subcontext to the jinja context which will hold the information for the data rows
+    // of the output HTML. Here we only create enough memory to hold every cell of every row. The
+    // contents of the cells will be filled in with specific validation information later.
+    List<List> dataContext = new ArrayList();
+    for (int i = 0; i < numberOfDataRows; i++) {
+      List<Map> rowContext = new ArrayList();
+      for (int j = 0; j < headerRow.size(); j++) {
+        rowContext.add(new HashMap());
+      }
+      dataContext.add(rowContext);
+    }
+    jinjaTableContext.put("dataRows", dataContext);
+  }
+
+  /**
+   * Given the string `format` and a number of formatting variables, use the formatting variables to
+   * fill in the format string in the manner of C's printf function, add a comment to jinja context
+   * with that string at the current location.
+   */
+  private static void report_jinja_context(String format, Object... positionalArgs) {
+    String commentString = String.format(format, positionalArgs);
+    List<List<Map<String, String>>> dataContext =
+        (List<List<Map<String, String>>>) jinjaTableContext.get("dataRows");
+    Map<String, String> cellContext = dataContext.get(csv_row_index).get(csv_col_index);
+    cellContext.put("comment", commentString);
+  }
+
+  /**
+   * Render a HTML report based on the data validated, using jinja2 templates and the current jinja
+   * context.
+   */
+  private static void generate_html_report(boolean standalone) throws IOException {
+    String template =
+        IOUtils.toString(
+            ValidateOperation.class.getResourceAsStream("/validate-table-template.jinja2"),
+            StandardCharsets.UTF_8);
+
+    RenderResult result = new Jinjava().renderForResult(template, jinjaTableContext);
+    if (result.hasErrors()) {
+      for (TemplateError error : result.getErrors()) {
+        writelog(
+            false,
+            LogLevel.ERROR,
+            "Jinjava error at line %s (severity %s): %s.",
+            error.getLineno(),
+            error.getSeverity(),
+            error.getMessage());
+      }
+    }
+
+    String tableOutput = result.getOutput();
+    if (!standalone) {
+      // If this isn't a standalone report then we are done. Just write the generated table code
+      // using the writer:
+      writer.write(tableOutput);
+    } else {
+      // If this is a standalone report, then we need to wrap the generated table in the code
+      // that is given in the wrapper template. For this we create a new context which will
+      // contain a single entry for the generated table, and which will be passed to Jinjava.
+      HashMap<String, String> jinjaHtmlContext = new HashMap();
+      jinjaHtmlContext.put("table", tableOutput);
+
+      template =
+          IOUtils.toString(
+              ValidateOperation.class.getResourceAsStream("/validate-template.jinja2"),
+              StandardCharsets.UTF_8);
+
+      result = new Jinjava().renderForResult(template, jinjaHtmlContext);
+      if (result.hasErrors()) {
+        for (TemplateError error : result.getErrors()) {
+          writelog(
+              false,
+              LogLevel.ERROR,
+              "Jinjava error at line %s (severity %s): %s.",
+              error.getLineno(),
+              error.getSeverity(),
+              error.getMessage());
+        }
+      }
+
+      writer.write(result.getOutput());
+    }
+  }
+
+  /**
    * Given the string `format` and a number of formatting variables, use the formatting variables to
    * fill in the format string in the manner of C's printf function, and write the string to the
-   * Writer object (or XLSX workbook) that belongs to ValidateOperation. If the parameter
-   * `showCoords` is true, then include the current row and column number in the output string.
+   * Writer object (or XLSX workbook, or Jinja context) that belongs to ValidateOperation. If the
+   * parameter `showCoords` is true, then include the current row and column number in the output
+   * string.
    */
   private static void report(boolean showCoords, String format, Object... positionalArgs)
       throws IOException {
 
     if (workbook != null && showCoords) {
       report_xlsx(format, positionalArgs);
+    } else if (jinjaTableContext != null && showCoords) {
+      report_jinja_context(format, positionalArgs);
     } else {
       String outStr = "";
       if (showCoords) {
@@ -398,7 +508,8 @@ public class ValidateOperation {
 
     // If the output path ends in ".xlsx" then initialise an XLSX workbook, otherwise initialise an
     // output writer to direct output to STDOUT if the output path is unspecified, or to the file
-    // indicated by the output path if it is specified.
+    // indicated by the output path if it is specified. If it is specified and it ends with ".html"
+    // then also initialise the jinja context we will use to generate the html output.
     if (outputPath == null) {
       writer = new PrintWriter(System.out);
     } else if (outputPath.toLowerCase().endsWith(".xlsx")) {
@@ -409,6 +520,9 @@ public class ValidateOperation {
       xlsxFileOutputStream = new FileOutputStream(outputPath);
     } else {
       writer = new FileWriter(outputPath);
+      if (outputPath.toLowerCase().endsWith(".html")) {
+        jinjaTableContext = new HashMap();
+      }
     }
 
     ValidateOperation.ontology = ontology;
@@ -1201,7 +1315,8 @@ public class ValidateOperation {
       List<List<String>> csvData,
       OWLOntology ontology,
       OWLReasonerFactory reasonerFactory,
-      String outputPath)
+      String outputPath,
+      boolean standalone)
       throws Exception {
 
     // Initialize the shared variables:
@@ -1216,10 +1331,14 @@ public class ValidateOperation {
       headerToRuleMap.put(headerRow.get(i), parse_rules(rulesRow.get(i)));
     }
 
-    // If we are writing to an XLSX workbook, then add the header and rule rows to it here:
     if (workbook != null) {
-      add_non_data_row_to_xlsx(headerRow);
-      add_non_data_row_to_xlsx(rulesRow);
+      // If we are writing to an XLSX workbook, then add the header and rule rows here:
+      add_non_data_rows_to_xlsx(Arrays.asList(headerRow, rulesRow));
+    } else if (jinjaTableContext != null) {
+      // If we are writing to an HTML file, then prepare the jinja context by adding in the header
+      // and rules rows, and initialising memory for the cells in the data rows that will be added
+      // later:
+      prepare_jinja_context(headerRow, rulesRow, csvData.size());
     }
 
     // Validate the data row by row, and column by column by column within a row. csv_row_index and
@@ -1231,9 +1350,14 @@ public class ValidateOperation {
         // Get the contents of the current cell:
         String cellString = row.get(csv_col_index);
 
-        // If there is an XLSX workbook to write to, write the contents of the current cell to it:
         if (workbook != null) {
+          // If there is an XLSX workbook to write to, write the contents of the current cell to it:
           write_xlsx(cellString);
+        } else if (jinjaTableContext != null) {
+          // If there is a jinja context to write to, write the contents of the current cell to it:
+          List<List<Map<String, String>>> dataContext =
+              (List<List<Map<String, String>>>) jinjaTableContext.get("dataRows");
+          dataContext.get(csv_row_index).get(csv_col_index).put("content", cellString);
         }
 
         // Extract all the data entries contained within the current cell:
@@ -1257,6 +1381,11 @@ public class ValidateOperation {
           }
         }
       }
+    }
+
+    // If the jinja context is not null, then use it to format the output as a HTML file:
+    if (jinjaTableContext != null) {
+      generate_html_report(standalone);
     }
 
     tearDown();

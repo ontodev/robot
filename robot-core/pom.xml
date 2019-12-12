@@ -70,7 +70,18 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Show more detailed deprecation warnings -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <showDeprecation>true</showDeprecation>
+        </configuration>
+      </plugin>
     </plugins>
+
   </build>
 
   <dependencies>
@@ -88,6 +99,11 @@
       <groupId>com.github.jsonld-java</groupId>
       <artifactId>jsonld-java</artifactId>
       <version>0.5.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.hubspot.jinjava</groupId>
+      <artifactId>jinjava</artifactId>
+      <version>2.5.2</version>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
