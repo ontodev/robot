@@ -37,17 +37,7 @@ public class MireotOperation {
   /** RDFS isDefinedBy annotation property. */
   private static OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
 
-  /** Specify how to handle intermediates. */
-  private static String intermediates;
-
-  /** Specify if source should be annotated. */
-  private static boolean annotateSource;
-
-  /** Specify a map of sources. */
-  private static Map<IRI, IRI> sourceMap;
-
   /**
-   * @param ioHelper
    * @param inputOntology
    * @param lowerIRIs
    * @param upperIRIs
@@ -58,13 +48,13 @@ public class MireotOperation {
    * @throws OWLOntologyCreationException
    */
   public static OWLOntology mireot(
-      IOHelper ioHelper,
       OWLOntology inputOntology,
       Set<IRI> lowerIRIs,
       Set<IRI> upperIRIs,
       Set<IRI> branchIRIs,
       Map<String, String> extractOptions,
-      Map<IRI, IRI> sourceMap)
+      Map<IRI, IRI> sourceMap,
+      Set<OWLAnnotationProperty> annotationProperties)
       throws OWLOntologyCreationException {
     List<OWLOntology> outputOntologies = new ArrayList<>();
 
@@ -72,7 +62,12 @@ public class MireotOperation {
     if (lowerIRIs != null) {
       outputOntologies.add(
           MireotOperation.getAncestors(
-              inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
+              inputOntology,
+              upperIRIs,
+              lowerIRIs,
+              annotationProperties,
+              extractOptions,
+              sourceMap));
       // If there are no lower IRIs, there shouldn't be any upper IRIs
     } else if (upperIRIs != null) {
       throw new IllegalArgumentException(missingLowerTermError);
@@ -81,7 +76,7 @@ public class MireotOperation {
     if (branchIRIs != null) {
       outputOntologies.add(
           MireotOperation.getDescendants(
-              inputOntology, branchIRIs, null, extractOptions, sourceMap));
+              inputOntology, branchIRIs, annotationProperties, extractOptions, sourceMap));
     }
 
     return MergeOperation.merge(outputOntologies);
@@ -146,7 +141,15 @@ public class MireotOperation {
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
 
     // Get options
-    setOptions(options, inputSourceMap);
+    if (options == null) {
+      options = ExtractOperation.getDefaultOptions();
+    }
+    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
+    boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
+    if (!annotateSource) {
+      // Make sure to set source map to null if not annotate-with-source
+      inputSourceMap = null;
+    }
 
     // The other OWLAPI extract methods use the source ontology IRI
     // so we'll use it here too.
@@ -157,7 +160,7 @@ public class MireotOperation {
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if (annotateSource) {
-        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+        maybeAnnotateSource(outputOntology, outputManager, entity, inputSourceMap);
       }
     }
 
@@ -176,13 +179,20 @@ public class MireotOperation {
             upperEntities,
             entity,
             entity,
-            annotationProperties);
+            annotationProperties,
+            inputSourceMap);
       } else {
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, reasoner, upperEntities, entity, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            entity,
+            annotationProperties,
+            inputSourceMap);
       }
       if (annotateSource) {
-        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+        maybeAnnotateSource(outputOntology, outputManager, entity, inputSourceMap);
       }
     }
 
@@ -249,7 +259,13 @@ public class MireotOperation {
         maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
       }
       copyAncestorsAllIntermediates(
-          inputOntology, outputOntology, reasoner, upperEntities, entity, annotationProperties);
+          inputOntology,
+          outputOntology,
+          reasoner,
+          upperEntities,
+          entity,
+          annotationProperties,
+          sourceMap);
     }
     return outputOntology;
   }
@@ -296,7 +312,15 @@ public class MireotOperation {
     logger.debug("Extract with MIREOT ...");
 
     // Get options
-    setOptions(options, inputSourceMap);
+    if (options == null) {
+      options = ExtractOperation.getDefaultOptions();
+    }
+
+    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
+    boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
+    if (!annotateSource) {
+      inputSourceMap = null;
+    }
 
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
     OWLOntology outputOntology = outputManager.createOntology();
@@ -312,7 +336,7 @@ public class MireotOperation {
             inputOntology, outputOntology, entity, annotationProperties);
       }
       if (annotateSource) {
-        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+        maybeAnnotateSource(outputOntology, outputManager, entity, inputSourceMap);
       }
     }
 
@@ -381,7 +405,8 @@ public class MireotOperation {
       OWLReasoner reasoner,
       Set<OWLEntity> upperEntities,
       OWLEntity entity,
-      Set<OWLAnnotationProperty> annotationProperties) {
+      Set<OWLAnnotationProperty> annotationProperties,
+      Map<IRI, IRI> sourceMap) {
     OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
 
     // If this is an upperEntity, copy it and return.
@@ -404,7 +429,8 @@ public class MireotOperation {
             reasoner,
             upperEntities,
             superclass,
-            annotationProperties);
+            annotationProperties,
+            sourceMap);
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> superProperties =
@@ -421,7 +447,8 @@ public class MireotOperation {
             reasoner,
             upperEntities,
             superProperty,
-            annotationProperties);
+            annotationProperties,
+            sourceMap);
       }
     } else if (entity.isOWLObjectProperty()) {
       Set<OWLObjectPropertyExpression> superProperties =
@@ -442,7 +469,8 @@ public class MireotOperation {
             reasoner,
             upperEntities,
             superProperty,
-            annotationProperties);
+            annotationProperties,
+            sourceMap);
       }
     } else if (entity.isOWLDataProperty()) {
       Set<OWLDataProperty> superProperties =
@@ -458,12 +486,13 @@ public class MireotOperation {
             reasoner,
             upperEntities,
             superProperty,
-            annotationProperties);
+            annotationProperties,
+            sourceMap);
       }
     }
 
     // Annotate with rdfs:isDefinedBy (maybe)
-    if (annotateSource) {
+    if (sourceMap != null) {
       maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
     }
   }
@@ -490,7 +519,8 @@ public class MireotOperation {
       Set<OWLEntity> upperEntities,
       OWLEntity entity,
       OWLEntity bottomEntity,
-      Set<OWLAnnotationProperty> annotationProperties) {
+      Set<OWLAnnotationProperty> annotationProperties,
+      Map<IRI, IRI> sourceMap) {
     OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
 
     // If there are no upperEntities or if this is an upperEntity, copy it and return
@@ -517,7 +547,8 @@ public class MireotOperation {
               upperEntities,
               superclass,
               bottomEntity,
-              annotationProperties);
+              annotationProperties,
+              sourceMap);
         }
       }
     } else if (entity.isOWLAnnotationProperty()) {
@@ -538,7 +569,8 @@ public class MireotOperation {
               upperEntities,
               superProperty,
               bottomEntity,
-              annotationProperties);
+              annotationProperties,
+              sourceMap);
         }
       }
     } else if (entity.isOWLObjectProperty()) {
@@ -563,7 +595,8 @@ public class MireotOperation {
               upperEntities,
               superProperty,
               bottomEntity,
-              annotationProperties);
+              annotationProperties,
+              sourceMap);
         }
       }
     } else if (entity.isOWLDataProperty()) {
@@ -584,13 +617,14 @@ public class MireotOperation {
               upperEntities,
               superProperty,
               bottomEntity,
-              annotationProperties);
+              annotationProperties,
+              sourceMap);
         }
       }
     }
 
     // Annotate with rdfs:isDefinedBy (maybe)
-    if (annotateSource) {
+    if (sourceMap != null) {
       maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
     }
   }
@@ -791,20 +825,5 @@ public class MireotOperation {
     if (existingValues == null || existingValues.size() == 0) {
       manager.addAxiom(ontology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
     }
-  }
-
-  /**
-   * Given a map of options and an optional source map, set the MIREOT options.
-   *
-   * @param options map of options
-   * @param inputSourceMap map of source IRIs (or null)
-   */
-  private static void setOptions(Map<String, String> options, Map<IRI, IRI> inputSourceMap) {
-    if (options == null) {
-      options = ExtractOperation.getDefaultOptions();
-    }
-    intermediates = OptionsHelper.getOption(options, "intermediates", "all");
-    annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-sources");
-    sourceMap = inputSourceMap;
   }
 }

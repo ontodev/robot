@@ -138,19 +138,95 @@ public class OntologyHelper {
     manager.applyChange(addition);
   }
 
-  public static void replaceParents(OWLOntology ontology, Map<OWLClass, Set<OWLClass>> addParents) {
+  /**
+   * @param ontology
+   * @param addParents
+   * @throws Exception
+   */
+  public static void replaceParents(OWLOntology ontology, Map<OWLEntity, Set<OWLEntity>> addParents)
+      throws Exception {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
-    for (Map.Entry<OWLClass, Set<OWLClass>> addParent : addParents.entrySet()) {
-      OWLClass child = addParent.getKey();
-      Set<OWLClass> parents = addParent.getValue();
-      // Remove existing parents
-      manager.removeAxioms(ontology, ontology.getSubClassAxiomsForSubClass(child));
-      for (OWLClass p : parents) {
-        // Add the new parents
-        OWLSubClassOfAxiom ax = dataFactory.getOWLSubClassOfAxiom(child, p);
-        manager.addAxiom(ontology, ax);
+    for (Map.Entry<OWLEntity, Set<OWLEntity>> addParent : addParents.entrySet()) {
+      String t = addParent.getKey().getEntityType().getName();
+      switch (t) {
+        case "Class":
+          OWLClass childCls = addParent.getKey().asOWLClass();
+          Set<OWLClass> parentClss = new HashSet<>();
+          addParent.getValue().forEach(x -> parentClss.add(x.asOWLClass()));
+          // Remove existing parents - NAMED only
+          for (OWLSubClassOfAxiom scAx : ontology.getSubClassAxiomsForSubClass(childCls)) {
+            if (!scAx.getSuperClass().isAnonymous()) {
+              manager.removeAxiom(ontology, scAx);
+            }
+          }
+          for (OWLClass p : parentClss) {
+            // Add the new parents
+            OWLSubClassOfAxiom ax = dataFactory.getOWLSubClassOfAxiom(childCls, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+        case "AnnotationProperty":
+          OWLAnnotationProperty childAp = addParent.getKey().asOWLAnnotationProperty();
+          Set<OWLAnnotationProperty> parentAps = new HashSet<>();
+          addParent.getValue().forEach(x -> parentAps.add(x.asOWLAnnotationProperty()));
+          // Remove existing parents (all named)
+          manager.removeAxioms(ontology, ontology.getSubAnnotationPropertyOfAxioms(childAp));
+          for (OWLAnnotationProperty p : parentAps) {
+            // Add the new parents
+            OWLSubAnnotationPropertyOfAxiom ax =
+                dataFactory.getOWLSubAnnotationPropertyOfAxiom(childAp, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+        case "DataProperty":
+          OWLDataProperty childDp = addParent.getKey().asOWLDataProperty();
+          Set<OWLDataProperty> parentDps = new HashSet<>();
+          addParent.getValue().forEach(x -> parentDps.add(x.asOWLDataProperty()));
+          // Remove existing parents (all named)
+          manager.removeAxioms(ontology, ontology.getDataSubPropertyAxiomsForSubProperty(childDp));
+          for (OWLDataProperty p : parentDps) {
+            // Add the new parents
+            OWLSubDataPropertyOfAxiom ax = dataFactory.getOWLSubDataPropertyOfAxiom(childDp, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+        case "ObjectProperty":
+          OWLObjectProperty childOp = addParent.getKey().asOWLObjectProperty();
+          Set<OWLObjectProperty> parentOps = new HashSet<>();
+          addParent.getValue().forEach(x -> parentOps.add(x.asOWLObjectProperty()));
+          // Remove existing parents - NAMED only
+          for (OWLSubObjectPropertyOfAxiom spAx :
+              ontology.getObjectSubPropertyAxiomsForSubProperty(childOp)) {
+            if (!spAx.getSuperProperty().isAnonymous()) {
+              manager.removeAxiom(ontology, spAx);
+            }
+          }
+          for (OWLObjectProperty p : parentOps) {
+            // Add the new parents
+            OWLSubObjectPropertyOfAxiom ax = dataFactory.getOWLSubObjectPropertyOfAxiom(childOp, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+        case "NamedIndividual":
+          OWLNamedIndividual indv = addParent.getKey().asOWLNamedIndividual();
+          Set<OWLClass> types = new HashSet<>();
+          addParent.getValue().forEach(x -> types.add(x.asOWLClass()));
+          // Remove existing types - NAMED only
+          for (OWLClassAssertionAxiom caAx : ontology.getClassAssertionAxioms(indv)) {
+            if (!caAx.getClassExpression().isAnonymous()) {
+              manager.removeAxiom(ontology, caAx);
+            }
+          }
+          for (OWLClass c : types) {
+            // Add the new types
+            OWLClassAssertionAxiom ax = dataFactory.getOWLClassAssertionAxiom(c, indv);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+        default:
+          throw new Exception(String.format("Cannot add parents for entity type: %s", t));
       }
     }
   }
