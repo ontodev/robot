@@ -8,6 +8,7 @@
 4. [Handling Imports (`--imports`)](#handling-imports)
 5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
 6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
+7. [Import Configuration File (`--config`)](#import-configuration-file)
 
 ## Overview
 
@@ -192,6 +193,115 @@ Or prefixes, as long as the [prefix is valid](/global#prefixes):
 
 ```
 BFO:0000001,RO
+```
+
+## Import Configuration File
+
+Instead of specifying each option on the command line, ROBOT offers a `--config <file>` option in which you can specify a text configuration file. The basic format is:
+```
+! option 1
+arg
+
+! option 2
+arg 1
+arg 2
+...
+```
+
+The following command-line options are supported:
+* `! input` - expects one line (path to the input ontology)
+* `! input-iri` - expects one line (IRI to the input ontology)
+* `! output-iri` - expects one line (IRI to save the output ontology with)
+* `! method` - expects one line (a valid [extraction method](#overview))
+* `! intermediates` - expects one line (a valid [intermediates option](#intermediates))
+* `! annotate-with-source` - expects one line (`true` or `false`, defaults to `true`)
+* `! imports` - expects one line (how to [handle input imports](#handling-imports), defaults to `include`)
+* `! lower-terms` - expects one or more lines (lower terms for [MIREOT](#mireot))
+* `! upper-terms` - expects one or more lines (upper terms for [MIREOT](#mireot))
+* `! terms` - expects one or more lines (terms for [SLME](#syntactic-locality-module-extractor-slme))
+
+Either an `! input` or `! input-iri` is required. The `! method` is required. If using MIREOT, `! lower-terms` is a required option. For SLME, `! terms` is a required option.
+
+When using the `--config` option, an `--output` must be specified:
+```
+robot extract --config my-config.txt --output my-new-ontology.owl
+```
+
+#### Using Labels
+
+All labels are loaded from the `! input` or `! input-iri` ontology and can be used in the terms instead of CURIEs or IRIs. If you prefer, you can always reference a term by CURIE or IRI instead.
+
+The config file expects that no term label will have a tab character in it. This is recommended practice, but if for some reason you have a label with a tab character, be sure to surround it with single quotes.
+
+We have included a `! target` option to specify the target ontology. No terms are extracted from the target ontology, but it is loaded so that you can use labels when specifying replacement parents and annotation properties.
+
+```
+! target
+path/to/my-ontology.owl
+```
+
+#### Annotations
+
+The config file also supports an `! annotations` option to specify how to handle annotations.
+
+The format for each argument is (with `\t` representing a tab):
+```
+<original label or ID> \t <keyword> \t <copy/replace label or ID>
+```
+
+The first `<label or ID>` is required. This is the annotation property to include when extracting. The `<keyword>` and second `<label or ID>` are optional. These are special operations to determine what to do with the annotation after extraction.
+
+The keywords are:
+* `copyTo` - the original annotation is kept in this case and the annotation value is copied to the given annotation property on the same subject.
+* `mapTo` - the original annotation property is replaced with the new annotation property.
+
+#### Annotating With Source Ontology
+
+If `! annotate-with-source` is not included, this defaults to `true`.
+
+If `annotate-with-source` is `true`, each extracted term will be annotated with `rdfs:isDefinedBy <source-ontology-iri>`. If the source ontology does not have an IRI, this annotation is not added.
+
+#### Terms and Parents
+
+The default parents can be replaced by specifying new parents for any of the arguments in `terms`, `lower-terms`, or `upper-terms`. The format is:
+
+```
+<label or ID> \t <new parent label or ID>
+```
+
+For all term options, the first `<label or ID>` is required. This specifies which term to extract from the input ontology. The `<new parent label or ID>` is optional. You can specify as many new parents as you'd like, separating each with a tab on the same line.
+
+
+#### Example
+
+Here is an example config file to extract a set of terms from UO for OBI. These terms are specified to be children of the term 'measurement unit label', which is loaded from the `! target` ontology.
+
+The annotations included from the input ontology are 'label' and 'definition'. The labels are copied to the 'editor preferred term'.
+
+```
+! input-iri
+http://purl.obolibrary.org/obo/uo.owl
+
+! target
+src/ontology/obi.owl
+
+! output-iri
+http://purl.obolibrary.org/obo/obi/uo_import.owl
+
+! method
+MIREOT
+
+! annotations
+label       copyTo	editor preferred term
+definition
+
+! intermediates
+none
+
+! lower-terms
+concentration unit	measurement unit label
+frequency unit		measurement unit label
+length unit		measurement unit label
 ```
 
 ---

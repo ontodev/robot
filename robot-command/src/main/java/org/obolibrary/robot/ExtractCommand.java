@@ -403,6 +403,8 @@ public class ExtractCommand implements Command {
   private static final String METHOD_OPT = "method";
   private static final String ANNOTATIONS_OPT = "annotations";
   private static final String INTERMEDIATES_OPT = "intermediates";
+  private static final String IMPORTS_OPT = "imports";
+  private static final String ANNOTATE_SOURCE_OPT = "annotate-with-source";
   private static final String LOWER_TERMS_OPT = "lower-terms";
   private static final String UPPER_TERMS_OPT = "upper-terms";
   private static final String TERMS_OPT = "terms";
@@ -423,7 +425,9 @@ public class ExtractCommand implements Command {
 
     IRI outputIRI = null;
     String method = null;
-    String intermediates = null;
+    String intermediates = "all";
+    String annotateSource = "true";
+    String imports = "include";
 
     Set<OWLAnnotationProperty> annotationProperties = new HashSet<>();
     Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
@@ -511,6 +515,14 @@ public class ExtractCommand implements Command {
 
           case INTERMEDIATES_OPT:
             intermediates = lineItr.next().trim();
+            continue;
+
+          case IMPORTS_OPT:
+            imports = lineItr.next().trim();
+            continue;
+
+          case ANNOTATE_SOURCE_OPT:
+            annotateSource = lineItr.next().trim();
             continue;
 
           case ANNOTATIONS_OPT:
@@ -658,12 +670,9 @@ public class ExtractCommand implements Command {
 
     // Create map of options
     Map<String, String> extractOptions = new HashMap<>();
-    if (!sourceMap.isEmpty()) {
-      extractOptions.put("annotate-with-source", "true");
-    }
-    if (intermediates != null) {
-      extractOptions.put(INTERMEDIATES_OPT, intermediates);
-    }
+    extractOptions.put(ANNOTATE_SOURCE_OPT, annotateSource);
+    extractOptions.put(IMPORTS_OPT, imports);
+    extractOptions.put(INTERMEDIATES_OPT, intermediates);
 
     // Create the output ontology
     OWLOntology outputOntology;
