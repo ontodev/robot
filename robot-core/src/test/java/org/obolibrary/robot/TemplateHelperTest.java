@@ -118,7 +118,11 @@ public class TemplateHelperTest extends CoreTest {
     }
   }
 
-  /** Tests getting a class expression from a template string and value. */
+  /**
+   * Tests getting a class expression from a template string and value.
+   *
+   * @throws Exception on issue getting class expressions
+   */
   @Test
   public void testGetClassExpressions() throws Exception {
     ManchesterOWLSyntaxClassExpressionParser parser =
@@ -146,7 +150,11 @@ public class TemplateHelperTest extends CoreTest {
     }
   }
 
-  /** Tests getting a data property expression from a template string and value. */
+  /**
+   * Tests getting a data property expression from a template string and value.
+   *
+   * @throws Exception on issue getting data properties
+   */
   @Test
   public void testGetDataPropertyExpressions() throws Exception {
     String template = "P %";
@@ -185,7 +193,11 @@ public class TemplateHelperTest extends CoreTest {
     assertEquals(dtMatch, datatypes);
   }
 
-  /** Tests getting an object property expression from a template string and value. */
+  /**
+   * Tests getting an object property expression from a template string and value.
+   *
+   * @throws Exception on issue getting object property expressions
+   */
   @Test
   public void testGetObjectPropertyExpressions() throws Exception {
     String template = "P inverse %";

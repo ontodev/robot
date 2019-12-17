@@ -492,7 +492,9 @@ public class OntologyHelper {
     if (axiom.isAnnotated()) {
       for (OWLAnnotation annotation : axiom.getAnnotations()) {
         objects.add(annotation.getProperty());
-        objects.add(annotation.getValue());
+        if (annotation.getValue().isIRI()) {
+          objects.add(annotation.getValue());
+        }
       }
     }
 
@@ -505,6 +507,43 @@ public class OntologyHelper {
     }
 
     return objects;
+  }
+
+  /**
+   * Given an OWLAxiom, return all the IRIs in the signature. This is an add-on to the getSignature
+   * method to include OWLAnnotationAssertionAxioms.
+   *
+   * @param axiom OWLAxiom to get signature of
+   * @return IRIs used in OWLAxiom
+   */
+  public static Set<IRI> getIRIsInSignature(OWLAxiom axiom) {
+    Set<IRI> sigIRIs = new HashSet<>();
+    if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      // Special handler for annotations to look at IRIs
+      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+
+      // Add the property IRI to signature
+      sigIRIs.add(a.getProperty().getIRI());
+      if (a.getSubject().isIRI()) {
+        // If the subject is an IRI, add that too (it probably is)
+        sigIRIs.add((IRI) a.getSubject());
+      }
+
+      if (a.getValue().isIRI()) {
+        // Only add the value if its an IRI
+        sigIRIs.add((IRI) a.getValue());
+      }
+    } else {
+      // Just get the signature of all other types of axioms
+      Set<OWLEntity> sig = axiom.getSignature();
+      for (OWLEntity e : sig) {
+        if (!e.isAnonymous()) {
+          // Get the IRIs
+          sigIRIs.add(e.getIRI());
+        }
+      }
+    }
+    return sigIRIs;
   }
 
   /**
@@ -530,7 +569,7 @@ public class OntologyHelper {
    * @return The set of objects
    */
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
-    Set<OWLObject> objects = getNamedObjects(axiom);
+    Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
 
     // The following are special cases
     // where there might be something anonymous that we want to include
