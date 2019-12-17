@@ -160,7 +160,7 @@ public class TreeOperation {
     Map<OWLAnnotationProperty, String> annPropMap = new HashMap<>();
     for (IRI iri : annotationProperties) {
       OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(iri);
-      String label = checker.getLabel(iri, iri.getShortForm());
+      String label = checker.getLabel(iri, IOHelper.getShortForm(iri));
       annPropMap.put(ap, label);
     }
 
@@ -220,7 +220,7 @@ public class TreeOperation {
           }
           OWLClass cls = expr.asOWLClass();
           IRI clsIRI = cls.getIRI();
-          String label = checker.getLabel(clsIRI, clsIRI.getShortForm());
+          String label = checker.getLabel(clsIRI, IOHelper.getShortForm(clsIRI));
           typeLabels.add(label);
           labelToClass.put(label, cls);
         }
@@ -279,7 +279,7 @@ public class TreeOperation {
       Map<String, OWLAnnotationProperty> labelToAnnProperty = new HashMap<>();
       List<String> annPropertyLabels = new ArrayList<>();
       for (OWLAnnotationProperty upper : upperAnnotationProperties) {
-        String label = checker.getLabel(upper.getIRI(), upper.getIRI().getShortForm());
+        String label = checker.getLabel(upper.getIRI(), IOHelper.getShortForm(upper.getIRI()));
         annPropertyLabels.add(label);
         labelToAnnProperty.put(label, upper);
       }
@@ -320,7 +320,7 @@ public class TreeOperation {
       Map<String, OWLDataProperty> labelToDataProperty = new HashMap<>();
       List<String> dataPropertyLabels = new ArrayList<>();
       for (OWLDataProperty upper : upperDataProperties) {
-        String label = checker.getLabel(upper.getIRI(), upper.getIRI().getShortForm());
+        String label = checker.getLabel(upper.getIRI(), IOHelper.getShortForm(upper.getIRI()));
         dataPropertyLabels.add(label);
         labelToDataProperty.put(label, upper);
       }
@@ -361,7 +361,7 @@ public class TreeOperation {
       Map<String, OWLObjectProperty> labelToObjProperty = new HashMap<>();
       List<String> objPropertyLabels = new ArrayList<>();
       for (OWLObjectProperty upper : upperObjectProperties) {
-        String label = checker.getLabel(upper.getIRI(), upper.getIRI().getShortForm());
+        String label = checker.getLabel(upper.getIRI(), IOHelper.getShortForm(upper.getIRI()));
         objPropertyLabels.add(label);
         labelToObjProperty.put(label, upper);
       }
@@ -395,7 +395,7 @@ public class TreeOperation {
       Map<String, OWLDatatype> labelToDatatype = new HashMap<>();
       List<String> datatypeLabels = new ArrayList<>();
       for (OWLDatatype dt : allDatatypes) {
-        String label = checker.getLabel(dt.getIRI(), dt.getIRI().getShortForm());
+        String label = checker.getLabel(dt.getIRI(), IOHelper.getShortForm(dt.getIRI()));
         datatypeLabels.add(label);
         labelToDatatype.put(label, dt);
       }
@@ -454,7 +454,7 @@ public class TreeOperation {
     for (OWLAnnotation ann : ontology.getAnnotations()) {
       // Get the property and its label
       OWLAnnotationProperty ap = ann.getProperty();
-      String apLabel = checker.getLabel(ap.getIRI(), ap.getIRI().getShortForm());
+      String apLabel = checker.getLabel(ap.getIRI(), IOHelper.getShortForm(ap.getIRI()));
 
       // Get the value of the annotation
       OWLAnnotationValue value = ann.getValue();
@@ -466,11 +466,22 @@ public class TreeOperation {
         }
       } else if (value.isIRI()) {
         IRI iri = (IRI) value;
-        String quotedLabel =
-            checker.getLabel(iri, iri.toString().replace("<", "").replace(">", ""));
-        String label = quotedLabel.replace("'", "");
-        strValue =
-            String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
+        String defaultLabel;
+        if (ontology.containsEntityInSignature(iri)) {
+          // Set short form only if the IRI exists in the ontology
+          defaultLabel = IOHelper.getShortForm(iri);
+        } else {
+          defaultLabel = iri.toString().replace("<", "").replace(">", "");
+        }
+        // Get label and escape single quotes if they exist
+        String label = checker.getLabel(iri, defaultLabel);
+        String quotedLabel = label.replace("\\'", "'");
+        if (label.contains(" ")) {
+          // Add quotes to multi-word labels
+          quotedLabel = "'" + quotedLabel + "'";
+        }
+        label = String.format("<a href=\"javascript:jumpTo('%s')\">%s</a>", label, quotedLabel);
+        strValue = String.format("<a href=\"javascript:jumpTo('%s')\">%s</a>", label, quotedLabel);
       }
 
       // Only add if the value is not null
@@ -857,13 +868,21 @@ public class TreeOperation {
     return treeDetails;
   }
 
+  Map<String, String> shortFormToLabel = new HashMap<>();
+
   private JsonObject getBasicDetails(OWLEntity e) {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = new JsonObject();
 
     // Get basic details (ID, display label)
     IRI iri = e.getIRI();
-    String label = checker.getLabel(iri, iri.getShortForm().replace("<", "").replace(">", ""));
+    String shortForm = IOHelper.getShortForm(iri);
+    String label = checker.getLabel(iri, shortForm);
+    shortFormToLabel.put(shortForm, label);
+    if (label.contains("\\'")) {
+      // Get rid of escaping characters for display label
+      label = label.replace("\\'", "'");
+    }
 
     // Add details for tree node
     treeDetails.addProperty("text", label);
@@ -887,8 +906,10 @@ public class TreeOperation {
       if (ap.getIRI().toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
         continue;
       }
-      attrs.add(
-          checker.getLabel(ap.getIRI(), ap.getIRI().getShortForm()), getAnnotationArray(e, ap));
+      JsonArray annArray = getAnnotationArray(e, ap);
+      if (annArray != null) {
+        attrs.add(checker.getLabel(ap.getIRI(), IOHelper.getShortForm(ap.getIRI())), annArray);
+      }
     }
 
     // Get the unordered annotations, removing the ones we already got
@@ -898,7 +919,10 @@ public class TreeOperation {
       if (ap.getIRI().toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
         continue;
       }
-      attrs.add(annotationProperties.get(ap), getAnnotationArray(e, ap));
+      JsonArray annArray = getAnnotationArray(e, ap);
+      if (annArray != null) {
+        attrs.add(annotationProperties.get(ap), annArray);
+      }
     }
 
     return attrs;
@@ -906,6 +930,10 @@ public class TreeOperation {
 
   private JsonArray getAnnotationArray(OWLEntity entity, OWLAnnotationProperty ap) {
     JsonArray annArray = new JsonArray();
+    Collection<OWLAnnotation> anns = EntitySearcher.getAnnotationObjects(entity, ontology, ap);
+    if (anns.isEmpty()) {
+      return null;
+    }
     for (OWLAnnotation a : EntitySearcher.getAnnotationObjects(entity, ontology, ap)) {
       OWLAnnotationValue val = a.getValue();
       if (val.isLiteral()) {
@@ -915,11 +943,21 @@ public class TreeOperation {
         }
       } else if (val.isIRI()) {
         IRI iri = (IRI) val;
-        String quotedLabel =
-            checker.getLabel(iri, iri.toString().replace("<", "").replace(">", ""));
-        String label = quotedLabel.replace("'", "");
-        label =
-            String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
+        String defaultLabel;
+        if (ontology.containsEntityInSignature(iri)) {
+          // Set short form only if the IRI exists in the ontology
+          defaultLabel = IOHelper.getShortForm(iri);
+        } else {
+          defaultLabel = iri.toString().replace("<", "").replace(">", "");
+        }
+        // Get label and escape single quotes if they exist
+        String label = checker.getLabel(iri, defaultLabel);
+        String quotedLabel = label.replace("\\'", "'");
+        if (label.contains(" ")) {
+          // Add quotes to multi-word labels
+          quotedLabel = "'" + quotedLabel + "'";
+        }
+        label = String.format("<a href=\"javascript:jumpTo('%s')\">%s</a>", label, quotedLabel);
         annArray.add(label);
       }
     }
@@ -1115,27 +1153,33 @@ public class TreeOperation {
       Matcher m = Pattern.compile("([^\\s()]+[_:][^\\s()]+)").matcher(render);
       while (m.find()) {
         // Maybe replace term IDs with their labels
-        String shortID = m.group(1);
-        IRI iri = ioHelper.createIRI(shortID);
+        String id = m.group(1);
+        IRI iri;
+        if (id.startsWith("<") && id.endsWith(">")) {
+          // Angle brackets mean it's already an IRI
+          iri = IRI.create(id.replace("<", "").replace(">", ""));
+        } else {
+          // No angle brackets mean it's a CURIE
+          iri = ioHelper.createIRI(id);
+        }
+
         if (iri != null) {
           // Short form used if label does not exist in ontology
           // Sometimes ends up with extra brackets
-          String shortForm = iri.getShortForm().replace(">", "").replace("<", "");
+          String shortForm = IOHelper.getShortForm(iri);
           String label = checker.getLabel(iri, shortForm);
-          String quotedLabel = label;
 
+          // Maybe create the quoted label
+          String quotedLabel = label.replace("\\'", "'");
           if (label.contains(" ")) {
             // add quotes to anything with more than one word
-            quotedLabel = "'" + label + "'";
+            quotedLabel = "'" + quotedLabel + "'";
           }
-          // Escape single quotes
-          label = label.replace("'", "\\'");
 
           // Click search function on click
-          label =
-              String.format("<a href=\"javascript:clickSearch('%s')\">%s</a>", label, quotedLabel);
+          label = String.format("<a href=\"javascript:jumpTo('%s')\">%s</a>", label, quotedLabel);
           // Replace the IDs with the click to search links
-          render = render.replace(shortID, label);
+          render = render.replace(id, label);
         }
       }
       renderedValues.add(render);
@@ -1210,8 +1254,8 @@ public class TreeOperation {
 
   class SortByLabel implements Comparator<Object> {
     public int compareEntities(OWLEntity e1, OWLEntity e2) {
-      String label1 = checker.getLabel(e1.getIRI(), e1.getIRI().getShortForm());
-      String label2 = checker.getLabel(e2.getIRI(), e2.getIRI().getShortForm());
+      String label1 = checker.getLabel(e1.getIRI(), IOHelper.getShortForm(e1.getIRI()));
+      String label2 = checker.getLabel(e2.getIRI(), IOHelper.getShortForm(e2.getIRI()));
       return compareStrings(label1, label2);
     }
 
@@ -1232,8 +1276,10 @@ public class TreeOperation {
 
   class SortByOther implements Comparator<Object> {
     public int compareEntities(OWLEntity e1, OWLEntity e2) {
-      boolean b1 = checker.getLabel(e1.getIRI(), e1.getIRI().getShortForm()).startsWith("other");
-      boolean b2 = checker.getLabel(e2.getIRI(), e2.getIRI().getShortForm()).startsWith("other");
+      boolean b1 =
+          checker.getLabel(e1.getIRI(), IOHelper.getShortForm(e1.getIRI())).startsWith("other");
+      boolean b2 =
+          checker.getLabel(e2.getIRI(), IOHelper.getShortForm(e2.getIRI())).startsWith("other");
       return Boolean.compare(b1, b2);
     }
 

@@ -357,13 +357,18 @@ p {
 <body>
   <!-- Search and info box -->
   <div class="col-md-7" id="scroll">
-    Search: 
-    <span class="text-input-wrapper">
-      <input type="text" id="search" name="searchInput" value="">
-      <span id="clear" title="Clear">&times;</span>
-    </span>
+    <div class="row">
+      Search: &nbsp;
+      <span class="text-input-wrapper">
+        <input type="text" id="search" name="searchInput" value="">
+        <span id="clear" title="Clear">&times;</span>
+      </span>
+    </div>
+    <div class="row" style="padding-top:10px;">
+      <a href="javascript:collapseTree()">Collapse Tree</a>
+    </div>
     <hr>
-    <div style="height:500px;position:relative;padding-right:50px;">
+    <div class="row" style="height:500px;position:relative;padding-right:50px;">
       <div id="info" style="max-height:100%;overflow:auto;"></div>
     </div>
   </div>
@@ -447,12 +452,18 @@ p {
     document.getElementById('info').innerHTML = innerHTML;
   }
 
+  // Function to collapse tree up to selected node
+  function collapseTree() {
+    tree.collapse();
+    tree.selected(true).collapseDeep();
+    tree.selected(true).expandParents();
+  }
+
   // Function to click an existing link to display its info box
-  function clickSearch(text) {
+  function jumpTo(text) {
     if (attributes.hasOwnProperty(text)) {
-      tree.search(text);
-      displayInfo(text);
-      document.getElementById('search').value = text;
+      history.pushState(null, null, '?text=' + text);
+      loadNode();
     } else {
       // If the node doesn't exist, open IRI in a new tab
       var win = window.open(text, '_blank');
@@ -498,12 +509,12 @@ p {
     loadNode();
   });
 
-  // Reset text, clear search
+  // Reset text, clear searchsk
   clearBtn.onclick = function() {
     var textInput = document.getElementById('search');
     var clearBtn = document.getElementById('clear');
     textInput.value = "";
-    tree.search('');
+    tree.matched(false).stateDeep('matched', false);
   };
 
   // Show info box on click

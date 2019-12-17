@@ -560,6 +560,21 @@ public class IOHelper {
   }
 
   /**
+   * Given an IRI, return a generic short form ID (the IRI minus the predicted namespace).
+   *
+   * @param iri IRI to get short form of
+   * @return short form ID
+   */
+  public static String getShortForm(IRI iri) {
+    String strIRI = iri.toString().replace("<", "").replace(">", "");
+    if (strIRI.contains("#")) {
+      return strIRI.substring(strIRI.lastIndexOf("#") + 1);
+    } else {
+      return strIRI.substring(strIRI.lastIndexOf("/") + 1);
+    }
+  }
+
+  /**
    * Save an ontology to a String path.
    *
    * @param ontology the ontology to save
