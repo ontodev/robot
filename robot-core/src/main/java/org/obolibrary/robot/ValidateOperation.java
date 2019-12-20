@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
@@ -54,10 +55,16 @@ import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * TODO: - See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old
- * code.
- */
+////////
+// TODO:
+//
+// Implement validations of multi-cells as the object of a rule (see slack conversation from
+// Dec. 13, 2019).
+//
+// See if you can fix the "Cannot create IRI (" ... warnings. Feel free to change the old
+// code.
+//
+////////
 
 /**
  * Implements the validate operation for a given CSV file and ontology.
@@ -299,6 +306,61 @@ public class ValidateOperation {
     }
 
     cell.setCellValue(cellString);
+  }
+
+  /**
+   * Given a string describing the contents of a cell in the input CSV, convert any named objects
+   * indicated in that cell to hyperlinks, and then add this converted content to the corresponding
+   * cell in the jinja context for the HTML output.
+   */
+  private static void write_html(String cellString) throws Exception {
+    // Extract all the data entries contained within the current cell:
+    String[] cellData = split_on_pipes(cellString.trim());
+    String label = null;
+    OWLClassExpression ce = null;
+    String htmlCellString = "";
+
+    for (int i = 0; i < cellData.length; i++) {
+      if (!cellData[i].trim().equals("")) {
+        // If the content of the given data entry is a label, then use the label_to_iri_map to
+        // get its corresponding IRI, and format the data entry as a HTML link with the IRI as its
+        // href:
+        if ((label = get_label_from_term(cellData[i])) != null) {
+          IRI iri = label_to_iri_map.get(label);
+          htmlCellString +=
+              String.format("<a href=\"%s\" target=\"__blank\">%s</a>", iri.toURI(), cellData[i]);
+        }
+        // If the content of the given data entry is a general class expression, then use the
+        // ManchesterOWLSyntaxClassExpressionHTMLRenderer to render it as a complex of
+        // sub-expressions in the form of HTML links, unless the class expression happens to be a
+        // literal. If it is a literal then it is either a comment or a typo (in the form of a
+        // valid class expression), since all literal labels should be captured by the if/else
+        // branch above. In that case just write it as is without rendering it.
+        else if ((ce = get_class_expression_from_string(cellData[i], LogLevel.DEBUG)) != null
+            && !ce.isClassExpressionLiteral()) {
+          StringWriter strWriter = new StringWriter();
+          new ManchesterOWLSyntaxObjectHTMLRenderer(strWriter, new SimpleShortFormProvider())
+              .visit(ce);
+          htmlCellString += (strWriter != null ? strWriter : cellData[i]);
+        }
+        // If the content of the given data entry is neither a label nor a non-literal class
+        // expression, then just write it as is:
+        else {
+          htmlCellString += cellData[i];
+        }
+      }
+
+      // Unless this is the last data entry, add a pipe symbol to demarcate it from the next data
+      // entry:
+      if ((i + 1) < cellData.length) {
+        htmlCellString += " | ";
+      }
+    }
+
+    // Add the generated HTML for the current cell to the dataContext:
+    List<List<Map<String, String>>> dataContext =
+        (List<List<Map<String, String>>>) jinjaTableContext.get("dataRows");
+    dataContext.get(csv_row_index).get(csv_col_index).put("content", htmlCellString);
   }
 
   /**
@@ -683,9 +745,11 @@ public class ValidateOperation {
 
   /**
    * Given a string describing a term from the ontology, parse it into a class expression expressed
-   * in terms of the ontology.
+   * in terms of the ontology. If the parsing fails, write a statement to the log at the given log
+   * level.
    */
-  private static OWLClassExpression get_class_expression_from_string(String term) {
+  private static OWLClassExpression get_class_expression_from_string(
+      String term, LogLevel logLevel) {
     OWLClassExpression ce;
     try {
       ce = parser.parse(term);
@@ -695,7 +759,7 @@ public class ValidateOperation {
         ce = parser.parse("'" + term + "'");
       } catch (OWLParserException ee) {
         writelog(
-            LogLevel.ERROR,
+            logLevel,
             "Could not determine class expression from \"%s\".\n\t%s.",
             term,
             e.getMessage().trim());
@@ -703,6 +767,14 @@ public class ValidateOperation {
       }
     }
     return ce;
+  }
+
+  /**
+   * Given a string describing a term from the ontology, parse it into a class expression expressed
+   * in terms of the ontology. If the parsing fails, write a warning statement to the log.
+   */
+  private static OWLClassExpression get_class_expression_from_string(String term) {
+    return get_class_expression_from_string(term, LogLevel.WARN);
   }
 
   /**
@@ -1350,14 +1422,14 @@ public class ValidateOperation {
         // Get the contents of the current cell:
         String cellString = row.get(csv_col_index);
 
+        // If there is an XLSX workbook or a jinja context to write to, write the contents of the
+        // current cell to it:
         if (workbook != null) {
           // If there is an XLSX workbook to write to, write the contents of the current cell to it:
           write_xlsx(cellString);
         } else if (jinjaTableContext != null) {
           // If there is a jinja context to write to, write the contents of the current cell to it:
-          List<List<Map<String, String>>> dataContext =
-              (List<List<Map<String, String>>>) jinjaTableContext.get("dataRows");
-          dataContext.get(csv_row_index).get(csv_col_index).put("content", cellString);
+          write_html(cellString);
         }
 
         // Extract all the data entries contained within the current cell:

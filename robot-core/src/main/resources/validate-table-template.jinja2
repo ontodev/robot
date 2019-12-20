@@ -24,7 +24,7 @@
               <div {% if cell.comment is defined %}
                      data-toggle="popover" title="Validation failure" data-content="{{ cell.comment|e }}"
                    {% endif %}>
-                   {{ cell.content|e }}
+                   {{ cell.content }}
               </div>
             </td>
           {% endfor %}
