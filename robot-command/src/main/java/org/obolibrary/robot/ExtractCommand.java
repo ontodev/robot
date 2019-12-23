@@ -188,7 +188,7 @@ public class ExtractCommand implements Command {
       String fileName = CommandLineHelper.getOptionalValue(line, "input");
       String iriString = CommandLineHelper.getOptionalValue(line, "input-iri");
       if (fileName == null && iriString == null) {
-        throw new Exception(CommandLineHelper.missingInputsError);
+        throw new Exception(CommandLineHelper.missingInputError);
       }
       IRI outputIRI = CommandLineHelper.getOutputIRI(line);
 

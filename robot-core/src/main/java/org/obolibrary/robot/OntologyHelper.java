@@ -41,10 +41,6 @@ public class OntologyHelper {
   private static final String multipleEntitiesError =
       NS + "MULTIPLE ENTITIES ERROR multiple entities represented by: %s";
 
-  /** Error message when an import ontology does not have an IRI. */
-  private static final String nullIRIError =
-      NS + "NULL IRI ERROR import ontology does not have an IRI";
-
   /**
    * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
    * ontology with that property and value.
@@ -139,9 +135,12 @@ public class OntologyHelper {
   }
 
   /**
-   * @param ontology
-   * @param addParents
-   * @throws Exception
+   * Replace parents in an ontology using the map of child -> new parent(s) OWLEntities. For
+   * individuals, the "new parents" are added as types. Old parents are removed.
+   *
+   * @param ontology OWLOntology to replace parents in
+   * @param addParents Map of OWLEntity child -> Set of OWLEntities parents
+   * @throws Exception if a illegal EntityType is provided (e.g., a DataType)
    */
   public static void replaceParents(OWLOntology ontology, Map<OWLEntity, Set<OWLEntity>> addParents)
       throws Exception {
@@ -395,8 +394,11 @@ public class OntologyHelper {
   }
 
   /**
-   * @param ontology
-   * @param copyToAnnotations
+   * Copy a set of annotations with a given annotation property to another annotation property for
+   * all entities. The original annotation is not deleted.
+   *
+   * @param ontology OWLOntology to copy annotations in
+   * @param copyToAnnotations map of existing annotation property -> new annotation property
    */
   public static void copyAnnotationObjects(
       OWLOntology ontology, Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations) {
@@ -422,8 +424,11 @@ public class OntologyHelper {
   }
 
   /**
-   * @param ontology
-   * @param mapToAnnotations
+   * Map a set of annotations with a given annotation property to another annotation property for
+   * all entities. The original annotation is deleted.
+   *
+   * @param ontology OWLOntology to map annotations in
+   * @param mapToAnnotations map of existing annotation property -> new annotation property
    */
   public static void mapAnnotationObjects(
       OWLOntology ontology, Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations) {
@@ -479,9 +484,11 @@ public class OntologyHelper {
   /**
    * Get all named OWLObjects from an input ontology.
    *
+   * @deprecated replaced by {{@link #getNamedObjects(OWLAxiom)}}
    * @param ontology OWLOntology to retrieve objects from
    * @return set of objects
    */
+  @Deprecated
   public static Set<OWLObject> getNamedObjects(OWLOntology ontology) {
     Set<OWLObject> objects = new HashSet<>();
     // TODO - include or exclude imports?
@@ -1382,9 +1389,11 @@ public class OntologyHelper {
   /**
    * Given an annotation value, return the IRI of its datatype, or null.
    *
+   * @deprecated replaced by {{@link #getType(OWLAnnotationValue)}}
    * @param value the value to check
    * @return the IRI of the datatype, or null if the value has none
    */
+  @Deprecated
   public static IRI getTypeIRI(OWLAnnotationValue value) {
     OWLDatatype datatype = getType(value);
     if (datatype == null) {
@@ -1485,10 +1494,12 @@ public class OntologyHelper {
    * Given an OWLAxiom class and a set of OWLAxiom classes, determine if the axiom class provided
    * extends at least one of the classes in the set.
    *
+   * @deprecated replaced by {{@link #extendsAxiomTypes(OWLAxiom, Set)}}
    * @param axiom the OWLAxiom class to check
    * @param axiomTypes classes of axioms desired
    * @return true if axiom class extends one of the classes in set
    */
+  @Deprecated
   public static boolean extendsAxiomTypes(
       Class<? extends OWLAxiom> axiom, Set<Class<? extends OWLAxiom>> axiomTypes) {
     for (Class<? extends OWLAxiom> at : axiomTypes) {
