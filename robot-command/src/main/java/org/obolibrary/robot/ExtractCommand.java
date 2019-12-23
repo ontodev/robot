@@ -252,7 +252,7 @@ public class ExtractCommand implements Command {
     }
     Map<String, List<String>> configOptions = parseConfig(FileUtils.readLines(c));
     String method = configOptions.get(METHOD_OPT).get(0);
-    switch (method) {
+    switch (method.toLowerCase()) {
       case "mireot":
         return MireotOperation.mireotFromConfig(ioHelper, configOptions);
       case "simple":

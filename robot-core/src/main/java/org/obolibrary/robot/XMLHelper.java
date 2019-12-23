@@ -143,6 +143,7 @@ public class XMLHelper {
       Set<IRI> targets, Set<IRI> annotationProperties, Map<String, String> options)
       throws IOException, OWLOntologyCreationException {
     String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
+    boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
 
     // Add declarations and hierarchy structure
     initOntology(targets, intermediates);
@@ -156,8 +157,20 @@ public class XMLHelper {
       throw new IOException("Unable to parse XML from " + this.fileName, e);
     }
 
+    // Maybe add source annotations
+    if (annotateSource && outputIRI != null) {
+      OWLAnnotationProperty isDefinedBy = df.getRDFSIsDefinedBy();
+      for (IRI iri : allTargets) {
+        manager.addAxiom(
+            outputOntology, df.getOWLAnnotationAssertionAxiom(isDefinedBy, iri, outputIRI));
+      }
+    }
+
     // This is a stupid way to set the IRI
     // But manager.setOntologyDocumentIRI(...) does not copy over to the output
+    if (outputIRI == null) {
+      return outputOntology;
+    }
     OWLOntologyManager manager = outputOntology.getOWLOntologyManager();
     Set<OWLOntology> ont = new HashSet<>();
     ont.add(outputOntology);
