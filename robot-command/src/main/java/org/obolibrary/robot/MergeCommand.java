@@ -26,6 +26,7 @@ public class MergeCommand implements Command {
     o.addOption("i", "input", true, "merge ontology from a file");
     o.addOption("I", "input-iri", true, "merge ontology from an IRI");
     o.addOption("p", "inputs", true, "merge ontologies matching wildcard pattern");
+    o.addOption("l", "input-list", true, "merge a list of ontologies (single-quote surrounded)");
     o.addOption("o", "output", true, "save merged ontology to a file");
     o.addOption(
         "c", "collapse-import-closure", true, "if true, the imports closure will be merged");

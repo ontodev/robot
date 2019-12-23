@@ -60,7 +60,7 @@ public class CommandLineHelper {
   private static final String missingInputError = NS + "MISSING INPUT ERROR an --input is required";
 
   /** Error message when no input ontology is provided for methods that accept multiple inputs. */
-  private static final String missingInputsError =
+  protected static final String missingInputsError =
       NS + "MISSING INPUT ERROR at least one --input is required";
 
   /** Error message when input terms are not provided. */
@@ -1053,6 +1053,13 @@ public class CommandLineHelper {
   public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
+    // Check for list of input files
+    List<String> inputLists = getOptionalValues(line, "input-list");
+    for (String inputList : inputLists) {
+      for (String inputOntologyPath : inputList.split(" ")) {
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+      }
+    }
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     for (String inputOntologyPath : inputOntologyPaths) {
@@ -1086,6 +1093,13 @@ public class CommandLineHelper {
   public static List<OWLOntology> getInputOntologies(
       IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
+    // Check for list of input files
+    List<String> inputLists = getOptionalValues(line, "input-list");
+    for (String inputList : inputLists) {
+      for (String inputOntologyPath : inputList.split(" ")) {
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, catalogPath));
+      }
+    }
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     for (String inputOntologyPath : inputOntologyPaths) {

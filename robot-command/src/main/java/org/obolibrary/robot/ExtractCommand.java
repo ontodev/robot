@@ -9,7 +9,6 @@ import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
@@ -20,6 +19,7 @@ import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class ExtractCommand implements Command {
+
   /** Namespace for error messages. */
   private static final String NS = "extract#";
 
@@ -71,6 +71,8 @@ public class ExtractCommand implements Command {
     o.addOption("n", "individuals", true, "handle individuals (default: include)");
     o.addOption("M", "imports", true, "handle imports (default: include)");
     o.addOption("N", "intermediates", true, "specify how to handle intermediate entities");
+    o.addOption(null, "annotation-property", true, "");
+    o.addOption(null, "annotation-properties", true, "");
     options = o;
   }
 
@@ -145,22 +147,14 @@ public class ExtractCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
+    // Special handling for config file
     String configFile = CommandLineHelper.getOptionalValue(line, "config");
     if (configFile != null) {
-      // Get everything from the config file, no need for other options
-      File c = new File(configFile);
-      if (!c.exists()) {
-        // TODO - config file does not exit
-        throw new IOException();
-      }
-      outputOntology = parseInputConfiguration(ioHelper, FileUtils.readLines(c));
+      outputOntology = configExtract(ioHelper, configFile);
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
     }
-
-    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
 
     // Override default reasoner options with command-line options
     Map<String, String> extractOptions = ExtractOperation.getDefaultOptions();
@@ -189,7 +183,38 @@ public class ExtractCommand implements Command {
         break;
     }
 
-    if (method.equals("mireot")) {
+    // Simple method never loads full ontology
+    if (method.equals("simple")) {
+      String fileName = CommandLineHelper.getOptionalValue(line, "input");
+      String iriString = CommandLineHelper.getOptionalValue(line, "input-iri");
+      if (fileName == null && iriString == null) {
+        throw new Exception(CommandLineHelper.missingInputsError);
+      }
+      IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+
+      Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, "term", "terms");
+      Set<IRI> annotationProperties =
+          CommandLineHelper.getTerms(
+              ioHelper, line, "annotation-property", "annotation-properties");
+
+      XMLHelper xmlHelper;
+      if (fileName != null) {
+        xmlHelper = new XMLHelper(fileName, outputIRI);
+      } else {
+        IRI inputIRI = IRI.create(iriString);
+        xmlHelper = new XMLHelper(inputIRI, outputIRI);
+      }
+      outputOntology = xmlHelper.extract(terms, annotationProperties, extractOptions);
+
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
+
+    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology inputOntology = state.getOntology();
+
+    if (method.equalsIgnoreCase("mireot")) {
       outputOntology = mireotExtract(ioHelper, inputOntology, line, extractOptions);
     } else if (moduleType != null) {
       outputOntology = slmeExtract(ioHelper, inputOntology, moduleType, line, extractOptions);
@@ -209,6 +234,38 @@ public class ExtractCommand implements Command {
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     state.setOntology(outputOntology);
     return state;
+  }
+
+  /**
+   * Perform extraction using parameters from a configuration file.
+   *
+   * @param ioHelper IOHelper to handle ontology objects
+   * @param configFile String path to configuration file
+   * @return a new ontology containing the extracted subset
+   * @throws Exception on any problem
+   */
+  private static OWLOntology configExtract(IOHelper ioHelper, String configFile) throws Exception {
+    // Get everything from the config file, no need for other options
+    File c = new File(configFile);
+    if (!c.exists()) {
+      throw new IOException(String.format("The config file '%s' does not exist!", configFile));
+    }
+    Map<String, List<String>> configOptions = parseConfig(FileUtils.readLines(c));
+    String method = configOptions.get(METHOD_OPT).get(0);
+    switch (method) {
+      case "mireot":
+        return MireotOperation.mireotFromConfig(ioHelper, configOptions);
+      case "simple":
+        return ExtractOperation.simpleExtractFromConfig(ioHelper, configOptions);
+      case "top":
+      case "bot":
+      case "star":
+        return ExtractOperation.extractFromConfig(ioHelper, configOptions);
+      default:
+        throw new IllegalArgumentException(
+            String.format(
+                "'%s' is an unknown extraction method from config file %s", method, configFile));
+    }
   }
 
   /**
@@ -408,342 +465,243 @@ public class ExtractCommand implements Command {
   private static final String LOWER_TERMS_OPT = "lower-terms";
   private static final String UPPER_TERMS_OPT = "upper-terms";
   private static final String TERMS_OPT = "terms";
-  private static final String PARENTS_OPT = "parents";
 
-  private static OWLOntology parseInputConfiguration(IOHelper ioHelper, List<String> lines)
-      throws Exception {
+  /**
+   * Parse options from a config file.
+   *
+   * @param lines List of file lines
+   * @return Map of extraction options as string key to list of args
+   */
+  private static Map<String, List<String>> parseConfig(List<String> lines) {
+    Iterator<String> lineItr = lines.iterator();
+    Map<String, List<String>> configOptions = new HashMap<>();
+    int ln = 0;
+
+    boolean hasInput = false;
+    boolean hasTarget = false;
 
     String currentOption = null;
-    Iterator<String> lineItr = lines.iterator();
-
-    OWLOntology inputOntology = null;
-    IRI inputIRI = null;
-    OWLOntology targetOntology = null;
-    QuotedEntityChecker checker = new QuotedEntityChecker();
-    checker.setIOHelper(ioHelper);
-    checker.addProperty(OWLManager.getOWLDataFactory().getRDFSLabel());
-
-    IRI outputIRI = null;
-    String method = null;
-    String intermediates = "all";
-    String annotateSource = "true";
-    String imports = "include";
-
-    Set<OWLAnnotationProperty> annotationProperties = new HashSet<>();
-    Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
-    Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations = new HashMap<>();
-    Map<IRI, IRI> sourceMap = new HashMap<>();
-    Set<IRI> upperTerms = new HashSet<>();
-    Set<IRI> lowerTerms = new HashSet<>();
-    Set<IRI> terms = new HashSet<>();
-    Map<OWLEntity, Set<OWLEntity>> replaceParents = new HashMap<>();
-
-    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
     while (lineItr.hasNext()) {
+      ln++;
       String line = lineItr.next().trim();
       if (line.trim().isEmpty()) {
         continue;
       }
+
+      // '! ' indicates the start of a new option
       if (line.startsWith("! ")) {
         String option = line.substring(2);
 
+        // Add single line options, or set the current option for multi-line tracking
         switch (option.toLowerCase()) {
           case INPUT_OPT:
             // Path to local ontology file
-            if (inputOntology != null) {
-              // TODO - already has input
-              throw new Exception();
+            if (hasInput) {
+              throw new IllegalArgumentException(
+                  String.format("Config file contains more than one input on line %d", ln));
             }
-            String path = lineItr.next().trim();
-            inputOntology = ioHelper.loadOntology(path);
-            inputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
-
-            // Use input ontology to get labels
-            checker.addAll(inputOntology);
+            ln++;
+            currentOption = null;
+            String inputOntologyPath = lineItr.next().trim();
+            if (inputOntologyPath.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("Input path on line %d is empty!", ln));
+            }
+            configOptions.put(INPUT_OPT, Lists.newArrayList(inputOntologyPath));
+            hasInput = true;
             continue;
 
           case INPUT_IRI_OPT:
             // IRI for remote ontology file
-            if (inputOntology != null) {
-              // TODO - already has input
-              throw new Exception();
+            if (hasInput) {
+              throw new IllegalArgumentException(
+                  String.format("Config file contains more than one input on line %d", ln));
             }
-            String iri = lineItr.next().trim();
-            inputIRI = IRI.create(iri);
-            inputOntology = ioHelper.loadOntology(inputIRI);
-
-            // Use input ontology to get labels
-            checker.addAll(inputOntology);
+            ln++;
+            currentOption = null;
+            String inputOntologyIRI = lineItr.next().trim();
+            if (inputOntologyIRI.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("Input IRI on line %d is empty!", ln));
+            }
+            configOptions.put(INPUT_IRI_OPT, Lists.newArrayList(inputOntologyIRI));
+            hasInput = true;
             continue;
 
           case OUTPUT_IRI_OPT:
-            outputIRI = IRI.create(lineItr.next().trim());
+            if (configOptions.containsKey("output-iri")) {
+              throw new IllegalArgumentException(
+                  String.format("Config file contains more than one output IRI on line %d", ln));
+            }
+            ln++;
+            currentOption = null;
+            String outputIRI = lineItr.next().trim();
+            if (outputIRI.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("Output IRI on line %d is empty!", ln));
+            }
+            configOptions.put(OUTPUT_IRI_OPT, Lists.newArrayList(outputIRI));
             continue;
 
           case TARGET_OPT:
             // Path to local ontology file
-            if (targetOntology != null) {
-              // TODO - already has input
-              throw new Exception();
+            if (hasTarget) {
+              throw new IllegalArgumentException(
+                  String.format("Config file contains more than one target on line %d", ln));
             }
-            String targetPath = lineItr.next().trim();
-            targetOntology = ioHelper.loadOntology(targetPath);
-
-            // Use target ontology to add to labels
-            checker.addAll(targetOntology);
+            ln++;
+            currentOption = null;
+            String target = lineItr.next().trim();
+            if (target.equals("")) {
+              throw new IllegalArgumentException(String.format("Target on line %d is empty!", ln));
+            }
+            configOptions.put(TARGET_OPT, Lists.newArrayList(target));
+            hasTarget = true;
             continue;
 
           case TARGET_IRI_OPT:
-            // IRI for remote ontology file
-            if (targetOntology != null) {
-              // TODO - already has input
-              throw new Exception();
+            // Path to local ontology file
+            if (hasTarget) {
+              throw new IllegalArgumentException(
+                  String.format("Config file contains more than one target on line %d", ln));
             }
+            ln++;
+            currentOption = null;
             String targetIRI = lineItr.next().trim();
-            targetOntology = ioHelper.loadOntology(IRI.create(targetIRI));
-
-            // Use target ontology to add to labels
-            checker.addAll(targetOntology);
+            if (targetIRI.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("Target IRI on line %d is empty!", ln));
+            }
+            configOptions.put(TARGET_IRI_OPT, Lists.newArrayList(targetIRI));
+            hasTarget = true;
             continue;
 
           case METHOD_OPT:
             // Extraction method
-            method = lineItr.next().trim();
+            if (configOptions.containsKey("method")) {
+              throw new IllegalArgumentException(
+                  String.format("Config file contains more than one method on line %d", ln));
+            }
+            ln++;
+            currentOption = null;
+            String method = lineItr.next().trim().toLowerCase();
+            if (method.equals("")) {
+              throw new IllegalArgumentException(String.format("Method on line %d is empty!", ln));
+            }
+            configOptions.put(METHOD_OPT, Lists.newArrayList(method));
             continue;
 
           case INTERMEDIATES_OPT:
-            intermediates = lineItr.next().trim();
+            // How to handle intermediates
+            if (configOptions.containsKey(INTERMEDIATES_OPT)) {
+              throw new IllegalArgumentException(
+                  String.format(
+                      "Config file contains more than one intermediates option on line %d", ln));
+            }
+            ln++;
+            currentOption = null;
+            String intermediates = lineItr.next().trim().toLowerCase();
+            if (intermediates.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("Intermediates option on line %d is empty!", ln));
+            }
+            configOptions.put(INTERMEDIATES_OPT, Lists.newArrayList(intermediates));
             continue;
 
           case IMPORTS_OPT:
-            imports = lineItr.next().trim();
+            // How to handle imports
+            if (configOptions.containsKey(IMPORTS_OPT)) {
+              throw new IllegalArgumentException(
+                  String.format(
+                      "Config file contains more than one imports option on line %d", ln));
+            }
+            ln++;
+            currentOption = null;
+            String imports = lineItr.next().trim().toLowerCase();
+            if (imports.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("Imports option on line %d is empty!", ln));
+            }
+            configOptions.put(IMPORTS_OPT, Lists.newArrayList(imports));
             continue;
 
           case ANNOTATE_SOURCE_OPT:
-            annotateSource = lineItr.next().trim();
-            continue;
-
-          case ANNOTATIONS_OPT:
-          case UPPER_TERMS_OPT:
-          case LOWER_TERMS_OPT:
-          case TERMS_OPT:
-          case PARENTS_OPT:
-            // Configuration, hop to next section
-            currentOption = option.toLowerCase();
+            // How to handle imports
+            if (configOptions.containsKey(ANNOTATE_SOURCE_OPT)) {
+              throw new IllegalArgumentException(
+                  String.format(
+                      "Config file contains more than one annotate-with-source option on line %d",
+                      ln));
+            }
+            ln++;
+            currentOption = null;
+            String annotateSource = lineItr.next().trim();
+            if (annotateSource.equals("")) {
+              throw new IllegalArgumentException(
+                  String.format("annotate-with-source option on line %d is empty!", ln));
+            }
+            configOptions.put(ANNOTATE_SOURCE_OPT, Lists.newArrayList(annotateSource));
             continue;
 
           default:
-            // TODO - unknown option
-            throw new Exception();
+            // Set option and hop to next line
+            currentOption = option;
+            continue;
         }
       }
 
+      // Multi-line option handling
+      // Always separated by tabs
       if (currentOption != null) {
-        // Always separated by tabs
-        List<String> split = Lists.newArrayList(line.split("\t"));
-        String term;
-        OWLEntity entity;
         switch (currentOption) {
           case ANNOTATIONS_OPT:
-            String ap1 = split.remove(0);
-            OWLAnnotationProperty sourceAp = checker.getOWLAnnotationProperty(ap1, true);
-
-            // Add to annotations to be extracted
-            annotationProperties.add(sourceAp);
-
-            // Maybe do something else with the annotation (copy or map)
-            if (split.size() == 1) {
-              // TODO - not enough entries
-              throw new Exception();
-
-            } else if (split.size() > 1) {
-              String annotationOpt = split.remove(0);
-              // Iterate over remaining to copy or map
-              for (String s : split) {
-                if (s.trim().isEmpty()) {
-                  continue;
-                }
-                OWLAnnotationProperty newAP = checker.getOWLAnnotationProperty(s, true);
-                if (annotationOpt.equalsIgnoreCase("copyTo")) {
-                  copyToAnnotations.put(sourceAp, newAP);
-                } else if (annotationOpt.equalsIgnoreCase("mapTo")) {
-                  mapToAnnotations.put(sourceAp, newAP);
-                }
-              }
-            }
+            // Add this annotation property to list of APs to extract
+            List<String> aps = configOptions.getOrDefault(ANNOTATIONS_OPT, new ArrayList<>());
+            aps.add(line);
+            configOptions.put(ANNOTATIONS_OPT, aps);
             break;
           case UPPER_TERMS_OPT:
-            term = split.remove(0);
-            entity = checker.getOWLEntity(term);
-            upperTerms.add(entity.getIRI());
-
-            if (inputIRI != null) {
-              sourceMap.put(entity.getIRI(), inputIRI);
-            }
-
-            // Maybe add parent or parents
-            if (split.size() >= 1) {
-              for (String s : split) {
-                if (s.trim().isEmpty()) {
-                  continue;
-                }
-                OWLEntity newParent = checker.getOWLEntity(s);
-                Set<OWLEntity> newParents = replaceParents.getOrDefault(entity, new HashSet<>());
-                newParents.add(newParent);
-                replaceParents.put(entity, newParents);
-              }
-            }
+            List<String> uts = configOptions.getOrDefault(UPPER_TERMS_OPT, new ArrayList<>());
+            uts.add(line);
+            configOptions.put(UPPER_TERMS_OPT, uts);
             break;
           case LOWER_TERMS_OPT:
-            term = split.remove(0);
-            entity = checker.getOWLEntity(term);
-            lowerTerms.add(entity.getIRI());
-
-            if (inputIRI != null) {
-              sourceMap.put(entity.getIRI(), inputIRI);
-            }
-
-            // Maybe add parent or parents
-            if (split.size() >= 1) {
-              for (String s : split) {
-                if (s.trim().isEmpty()) {
-                  continue;
-                }
-                OWLEntity newParent = checker.getOWLEntity(s);
-                Set<OWLEntity> newParents = replaceParents.getOrDefault(entity, new HashSet<>());
-                newParents.add(newParent);
-                replaceParents.put(entity, newParents);
-              }
-            }
+            List<String> lts = configOptions.getOrDefault(LOWER_TERMS_OPT, new ArrayList<>());
+            lts.add(line);
+            configOptions.put(LOWER_TERMS_OPT, lts);
             break;
           case TERMS_OPT:
-            term = split.remove(0);
-            entity = checker.getOWLEntity(term);
-            terms.add(entity.getIRI());
-
-            if (inputIRI != null) {
-              sourceMap.put(entity.getIRI(), inputIRI);
-            }
-
-            // Maybe add parent or parents
-            if (split.size() >= 1) {
-              for (String s : split) {
-                if (s.trim().isEmpty()) {
-                  continue;
-                }
-                OWLEntity newParent = checker.getOWLEntity(s);
-                Set<OWLEntity> newParents = replaceParents.getOrDefault(entity, new HashSet<>());
-                newParents.add(newParent);
-                replaceParents.put(entity, newParents);
-              }
-            }
+            List<String> ts = configOptions.getOrDefault(TERMS_OPT, new ArrayList<>());
+            ts.add(line);
+            configOptions.put(TERMS_OPT, ts);
             break;
           default:
-            throw new Exception(String.format("'%s' is an unknown option!", currentOption));
+            throw new IllegalArgumentException(
+                String.format("'%s' is an unknown option on line %d", currentOption, ln));
         }
       }
     }
 
-    // Sanity checks
-    if (inputOntology == null) {
-      throw new Exception();
-    } else if (method == null) {
-      throw new Exception();
+    // Make sure we have required arguments
+    if (!hasInput) {
+      throw new IllegalArgumentException("An input or input-iri is required!");
+    }
+    if (!configOptions.containsKey("method")) {
+      throw new IllegalArgumentException("A method is required!");
     }
 
-    if (method.equalsIgnoreCase("mireot") && lowerTerms.isEmpty()) {
-      // mireot without lower terms
-      throw new Exception();
+    // Add defaults where necessary
+    if (!configOptions.containsKey(INTERMEDIATES_OPT)) {
+      configOptions.put(INTERMEDIATES_OPT, Lists.newArrayList("all"));
+    }
+    if (!configOptions.containsKey(IMPORTS_OPT)) {
+      configOptions.put(IMPORTS_OPT, Lists.newArrayList("include"));
+    }
+    if (!configOptions.containsKey(ANNOTATE_SOURCE_OPT)) {
+      configOptions.put(ANNOTATE_SOURCE_OPT, Lists.newArrayList("true"));
     }
 
-    if (!method.equalsIgnoreCase("mireot") && (!lowerTerms.isEmpty() || !upperTerms.isEmpty())) {
-      // Non-mireot method with lower/upper terms
-      throw new Exception();
-    }
-
-    if (!method.equalsIgnoreCase("mireot") && terms.isEmpty()) {
-      // Non-mireot without terms
-      throw new Exception();
-    }
-
-    // Create map of options
-    Map<String, String> extractOptions = new HashMap<>();
-    extractOptions.put(ANNOTATE_SOURCE_OPT, annotateSource);
-    extractOptions.put(IMPORTS_OPT, imports);
-    extractOptions.put(INTERMEDIATES_OPT, intermediates);
-
-    // Create the output ontology
-    OWLOntology outputOntology;
-    ModuleType m;
-    switch (method.toLowerCase()) {
-      case "mireot":
-        // Generate the output ontology
-        outputOntology =
-            MireotOperation.mireot(
-                inputOntology,
-                lowerTerms,
-                upperTerms,
-                null,
-                extractOptions,
-                sourceMap,
-                annotationProperties);
-        if (outputIRI != null) {
-          // Reset manager
-          manager = outputOntology.getOWLOntologyManager();
-          manager.setOntologyDocumentIRI(outputOntology, outputIRI);
-        }
-        break;
-      case "star":
-        m = ModuleType.STAR;
-        outputOntology =
-            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
-        break;
-      case "top":
-        m = ModuleType.TOP;
-        outputOntology =
-            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
-        break;
-      case "bot":
-        m = ModuleType.BOT;
-        outputOntology =
-            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
-        break;
-      default:
-        throw new Exception(invalidMethodError);
-    }
-
-    // Handle annotation options
-    if (!copyToAnnotations.isEmpty()) {
-      OntologyHelper.copyAnnotationObjects(outputOntology, copyToAnnotations);
-    }
-    if (!mapToAnnotations.isEmpty()) {
-      OntologyHelper.mapAnnotationObjects(outputOntology, mapToAnnotations);
-    }
-
-    if (!replaceParents.isEmpty()) {
-      OntologyHelper.replaceParents(outputOntology, replaceParents);
-      // Clean up ontology after moving terms around
-      // If there is a dangling term not in target, remove it
-      Set<OWLObject> remove = new HashSet<>();
-      for (OWLClass c : outputOntology.getClassesInSignature()) {
-        Collection<OWLSubClassOfAxiom> subAxs = outputOntology.getSubClassAxiomsForSubClass(c);
-        // Remove subclass of OWL Thing
-        subAxs.remove(dataFactory.getOWLSubClassOfAxiom(c, dataFactory.getOWLThing()));
-        Collection<OWLSubClassOfAxiom> superAxs = outputOntology.getSubClassAxiomsForSuperClass(c);
-        if (subAxs.isEmpty() && superAxs.isEmpty()) {
-          if (!lowerTerms.contains(c.getIRI())
-              && !upperTerms.contains(c.getIRI())
-              && !terms.contains(c.getIRI())) {
-            remove.add(c);
-          }
-        }
-      }
-      Set<OWLAxiom> removeAxs = RelatedObjectsHelper.getPartialAxioms(outputOntology, remove, null);
-      manager.removeAxioms(outputOntology, removeAxs);
-    }
-
-    return outputOntology;
+    return configOptions;
   }
 }

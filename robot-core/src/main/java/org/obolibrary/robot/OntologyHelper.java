@@ -154,7 +154,20 @@ public class OntologyHelper {
         case "Class":
           OWLClass childCls = addParent.getKey().asOWLClass();
           Set<OWLClass> parentClss = new HashSet<>();
-          addParent.getValue().forEach(x -> parentClss.add(x.asOWLClass()));
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              logger.warn(
+                  String.format(
+                      "New parent list for <%s> contains null value!", childCls.toStringID()));
+              continue;
+            }
+            try {
+              OWLClass p = e.asOWLClass();
+              parentClss.add(p);
+            } catch (Exception ex) {
+              logger.error(String.format("<%s> is not a Class in input ontology", e.toStringID()));
+            }
+          }
           // Remove existing parents - NAMED only
           for (OWLSubClassOfAxiom scAx : ontology.getSubClassAxiomsForSubClass(childCls)) {
             if (!scAx.getSuperClass().isAnonymous()) {

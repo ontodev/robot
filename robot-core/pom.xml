@@ -153,5 +153,10 @@
       <artifactId>owl-diff_2.12</artifactId>
       <version>1.1.2</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.woodstox</groupId>
+      <artifactId>woodstox-core</artifactId>
+      <version>6.0.3</version>
+    </dependency>
   </dependencies>
 </project>

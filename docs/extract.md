@@ -5,10 +5,12 @@
 1. [Overview](#overview)
 2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
 3. [Extraction method: MIREOT](#mireot)
-4. [Handling Imports (`--imports`)](#handling-imports)
-5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
-6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
-7. [Import Configuration File (`--config`)](#import-configuration-file)
+4. [Extraction method: simple](#simple)
+5. [Handling Intermediates (`--intermediates`)](#intermediates)
+6. [Handling Imports (`--imports`)](#handling-imports)
+7. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
+8. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
+9. [Import Configuration File (`--config`)](#import-configuration-file)
 
 ## Overview
 
@@ -69,9 +71,30 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 
 To only include all descendants of a term or set of terms, use `--branch-from-term` or `--branch-from-terms`, respectively. `--lower-term` or `--lower-terms` are not required when using this option.
 
+You may specify which annotation properties to include with `--annotation-property`, or `--annotation-properties` for a text file of annotation properties. These should be referenced by CURIE or IRI.
+
+If neither `--annotation-property` nor `--annotation-properties` is specified, all annotation properties will be included in the output.
+
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
-### Intermediates
+## Simple
+
+Loading very large ontologies into ROBOT can require a lot of time and memory. Because of this, it can be easier to parse large RDF/XML files using a streaming XML processor instead of fully loading them into memory.
+
+**Please note** that this method can only be used on files in RDF/XML format.
+
+    robot extract --method simple \
+        --input uberon_fragment.owl \
+        --term UBERON:0000465 \
+        --term UBERON:0001017 \
+        --term UBERON:0002369 \
+        --output uberon_simple.owl
+        
+For this method, one or more `--annotation-property` options can be provided in order to add annotations to the entities. If not included, all annotations will be included in the output. To provide a text file of annotation properties, use `--annotation-properties`.
+
+The 'simple' method is similar to MIREOT in that no anonymous class expressions or equivalent classes are included. Unlike MIREOT, 'simple' will not include axiom annotations on annotations.
+
+## Intermediates
 
 When extracting (especially with MIREOT), sometimes the hierarchy can have too many intermediate classes, making it difficult to identify relevant relationships. For example, you may end up with this after extracting `adrenal gland`:
 ```
@@ -244,18 +267,22 @@ path/to/my-ontology.owl
 
 The config file also supports an `! annotations` option to specify how to handle annotations.
 
+For MIREOT and simple extractions, all desired annotation properties must be listed. For SLME methods, all annotation properties are always included, but the `! annotations` option can still be used for `mapTo` and `copyTo` annotations (see below).
+
 The format for each argument is (with `\t` representing a tab):
 ```
 <original label or ID> \t <keyword> \t <copy/replace label or ID>
 ```
 
-The first `<label or ID>` is required. This is the annotation property to include when extracting. The `<keyword>` and second `<label or ID>` are optional. These are special operations to determine what to do with the annotation after extraction.
+The first `<label or ID>` is required. This is the annotation property to include when extracting (MIREOT and simple). The `<keyword>` and second `<label or ID>` are optional. These are special operations to determine what to do with the annotation after extraction.
 
 The keywords are:
 * `copyTo` - the original annotation is kept in this case and the annotation value is copied to the given annotation property on the same subject.
 * `mapTo` - the original annotation property is replaced with the new annotation property.
 
 #### Annotating With Source Ontology
+
+Note that this option is currently only implemented with the MIREOT method for config files.
 
 If `! annotate-with-source` is not included, this defaults to `true`.
 
