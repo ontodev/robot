@@ -70,7 +70,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   /** Map from IRIs to names of entities. */
   private Map<IRI, String> labels = new HashMap<>();
 
-  /** Map from names to IRIs of entities. */
+  /** Map from names of entities to IRIs. */
   private Map<String, IRI> iris = new HashMap<>();
 
   /**
@@ -482,6 +482,24 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return getOWLIndividual(name);
     } else if (classes.containsKey(name)) {
       return getOWLClass(name);
+    }
+
+    // Try as CURIE/IRI
+    if (ioHelper != null) {
+      IRI iri = ioHelper.createIRI(name);
+      if (annotationProperties.containsValue(iri)) {
+        return getOWLAnnotationProperty(name, true);
+      } else if (objectProperties.containsValue(iri)) {
+        return getOWLObjectProperty(name);
+      } else if (dataProperties.containsValue(iri)) {
+        return getOWLDataProperty(name);
+      } else if (datatypes.containsValue(iri)) {
+        return getOWLDatatype(name, true);
+      } else if (namedIndividuals.containsValue(iri)) {
+        return getOWLIndividual(name);
+      } else if (classes.containsValue(iri)) {
+        return getOWLClass(name);
+      }
     }
     return null;
   }

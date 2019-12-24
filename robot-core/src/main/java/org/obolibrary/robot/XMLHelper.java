@@ -20,7 +20,13 @@ import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provides convenience methods for working with RDF/XML ontologies with a streaming XML processor.
+ *
+ * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
+ */
 public class XMLHelper {
+
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(XMLHelper.class);
 
@@ -40,18 +46,26 @@ public class XMLHelper {
   private final String RDFS_DATATYPE_TAG = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}datatype";
   private final String SUBCLASS_OF_TAG = "{http://www.w3.org/2000/01/rdf-schema#}subClassOf";
 
-  private final OWLDataFactory df = OWLManager.getOWLDataFactory();
+  // Shared data factory & manager
+  private final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
   private final OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
+  // Extracted module
   private OWLOntology outputOntology;
+
+  // User parameters
   private String fileName;
   private IRI outputIRI;
 
+  // Maps to resolve labels, relationships, and types from IRIs
   private BiMap<IRI, String> labelMap = HashBiMap.create();
   private Map<IRI, Set<IRI>> childParentMap = new HashMap<>();
   private Map<IRI, EntityType> typeMap = new HashMap<>();
 
+  // Tracking added targets (if intermediates = all or minimal)
   private Set<IRI> allTargets = new HashSet<>();
+
+  // Tracking all annotation properties, if none are specified
   private Set<IRI> allAnnotationProperties = new HashSet<>();
 
   /**
@@ -159,10 +173,11 @@ public class XMLHelper {
 
     // Maybe add source annotations
     if (annotateSource && outputIRI != null) {
-      OWLAnnotationProperty isDefinedBy = df.getRDFSIsDefinedBy();
+      OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
       for (IRI iri : allTargets) {
         manager.addAxiom(
-            outputOntology, df.getOWLAnnotationAssertionAxiom(isDefinedBy, iri, outputIRI));
+            outputOntology,
+            dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, iri, outputIRI));
       }
     }
 
@@ -236,7 +251,7 @@ public class XMLHelper {
     StringBuilder currentContent = null;
 
     // Add label to set of annotation properties
-    allAnnotationProperties.add(df.getRDFSLabel().getIRI());
+    allAnnotationProperties.add(dataFactory.getRDFSLabel().getIRI());
 
     // Track current entity by IRI
     IRI iri = null;
@@ -386,8 +401,8 @@ public class XMLHelper {
         continue;
       }
       // Add declaration
-      OWLEntity e = df.getOWLEntity(et, iri);
-      manager.addAxiom(outputOntology, df.getOWLDeclarationAxiom(e));
+      OWLEntity e = dataFactory.getOWLEntity(et, iri);
+      manager.addAxiom(outputOntology, dataFactory.getOWLDeclarationAxiom(e));
     }
 
     // Handle parents
@@ -493,7 +508,7 @@ public class XMLHelper {
               String attr = sr.getAttributeName(0).toString();
               if (attr.equals(RDFS_DATATYPE_TAG)) {
                 IRI dtIRI = IRI.create(sr.getAttributeValue(0));
-                annotationDatatype = df.getOWLDatatype(dtIRI);
+                annotationDatatype = dataFactory.getOWLDatatype(dtIRI);
               } else if (attr.equals(LANG_TAG)) {
                 lang = sr.getAttributeValue(0);
               }
@@ -555,16 +570,17 @@ public class XMLHelper {
               // Closing of an annotation property
               // Add the content to the ontology
               content = currentContent.toString();
-              OWLAnnotationProperty ap = df.getOWLAnnotationProperty(apIRI);
+              OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(apIRI);
               OWLLiteral lit;
               if (annotationDatatype != null) {
-                lit = df.getOWLLiteral(content, annotationDatatype);
+                lit = dataFactory.getOWLLiteral(content, annotationDatatype);
               } else if (lang != null) {
-                lit = df.getOWLLiteral(content, lang);
+                lit = dataFactory.getOWLLiteral(content, lang);
               } else {
-                lit = df.getOWLLiteral(content);
+                lit = dataFactory.getOWLLiteral(content);
               }
-              manager.addAxiom(outputOntology, df.getOWLAnnotationAssertionAxiom(ap, iri, lit));
+              manager.addAxiom(
+                  outputOntology, dataFactory.getOWLAnnotationAssertionAxiom(ap, iri, lit));
 
               // Reset tracking variables
               apIRI = null;
@@ -626,21 +642,22 @@ public class XMLHelper {
   private void addSubXOfAxiom(IRI childIRI, IRI parentIRI) {
     EntityType<?> et = getEntityType(childIRI);
     if (et == EntityType.CLASS) {
-      OWLClass child = df.getOWLClass(childIRI);
-      OWLClass parent = df.getOWLClass(parentIRI);
-      manager.addAxiom(outputOntology, df.getOWLSubClassOfAxiom(child, parent));
+      OWLClass child = dataFactory.getOWLClass(childIRI);
+      OWLClass parent = dataFactory.getOWLClass(parentIRI);
+      manager.addAxiom(outputOntology, dataFactory.getOWLSubClassOfAxiom(child, parent));
     } else if (et == EntityType.ANNOTATION_PROPERTY) {
-      OWLAnnotationProperty child = df.getOWLAnnotationProperty(childIRI);
-      OWLAnnotationProperty parent = df.getOWLAnnotationProperty(parentIRI);
-      manager.addAxiom(outputOntology, df.getOWLSubAnnotationPropertyOfAxiom(child, parent));
+      OWLAnnotationProperty child = dataFactory.getOWLAnnotationProperty(childIRI);
+      OWLAnnotationProperty parent = dataFactory.getOWLAnnotationProperty(parentIRI);
+      manager.addAxiom(
+          outputOntology, dataFactory.getOWLSubAnnotationPropertyOfAxiom(child, parent));
     } else if (et == EntityType.DATA_PROPERTY) {
-      OWLDataProperty child = df.getOWLDataProperty(childIRI);
-      OWLDataProperty parent = df.getOWLDataProperty(parentIRI);
-      manager.addAxiom(outputOntology, df.getOWLSubDataPropertyOfAxiom(child, parent));
+      OWLDataProperty child = dataFactory.getOWLDataProperty(childIRI);
+      OWLDataProperty parent = dataFactory.getOWLDataProperty(parentIRI);
+      manager.addAxiom(outputOntology, dataFactory.getOWLSubDataPropertyOfAxiom(child, parent));
     } else if (et == EntityType.OBJECT_PROPERTY) {
-      OWLObjectProperty child = df.getOWLObjectProperty(childIRI);
-      OWLObjectProperty parent = df.getOWLObjectProperty(parentIRI);
-      manager.addAxiom(outputOntology, df.getOWLSubObjectPropertyOfAxiom(child, parent));
+      OWLObjectProperty child = dataFactory.getOWLObjectProperty(childIRI);
+      OWLObjectProperty parent = dataFactory.getOWLObjectProperty(parentIRI);
+      manager.addAxiom(outputOntology, dataFactory.getOWLSubObjectPropertyOfAxiom(child, parent));
     }
   }
 }

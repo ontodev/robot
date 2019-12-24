@@ -6,9 +6,11 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
@@ -23,6 +25,10 @@ public class ExtractCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "extract#";
 
+  /** Error message when a config option has no contents. */
+  private static final String emptyOptionError =
+      NS + "EMPTY OPTION ERROR '! %s' option on line %d is empty.";
+
   /** Error message when lower or branch terms are not specified with MIREOT. */
   private static final String missingMireotTermsError =
       NS
@@ -31,7 +37,7 @@ public class ExtractCommand implements Command {
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
-      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT";
+      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or simple";
 
   /** Error message when a MIREOT option is used for SLME. */
   private static final String invalidOptionError =
@@ -44,35 +50,60 @@ public class ExtractCommand implements Command {
   private static final String invalidSourceMapError =
       NS + "INVALID SOURCE MAP ERROR --sources input must be .tsv or .csv";
 
+  /** Error message when an unknown config option is provided. */
+  private static final String unknownConfigOptionError =
+      NS + "UNKNOWN CONFIG OPTION '%s' is an unknown option on line %d";
+
   /** Store the command-line options for the command. */
   private Options options;
+
+  // Option names (reusable for config file)
+  private static final String INPUT_OPT = "input";
+  private static final String INPUT_IRI_OPT = "input-iri";
+  private static final String OUTPUT_IRI_OPT = "output-iri";
+  private static final String TARGET_OPT = "target";
+  private static final String TARGET_IRI_OPT = "target-iri";
+  private static final String METHOD_OPT = "method";
+  private static final String ANNOTATIONS_OPT = "annotations";
+  private static final String INTERMEDIATES_OPT = "intermediates";
+  private static final String IMPORTS_OPT = "imports";
+  private static final String ANNOTATE_SOURCE_OPT = "annotate-with-source";
+  private static final String LOWER_TERMS_OPT = "lower-terms";
+  private static final String UPPER_TERMS_OPT = "upper-terms";
+  private static final String BRANCH_TERMS_OPT = "branch-from-terms";
+  private static final String TERMS_OPT = "terms";
 
   /** Initialze the command. */
   public ExtractCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("i", "input", true, "load ontology from a file");
-    o.addOption("I", "input-iri", true, "load ontology from an IRI");
+    o.addOption("i", INPUT_OPT, true, "load ontology from a file");
+    o.addOption("I", INPUT_IRI_OPT, true, "load ontology from an IRI");
     o.addOption("C", "config", true, "load extract options from configuration file");
     o.addOption("o", "output", true, "save ontology to a file");
-    o.addOption("O", "output-iri", true, "set OntologyIRI for output");
-    o.addOption("m", "method", true, "extract method to use");
+    o.addOption("O", OUTPUT_IRI_OPT, true, "set OntologyIRI for output");
+    o.addOption("m", METHOD_OPT, true, "extract method to use");
     o.addOption("t", "term", true, "term to extract");
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("u", "upper-term", true, "upper level term to extract");
-    o.addOption("U", "upper-terms", true, "upper level terms to extract");
+    o.addOption("U", UPPER_TERMS_OPT, true, "upper level terms to extract");
     o.addOption("l", "lower-term", true, "lower level term to extract");
-    o.addOption("L", "lower-terms", true, "lower level terms to extract");
+    o.addOption("L", LOWER_TERMS_OPT, true, "lower level terms to extract");
     o.addOption("b", "branch-from-term", true, "root term of branch to extract");
-    o.addOption("B", "branch-from-terms", true, "root terms of branches to extract");
+    o.addOption("B", BRANCH_TERMS_OPT, true, "root terms of branches to extract");
     o.addOption("c", "copy-ontology-annotations", true, "if true, include ontology annotations");
     o.addOption("f", "force", true, "if true, warn on empty input terms instead of fail");
-    o.addOption("a", "annotate-with-source", true, "if true, annotate terms with rdfs:isDefinedBy");
+    o.addOption("a", ANNOTATE_SOURCE_OPT, true, "if true, annotate terms with rdfs:isDefinedBy");
     o.addOption("s", "sources", true, "specify a mapping file of term to source ontology");
     o.addOption("n", "individuals", true, "handle individuals (default: include)");
-    o.addOption("M", "imports", true, "handle imports (default: include)");
-    o.addOption("N", "intermediates", true, "specify how to handle intermediate entities");
-    o.addOption(null, "annotation-property", true, "");
-    o.addOption(null, "annotation-properties", true, "");
+    o.addOption("M", IMPORTS_OPT, true, "handle imports (default: include)");
+    o.addOption("N", INTERMEDIATES_OPT, true, "specify how to handle intermediate entities");
+    o.addOption(
+        null, "annotation-property", true, "annotation property to include (MIREOT and simple)");
+    o.addOption(
+        null,
+        "annotation-properties",
+        true,
+        "annotation properties to include (MIREOT and simple)");
     options = o;
   }
 
@@ -166,10 +197,24 @@ public class ExtractCommand implements Command {
 
     // Get method, make sure it has been specified
     String method =
-        CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
+        CommandLineHelper.getRequiredValue(
+                line, METHOD_OPT, "method of extraction must be specified")
             .trim()
             .toLowerCase();
 
+    // Simple method never loads full ontology
+    if (method.equals("simple")) {
+      outputOntology = simpleExtract(ioHelper, line, extractOptions);
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
+
+    // All other extract methods load ontology
+    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology inputOntology = state.getOntology();
+
+    // Maybe get a module type
     ModuleType moduleType = null;
     switch (method) {
       case "star":
@@ -182,37 +227,6 @@ public class ExtractCommand implements Command {
         moduleType = ModuleType.BOT;
         break;
     }
-
-    // Simple method never loads full ontology
-    if (method.equals("simple")) {
-      String fileName = CommandLineHelper.getOptionalValue(line, "input");
-      String iriString = CommandLineHelper.getOptionalValue(line, "input-iri");
-      if (fileName == null && iriString == null) {
-        throw new Exception(CommandLineHelper.missingInputError);
-      }
-      IRI outputIRI = CommandLineHelper.getOutputIRI(line);
-
-      Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, "term", "terms");
-      Set<IRI> annotationProperties =
-          CommandLineHelper.getTerms(
-              ioHelper, line, "annotation-property", "annotation-properties");
-
-      XMLHelper xmlHelper;
-      if (fileName != null) {
-        xmlHelper = new XMLHelper(fileName, outputIRI);
-      } else {
-        IRI inputIRI = IRI.create(iriString);
-        xmlHelper = new XMLHelper(inputIRI, outputIRI);
-      }
-      outputOntology = xmlHelper.extract(terms, annotationProperties, extractOptions);
-
-      CommandLineHelper.maybeSaveOutput(line, outputOntology);
-      state.setOntology(outputOntology);
-      return state;
-    }
-
-    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
 
     if (method.equalsIgnoreCase("mireot")) {
       outputOntology = mireotExtract(ioHelper, inputOntology, line, extractOptions);
@@ -291,7 +305,7 @@ public class ExtractCommand implements Command {
     Set<IRI> upperIRIs =
         OntologyHelper.filterExistingTerms(
             inputOntology,
-            CommandLineHelper.getTerms(ioHelper, line, "upper-term", "upper-terms"),
+            CommandLineHelper.getTerms(ioHelper, line, "upper-term", UPPER_TERMS_OPT),
             true);
     if (upperIRIs.size() == 0) {
       upperIRIs = null;
@@ -299,7 +313,7 @@ public class ExtractCommand implements Command {
     Set<IRI> lowerIRIs =
         OntologyHelper.filterExistingTerms(
             inputOntology,
-            CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms"),
+            CommandLineHelper.getTerms(ioHelper, line, "lower-term", LOWER_TERMS_OPT),
             true);
     if (lowerIRIs.size() == 0) {
       lowerIRIs = null;
@@ -307,7 +321,7 @@ public class ExtractCommand implements Command {
     Set<IRI> branchIRIs =
         OntologyHelper.filterExistingTerms(
             inputOntology,
-            CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", "branch-from-terms"),
+            CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", BRANCH_TERMS_OPT),
             true);
     if (branchIRIs.size() == 0) {
       branchIRIs = null;
@@ -318,13 +332,35 @@ public class ExtractCommand implements Command {
       throw new IllegalArgumentException(missingMireotTermsError);
     }
 
+    // Get an optional IRI -> source IRI map
     Map<IRI, IRI> sourceMap =
         getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
+
+    // Get optional annotation properties to include
+    OWLDataFactory df = OWLManager.getOWLDataFactory();
+    Set<IRI> annotationPropertyIRIs =
+        CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+    Set<OWLAnnotationProperty> annotationProperties;
+    if (annotationPropertyIRIs.isEmpty()) {
+      annotationProperties = null;
+    } else {
+      annotationProperties =
+          annotationPropertyIRIs
+              .stream()
+              .map(df::getOWLAnnotationProperty)
+              .collect(Collectors.toSet());
+    }
 
     // Create the output ontology
     OWLOntology outputOntology =
         MireotOperation.mireot(
-            inputOntology, lowerIRIs, upperIRIs, branchIRIs, extractOptions, sourceMap, null);
+            inputOntology,
+            lowerIRIs,
+            upperIRIs,
+            branchIRIs,
+            extractOptions,
+            sourceMap,
+            annotationProperties);
 
     // Get the output IRI and create the output ontology
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
@@ -335,6 +371,38 @@ public class ExtractCommand implements Command {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
     }
     return outputOntology;
+  }
+
+  /**
+   * Perform a simple extraction.
+   *
+   * @param ioHelper IOHelper to handle resolving terms
+   * @param line CommadLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws Exception on any problem
+   */
+  private static OWLOntology simpleExtract(
+      IOHelper ioHelper, CommandLine line, Map<String, String> extractOptions) throws Exception {
+    String fileName = CommandLineHelper.getOptionalValue(line, INPUT_OPT);
+    String iriString = CommandLineHelper.getOptionalValue(line, INPUT_IRI_OPT);
+    if (fileName == null && iriString == null) {
+      throw new Exception(CommandLineHelper.missingInputError);
+    }
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+
+    Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, "term", TERMS_OPT);
+    Set<IRI> annotationProperties =
+        CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+
+    XMLHelper xmlHelper;
+    if (fileName != null) {
+      xmlHelper = new XMLHelper(fileName, outputIRI);
+    } else {
+      IRI inputIRI = IRI.create(iriString);
+      xmlHelper = new XMLHelper(inputIRI, outputIRI);
+    }
+    return xmlHelper.extract(terms, annotationProperties, extractOptions);
   }
 
   /**
@@ -359,11 +427,11 @@ public class ExtractCommand implements Command {
     List<String> mireotTerms =
         Arrays.asList(
             CommandLineHelper.getOptionalValue(line, "upper-term"),
-            CommandLineHelper.getOptionalValue(line, "upper-terms"),
+            CommandLineHelper.getOptionalValue(line, UPPER_TERMS_OPT),
             CommandLineHelper.getOptionalValue(line, "lower-term"),
-            CommandLineHelper.getOptionalValue(line, "lower-terms"),
+            CommandLineHelper.getOptionalValue(line, LOWER_TERMS_OPT),
             CommandLineHelper.getOptionalValue(line, "branch-from-term"),
-            CommandLineHelper.getOptionalValue(line, "branch-from-terms"));
+            CommandLineHelper.getOptionalValue(line, BRANCH_TERMS_OPT));
     for (String mt : mireotTerms) {
       if (mt != null) {
         throw new IllegalArgumentException(invalidOptionError);
@@ -452,20 +520,6 @@ public class ExtractCommand implements Command {
     return sourceMap;
   }
 
-  private static final String INPUT_OPT = "input";
-  private static final String INPUT_IRI_OPT = "input-iri";
-  private static final String OUTPUT_IRI_OPT = "output-iri";
-  private static final String TARGET_OPT = "target";
-  private static final String TARGET_IRI_OPT = "target-iri";
-  private static final String METHOD_OPT = "method";
-  private static final String ANNOTATIONS_OPT = "annotations";
-  private static final String INTERMEDIATES_OPT = "intermediates";
-  private static final String IMPORTS_OPT = "imports";
-  private static final String ANNOTATE_SOURCE_OPT = "annotate-with-source";
-  private static final String LOWER_TERMS_OPT = "lower-terms";
-  private static final String UPPER_TERMS_OPT = "upper-terms";
-  private static final String TERMS_OPT = "terms";
-
   /**
    * Parse options from a config file.
    *
@@ -505,8 +559,7 @@ public class ExtractCommand implements Command {
             currentOption = null;
             String inputOntologyPath = lineItr.next().trim();
             if (inputOntologyPath.equals("")) {
-              throw new IllegalArgumentException(
-                  String.format("Input path on line %d is empty!", ln));
+              throw new IllegalArgumentException(String.format(emptyOptionError, INPUT_OPT, ln));
             }
             configOptions.put(INPUT_OPT, Lists.newArrayList(inputOntologyPath));
             hasInput = true;
@@ -523,14 +576,14 @@ public class ExtractCommand implements Command {
             String inputOntologyIRI = lineItr.next().trim();
             if (inputOntologyIRI.equals("")) {
               throw new IllegalArgumentException(
-                  String.format("Input IRI on line %d is empty!", ln));
+                  String.format(emptyOptionError, INPUT_IRI_OPT, ln));
             }
             configOptions.put(INPUT_IRI_OPT, Lists.newArrayList(inputOntologyIRI));
             hasInput = true;
             continue;
 
           case OUTPUT_IRI_OPT:
-            if (configOptions.containsKey("output-iri")) {
+            if (configOptions.containsKey(OUTPUT_IRI_OPT)) {
               throw new IllegalArgumentException(
                   String.format("Config file contains more than one output IRI on line %d", ln));
             }
@@ -539,7 +592,7 @@ public class ExtractCommand implements Command {
             String outputIRI = lineItr.next().trim();
             if (outputIRI.equals("")) {
               throw new IllegalArgumentException(
-                  String.format("Output IRI on line %d is empty!", ln));
+                  String.format(emptyOptionError, OUTPUT_IRI_OPT, ln));
             }
             configOptions.put(OUTPUT_IRI_OPT, Lists.newArrayList(outputIRI));
             continue;
@@ -554,7 +607,7 @@ public class ExtractCommand implements Command {
             currentOption = null;
             String target = lineItr.next().trim();
             if (target.equals("")) {
-              throw new IllegalArgumentException(String.format("Target on line %d is empty!", ln));
+              throw new IllegalArgumentException(String.format(emptyOptionError, TARGET_OPT, ln));
             }
             configOptions.put(TARGET_OPT, Lists.newArrayList(target));
             hasTarget = true;
@@ -571,7 +624,7 @@ public class ExtractCommand implements Command {
             String targetIRI = lineItr.next().trim();
             if (targetIRI.equals("")) {
               throw new IllegalArgumentException(
-                  String.format("Target IRI on line %d is empty!", ln));
+                  String.format(emptyOptionError, TARGET_IRI_OPT, ln));
             }
             configOptions.put(TARGET_IRI_OPT, Lists.newArrayList(targetIRI));
             hasTarget = true;
@@ -579,7 +632,7 @@ public class ExtractCommand implements Command {
 
           case METHOD_OPT:
             // Extraction method
-            if (configOptions.containsKey("method")) {
+            if (configOptions.containsKey(METHOD_OPT)) {
               throw new IllegalArgumentException(
                   String.format("Config file contains more than one method on line %d", ln));
             }
@@ -587,7 +640,7 @@ public class ExtractCommand implements Command {
             currentOption = null;
             String method = lineItr.next().trim().toLowerCase();
             if (method.equals("")) {
-              throw new IllegalArgumentException(String.format("Method on line %d is empty!", ln));
+              throw new IllegalArgumentException(String.format(emptyOptionError, METHOD_OPT, ln));
             }
             configOptions.put(METHOD_OPT, Lists.newArrayList(method));
             continue;
@@ -604,7 +657,7 @@ public class ExtractCommand implements Command {
             String intermediates = lineItr.next().trim().toLowerCase();
             if (intermediates.equals("")) {
               throw new IllegalArgumentException(
-                  String.format("Intermediates option on line %d is empty!", ln));
+                  String.format(emptyOptionError, INTERMEDIATES_OPT, ln));
             }
             configOptions.put(INTERMEDIATES_OPT, Lists.newArrayList(intermediates));
             continue;
@@ -620,8 +673,7 @@ public class ExtractCommand implements Command {
             currentOption = null;
             String imports = lineItr.next().trim().toLowerCase();
             if (imports.equals("")) {
-              throw new IllegalArgumentException(
-                  String.format("Imports option on line %d is empty!", ln));
+              throw new IllegalArgumentException(String.format(emptyOptionError, IMPORTS_OPT, ln));
             }
             configOptions.put(IMPORTS_OPT, Lists.newArrayList(imports));
             continue;
@@ -639,7 +691,7 @@ public class ExtractCommand implements Command {
             String annotateSource = lineItr.next().trim();
             if (annotateSource.equals("")) {
               throw new IllegalArgumentException(
-                  String.format("annotate-with-source option on line %d is empty!", ln));
+                  String.format(emptyOptionError, ANNOTATE_SOURCE_OPT, ln));
             }
             configOptions.put(ANNOTATE_SOURCE_OPT, Lists.newArrayList(annotateSource));
             continue;
@@ -656,7 +708,6 @@ public class ExtractCommand implements Command {
       if (currentOption != null) {
         switch (currentOption) {
           case ANNOTATIONS_OPT:
-            // Add this annotation property to list of APs to extract
             List<String> aps = configOptions.getOrDefault(ANNOTATIONS_OPT, new ArrayList<>());
             aps.add(line);
             configOptions.put(ANNOTATIONS_OPT, aps);
@@ -671,6 +722,11 @@ public class ExtractCommand implements Command {
             lts.add(line);
             configOptions.put(LOWER_TERMS_OPT, lts);
             break;
+          case BRANCH_TERMS_OPT:
+            List<String> bts = configOptions.getOrDefault(BRANCH_TERMS_OPT, new ArrayList<>());
+            bts.add(line);
+            configOptions.put(BRANCH_TERMS_OPT, bts);
+            break;
           case TERMS_OPT:
             List<String> ts = configOptions.getOrDefault(TERMS_OPT, new ArrayList<>());
             ts.add(line);
@@ -678,17 +734,18 @@ public class ExtractCommand implements Command {
             break;
           default:
             throw new IllegalArgumentException(
-                String.format("'%s' is an unknown option on line %d", currentOption, ln));
+                String.format(unknownConfigOptionError, currentOption, ln));
         }
       }
     }
 
     // Make sure we have required arguments
     if (!hasInput) {
-      throw new IllegalArgumentException("An input or input-iri is required!");
+      throw new IllegalArgumentException(ExtractOperation.missingInputInConfigError);
     }
-    if (!configOptions.containsKey("method")) {
-      throw new IllegalArgumentException("A method is required!");
+    if (!configOptions.containsKey(METHOD_OPT)) {
+      throw new IllegalArgumentException(
+          "A method of extraction must be specified with '! method'");
     }
 
     // Add defaults where necessary

@@ -153,20 +153,24 @@ public class OntologyHelper {
         case "Class":
           OWLClass childCls = addParent.getKey().asOWLClass();
           Set<OWLClass> parentClss = new HashSet<>();
+
+          // Add parents, making sure they are all classes
           for (OWLEntity e : addParent.getValue()) {
             if (e == null) {
-              logger.warn(
-                  String.format(
-                      "New parent list for <%s> contains null value!", childCls.toStringID()));
               continue;
             }
-            try {
+            if (!e.isOWLClass()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as a superclass for <%s>!",
+                      e.getIRI(), et, childCls.getIRI()));
+            } else {
               OWLClass p = e.asOWLClass();
               parentClss.add(p);
-            } catch (Exception ex) {
-              logger.error(String.format("<%s> is not a Class in input ontology", e.toStringID()));
             }
           }
+
           // Remove existing parents - NAMED only
           for (OWLSubClassOfAxiom scAx : ontology.getSubClassAxiomsForSubClass(childCls)) {
             if (!scAx.getSuperClass().isAnonymous()) {
@@ -179,10 +183,28 @@ public class OntologyHelper {
             manager.addAxiom(ontology, ax);
           }
           break;
+
         case "AnnotationProperty":
           OWLAnnotationProperty childAp = addParent.getKey().asOWLAnnotationProperty();
           Set<OWLAnnotationProperty> parentAps = new HashSet<>();
-          addParent.getValue().forEach(x -> parentAps.add(x.asOWLAnnotationProperty()));
+
+          // Add parents, making sure they are all annotation properties
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLAnnotationProperty()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as an annotation super-property for <%s>!",
+                      e.getIRI(), et, childAp.getIRI()));
+            } else {
+              OWLAnnotationProperty p = e.asOWLAnnotationProperty();
+              parentAps.add(p);
+            }
+          }
+
           // Remove existing parents (all named)
           manager.removeAxioms(ontology, ontology.getSubAnnotationPropertyOfAxioms(childAp));
           for (OWLAnnotationProperty p : parentAps) {
@@ -192,10 +214,28 @@ public class OntologyHelper {
             manager.addAxiom(ontology, ax);
           }
           break;
+
         case "DataProperty":
           OWLDataProperty childDp = addParent.getKey().asOWLDataProperty();
           Set<OWLDataProperty> parentDps = new HashSet<>();
-          addParent.getValue().forEach(x -> parentDps.add(x.asOWLDataProperty()));
+
+          // Add parents, making sure they are all data properties
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLDataProperty()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as a data super-property for <%s>!",
+                      e.getIRI(), et, childDp.getIRI()));
+            } else {
+              OWLDataProperty p = e.asOWLDataProperty();
+              parentDps.add(p);
+            }
+          }
+
           // Remove existing parents (all named)
           manager.removeAxioms(ontology, ontology.getDataSubPropertyAxiomsForSubProperty(childDp));
           for (OWLDataProperty p : parentDps) {
@@ -204,10 +244,28 @@ public class OntologyHelper {
             manager.addAxiom(ontology, ax);
           }
           break;
+
         case "ObjectProperty":
           OWLObjectProperty childOp = addParent.getKey().asOWLObjectProperty();
           Set<OWLObjectProperty> parentOps = new HashSet<>();
-          addParent.getValue().forEach(x -> parentOps.add(x.asOWLObjectProperty()));
+
+          // Add parents, making sure they are all object properties
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLObjectProperty()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as an object super-property for <%s>!",
+                      e.getIRI(), et, childOp.getIRI()));
+            } else {
+              OWLObjectProperty p = e.asOWLObjectProperty();
+              parentOps.add(p);
+            }
+          }
+
           // Remove existing parents - NAMED only
           for (OWLSubObjectPropertyOfAxiom spAx :
               ontology.getObjectSubPropertyAxiomsForSubProperty(childOp)) {
@@ -221,10 +279,24 @@ public class OntologyHelper {
             manager.addAxiom(ontology, ax);
           }
           break;
+
         case "NamedIndividual":
           OWLNamedIndividual indv = addParent.getKey().asOWLNamedIndividual();
           Set<OWLClass> types = new HashSet<>();
-          addParent.getValue().forEach(x -> types.add(x.asOWLClass()));
+
+          // Add types, making sure they are all classes
+          for (OWLEntity e : addParent.getValue()) {
+            if (!e.isOWLClass()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as a type for individual <%s>!",
+                      e.getIRI(), et, indv.getIRI()));
+            } else {
+              types.add(e.asOWLClass());
+            }
+          }
+
           // Remove existing types - NAMED only
           for (OWLClassAssertionAxiom caAx : ontology.getClassAssertionAxioms(indv)) {
             if (!caAx.getClassExpression().isAnonymous()) {
@@ -237,6 +309,7 @@ public class OntologyHelper {
             manager.addAxiom(ontology, ax);
           }
           break;
+
         default:
           throw new Exception(String.format("Cannot add parents for entity type: %s", t));
       }

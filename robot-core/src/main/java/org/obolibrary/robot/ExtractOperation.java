@@ -31,7 +31,23 @@ public class ExtractOperation {
   /** Namespace for errors. */
   private static final String NS = "extract#";
 
-  /** Error message when an invalid intermediates opiton is provided. */
+  /** Error message when user provides invalid extraction method. */
+  private static final String invalidMethodError =
+      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or simple";
+
+  /** Error message when upper or lower terms are used for SLME or simple methods. */
+  private static final String invalidTermsInConfigError =
+      NS + "INVALID TERMS IN CONFIG The '%s' option should only be used for MIREOT";
+
+  /** Error message when 'terms' is missing for SLME or simple methods. */
+  private static final String missingTermsInConfigError =
+      NS + "MISSING TERMS IN CONFIG 'terms' is a required option in the configuration file";
+
+  /** Error when 'input' or 'input-iri' is missing. */
+  protected static final String missingInputInConfigError =
+      NS + "MISSING INPUT IN CONFIG an 'input' or 'input-iri' is required in configuration file";
+
+  /** Error message when an invalid intermediates option is provided. */
   private static final String unknownIntermediatesError =
       NS + "UNKNOWN INTERMEDIATES ERROR '%s' is not a valid --intermediates arg";
 
@@ -221,13 +237,13 @@ public class ExtractOperation {
       throws Exception {
     // Make sure we have terms to extract
     if (!options.containsKey("terms")) {
-      throw new Exception("The 'terms' option is required to extract!");
+      throw new Exception(missingTermsInConfigError);
     }
     if (options.containsKey("lower-terms")) {
-      throw new Exception("The 'lower-terms' option should only be used for MIREOT!");
+      throw new Exception(String.format(invalidTermsInConfigError, "lower-terms"));
     }
     if (options.containsKey("upper-terms")) {
-      throw new Exception("The 'upper-terms' option should only be used for MIREOT!");
+      throw new Exception(String.format(invalidTermsInConfigError, "upper-terms"));
     }
 
     // Get an input
@@ -239,7 +255,7 @@ public class ExtractOperation {
       IRI inputIRI = IRI.create(options.get("input-iri").get(0));
       inputOntology = ioHelper.loadOntology(inputIRI);
     } else {
-      throw new Exception("An input or input IRI is required!");
+      throw new Exception(missingInputInConfigError);
     }
 
     // Maybe get a target
@@ -305,7 +321,7 @@ public class ExtractOperation {
       String apString = split.remove(0).trim();
 
       // Try to create an annotation property from the string
-      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(apString);
+      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(apString, true);
       if (ap == null) {
         logger.error(String.format("Unable to create annotation property from '%s'", apString));
         continue;
@@ -317,7 +333,7 @@ public class ExtractOperation {
 
       String apOpt = split.remove(0);
       for (String s : split) {
-        OWLAnnotationProperty ap2 = checker.getOWLAnnotationProperty(s);
+        OWLAnnotationProperty ap2 = checker.getOWLAnnotationProperty(s, true);
         if (ap2 == null) {
           logger.error(String.format("Unable to create annotation property from '%s'", s));
           continue;
@@ -367,7 +383,7 @@ public class ExtractOperation {
             ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
         break;
       default:
-        throw new Exception("Unknown extraction method: " + method);
+        throw new Exception(invalidMethodError);
     }
 
     updateExtractedModule(
@@ -388,13 +404,13 @@ public class ExtractOperation {
       IOHelper ioHelper, Map<String, List<String>> options) throws Exception {
     // Make sure we have terms to extract
     if (!options.containsKey("terms")) {
-      throw new Exception("The 'terms' option is required to extract!");
+      throw new Exception(missingTermsInConfigError);
     }
     if (options.containsKey("lower-terms")) {
-      throw new Exception("The 'lower-terms' option should only be used for MIREOT!");
+      throw new Exception(String.format(invalidTermsInConfigError, "lower-terms"));
     }
     if (options.containsKey("upper-terms")) {
-      throw new Exception("The 'upper-terms' option should only be used for MIREOT!");
+      throw new Exception(String.format(invalidTermsInConfigError, "upper-terms"));
     }
 
     // Get an input
@@ -405,7 +421,7 @@ public class ExtractOperation {
     } else if (options.containsKey("input-iri")) {
       inputIRI = IRI.create(options.get("input-iri").get(0));
     } else {
-      throw new Exception("An input or input IRI is required!");
+      throw new Exception(missingInputInConfigError);
     }
 
     // Maybe get a target
@@ -438,10 +454,10 @@ public class ExtractOperation {
     XMLHelper xmlHelper;
     if (inputPath != null) {
       xmlHelper = new XMLHelper(inputPath, outputIRI);
-    } else if (inputIRI != null) {
-      xmlHelper = new XMLHelper(inputIRI, outputIRI);
     } else {
-      throw new Exception("An input or input IRI is required!");
+      // IRI should never be null here
+      assert inputIRI != null;
+      xmlHelper = new XMLHelper(inputIRI, outputIRI);
     }
 
     // Parse terms
@@ -741,6 +757,19 @@ public class ExtractOperation {
     manager.removeAxioms(outputOntology, removeAxioms);
   }
 
+  /**
+   * Update an extracted module. First copy needed annotations, keeping original annotations. Then
+   * map new annotations, removing the original annotations. Finally, update parents by replacing
+   * old parents with new parents. If terms are dangling after updating parents (and they are not in
+   * the target IRIs), remove these.
+   *
+   * @param outputOntology OWLOntology to update
+   * @param terms Set of IRIs to keep after updating parents
+   * @param copyToAnnotations Map of annotation properties to copy
+   * @param mapToAnnotations Map of annotation properties to replace
+   * @param replaceParents Map of OWLEntity child -> new parent
+   * @throws Exception on any problem
+   */
   protected static void updateExtractedModule(
       OWLOntology outputOntology,
       Set<IRI> terms,

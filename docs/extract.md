@@ -246,9 +246,10 @@ The following command-line options are supported:
 Either an `! input` or `! input-iri` is required. The `! method` is required. For MIREOT extractions, `! lower-terms` is a required option. For SLME and simple extractions, `! terms` is a required option.
 
 When using the `--config` option, an `--output` must be specified:
-```
-robot extract --config my-config.txt --output my-new-ontology.owl
-```
+
+    robot extract --config uberon_config.txt \
+     --output results/uberon_mireot.owl
+
 
 ### Using Labels
 
@@ -335,28 +336,66 @@ length unit		measurement unit label
 
 ## Error Messages
 
+### Empty Option Error
+
+This error is thrown when a `! <option-name>` option in the config file does not have contents directly below it. There should be **no** blank lines between the option and the argument. For example:
+```
+! input
+path/to/input.owl
+```
+
+### Invalid Method Error
+
+The `--method` option only accepts: MIREOT, STAR, TOP, BOT, or simple.
+
+### Invalid Option Error
+
+The following flags *should not* be used with STAR, TOP, BOT, or simple methods:
+* `--upper-term` & `--upper-terms`
+* `--lower-term` & `--lower-terms`
+* `--branch-from-term` & `--branch-from-terms`
+
+Instead, `--term` or `--term-file` must be used.
+
+### Invalid Source Map Error
+
+The input for `--sources` must be either CSV or TSV format.
+
+## Invalid Terms in Config
+
+The `! upper-terms` and `! lower-terms` options should only be used for MIREOT.
+
+The `! terms` option should be used only with SLME and simple methods.
+
+### Missing Input in Config
+
+An `! input` or `! input-iri` is required in the configuration file. 
+
+For `! input`, the path to the local ontology should appear on the next line. For `! input-iri`, the IRI of the ontology (e.g. `http://purl.obolibrary.org/obo/obi.owl`) should appear on the next line.
+
 ### Missing MIREOT Term(s) Error
 
 MIREOT requires either `--lower-term` or `--branch-from-term` to proceed. `--upper-term` is optional.
+
+For configuration files, either the `! lower-terms` or `! branch-from-terms` is required. Terms should be listed line-by-line directly under the option.
 
 ### Missing Lower Term(s) Error
 
 If an `--upper-term` is specified for MIREOT, `--lower-term` (or terms) must also be specified.
 
-### Invalid Method Error
+### Missing Terms in Config
 
-The `--method` option only accepts: MIREOT, STAR, TOP, and BOT.
+The `! terms` option in the configuration file is required for SLME and simple extraction methods. Terms should be listed under this option line-by-line:
+```
+! terms
+example term 1
+example term 2
+...
+```
 
-### Invalid Option Error
+### Unknown Config Option
 
-The following flags *should not* be used with STAR, TOP, or BOT methods:
-* `--upper-term` & `--upper-terms`
-* `--lower-term` & `--lower-terms`
-* `--branch-from-term` & `--branch-from-terms`
-
-### Invalid Source Map Error
-
-The input for `--sources` must be either CSV or TSV format.
+This error message means that an unexpected `! <option-name>` option was provided in the configuration file. The accepted options are [listed here](#import-configuration-file).
 
 ### Unknown Individuals Error
 

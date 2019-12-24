@@ -32,6 +32,12 @@ public class MireotOperation {
           + "MISSING LOWER TERMS ERROR "
           + "lower term(s) must be specified with upper term(s) for MIREOT";
 
+  /** Error message when lower or branch terms are not specified with MIREOT. */
+  private static final String missingMireotTermsError =
+      NS
+          + "MISSING MIREOT TERMS ERROR "
+          + "either '! lower-terms' or '! branch-from-terms' must be specified for MIREOT in the config file";
+
   /** Shared data factory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
@@ -85,18 +91,27 @@ public class MireotOperation {
     return MergeOperation.merge(outputOntologies);
   }
 
+  /**
+   * Extract a module from an input ontology using the MIREOT method with parameters from a
+   * configuration file.
+   *
+   * @param ioHelper IOHelper to load ontology, resolve IRIs
+   * @param options Map of config options
+   * @return OWLOntology extracted module
+   * @throws Exception on problem with config options or any issue extracting module
+   */
   public static OWLOntology mireotFromConfig(IOHelper ioHelper, Map<String, List<String>> options)
       throws Exception {
     // Make sure we have terms to extract
-    if (!options.containsKey("lower-terms")) {
-      throw new Exception("The 'lower-terms' option is required for MIEROT!");
+    if (!options.containsKey("lower-terms") && !options.containsKey("branch-from-terms")) {
+      throw new Exception(missingMireotTermsError);
     }
     if (options.containsKey("terms")) {
-      throw new Exception("The 'terms' option should not be used for MIREOT!");
+      logger.error("'terms' should not be used for MIREOT, these entries will be ignored...");
     }
 
     // Get an input
-    OWLOntology inputOntology = null;
+    OWLOntology inputOntology;
     if (options.containsKey("input")) {
       String inputPath = options.get("input").get(0);
       inputOntology = ioHelper.loadOntology(inputPath);
@@ -104,7 +119,7 @@ public class MireotOperation {
       IRI inputIRI = IRI.create(options.get("input-iri").get(0));
       inputOntology = ioHelper.loadOntology(inputIRI);
     } else {
-      throw new Exception("An input or input IRI is required!");
+      throw new Exception(ExtractOperation.missingInputInConfigError);
     }
 
     IRI inputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
@@ -131,7 +146,7 @@ public class MireotOperation {
     Map<OWLEntity, Set<OWLEntity>> replaceParents = new HashMap<>();
     Map<IRI, IRI> sourceMap = new HashMap<>();
 
-    // Parse terms
+    // Parse lower terms
     Set<IRI> lowerTerms = new HashSet<>();
     for (String termLine : options.get("lower-terms")) {
       List<String> split = Lists.newArrayList(termLine.split("\t"));
@@ -157,9 +172,9 @@ public class MireotOperation {
         if (s.trim().equals("")) {
           continue;
         }
-        OWLEntity e2 = checker.getOWLEntity(termString);
+        OWLEntity e2 = checker.getOWLEntity(s);
         if (e2 == null) {
-          logger.error(String.format("Unable to create entity from '%s'", termString));
+          logger.error(String.format("Unable to create entity from '%s'", s));
           continue;
         }
         replaceParentsForCurrent.add(e2);
@@ -169,6 +184,7 @@ public class MireotOperation {
       }
     }
 
+    // Parse upper terms
     Set<IRI> upperTerms = new HashSet<>();
     for (String termLine : options.getOrDefault("upper-terms", new ArrayList<>())) {
       List<String> split = Lists.newArrayList(termLine.split("\t"));
@@ -194,9 +210,47 @@ public class MireotOperation {
         if (s.trim().equals("")) {
           continue;
         }
-        OWLEntity e2 = checker.getOWLEntity(termString);
+        OWLEntity e2 = checker.getOWLEntity(s);
         if (e2 == null) {
-          logger.error(String.format("Unable to create entity from '%s'", termString));
+          logger.error(String.format("Unable to create entity from '%s'", s));
+          continue;
+        }
+        replaceParentsForCurrent.add(e2);
+      }
+      if (!replaceParentsForCurrent.isEmpty()) {
+        replaceParents.put(e, replaceParentsForCurrent);
+      }
+    }
+
+    // Parse branch-from terms
+    Set<IRI> branchTerms = new HashSet<>();
+    for (String termLine : options.getOrDefault("branch-from-terms", new ArrayList<>())) {
+      List<String> split = Lists.newArrayList(termLine.split("\t"));
+      String termString = split.remove(0).trim();
+
+      OWLEntity e = checker.getOWLEntity(termString);
+      if (e == null) {
+        logger.error(String.format("Unable to create entity from '%s'", termString));
+        continue;
+      }
+      branchTerms.add(e.getIRI());
+      if (inputIRI != null) {
+        sourceMap.put(e.getIRI(), inputIRI);
+      }
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      // IF there are remaining splits, add them as replacement parents
+      Set<OWLEntity> replaceParentsForCurrent = new HashSet<>();
+      for (String s : split) {
+        if (s.trim().equals("")) {
+          continue;
+        }
+        OWLEntity e2 = checker.getOWLEntity(s);
+        if (e2 == null) {
+          logger.error(String.format("Unable to create entity from '%s'", s));
           continue;
         }
         replaceParentsForCurrent.add(e2);
@@ -215,7 +269,7 @@ public class MireotOperation {
       String apString = split.remove(0).trim();
 
       // Try to create an annotation property from the string
-      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(apString);
+      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(apString, true);
       if (ap == null) {
         logger.error(String.format("Unable to create annotation property from '%s'", apString));
         continue;
@@ -228,7 +282,7 @@ public class MireotOperation {
 
       String apOpt = split.remove(0);
       for (String s : split) {
-        OWLAnnotationProperty ap2 = checker.getOWLAnnotationProperty(s);
+        OWLAnnotationProperty ap2 = checker.getOWLAnnotationProperty(s, true);
         if (ap2 == null) {
           logger.error(String.format("Unable to create annotation property from '%s'", s));
           continue;
@@ -239,6 +293,11 @@ public class MireotOperation {
           copyToAnnotations.put(ap, ap2);
         }
       }
+    }
+
+    // If no APs were provided, add them all
+    if (annotationProperties.isEmpty()) {
+      annotationProperties.addAll(inputOntology.getAnnotationPropertiesInSignature());
     }
 
     // Map options from list to string
@@ -256,7 +315,7 @@ public class MireotOperation {
             inputOntology,
             lowerTerms,
             upperTerms,
-            null,
+            branchTerms,
             extractOptions,
             sourceMap,
             annotationProperties);
