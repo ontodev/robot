@@ -16,8 +16,13 @@ import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a> */
-public class TreeOperation {
+/**
+ * Class to create a JSON tree from an OWL Ontology. This JSON tree can be used to create an Inspire
+ * Tree.
+ *
+ * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
+ */
+public class TreeBuilder {
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(QuotedEntityChecker.class);
@@ -72,7 +77,13 @@ public class TreeOperation {
     return options;
   }
 
-  public TreeOperation(IOHelper ioHelper, OWLOntology ontology) {
+  /**
+   * Init a new TreeBuilder.
+   *
+   * @param ioHelper IOHelper to resolve IRIs, etc.
+   * @param ontology OWLOntology to build tree from
+   */
+  public TreeBuilder(IOHelper ioHelper, OWLOntology ontology) {
     this.ioHelper = ioHelper;
     this.ontology = ontology;
 
@@ -94,6 +105,7 @@ public class TreeOperation {
     setOrderedAnnotations();
   }
 
+  /** Set the order that annotations should appear in the tree. */
   private void setOrderedAnnotations() {
     this.orderedAnnotations =
         Lists.newArrayList(
@@ -104,6 +116,15 @@ public class TreeOperation {
                 IRI.create("http://purl.obolibrary.org/obo/IAO_0000115")));
   }
 
+  /**
+   * Build a tree object (a JSON array from the ontology) and write to provided output file in
+   * provided format (JSON, HTML, or MD).
+   *
+   * @param upperTerms Set of IRIs representing the top-level terms of the tree
+   * @param annotationProperties Set of IRIs of annotation properties to include
+   * @param options Map of Tree options
+   * @throws Exception on any problem
+   */
   public void buildTree(
       Set<IRI> upperTerms, Set<IRI> annotationProperties, Map<String, String> options)
       throws Exception {
@@ -149,6 +170,12 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * Use OWL Ontology to create a JSON array.
+   *
+   * @param annotationProperties Set of IRIs of annotation properties to include
+   * @param upperTerms Set of IRIs representing the top-level terms of the tree
+   */
   private void parseOntology(Set<IRI> annotationProperties, Set<IRI> upperTerms) {
     // ----------- Handle ontology annotations -----------
     tree.add(parseOntologyHeader());
@@ -244,11 +271,12 @@ public class TreeOperation {
           continue;
         }
 
-        IRI typeIRI = t.getIRI();
         JsonObject typeClass = new JsonObject();
 
-        typeClass.addProperty("id", typeIRI.toString());
-        typeClass.addProperty("text", typeLabel);
+        // These appear more than once in the tree and will have the same ID
+        // Do it needs to be overidden by appending something
+        // This is removed for the text display in the tree view
+        typeClass.addProperty("id", typeLabel + "{OWLClass}");
         typeClass.add("children", getIndiviudalArray(t, annPropMap));
         individualsByType.add(typeClass);
       }
@@ -419,6 +447,11 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * Generate a JSON Object representing the ontology header (IRI, imports, etc.)
+   *
+   * @return JSON Object of ontology header
+   */
   private JsonObject parseOntologyHeader() {
     // Basic details
     JsonObject ontologyObj = new JsonObject();
@@ -516,6 +549,11 @@ public class TreeOperation {
     return ontologyObj;
   }
 
+  /**
+   * Get the set of top-level OWLClasses from the ontology.
+   *
+   * @return Set of top-level OWLClasses
+   */
   private Set<OWLClass> getTopClasses() {
     Set<OWLClass> topClasses = new HashSet<>();
     for (OWLClass c : ontology.getClassesInSignature()) {
@@ -535,6 +573,11 @@ public class TreeOperation {
     return topClasses;
   }
 
+  /**
+   * Get the set of top-level OWLAnnotationProperties from the ontology.
+   *
+   * @return Set of top-level OWLAnnotationProperties
+   */
   private Set<OWLAnnotationProperty> getTopAnnotationProperties() {
     Set<OWLAnnotationProperty> topProperties = new HashSet<>();
     for (OWLAnnotationProperty p : ontology.getAnnotationPropertiesInSignature()) {
@@ -554,6 +597,11 @@ public class TreeOperation {
     return topProperties;
   }
 
+  /**
+   * Get the set of top-level OWLDataProperties from the ontology.
+   *
+   * @return Set of top-level OWLDataProperties
+   */
   private Set<OWLDataProperty> getTopDataProperties() {
     Set<OWLDataProperty> topProperties = new HashSet<>();
     for (OWLDataProperty p : ontology.getDataPropertiesInSignature()) {
@@ -573,6 +621,11 @@ public class TreeOperation {
     return topProperties;
   }
 
+  /**
+   * Get the set of top-level OWLObjectProperties from the ontology.
+   *
+   * @return Set of top-level OWLObjectProperties
+   */
   private Set<OWLObjectProperty> getTopObjectProperties() {
     Set<OWLObjectProperty> topProperties = new HashSet<>();
     for (OWLObjectProperty p : ontology.getObjectPropertiesInSignature()) {
@@ -592,6 +645,13 @@ public class TreeOperation {
     return topProperties;
   }
 
+  /**
+   * Create a JSON Object representing an OWLClass.
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param cls OWLClass to create a JSON Object for
+   * @return JSON Object representing OWLClass
+   */
   private JsonObject parseClass(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLClass cls) {
     // Tree details are text (label) and children
@@ -649,7 +709,7 @@ public class TreeOperation {
     }
 
     // Only add to attributes once
-    String label = treeDetails.get("text").getAsString();
+    String label = treeDetails.get("id").getAsString();
     if (attributes.get(label) == null) {
       attributes.add(label, attrs);
     }
@@ -657,6 +717,13 @@ public class TreeOperation {
     return treeDetails;
   }
 
+  /**
+   * Create a JSON Object representing an OWLNamedIndividual.
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param individual OWLNamedIndividual to create a JSON Object for
+   * @return JSON Object representing OWLNamedIndividual
+   */
   private JsonObject parseIndividual(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLNamedIndividual individual) {
     JsonObject treeDetails = getBasicDetails(individual);
@@ -683,7 +750,7 @@ public class TreeOperation {
     }
 
     // Only add to attributes once
-    String label = treeDetails.get("text").getAsString();
+    String label = treeDetails.get("id").getAsString();
     if (attributes.get(label) == null) {
       attributes.add(label, attrs);
     }
@@ -691,6 +758,13 @@ public class TreeOperation {
     return treeDetails;
   }
 
+  /**
+   * Create a JSON Object representing an OWLAnnotationProperty.
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param property OWLAnnotationProperty to create a JSON Object for
+   * @return JSON Object representing OWLAnnotationProperty
+   */
   private JsonObject parseAnnotationProperty(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLAnnotationProperty property) {
     // Tree details are ID, text (label), and children
@@ -723,7 +797,7 @@ public class TreeOperation {
     }
 
     // Only add to attributes once
-    String label = treeDetails.get("text").getAsString();
+    String label = treeDetails.get("id").getAsString();
     if (attributes.get(label) == null) {
       attributes.add(label, attrs);
     }
@@ -731,6 +805,13 @@ public class TreeOperation {
     return treeDetails;
   }
 
+  /**
+   * Create a JSON Object representing an OWLDataProperty.
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param property OWLDataProperty to create a JSON Object for
+   * @return JSON Object representing OWLDataProperty
+   */
   private JsonObject parseDataProperty(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLDataProperty property) {
     // Tree details are ID, text (label), and children
@@ -785,7 +866,7 @@ public class TreeOperation {
     }
 
     // Only add to attributes once
-    String label = treeDetails.get("text").getAsString();
+    String label = treeDetails.get("id").getAsString();
     if (attributes.get(label) == null) {
       attributes.add(label, attrs);
     }
@@ -793,6 +874,13 @@ public class TreeOperation {
     return treeDetails;
   }
 
+  /**
+   * Create a JSON Object representing an OWLObjectProperty.
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param property OWLObjectProperty to create a JSON Object for
+   * @return JSON Object representing OWLObjectProperty
+   */
   private JsonObject parseObjectProperty(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLObjectProperty property) {
     // Tree details are ID, text (label), and children
@@ -847,7 +935,7 @@ public class TreeOperation {
     }
 
     // Only add to attributes once
-    String label = treeDetails.get("text").getAsString();
+    String label = treeDetails.get("id").getAsString();
     if (attributes.get(label) == null) {
       attributes.add(label, attrs);
     }
@@ -855,12 +943,19 @@ public class TreeOperation {
     return treeDetails;
   }
 
+  /**
+   * Create a JSON Object representing an OWLDatatype.
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param datatype OWLDatatype to create a JSON Object for
+   * @return JSON Object representing OWLDatatype
+   */
   private JsonObject parseDatatype(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLDatatype datatype) {
     JsonObject treeDetails = getBasicDetails(datatype);
     JsonObject attrs = getAttributes(annotationProperties, datatype);
     // Only add to attributes once
-    String label = treeDetails.get("text").getAsString();
+    String label = treeDetails.get("id").getAsString();
     if (attributes.get(label) == null) {
       attributes.add(label, attrs);
     }
@@ -870,6 +965,12 @@ public class TreeOperation {
 
   Map<String, String> shortFormToLabel = new HashMap<>();
 
+  /**
+   * Create a JSON Object containing basic details for an OWLEntity. This is: label as 'id'
+   *
+   * @param e OWLEntity to get details for
+   * @return JSON Object containing basic details for OWLEntity
+   */
   private JsonObject getBasicDetails(OWLEntity e) {
     // Tree details are ID, text (label), and children
     JsonObject treeDetails = new JsonObject();
@@ -885,12 +986,19 @@ public class TreeOperation {
     }
 
     // Add details for tree node
-    treeDetails.addProperty("text", label);
     treeDetails.addProperty("id", label);
 
     return treeDetails;
   }
 
+  /**
+   * Create a JSON Object containing additional attributes for an OWLEntity. These include the IRI,
+   * annotations, and logic (e.g., superclasses).
+   *
+   * @param annotationProperties Map of annotation property object to label
+   * @param e OWLEntity to get attributes for
+   * @return JSON Object containing additional attributes for OWLEntity
+   */
   private JsonObject getAttributes(
       Map<OWLAnnotationProperty, String> annotationProperties, OWLEntity e) {
     // Attributes are everything else (annotations, etc...)
@@ -928,6 +1036,11 @@ public class TreeOperation {
     return attrs;
   }
 
+  /**
+   * @param entity OWLEntity to create JSON array of annotations for
+   * @param ap OWLAnnotationProperty to get values of
+   * @return Json array of annotation values for annotation property
+   */
   private JsonArray getAnnotationArray(OWLEntity entity, OWLAnnotationProperty ap) {
     JsonArray annArray = new JsonArray();
     Collection<OWLAnnotation> anns = EntitySearcher.getAnnotationObjects(entity, ontology, ap);
@@ -964,6 +1077,11 @@ public class TreeOperation {
     return annArray;
   }
 
+  /**
+   * @param cls
+   * @param annotationProperties
+   * @return
+   */
   private JsonArray getSubClassArray(
       OWLClass cls, Map<OWLAnnotationProperty, String> annotationProperties) {
     JsonArray children = new JsonArray();
@@ -982,7 +1100,11 @@ public class TreeOperation {
     // Parse and add to array
     int childCount = 0;
     for (OWLClassExpression child : subClasses) {
-      children.add(parseClass(annotationProperties, child.asOWLClass()));
+      JsonObject next = parseClass(annotationProperties, child.asOWLClass());
+      if (next == null) {
+        continue;
+      }
+      children.add(next);
       childCount++;
     }
 
@@ -993,6 +1115,11 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * @param cls
+   * @param annotationProperties
+   * @return
+   */
   private JsonArray getIndiviudalArray(
       OWLClass cls, Map<OWLAnnotationProperty, String> annotationProperties) {
     JsonArray individuals = new JsonArray();
@@ -1037,6 +1164,11 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * @param property
+   * @param annotationProperties
+   * @return
+   */
   private JsonArray getSubPropertyArray(
       OWLAnnotationProperty property, Map<OWLAnnotationProperty, String> annotationProperties) {
     JsonArray children = new JsonArray();
@@ -1065,6 +1197,11 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * @param property
+   * @param annotationProperties
+   * @return
+   */
   private JsonArray getSubPropertyArray(
       OWLDataProperty property, Map<OWLAnnotationProperty, String> annotationProperties) {
     JsonArray children = new JsonArray();
@@ -1094,6 +1231,11 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * @param property
+   * @param annotationProperties
+   * @return
+   */
   private JsonArray getSubPropertyArray(
       OWLObjectProperty property, Map<OWLAnnotationProperty, String> annotationProperties) {
     JsonArray children = new JsonArray();
@@ -1123,6 +1265,10 @@ public class TreeOperation {
     }
   }
 
+  /**
+   * @param e
+   * @return
+   */
   private boolean isObsolete(OWLEntity e) {
     for (OWLAnnotation ann :
         EntitySearcher.getAnnotationObjects(e, ontology, dataFactory.getOWLDeprecated())) {
@@ -1144,6 +1290,10 @@ public class TreeOperation {
     return false;
   }
 
+  /**
+   * @param values
+   * @return
+   */
   private Set<String> renderExpressions(Set<OWLObject> values) {
     Set<String> renderedValues = new HashSet<>();
     for (OWLObject v : values) {
@@ -1187,6 +1337,10 @@ public class TreeOperation {
     return renderedValues;
   }
 
+  /**
+   * @param outputPath
+   * @throws IOException
+   */
   private void writeHTML(String outputPath) throws IOException {
     // JSON data
     Gson g = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -1207,11 +1361,20 @@ public class TreeOperation {
     FileUtils.writeStringToFile(new File(outputPath), htmlOutput);
   }
 
+  /**
+   * @param outputPath
+   * @throws IOException
+   */
   private void writeJSON(String outputPath) throws IOException {
     Gson g = new GsonBuilder().setPrettyPrinting().create();
     FileUtils.writeStringToFile(new File(outputPath), g.toJson(tree));
   }
 
+  /**
+   * @param markdownPattern
+   * @param outputPath
+   * @throws Exception
+   */
   private void writeMarkdown(String markdownPattern, String outputPath) throws Exception {
     // Validate the MD pattern
     if (!markdownPattern.contains("{ID}") && !markdownPattern.contains("{LABEL}")) {
@@ -1226,13 +1389,20 @@ public class TreeOperation {
     FileUtils.writeStringToFile(new File(outputPath), md);
   }
 
+  /**
+   * @param arr
+   * @param markdownPattern
+   * @param level
+   * @return
+   */
   private static List<String> getMarkdown(JsonArray arr, String markdownPattern, int level) {
     List<String> lines = new ArrayList<>();
     for (JsonElement element : arr) {
       if (element.isJsonObject()) {
         JsonObject obj = element.getAsJsonObject();
-        String id = obj.get("id").getAsString();
-        String text = obj.get("text").getAsString();
+        // TODO - redo
+        String id = "";
+        String text = obj.get("id").getAsString();
 
         // Number of spaces is 2*level
         String spaces = String.join("", Collections.nCopies(level, "  "));
@@ -1252,17 +1422,33 @@ public class TreeOperation {
     return lines;
   }
 
+  /** Comparator that arranges entities by label alphabetically. */
   class SortByLabel implements Comparator<Object> {
+    /**
+     * @param e1
+     * @param e2
+     * @return
+     */
     public int compareEntities(OWLEntity e1, OWLEntity e2) {
       String label1 = checker.getLabel(e1.getIRI(), IOHelper.getShortForm(e1.getIRI()));
       String label2 = checker.getLabel(e2.getIRI(), IOHelper.getShortForm(e2.getIRI()));
       return compareStrings(label1, label2);
     }
 
+    /**
+     * @param s1
+     * @param s2
+     * @return
+     */
     public int compareStrings(String s1, String s2) {
       return s1.toLowerCase().compareTo(s2.toLowerCase());
     }
 
+    /**
+     * @param o1
+     * @param o2
+     * @return
+     */
     @Override
     public int compare(Object o1, Object o2) {
       if (o1 instanceof OWLEntity && o2 instanceof OWLEntity) {
@@ -1274,6 +1460,7 @@ public class TreeOperation {
     }
   }
 
+  /** Comparator for IEDB trees that arranges any "other" entity at the end of the list. */
   class SortByOther implements Comparator<Object> {
     public int compareEntities(OWLEntity e1, OWLEntity e2) {
       boolean b1 =
@@ -1287,6 +1474,11 @@ public class TreeOperation {
       return s1.toLowerCase().compareTo(s2.toLowerCase());
     }
 
+    /**
+     * @param o1
+     * @param o2
+     * @return
+     */
     @Override
     public int compare(Object o1, Object o2) {
       if (o1 instanceof OWLEntity && o2 instanceof OWLEntity) {
@@ -1298,6 +1490,7 @@ public class TreeOperation {
     }
   }
 
+  /** Comparator that arranges deprecated entities at the end of the list. */
   class SortByStatus implements Comparator<Object> {
     public int compareEntities(OWLEntity e1, OWLEntity e2) {
       boolean b1 = isObsolete(e1);
@@ -1309,6 +1502,11 @@ public class TreeOperation {
       return s1.toLowerCase().compareTo(s2.toLowerCase());
     }
 
+    /**
+     * @param o1
+     * @param o2
+     * @return
+     */
     @Override
     public int compare(Object o1, Object o2) {
       if (o1 instanceof OWLEntity && o2 instanceof OWLEntity) {

@@ -103,7 +103,7 @@ public class TreeCommand implements Command {
     OWLOntology ontology = state.getOntology();
 
     // Override default reasoner options with command-line options
-    Map<String, String> treeOptions = TreeOperation.getDefaultOptions();
+    Map<String, String> treeOptions = TreeBuilder.getDefaultOptions();
     for (String option : treeOptions.keySet()) {
       if (line.hasOption(option)) {
         treeOptions.put(option, line.getOptionValue(option));
@@ -114,7 +114,7 @@ public class TreeCommand implements Command {
     Set<IRI> annotationProperties =
         CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
 
-    TreeOperation treeOp = new TreeOperation(ioHelper, ontology);
+    TreeBuilder treeOp = new TreeBuilder(ioHelper, ontology);
     treeOp.buildTree(upperTerms, annotationProperties, treeOptions);
 
     return state;

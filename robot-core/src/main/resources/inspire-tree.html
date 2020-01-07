@@ -380,45 +380,13 @@ p {
   </div>
 </body>
 <script>
-  // Label for owl:deprecated
-  var owl_deprecated = '{OWL_DEPRECATED}';
+  // ----------- Functions -----------
 
-	// attributes for each class
-	var attributes = {ATTRIBUTES}
-
-	// init a new Inspire Tree
-	var tree = new InspireTree({
-		// Class ID, text (label), and children
-		data: {DATA}
-	});
-
-	// Inspire Tree DOM
-  new InspireTreeDOM(tree, {
-    target: '.tree'
-  });
-
-  // Document elements
-  var li_elements = document.getElementsByTagName("li");
-  var textInput = document.getElementById('search');
-  var clearBtn = document.getElementById('clear');
-
-  // Strike out deprecated terms
-  for (var i = 0, len = li_elements.length; i < len; i++ ) {
-    elem = li_elements[ i ];
-    if (elem.hasAttribute('data-uid')) {
-      // We know it's a tree element if it has a data-uid
-      // Which corresponds to the node ID
-      id = elem.getAttribute('data-uid');
-      if (attributes.hasOwnProperty(id)) {
-        attrs = attributes[id];
-        if (attrs.hasOwnProperty(owl_deprecated)) {
-          if (attrs.deprecated == 'true') {
-            // Only add line-through style to deprecated 'true' nodes
-            li_elements[i].style.textDecoration = 'line-through';
-          }
-        }
-      }
-    }
+  // Function to collapse tree up to selected node
+  function collapseTree() {
+    tree.collapse();
+    tree.selected(true).collapseDeep();
+    tree.selected(true).expandParents();
   }
 
   // Function to display info box on right side
@@ -452,13 +420,6 @@ p {
     document.getElementById('info').innerHTML = innerHTML;
   }
 
-  // Function to collapse tree up to selected node
-  function collapseTree() {
-    tree.collapse();
-    tree.selected(true).collapseDeep();
-    tree.selected(true).expandParents();
-  }
-
   // Function to click an existing link to display its info box
   function jumpTo(text) {
     if (attributes.hasOwnProperty(text)) {
@@ -468,6 +429,18 @@ p {
       // If the node doesn't exist, open IRI in a new tab
       var win = window.open(text, '_blank');
       win.focus();
+    }
+  }
+
+  // Function to load node from query string
+  function loadNode() {
+    const params = new URLSearchParams(window.location.search);
+    const text = params.get('text');
+    if (text != null && text != '') {
+      // Select the correct node
+      selectNode(text);
+      // And display the info box
+      displayInfo(text);
     }
   }
 
@@ -485,19 +458,84 @@ p {
     n.select();
   }
 
-  // Function to load node from query string
-  function loadNode() {
-    const params = new URLSearchParams(window.location.search);
-    const text = params.get('text');
-    if (text != null && text != '') {
-      // Select the correct node
-      selectNode(text);
-      // And display the info box
-      displayInfo(text);
+  // Funciton to update tree nodes to have text displays
+  function update(node) {
+    var id = node.id;
+    // Appending -type to IDs for individuals by types prevents collision
+    // Remove it for the text display
+    if (id.endsWith('-type')) {
+      id = id.replace('-type', '');
+    }
+    // Some nodes might have text different than their ID
+    // Do not override these
+    var t = node.text;
+    if (t == null) {
+      node.set('text', id);
+    }
+    // Update child nodes
+    if (node.hasChildren()) {
+      var c = node.getChildren();
+      for (var i = 0, len = c.length; i < len; i++ ) {
+        update(c[i]);
+      }
     }
   }
 
-  // --- Event listeners ---
+  // ---------- Variables ----------
+
+  // Label for owl:deprecated
+  var owl_deprecated = '{OWL_DEPRECATED}';
+
+	// attributes for each class
+	var attributes = {ATTRIBUTES}
+
+	// init a new Inspire Tree
+	var tree = new InspireTree({
+		// Class ID, text (label), and children
+		data: {DATA}
+	});
+
+  // ---------- On init ----------
+
+  // Add text displays for all nodes
+  var nodes = tree.nodes();
+  for (var i = 0, len = nodes.length; i < len; i++ ) {
+    var n = nodes[i];
+    update(n);
+  } 
+  // Remove nodes var from memory
+  delete nodes;
+
+  // Init Inspire Tree DOM
+  new InspireTreeDOM(tree, {
+    target: '.tree'
+  });
+
+  // Document elements
+  var li_elements = document.getElementsByTagName("li");
+  var textInput = document.getElementById('search');
+  var clearBtn = document.getElementById('clear');
+
+  // Strike out deprecated terms
+  for (var i = 0, len = li_elements.length; i < len; i++ ) {
+    elem = li_elements[ i ];
+    var id = elem.id;
+    if (elem.hasAttribute('data-uid')) {
+      if (attributes.hasOwnProperty(id)) {
+        attrs = attributes[id];
+        if (attrs.hasOwnProperty(owl_deprecated)) {
+          if (attrs.deprecated == 'true') {
+            // Only add line-through style to deprecated 'true' nodes
+            li_elements[i].style.textDecoration = 'line-through';
+          }
+        }
+      }
+    }
+  }
+  // Remove var from memory
+  delete li_elements;
+
+  // ---------- Event listeners ----------
 
   // On back or forward button
   window.addEventListener('popstate', function(e) {
