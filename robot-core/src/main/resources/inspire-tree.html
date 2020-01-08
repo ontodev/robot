@@ -564,6 +564,12 @@ p {
 
   // Search functionality
   $('input').on('keyup', _.debounce(function(event) {
-    tree.search(this.value);
+    var val = this.value;
+    // Escape parentheses
+    if (val.includes('(') || val.includes(')')) {
+      val = val.replace('(', '\\(')
+      val = val.replace(')', '\\)')
+    }
+    tree.search(val);
   }, 500));
 </script>
