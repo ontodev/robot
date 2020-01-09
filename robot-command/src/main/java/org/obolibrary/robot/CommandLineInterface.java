@@ -30,6 +30,7 @@ public class CommandLineInterface {
     m.addCommand("merge", new MergeCommand());
     m.addCommand("minimize", new MinimizeCommand());
     m.addCommand("mirror", new MirrorCommand());
+    m.addCommand("python", new PythonCommand());
     m.addCommand("query", new QueryCommand());
     m.addCommand("reason", new ReasonCommand());
     m.addCommand("reduce", new ReduceCommand());

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import com.github.jsonldjava.core.Context;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,11 +26,8 @@ public class IOHelperTest extends CoreTest {
    * @throws IOException on file problem
    */
   @Test
-  public void testJSON() throws IOException {
-    IOHelper ioh = new IOHelper();
-    String jsonPath = this.getClass().getResource("/simple.json").getFile();
-    File jsonFile = new File(jsonPath);
-    assertIdentical("/simple.owl", ioh.loadOntology(jsonFile));
+  public void testJSON() throws IOException, URISyntaxException {
+    assertIdentical("/simple.owl", loadOntologyWithCatalog("/simple.json"));
   }
 
   /**
@@ -38,11 +36,8 @@ public class IOHelperTest extends CoreTest {
    * @throws IOException on file problem
    */
   @Test
-  public void testYAML() throws IOException {
-    IOHelper ioh = new IOHelper();
-    String yamlPath = this.getClass().getResource("/simple.yaml").getFile();
-    File yamlFile = new File(yamlPath);
-    assertIdentical("/simple.owl", ioh.loadOntology(yamlFile));
+  public void testYAML() throws IOException, URISyntaxException {
+    assertIdentical("/simple.owl", loadOntologyWithCatalog("/simple.json"));
   }
 
   /**

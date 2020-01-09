@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -37,9 +36,6 @@ public class CommandLineHelper {
 
   /** Namespace for general input error messages. */
   private static final String NS = "errors#";
-
-  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
-  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /** Error message when a boolean value is not "true" or "false". Expects option name. */
   private static final String booleanValueError =
@@ -225,6 +221,64 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given a command line, get the 'axioms' option(s) and make sure all are properly split and
+   * return one axiom selector per list entry.
+   *
+   * @param line the command line to use
+   * @return cleaned list of input axiom type strings
+   */
+  public static List<String> cleanAxiomStrings(CommandLine line) {
+    List<String> axiomTypeStrings = getOptionalValues(line, "axioms");
+
+    if (axiomTypeStrings.isEmpty()) {
+      axiomTypeStrings.add("all");
+    }
+
+    // Split if it's one arg with spaces
+    List<String> axiomTypeFixedStrings = new ArrayList<>();
+    for (String axiom : axiomTypeStrings) {
+      if (axiom.contains(" ")) {
+        axiomTypeFixedStrings.addAll(Arrays.asList(axiom.split(" ")));
+      } else {
+        axiomTypeFixedStrings.add(axiom);
+      }
+    }
+
+    return axiomTypeFixedStrings;
+  }
+
+  /**
+   * Given a command line and an IOHelper, return a list of base namespaces from the '--base-iri'
+   * option.
+   *
+   * @param line the command line to use
+   * @param ioHelper the IOHelper to resolve prefixes
+   * @return list of full base namespaces
+   */
+  public static List<String> getBaseNamespaces(CommandLine line, IOHelper ioHelper) {
+    List<String> bases = new ArrayList<>();
+    if (!line.hasOption("base-iri")) {
+      return bases;
+    }
+
+    Map<String, String> prefixMap = ioHelper.getPrefixes();
+    for (String base : line.getOptionValues("base-iri")) {
+      if (!base.contains(":")) {
+        String expanded = prefixMap.getOrDefault(base, null);
+        if (expanded != null) {
+          bases.add(expanded);
+        } else {
+          logger.error(String.format("Unknown prefix: '%s'", base));
+        }
+      } else {
+        bases.add(base);
+      }
+    }
+
+    return bases;
+  }
+
+  /**
    * Given a command line, an argument name, the boolean default value, and boolean if the arg is
    * optional, return the value of the command-line option 'name'.
    *
@@ -250,74 +304,20 @@ public class CommandLineHelper {
   /**
    * Given a command line, return the value of --axioms as a set of classes that extend OWLAxiom.
    *
+   * @deprecated split into methods {@link #cleanAxiomStrings(CommandLine)} and others in {@link
+   *     org.obolibrary.robot.RelatedObjectsHelper}
    * @param line the command line to use
    * @return set of OWLAxiom types
    */
+  @Deprecated
   public static Set<Class<? extends OWLAxiom>> getAxiomValues(CommandLine line) {
     Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
-    List<String> axiomTypeStrings = getOptionValues(line, "axioms");
-    if (axiomTypeStrings.isEmpty()) {
-      axiomTypeStrings.add("all");
-    }
-    // Split if it's one arg with spaces
-    List<String> axiomTypeFixedStrings = new ArrayList<>();
-    for (String axiom : axiomTypeStrings) {
-      if (axiom.contains(" ")) {
-        axiomTypeFixedStrings.addAll(Arrays.asList(axiom.split(" ")));
-      } else {
-        axiomTypeFixedStrings.add(axiom);
-      }
-    }
+    List<String> axiomTypeStrings = cleanAxiomStrings(line);
     // Then get the actual types
-    for (String axiom : axiomTypeFixedStrings) {
-      if (axiom.equalsIgnoreCase("all")) {
-        axiomTypes.add(OWLAxiom.class);
-      } else if (axiom.equalsIgnoreCase("logical")) {
-        axiomTypes.add(OWLLogicalAxiom.class);
-      } else if (axiom.equalsIgnoreCase("annotation")) {
-        axiomTypes.add(OWLAnnotationAxiom.class);
-      } else if (axiom.equalsIgnoreCase("subclass")) {
-        axiomTypes.add(OWLSubClassOfAxiom.class);
-      } else if (axiom.equalsIgnoreCase("subproperty")) {
-        axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
-        axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
-        axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
-      } else if (axiom.equalsIgnoreCase("equivalent")) {
-        axiomTypes.add(OWLEquivalentClassesAxiom.class);
-        axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
-        axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
-      } else if (axiom.equalsIgnoreCase("disjoint")) {
-        axiomTypes.add(OWLDisjointClassesAxiom.class);
-        axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
-        axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
-        axiomTypes.add(OWLDisjointUnionAxiom.class);
-      } else if (axiom.equalsIgnoreCase("type")) {
-        axiomTypes.add(OWLClassAssertionAxiom.class);
-      } else if (axiom.equalsIgnoreCase("abox")) {
-        axiomTypes.addAll(
-            AxiomType.ABoxAxiomTypes.stream()
-                .map(AxiomType::getActualClass)
-                .collect(Collectors.toSet()));
-      } else if (axiom.equalsIgnoreCase("tbox")) {
-        axiomTypes.addAll(
-            AxiomType.TBoxAxiomTypes.stream()
-                .map(AxiomType::getActualClass)
-                .collect(Collectors.toSet()));
-      } else if (axiom.equalsIgnoreCase("rbox")) {
-        axiomTypes.addAll(
-            AxiomType.RBoxAxiomTypes.stream()
-                .map(AxiomType::getActualClass)
-                .collect(Collectors.toSet()));
-      } else if (axiom.equalsIgnoreCase("declaration")) {
-        axiomTypes.add(OWLDeclarationAxiom.class);
-      } else {
-        AxiomType<?> at = AxiomType.getAxiomType(axiom);
-        if (at != null) {
-          // Attempt to get the axiom type based on AxiomType names
-          axiomTypes.add(at.getActualClass());
-        } else {
-          throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
-        }
+    for (String axiom : axiomTypeStrings) {
+      Set<Class<? extends OWLAxiom>> addTypes = RelatedObjectsHelper.getAxiomValues(axiom);
+      if (addTypes != null) {
+        axiomTypes.addAll(addTypes);
       }
     }
     return axiomTypes;
@@ -407,7 +407,7 @@ public class CommandLineHelper {
 
   /**
    * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
-   * --add-prefixes, --noprefixes and --xml-entities options are handled.
+   * --add-prefixes, --noprefixes, --xml-entities, and --base options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper
