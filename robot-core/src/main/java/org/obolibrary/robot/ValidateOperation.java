@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -313,47 +315,59 @@ public class ValidateOperation {
    * indicated in that cell to hyperlinks, and then add this converted content to the corresponding
    * cell in the jinja context for the HTML output.
    */
-  private static void write_html(String cellString) throws Exception {
+  private static void write_html(String cellString, boolean verbatim) throws Exception {
     // Extract all the data entries contained within the current cell:
     String[] cellData = split_on_pipes(cellString.trim());
     String label = null;
     OWLClassExpression ce = null;
     String htmlCellString = "";
 
-    for (int i = 0; i < cellData.length; i++) {
-      if (!cellData[i].trim().equals("")) {
-        // If the content of the given data entry is a label, then use the label_to_iri_map to
-        // get its corresponding IRI, and format the data entry as a HTML link with the IRI as its
-        // href:
-        if ((label = get_label_from_term(cellData[i])) != null) {
-          IRI iri = label_to_iri_map.get(label);
-          htmlCellString +=
-              String.format("<a href=\"%s\" target=\"__blank\">%s</a>", iri.toURI(), cellData[i]);
+    if (verbatim) {
+      htmlCellString = cellString;
+    } else {
+      for (int i = 0; i < cellData.length; i++) {
+        if (!cellData[i].trim().equals("")) {
+          // If the content of the given data entry is a label, then use the label_to_iri_map to
+          // get its corresponding IRI, and format the data entry as a HTML link with the IRI as its
+          // href:
+          if ((label = get_label_from_term(cellData[i])) != null) {
+            IRI iri = label_to_iri_map.get(label);
+            htmlCellString +=
+                String.format("<a href=\"%s\" target=\"__blank\">%s</a>", iri.toString(), label);
+          }
+          // If the content of the given data entry is a general class expression, then use the
+          // ManchesterOWLSyntaxClassExpressionHTMLRenderer to render it as a complex of
+          // sub-expressions in the form of HTML links, unless the class expression happens to be an
+          // IRI or a literal. If it is an IRI then we don't want to generate a hyperlink since we
+          // do not want to have self-referential links. If it is a literal then it is either a
+          // comment or a typo (in the form of a valid class expression), since all literal labels
+          // should be captured by the if/else branch above. If it is an IRI or a literal, then
+          // just write it as is without rendering it.
+          else if ((ce = get_class_expression_from_string(cellData[i], LogLevel.DEBUG)) != null
+              && !ce.isIRI()
+              && !ce.isClassExpressionLiteral()) {
+            StringWriter strWriter = new StringWriter();
+            new ManchesterOWLSyntaxObjectHTMLRenderer(
+                    strWriter,
+                    new AnnotationValueShortFormProvider(
+                        Collections.singletonList(dataFactory.getRDFSLabel()),
+                        Collections.emptyMap(),
+                        ontology.getOWLOntologyManager()))
+                .visit(ce);
+            htmlCellString += (strWriter != null ? strWriter : cellData[i]);
+          }
+          // If the content of the given data entry is neither a label nor a non-literal class
+          // expression, then just write it as is:
+          else {
+            htmlCellString += cellData[i];
+          }
         }
-        // If the content of the given data entry is a general class expression, then use the
-        // ManchesterOWLSyntaxClassExpressionHTMLRenderer to render it as a complex of
-        // sub-expressions in the form of HTML links, unless the class expression happens to be a
-        // literal. If it is a literal then it is either a comment or a typo (in the form of a
-        // valid class expression), since all literal labels should be captured by the if/else
-        // branch above. In that case just write it as is without rendering it.
-        else if ((ce = get_class_expression_from_string(cellData[i], LogLevel.DEBUG)) != null
-            && !ce.isClassExpressionLiteral()) {
-          StringWriter strWriter = new StringWriter();
-          new ManchesterOWLSyntaxObjectHTMLRenderer(strWriter, new SimpleShortFormProvider())
-              .visit(ce);
-          htmlCellString += (strWriter != null ? strWriter : cellData[i]);
-        }
-        // If the content of the given data entry is neither a label nor a non-literal class
-        // expression, then just write it as is:
-        else {
-          htmlCellString += cellData[i];
-        }
-      }
 
-      // Unless this is the last data entry, add a pipe symbol to demarcate it from the next data
-      // entry:
-      if ((i + 1) < cellData.length) {
-        htmlCellString += " | ";
+        // Unless this is the last data entry, add a pipe symbol to demarcate it from the next data
+        // entry:
+        if ((i + 1) < cellData.length) {
+          htmlCellString += " | ";
+        }
       }
     }
 
@@ -464,7 +478,12 @@ public class ValidateOperation {
     List<List<Map<String, String>>> dataContext =
         (List<List<Map<String, String>>>) jinjaTableContext.get("dataRows");
     Map<String, String> cellContext = dataContext.get(csv_row_index).get(csv_col_index);
-    cellContext.put("comment", commentString);
+    String oldComment = cellContext.get("comment");
+    if (oldComment == null) {
+      cellContext.put("comment", commentString);
+    } else {
+      cellContext.put("comment", oldComment + "; " + commentString);
+    }
   }
 
   /**
@@ -811,36 +830,73 @@ public class ValidateOperation {
    * CSV, return a string in which all of the wildcards in the input string have been replaced by
    * the rdfs:labels corresponding to the content in the positions of the row that they indicate.
    */
-  private static String interpolate(String str, List<String> row) throws Exception {
-    if (str.trim().equals("")) {
-      return str.trim();
+  private static List<String> interpolate_rule(String rule, List<String> row) throws Exception {
+    // This is what will be returned:
+    List<String> interpolatedRules = new ArrayList();
+
+    // If the rule only has whitespace in it, return an empty string back to the caller:
+    if (rule.trim().equals("")) {
+      interpolatedRules.add("");
+      return interpolatedRules;
     }
 
-    String interpolatedString = "";
-
-    // Look for any substrings starting with a percent-symbol and followed by a number:
-    Matcher m = Pattern.compile("%\\d+").matcher(str);
-    int currIndex = 0;
+    // Look for wildcards within the given rule. These will be of the form %d where d is the number
+    // of the cell the wildcard is pointing to (e.g. %1 is the first cell). Then create a map from
+    // wildcard numbers to the terms that they point to, which we extract from the cell
+    // indicated by the wildcard number. In general the terms will be split by pipes within a
+    // cell. E.g. if the wildcard is %1 and the first cell contains 'term1|term2|term3' then add an
+    // entry to the wildcard map like: 1 -> ['term1', 'term2', 'term3'].
+    Matcher m = Pattern.compile("%(\\d+)").matcher(rule);
+    Map<Integer, String[]> wildCardMap = new HashMap();
     while (m.find()) {
-      // Get the term from the row that corresponds to the given wildcard:
-      String term = get_wildcard_contents(m.group(), row);
-
-      // Iteratively build the interpolated string up to the current term, which we try to convert
-      // into a label. If conversion to a label is possible, enclose it in single quotes, otherwise
-      // enclose it in parentheses:
-      String label = get_label_from_term(term);
-      if (label != null) {
-        interpolatedString =
-            interpolatedString + str.substring(currIndex, m.start()) + "'" + label + "'";
-      } else {
-        interpolatedString =
-            interpolatedString + str.substring(currIndex, m.start()) + "(" + term + ")";
+      int key = Integer.parseInt(m.group(1));
+      if (!wildCardMap.containsKey(key)) {
+        String wildcard = get_wildcard_contents(m.group(), row);
+        String[] terms = wildcard != null ? split_on_pipes(wildcard) : new String[] {null};
+        wildCardMap.put(key, terms);
       }
-      currIndex = m.end();
     }
-    // There may be text after the final wildcard, so add it now:
-    interpolatedString += str.substring(currIndex);
-    return interpolatedString;
+
+    // If the wildcard map is empty then the rule contained no wildcards. Just return it as it is:
+    if (wildCardMap.isEmpty()) {
+      interpolatedRules.add(rule);
+      return interpolatedRules;
+    }
+
+    // Now interpolate the rule using the wildcard map. If any of the wildcards points to a cell
+    // with multiple terms, then we duplicate the rule for each term pointed to. Finally we return
+    // all of the rules generated.
+    for (int i : wildCardMap.keySet()) {
+      if (interpolatedRules.isEmpty()) {
+        // If we haven't yet interpolated anything, then base the current interpolation on the rule
+        // that has been passed as an argument to the function above, and generate an interpolated
+        // rule corresponding to every term corresponding to this key in the wildcard map.
+        for (String term : wildCardMap.get(i)) {
+          String label = get_label_from_term(term);
+          String interpolatedRule =
+              rule.replaceAll(
+                  String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
+          interpolatedRules.add(interpolatedRule);
+        }
+      } else {
+        // If we have already interpolated some rules, then every string that has been interpolated
+        // thus far must be interpolated again for every term corresponding to this key in the
+        // wildcard map, and the list of interpolated rules is then replaced with the new list.
+        List<String> tmpList = new ArrayList();
+        for (String term : wildCardMap.get(i)) {
+          String label = get_label_from_term(term);
+          for (String intStr : interpolatedRules) {
+            String interpolatedRule =
+                intStr.replaceAll(
+                    String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
+            tmpList.add(interpolatedRule);
+          }
+        }
+        interpolatedRules = tmpList;
+      }
+    }
+
+    return interpolatedRules;
   }
 
   /**
@@ -888,7 +944,12 @@ public class ValidateOperation {
     // Here we resolve each sub-clause of the when statement into a list of such triples.
     ArrayList<String[]> whenClauses = new ArrayList();
     for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
-      m = Pattern.compile("^([^\'\\s]+|\'[^\']+\')\\s+([a-z\\-\\|]+)\\s+(.*)$").matcher(whenClause);
+      m =
+          Pattern.compile(
+                  "^([^\'\\s\\(\\)]+|\'[^\'\\(\\)]+\'|\\(.+?\\))"
+                      + "\\s+([a-z\\-\\|]+)"
+                      + "\\s+(.*)$")
+              .matcher(whenClause);
 
       if (!m.find()) {
         throw new Exception(String.format(malformedWhenClauseError, csv_col_index + 1, whenClause));
@@ -927,9 +988,7 @@ public class ValidateOperation {
       throws Exception {
 
     for (String[] whenClause : whenClauses) {
-      String subject = interpolate(whenClause[0], row).trim();
-      writelog(LogLevel.DEBUG, "Interpolated: \"%s\" into \"%s\"", whenClause[0], subject);
-
+      String subject = whenClause[0].trim();
       // If the subject term is blank, then skip this clause:
       if (subject.equals("")) {
         continue;
@@ -949,12 +1008,9 @@ public class ValidateOperation {
         }
       }
 
-      // Interpolate the axiom to validate and send the query to the reasoner:
+      // Get the axiom to validate and send the query to the reasoner:
       String axiom = whenClause[2];
-      String interpolatedAxiom = interpolate(axiom, row);
-      writelog(LogLevel.DEBUG, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
-
-      if (!execute_query(subject, interpolatedAxiom, row, whenRuleType)) {
+      if (!execute_query(subject, axiom, row, whenRuleType)) {
         // If any of the when clauses fail to be satisfied, then we do not need to evaluate any
         // of the other when clauses, or the main clause, since the main clause may only be
         // evaluated when all of the when clauses are satisfied.
@@ -963,15 +1019,11 @@ public class ValidateOperation {
             "When clause: \"%s %s %s\" is not satisfied.",
             subject,
             whenRuleType,
-            interpolatedAxiom);
+            axiom);
         return false;
       } else {
         writelog(
-            LogLevel.INFO,
-            "Validated when clause \"%s %s %s\".",
-            subject,
-            whenRuleType,
-            interpolatedAxiom);
+            LogLevel.INFO, "Validated when clause \"%s %s %s\".", subject, whenRuleType, axiom);
       }
     }
     // If we get to here, then all of the when clauses have been satisfied, so return true:
@@ -1200,7 +1252,7 @@ public class ValidateOperation {
     // Get the class expression corresponfing to the rule that has been passed:
     OWLClassExpression ruleCE = get_class_expression_from_string(rule);
     if (ruleCE == null) {
-      writelog(LogLevel.ERROR, "Unable to parse rule \"%s %s\".", unsplitQueryType, rule);
+      report("Unable to parse rule \"%s %s\".", unsplitQueryType, rule);
       return false;
     }
 
@@ -1361,17 +1413,15 @@ public class ValidateOperation {
     // previous step, assuming such a rule is constraining the column).
     if (cell.trim().equals("")) return;
 
-    // Interpolate the axiom that the cell will be validated against:
+    // Get the axiom that the cell will be validated against:
     String axiom = separatedRule.getKey();
-    String interpolatedAxiom = interpolate(axiom, row);
-    writelog(LogLevel.DEBUG, "Interpolated: \"%s\" into \"%s\"", axiom, interpolatedAxiom);
 
     // Send the query to the reasoner:
-    boolean result = execute_query(cell, interpolatedAxiom, row, ruleType);
+    boolean result = execute_query(cell, axiom, row, ruleType);
     if (!result) {
-      report("Validation failed for rule: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
+      report("Validation failed for rule: \"%s %s %s\".", cell, ruleType, axiom);
     } else {
-      writelog(LogLevel.INFO, "Validated: \"%s %s %s\".", cell, ruleType, interpolatedAxiom);
+      writelog(LogLevel.INFO, "Validated: \"%s %s %s\".", cell, ruleType, axiom);
     }
   }
 
@@ -1422,6 +1472,10 @@ public class ValidateOperation {
         // Get the contents of the current cell:
         String cellString = row.get(csv_col_index);
 
+        // Get the rules for the current column:
+        String colName = headerRow.get(csv_col_index);
+        Map<String, List<String>> colRules = headerToRuleMap.get(colName);
+
         // If there is an XLSX workbook or a jinja context to write to, write the contents of the
         // current cell to it:
         if (workbook != null) {
@@ -1429,15 +1483,11 @@ public class ValidateOperation {
           write_xlsx(cellString);
         } else if (jinjaTableContext != null) {
           // If there is a jinja context to write to, write the contents of the current cell to it:
-          write_html(cellString);
+          write_html(cellString, colRules.isEmpty());
         }
 
         // Extract all the data entries contained within the current cell:
         String[] cellData = split_on_pipes(cellString.trim());
-
-        // Get the rules for the current column:
-        String colName = headerRow.get(csv_col_index);
-        Map<String, List<String>> colRules = headerToRuleMap.get(colName);
 
         // If there are no rules for this column, then skip the validation for this cell (the entire
         // column to which the cell belongs is interpreted as 'commented out'):
@@ -1447,8 +1497,13 @@ public class ValidateOperation {
         // against it:
         for (String ruleType : colRules.keySet()) {
           for (String rule : colRules.get(ruleType)) {
-            for (String data : cellData) {
-              validate_rule(data, rule, row, ruleType);
+            // The relation between rules, as given in the input table, and interpolated rules
+            // is many to one, because wildcards can refer to cells with multiple entries.
+            List<String> interpolatedRules = interpolate_rule(rule, row);
+            for (String interpolatedRule : interpolatedRules) {
+              for (String data : cellData) {
+                validate_rule(data, interpolatedRule, row, ruleType);
+              }
             }
           }
         }
