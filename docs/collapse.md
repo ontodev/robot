@@ -1,9 +1,9 @@
-# Minimize
+# Collapse
 
-Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `minimize` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option.
+Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `collapse` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option.
 
 ```
-robot minimize \
+robot collapse \
  --input module.owl \
  --threshold 3 \
  --output minimized_module.owl
@@ -39,7 +39,7 @@ Becomes:
 
 If there are any classes that you don't want removed, you can keep them regardless of the number of subclasses using `--precious <IRI/CURIE>` (for a set of terms in a file, use `--precious-terms <term-file>`). 
 
-    robot minimize \
+    robot collapse \
      --input uberon_module.owl \
      --threshold 3 \
      --precious UBERON:0000483 \

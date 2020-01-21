@@ -5,14 +5,9 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** */
-public class MinimizeCommand implements Command {
-
-  /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(MinimizeCommand.class);
+public class CollapseCommand implements Command {
 
   /** Namespace for error messages. */
   private static final String NS = "minimize#";
@@ -25,11 +20,11 @@ public class MinimizeCommand implements Command {
   private Options options;
 
   /** Initialize the command. */
-  public MinimizeCommand() {
+  public CollapseCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("i", "input", true, "mirror ontology from a file");
-    o.addOption("I", "input-iri", true, "mirror ontology from an IRI");
-    o.addOption("t", "threshold", true, "threshold to minimize");
+    o.addOption("i", "input", true, "collapse ontology from a file");
+    o.addOption("I", "input-iri", true, "collapse ontology from an IRI");
+    o.addOption("t", "threshold", true, "threshold to collapse below");
     o.addOption("r", "precious", true, "CURIE or IRI of a class to keep");
     o.addOption("R", "precious-terms", true, "set of CURIEs or IRIs of classes to keep");
     o.addOption("o", "output", true, "save minimized ontology to a file");
@@ -42,7 +37,7 @@ public class MinimizeCommand implements Command {
    * @return name
    */
   public String getName() {
-    return "minimize";
+    return "collapse";
   }
 
   /**
@@ -60,7 +55,7 @@ public class MinimizeCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "robot minimize --input <file> " + "--threshold <int> " + "--output <file>";
+    return "robot collapse --input <file> " + "--threshold <int> " + "--output <file>";
   }
 
   /**
@@ -110,7 +105,7 @@ public class MinimizeCommand implements Command {
 
     Set<IRI> precious = CommandLineHelper.getTerms(ioHelper, line, "precious", "precious-terms");
 
-    MinimizeOperation.minimize(ontology, threshold, precious);
+    OntologyHelper.collapseOntology(ontology, threshold, precious, true);
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);
