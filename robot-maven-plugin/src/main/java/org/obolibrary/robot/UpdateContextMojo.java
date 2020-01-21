@@ -12,9 +12,17 @@ import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Mojo;
 
+/**
+ * MOJO to update OBO context file.
+ *
+ * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
+ */
 @Mojo(name = "UpdateContext")
 public class UpdateContextMojo extends AbstractMojo {
 
+  /**
+   * Execute updating the OBO context file.
+   */
   public void execute() {
     getLog().info("Updating OBO context...");
     File robotMvn = new File(System.getProperty("user.dir"));
