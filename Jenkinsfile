@@ -24,7 +24,7 @@ pipeline {
                             sh 'rm -rf obi'
                         }
                     } else {
-                        sh 'java -jar bin/robot.jar notacommand'
+                        sh 'java -jar bin/robot.jar help'
                     }
                 }
             }

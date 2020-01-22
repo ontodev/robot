@@ -45,7 +45,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.4.1</version>
+              <version>1.5.0</version>
               <type>jar</type>
             </dependency>
           </oldVersion>
