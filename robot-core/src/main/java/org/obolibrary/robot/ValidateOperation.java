@@ -128,6 +128,9 @@ public class ValidateOperation {
   /** Output writer */
   private static Writer writer;
 
+  /** Flag to indicate if the output writer is pointing to stdout (defaults to false) */
+  private static boolean usingStdout = false;
+
   /** Jinja context for HTML table output */
   private static Map<String, Object> jinjaTableContext;
 
@@ -593,6 +596,7 @@ public class ValidateOperation {
     // then also initialise the jinja context we will use to generate the html output.
     if (outputPath == null) {
       writer = new PrintWriter(System.out);
+      usingStdout = true;
     } else if (outputPath.toLowerCase().endsWith(".xlsx")) {
       workbook = new XSSFWorkbook();
       // Create a single worksheet inside the workbook and initialise an output stream to which we
@@ -642,7 +646,9 @@ public class ValidateOperation {
     reasoner.dispose();
     if (writer != null) {
       writer.flush();
-      writer.close();
+      if (!usingStdout) {
+        writer.close();
+      }
     }
   }
 
