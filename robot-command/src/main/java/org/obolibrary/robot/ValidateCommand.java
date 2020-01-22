@@ -89,7 +89,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --table <file> --input <file> "
+    return "validate --table <file> [--table <file> ...] --input <file> "
         + "[--reasoner <name>] [--format (HTML|XLSX|TXT)] [--output-dir <directory>] "
         + "[--standalone (true|false)]";
   }
