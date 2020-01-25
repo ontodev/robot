@@ -43,10 +43,20 @@ public class ValidateCommand implements Command {
           + "INVALID OUTPUT DIRECTORY ERROR the specified output directory does not exist or "
           + "is not writable";
 
+  private static final String invalidSkipRowError =
+      NS + "INVALID SKIP ROW ERROR the specified skip-row must be an integer";
+
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("t", "table", true, "file containing data (in CSV or TSV format) to validate");
+    o.addOption(
+        "k",
+        "skip-row",
+        true,
+        "ignore the given row from the tables to be validated "
+            + "(where the first row in the file is row #1); this option is ignored if the row "
+            + "to skip is greater than the total number of rows in a table");
     o.addOption("i", "input", true, "input file containing the ontology data to validate against");
     o.addOption(
         "r",
@@ -99,7 +109,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --table <file> [--table <file> ...] --input <file> "
+    return "validate --table <file> [--table <file> ...] [--skip-row k] --input <file> "
         + "[--reasoner <name>] [--format (HTML|XLSX|TXT)] [--output-dir <directory>] "
         + "[--standalone (true|false)]";
   }
@@ -203,6 +213,25 @@ public class ValidateCommand implements Command {
         throw new IllegalArgumentException(incorrectTableFormatError);
       }
 
+      // If the `--skip-row` switch has been specified, then possibly delete the specified row from
+      // the table:
+      String rowToSkipStr;
+      if ((rowToSkipStr = CommandLineHelper.getOptionalValue(line, "skip-row")) != null) {
+        try {
+          int rowToSkip = Integer.parseInt(rowToSkipStr);
+          if (rowToSkip > tableData.size()) {
+            logger.warn(
+                "ignoring skip-row value: {}; there are only {} rows in '{}'",
+                rowToSkip,
+                tableData.size(),
+                tablePath);
+          } else {
+            tableData.remove(rowToSkip - 1);
+          }
+        } catch (NumberFormatException e) {
+          throw new IllegalArgumentException(invalidSkipRowError);
+        }
+      }
       tables.put(tablePath, tableData);
     }
 

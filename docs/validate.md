@@ -182,3 +182,7 @@ The name of a `.csv` or `.tsv` file containing the table data to validate must b
 ### Incorrect Table Format Error
 
 The name of the file specified using the `--table` option must end in either `.csv` or `.tsv`.
+
+### Invalid Skip Row Error
+
+The value of the `--skip-row` option must be an integer.
