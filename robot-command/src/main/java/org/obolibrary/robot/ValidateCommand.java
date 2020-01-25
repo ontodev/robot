@@ -1,15 +1,21 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Handles command-line options for the {@link ValidateOperation}.
+ *
+ * @author <a href="mailto:consulting@michaelcuffaro.com">Michael Cuffaro</a>
+ */
 public class ValidateCommand implements Command {
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ValidateCommand.class);
@@ -20,7 +26,6 @@ public class ValidateCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "validate#";
 
-  /** Error message when user provides --merge-before and --merge-after as true. */
   private static final String tableNotProvidedError =
       NS + "TABLE NOT PROVIDED ERROR a table file must be specified to run this command";
 
@@ -41,9 +46,14 @@ public class ValidateCommand implements Command {
   /** Constructor: Initialises the command with its various options. */
   public ValidateCommand() {
     Options o = CommandLineHelper.getCommonOptions();
-    o.addOption("t", "table", true, "file containing the data (in CSV or TSV format) to validate");
+    o.addOption("t", "table", true, "file containing data (in CSV or TSV format) to validate");
     o.addOption("i", "input", true, "input file containing the ontology data to validate against");
-    o.addOption("r", "reasoner", true, "reasoner to use (structural, hermit, jfact, emr, elk)");
+    o.addOption(
+        "r",
+        "reasoner",
+        true,
+        "reasoner to use; must be one of: structural, hermit, jfact, "
+            + "emr, elk (if left unspecified, the default reasoner will be used)");
     o.addOption(
         "o",
         "output-dir",
@@ -149,13 +159,14 @@ public class ValidateCommand implements Command {
 
     // Get the requested output directory and output format, and the value of the standalone option.
     // Note that standalone only applies to html formatted output, and will be ignored by
-    // ValidateOperation if another format has been specified.
+    // ValidateOperation if html hasn't been specified.
     String outFormat = CommandLineHelper.getOptionalValue(line, "format");
     boolean standalone = CommandLineHelper.getBooleanValue(line, "standalone", false);
     String outDir = CommandLineHelper.getOptionalValue(line, "output-dir");
 
     // If an output format has been specified, make sure that it is of a supported kind and that
-    // the output directory is valid:
+    // the output directory is valid. If it hasn't been specified it will just be passed as null to
+    // the validate operation.
     if (outFormat != null) {
       if (!(outFormat.equalsIgnoreCase("html")
           || outFormat.equalsIgnoreCase("xlsx")
@@ -173,14 +184,15 @@ public class ValidateCommand implements Command {
       }
     }
 
-    // Get the paths to the tables given in the --table arguments. Only TSV and CSV tables
-    // are currently supported.
+    // Get the paths to the tables given in the --table arguments.
     List<String> tablePaths = CommandLineHelper.getOptionalValues(line, "table");
     if (tablePaths.isEmpty()) {
       throw new IllegalArgumentException(tableNotProvidedError);
     }
 
-    // Validate the data in each of the given tables
+    // Extract all of the data from each of the given table paths. Only TSV and CSV tables
+    // are currently supported.
+    Map<String, List<List<String>>> tables = new HashMap();
     for (String tablePath : tablePaths) {
       List<List<String>> tableData;
       if (tablePath.toLowerCase().endsWith(".tsv")) {
@@ -191,22 +203,11 @@ public class ValidateCommand implements Command {
         throw new IllegalArgumentException(incorrectTableFormatError);
       }
 
-      // Generate the output path to write the validation results to, based on the format and the
-      // output directory provided. If no format is provided then we pass null as the output path to
-      // ValidateOperation, which should interpret that as a request to write to STDOUT.
-      String outPath = null;
-      if (outFormat != null) {
-        outPath =
-            outDir + "/" + FilenameUtils.getBaseName(tablePath) + "." + outFormat.toLowerCase();
-      }
-
-      // Finally call the validator:
-      if (outPath == null) {
-        // If the output is going to stdout, add a line to distinguish each table:
-        System.out.println("Validation report for table: " + tablePath);
-      }
-      ValidateOperation.validate(tableData, ontology, reasonerFactory, outPath, standalone);
+      tables.put(tablePath, tableData);
     }
+
+    // Finally send everything to the validate operation:
+    ValidateOperation.validate(tables, ontology, reasonerFactory, outDir, outFormat, standalone);
 
     return state;
   }

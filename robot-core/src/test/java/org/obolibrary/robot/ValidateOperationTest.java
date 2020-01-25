@@ -7,7 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.semanticweb.HermiT.ReasonerFactory;
@@ -26,10 +30,17 @@ public class ValidateOperationTest extends CoreTest {
   public void testImmuneExposuresValidation() throws Exception, IOException {
     IOHelper ioHelper = new IOHelper();
 
-    InputStream csvStream = this.getClass().getResourceAsStream("/immune_exposures.csv");
-    assert (csvStream != null);
-    List<List<String>> csvData = ioHelper.readCSV(csvStream);
-    assert (csvData != null);
+    InputStream tableStream = this.getClass().getResourceAsStream("/immune_exposures.csv");
+    assert (tableStream != null);
+    List<List<String>> tableData = ioHelper.readCSV(tableStream);
+    assert (tableData != null);
+
+    URL res = this.getClass().getResource("/immune_exposures.csv");
+    File file = Paths.get(res.toURI()).toFile();
+    String tablePath = file.getAbsolutePath();
+
+    Map<String, List<List<String>>> tables = new HashMap();
+    tables.put(tablePath, tableData);
 
     InputStream owlStream = this.getClass().getResourceAsStream("/immune_exposures.owl");
     assert (owlStream != null);
@@ -43,7 +54,7 @@ public class ValidateOperationTest extends CoreTest {
 
     // Call validate() with an outputPath of null to send output to STDOUT:
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
-    ValidateOperation.validate(csvData, ontology, reasonerFactory, null, false);
+    ValidateOperation.validate(tables, ontology, reasonerFactory, null, null, false);
 
     // Compare the output with the contents of a file in the resources directory which contains
     // the output we expect to get:
