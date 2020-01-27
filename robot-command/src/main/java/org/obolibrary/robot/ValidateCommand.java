@@ -219,9 +219,9 @@ public class ValidateCommand implements Command {
       if ((rowToSkipStr = CommandLineHelper.getOptionalValue(line, "skip-row")) != null) {
         try {
           int rowToSkip = Integer.parseInt(rowToSkipStr);
-          if (rowToSkip > tableData.size()) {
+          if (rowToSkip > tableData.size() || rowToSkip < 1) {
             logger.warn(
-                "ignoring skip-row value: {}; there are only {} rows in '{}'",
+                "ignoring skip-row value: {}; there are {} rows in '{}'",
                 rowToSkip,
                 tableData.size(),
                 tablePath);

@@ -673,6 +673,20 @@ public class TableValidator {
   }
 
   /**
+   * Given a map representing the rules for a column, return true if any of those rules are
+   * query-type rules
+   */
+  private boolean contains_query_rules(Map<String, List<String>> colRules) {
+    for (String ruleType : colRules.keySet()) {
+      RTypeEnum rType = rule_type_to_rtenum_map.get(ruleType);
+      if (rType.getRuleCat() == RCatEnum.QUERY) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Given a string describing one of the classes in the ontology, in either the form of an IRI, an
    * abbreviated IRI, or an rdfs:label, return the rdfs:label for that class.
    */
@@ -1450,7 +1464,7 @@ public class TableValidator {
           write_xlsx(cellString);
         } else if (jinjaTblContext != null) {
           // If there is a jinja context to write to, write the contents of the current cell to it:
-          write_html(cellString, colRules.isEmpty());
+          write_html(cellString, !contains_query_rules(colRules));
         }
 
         // Extract all the data entries contained within the current cell:
