@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -1422,7 +1423,10 @@ public class TableValidator {
     // If there is no writer and no workbook then validation output will go to stdout, so we write
     // a line here to identify the table that this output belongs to in lieu of a filename:
     if (writer == null && workbook == null) {
-      System.out.println("Validating " + tblPath + " ...");
+      System.out.println(
+          String.format(
+              "Validating %s.%s ...",
+              FilenameUtils.getBaseName(tblPath), FilenameUtils.getExtension(tblPath)));
     }
 
     // Extract the header and rules rows from the CSV data and map the column names to their
