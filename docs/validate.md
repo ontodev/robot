@@ -1,6 +1,6 @@
 # Validate
 
-Validates a table (CSV or TSV file) against an ontology using the set of rules defined in the table file, and write the output to a TXT, HTML, or XLSX file. (If no output format is specified then the output is directed to STDOUT.) For example:
+Validates tables (CSV or TSV files) against an ontology using the sets of rules defined (per table) in the table files, and writes the output to TXT, HTML, or XLSX files. (If no output format is specified then the output is directed to STDOUT.) For example:
 
     robot validate --input immune_exposures.owl \
       --table immune_exposures.csv \
@@ -8,7 +8,9 @@ Validates a table (CSV or TSV file) against an ontology using the set of rules d
       --format TXT \
       --output-dir results/
 
-Multiple table files can be specified as input. In that case there will be multiple output files corresponding to each table in the output directory. Note that each input table must define its own set of validation rules. For example:
+In this case the command will generate a single file called immune_exposures.txt in the results/ directory.
+
+One can also specify multiple table files as input. In that case there will be multiple output files corresponding to each table in the output directory. For example:
 
     robot validate --input immune_exposures.owl \
       --table immune_exposures.csv \
@@ -17,13 +19,13 @@ Multiple table files can be specified as input. In that case there will be multi
       --format HTML \
       --output-dir results/
 
-In this case, since an output format of HTML has been specified, two files: immune_exposures.html and immune_exposures_2.html will appear in the results/ directory.
+In this case two files: immune_exposures.html and immune_exposures_2.html will appear in the results/ directory.
 
 ## Validation rules
 
 ### Data file organisation
 
-Validation rules are read from the second row of the CSV file as follows:
+Validation rules are read from the second row of the CSV or TSV file. If the `--skip-row k` option is used, then the 'second row' is the second of the rows remaining in the table _after_ the kth row has been removed. Below is an example table. Note that validation rules must be specified per column, and are applied to the data in that column.
 
 |header A                        |header B                        |header C                     |
 |--------------------------------|--------------------------------|-----------------------------|
@@ -32,9 +34,9 @@ Validation rules are read from the second row of the CSV file as follows:
 |data                            |data                            |data                         |
 |...                             |                                |                             |
 
-* Data must be either a named class (e.g. 'Dengue virus'), a named individual (e.g. 'Dr. Smith'), or a general class expression (e.g. ('Dengue virus' or 'Dengue virus 2')). IRIs or short-form IRIs may be be used in lieu of labels if desired.
+* Data cells must either be in the form of a named class, e.g. 'Dengue virus', a named individual, e.g. 'Dr. Smith', or a general class expression, e.g. ('Dengue virus' or 'Dengue virus 2'). IRIs or short-form IRIs may be be used in lieu of labels if desired.
 
-* Rules for a given column must be separated by semicolons. To comment out all of the rules for a given column, the list should be prefixed by '##'. To comment out individual rules from the rules belonging to a given column, prefix the rule with '#'. For example:
+* Rules for a given column must be separated by semicolons. To comment out all of the rules for a given column, the list should be prefixed by '##'. To comment out particular rules from among the rules belonging to a given column, prefix those rules with '#'. For example:
 
 _To comment out all rules:_
 
@@ -56,7 +58,7 @@ Individual rules must be of the form:
 
 Where:
 
-* `<main-rule-type>` can be one of:
+* `<main-rule-type>` can be one of (or a combination of -- see below):
 
     * is-required
     * is-excluded
@@ -68,7 +70,7 @@ Where:
     * instance-of
     * direct-instance-of
 
-* `<when-rule-type>` can be one of:
+* `<when-rule-type>` can be one of (or a combination of -- see below):
 
     * subclass-of
     * direct-subclass-of
@@ -83,11 +85,11 @@ Where:
 * The following rule types are called _presence_ rule types. They place restrictions on whether a cell in a given column can have data or not, and may take a value of either `true` (equivalently: `t`, `yes`, `y`) or `false` (equivalently: `f`, `no`, `n`). If no truth value is supplied, `true` is assumed.
 
     * is-required
-        * When set to `true`, this indicates that cells in this column should have data, possibly conditional upon an optional when-clause. E.g. `is-required (when 'Crotalus atrox' subclass-of 'vaccine')`
+        * When set to `true` (implicitly or explicitly), this indicates that cells in this column should have data, possibly conditional upon an optional when-clause. E.g. `is-required (when 'Crotalus atrox' subclass-of 'vaccine')`
     * is-excluded
-        * When set to `true`, this indicates that cells in this column must be empty, possibly conditional upon an optional when-clause. E.g. `is-excluded (when 'Crotalus atrox' subclass-of 'vaccine')`
+        * When set to `true` (implicitly or explicitly), this indicates that cells in this column must be empty, possibly conditional upon an optional when-clause. E.g. `is-excluded (when 'Crotalus atrox' subclass-of 'vaccine')`
 
-* The following rule types are called _query_ rule types. They involve queries to the reasoner. Consider the example rule `<query-type> 'vaccine'`. Given the query types below, we have the following corresponding reasoner queries:
+* The following rule types are called _query_ rule types. They involve queries to the reasoner. Consider the example rule: `<query-type> 'vaccine'`. Replacing `<query-type>` with each of the below results in the following corresponding reasoner queries:
 
     * subclass-of
         * queries the reasoner to verify that the class represented in the current cell is a subclass of the class 'vaccine'
@@ -108,11 +110,11 @@ Where:
 
 * For the rule types: `is-required` and `is-excluded`, `<rule>` is _optional_ and if not specified defaults to _true_.
 
-* For other rules types, `<rule>` is _mandatory_ and must be in the form of a description logic (DL) expression query, in Manchester syntax.
+* For other rule types, `<rule>` is _mandatory_ and must be in the form of a description logic (DL) expression query, in Manchester syntax.
 
 * `instance-of` and `direct-instance-of` may only be applied to named individuals. `subclass-of`, `direct-subclass-of`, `superclass-of`, `direct-superclass-of`, and `equivalent-to` may be applied only to classes or general class expressions.
 
-* `<when-subject-expr>` must describe an individual, a class, or generalised class expression and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, a general DL expression, or a wildcard.
+* `<when-subject-expr>` must describe an individual, a class, or a generalised class expression and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, a general DL expression, or a wildcard.
 
 #### Wildcards
 
@@ -154,10 +156,27 @@ _Note that double quotes are not allowed._
 
 `is-required` indicates that the given cell must be non-empty, while `is-excluded` requires that it be empty. These rules can be used with an optional when-clause. E.g.:
 
-	is-required (when %1 subclass-of 'exposure process)
+	is-required (when %1 subclass-of 'exposure process')
 
 indicates that the current cell must be non-empty whenever the cell in column 1 of the current
 row is a subclass of `'exposure process'`.
+
+#### Multi-cells
+
+A data cell can contain more than one logical entity if these are separated using the pipe ('|') character. Such cells are called multi-cells. When a rule is defined over a multi-cell, it will be validated for each logical entity in that multi-cell, and if the rule contains a wildcard that refers to a multi-cell, then all possible interpretations of that rule will be validatd against the current cell (which may itself be a multi-cell). Consider, for example:
+
+|header 1                        |header 2                        |
+|--------------------------------|--------------------------------|
+|                                |`subclass-of %1`                |
+|`data1A | data1B`               |`data2A | data2B`               |
+|...                             |                                |
+
+In this case, the following validations will be performed:
+
+* data2A subclass-of data1A
+* data2A subclass-of data1B
+* data2B subclass-of data1A
+* data2B subclass-of data1B
 
 ## Error Messages
 
