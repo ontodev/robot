@@ -1,5 +1,23 @@
 # Validate
 
+Validates a table (CSV or TSV file) against an ontology using the set of rules defined in the table file, and write the output to a TXT, HTML, or XLSX file. (If no output format is specified then the output is directed to STDOUT.) For example:
+
+    robot validate --input immune_exposures.owl \
+      --table immune_exposures.csv \
+      --reasoner hermit \
+      --format TXT \
+      --output-dir results/
+
+Multiple table files can be specified as input. In that case there will be multiple output files corresponding to each table in the output directory. Note that each input table must define its own set of validation rules. For example:
+
+    robot validate --input immune_exposures.owl \
+      --table immune_exposures.csv \
+      --table immune_exposures_2.csv \
+      --reasoner hermit \
+      --format HTML \
+      --output-dir results/
+
+In this case, since an output format of HTML has been specified, two files: immune_exposures.html and immune_exposures_2.html will appear in the results/ directory.
 
 ## Validation rules
 

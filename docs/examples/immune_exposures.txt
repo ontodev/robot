@@ -1,0 +1,17 @@
+At row: 17, column: 2: Cell is empty but rule: "is-required true" does not allow this.
+At row: 17, column: 4: Unable to parse rule "subclass-of hasMaterialBasisIn some (null)".
+At row: 17, column: 4: Validation failed for rule: "dengue hemorrhagic fever subclass-of hasMaterialBasisIn some (null)".
+At row: 19, column: 4: Cell is empty but rule: "is-required true" does not allow this.
+At row: 20, column: 6: Cell is empty but rule: "is-required true" does not allow this.
+At row: 21, column: 2: Validation failed for rule: "Dengue virus equivalent-to 'Dengue virus 2'".
+At row: 21, column: 3: Validation failed for rule: "NCBITaxon_11060 equivalent-to 'Dengue virus'".
+At row: 22, column: 4: Validation failed for rule: "Dengue virus 2 subclass-of 'disease name'".
+At row: 22, column: 4: Validation failed for rule: "Dengue virus 2 subclass-of hasMaterialBasisIn some 'Dengue virus'".
+At row: 23, column: 2: Validation failed for rule: "'Hepatovirus A' or blood equivalent-to 'blood'".
+At row: 23, column: 3: Validation failed for rule: "UBERON_0000178 equivalent-to ('Hepatovirus A' or blood)".
+At row: 23, column: 6: Cell is non-empty ("chronic") but rule: "is-excluded true" does not allow this.
+At row: 24, column: 4: Validation failed for rule: "wheat allergy equivalent-to 'dengue hemorrhagic fever'".
+At row: 24, column: 4: Validation failed for rule: "dengue hemorrhagic fever equivalent-to 'wheat allergy'".
+At row: 24, column: 4: Validation failed for rule: "wheat allergy subclass-of hasMaterialBasisIn some 'Dengue virus'".
+At row: 24, column: 5: Validation failed for rule: "DOID_3660 equivalent-to 'dengue hemorrhagic fever'".
+At row: 24, column: 5: Validation failed for rule: "DOID_12206 equivalent-to 'wheat allergy'".

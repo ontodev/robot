@@ -1,0 +1,1195 @@
+    <table class="table table-bordered table-striped">
+      <thead class="bg-dark text-white header-row">
+        <tr>
+          
+            <th>
+              exposure process reported
+            </th>
+          
+            <th>
+              exposure material reported
+            </th>
+          
+            <th>
+              exposure material id
+            </th>
+          
+            <th>
+              disease reported
+            </th>
+          
+            <th>
+              disease ontology id
+            </th>
+          
+            <th>
+              disease stage reported
+            </th>
+          
+            <th>
+              comment
+            </th>
+          
+        </tr>
+      </thead>
+      <thead class="bg-secondary text-white">
+        <tr>
+          
+            <th>
+              is-required; subclass-of 'exposure process';
+            </th>
+          
+            <th>
+              subclass-of 'exposure material'; equivalent-to %3; is-required (when %1 subclass-of (administration or 'exposure without disease' or 'infectious disease' or 'allergic disease')); is-excluded (when %1 equivalent-to disease); is-excluded (when %1 subclass-of ('autoimmune disease' or cancer or 'no exposure' or unknown))
+            </th>
+          
+            <th>
+              equivalent-to %2
+            </th>
+          
+            <th>
+              subclass-of 'disease name'; subclass-of hasMaterialBasisIn some %2 (when %1 subclass-of not ('autoimmune disease' or cancer)); equivalent-to %5; is-required (when %1 subclass-of disease); is-excluded (when %1 equivalent-to administration); is-excluded (when %1 subclass-of (vaccination or transplant/transfusion or 'exposure without disease' or 'no exposure' or unknown))
+            </th>
+          
+            <th>
+              equivalent-to %4
+            </th>
+          
+            <th>
+              subclass-of 'disease stage'; is-required (when %1 subclass-of disease); is-excluded (when %1 subclass-of not disease)
+            </th>
+          
+            <th>
+              
+            </th>
+          
+        </tr>
+      </thead>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Vaccination" target="__blank">vaccination</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/VO_0000669" target="__blank">Varicella-zoster virus vaccine</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/VO_0000669" target="__blank">Varicella-zoster virus vaccine</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: vacciniation has only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge" target="__blank">infectious challenge</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103" target="__blank">Hepacivirus C</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103" target="__blank">Hepacivirus C</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: infectious challenge requires only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#TransplantOrTransfusion" target="__blank">transplant/transfusion</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/UBERON_0000178" target="__blank">blood</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/UBERON_0000178" target="__blank">blood</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: transplant requires only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: infectious disease requires material, disease, stage
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AllergicDisease" target="__blank">allergic disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_4565" target="__blank">Triticum aestivum</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_4565" target="__blank">Triticum aestivum</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_3660" target="__blank">wheat allergy</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_3660" target="__blank">wheat allergy</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Post" target="__blank">post</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: allergic disease requires material, disease, stage
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AutoImmuneDisease" target="__blank">autoimmune disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_635" target="__blank">acquired immunodeficiency syndrome</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_635" target="__blank">acquired immunodeficiency syndrome</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic" target="__blank">chronic</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: autoimmune disease requires disease, state; excludes material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Cancer" target="__blank">cancer</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_219" target="__blank">colon cancer</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_219" target="__blank">colon cancer</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic" target="__blank">chronic</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: cancer requires disease, state; excludes material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AsymptomaticInfectionOrColonization" target="__blank">asymptomatic infection/colonization</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: asymptomatic requires only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithImmuneReactivity" target="__blank">exposure with immune reactivity</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_11060" target="__blank">Dengue virus 2</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_11060" target="__blank">Dengue virus 2</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: exposure with immune reactivity requires only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithDocumentation" target="__blank">exposure with documentation</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: exposure with documentation requires only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureToEndemicOrUbiquitousAgent" target="__blank">exposure to endemic/ubiquitous agent</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: exposure to endemic requires only material
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NoExposure" target="__blank">no exposure</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: none requires no fields
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#UnknownExposure" target="__blank">unknown</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS: unknown requires no fields
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure" target="__blank">administration</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103" target="__blank">Hepacivirus C</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103" target="__blank">Hepacivirus C</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease" target="__blank">exposure without disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure" target="__blank">disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Cell is empty but rule: &quot;is-required true&quot; does not allow this."
+                   >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Unable to parse rule &quot;subclass-of hasMaterialBasisIn some (null)&quot;.; Validation failed for rule: &quot;dengue hemorrhagic fever subclass-of hasMaterialBasisIn some (null)&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   FAIL: material required
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure" target="__blank">disease</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge" target="__blank">infectious challenge</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a> or <a href="http://purl.obolibrary.org/obo/DOID_3660" target="__blank">wheat allergy</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a> or <a href="http://purl.obolibrary.org/obo/DOID_3660" target="__blank">wheat allergy</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic" target="__blank">chronic</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Cell is empty but rule: &quot;is-required true&quot; does not allow this."
+                   >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   FAIL: disease required
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;Dengue virus equivalent-to &#39;Dengue virus 2&#39;&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;NCBITaxon_11060 equivalent-to &#39;Dengue virus&#39;&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_11060" target="__blank">Dengue virus 2</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   FAIL: exposure material must match exposure material ID
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;Dengue virus 2 subclass-of &#39;disease name&#39;&quot;.; Validation failed for rule: &quot;Dengue virus 2 subclass-of hasMaterialBasisIn some &#39;Dengue virus&#39;&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_11060" target="__blank">Dengue virus 2</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_11060" target="__blank">Dengue virus 2</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   FAIL: disease value must be a disease
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure" target="__blank">administration</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease" target="__blank">exposure without disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;&#39;Hepatovirus A&#39; or blood equivalent-to &#39;blood&#39;&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/UBERON_0000178" target="__blank">blood</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_12092" target="__blank">Hepatovirus A</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;UBERON_0000178 equivalent-to (&#39;Hepatovirus A&#39; or blood)&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/UBERON_0000178" target="__blank">blood</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Cell is non-empty (&quot;chronic&quot;) but rule: &quot;is-excluded true&quot; does not allow this."
+                   >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic" target="__blank">chronic</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   FAIL: exposure material must match exposure material ID, disease must be excluded when exposure process is not a subclass of disease
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;wheat allergy equivalent-to &#39;dengue hemorrhagic fever&#39;&quot;.; Validation failed for rule: &quot;dengue hemorrhagic fever equivalent-to &#39;wheat allergy&#39;&quot;.; Validation failed for rule: &quot;wheat allergy subclass-of hasMaterialBasisIn some &#39;Dengue virus&#39;&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a> | <a href="http://purl.obolibrary.org/obo/DOID_3660" target="__blank">wheat allergy</a>
+              </div>
+            </td>
+          
+            <td class="bg-danger text-white"
+              <div 
+                     data-toggle="popover" title="Validation failure" data-content="Validation failed for rule: &quot;DOID_3660 equivalent-to &#39;dengue hemorrhagic fever&#39;&quot;.; Validation failed for rule: &quot;DOID_12206 equivalent-to &#39;wheat allergy&#39;&quot;."
+                   >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a> | <a href="http://purl.obolibrary.org/obo/DOID_3660" target="__blank">wheat allergy</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   FAIL: not all combinations of the entries in the multi-cells for columns D and E satisfy the given rules
+              </div>
+            </td>
+          
+        </tr>
+      
+        <tr>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease" target="__blank">infectious disease</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/NCBITaxon_12637" target="__blank">Dengue virus</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a> | <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a> | <a href="http://purl.obolibrary.org/obo/DOID_12206" target="__blank">dengue hemorrhagic fever</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset" target="__blank">acute/recent onset</a>
+              </div>
+            </td>
+          
+            <td class="bg-light text-dark"
+              <div >
+                   PASS
+              </div>
+            </td>
+          
+        </tr>
+      
+    </table>
