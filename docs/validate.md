@@ -167,8 +167,8 @@ A data cell can contain more than one logical entity if these are separated usin
 
 |header 1                        |header 2                        |
 |--------------------------------|--------------------------------|
-|                                |`subclass-of %1`                |
-|`data1A | data1B`               |`data2A | data2B`               |
+|                                |subclass-of %1                  |
+|data1A \| data1B                |data2A \| data2B                |
 |...                             |                                |
 
 In this case, the following validations will be performed:
