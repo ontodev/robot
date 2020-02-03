@@ -229,7 +229,7 @@
     "VSAO": "http://purl.obolibrary.org/obo/VSAO_",
     "VT": "http://purl.obolibrary.org/obo/VT_",
     "VTO": "http://purl.obolibrary.org/obo/VTO_",
-    "WBLS": "http://purl.obolibrary.org/obo/WBLS_",
+    "WBls": "http://purl.obolibrary.org/obo/WBls_",
     "WBPhenotype": "http://purl.obolibrary.org/obo/WBPhenotype_",
     "WBbt": "http://purl.obolibrary.org/obo/WBbt_",
     "XAO": "http://purl.obolibrary.org/obo/XAO_",
