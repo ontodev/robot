@@ -191,7 +191,10 @@ public class ExtractOperation {
             OntologyHelper.getAnnotationValues(outputOntology, isDefinedBy, entity.getIRI());
         if (existingValues == null || existingValues.size() == 0) {
           // If not, add it
-          sourceAxioms.add(getIsDefinedBy(entity, sourceMap));
+          OWLAnnotationAxiom def = getIsDefinedBy(entity, sourceMap);
+          if (def != null) {
+            sourceAxioms.add(def);
+          }
         }
       }
       manager.addAxioms(outputOntology, sourceAxioms);
@@ -322,9 +325,12 @@ public class ExtractOperation {
       } else if (iri.contains("_")) {
         String baseStr = iri.substring(0, iri.lastIndexOf("_")).toLowerCase() + ".owl";
         base = IRI.create(baseStr);
-      } else {
+      } else if (iri.contains("/")) {
         String baseStr = iri.substring(0, iri.lastIndexOf("/")).toLowerCase() + ".owl";
         base = IRI.create(baseStr);
+      } else {
+        logger.warn("Unable to get source for IRI " + iri);
+        return null;
       }
     }
     return dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, entity.getIRI(), base);
