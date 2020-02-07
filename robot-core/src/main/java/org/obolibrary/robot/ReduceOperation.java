@@ -2,26 +2,12 @@ package org.obolibrary.robot;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLObjectPropertyCharacteristicAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.Node;
+import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
@@ -38,7 +24,7 @@ import org.slf4j.LoggerFactory;
  *
  * <h2>Implementation</h2>
  *
- * Because an OWL reasoner will only return named (non-anonymous) superclasses, we add a
+ * <p>Because an OWL reasoner will only return named (non-anonymous) superclasses, we add a
  * pre-processing step, where for each class C appearing in either LHS or RHS of a SubClassOf
  * expression, if C is anonymous, we create a named class C' and add a temporary axioms <code>
  * EquivalentClasses(C' C)</code>, which is later removed as a post-processing step. When performing
@@ -46,7 +32,7 @@ import org.slf4j.LoggerFactory;
  *
  * <h2>GENERAL CLASS INCLUSION AXIOMS</h2>
  *
- * We make a special additional case of redunancy, as in the following example: <code>
+ * <p>We make a special additional case of redunancy, as in the following example: <code>
  * 1. (hand and part-of some human) SubClassOf part-of some forelimb
  * 2. hand SubClassOf part-of some forelimb
  * </code> Here we treat axiom 1 as redundant, but this is not detected by the algorithm above,
@@ -68,6 +54,7 @@ public class ReduceOperation {
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
     options.put("preserve-annotated-axioms", "false");
+    options.put("named-classes-only", "false");
     return options;
   }
 
@@ -93,6 +80,27 @@ public class ReduceOperation {
    */
   public static void reduce(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, Map<String, String> options)
+      throws OWLOntologyCreationException {
+    boolean preserveAnnotatedAxioms =
+        OptionsHelper.optionIsTrue(options, "preserve-annotated-axioms");
+    boolean namedClassesOnly = OptionsHelper.optionIsTrue(options, "named-classes-only");
+    if (namedClassesOnly) {
+      reduceNamedOnly(ontology, reasonerFactory, preserveAnnotatedAxioms);
+    } else {
+      reduceAllClassExpressions(ontology, reasonerFactory, preserveAnnotatedAxioms);
+    }
+  }
+
+  /**
+   * Remove redundant SubClassOf axioms.
+   *
+   * @param ontology The ontology to reduce.
+   * @param reasonerFactory The reasoner factory to use.
+   * @param preserveAnnotatedAxioms Whether to not remove redundant, but annotated, axioms.
+   * @throws OWLOntologyCreationException on ontology problem
+   */
+  private static void reduceAllClassExpressions(
+      OWLOntology ontology, OWLReasonerFactory reasonerFactory, boolean preserveAnnotatedAxioms)
       throws OWLOntologyCreationException {
 
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -166,7 +174,7 @@ public class ReduceOperation {
 
     Set<OWLSubClassOfAxiom> rmAxioms = new HashSet<>();
     for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
-      if (OptionsHelper.optionIsTrue(options, "preserve-annotated-axioms")) {
+      if (preserveAnnotatedAxioms) {
         if (ax.getAnnotations().size() > 0) {
           logger.debug("Protecting axiom with annotations: " + ax);
           continue;
@@ -254,6 +262,7 @@ public class ReduceOperation {
     for (OWLAxiom ax : rmAxioms) {
       manager.removeAxiom(ontology, ax);
     }
+    reasoner.dispose();
   }
 
   /**
@@ -278,5 +287,94 @@ public class ReduceOperation {
       }
     }
     return rxmap.get(x);
+  }
+
+  /**
+   * Remove redundant SubClassOf axioms, only considering named classes. When only considering named
+   * classes, a somewhat more efficient algorithm can be used.
+   *
+   * @param ontology The ontology to reduce.
+   * @param reasonerFactory The reasoner factory to use.
+   * @param preserveAnnotatedAxioms Whether to not remove redundant, but annotated, axioms.
+   */
+  private static void reduceNamedOnly(
+      OWLOntology ontology, OWLReasonerFactory reasonerFactory, boolean preserveAnnotatedAxioms) {
+    // Map<superclass, Map<subclass, axioms>>
+    Map<OWLClass, Map<OWLClass, Set<OWLSubClassOfAxiom>>> assertions = new HashMap<>();
+    Set<OWLSubClassOfAxiom> assertedSubClassAxioms = ontology.getAxioms(AxiomType.SUBCLASS_OF);
+    for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
+      if (!ax.getSubClass().isAnonymous() && !ax.getSuperClass().isAnonymous()) {
+        OWLClass subclass = ax.getSubClass().asOWLClass();
+        OWLClass superclass = ax.getSuperClass().asOWLClass();
+        if (!assertions.containsKey(superclass)) {
+          assertions.put(superclass, new HashMap<>());
+        }
+        Map<OWLClass, Set<OWLSubClassOfAxiom>> subMap = assertions.get(superclass);
+        if (!subMap.containsKey(subclass)) {
+          subMap.put(subclass, new HashSet<>());
+        }
+        Set<OWLSubClassOfAxiom> axioms = subMap.get(subclass);
+        axioms.add(ax);
+      }
+    }
+    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+    if (!reasoner.isConsistent()) {
+      logger.info("Ontology is not consistent!");
+      return;
+    }
+    Node<OWLClass> unsatisfiableClasses = reasoner.getUnsatisfiableClasses();
+    if (unsatisfiableClasses.getSize() > 1) {
+      logger.info(
+          "There are {} unsatisfiable classes in the ontology.", unsatisfiableClasses.getSize());
+      for (OWLClass cls : unsatisfiableClasses) {
+        if (!cls.isOWLNothing()) {
+          logger.info("    unsatisfiable: " + cls.getIRI());
+        }
+      }
+    }
+    Set<OWLSubClassOfAxiom> nonredundant = new HashSet<>();
+    Set<Node<OWLClass>> alreadySeen = new HashSet<>();
+    findNonRedundant(reasoner.getTopClassNode(), reasoner, assertions, nonredundant, alreadySeen);
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    for (OWLSubClassOfAxiom ax : assertedSubClassAxioms) {
+      if (!ax.getSubClass().isAnonymous() && !ax.getSuperClass().isAnonymous()) {
+        if (preserveAnnotatedAxioms) {
+          if (ax.getAnnotations().size() > 0) {
+            logger.debug("Protecting axiom with annotations: " + ax);
+            continue;
+          }
+        }
+        if (!nonredundant.contains(ax)) {
+          manager.removeAxiom(ontology, ax);
+        }
+      }
+    }
+    reasoner.dispose();
+  }
+
+  private static void findNonRedundant(
+      Node<OWLClass> node,
+      OWLReasoner reasoner,
+      Map<OWLClass, Map<OWLClass, Set<OWLSubClassOfAxiom>>> assertions,
+      Set<OWLSubClassOfAxiom> nonredundant,
+      Set<Node<OWLClass>> alreadySeen) {
+    if (!alreadySeen.contains(node)) {
+      NodeSet<OWLClass> subclasses = reasoner.getSubClasses(node.getRepresentativeElement(), true);
+      for (OWLClass superclass : node.getEntities()) {
+        for (OWLClass subclass : subclasses.getFlattened()) {
+          if (assertions.containsKey(superclass)) {
+            Map<OWLClass, Set<OWLSubClassOfAxiom>> subclassAxiomsBySubclass =
+                assertions.get(superclass);
+            if (subclassAxiomsBySubclass.containsKey(subclass)) {
+              nonredundant.addAll(subclassAxiomsBySubclass.get(subclass));
+            }
+          }
+        }
+      }
+      alreadySeen.add(node);
+      for (Node<OWLClass> subclassNode : subclasses.getNodes()) {
+        findNonRedundant(subclassNode, reasoner, assertions, nonredundant, alreadySeen);
+      }
+    }
   }
 }

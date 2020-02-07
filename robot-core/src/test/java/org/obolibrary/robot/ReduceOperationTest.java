@@ -29,6 +29,16 @@ public class ReduceOperationTest extends CoreTest {
 
     ReduceOperation.reduce(reasoned, reasonerFactory, options);
     assertIdentical("/without_redundant_subclasses.owl", reasoned);
+
+    OWLOntology reasoned2 = loadOntology("/redundant_subclasses.owl");
+
+    Map<String, String> options2 = new HashMap<String, String>();
+    options2.put("remove-redundant-subclass-axioms", "true");
+    options2.put("preserve-annotated-axioms", "true");
+    options2.put("named-classes-only", "true");
+
+    ReduceOperation.reduce(reasoned2, reasonerFactory, options2);
+    assertIdentical("/without_redundant_subclasses.owl", reasoned2);
   }
 
   @Test
@@ -155,5 +165,23 @@ public class ReduceOperationTest extends CoreTest {
 
     ReduceOperation.reduce(reasoned, reasonerFactory, options);
     assertIdentical("/reduce-domain-test.owl", reasoned);
+  }
+
+  /** Test reduce only named classes vs. including expressions */
+  @Test
+  public void testReducedNamedOnly() throws OWLOntologyCreationException, IOException {
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+
+    OWLOntology ontologyA = loadOntology("/reduce-named-only-test.ofn");
+    Map<String, String> optionsA = new HashMap<String, String>();
+    optionsA.put("named-classes-only", "true");
+    ReduceOperation.reduce(ontologyA, reasonerFactory, optionsA);
+    assertIdentical("/reduce-named-only-test-named-only-true-reduced.ofn", ontologyA);
+
+    OWLOntology ontologyB = loadOntology("/reduce-named-only-test.ofn");
+    Map<String, String> optionsB = new HashMap<String, String>();
+    optionsB.put("named-classes-only", "false");
+    ReduceOperation.reduce(ontologyB, reasonerFactory, optionsB);
+    assertIdentical("/reduce-named-only-test-named-only-false-reduced.ofn", ontologyB);
   }
 }
