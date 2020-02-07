@@ -1,0 +1,38 @@
+Prefix(:=<http://robot.obolibrary.org/reduce/test#>)
+Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(xml:=<http://www.w3.org/XML/1998/namespace>)
+Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+
+
+Ontology(<http://robot.obolibrary.org/reduce/test>
+
+Declaration(Class(<http://robot.obolibrary.org/reduce/test/A>))
+Declaration(Class(<http://robot.obolibrary.org/reduce/test/B>))
+Declaration(Class(<http://robot.obolibrary.org/reduce/test/C>))
+Declaration(Class(<http://robot.obolibrary.org/reduce/test/D>))
+Declaration(ObjectProperty(<http://robot.obolibrary.org/reduce/test/r>))
+
+############################
+#   Classes
+############################
+
+# Class: <http://robot.obolibrary.org/reduce/test/A> (<http://robot.obolibrary.org/reduce/test/A>)
+
+SubClassOf(<http://robot.obolibrary.org/reduce/test/A> ObjectSomeValuesFrom(<http://robot.obolibrary.org/reduce/test/r> <http://robot.obolibrary.org/reduce/test/C>))
+
+# Class: <http://robot.obolibrary.org/reduce/test/B> (<http://robot.obolibrary.org/reduce/test/B>)
+
+SubClassOf(<http://robot.obolibrary.org/reduce/test/B> <http://robot.obolibrary.org/reduce/test/A>)
+
+# Class: <http://robot.obolibrary.org/reduce/test/C> (<http://robot.obolibrary.org/reduce/test/C>)
+
+SubClassOf(<http://robot.obolibrary.org/reduce/test/C> <http://robot.obolibrary.org/reduce/test/B>)
+
+# Class: <http://robot.obolibrary.org/reduce/test/D> (<http://robot.obolibrary.org/reduce/test/D>)
+
+SubClassOf(<http://robot.obolibrary.org/reduce/test/D> <http://robot.obolibrary.org/reduce/test/C>)
+
+
+)
