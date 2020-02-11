@@ -46,6 +46,9 @@ public class XMLHelper {
   private final String LANG_TAG = "{http://www.w3.org/XML/1998/namespace}lang";
   private final String RDFS_DATATYPE_TAG = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}datatype";
   private final String SUBCLASS_OF_TAG = "{http://www.w3.org/2000/01/rdf-schema#}subClassOf";
+  private final String ANNOTATED_TARGET_TAG = "{http://www.w3.org/2002/07/owl#}annotatedTarget";
+  private final String ANNOTATED_SOURCE_TAG = "{http://www.w3.org/2002/07/owl#}annotatedSource";
+  private final String ANNOTATED_PROPERTY_TAG = "{http://www.w3.org/2002/07/owl#}annotatedProperty";
 
   // Shared data factory & manager
   private final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
@@ -435,10 +438,11 @@ public class XMLHelper {
   }
 
   /**
-   * 
-   * @param fis
-   * @param annotationProperties
-   * @throws XMLStreamException
+   * Add OWLAxiom objects to output ontology for all targets that are sources of OWLAxioms.
+   *
+   * @param fis FileInputStream of XML
+   * @param annotationProperties set of IRIs for annotation properties to include
+   * @throws XMLStreamException on issue parsing XML
    */
   private void addOWLAxioms(FileInputStream fis, Set<IRI> annotationProperties)
       throws XMLStreamException {
@@ -451,182 +455,204 @@ public class XMLHelper {
 
     int e;
     String node = null;
+
+    // Parts of the OWLAxiom
     String source = null;
     String property = null;
     String target = null;
+    String annotationNode = null;
+
+    // Annotation content
     StringBuilder targetContentBuilder = null;
     String targetContent = null;
-    String annotationNode = null;
     StringBuilder annotationContentBuilder = null;
     String annotationContent = null;
+
+    // Datatype of annotation
     String annotationDt = null;
 
-    while (sr.hasNext()) {
-      e = sr.next();
-      if (e == XMLEvent.START_ELEMENT && sr.getName().toString().equalsIgnoreCase(AXIOM_TAG)) {
+    try {
+      while (sr.hasNext()) {
+        e = sr.next();
+        if (e == XMLEvent.START_ELEMENT && sr.getName().toString().equalsIgnoreCase(AXIOM_TAG)) {
+          // Start of OWLAxiom - the only element we care about
+          while (true) {
+            // Loop through elements until we hit end of AXIOM_TAG
+            if (sr.hasNext()) {
+              e = sr.next();
+            } else {
+              break;
+            }
 
-        while (true) {
-          if (sr.hasNext()) {
-            e = sr.next();
-          } else {
-            break;
+            if (e == XMLEvent.END_ELEMENT) {
+              node = sr.getName().toString();
+              if (node.equalsIgnoreCase(AXIOM_TAG)) {
+                // End of OWL Axiom
+                break;
+
+              } else if (node.equalsIgnoreCase(ANNOTATED_TARGET_TAG)
+                  && targetContentBuilder != null) {
+                // End of target with content
+                targetContent = targetContentBuilder.toString();
+                targetContentBuilder = null;
+
+              } else if (node.equalsIgnoreCase(annotationNode)
+                  && annotationContentBuilder != null) {
+                // End of annotation with content
+                annotationContent = annotationContentBuilder.toString();
+                annotationContentBuilder = null;
+              }
+
+            } else if (e == XMLEvent.START_ELEMENT) {
+              node = sr.getName().toString();
+              switch (node) {
+                case ANNOTATED_SOURCE_TAG:
+                  if (sr.getAttributeCount() > 0) {
+                    // Source should always have a resource
+                    source = sr.getAttributeValue(0);
+                  }
+                  break;
+
+                case ANNOTATED_PROPERTY_TAG:
+                  if (sr.getAttributeCount() > 0) {
+                    // Property should always have a resource
+                    property = sr.getAttributeValue(0);
+                  }
+                  break;
+
+                case ANNOTATED_TARGET_TAG:
+                  if (sr.getAttributeCount() > 0) {
+                    // This may or may not have a resource
+                    // This is either a datatype or another entity IRI
+                    target = sr.getAttributeValue(0);
+                  }
+                  break;
+
+                default:
+                  // The node is the annotation property
+                  annotationNode = node;
+                  if (sr.getAttributeCount() > 0) {
+                    // This might have a datatype
+                    annotationDt = sr.getAttributeValue(0);
+                  }
+              }
+
+            } else if (e == XMLEvent.CHARACTERS) {
+              if (node == null) {
+                // node should never be null here
+                // but just in case, continue to next element
+                continue;
+              }
+
+              String content = sr.getText();
+              if (node.equalsIgnoreCase(ANNOTATED_TARGET_TAG)) {
+                // Target content (if the OWLAxiom is targeting another annotation)
+                if (targetContentBuilder == null) {
+                  targetContentBuilder = new StringBuilder();
+                }
+                if (!content.trim().isEmpty()) {
+                  targetContentBuilder.append(content);
+                }
+
+              } else if (annotationNode != null) {
+                // Annotation content
+                if (annotationContentBuilder == null) {
+                  annotationContentBuilder = new StringBuilder();
+                }
+                if (!content.trim().isEmpty()) {
+                  annotationContentBuilder.append(content);
+                }
+              }
+            }
           }
 
-          if (e == XMLEvent.END_ELEMENT) {
-            node = sr.getName().toString();
-            if (node.equalsIgnoreCase(AXIOM_TAG)) {
-              // End of OWL Axiom
-              break;
+          if (annotationNode != null
+              && annotationContent != null
+              && source != null
+              && property != null) {
 
-            } else if (node.equalsIgnoreCase("{http://www.w3.org/2002/07/owl#}annotatedTarget")
-                && targetContentBuilder != null) {
-              // End of target with content
-              targetContent = targetContentBuilder.toString();
-              targetContentBuilder = null;
-
-            } else if (node.equalsIgnoreCase(annotationNode) && annotationContentBuilder != null) {
-              // End of annotation with content
-              annotationContent = annotationContentBuilder.toString();
-              annotationContentBuilder = null;
+            IRI annotationIRI = IRI.create(annotationNode.replace("{", "").replace("}", ""));
+            if (!annotationProperties.contains(annotationIRI)) {
+              // Only include the annotation if the annotation property is in our set
+              continue;
             }
+            OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(annotationIRI);
 
-          } else if (e == XMLEvent.START_ELEMENT) {
-            node = sr.getName().toString();
-            switch (node) {
-              case "{http://www.w3.org/2002/07/owl#}annotatedSource":
-                if (sr.getAttributeCount() > 0) {
-                  // Source should always have a resource
-                  source = sr.getAttributeValue(0);
-                }
-                break;
-
-              case "{http://www.w3.org/2002/07/owl#}annotatedProperty":
-                if (sr.getAttributeCount() > 0) {
-                  // Property should always have a resource
-                  property = sr.getAttributeValue(0);
-                }
-                break;
-
-              case "{http://www.w3.org/2002/07/owl#}annotatedTarget":
-                if (sr.getAttributeCount() > 0) {
-                  // This may or may not have a resource
-                  // This is either a datatype or another entity IRI
-                  target = sr.getAttributeValue(0);
-                }
-                break;
-
-              default:
-                // The node is the annotation property
-                annotationNode = node;
-                if (sr.getAttributeCount() > 0) {
-                  // This might have a datatype
-                  annotationDt = sr.getAttributeValue(0);
-                }
-            }
-
-          } else if (e == XMLEvent.CHARACTERS) {
-            if (node == null) {
-              // node should never be null here
+            IRI sourceIRI = IRI.create(source.replace("{", "").replace("}", ""));
+            if (!allTargets.contains(sourceIRI)) {
+              // Only add if the source of axiom is in the targets we are extracting
               continue;
             }
 
-            String content = sr.getText();
-            if (node.equalsIgnoreCase("{http://www.w3.org/2002/07/owl#}annotatedTarget")) {
-              if (targetContentBuilder == null) {
-                targetContentBuilder = new StringBuilder();
-              }
-              if (!content.trim().isEmpty()) {
-                targetContentBuilder.append(content);
-              }
-
-            } else if (annotationNode != null) {
-              if (annotationContentBuilder == null) {
-                annotationContentBuilder = new StringBuilder();
-              }
-              if (!content.trim().isEmpty()) {
-                annotationContentBuilder.append(content);
-              }
-            }
-          }
-        }
-
-        if (annotationNode != null
-            && annotationContent != null
-            && source != null
-            && property != null) {
-
-          IRI annotationIRI = IRI.create(annotationNode.replace("{", "").replace("}", ""));
-          if (!annotationProperties.contains(annotationIRI)) {
-            continue;
-          }
-          IRI sourceIRI = IRI.create(source.replace("{", "").replace("}", ""));
-          if (!allTargets.contains(sourceIRI)) {
-            // Only add if the source of axiom is in the targets we are extracting
-            continue;
-          }
-
-          OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(annotationIRI);
-          OWLAnnotation a;
-          if (annotationDt != null) {
-            OWLDatatype dt = dataFactory.getOWLDatatype(IRI.create(annotationDt));
-            a = dataFactory.getOWLAnnotation(ap, dataFactory.getOWLLiteral(annotationContent, dt));
-          } else {
-            a = dataFactory.getOWLAnnotation(ap, dataFactory.getOWLLiteral(annotationContent));
-          }
-          Set<OWLAnnotation> anns = new HashSet<>();
-          anns.add(a);
-
-          IRI propertyIRI = IRI.create(property.replace("{", "").replace("}", ""));
-          OWLAnnotation pa;
-
-          // This is either an IRI, a datatype, or null
-          IRI targetIRI = null;
-          if (target != null) {
-            targetIRI = IRI.create(target);
-          }
-          if (targetContent != null && !targetContent.trim().equals("")) {
-            // Create a parent annotation axiom using IRI as a datatype
-            ap = dataFactory.getOWLAnnotationProperty(propertyIRI);
-            OWLLiteral lit;
-            if (targetIRI != null) {
-              lit = dataFactory.getOWLLiteral(targetContent, dataFactory.getOWLDatatype(targetIRI));
+            // Create the annotation, maybe with a datatype
+            OWLAnnotation a;
+            if (annotationDt != null) {
+              OWLDatatype dt = dataFactory.getOWLDatatype(IRI.create(annotationDt));
+              a =
+                  dataFactory.getOWLAnnotation(
+                      ap, dataFactory.getOWLLiteral(annotationContent, dt));
             } else {
-              lit = dataFactory.getOWLLiteral(targetContent);
+              a = dataFactory.getOWLAnnotation(ap, dataFactory.getOWLLiteral(annotationContent));
             }
-            pa = dataFactory.getOWLAnnotation(ap, lit);
-            manager.addAxiom(
-                outputOntology, dataFactory.getOWLAnnotationAssertionAxiom(sourceIRI, pa, anns));
+            Set<OWLAnnotation> anns = new HashSet<>();
+            anns.add(a);
 
-          } else if (targetIRI != null) {
-            // Target is an IRI which means the axiom is targeting a logical axiom
-            OWLClass sourceClass = dataFactory.getOWLClass(sourceIRI);
-            OWLClass targetClass = dataFactory.getOWLClass(targetIRI);
-            Set<OWLClass> cls = new HashSet<>();
-            cls.add(sourceClass);
-            cls.add(targetClass);
+            // Target property - potentially an annotation property, or a logical property
+            IRI propertyIRI = IRI.create(property.replace("{", "").replace("}", ""));
 
-            if (propertyIRI
-                .toString()
-                .equalsIgnoreCase("http://www.w3.org/2000/01/rdf-schema#subClassOf")) {
-              OWLSubClassOfAxiom subClassOfAxiom =
-                  dataFactory.getOWLSubClassOfAxiom(sourceClass, targetClass, anns);
-              manager.addAxiom(outputOntology, subClassOfAxiom);
-            } else if (propertyIRI
-                .toString()
-                .equalsIgnoreCase("http://www.w3.org/2002/07/owl#equivalentClasses")) {
-              OWLDisjointClassesAxiom disjointClassesAxiom =
-                  dataFactory.getOWLDisjointClassesAxiom(cls, anns);
-              manager.addAxiom(outputOntology, disjointClassesAxiom);
-            } else if (propertyIRI
-                .toString()
-                .equalsIgnoreCase("http://www.w3.org/2002/07/owl#disjointClasses")) {
-              OWLEquivalentClassesAxiom eqClassesAxiom =
-                  dataFactory.getOWLEquivalentClassesAxiom(cls, anns);
-              manager.addAxiom(outputOntology, eqClassesAxiom);
+            // This is either an IRI, a datatype, or null
+            IRI targetIRI = null;
+            if (target != null) {
+              targetIRI = IRI.create(target);
+            }
+            if (targetContent != null && !targetContent.trim().equals("")) {
+              // Create a parent annotation axiom using IRI as a datatype
+              ap = dataFactory.getOWLAnnotationProperty(propertyIRI);
+              OWLLiteral lit;
+              if (targetIRI != null) {
+                lit =
+                    dataFactory.getOWLLiteral(targetContent, dataFactory.getOWLDatatype(targetIRI));
+              } else {
+                lit = dataFactory.getOWLLiteral(targetContent);
+              }
+              OWLAnnotation parentAnnotation = dataFactory.getOWLAnnotation(ap, lit);
+              manager.addAxiom(
+                  outputOntology,
+                  dataFactory.getOWLAnnotationAssertionAxiom(sourceIRI, parentAnnotation, anns));
+
+            } else if (targetIRI != null) {
+              // Target is an IRI which means the axiom is targeting a logical axiom
+              OWLClass sourceClass = dataFactory.getOWLClass(sourceIRI);
+              OWLClass targetClass = dataFactory.getOWLClass(targetIRI);
+              Set<OWLClass> cls = new HashSet<>();
+              cls.add(sourceClass);
+              cls.add(targetClass);
+
+              if (propertyIRI
+                  .toString()
+                  .equalsIgnoreCase("http://www.w3.org/2000/01/rdf-schema#subClassOf")) {
+                OWLSubClassOfAxiom subClassOfAxiom =
+                    dataFactory.getOWLSubClassOfAxiom(sourceClass, targetClass, anns);
+                manager.addAxiom(outputOntology, subClassOfAxiom);
+              } else if (propertyIRI
+                  .toString()
+                  .equalsIgnoreCase("http://www.w3.org/2002/07/owl#equivalentClasses")) {
+                OWLDisjointClassesAxiom disjointClassesAxiom =
+                    dataFactory.getOWLDisjointClassesAxiom(cls, anns);
+                manager.addAxiom(outputOntology, disjointClassesAxiom);
+              } else if (propertyIRI
+                  .toString()
+                  .equalsIgnoreCase("http://www.w3.org/2002/07/owl#disjointClasses")) {
+                OWLEquivalentClassesAxiom eqClassesAxiom =
+                    dataFactory.getOWLEquivalentClassesAxiom(cls, anns);
+                manager.addAxiom(outputOntology, eqClassesAxiom);
+              }
             }
           }
         }
       }
+    } finally {
+      sr.closeCompletely();
     }
   }
 
