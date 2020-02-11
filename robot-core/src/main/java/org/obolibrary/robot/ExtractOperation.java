@@ -33,13 +33,13 @@ public class ExtractOperation {
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
-      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or simple";
+      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or mireot-rdfxml";
 
-  /** Error message when upper or lower terms are used for SLME or simple methods. */
+  /** Error message when upper or lower terms are used for SLME or mireot-rdfxml methods. */
   private static final String invalidTermsInConfigError =
       NS + "INVALID TERMS IN CONFIG The '%s' option should only be used for MIREOT";
 
-  /** Error message when 'terms' is missing for SLME or simple methods. */
+  /** Error message when 'terms' is missing for SLME or mireot-rdfxml methods. */
   private static final String missingTermsInConfigError =
       NS + "MISSING TERMS IN CONFIG 'terms' is a required option in the configuration file";
 
@@ -392,15 +392,16 @@ public class ExtractOperation {
   }
 
   /**
-   * Perform a 'simple' extraction using parameters from a configuration file. Simple method never
-   * loads the ontology object, just parses XML. This is recommended for very large ontologies.
+   * Perform a 'mireot-rdfxml' extraction using parameters from a configuration file. This method
+   * never loads the ontology object, just parses XML. This is recommended for very large
+   * ontologies.
    *
    * @param ioHelper IOHelper to handle creating IRIs
    * @param options Map of options from config file
    * @return extracted subset
    * @throws Exception on any problem
    */
-  public static OWLOntology simpleExtractFromConfig(
+  public static OWLOntology mireotRDFXMLExtractFromConfig(
       IOHelper ioHelper, Map<String, List<String>> options) throws Exception {
     // Make sure we have terms to extract
     if (!options.containsKey("terms")) {

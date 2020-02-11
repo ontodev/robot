@@ -5,7 +5,7 @@
 1. [Overview](#overview)
 2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
 3. [Extraction method: MIREOT](#mireot)
-4. [Extraction method: simple](#simple)
+4. [Extraction method: MIREOT RDFXML](#mireot-rdfxml)
 5. [Handling Intermediates (`--intermediates`)](#intermediates)
 6. [Handling Imports (`--imports`)](#handling-imports)
 7. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
@@ -77,13 +77,13 @@ If neither `--annotation-property` nor `--annotation-properties` is specified, a
 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
-## Simple
+## MIREOT-RDFXML
 
 Loading very large ontologies into ROBOT can require a lot of time and memory. Because of this, it can be easier to parse large RDF/XML files using a streaming XML processor instead of fully loading them into memory.
 
 **Please note** that this method can only be used on files in RDF/XML format.
 
-    robot extract --method simple \
+    robot extract --method mireot-rdfxml \
         --input uberon_fragment.owl \
         --term UBERON:0000465 \
         --term UBERON:0001017 \
@@ -92,7 +92,7 @@ Loading very large ontologies into ROBOT can require a lot of time and memory. B
         
 For this method, one or more `--annotation-property` options can be provided in order to add annotations to the entities. If not included, all annotations will be included in the output. To provide a text file of annotation properties, use `--annotation-properties`.
 
-The 'simple' method is similar to MIREOT in that no anonymous class expressions or equivalent classes are included. Unlike MIREOT, 'simple' will not include axiom annotations on annotations.
+The `mireot-rdfxml` method is similar to MIREOT in that no anonymous class expressions or equivalent classes are included.
 
 ## Intermediates
 
@@ -222,28 +222,28 @@ BFO:0000001,RO
 
 Instead of specifying each option on the command line, ROBOT offers a `--config <file>` option in which you can specify a text configuration file. The basic format is:
 ```
-! option 1
+--option-1
 arg
 
-! option 2
+--option-2
 arg 1
 arg 2
 ...
 ```
 
 The following command-line options are supported:
-* `! input` - expects one line (path to the input ontology)
-* `! input-iri` - expects one line (IRI to the input ontology)
-* `! output-iri` - expects one line (IRI to save the output ontology with)
-* `! method` - expects one line (a valid [extraction method](#overview))
-* `! intermediates` - expects one line (a valid [intermediates option](#intermediates))
-* `! annotate-with-source` - expects one line (`true` or `false`, defaults to `true`)
-* `! imports` - expects one line (how to [handle input imports](#handling-imports), defaults to `include`)
-* `! lower-terms` - expects one or more lines (lower terms for [MIREOT](#mireot))
-* `! upper-terms` - expects one or more lines (upper terms for [MIREOT](#mireot))
-* `! terms` - expects one or more lines (terms for [SLME](#syntactic-locality-module-extractor-slme))
+* `--input` - expects one line (path to the input ontology)
+* `--input-iri` - expects one line (IRI to the input ontology)
+* `--output-iri` - expects one line (IRI to save the output ontology with)
+* `--method` - expects one line (a valid [extraction method](#overview))
+* `--intermediates` - expects one line (a valid [intermediates option](#intermediates))
+* `--annotate-with-source` - expects one line (`true` or `false`, defaults to `true`)
+* `--imports` - expects one line (how to [handle input imports](#handling-imports), defaults to `include`)
+* `--lower-terms` - expects one or more lines (lower terms for [MIREOT](#mireot))
+* `--upper-terms` - expects one or more lines (upper terms for [MIREOT](#mireot))
+* `--terms` - expects one or more lines (terms for [SLME](#syntactic-locality-module-extractor-slme))
 
-Either an `! input` or `! input-iri` is required. The `! method` is required. For MIREOT extractions, `! lower-terms` is a required option. For SLME and simple extractions, `! terms` is a required option.
+Either an `--input` or `--input-iri` is required. The `--method` is required. For MIREOT extractions, `--lower-terms` is a required option. For SLME and `mireot-rdfxml` extractions, `--terms` is a required option.
 
 When using the `--config` option, an `--output` must be specified:
 
@@ -253,29 +253,29 @@ When using the `--config` option, an `--output` must be specified:
 
 ### Using Labels
 
-All labels are loaded from the `! input` or `! input-iri` ontology and can be used in the terms instead of CURIEs or IRIs. If you prefer, you can always reference a term by CURIE or IRI instead.
+All labels are loaded from the `--input` or `--input-iri` ontology and can be used in the terms instead of CURIEs or IRIs. If you prefer, you can always reference a term by CURIE or IRI instead.
 
 The config file expects that no term label will have a tab character in it. This is recommended practice, but if for some reason you have a label with a tab character, be sure to surround it with single quotes.
 
-We have included a `! target` option to specify the target ontology. No terms are extracted from the target ontology, but it is loaded so that you can use labels when specifying replacement parents and annotation properties.
+We have included a `--target` option to specify the target ontology. No terms are extracted from the target ontology, but it is loaded so that you can use labels when specifying replacement parents and annotation properties.
 
 ```
-! target
+--target
 path/to/my-ontology.owl
 ```
 
 ### Annotations
 
-The config file also supports an `! annotations` option to specify how to handle annotations.
+The config file also supports an `--annotations` option to specify how to handle annotations.
 
-For MIREOT and simple extractions, all desired annotation properties must be listed. For SLME methods, all annotation properties are always included, but the `! annotations` option can still be used for `mapTo` and `copyTo` annotations (see below).
+For MIREOT and `mireot-rdfxml` extractions, all desired annotation properties must be listed. For SLME methods, all annotation properties are always included, but the `--annotations` option can still be used for `mapTo` and `copyTo` annotations (see below).
 
 The format for each argument is (with `\t` representing a tab):
 ```
 <original label or ID> \t <keyword> \t <copy/replace label or ID>
 ```
 
-The first `<label or ID>` is required. This is the annotation property to include when extracting (MIREOT and simple). The `<keyword>` and second `<label or ID>` are optional. These are special operations to determine what to do with the annotation after extraction.
+The first `<label or ID>` is required. This is the annotation property to include when extracting (MIREOT and `mireot-rdfxml`). The `<keyword>` and second `<label or ID>` are optional. These are special operations to determine what to do with the annotation after extraction.
 
 The keywords are:
 * `copyTo` - the original annotation is kept in this case and the annotation value is copied to the given annotation property on the same subject.
@@ -283,9 +283,9 @@ The keywords are:
 
 ### Annotating With Source Ontology
 
-Note that this option is currently only implemented with the MIREOT and simple methods for config files.
+Note that this option is currently only implemented with the MIREOT and `mireot-rdfxml` methods for config files.
 
-If `! annotate-with-source` is not included, this defaults to `true`.
+If `--annotate-with-source` is not included, this defaults to `true`.
 
 If `annotate-with-source` is `true`, each extracted term will be annotated with `rdfs:isDefinedBy <source-ontology-iri>`. If the source ontology does not have an IRI, this annotation is not added.
 
@@ -302,31 +302,31 @@ For all term options, the first `<label or ID>` is required. This specifies whic
 
 ### Example
 
-Here is an example config file to extract a set of terms from UO for OBI. These terms are specified to be children of the term 'measurement unit label', which is loaded from the `! target` ontology.
+Here is an example config file to extract a set of terms from UO for OBI. These terms are specified to be children of the term 'measurement unit label', which is loaded from the `--target` ontology.
 
 The annotations included from the input ontology are 'label' and 'definition'. The labels are copied to the 'editor preferred term'.
 
 ```
-! input-iri
+--input-iri
 http://purl.obolibrary.org/obo/uo.owl
 
-! target
+--target
 src/ontology/obi.owl
 
-! output-iri
+--output-iri
 http://purl.obolibrary.org/obo/obi/uo_import.owl
 
-! method
+--method
 MIREOT
 
-! annotations
+--annotations
 label       copyTo	editor preferred term
 definition
 
-! intermediates
+--intermediates
 none
 
-! lower-terms
+--lower-terms
 concentration unit	measurement unit label
 frequency unit		measurement unit label
 length unit		measurement unit label
@@ -338,19 +338,19 @@ length unit		measurement unit label
 
 ### Empty Option Error
 
-This error is thrown when a `! <option-name>` option in the config file does not have contents directly below it. There should be **no** blank lines between the option and the argument. For example:
+This error is thrown when a `--<option-name>` option in the config file does not have contents directly below it. There should be **no** blank lines between the option and the argument. For example:
 ```
-! input
+--input
 path/to/input.owl
 ```
 
 ### Invalid Method Error
 
-The `--method` option only accepts: MIREOT, STAR, TOP, BOT, or simple.
+The `--method` option only accepts: MIREOT, STAR, TOP, BOT, or `mireot-rdfxml`.
 
 ### Invalid Option Error
 
-The following flags *should not* be used with STAR, TOP, BOT, or simple methods:
+The following flags *should not* be used with STAR, TOP, BOT, or `mireot-rdfxml` methods:
 * `--upper-term` & `--upper-terms`
 * `--lower-term` & `--lower-terms`
 * `--branch-from-term` & `--branch-from-terms`
@@ -363,21 +363,21 @@ The input for `--sources` must be either CSV or TSV format.
 
 ## Invalid Terms in Config
 
-The `! upper-terms` and `! lower-terms` options should only be used for MIREOT.
+The `--upper-terms` and `--lower-terms` options should only be used for MIREOT.
 
-The `! terms` option should be used only with SLME and simple methods.
+The `--terms` option should be used only with SLME and `mireot-rdfxml` methods.
 
 ### Missing Input in Config
 
-An `! input` or `! input-iri` is required in the configuration file. 
+An `--input` or `--input-iri` is required in the configuration file. 
 
-For `! input`, the path to the local ontology should appear on the next line. For `! input-iri`, the IRI of the ontology (e.g. `http://purl.obolibrary.org/obo/obi.owl`) should appear on the next line.
+For `--input`, the path to the local ontology should appear on the next line. For `--input-iri`, the IRI of the ontology (e.g. `http://purl.obolibrary.org/obo/obi.owl`) should appear on the next line.
 
 ### Missing MIREOT Term(s) Error
 
 MIREOT requires either `--lower-term` or `--branch-from-term` to proceed. `--upper-term` is optional.
 
-For configuration files, either the `! lower-terms` or `! branch-from-terms` is required. Terms should be listed line-by-line directly under the option.
+For configuration files, either the `--lower-terms` or `--branch-from-terms` is required. Terms should be listed line-by-line directly under the option.
 
 ### Missing Lower Term(s) Error
 
@@ -385,9 +385,9 @@ If an `--upper-term` is specified for MIREOT, `--lower-term` (or terms) must als
 
 ### Missing Terms in Config
 
-The `! terms` option in the configuration file is required for SLME and simple extraction methods. Terms should be listed under this option line-by-line:
+The `--terms` option in the configuration file is required for SLME and `mireot-rdfxml` extraction methods. Terms should be listed under this option line-by-line:
 ```
-! terms
+--terms
 example term 1
 example term 2
 ...
@@ -395,7 +395,7 @@ example term 2
 
 ### Unknown Config Option
 
-This error message means that an unexpected `! <option-name>` option was provided in the configuration file. The accepted options are [listed here](#import-configuration-file).
+This error message means that an unexpected `--<option-name>` option was provided in the configuration file. The accepted options are [listed here](#import-configuration-file).
 
 ### Unknown Individuals Error
 

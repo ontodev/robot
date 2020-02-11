@@ -37,7 +37,7 @@ public class ExtractCommand implements Command {
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
-      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or simple";
+      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or mireot-rdfxml";
 
   /** Error message when a MIREOT option is used for SLME. */
   private static final String invalidOptionError =
@@ -98,12 +98,15 @@ public class ExtractCommand implements Command {
     o.addOption("M", IMPORTS_OPT, true, "handle imports (default: include)");
     o.addOption("N", INTERMEDIATES_OPT, true, "specify how to handle intermediate entities");
     o.addOption(
-        null, "annotation-property", true, "annotation property to include (MIREOT and simple)");
+        null,
+        "annotation-property",
+        true,
+        "annotation property to include (MIREOT and mireot-rdfxml)");
     o.addOption(
         null,
         "annotation-properties",
         true,
-        "annotation properties to include (MIREOT and simple)");
+        "annotation properties to include (MIREOT and mireot-rdfxml)");
     options = o;
   }
 
@@ -202,9 +205,9 @@ public class ExtractCommand implements Command {
             .trim()
             .toLowerCase();
 
-    // Simple method never loads full ontology
-    if (method.equals("simple")) {
-      outputOntology = simpleExtract(ioHelper, line, extractOptions);
+    // mireot-rdfxml method never loads full ontology
+    if (method.equals("mireot-rdfxml")) {
+      outputOntology = mireotRDFXMLExtract(ioHelper, line, extractOptions);
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
@@ -269,8 +272,8 @@ public class ExtractCommand implements Command {
     switch (method.toLowerCase()) {
       case "mireot":
         return MireotOperation.mireotFromConfig(ioHelper, configOptions);
-      case "simple":
-        return ExtractOperation.simpleExtractFromConfig(ioHelper, configOptions);
+      case "mireot-rdfxml":
+        return ExtractOperation.mireotRDFXMLExtractFromConfig(ioHelper, configOptions);
       case "top":
       case "bot":
       case "star":
@@ -374,7 +377,7 @@ public class ExtractCommand implements Command {
   }
 
   /**
-   * Perform a simple extraction.
+   * Perform a mireot-rdfxml extraction.
    *
    * @param ioHelper IOHelper to handle resolving terms
    * @param line CommadLine with options
@@ -382,7 +385,7 @@ public class ExtractCommand implements Command {
    * @return a new ontology containing extracted subset
    * @throws Exception on any problem
    */
-  private static OWLOntology simpleExtract(
+  private static OWLOntology mireotRDFXMLExtract(
       IOHelper ioHelper, CommandLine line, Map<String, String> extractOptions) throws Exception {
     String fileName = CommandLineHelper.getOptionalValue(line, INPUT_OPT);
     String iriString = CommandLineHelper.getOptionalValue(line, INPUT_IRI_OPT);
@@ -391,7 +394,9 @@ public class ExtractCommand implements Command {
     }
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
 
+    // Support both --terms in the import config and --term-file on the command line
     Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, "term", TERMS_OPT);
+    terms.addAll(CommandLineHelper.getTerms(ioHelper, line, "term", "term-file"));
     Set<IRI> annotationProperties =
         CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
 
@@ -543,8 +548,8 @@ public class ExtractCommand implements Command {
         continue;
       }
 
-      // '! ' indicates the start of a new option
-      if (line.startsWith("! ")) {
+      // '--' indicates the start of a new option
+      if (line.startsWith("--")) {
         String option = line.substring(2);
 
         // Add single line options, or set the current option for multi-line tracking

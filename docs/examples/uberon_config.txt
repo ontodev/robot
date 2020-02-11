@@ -1,15 +1,15 @@
-! input
+--input
 uberon_fragment.owl
 
-! method
+--method
 MIREOT
 
-! annotate-with-source
+--annotate-with-source
 false
 
-! lower-terms
+--lower-terms
 UBERON:0001017
 UBERON:0002369
 
-! upper-terms
+--upper-terms
 UBERON:0000465
