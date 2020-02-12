@@ -134,7 +134,8 @@ In this template, Class 5 would be a subclass of `part_of some 'Class 4'`.
 
 If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an instance will be created. If the `TYPE` does not include a defined class, that instance will have no class assertions (unless you use the `TI` template string to add an anonymous type). You may include a `SPLIT=` in `TYPE` if you wish to provide more than one class assertion for an individual.
 
-- `TI %`: the individual will be asserted to be a type of the *class expression* in the column
+- **class assertion**:
+    - `TI %`: the individual will be asserted to be a type of the *class expression* in the column
 - **individual assertion**:
     - `I <property>`: when creating an individual, replace property with an object property or data property to add assertions (either by label or CURIE). The value of each axiom will be the value of the cell in this column. For object property assertions, this is another individual. For data property assertions, this is a literal value. If using a property label here, **do not** wrap the label in single quotes.
     - `SI %`: the individual in the column will be asserted to be the same individual
@@ -144,7 +145,7 @@ If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an
 
 | Label        | Entity Type | Individual Role      |Property Assertions | Different Individuals | 
 | ------------ | ----------- | -------------------- |------------------- | --------------------- |
-| LABEL        | TYPE        | IT 'has role' some % |I part_of           | DI %                  |
+| LABEL        | TYPE        | TI 'has role' some % |I part_of           | DI %                  |
 | Individual 1 | Class 1     | Role Class 1         |Individual 2        |                       |
 | Individual 2 | Class 1     | Role Class 2         |                    | Individual 1          |
 
