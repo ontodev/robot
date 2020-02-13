@@ -1798,6 +1798,19 @@ public class Template {
         if (!differentIndividuals.isEmpty()) {
           addDifferentIndividualsAxioms(individual, differentIndividuals, row, column);
         }
+      } else if (template.startsWith("TI")) {
+        // Anonymous class assertion axioms
+        // Add the split back
+        if (split != null) {
+          template = template + " SPLIT=" + split;
+        }
+        Set<OWLClassExpression> classAssertions =
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
+        if (!classAssertions.isEmpty()) {
+          for (OWLClassExpression ce : classAssertions) {
+            axioms.add(dataFactory.getOWLClassAssertionAxiom(ce, individual));
+          }
+        }
       } else if (template.startsWith("I") && !template.startsWith("INDIVIDUAL_TYPE")) {
         // Use individual type to determine how to handle expressions
         switch (individualType) {

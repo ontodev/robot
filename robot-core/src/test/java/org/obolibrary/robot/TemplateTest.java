@@ -44,6 +44,9 @@ public class TemplateTest extends CoreTest {
 
     Template t = new Template(path, rows, simpleParts);
     OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false);
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.saveOntology(template, "test.owl");
+
     assertIdentical("/template.owl", template);
   }
 
@@ -129,5 +132,17 @@ public class TemplateTest extends CoreTest {
     OntologyHelper.setOntologyIRI(
         template, IRI.create("https://github.com/ontodev/robot/examples/template.owl"), null);
     assertIdentical("/docs-template.owl", template);
+  }
+
+  @Test
+  public void testTemplateWithAnonymousClassAssertion() throws Exception {
+    String path = "/anon-ca-template.csv";
+    List<List<String>> rows = TemplateHelper.readCSV(this.getClass().getResourceAsStream(path));
+    OWLOntology simpleParts = loadOntology("/simple_parts.owl");
+
+    Template t = new Template(path, rows, simpleParts);
+    OWLOntology template = t.generateOutputOntology("http://test.com/anon-ca-template.owl", false);
+
+    assertIdentical("/anon-ca-template.owl", template);
   }
 }

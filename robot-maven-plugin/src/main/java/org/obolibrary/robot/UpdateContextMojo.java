@@ -20,9 +20,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 @Mojo(name = "UpdateContext")
 public class UpdateContextMojo extends AbstractMojo {
 
-  /**
-   * Execute updating the OBO context file.
-   */
+  /** Execute updating the OBO context file. */
   public void execute() {
     getLog().info("Updating OBO context...");
     File robotMvn = new File(System.getProperty("user.dir"));

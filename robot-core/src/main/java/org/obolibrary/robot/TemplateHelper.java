@@ -1038,7 +1038,9 @@ public class TemplateHelper {
       return true;
     } else if (template.equals("LABEL")) {
       return true;
-    } else if (template.equals("TYPE")) {
+    } else if (template.matches("^TYPE( SPLIT=.+)?$")) {
+      // TYPE can have a split
+      // Should only be followed by SPLIT, nothing else
       return true;
     } else if (template.equals("CLASS_TYPE")) {
       return true;
@@ -1052,9 +1054,7 @@ public class TemplateHelper {
       // CHARACTERISTIC can have a split
       // Should only be followed by SPLIT, nothing else
       return true;
-    } else if (template.matches("^INDIVIDUAL_TYPE( SPLIT=.+)?$")) {
-      // INDIVIDUAL_TYPE can have a split
-      // Should only be followed by SPLIT, nothing else
+    } else if (template.equals("INDIVIDUAL_TYPE")) {
       return true;
     } else if (template.matches("^>{0,2}A[LTI]? .*")) {
       // Annotations can have one or two > (nested)
@@ -1069,7 +1069,7 @@ public class TemplateHelper {
       return true;
     } else
       // Individuals can be I, II (does not need to be followed by space), SI, or DI
-      return template.matches("^(I .*|II.?|[SD]I .*)");
+      return template.matches("^(I .*|II.?|[TSD]I .*)");
 
     // TODO - future support for DT datatype axioms
   }
