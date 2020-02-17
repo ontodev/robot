@@ -68,6 +68,7 @@
   <modules>
     <module>robot-core</module>
     <module>robot-command</module>
+    <module>robot-maven-plugin</module>
   </modules>
 
   <profiles>
@@ -214,6 +215,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
         <version>3.7.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.obolibrary.robot</groupId>
+        <artifactId>robot-maven-plugin</artifactId>
+        <version>1.6.0-SNAPSHOT</version>
       </plugin>
     </plugins>
   </build>

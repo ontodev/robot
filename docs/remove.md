@@ -5,7 +5,7 @@
 1. [Overview](#overview)
 2. [Preserving the Structure (`--preserve-structure`)](#preserving-the-structure)
 2. [Selectors (`--select`)](#selectors)
-3. [Axioms (`--aximos`)](#axioms)
+3. [Axioms (`--axioms`)](#axioms)
 4. [Examples](#examples)
 
 ## Overview
