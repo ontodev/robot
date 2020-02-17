@@ -648,6 +648,19 @@ public class TableValidator {
   }
 
   /**
+   * Given a list of strings representing a row from the table, return true if any of the cells in
+   * the row has non-whitespace content.
+   */
+  private boolean has_content(List<String> row) {
+    for (String cell : row) {
+      if (!cell.trim().equals("")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Given a string of substrings split by pipes ('|'), return an array with the first substring in
    * the 0th position of the array, the second substring in the 1st position, and so on.
    */
@@ -679,9 +692,10 @@ public class TableValidator {
    */
   private boolean contains_query_rules(Map<String, List<String>> colRules) {
     for (String ruleType : colRules.keySet()) {
-      RTypeEnum rType = rule_type_to_rtenum_map.get(ruleType);
-      if (rType.getRuleCat() == RCatEnum.QUERY) {
-        return true;
+      for (String subRuleType : split_on_pipes(ruleType)) {
+        if (rule_type_to_rtenum_map.get(subRuleType).getRuleCat() == RCatEnum.QUERY) {
+          return true;
+        }
       }
     }
     return false;
@@ -1435,7 +1449,8 @@ public class TableValidator {
     List<String> rulesRow = tblData.remove(0);
     HashMap<String, Map<String, List<String>>> headerToRuleMap = new HashMap();
     for (int i = 0; i < headerRow.size(); i++) {
-      headerToRuleMap.put(headerRow.get(i), parse_rules(rulesRow.get(i)));
+      String rawRule = i < rulesRow.size() ? rulesRow.get(i) : "";
+      headerToRuleMap.put(headerRow.get(i), parse_rules(rawRule));
     }
 
     if (workbook != null) {
@@ -1453,9 +1468,14 @@ public class TableValidator {
     // about the current location within the CSV file when logging info and reporting errors.
     for (tbl_row_index = 0; tbl_row_index < tblData.size(); tbl_row_index++) {
       List<String> row = tblData.get(tbl_row_index);
+      if (!has_content(row)) {
+        writelog(false, LogLevel.DEBUG, "Skipping empty row %d", tbl_row_index);
+        continue;
+      }
+
       for (tbl_col_index = 0; tbl_col_index < headerRow.size(); tbl_col_index++) {
         // Get the contents of the current cell:
-        String cellString = row.get(tbl_col_index);
+        String cellString = tbl_col_index < row.size() ? row.get(tbl_col_index) : "";
 
         // Get the rules for the current column:
         String colName = headerRow.get(tbl_col_index);
