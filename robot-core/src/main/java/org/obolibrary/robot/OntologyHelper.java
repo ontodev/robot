@@ -290,7 +290,7 @@ public class OntologyHelper {
 
   /**
    * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
-   * the ontology.
+   * the ontology. Always include terms in imports.
    *
    * @param ontology the ontology to check for IRIs
    * @param IRIs Set of IRIs to filter
@@ -299,9 +299,24 @@ public class OntologyHelper {
    */
   public static Set<IRI> filterExistingTerms(
       OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty) {
+    return filterExistingTerms(ontology, IRIs, allowEmpty, Imports.INCLUDED);
+  }
+
+  /**
+   * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
+   * the ontology. Maybe include terms in imports.
+   *
+   * @param ontology the ontology to check for IRIs
+   * @param IRIs Set of IRIs to filter
+   * @param allowEmpty boolean specifying if an empty set can be returned
+   * @param imports Imports INCLUDED or EXCLUDED
+   * @return Set of filtered IRIs
+   */
+  public static Set<IRI> filterExistingTerms(
+      OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty, Imports imports) {
     Set<IRI> missingIRIs = new HashSet<>();
     for (IRI iri : IRIs) {
-      if (!ontology.containsEntityInSignature(iri)) {
+      if (!ontology.containsEntityInSignature(iri, imports)) {
         logger.warn("Ontology does not contain {}", iri.toQuotedString());
         missingIRIs.add(iri);
       }
