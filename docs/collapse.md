@@ -1,6 +1,6 @@
 # Collapse
 
-Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `collapse` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option.
+Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `collapse` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option. If `--threshold` is not provided, it will default to `2`.
 
 ```
 robot collapse \

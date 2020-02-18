@@ -94,8 +94,7 @@ public class CollapseCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    String thresholdString =
-        CommandLineHelper.getRequiredValue(line, "threshold", "A threshold level is required");
+    String thresholdString = CommandLineHelper.getDefaultValue(line, "threshold", "2");
     int threshold;
     try {
       threshold = Integer.parseInt(thresholdString);
