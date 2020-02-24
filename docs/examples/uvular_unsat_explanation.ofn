@@ -1,0 +1,31 @@
+Prefix(:=<https://github.com/ontodev/robot/examples/uvular_muscle_unsat.ofn#>)
+Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(xml:=<http://www.w3.org/XML/1998/namespace>)
+Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+
+
+Ontology(<https://github.com/ontodev/robot/examples/uvular_muscle_unsat.ofn>
+Annotation(rdfs:label "Explanation for unsatisfiability of Uvular Muscle"^^xsd:string)
+
+Declaration(Class(<http://purl.obolibrary.org/obo/UBERON_0003682>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UBERON_0010235>))
+
+
+############################
+#   Classes
+############################
+
+# Class: <http://purl.obolibrary.org/obo/UBERON_0003682> (palatal muscle)
+
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003682> "palatal muscle"^^xsd:string)
+DisjointClasses(<http://purl.obolibrary.org/obo/UBERON_0003682> <http://purl.obolibrary.org/obo/UBERON_0010235>)
+
+# Class: <http://purl.obolibrary.org/obo/UBERON_0010235> (uvular muscle)
+
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0010235> "uvular muscle"^^xsd:string)
+SubClassOf(<http://purl.obolibrary.org/obo/UBERON_0010235> <http://purl.obolibrary.org/obo/UBERON_0003682>)
+
+
+)

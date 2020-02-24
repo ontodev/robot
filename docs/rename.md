@@ -1,5 +1,12 @@
 # Rename
 
+## Contents
+
+1. [Overview](#overview)
+2. [Mapping Files (`--mappings`)](#mapping-files)
+
+## Overview
+
 The `rename` command allows you to rename entity IRIs in an ontology in two ways:
 
 #### Full
@@ -21,16 +28,10 @@ Renames the base IRIs of all matching entites (e.g. change the prefix `http://pu
       --prefix-mappings partial-rename.tsv \
       --add-prefix "fb: http://foo.bar/"
       --output results/partial-rename.owl
-      
-The `--add-prefix` option allows you to specify a prefix mapping in the same way as the [global prefix option](/global#prefixes). This will be added to the output ontology:
 
-```
-Prefix(fb:=<http://foo.bar/>)
-```
+More information on the `--add-prefix` option can be found in [Global Options](/global#prefixes).
 
-The difference is that the global `--prefix` option does not include the prefix in the output ontology.
-
-### Mappings Files
+## Mappings Files
 
 The mappings for renaming should be specified with the `--mappings` (for full renames) or `--prefix-mappings` (for renaming prefixes) option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with. 
 

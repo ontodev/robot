@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.github.jsonldjava.core.Context;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,7 +10,6 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -18,6 +18,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
@@ -35,9 +36,6 @@ public class CommandLineHelper {
 
   /** Namespace for general input error messages. */
   private static final String NS = "errors#";
-
-  /** Error message when --axioms is not a valid AxiomType. Expects: input string. */
-  private static final String axiomTypeError = NS + "AXIOM TYPE ERROR %s is not a valid axiom type";
 
   /** Error message when a boolean value is not "true" or "false". Expects option name. */
   private static final String booleanValueError =
@@ -223,6 +221,64 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given a command line, get the 'axioms' option(s) and make sure all are properly split and
+   * return one axiom selector per list entry.
+   *
+   * @param line the command line to use
+   * @return cleaned list of input axiom type strings
+   */
+  public static List<String> cleanAxiomStrings(CommandLine line) {
+    List<String> axiomTypeStrings = getOptionalValues(line, "axioms");
+
+    if (axiomTypeStrings.isEmpty()) {
+      axiomTypeStrings.add("all");
+    }
+
+    // Split if it's one arg with spaces
+    List<String> axiomTypeFixedStrings = new ArrayList<>();
+    for (String axiom : axiomTypeStrings) {
+      if (axiom.contains(" ")) {
+        axiomTypeFixedStrings.addAll(Arrays.asList(axiom.split(" ")));
+      } else {
+        axiomTypeFixedStrings.add(axiom);
+      }
+    }
+
+    return axiomTypeFixedStrings;
+  }
+
+  /**
+   * Given a command line and an IOHelper, return a list of base namespaces from the '--base-iri'
+   * option.
+   *
+   * @param line the command line to use
+   * @param ioHelper the IOHelper to resolve prefixes
+   * @return list of full base namespaces
+   */
+  public static List<String> getBaseNamespaces(CommandLine line, IOHelper ioHelper) {
+    List<String> bases = new ArrayList<>();
+    if (!line.hasOption("base-iri")) {
+      return bases;
+    }
+
+    Map<String, String> prefixMap = ioHelper.getPrefixes();
+    for (String base : line.getOptionValues("base-iri")) {
+      if (!base.contains(":")) {
+        String expanded = prefixMap.getOrDefault(base, null);
+        if (expanded != null) {
+          bases.add(expanded);
+        } else {
+          logger.error(String.format("Unknown prefix: '%s'", base));
+        }
+      } else {
+        bases.add(base);
+      }
+    }
+
+    return bases;
+  }
+
+  /**
    * Given a command line, an argument name, the boolean default value, and boolean if the arg is
    * optional, return the value of the command-line option 'name'.
    *
@@ -248,68 +304,20 @@ public class CommandLineHelper {
   /**
    * Given a command line, return the value of --axioms as a set of classes that extend OWLAxiom.
    *
+   * @deprecated split into methods {@link #cleanAxiomStrings(CommandLine)} and others in {@link
+   *     org.obolibrary.robot.RelatedObjectsHelper}
    * @param line the command line to use
    * @return set of OWLAxiom types
    */
+  @Deprecated
   public static Set<Class<? extends OWLAxiom>> getAxiomValues(CommandLine line) {
     Set<Class<? extends OWLAxiom>> axiomTypes = new HashSet<>();
-    List<String> axiomTypeStrings = getOptionValues(line, "axioms");
-    if (axiomTypeStrings.isEmpty()) {
-      axiomTypeStrings.add("all");
-    }
-    // Split if it's one arg with spaces
-    List<String> axiomTypeFixedStrings = new ArrayList<>();
-    for (String axiom : axiomTypeStrings) {
-      if (axiom.contains(" ")) {
-        axiomTypeFixedStrings.addAll(Arrays.asList(axiom.split(" ")));
-      } else {
-        axiomTypeFixedStrings.add(axiom);
-      }
-    }
+    List<String> axiomTypeStrings = cleanAxiomStrings(line);
     // Then get the actual types
-    for (String axiom : axiomTypeFixedStrings) {
-      if (axiom.equalsIgnoreCase("all")) {
-        axiomTypes.add(OWLAxiom.class);
-      } else if (axiom.equalsIgnoreCase("logical")) {
-        axiomTypes.add(OWLLogicalAxiom.class);
-      } else if (axiom.equalsIgnoreCase("annotation")) {
-        axiomTypes.add(OWLAnnotationAxiom.class);
-      } else if (axiom.equalsIgnoreCase("subclass")) {
-        axiomTypes.add(OWLSubClassOfAxiom.class);
-      } else if (axiom.equalsIgnoreCase("subproperty")) {
-        axiomTypes.add(OWLSubObjectPropertyOfAxiom.class);
-        axiomTypes.add(OWLSubDataPropertyOfAxiom.class);
-        axiomTypes.add(OWLSubAnnotationPropertyOfAxiom.class);
-      } else if (axiom.equalsIgnoreCase("equivalent")) {
-        axiomTypes.add(OWLEquivalentClassesAxiom.class);
-        axiomTypes.add(OWLEquivalentObjectPropertiesAxiom.class);
-        axiomTypes.add(OWLEquivalentDataPropertiesAxiom.class);
-      } else if (axiom.equalsIgnoreCase("disjoint")) {
-        axiomTypes.add(OWLDisjointClassesAxiom.class);
-        axiomTypes.add(OWLDisjointObjectPropertiesAxiom.class);
-        axiomTypes.add(OWLDisjointDataPropertiesAxiom.class);
-        axiomTypes.add(OWLDisjointUnionAxiom.class);
-      } else if (axiom.equalsIgnoreCase("type")) {
-        axiomTypes.add(OWLClassAssertionAxiom.class);
-      } else if (axiom.equalsIgnoreCase("abox")) {
-        axiomTypes.addAll(
-            AxiomType.ABoxAxiomTypes.stream()
-                .map(AxiomType::getActualClass)
-                .collect(Collectors.toSet()));
-      } else if (axiom.equalsIgnoreCase("tbox")) {
-        axiomTypes.addAll(
-            AxiomType.TBoxAxiomTypes.stream()
-                .map(AxiomType::getActualClass)
-                .collect(Collectors.toSet()));
-      } else if (axiom.equalsIgnoreCase("rbox")) {
-        axiomTypes.addAll(
-            AxiomType.RBoxAxiomTypes.stream()
-                .map(AxiomType::getActualClass)
-                .collect(Collectors.toSet()));
-      } else if (axiom.equalsIgnoreCase("declaration")) {
-        axiomTypes.add(OWLDeclarationAxiom.class);
-      } else {
-        throw new IllegalArgumentException(String.format(axiomTypeError, axiom));
+    for (String axiom : axiomTypeStrings) {
+      Set<Class<? extends OWLAxiom>> addTypes = RelatedObjectsHelper.getAxiomValues(axiom);
+      if (addTypes != null) {
+        axiomTypes.addAll(addTypes);
       }
     }
     return axiomTypes;
@@ -398,8 +406,8 @@ public class CommandLineHelper {
   }
 
   /**
-   * Given a command line, return an initialized IOHelper. The --prefix, --prefixes, --noprefixes
-   * and --xml-entities options are handled.
+   * Given a command line, return an initialized IOHelper. The --prefix, --add-prefix, --prefixes,
+   * --add-prefixes, --noprefixes, --xml-entities, and --base options are handled.
    *
    * @param line the command line to use
    * @return an initialized IOHelper
@@ -413,13 +421,17 @@ public class CommandLineHelper {
     } else {
       ioHelper = new IOHelper(!line.hasOption("noprefixes"));
     }
+    prefixes = getOptionalValue(line, "add-prefixes");
+    if (prefixes != null) {
+      ioHelper.addPrefixes(prefixes);
+    }
 
     for (String prefix : getOptionalValues(line, "prefix")) {
-      try {
-        ioHelper.addPrefix(prefix);
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format(IOHelper.invalidPrefixError, prefix), e);
-      }
+      ioHelper.addPrefix(prefix);
+    }
+
+    for (String prefix : getOptionalValues(line, "add-prefix")) {
+      ioHelper.addPrefix(prefix);
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
@@ -439,35 +451,49 @@ public class CommandLineHelper {
    */
   public static OWLOntology getInputOntology(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
-    OWLOntology inputOntology;
-    // Check for multiple inputs
+    // Get the catalog if specified by --catalog
+    String catalogPath = getOptionalValue(line, "catalog");
+    return getInputOntology(ioHelper, line, catalogPath);
+  }
+
+  /**
+   * Given an IOHelper, a command line, and a path to a catalog, return an OWLOntology loaded from
+   * input or input-iri using the specified catalog (or null).
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @param catalogPath the catalog to use to load imports
+   * @return the input ontology
+   * @throws IllegalArgumentException if requires options are missing
+   * @throws IOException if the ontology cannot be loaded
+   */
+  public static OWLOntology getInputOntology(
+      IOHelper ioHelper, CommandLine line, String catalogPath)
+      throws IllegalArgumentException, IOException {
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
-    String catalogPath = getOptionalValue(line, "catalog");
 
-    Integer check = inputOntologyPaths.size() + inputOntologyIRIs.size();
+    int check = inputOntologyPaths.size() + inputOntologyIRIs.size();
     if (check > 1) {
       throw new IllegalArgumentException(multipleInputsError);
     }
 
     if (!inputOntologyPaths.isEmpty()) {
       if (catalogPath != null) {
-        inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
+        return ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
       } else {
-        inputOntology = ioHelper.loadOntology(inputOntologyPaths.get(0));
+        return ioHelper.loadOntology(inputOntologyPaths.get(0));
       }
     } else if (!inputOntologyIRIs.isEmpty()) {
       if (catalogPath != null) {
-        inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
+        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
       } else {
-        inputOntology = ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
+        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
       }
     } else {
       // Both input options are empty
       throw new IllegalArgumentException(missingInputError);
     }
-
-    return inputOntology;
   }
 
   /**
@@ -540,9 +566,21 @@ public class CommandLineHelper {
       }
     }
 
+    // If normal --input is used, save the path
+    String ontologyPath = CommandLineHelper.getOptionalValue(line, "input");
+    if (ontologyPath != null) {
+      state.setOntologyPath(ontologyPath);
+    }
+
+    // If a --catalog is provided, save the catalog
+    String catalogPath = CommandLineHelper.getOptionalValue(line, "catalog");
+    if (catalogPath != null) {
+      state.setCatalogPath(catalogPath);
+    }
+
     OWLOntology ontology = null;
     try {
-      ontology = getInputOntology(ioHelper, line);
+      ontology = getInputOntology(ioHelper, line, catalogPath);
     } catch (Exception e) {
       if (required) {
         // Throw message from IOHelper
@@ -599,9 +637,36 @@ public class CommandLineHelper {
    */
   public static void maybeSaveOutput(CommandLine line, OWLOntology ontology) throws IOException {
     IOHelper ioHelper = getIOHelper(line);
+    // Determine if OBO structure should be enforced
+    boolean checkOBO = CommandLineHelper.getBooleanValue(line, "check", true);
+
+    // Determine if prefixes should be added to the header of output
+    // Create a map of these to include in output (or an empty map)
+    Map<String, String> addPrefixes = getAddPrefixes(line);
+
+    // Get an output format or null
+    // If null, format will be guessed from the output path
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    OWLDocumentFormat df;
+    if (format != null) {
+      df = IOHelper.getFormat(format);
+    } else {
+      df = null;
+    }
+
+    // Save outputs
     for (String path : getOptionValues(line, "output")) {
       try {
-        ioHelper.saveOntology(ontology, path);
+        // maybe guess the document format
+        OWLDocumentFormat thisDf = df;
+        if (thisDf == null) {
+          if (path.endsWith(".gz")) {
+            path = path.substring(0, path.lastIndexOf("."));
+          }
+          String formatName = FilenameUtils.getExtension(path);
+          thisDf = IOHelper.getFormat(formatName);
+        }
+        ioHelper.saveOntology(ontology, thisDf, IRI.create(new File(path)), addPrefixes, checkOBO);
       } catch (IllegalArgumentException e) {
         // Exception from getFormat -- invalid format
         throw new IllegalArgumentException(
@@ -626,6 +691,37 @@ public class CommandLineHelper {
       throw new IllegalArgumentException(String.format(invalidIRIError, field, term));
     }
     return iri;
+  }
+
+  /**
+   * Given a command line, get a map of all prefixes to use and add to the output.
+   *
+   * @param line the command line to use
+   * @return a map of prefixes to add to output
+   * @throws IOException if the prefixes are not formatted correctly or a JSON file cannot be read
+   */
+  public static Map<String, String> getAddPrefixes(CommandLine line) throws IOException {
+    Map<String, String> addPrefixes = new HashMap<>();
+    if (line.hasOption("add-prefix")) {
+      for (String pref : CommandLineHelper.getOptionalValues(line, "add-prefix")) {
+        String[] split = pref.split(": ");
+        if (split.length != 2) {
+          throw new IOException(String.format(IOHelper.invalidPrefixError, pref));
+        }
+        addPrefixes.put(split[0], split[1]);
+      }
+    }
+    if (line.hasOption("add-prefixes")) {
+      for (String prefixFilePath : CommandLineHelper.getOptionalValues(line, "add-prefixes")) {
+        File prefixFile = new File(prefixFilePath);
+        if (!prefixFile.exists()) {
+          throw new IOException(String.format(IOHelper.fileDoesNotExistError, prefixFilePath));
+        }
+        Context json = IOHelper.parseContext(FileUtils.readFileToString(prefixFile));
+        addPrefixes.putAll(json.getPrefixes(false));
+      }
+    }
+    return addPrefixes;
   }
 
   /**
@@ -815,6 +911,8 @@ public class CommandLineHelper {
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
     o.addOption("noprefixes", false, "do not use default prefixes");
+    o.addOption(null, "add-prefix", true, "add prefix 'foo: http://bar' to the output");
+    o.addOption(null, "add-prefixes", true, "add JSON-LD prefixes to the output");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");
     return o;
   }

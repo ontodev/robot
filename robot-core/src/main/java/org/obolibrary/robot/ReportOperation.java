@@ -20,14 +20,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.query.*;
+import org.apache.jena.tdb.TDBFactory;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +51,10 @@ public class ReportOperation {
   /** Error message when user profiles an invalid fail-on level. */
   private static final String failOnError = NS + "FAIL ON ERROR '%s' is not a valid fail-on level.";
 
+  /** Error message when 'limit' is not a number. */
+  private static final String limitNumberError =
+      NS + "LIMIT NUMBER ERROR --limit argument '%s' must be an integer.";
+
   /** Error message when the query does not have ?entity. */
   private static final String missingEntityBinding =
       NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
@@ -59,6 +62,10 @@ public class ReportOperation {
   /** Error message when a user-provided report query does not exist. */
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR query at '%s' does not exist.";
+
+  /** Error message when 'print' is not a number. */
+  private static final String printNumberError =
+      NS + "PRINT NUMBER ERROR --print argument '%s' must be an integer.";
 
   /** Error message when user provides a rule level other than INFO, WARN, or ERROR. */
   private static final String reportLevelError =
@@ -79,7 +86,16 @@ public class ReportOperation {
    * @return a map with default values for all available options
    */
   public static Map<String, String> getDefaultOptions() {
-    return new HashMap<>();
+    Map<String, String> options = new HashMap<>();
+    options.put("print", "0");
+    options.put("fail-on", "error");
+    options.put("labels", "false");
+    options.put("format", null);
+    options.put("profile", null);
+    options.put("tdb", "false");
+    options.put("tdb-directory", ".tdb");
+    options.put("keep-tdb-mappings", "false");
+    return options;
   }
 
   /**
@@ -88,26 +104,11 @@ public class ReportOperation {
    * failOn).
    *
    * @param ontology the OWLOntology to report
-   * @param iohelper IOHelper to work with ontology
+   * @param ioHelper IOHelper to work with ontology
    * @throws Exception on any reporting error
    */
-  public static void report(OWLOntology ontology, IOHelper iohelper) throws Exception {
-    report(ontology, null, null, null, null);
-  }
-
-  /**
-   * Report on the ontology using the rules within the profile and print results. Prefer
-   * report(OWLOntology ontology, String profilePath, String outputPath, String format, String
-   * failOn).
-   *
-   * @param ontology the OWLOntology to report
-   * @param iohelper IOHelper to work with ontology
-   * @param options map of report options
-   * @throws Exception on any reporting error
-   */
-  public static void report(OWLOntology ontology, IOHelper iohelper, Map<String, String> options)
-      throws Exception {
-    report(ontology, null, null, null, null);
+  public static void report(OWLOntology ontology, IOHelper ioHelper) throws Exception {
+    report(ontology, ioHelper, null, null, null, null);
   }
 
   /**
@@ -130,6 +131,22 @@ public class ReportOperation {
     return report(ontology, null, profilePath, outputPath, format, failOn, false);
   }
 
+  /**
+   * Given an ontology, an IOHelper, a profile path (or null), an output path (or null), a report
+   * format (or null), and a level to fail on, report on the ontology using the rules within the
+   * profile and write results to the output path. If profile is null, use the default profile in
+   * resources. If the output path is null, write results to console. If the format is null, write
+   * results in TSV format. Exit with status 1 if any violations of fail-on level are found.
+   *
+   * @param ontology OWLOntology to report on
+   * @param ioHelper IOHelper to use
+   * @param profilePath user profile file path to use, or null
+   * @param outputPath string path to write report file to, or null
+   * @param format string format for the output report (TSV or YAML), or null
+   * @param failOn logging level to fail execution
+   * @return true if successful, false if failed
+   * @throws Exception on any error
+   */
   public static boolean report(
       OWLOntology ontology,
       IOHelper ioHelper,
@@ -142,10 +159,27 @@ public class ReportOperation {
   }
 
   /**
-   * Given an ontology, a profile path (or null), an output path (or null), and a report format (or
-   * null) report on the ontology using the rules within the profile and write results to the output
-   * path. If profile is null, use the default profile in resources. If the output path is null,
-   * write results to console. If the format is null, write results in TSV format.
+   * Report on the ontology using the rules within the profile and print results. Prefer
+   * report(OWLOntology ontology, IOHelper ioHelper, String outputPath, Map&lt;String,String&gt;
+   * options).
+   *
+   * @param ontology the OWLOntology to report
+   * @param ioHelper IOHelper to work with ontology
+   * @param options map of report options
+   * @throws Exception on any reporting error
+   */
+  public static void report(OWLOntology ontology, IOHelper ioHelper, Map<String, String> options)
+      throws Exception {
+    report(ontology, ioHelper, null, options);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, a profile path (or null), an output path (or null), a report
+   * format (or null), a level to fail on, and a boolean indicating to use labels, report on the
+   * ontology using the rules within the profile and write results to the output path. If profile is
+   * null, use the default profile in resources. If the output path is null, write results to
+   * console. If the format is null, write results in TSV format. Exit with status 1 if any
+   * violations of fail-on level are found.
    *
    * @param ontology OWLOntology to report on
    * @param ioHelper IOHelper to use
@@ -166,10 +200,64 @@ public class ReportOperation {
       String failOn,
       boolean useLabels)
       throws Exception {
-    // Set failOn if null to default
-    if (failOn == null) {
-      failOn = ERROR;
+    Map<String, String> options = getDefaultOptions();
+    if (profilePath != null) {
+      options.put("profile", profilePath);
     }
+    if (format != null) {
+      options.put("format", format);
+    }
+    if (failOn != null) {
+      options.put("fail-on", failOn);
+    }
+    if (useLabels) {
+      options.put("labels", "true");
+    }
+    return report(ontology, ioHelper, outputPath, options);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, an output path (or null), and a map of options (or null),
+   * report on the ontology using the rules within the profile specified by the options and write
+   * results to the output path. If profile is null, use the default profile in resources. If the
+   * output path is null, write results to console. If the format is null, write results in TSV
+   * format.
+   *
+   * @param ontology the OWLOntology to report
+   * @param ioHelper IOHelper to work with ontology
+   * @param outputPath string path to write report file to, or null
+   * @param options map of report options
+   * @return false if there are violations at or above the fail-on level, true otherwise
+   * @throws Exception on any reporting error
+   */
+  public static boolean report(
+      OWLOntology ontology, IOHelper ioHelper, String outputPath, Map<String, String> options)
+      throws Exception {
+    // Generate the report object with violation details
+    Report report = getReport(ontology, ioHelper, options);
+    return processReport(report, outputPath, options);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, and a map of options, create a Report object and run the report
+   * queries specified in a profile (from options, or default). Return the completed Report object.
+   *
+   * @param ontology OWLOntology to report on
+   * @param ioHelper IOHelper to resolve labels
+   * @param options Map of report options
+   * @return Report object with violation details
+   * @throws Exception on any reporting error
+   */
+  public static Report getReport(
+      OWLOntology ontology, IOHelper ioHelper, Map<String, String> options) throws Exception {
+    // Get options specified in map or default options
+    if (options == null) {
+      options = getDefaultOptions();
+    }
+
+    String profilePath = OptionsHelper.getOption(options, "profile", null);
+    boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
@@ -183,7 +271,6 @@ public class ReportOperation {
       report = new Report(ontology, useLabels);
     }
 
-    // Load into dataset without imports
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
       String fullQueryString = queries.get(queryName);
@@ -197,14 +284,153 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations = getViolations(dataset, queryString);
+      List<Violation> violations = getViolations(dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      report.addViolations(queryName, profile.get(queryName), getViolations(dataset, queryString));
+      report.addViolations(queryName, profile.get(queryName), violations);
     }
 
+    return report;
+  }
+
+  /**
+   * Given an input path, an output path (or null), and a map of options, report on the ontology
+   * using the rules within the profile specified by the options and write results to the output
+   * path. Ontology is loaded to dataset backed on disk. The labels option is not supported with
+   * TDB.
+   *
+   * @param inputPath String path of ontology to load
+   * @param outputPath String path to write report file to, or null
+   * @param options map of report options
+   * @return false if there are violations at or above the fail-on level, true otherwise
+   * @throws Exception on any reporting error
+   */
+  public static boolean tdbReport(String inputPath, String outputPath, Map<String, String> options)
+      throws Exception {
+    Report report = getTDBReport(inputPath, options);
+    return processReport(report, outputPath, options);
+  }
+
+  /**
+   * Given an input path to an ontology and a map of options, create a Report object and run (on TDB
+   * dataset) the report queries specified in a profile (from options, or default). Return the
+   * completed Report object. The labels option is not supported with TDB.
+   *
+   * @param inputPath path to load triples to TDB
+   * @param options map of report options
+   * @return Report object with violation details
+   * @throws Exception on any loading, query, or reporting error
+   */
+  public static Report getTDBReport(String inputPath, Map<String, String> options)
+      throws Exception {
+    String tdbDir = OptionsHelper.getOption(options, "tdb-directory", ".tdb");
+
+    // Load dataset
+    // Fail if the input path is not in RDF/XML or TTL
+    Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
+
+    Report report;
+    boolean keepMappings = OptionsHelper.optionIsTrue(options, "keep-tdb-mappings");
+    try {
+      report = getTDBReport(dataset, options);
+    } finally {
+      // Close and release
+      dataset.close();
+      TDBFactory.release(dataset);
+      if (!keepMappings) {
+        // Maybe delete
+        boolean success = IOHelper.cleanTDB(tdbDir);
+        if (!success) {
+          logger.error(String.format("Unable to remove directory '%s'", tdbDir));
+        }
+      }
+    }
+
+    return report;
+  }
+
+  /**
+   * Given a dataset and a map of options, create a Report object and run (on TDB dataset) the
+   * report queries specified in a profile (from options, or default). Return the completed Report
+   * object. The labels option is not supported with TDB.
+   *
+   * @param dataset TDB Dataset to perform Report operation on
+   * @param options Map of report options
+   * @return Report object with violation details
+   * @throws Exception on any reporting error
+   */
+  public static Report getTDBReport(Dataset dataset, Map<String, String> options) throws Exception {
+    // Get options specified in map or default options
+    if (options == null) {
+      options = getDefaultOptions();
+    }
+    // Make sure TDB is true here
+    options.put("tdb", "true");
+
+    String profilePath = OptionsHelper.getOption(options, "profile", null);
+
+    boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+    Map<IRI, String> labelMap = null;
+    if (useLabels) {
+      labelMap = new HashMap<>();
+      // Run query over dataset to retrive all labels
+      String query =
+          "SELECT ?s ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }";
+      ResultSet labelResults = QueryOperation.execQuery(dataset, query);
+      while (labelResults.hasNext()) {
+        QuerySolution qs = labelResults.next();
+        IRI iri = IRI.create(qs.getResource("s").getURI());
+        String label = qs.getLiteral("label").getString();
+        labelMap.put(iri, label);
+      }
+    }
+
+    // The profile is a map of rule name and reporting level
+    Map<String, String> profile = getProfile(profilePath);
+    // The queries is a map of rule name and query string
+    Map<String, String> queries = getQueryStrings(profile.keySet());
+
+    // Create the report object (maybe using labels)
+    Report report = new Report(labelMap);
+
+    for (String queryName : queries.keySet()) {
+      String fullQueryString = queries.get(queryName);
+      String queryString;
+      // Remove any comments
+      List<String> lines = new ArrayList<>();
+      for (String line : fullQueryString.split("\n")) {
+        if (!line.startsWith("#")) {
+          lines.add(line);
+        }
+      }
+      queryString = String.join("\n", lines);
+      // Use the query to get violations
+      List<Violation> violations = getViolations(dataset, queryName, queryString, options);
+      // If violations is not returned properly, the query did not have the correct format
+      if (violations == null) {
+        throw new Exception(String.format(missingEntityBinding, queryName));
+      }
+      report.addViolations(queryName, profile.get(queryName), violations);
+    }
+
+    return report;
+  }
+
+  /**
+   * Given a Report, an output path, and a map of report options, process the Report results and
+   * save the report to the output path.
+   *
+   * @param report completed Report object
+   * @param outputPath path to save report to
+   * @param options Map of report options
+   * @return true if report passed, false if it failed
+   * @throws IOException on issue writing to file
+   */
+  public static boolean processReport(Report report, String outputPath, Map<String, String> options)
+      throws IOException {
+    // Print violations to terminal
     Integer violationCount = report.getTotalViolations();
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
@@ -216,15 +442,39 @@ public class ReportOperation {
       System.out.println("No violations found.");
     }
 
-    // System.out.println(report.getIRIs());
+    // Maybe print some of the lines
+    String printString = OptionsHelper.getOption(options, "print", "0").trim();
+    // Parse print N lines option to an int
+    int print;
+    try {
+      print = Integer.parseInt(printString);
+    } catch (NumberFormatException e) {
+      // Not a number
+      throw new IllegalArgumentException(String.format(printNumberError, printString));
+    }
+
+    // Format is determined either by --format or the extension of the output path
+    String format = OptionsHelper.getOption(options, "format");
+    if (format == null && outputPath != null) {
+      format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
+      if (!format.equalsIgnoreCase("csv") && !format.equalsIgnoreCase("yaml")) {
+        // Anything other than .yaml or .csv is written as TSV
+        format = "tsv";
+      }
+    } else if (format == null) {
+      // Null format means no output file, will be printed as TSV
+      format = "tsv";
+    }
+
     String result;
-    if (format != null && format.equalsIgnoreCase("yaml")) {
+    if (format.equalsIgnoreCase("yaml")) {
       result = report.toYAML();
-    } else if (format != null && format.equalsIgnoreCase("csv")) {
+    } else if (format.equalsIgnoreCase("csv")) {
       result = report.toCSV();
     } else {
       result = report.toTSV();
     }
+
     if (outputPath != null) {
       // If output is provided, write to that file
       try (FileWriter fw = new FileWriter(outputPath);
@@ -232,9 +482,25 @@ public class ReportOperation {
         logger.debug("Writing report to: " + outputPath);
         bw.write(result);
       }
+      // Maybe print the first N lines
+      if (print > 0) {
+        String[] lines = getLinesToPrint(report, result, format);
+        printNViolations(lines, print);
+      }
     } else {
-      // Otherwise output to terminal
-      System.out.println(result);
+      // Output goes to terminal
+      if (print > 0) {
+        String[] lines = getLinesToPrint(report, result, format);
+        printNViolations(lines, print);
+      } else {
+        System.out.println(result);
+      }
+    }
+
+    String failOn = OptionsHelper.getOption(options, "fail-on", "error");
+    // Set failOn if null to default
+    if (failOn == null) {
+      failOn = ERROR;
     }
 
     // If a fail-on is provided, return false if there are violations of the given level
@@ -249,6 +515,26 @@ public class ReportOperation {
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
+  }
+
+  /**
+   * Given a Report, a result, and a format, return the array of lines in TSV format to be printed
+   * to terminal. The written output of the report will still be in the specified format.
+   *
+   * @param report Report object
+   * @param result string result of the report
+   * @param format format of the string result
+   * @return array of TSV format lines
+   */
+  private static String[] getLinesToPrint(Report report, String result, @NotNull String format) {
+    String[] lines;
+    if (format.equalsIgnoreCase("yaml") || format.equalsIgnoreCase("csv")) {
+      // Print YAML as TSV for this (output will still be YAML)
+      lines = report.toTSV().split("\n");
+    } else {
+      lines = result.split("\n");
+    }
+    return lines;
   }
 
   /**
@@ -445,20 +731,6 @@ public class ReportOperation {
   }
 
   /**
-   * Given an ontology as a DatasetGraph and a query, return the violations found by that query.
-   *
-   * @deprecated use {@link #getViolations(Dataset, String)} instead.
-   * @param dsg the ontology as a graph
-   * @param query the query
-   * @return List of Violations
-   * @throws IOException on issue parsing query
-   */
-  @Deprecated
-  private static List<Violation> getViolations(DatasetGraph dsg, String query) throws IOException {
-    return getViolations(DatasetFactory.wrap(dsg), query);
-  }
-
-  /**
    * Given an ontology as a Dataset and a query, return the violations found by that query.
    *
    * @param dataset the ontology/ontologies as a dataset
@@ -466,22 +738,100 @@ public class ReportOperation {
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(Dataset dataset, String query) throws IOException {
-    ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+  private static List<Violation> getViolations(
+      Dataset dataset, String queryName, String query, Map<String, String> options)
+      throws Exception {
+    boolean tdb = OptionsHelper.optionIsTrue(options, "tdb");
+    String limitString = OptionsHelper.getOption(options, "limit", null);
+    Integer limit = null;
+    if (limitString != null) {
+      try {
+        limit = Integer.parseInt(limitString);
+      } catch (NumberFormatException e) {
+        throw new Exception(String.format(limitNumberError, limitString));
+      }
+    }
 
-    List<Violation> violations = new ArrayList<>();
-
-    while (violationSet.hasNext()) {
-      QuerySolution qs = violationSet.next();
-      // entity should never be null
-      String entity = getQueryResultOrNull(qs, "entity");
-      if (entity == null) {
+    if (tdb) {
+      // If using TDB we must be in a read transaction to query
+      dataset.begin(ReadWrite.READ);
+      try {
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolationsFromResults(queryName, violationSet, limit);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return null;
+      } finally {
+        // Always end the transaction
+        dataset.end();
+      }
+    } else {
+      try {
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolationsFromResults(queryName, violationSet, limit);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
         return null;
       }
+    }
+  }
+
+  /**
+   * Given a query name, a result set, and a limit for results, return a list of Violation objects
+   * for those results.
+   *
+   * @param queryName name of query that produced result set
+   * @param violationSet ResultSet of query results
+   * @param limit number of results to limit, or null for no limit
+   * @return list of Violation objects
+   * @throws Exception on malformed query
+   */
+  private static List<Violation> getViolationsFromResults(
+      String queryName, ResultSet violationSet, Integer limit) throws Exception {
+    List<Violation> violations = new ArrayList<>();
+
+    // Counter for stopping at limit
+    int c = 0;
+    while (violationSet.hasNext()) {
+      if (limit != null && limit <= c) {
+        // Stop checking violations
+        break;
+      }
+
+      // Wrap in try catch in case GC overflows
+      // Will return results up to this point with warning that report may be incomplete
+      QuerySolution qs;
+      try {
+        qs = violationSet.next();
+      } catch (Exception e) {
+        logger.error(
+            String.format(
+                "Could not retrieve all results for query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return violations;
+      }
+
+      // entity should never be null (missing entity binding error)
+      String entity = getQueryResultOrNull(qs, "entity");
+      if (entity == null) {
+        throw new Exception(String.format(missingEntityBinding, queryName));
+      }
+
       // skip RDFS and OWL terms
       if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
         continue;
       }
+
       Violation violation = new Violation(entity);
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
@@ -491,7 +841,28 @@ public class ReportOperation {
         violation.addStatement(property, value);
       }
       violations.add(violation);
+
+      // Increase counter
+      c++;
     }
     return violations;
+  }
+
+  /**
+   * Given an array of lines and a number of lines to print, print that number of violations (one
+   * per line).
+   *
+   * @param lines array of lines to print
+   * @param n number of lines to print
+   */
+  private static void printNViolations(String[] lines, int n) {
+    if (lines.length <= n) {
+      n = lines.length - 1;
+    }
+    System.out.println(String.format("\nFirst %d violations:", n));
+    for (int i = 0; i < n; i++) {
+      // i + 1 to skip headers
+      System.out.println(lines[i + 1]);
+    }
   }
 }

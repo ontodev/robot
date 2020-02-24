@@ -10,6 +10,8 @@ import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.obolibrary.robot.exceptions.*;
 import org.obolibrary.robot.reason.EquivalentClassReasoning;
 import org.obolibrary.robot.reason.EquivalentClassReasoningMode;
+import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
+import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -29,6 +31,11 @@ import org.slf4j.LoggerFactory;
 public class ReasonOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReasonOperation.class);
+
+  private static final String NS = "reason#";
+
+  private static final String equivalentClassAxiomError =
+      NS + "EQUIVALENT CLASS AXIOM ERROR one or more equivalent named classes were found.";
 
   /**
    * Return a map from option name to default option value, for all the available reasoner options.
@@ -50,6 +57,7 @@ public class ReasonOperation {
     options.put("dump-unsatisfiable", null);
     options.put("axiom-generators", "subclass");
     options.put("include-indirect", "false");
+    options.put("exclude-tautologies", "false");
 
     return options;
   }
@@ -87,11 +95,6 @@ public class ReasonOperation {
       throws OntologyLogicException, OWLOntologyCreationException, InvalidReferenceException {
     logger.info("Ontology has {} axioms.", ontology.getAxioms().size());
 
-    // TODO - what is this for?
-    // logger.info("Fetching labels...");
-    // Function<OWLNamedObject, String> labelFunc = OntologyHelper.getLabelFunction(ontology,
-    // false);
-
     // Check the ontology for reference violations
     // Maybe fail if prevent-invalid-references
     checkReferenceViolations(ontology, options);
@@ -102,18 +105,86 @@ public class ReasonOperation {
     reason(ontology, reasoner, options);
 
     // Get the axiom generators
-    // If none are provided, just default to subclass
-    String axGeneratorString = OptionsHelper.getOption(options, "axiom-generators", "subclass");
-    List<String> axGenerators = Arrays.asList(axGeneratorString.split(" "));
-    List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
-        ReasonerHelper.getInferredAxiomGenerators(axGenerators);
-    logger.info("Using these axiom generators:");
-    for (InferredAxiomGenerator<?> inf : gens) {
-      logger.info("    " + inf);
-    }
+    // If none are provided, just default to subclass=
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens = getInferredAxiomGenerators(options);
 
     // Assert inferred axioms in the ontology
     assertInferred(ontology, reasoner, gens, options);
+  }
+
+  /**
+   * Create a tautology checker.
+   *
+   * @param structural if true, return null - we do not need a checker for the structural patterns
+   * @return new OWLReasoner for empty ontology or null
+   * @throws OWLOntologyCreationException on issue creating empty ontology
+   */
+  public static OWLReasoner getTautologyChecker(boolean structural)
+      throws OWLOntologyCreationException {
+    if (!structural) {
+      OWLOntology empty = OWLManager.createOWLOntologyManager().createOntology();
+      return new ReasonerFactory().createReasoner(empty);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Given an OWLAxiom, a tautology checker reasoner, and a boolean, determine if the axiom is a
+   * tautology.
+   *
+   * @param axiom OWLAxiom to check
+   * @param tautologyChecker OWLReasoner for empty ontology
+   * @param structural if true, only check for hard-coded structural patterns (checker can be null)
+   * @return true if axiom is tautological
+   */
+  public static boolean isTautological(
+      OWLAxiom axiom, OWLReasoner tautologyChecker, boolean structural) {
+    if (structural) {
+      if (axiom instanceof OWLSubClassOfAxiom) {
+        OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
+        if (subClassOfAxiom.getSuperClass().isOWLThing()) {
+          // X subClassOf owl:Thing
+          return true;
+        } else if (subClassOfAxiom.getSubClass().isOWLNothing()) {
+          // owl:Nothing subClassOf X
+          return true;
+        } else {
+          // X subClassOf X
+          return subClassOfAxiom.getSubClass().equals(subClassOfAxiom.getSuperClass());
+        }
+      } else if (axiom instanceof OWLEquivalentClassesAxiom) {
+        // X equivalentTo X
+        OWLEquivalentClassesAxiom equivAxiom = (OWLEquivalentClassesAxiom) axiom;
+        return equivAxiom.getClassExpressions().size() < 2;
+      } else if (axiom instanceof OWLClassAssertionAxiom) {
+        // X a owl:Thing
+        OWLClassAssertionAxiom classAssertion = (OWLClassAssertionAxiom) axiom;
+        return classAssertion.getClassExpression().isOWLThing();
+      } else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
+        // X owl:topDataProperty ...
+        OWLObjectPropertyAssertionAxiom assertion = (OWLObjectPropertyAssertionAxiom) axiom;
+        return assertion.getProperty().isOWLTopObjectProperty();
+      } else if (axiom instanceof OWLDataPropertyAssertionAxiom) {
+        // X owl:topObjectProperty ...
+        OWLDataPropertyAssertionAxiom assertion = (OWLDataPropertyAssertionAxiom) axiom;
+        return assertion.getProperty().isOWLTopDataProperty();
+      } else if (axiom instanceof OWLDeclarationAxiom) {
+        // owl:Thing a owl:Class, owl:Nothing a owl:Class, etc.
+        OWLDeclarationAxiom declaration = (OWLDeclarationAxiom) axiom;
+        return declaration.getEntity().isBuiltIn();
+      }
+    } else if (tautologyChecker != null) {
+      if (axiom instanceof OWLDeclarationAxiom) {
+        // ignore declaration UNLESS it is built in
+        OWLDeclarationAxiom declaration = (OWLDeclarationAxiom) axiom;
+        return declaration.getEntity().isBuiltIn();
+      } else if (axiom instanceof OWLLogicalAxiom) {
+        // otherwise check if axiom is entailed by empty ontology
+        return tautologyChecker.isEntailed(axiom);
+      }
+    }
+    return false;
   }
 
   /**
@@ -231,6 +302,26 @@ public class ReasonOperation {
   }
 
   /**
+   * Given a map of reasoner options, return a list of inferred axiom generators.
+   *
+   * @param options Map of reasoner options
+   * @return list of InferredAxiomGenerators
+   */
+  private static List<InferredAxiomGenerator<? extends OWLAxiom>> getInferredAxiomGenerators(
+      Map<String, String> options) {
+    String axGeneratorString = OptionsHelper.getOption(options, "axiom-generators", "subclass");
+    List<String> axGenerators = Arrays.asList(axGeneratorString.split(" "));
+    boolean direct = !OptionsHelper.optionIsTrue(options, "include-indirect");
+    List<InferredAxiomGenerator<? extends OWLAxiom>> gens =
+        ReasonerHelper.getInferredAxiomGenerators(axGenerators, direct);
+    logger.info("Using these axiom generators:");
+    for (InferredAxiomGenerator<?> inf : gens) {
+      logger.info("    " + inf);
+    }
+    return gens;
+  }
+
+  /**
    * Given an ontology, a reasoner, a list of axiom generators, and map of reasoner options, create
    * a new ontology containing only the newly generated axioms. If direct (in options) is false,
    * include indirect axioms.
@@ -251,38 +342,28 @@ public class ReasonOperation {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
     boolean direct = !OptionsHelper.optionIsTrue(options, "include-indirect");
-
-    boolean subClass = false;
-    boolean classAssertion = false;
-    boolean subObjectProperty = false;
-    for (InferredAxiomGenerator g : gens) {
-      if (g instanceof InferredSubClassAxiomGenerator) {
-        subClass = true;
-      } else if (g instanceof InferredClassAssertionAxiomGenerator) {
-        classAssertion = true;
-      } else if (g instanceof InferredSubObjectPropertyAxiomGenerator) {
-        subObjectProperty = true;
-      }
-    }
+    boolean subClass =
+        gens.stream()
+            .anyMatch(
+                g ->
+                    (g instanceof InferredSubClassAxiomGenerator)
+                        || (g instanceof InferredSubClassAxiomGeneratorIncludingIndirect));
 
     // we first place all inferred axioms into a new ontology;
     // these will be later transferred into the main ontology,
     // unless the create new ontology option is passed
-    OWLOntology newAxiomOntology;
-    newAxiomOntology = manager.createOntology();
-
+    OWLOntology newAxiomOntology = manager.createOntology();
     InferredOntologyGenerator generator = new InferredOntologyGenerator(reasoner, gens);
     generator.fillOntology(dataFactory, newAxiomOntology);
 
     // If EMR, add expressions instead of just classes, etc...
-    ExpressionMaterializingReasoner emr = null;
     if (reasoner instanceof ExpressionMaterializingReasoner) {
       logger.info("Creating expression materializing reasoner...");
-      emr = (ExpressionMaterializingReasoner) reasoner;
+      ExpressionMaterializingReasoner emr = (ExpressionMaterializingReasoner) reasoner;
       emr.materializeExpressions();
       // Maybe add direct/indirect class expressions
       if (subClass) {
-        for (OWLClass c : ontology.getClassesInSignature()) {
+        for (OWLClass c : ontology.getClassesInSignature(Imports.INCLUDED)) {
           // Look at the superclasses because otherwise we would lose the anonymous exprs
           Set<OWLClassExpression> sces = emr.getSuperClassExpressions(c, direct);
           for (OWLClassExpression sce : sces) {
@@ -291,50 +372,6 @@ public class ReasonOperation {
               logger.debug("NEW:" + ax);
               manager.addAxiom(newAxiomOntology, ax);
             }
-          }
-        }
-      }
-    } else if (subClass) {
-      // if not EMR and still using subclasses, do not use expressions
-      for (OWLClass c : ontology.getClassesInSignature()) {
-        Set<OWLClass> scs = reasoner.getSubClasses(c, direct).getFlattened();
-        for (OWLClass sc : scs) {
-          if (!sc.isOWLNothing()) {
-            OWLAxiom ax = dataFactory.getOWLSubClassOfAxiom(sc, c);
-            logger.debug("NEW:" + ax);
-            manager.addAxiom(newAxiomOntology, ax);
-          }
-        }
-      }
-    }
-
-    // Maybe add direct/indirect class assertions
-    if (classAssertion) {
-      for (OWLClass c : ontology.getClassesInSignature()) {
-        Set<OWLNamedIndividual> inds = reasoner.getInstances(c, direct).getFlattened();
-        for (OWLNamedIndividual i : inds) {
-          OWLAxiom ax = dataFactory.getOWLClassAssertionAxiom(c, i);
-          logger.debug("NEW:" + ax);
-          manager.addAxiom(newAxiomOntology, ax);
-        }
-      }
-    }
-
-    // Maybe add direct/indirect object property expressions
-    if (subObjectProperty) {
-      for (OWLObjectProperty op : ontology.getObjectPropertiesInSignature()) {
-        // Look at superproperties so we can get the expressions
-        Set<OWLObjectPropertyExpression> sopes;
-        if (emr != null) {
-          sopes = emr.getSuperObjectProperties(op, direct).getFlattened();
-        } else {
-          sopes = reasoner.getSuperObjectProperties(op, direct).getFlattened();
-        }
-        for (OWLObjectPropertyExpression sope : sopes) {
-          if (!sope.getSignature().contains(dataFactory.getOWLTopObjectProperty())) {
-            OWLAxiom ax = dataFactory.getOWLSubObjectPropertyOfAxiom(op, sope);
-            logger.debug("NEW:" + ax);
-            manager.addAxiom(newAxiomOntology, ax);
           }
         }
       }
@@ -390,7 +427,8 @@ public class ReasonOperation {
    * @param options Map of reason options
    */
   private static void addInferredAxioms(
-      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options) {
+      OWLOntology ontology, OWLOntology newAxiomOntology, Map<String, String> options)
+      throws OWLOntologyCreationException {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
 
@@ -417,6 +455,12 @@ public class ReasonOperation {
       propertyIRI = IRI.create("http://www.geneontology.org/formats/oboInOwl#is_inferred");
       value = dataFactory.getOWLLiteral("true");
     }
+
+    // If we will need a tautology checker, create it only once
+    String tautologiesOption = OptionsHelper.getOption(options, "exclude-tautologies", "false");
+    boolean excludeTautologies = !tautologiesOption.equalsIgnoreCase("false");
+    boolean structural = tautologiesOption.equalsIgnoreCase("structural");
+    OWLReasoner tautologyChecker = getTautologyChecker(structural);
 
     // Look at each inferred axiom
     // Check the options, and maybe add the inferred axiom to the ontology
@@ -464,6 +508,11 @@ public class ReasonOperation {
         }
       }
 
+      // Maybe exclude tautologies
+      if (excludeTautologies && isTautological(a, tautologyChecker, structural)) {
+        continue;
+      }
+
       // If the axiom has not been skipped, add it to the ontology
       manager.addAxiom(ontology, a);
       // If propertyIRI isn't null, we are annotating the inferred axioms
@@ -486,16 +535,60 @@ public class ReasonOperation {
       throws InvalidReferenceException {
     Set<InvalidReferenceViolation> referenceViolations =
         InvalidReferenceChecker.getInvalidReferenceViolations(ontology, false);
+    Set<InvalidReferenceViolation> filteredViolations = new HashSet<>();
+
     if (referenceViolations.size() > 0) {
+      for (InvalidReferenceViolation v : referenceViolations) {
+        // Don't log errors for:
+        // - annotations
+        // - subclass of ObsoleteClass
+        // - subproperty of ObsoleteProperty
+        // - rdf:type owl:Thing
+        if (v.getAxiom() instanceof OWLAnnotationAxiom) {
+          continue;
+        }
+        if (v.getAxiom() instanceof OWLSubClassOfAxiom) {
+          OWLSubClassOfAxiom sub = (OWLSubClassOfAxiom) v.getAxiom();
+          OWLClassExpression sup = sub.getSuperClass();
+          if (!sup.isAnonymous()
+              && sup.asOWLClass()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteClass")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLSubObjectPropertyOfAxiom) {
+          OWLSubObjectPropertyOfAxiom sub = (OWLSubObjectPropertyOfAxiom) v.getAxiom();
+          OWLObjectPropertyExpression sup = sub.getSuperProperty();
+          if (!sup.isAnonymous()
+              && sup.asOWLObjectProperty()
+                  .getIRI()
+                  .toString()
+                  .equals("http://www.geneontology.org/formats/oboInOwl#ObsoleteProperty")) {
+            continue;
+          }
+        }
+        if (v.getAxiom() instanceof OWLClassAssertionAxiom) {
+          OWLClassAssertionAxiom sub = (OWLClassAssertionAxiom) v.getAxiom();
+          if (sub.getClassExpression().isOWLThing()) {
+            continue;
+          }
+        }
+
+        filteredViolations.add(v);
+      }
+    }
+
+    if (filteredViolations.size() > 0) {
       logger.error(
           "Reference violations found: "
-              + referenceViolations.size()
+              + filteredViolations.size()
               + " - reasoning may be incomplete");
 
       int maxDanglings = 10;
       int danglings = 0;
-      for (InvalidReferenceViolation v : referenceViolations) {
-
+      for (InvalidReferenceViolation v : filteredViolations) {
         if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
             && danglings < maxDanglings) {
           logger.error("Reference violation: " + v);
@@ -518,13 +611,11 @@ public class ReasonOperation {
    * @param ontology OWLOntology to reason over
    * @param reasoner OWLReasoner to use
    * @param options Map of reason options
-   * @throws InconsistentOntologyException on invalid ontology
-   * @throws IncoherentRBoxException on invalid ontology
-   * @throws IncoherentTBoxException on invalid ontology
+   * @throws OntologyLogicException on invalid ontology
    */
   private static void reason(
       OWLOntology ontology, OWLReasoner reasoner, Map<String, String> options)
-      throws InconsistentOntologyException, IncoherentRBoxException, IncoherentTBoxException {
+      throws OntologyLogicException {
     long startTime = System.currentTimeMillis();
     logger.info("Starting reasoning...");
 
@@ -544,7 +635,7 @@ public class ReasonOperation {
     boolean passesEquivalenceTests = equivalentReasoning.reason();
     equivalentReasoning.logReport(logger);
     if (!passesEquivalenceTests) {
-      System.exit(1);
+      throw new OntologyLogicException(equivalentClassAxiomError);
     }
 
     float elapsedTime = System.currentTimeMillis() - startTime;

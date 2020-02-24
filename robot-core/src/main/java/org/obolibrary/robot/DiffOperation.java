@@ -5,7 +5,16 @@ import java.io.Writer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import org.geneontology.owl.differ.Differ;
+import org.geneontology.owl.differ.render.BasicDiffRenderer;
+import org.geneontology.owl.differ.render.HTMLDiffRenderer;
+import org.geneontology.owl.differ.render.MarkdownGroupedDiffRenderer;
+import org.geneontology.owl.differ.shortform.DoubleShortFormProvider;
+import org.geneontology.owl.differ.shortform.OBOShortenerShortFormProvider;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +46,8 @@ public class DiffOperation {
   }
 
   /**
-   * Given two ontologies, compare their sets of axiom strings, returning true if they are identical
-   * and false otherwise.
+   * Given two ontologies, compare their sets of axioms, annotations, imports, and ontology IDs,
+   * returning true if they are identical and false otherwise.
    *
    * @param ontology1 the first ontology
    * @param ontology2 the second ontology
@@ -53,8 +62,8 @@ public class DiffOperation {
   }
 
   /**
-   * Given two ontologies and a Writer, get the differences between axiom strings and write then to
-   * the writer. The ontologies are not changed.
+   * Given two ontologies and a Writer, get their differences and write then to the writer. The
+   * ontologies are not changed.
    *
    * @param ontology1 the first ontology
    * @param ontology2 the second ontology
@@ -68,8 +77,8 @@ public class DiffOperation {
   }
 
   /**
-   * Given two ontologies, a Writer, and a set of diff options, get the differences between axiom
-   * strings and write then to the writer. The ontologies are not changed.
+   * Given two ontologies, a Writer, and a set of diff options, get their differences and write then
+   * to the writer. The ontologies are not changed.
    *
    * @param ontology1 the first ontology
    * @param ontology2 the second ontology
@@ -88,20 +97,15 @@ public class DiffOperation {
       throws IOException {
 
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
+    String format = OptionsHelper.getOption(options, "format", "plain");
+    format = format.toLowerCase();
+    if (useLabels && format.equals("plain")) {
+      format = "pretty";
+    }
 
-    Map<IRI, String> labels = OntologyHelper.getLabels(ontology1);
-    labels.putAll(OntologyHelper.getLabels(ontology2));
+    Differ.BasicDiff diff = Differ.diff(ontology1, ontology2);
 
-    Set<String> strings1 = getAxiomStrings(ontology1);
-    Set<String> strings2 = getAxiomStrings(ontology2);
-    Set<String> sorted;
-
-    Set<String> strings1minus2 = new HashSet<>(strings1);
-    strings1minus2.removeAll(strings2);
-    Set<String> strings2minus1 = new HashSet<>(strings2);
-    strings2minus1.removeAll(strings1);
-
-    if (strings1minus2.size() == 0 && strings2minus1.size() == 0) {
+    if (diff.isEmpty()) {
       if (writer != null) {
         writer.write("Ontologies are identical\n");
       }
@@ -112,35 +116,57 @@ public class DiffOperation {
       return false;
     }
 
-    writer.write(strings1minus2.size() + " axioms in Ontology 1 but not in Ontology 2:\n");
-    sorted = new TreeSet<>();
-    for (String axiom : strings1minus2) {
-      if (useLabels) {
-        sorted.add("- " + addLabels(ioHelper, labels, axiom) + "\n");
-      } else {
-        sorted.add("- " + axiom + "\n");
-      }
-    }
-    for (String axiom : sorted) {
-      writer.write(axiom);
-    }
+    OWLOntologySetProvider ontologyProvider =
+        new DualOntologySetProvider(
+            ontology1.getOWLOntologyManager(), ontology2.getOWLOntologyManager());
 
-    writer.write("\n");
-
-    writer.write(strings2minus1.size() + " axioms in Ontology 2 but not in Ontology 1:\n");
-    sorted = new TreeSet<>();
-    for (String axiom : strings2minus1) {
-      if (useLabels) {
-        sorted.add("+ " + addLabels(ioHelper, labels, axiom) + "\n");
-      } else {
-        sorted.add("+ " + axiom + "\n");
-      }
-    }
-    for (String axiom : sorted) {
-      writer.write(axiom);
+    switch (format) {
+      case "plain":
+        writer.write(BasicDiffRenderer.renderPlain(diff));
+        break;
+      case "pretty":
+        DefaultPrefixManager pm = ioHelper.getPrefixManager();
+        AnnotationValueShortFormProvider labelProvider =
+            new AnnotationValueShortFormProvider(
+                ontologyProvider,
+                pm,
+                pm,
+                Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+                Collections.emptyMap());
+        OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
+        DoubleShortFormProvider doubleProvider =
+            new DoubleShortFormProvider(iriProvider, labelProvider);
+        writer.write(BasicDiffRenderer.render(diff, doubleProvider));
+        break;
+      case "markdown":
+        Differ.GroupedDiff groupedForMarkdown = Differ.groupedDiff(diff);
+        writer.write(MarkdownGroupedDiffRenderer.render(groupedForMarkdown, ontologyProvider));
+        break;
+      case "html":
+        Differ.GroupedDiff groupedForHTML = Differ.groupedDiff(diff);
+        writer.write(HTMLDiffRenderer.render(groupedForHTML, ontologyProvider));
+        break;
+      default:
+        throw new IOException("Unknown diff format: " + format);
     }
 
     return false;
+  }
+
+  private static class DualOntologySetProvider implements OWLOntologySetProvider {
+
+    private final Set<OWLOntology> ontologies = new HashSet<>();
+
+    public DualOntologySetProvider(OWLOntologySetProvider left, OWLOntologySetProvider right) {
+      ontologies.addAll(left.getOntologies());
+      ontologies.addAll(right.getOntologies());
+    }
+
+    @Nonnull
+    @Override
+    public Set<OWLOntology> getOntologies() {
+      return Collections.unmodifiableSet(ontologies);
+    }
   }
 
   /**
@@ -150,7 +176,10 @@ public class DiffOperation {
    * @param labels a map from IRIs to label strings
    * @param axiom a string representation of an OWLAxiom
    * @return a string with labels inserted next to IRIs
+   * @deprecated This functionality is now provided by the owl-diff library and no longer used to
+   *     format results in DiffOperation.
    */
+  @Deprecated
   public static String addLabels(Map<IRI, String> labels, String axiom) {
     Matcher matcher = iriPattern.matcher(axiom);
     StringBuffer sb = new StringBuffer();
@@ -178,7 +207,10 @@ public class DiffOperation {
    * @param labels a map from IRIs to label strings
    * @param axiom a string representation of an OWLAxiom
    * @return a string with labels inserted next to CURIEs
+   * @deprecated This functionality is now provided by the owl-diff library and no longer used to
+   *     format results in DiffOperation.
    */
+  @Deprecated
   public static String addLabels(IOHelper ioHelper, Map<IRI, String> labels, String axiom) {
     DefaultPrefixManager pm = ioHelper.getPrefixManager();
     Matcher matcher = iriPattern.matcher(axiom);
@@ -207,7 +239,9 @@ public class DiffOperation {
    *
    * @param ontology the ontology to use
    * @return a set of strings, one for each axiom in the ontology
+   * @deprecated This functionality is no longer used within DiffOperation.
    */
+  @Deprecated
   public static Set<String> getAxiomStrings(OWLOntology ontology) {
     Set<String> strings = new HashSet<>();
     strings.add(ontology.getOntologyID().toString());

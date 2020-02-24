@@ -53,6 +53,7 @@ public class ExtractOperation {
     options.put("copy-ontology-annotations", "false");
     options.put("annotate-with-source", "false");
     options.put("intermediates", "all");
+    options.put("force", "false");
     return options;
   }
 
@@ -141,10 +142,13 @@ public class ExtractOperation {
       type = ModuleType.STAR;
     }
 
-    // Get all axioms from the ontology and its imports
+    // Get all axioms from the ontology
     Set<OWLAxiom> axs = new HashSet<>(inputOntology.getAxioms());
-    for (OWLOntology importedOnt : inputOntology.getImportsClosure()) {
-      axs.addAll(importedOnt.getAxioms());
+    if (imports.equals(Imports.INCLUDED)) {
+      // Maybe get the axioms from the imported ontologies
+      for (OWLOntology importedOnt : inputOntology.getImportsClosure()) {
+        axs.addAll(importedOnt.getAxioms());
+      }
     }
     // Maybe get an IRI
     IRI ontIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
@@ -166,7 +170,7 @@ public class ExtractOperation {
       // Make sure to completely remove individuals
       Set<OWLObject> indivs = new HashSet<>(outputOntology.getIndividualsInSignature());
       Set<OWLAxiom> indivAxioms =
-          RelatedObjectsHelper.getCompleteAxioms(outputOntology, indivs, null);
+          RelatedObjectsHelper.getCompleteAxioms(outputOntology, indivs, null, true);
       manager.removeAxioms(outputOntology, indivAxioms);
     }
 
@@ -187,7 +191,10 @@ public class ExtractOperation {
             OntologyHelper.getAnnotationValues(outputOntology, isDefinedBy, entity.getIRI());
         if (existingValues == null || existingValues.size() == 0) {
           // If not, add it
-          sourceAxioms.add(getIsDefinedBy(entity, sourceMap));
+          OWLAnnotationAxiom def = getIsDefinedBy(entity, sourceMap);
+          if (def != null) {
+            sourceAxioms.add(def);
+          }
         }
       }
       manager.addAxioms(outputOntology, sourceAxioms);
@@ -318,9 +325,12 @@ public class ExtractOperation {
       } else if (iri.contains("_")) {
         String baseStr = iri.substring(0, iri.lastIndexOf("_")).toLowerCase() + ".owl";
         base = IRI.create(baseStr);
-      } else {
+      } else if (iri.contains("/")) {
         String baseStr = iri.substring(0, iri.lastIndexOf("/")).toLowerCase() + ".owl";
         base = IRI.create(baseStr);
+      } else {
+        logger.warn("Unable to get source for IRI " + iri);
+        return null;
       }
     }
     return dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, entity.getIRI(), base);

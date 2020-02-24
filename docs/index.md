@@ -11,6 +11,10 @@ Click on the command names in the sidebar for documentation and examples, and vi
 
 For a "how-to" covering the major commands and features of ROBOT, visit our tutorial [located here](https://github.com/rctauber/robot-tutorial).
 
+### Cite ROBOT
+
+R.C. Jackson, J.P. Balhoff, E. Douglass, N.L. Harris, C.J. Mungall, and J.A. Overton. [ROBOT: A tool for automating ontology workflows](https://rdcu.be/bMnHT). BMC Bioinformatics, vol. 20, July 2019.
+
 
 ## 1. Getting Started
 

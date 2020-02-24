@@ -8,6 +8,7 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import com.google.common.collect.Sets;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,26 +19,24 @@ import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.shared.JenaException;
+import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.util.FileManager;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
 import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
+import org.obolibrary.oboformat.model.FrameStructureException;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -58,7 +57,7 @@ public class IOHelper {
   private static final String NS = "errors#";
 
   /** Error message when the specified file does not exist. Expects file name. */
-  private static final String fileDoesNotExistError =
+  static final String fileDoesNotExistError =
       NS + "FILE DOES NOT EXIST ERROR File does not exist: %s";
 
   /** Error message when an invalid extension is provided (file format). Expects the file format. */
@@ -87,6 +86,10 @@ public class IOHelper {
   private static final String jsonldContextParseError =
       NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
 
+  /** Error message when OBO cannot be saved. */
+  private static final String oboStructureError =
+      NS + "OBO STRUCTURE ERROR Ontology does not conform to OBO structure rules:\n%s";
+
   /** Error message when the ontology cannot be saved. Expects the IRI string. */
   private static final String ontologyStorageError =
       NS + "ONTOLOGY STORAGE ERROR Could not save ontology to IRI: %s";
@@ -94,6 +97,18 @@ public class IOHelper {
   /** Error message when a prefix cannot be loaded. Expects the prefix and target. */
   private static final String prefixLoadError =
       NS + "PREFIX LOAD ERROR Could not load prefix '%s' for '%s'";
+
+  /**
+   * Error message when Jena cannot load a file to a dataset, probably not RDF/XML (including OWL)
+   * or TTL.
+   */
+  private static final String syntaxError =
+      NS
+          + "SYNTAX ERROR unable to load '%s' with Jena - "
+          + "check that this file is in RDF/XML or TTL syntax and try again.";
+
+  /** Optional base namespaces. */
+  private Set<String> baseNamespaces = new HashSet<>();
 
   /** Path to default context as a resource. */
   private static String defaultContextPath = "/obo_context.jsonld";
@@ -163,32 +178,63 @@ public class IOHelper {
    * Given an ontology, a file, and a list of prefixes, save the ontology to the file and include
    * the prefixes in the header.
    *
+   * @deprecated replaced by {@link #saveOntology(OWLOntology, OWLDocumentFormat, IRI, Map,
+   *     boolean)}
    * @param ontology OWLOntology to save
    * @param outputFile File to save ontology to
    * @param addPrefixes List of prefixes to add ("foo: http://foo.bar/")
    * @throws IOException On issue parsing list of prefixes or saving file
    */
+  @Deprecated
   public void addPrefixesAndSave(OWLOntology ontology, File outputFile, List<String> addPrefixes)
       throws IOException {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLDocumentFormat df = getFormat(FilenameUtils.getExtension(outputFile.getPath()));
 
     // If prefixes are not supported, just save the ontology without adding prefixes
     if (!df.isPrefixOWLOntologyFormat()) {
       logger.error("Prefixes are not supported in " + df.toString() + " (saving without prefixes)");
-      saveOntology(ontology, df, outputFile);
+      saveOntology(ontology, df, IRI.create(outputFile));
       return;
     }
 
-    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    // Convert prefixes to map
+    Map<String, String> prefixMap = new HashMap<>();
     for (String pref : addPrefixes) {
       String[] split = pref.split(": ");
       if (split.length != 2) {
         throw new IOException(String.format(invalidPrefixError, pref));
       }
-      pf.setPrefix(split[0].trim(), split[1].trim());
+      prefixMap.put(split[0], split[1]);
     }
-    saveOntology(ontology, df, outputFile);
+
+    addPrefixes(df, prefixMap);
+    saveOntology(ontology, df, IRI.create(outputFile));
+  }
+
+  /**
+   * Given a directory containing TDB mappings, remove the files and directory. If successful,
+   * return true.
+   *
+   * @param tdbDir directory to remove
+   * @return boolean indicating success
+   */
+  protected static boolean cleanTDB(String tdbDir) {
+    File dir = new File(tdbDir);
+    boolean success = true;
+    if (dir.exists()) {
+      String[] files = dir.list();
+      if (files != null) {
+        for (String file : files) {
+          File f = new File(dir.getPath(), file);
+          success = f.delete();
+        }
+      }
+      // Only delete if all the files in dir were deleted
+      if (success) {
+        success = dir.delete();
+      }
+    }
+    return success;
   }
 
   /**
@@ -436,6 +482,48 @@ public class IOHelper {
   }
 
   /**
+   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
+   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
+   *
+   * <p>WARNING - this creates a directory at given tdbDir location!
+   *
+   * @param inputPath input path of RDF/XML or TTL file
+   * @param tdbDir location to put TDB mappings
+   * @return Dataset instantiated with triples
+   * @throws JenaException if TDB directory can't be written to
+   */
+  public static Dataset loadToTDBDataset(String inputPath, String tdbDir) throws JenaException {
+    Dataset dataset;
+    if (new File(tdbDir).isDirectory()) {
+      dataset = TDBFactory.createDataset(tdbDir);
+      if (!dataset.isEmpty()) {
+        return dataset;
+      }
+    }
+    dataset = TDBFactory.createDataset(tdbDir);
+    logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
+    // Track parsing time
+    long start = System.nanoTime();
+    Model m;
+    dataset.begin(ReadWrite.WRITE);
+    try {
+      m = dataset.getDefaultModel();
+      FileManager.get().readModel(m, inputPath);
+      dataset.commit();
+    } catch (JenaException e) {
+      dataset.abort();
+      dataset.end();
+      dataset.close();
+      throw new JenaException(String.format(syntaxError, inputPath));
+    } finally {
+      dataset.end();
+    }
+    long time = (System.nanoTime() - start) / 1000000000;
+    logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
+    return dataset;
+  }
+
+  /**
    * Given the name of a file format, return an instance of it.
    *
    * <p>Suported formats:
@@ -508,17 +596,13 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology saveOntology(final OWLOntology ontology, IRI ontologyIRI) throws IOException {
-    try {
-      String path = ontologyIRI.toString();
-      if (path.endsWith(".gz")) {
-        path = path.substring(0, path.lastIndexOf("."));
-      }
-      String formatName = FilenameUtils.getExtension(path);
-      OWLDocumentFormat format = getFormat(formatName);
-      return saveOntology(ontology, format, ontologyIRI, true);
-    } catch (Exception e) {
-      throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+    String path = ontologyIRI.toString();
+    if (path.endsWith(".gz")) {
+      path = path.substring(0, path.lastIndexOf("."));
     }
+    String formatName = FilenameUtils.getExtension(path);
+    OWLDocumentFormat format = getFormat(formatName);
+    return saveOntology(ontology, format, ontologyIRI, true);
   }
 
   /**
@@ -594,11 +678,30 @@ public class IOHelper {
   public OWLOntology saveOntology(
       final OWLOntology ontology, OWLDocumentFormat format, IRI ontologyIRI, boolean checkOBO)
       throws IOException {
-    logger.debug("Saving ontology {} as {} with to IRI {}", ontology, format, ontologyIRI);
-    // if (format instanceof PrefixOWLDocumentFormat) {
-    //    ((PrefixOWLDocumentFormat) format)
-    //        .copyPrefixesFrom(getPrefixManager());
-    // }
+    return saveOntology(ontology, format, ontologyIRI, null, checkOBO);
+  }
+
+  /**
+   * Save an ontology in the given format to an IRI, with option to add prefixes and option to
+   * ignore OBO document checks.
+   *
+   * @param ontology the ontology to save
+   * @param format the ontology format to use
+   * @param ontologyIRI the IRI to save the ontology to
+   * @param addPrefixes map of prefixes to add to header
+   * @param checkOBO if false, ignore OBO document checks
+   * @return the saved ontology
+   * @throws IOException on any problem
+   */
+  public OWLOntology saveOntology(
+      final OWLOntology ontology,
+      OWLDocumentFormat format,
+      IRI ontologyIRI,
+      Map<String, String> addPrefixes,
+      boolean checkOBO)
+      throws IOException {
+    // Determine the format if not provided
+    logger.debug("Saving ontology as {} with to IRI {}", format, ontologyIRI);
     XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
     // If saving in compressed format, get byte data then save to gzip
     if (ontologyIRI.toString().endsWith(".gz")) {
@@ -607,6 +710,9 @@ public class IOHelper {
       return ontology;
     }
     // If not compressed, just save the file as-is
+    if (addPrefixes != null && !addPrefixes.isEmpty()) {
+      addPrefixes(format, addPrefixes);
+    }
     saveOntologyFile(ontology, format, ontologyIRI, checkOBO);
     return ontology;
   }
@@ -778,6 +884,43 @@ public class IOHelper {
   }
 
   /**
+   * Add a base namespace to the IOHelper.
+   *
+   * @param baseNamespace namespace to add to bases.
+   */
+  public void addBaseNamespace(String baseNamespace) {
+    baseNamespaces.add(baseNamespace);
+  }
+
+  /**
+   * Add a set of base namespaces to the IOHelper from file. Each base namespace should be on its
+   * own line.
+   *
+   * @param baseNamespacePath path to base namespace file
+   * @throws IOException if file does not exist
+   */
+  public void addBaseNamespaces(String baseNamespacePath) throws IOException {
+    File prefixFile = new File(baseNamespacePath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, baseNamespacePath));
+    }
+
+    List<String> lines = FileUtils.readLines(new File(baseNamespacePath));
+    for (String l : lines) {
+      baseNamespaces.add(l.trim());
+    }
+  }
+
+  /**
+   * Get the base namespaces.
+   *
+   * @return set of base namespaces
+   */
+  public Set<String> getBaseNamespaces() {
+    return baseNamespaces;
+  }
+
+  /**
    * Get a copy of the default context.
    *
    * @return a copy of the current context
@@ -920,6 +1063,22 @@ public class IOHelper {
   }
 
   /**
+   * Given a path to a JSON-LD prefix file, add the prefix mappings in the file to the current
+   * JSON-LD context.
+   *
+   * @param prefixPath path to JSON-LD prefix file to add
+   * @throws IOException if the file does not exist or cannot be read
+   */
+  public void addPrefixes(String prefixPath) throws IOException {
+    File prefixFile = new File(prefixPath);
+    if (!prefixFile.exists()) {
+      throw new IOException(String.format(fileDoesNotExistError, prefixPath));
+    }
+    Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    context.putAll(context1.getPrefixes(false));
+  }
+
+  /**
    * Get a copy of the current prefix map.
    *
    * @return a copy of the current prefix map
@@ -1055,6 +1214,68 @@ public class IOHelper {
   }
 
   /**
+   * Given a document format and a map of prefixes to add, add the prefixes to the document.
+   *
+   * @param df OWLDocumentFormat
+   * @param addPrefixes map of prefix to namespace to add
+   */
+  private void addPrefixes(OWLDocumentFormat df, Map<String, String> addPrefixes) {
+    if (!df.isPrefixOWLOntologyFormat()) {
+      // Warn on non-prefix document format (i.e. OBO)
+      logger.warn(
+          String.format(
+              "Unable to add prefixes to %s document - saving without prefixes", df.toString()));
+      return;
+    }
+    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    for (Map.Entry<String, String> pref : addPrefixes.entrySet()) {
+      pf.setPrefix(pref.getKey(), pref.getValue());
+    }
+  }
+
+  /**
+   * Given a URL, check if the URL returns a redirect and return that new URL. Continue following
+   * redirects until there are no more redirects.
+   *
+   * @param url URL to follow redirects
+   * @return URL after all redirects
+   * @throws IOException on issue making URL connection
+   */
+  private URL followRedirects(URL url) throws IOException {
+    // Check if the URL redirects
+    if (url.toString().startsWith("ftp")) {
+      // Trying to open HttpURLConnection on FTP will throw exception
+      return url;
+    }
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    int status = conn.getResponseCode();
+    boolean redirect = false;
+    if (status != HttpURLConnection.HTTP_OK) {
+      if (status == HttpURLConnection.HTTP_MOVED_TEMP
+          || status == HttpURLConnection.HTTP_MOVED_PERM
+          || status == HttpURLConnection.HTTP_SEE_OTHER) {
+        redirect = true;
+      }
+    }
+
+    if (redirect) {
+      // Get the new URL and then check that for redirect
+      String newURL = conn.getHeaderField("Location");
+      logger.info(String.format("<%s> redirecting to <%s>...", url.toString(), newURL));
+      if (newURL.startsWith("ftp")) {
+        // No more redirects
+        return new URL(newURL);
+      } else {
+        // Check again if there is another redirect
+        return followRedirects(new URL(newURL));
+      }
+    } else {
+      // Otherwise just return the URL
+      return url;
+    }
+  }
+
+  /**
    * Given an ontology, a document format, and a boolean indicating to check OBO formatting, return
    * the ontology file in the OWLDocumentFormat as a byte array.
    *
@@ -1120,6 +1341,10 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   private OWLOntology loadCompressedOntology(URL url, String catalogPath) throws IOException {
+    // Check for redirects
+    url = followRedirects(url);
+
+    // Open an input stream
     InputStream is;
     try {
       is = new BufferedInputStream(url.openStream(), 1024);
@@ -1172,6 +1397,12 @@ public class IOHelper {
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
       } catch (OWLOntologyStorageException e) {
+        // Determine if its caused by an OBO Format error
+        if (format instanceof OBODocumentFormat
+            && e.getCause() instanceof FrameStructureException) {
+          throw new IOException(
+              String.format(oboStructureError, e.getCause().getMessage()), e.getCause());
+        }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }
     }

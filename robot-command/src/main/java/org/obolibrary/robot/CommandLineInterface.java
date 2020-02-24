@@ -30,6 +30,7 @@ public class CommandLineInterface {
     m.addCommand("materialize", new MaterializeCommand());
     m.addCommand("merge", new MergeCommand());
     m.addCommand("mirror", new MirrorCommand());
+    m.addCommand("python", new PythonCommand());
     m.addCommand("query", new QueryCommand());
     m.addCommand("reason", new ReasonCommand());
     m.addCommand("reduce", new ReduceCommand());

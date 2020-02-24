@@ -8,6 +8,7 @@ import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,10 @@ public class ExtractCommand implements Command {
       NS
           + "MISSING LOWER TERMS ERROR "
           + "lower term(s) must be specified with upper term(s) for MIREOT";
+
+  /** Error message when user provides invalid imports option. */
+  private static final String invalidImportsError =
+      NS + "INVALID IMPORTS ERROR --imports must be 'include' or 'exclude'";
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
@@ -221,6 +226,7 @@ public class ExtractCommand implements Command {
       CommandLine line,
       Map<String, String> extractOptions)
       throws Exception {
+    Imports imports = getImportsOption(extractOptions);
     List<OWLOntology> outputOntologies = new ArrayList<>();
     // Get terms from input (ensuring that they are in the input ontology)
     // It's okay for any of these to return empty (allowEmpty = true)
@@ -229,7 +235,8 @@ public class ExtractCommand implements Command {
         OntologyHelper.filterExistingTerms(
             inputOntology,
             CommandLineHelper.getTerms(ioHelper, line, "upper-term", "upper-terms"),
-            true);
+            true,
+            imports);
     if (upperIRIs.size() == 0) {
       upperIRIs = null;
     }
@@ -237,7 +244,8 @@ public class ExtractCommand implements Command {
         OntologyHelper.filterExistingTerms(
             inputOntology,
             CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms"),
-            true);
+            true,
+            imports);
     if (lowerIRIs.size() == 0) {
       lowerIRIs = null;
     }
@@ -245,7 +253,8 @@ public class ExtractCommand implements Command {
         OntologyHelper.filterExistingTerms(
             inputOntology,
             CommandLineHelper.getTerms(ioHelper, line, "branch-from-term", "branch-from-terms"),
-            true);
+            true,
+            imports);
     if (branchIRIs.size() == 0) {
       branchIRIs = null;
     }
@@ -303,6 +312,7 @@ public class ExtractCommand implements Command {
       CommandLine line,
       Map<String, String> extractOptions)
       throws Exception {
+    Imports imports = getImportsOption(extractOptions);
     // upper-term, lower-term, and branch-from term should not be used
     List<String> mireotTerms =
         Arrays.asList(
@@ -322,7 +332,8 @@ public class ExtractCommand implements Command {
         OntologyHelper.filterExistingTerms(
             inputOntology,
             CommandLineHelper.getTerms(ioHelper, line),
-            OptionsHelper.optionIsTrue(extractOptions, "force"));
+            OptionsHelper.optionIsTrue(extractOptions, "force"),
+            imports);
 
     // Determine what to do with sources
     Map<IRI, IRI> sourceMap =
@@ -335,6 +346,24 @@ public class ExtractCommand implements Command {
 
     return ExtractOperation.extract(
         inputOntology, terms, outputIRI, moduleType, extractOptions, sourceMap);
+  }
+
+  /**
+   * Given a map of options, return the imports option as Imports.
+   *
+   * @param extractOptions map of options
+   * @return Imports INCLUDED or EXCLUDED
+   * @throws Exception if option is not 'include' or 'exclude'
+   */
+  private static Imports getImportsOption(Map<String, String> extractOptions) throws Exception {
+    String importsOption = OptionsHelper.getOption(extractOptions, "imports", "include");
+    if (importsOption.equalsIgnoreCase("include")) {
+      return Imports.INCLUDED;
+    } else if (importsOption.equalsIgnoreCase("exclude")) {
+      return Imports.EXCLUDED;
+    } else {
+      throw new Exception(invalidImportsError);
+    }
   }
 
   /**

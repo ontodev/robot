@@ -1,5 +1,16 @@
 # Extract
 
+## Contents
+
+1. [Overview](#overview)
+2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
+3. [Extraction method: MIREOT](#mireot)
+4. [Handling Imports (`--imports`)](#handling-imports)
+5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
+6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
+
+## Overview
+
 The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
 
     robot extract --method STAR \
@@ -9,16 +20,12 @@ The reuse of ontology terms creates links between data, making the ontology and 
 
 See <a href="/examples/uberon_module.txt" target="_blank">`uberon_module.txt`</a> for an example of a term file. Terms should be listed line by line, and comments can be included with `#`. Individual terms can be specified with `--term` followed by the CURIE.
 
-NOTE: The `extract` command works on the input ontology, not its imports. To extract from imports you should first [merge](/merge).
-
 The `--method` options fall into two groups: Syntactic Locality Module Extractor (SLME) and Minimum Information to Reference an External Ontology Term (MIREOT).
 
 - STAR: use the SLME to extract a fixpoint-nested module
 - TOP: use the SLME to extract a top module
 - BOT: use the SLME to extract a bottom module
 - MIREOT: extract a simple hierarchy of terms
-
-By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method.
 
 ## Syntactic Locality Module Extractor (SLME)
 
@@ -40,7 +47,7 @@ ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ont
 
 ### Instances
 
-When using the SLME method of extraction, all individuals (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--individuals` option to specify what (if any) individuals are included in the output ontology:
+__Important note for ontologies that include individuals:__ When using the SLME method of extraction, all individuals (ABox axioms) and their class types (the TBox axioms they depend on) are included by default. The `extract` command provides an `--individuals` option to specify what (if any) individuals are included in the output ontology:
 * `--individuals include`: all individuals in the input ontology and their class types (default)
 * `--individuals minimal`: only the individuals that are a type of a class in the extracted module
 * `--individuals definitions`: only the individuals that are used in logical definitions of classes
@@ -58,6 +65,8 @@ The MIREOT method preserves the hierarchy of the input ontology (subclass and su
         --output results/uberon_mireot.owl
 
 To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. The upper terms are the upper boundaries of what will be extracted. If no upper term is specified, all terms up to the root (`owl:Thing`) will be returned. The lower term (or terms) is required; this is the limit to what will be extracted, e.g. no descendants of the lower term will be included in the result.
+
+To only include all descendants of a term or set of terms, use `--branch-from-term` or `--branch-from-terms`, respectively. `--lower-term` or `--lower-terms` are not required when using this option.
 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
@@ -119,7 +128,29 @@ Would result in:
 
 Any term specified as an input term will not be pruned.
 
-## Ontology Annotations
+## Handling Imports
+
+By default, `extract` will include imported ontologies. To exclude imported ontologies, just add `--imports exclude` for any non-MIREOT extraction method:
+
+    robot extract --method BOT \
+      --catalog catalog.xml \
+      --input imports-nucleus.owl \
+      --term GO:0005739 \
+      --imports exclude \
+      --output results/mitochondrion.owl
+
+This only includes what is asserted in `imports-nucleus.owl`, which imports `nucleus.owl`. `imports-nucleus.owl` only includes the term 'mitochondrion' (`GO:0005739`) and links it to its parent class, 'intracellular membrane-bounded organelle' (`GO:0043231`). `nucleus.owl` contains the full hierarchy down to 'intracellular membrane-bounded organelle'. The output module, `mitochondrion.owl`, only includes the term 'mitochondrion' and this subClassOf statement.
+
+By contrast, including imports returns the full hierarchy down to 'mitochondrion', which is asserted in `nucleus.owl`:
+
+    robot extract --method BOT \
+      --catalog catalog.xml \
+      --input imports-nucleus.owl \
+      --term GO:0005739 \
+      --imports include \
+      --output results/mitochondrion-full.owl
+
+## Extracting Ontology Annotations
 
 You can also include ontology annotations from the input ontology with `--copy-ontology-annotations true`. By default, this is false.
 
@@ -129,7 +160,7 @@ You can also include ontology annotations from the input ontology with `--copy-o
       --copy-ontology-annotations true \
       --output results/annotated_module.owl
       
-## Source Annotations
+## Adding Source Annotations
 
 `extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`. If the term already has an annotation using this property, the existing annotation will be copied and no new annotation will be added.
 
@@ -174,6 +205,10 @@ MIREOT requires either `--lower-term` or `--branch-from-term` to proceed. `--upp
 ### Missing Lower Term(s) Error
 
 If an `--upper-term` is specified for MIREOT, `--lower-term` (or terms) must also be specified.
+
+### Invalid Imports Error
+
+The input for `--imports` must be either `exclude` or `include`.
 
 ### Invalid Method Error
 

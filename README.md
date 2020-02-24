@@ -5,13 +5,17 @@
 
 ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org).
 
+### Cite ROBOT
 
-# Installation and Usage
+R.C. Jackson, J.P. Balhoff, E. Douglass, N.L. Harris, C.J. Mungall, and J.A. Overton. [ROBOT: A tool for automating ontology workflows](https://rdcu.be/bMnHT). BMC Bioinformatics, vol. 20, July 2019.
+
+
+### Installation and Usage
 
 Please see <http://robot.obolibrary.org>.
 
 
-# Build
+## Build
 
 We use [Maven](http://maven.apache.org) as our build tool. Make sure it's [installed](http://maven.apache.org/download.cgi), then run:
 
@@ -33,7 +37,7 @@ Alternatively, you can use [Docker](https://www.docker.com) with the provided [D
 We use [Google Java Style](https://google.github.io/styleguide/javaguide.html), automatically enforced with [google-java-format](https://github.com/google/google-java-format) and [fmt-maven-plugin](https://github.com/coveo/fmt-maven-plugin). You may want to use the [styleguide configuration file](https://github.com/google/styleguide) for [Eclipse](https://github.com/google/styleguide/blob/gh-pages/eclipse-java-google-style.xml) or [IntelliJ](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml).
 
 
-# Design
+## Design
 
 The library provides a set of Operations and a set of Commands. Commands handle the command-line interface and IO tasks, while Operations focus on manipulating ontologies. Sometimes you will have the pair of an Operation and a Command, but there's no necessity for a one-to-one correspondence between them.
 
@@ -49,6 +53,11 @@ The current implementation is modular but not pluggable. In particular, the Comm
 Many Operations require lists of terms. The IOHelper class defines methods for collecting lists of terms from strings and files, and returning a `Set<IRI>`. Our convention is that a term list is a space-separated list of IRIs or CURIEs with optional comments. The "#" character and everything to the end of the line is ignored. Note that a "#" must start the line or be preceded by whitespace -- a "#" inside an IRI does not start a comment.
 
 
-# Acknowledgments
+## Acknowledgments
 
 The initial version of ROBOT was developed by James A. Overton, based on requirements and designs given by Chris Mungall, Heiko Dietze and David Osumi-Sutherland. This initial version was funded by P41 grant 5P41HG002273-09 to the Gene Ontology Consortium. Current support is from NIH grant 1 R24 HG010032-01, “Services to support the OBO foundry standards” to C. Mungall and B. Peters.
+
+
+## Copyright
+
+The copyright for ROBOT code and documentation belongs to the respective authors. ROBOT code is distributed under a [BSD3 license](https://github.com/ontodev/robot/blob/master/LICENSE.txt). Our `pom.xml` files list a number of software dependencies, each with its own license.

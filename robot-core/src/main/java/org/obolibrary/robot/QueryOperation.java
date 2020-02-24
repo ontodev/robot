@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import org.apache.jena.query.*;
@@ -60,11 +61,10 @@ public class QueryOperation {
    *
    * @param ontology ontology to query
    * @return dataset to query
-   * @throws IOException on issue creating temp files
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology)
-      throws IOException, OWLOntologyStorageException {
+      throws OWLOntologyStorageException {
     return loadOntologyAsDataset(ontology, false);
   }
 
@@ -76,11 +76,9 @@ public class QueryOperation {
    * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
-   * @throws UnsupportedEncodingException on parsing TTL string
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
-      throws OWLOntologyStorageException, UnsupportedEncodingException {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      throws OWLOntologyStorageException {
     Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
     if (useGraphs) {
@@ -112,31 +110,64 @@ public class QueryOperation {
    *
    * @param ontology OWLOntology to convert to Model
    * @return Model of axioms (imports ignored)
-   * @throws UnsupportedEncodingException on issue parsing byte array to string
    * @throws OWLOntologyStorageException on issue writing ontology to TTL format
    */
-  public static Model loadOntologyAsModel(OWLOntology ontology)
-      throws UnsupportedEncodingException, OWLOntologyStorageException {
+  public static Model loadOntologyAsModel(OWLOntology ontology) throws OWLOntologyStorageException {
     Model model = ModelFactory.createDefaultModel();
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
-    String content = new String(os.toByteArray(), "UTF-8");
+    String content = new String(os.toByteArray(), StandardCharsets.UTF_8);
     RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(model);
     return model;
   }
 
   /**
+   * Given a path to an RDF/XML or TTL file and a RDF language, load the file as the default model
+   * of a TDB dataset backed by a directory to improve processing time. Return the new dataset.
+   *
+   * <p>WARNING - this creates a directory at given tdbDir location!
+   *
+   * @deprecated moved to {@link org.obolibrary.robot.IOHelper#loadToTDBDataset(String, String)}
+   * @param inputPath input path of RDF/XML or TTL file
+   * @param tdbDir location to put TDB mappings
+   * @return Dataset instantiated with triples
+   */
+  @Deprecated
+  public static Dataset loadTriplesAsDataset(String inputPath, String tdbDir) {
+    return IOHelper.loadToTDBDataset(inputPath, tdbDir);
+  }
+
+  /**
    * Given a Model, return the OWLOntology representation of the axioms.
    *
+   * @deprecated Use {@link #convertModel(Model, IOHelper, String)}
    * @param model Model to convert to OWLOntology
    * @return OWLOntology of axioms
    * @throws OWLOntologyCreationException on issue loading ontology from byte array
    */
+  @Deprecated
   public static OWLOntology convertModel(Model model) throws OWLOntologyCreationException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     RDFDataMgr.write(os, model, Lang.TTL);
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     return manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(os.toByteArray()));
+  }
+
+  /**
+   * Given a Model, an IOHelper, and a path to an XML catalog, convert the model to an OWLOntology
+   * object.
+   *
+   * @param model Model to convert to OWLOntology
+   * @param ioHelper IOHelper to load ontology
+   * @param catalogPath String path to XML catalog
+   * @return OWLOntology object version of model
+   * @throws IOException on issue loading ontology
+   */
+  public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
+      throws IOException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    RDFDataMgr.write(os, model, Lang.TTL);
+    return ioHelper.loadOntology(new ByteArrayInputStream(os.toByteArray()), catalogPath);
   }
 
   /**

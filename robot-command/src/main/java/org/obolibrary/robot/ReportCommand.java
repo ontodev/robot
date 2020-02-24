@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -28,6 +29,11 @@ public class ReportCommand implements Command {
     o.addOption("f", "format", true, "save report in a given format (TSV or YAML)");
     o.addOption("F", "fail-on", true, "logging level to fail on");
     o.addOption("l", "labels", true, "if true, use labels for output");
+    o.addOption("P", "print", true, "specify a number of violations to print");
+    o.addOption("t", "tdb", true, "if true, load RDF/XML or TTL onto disk");
+    o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
+    o.addOption("d", "tdb-directory", true, "directory to put TDB mappings (default: .tdb)");
+    o.addOption("L", "limit", true, "specify a number of results to limit queries to");
     options = o;
   }
 
@@ -96,29 +102,36 @@ public class ReportCommand implements Command {
     }
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology ontology = state.getOntology();
+
+    // Override default report options with command-line options
+    Map<String, String> reportOptions = ReportOperation.getDefaultOptions();
+    for (String option : reportOptions.keySet()) {
+      if (line.hasOption(option)) {
+        reportOptions.put(option, line.getOptionValue(option));
+      }
+    }
 
     // output is optional - no output means the file will not be written anywhere
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
-    // profile is optional - no profile means the default profile will be used
-    String profilePath = CommandLineHelper.getOptionalValue(line, "profile");
-    // format is optional - default is TSV, but if the prefix of file is 'csv' or 'yaml',
-    // that will be automatically detected
-    String format = CommandLineHelper.getOptionalValue(line, "format");
-    if (format == null && outputPath != null) {
-      format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
+
+    boolean success;
+
+    boolean tdb = CommandLineHelper.getBooleanValue(line, "tdb", false);
+    if (tdb) {
+      // TDB is backed on disk and loads directly from path
+      // Avoids extra time loading OWLOntology object for big ontologies
+      String inputPath =
+          CommandLineHelper.getRequiredValue(line, "input", "An input ontology is required");
+      success = ReportOperation.tdbReport(inputPath, outputPath, reportOptions);
+    } else {
+      state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+      OWLOntology ontology = state.getOntology();
+      success = ReportOperation.report(ontology, ioHelper, outputPath, reportOptions);
     }
-    // fail-on is optional - if null, will always exit with 0
-    String failOn = CommandLineHelper.getDefaultValue(line, "fail-on", "error");
-    boolean useLabels = CommandLineHelper.getBooleanValue(line, "labels", false);
 
     // Success is based on failOn
     // If any violations are found of the fail-on level, this will be false
-    // If failOn is "none" or if no violations are found, this will be true
-    boolean success =
-        ReportOperation.report(
-            ontology, ioHelper, profilePath, outputPath, format, failOn, useLabels);
+    // If fail-on is "none" or if no violations are found, this will be true
     if (!success) {
       logger.error("Report failed!");
       System.exit(1);

@@ -1,0 +1,5 @@
+Label,Label Comment,Nested Comment,See Also,ID,Synonyms,Type,Parent,Parts,Parts Annotation
+A rdfs:label,>AL rdfs:comment@en,>>A rdfs:comment,>AI rdfs:seeAlso,ID,A IAO:0000118 SPLIT=|,CLASS_TYPE,C %,C part_of some %,>C rdfs:comment
+skip this row
+test 3,test 3 comment,test 3 comment comment,http://robot.obolibrary.org/,GO:1234,synonym 1|synonym 2,subclass,test2,test one,test one comment
+test 4,test 4 comment,,,GO:1235,,equivalent,test one,(test2 and 'test 3'),test2 and test 3 comment

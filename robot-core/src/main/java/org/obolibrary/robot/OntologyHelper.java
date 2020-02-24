@@ -290,7 +290,7 @@ public class OntologyHelper {
 
   /**
    * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
-   * the ontology.
+   * the ontology. Always include terms in imports.
    *
    * @param ontology the ontology to check for IRIs
    * @param IRIs Set of IRIs to filter
@@ -299,9 +299,24 @@ public class OntologyHelper {
    */
   public static Set<IRI> filterExistingTerms(
       OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty) {
+    return filterExistingTerms(ontology, IRIs, allowEmpty, Imports.INCLUDED);
+  }
+
+  /**
+   * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
+   * the ontology. Maybe include terms in imports.
+   *
+   * @param ontology the ontology to check for IRIs
+   * @param IRIs Set of IRIs to filter
+   * @param allowEmpty boolean specifying if an empty set can be returned
+   * @param imports Imports INCLUDED or EXCLUDED
+   * @return Set of filtered IRIs
+   */
+  public static Set<IRI> filterExistingTerms(
+      OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty, Imports imports) {
     Set<IRI> missingIRIs = new HashSet<>();
     for (IRI iri : IRIs) {
-      if (!ontology.containsEntityInSignature(iri)) {
+      if (!ontology.containsEntityInSignature(iri, imports)) {
         logger.warn("Ontology does not contain {}", iri.toQuotedString());
         missingIRIs.add(iri);
       }
@@ -311,6 +326,89 @@ public class OntologyHelper {
       throw new IllegalArgumentException(emptyTermsError);
     }
     return IRIs;
+  }
+
+  /**
+   * Get all named OWLObjects from an input ontology.
+   *
+   * @param ontology OWLOntology to retrieve objects from
+   * @return set of objects
+   */
+  public static Set<OWLObject> getNamedObjects(OWLOntology ontology) {
+    Set<OWLObject> objects = new HashSet<>();
+    // TODO - include or exclude imports?
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      objects.addAll(getNamedObjects(axiom));
+    }
+    return objects;
+  }
+
+  /**
+   * Get all named OWLObjects associated with an axiom. This is builds on getSignature() by
+   * including annotation subjects, properties, and values.
+   *
+   * @param axiom The axiom to check
+   * @return The set of objects
+   */
+  public static Set<OWLObject> getNamedObjects(OWLAxiom axiom) {
+    Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
+
+    // Add annotations if the axiom is annotated
+    if (axiom.isAnnotated()) {
+      for (OWLAnnotation annotation : axiom.getAnnotations()) {
+        objects.add(annotation.getProperty());
+        if (annotation.getValue().isIRI()) {
+          objects.add(annotation.getValue());
+        }
+      }
+    }
+
+    // The following are special cases
+    // where there might be something anonymous that we want to include
+    // in addition to the (named) entities in the signature.
+    if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+      objects.add(a.getSubject());
+    }
+
+    return objects;
+  }
+
+  /**
+   * Given an OWLAxiom, return all the IRIs in the signature. This is an add-on to the getSignature
+   * method to include OWLAnnotationAssertionAxioms.
+   *
+   * @param axiom OWLAxiom to get signature of
+   * @return IRIs used in OWLAxiom
+   */
+  public static Set<IRI> getIRIsInSignature(OWLAxiom axiom) {
+    Set<IRI> sigIRIs = new HashSet<>();
+    if (axiom instanceof OWLAnnotationAssertionAxiom) {
+      // Special handler for annotations to look at IRIs
+      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
+
+      // Add the property IRI to signature
+      sigIRIs.add(a.getProperty().getIRI());
+      if (a.getSubject().isIRI()) {
+        // If the subject is an IRI, add that too (it probably is)
+        sigIRIs.add((IRI) a.getSubject());
+      }
+
+      if (a.getValue().isIRI()) {
+        // Only add the value if its an IRI
+        sigIRIs.add((IRI) a.getValue());
+      }
+    } else {
+      // Just get the signature of all other types of axioms
+      Set<OWLEntity> sig = axiom.getSignature();
+      for (OWLEntity e : sig) {
+        if (!e.isAnonymous()) {
+          // Get the IRIs
+          sigIRIs.add(e.getIRI());
+        }
+      }
+    }
+    return sigIRIs;
   }
 
   /**
@@ -338,21 +436,10 @@ public class OntologyHelper {
   public static Set<OWLObject> getObjects(OWLAxiom axiom) {
     Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
 
-    // Add annotations if the axiom is annotated
-    if (axiom.isAnnotated()) {
-      for (OWLAnnotation annotation : axiom.getAnnotations()) {
-        objects.add(annotation.getProperty());
-        objects.add(annotation.getValue());
-      }
-    }
-
     // The following are special cases
     // where there might be something anonymous that we want to include
     // in addition to the (named) entities in the signature.
-    if (axiom instanceof OWLAnnotationAssertionAxiom) {
-      OWLAnnotationAssertionAxiom a = (OWLAnnotationAssertionAxiom) axiom;
-      objects.add(a.getSubject());
-    } else if (axiom instanceof OWLClassAssertionAxiom) {
+    if (axiom instanceof OWLClassAssertionAxiom) {
       OWLClassAssertionAxiom a = (OWLClassAssertionAxiom) axiom;
       objects.add(a.getClassExpression());
     } else if (axiom instanceof OWLDisjointUnionAxiom) {

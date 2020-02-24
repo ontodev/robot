@@ -7,7 +7,7 @@ Prefix: xsd: <http://www.w3.org/2001/XMLSchema#>
 
 
 
-Ontology: <http://purl.obolibrary.org/obo/go.owl>
+Ontology: <http://robot.obolibrary.org/nucleus.owl>
 
 
 AnnotationProperty: rdfs:label

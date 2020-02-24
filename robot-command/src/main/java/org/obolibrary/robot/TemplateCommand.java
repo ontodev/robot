@@ -1,10 +1,6 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
@@ -51,6 +47,7 @@ public class TemplateCommand implements Command {
         "c", "collapse-import-closure", true, "if true, collapse the import closure when merging");
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
+    o.addOption("f", "force", true, "if true, do not exit on error");
 
     options = o;
   }
@@ -127,6 +124,14 @@ public class TemplateCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line, false);
     OWLOntology inputOntology = state.getOntology();
 
+    // Override default reasoner options with command-line options
+    Map<String, String> templateOptions = TemplateOperation.getDefaultOptions();
+    for (String option : templateOptions.keySet()) {
+      if (line.hasOption(option)) {
+        templateOptions.put(option, line.getOptionValue(option));
+      }
+    }
+
     // Read the whole CSV into a nested list of strings.
     List<String> templatePaths = CommandLineHelper.getOptionalValues(line, "template");
     if (templatePaths.size() == 0) {
@@ -137,7 +142,9 @@ public class TemplateCommand implements Command {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
 
-    OWLOntology outputOntology = TemplateOperation.template(tables, inputOntology, null, ioHelper);
+    // Process the templates
+    OWLOntology outputOntology =
+        TemplateOperation.template(inputOntology, ioHelper, tables, templateOptions);
 
     boolean collapseImports =
         CommandLineHelper.getBooleanValue(line, "collapse-import-closure", false);
@@ -149,7 +156,6 @@ public class TemplateCommand implements Command {
     // from the inputOntology, with just their labels.
     // Do not MIREOT the terms defined in the template,
     // just their dependencies!
-    List<OWLOntology> ontologies;
     boolean hasAncestors = CommandLineHelper.getBooleanValue(line, "ancestors", false, true);
     if (hasAncestors && inputOntology != null) {
       Set<IRI> iris = OntologyHelper.getIRIs(outputOntology);
@@ -157,29 +163,27 @@ public class TemplateCommand implements Command {
       OWLOntology ancestors =
           MireotOperation.getAncestors(
               inputOntology, null, iris, MireotOperation.getDefaultAnnotationProperties());
-      ontologies = new ArrayList<>();
-      ontologies.add(ancestors);
-      MergeOperation.mergeInto(ontologies, outputOntology, includeAnnotations, collapseImports);
+      MergeOperation.mergeInto(ancestors, outputOntology, includeAnnotations, collapseImports);
     }
 
     // Either merge-then-save, save-then-merge, or don't merge
-    ontologies = new ArrayList<>();
-    ontologies.add(outputOntology);
     boolean mergeBefore = CommandLineHelper.getBooleanValue(line, "merge-before", false, true);
     boolean mergeAfter = CommandLineHelper.getBooleanValue(line, "merge-after", false, true);
     if (mergeBefore && mergeAfter) {
       throw new IllegalArgumentException(mergeError);
     }
     if (mergeBefore) {
-      MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
+      MergeOperation.mergeInto(outputOntology, inputOntology, includeAnnotations, collapseImports);
       CommandLineHelper.maybeSaveOutput(line, inputOntology);
+      state.setOntology(inputOntology);
     } else if (mergeAfter) {
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
-      MergeOperation.mergeInto(ontologies, inputOntology, includeAnnotations, collapseImports);
+      MergeOperation.mergeInto(outputOntology, inputOntology, includeAnnotations, collapseImports);
+      state.setOntology(inputOntology);
     } else {
       // Set ontology and version IRI
-      String ontologyIRI = CommandLineHelper.getOptionalValue(line, "ontology-iri");
       String versionIRI = CommandLineHelper.getOptionalValue(line, "version-iri");
+      String ontologyIRI = CommandLineHelper.getOptionalValue(line, "ontology-iri");
       if (ontologyIRI != null || versionIRI != null) {
         OntologyHelper.setOntologyIRI(outputOntology, ontologyIRI, versionIRI);
       }
