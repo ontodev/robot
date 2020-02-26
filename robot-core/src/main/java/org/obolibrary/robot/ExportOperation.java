@@ -81,26 +81,37 @@ public class ExportOperation {
     // Create table object
     Table table = new Table();
 
+    // Get a label map of all labels -> IRIs
+    Map<String, IRI> labelMap = OntologyHelper.getLabelIRIs(ontology);
+
     // Create the Column objects and add to table
     List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
     for (String c : columnNames) {
+      // Try to resolve a CURIE
+      IRI iri = ioHelper.createIRI(c);
+
+      // Or a label
+      if (iri == null) {
+        iri = labelMap.getOrDefault(c, null);
+      }
+
       Column column = null;
       for (String s : sorts) {
         if (c.equalsIgnoreCase(s)) {
           // Regular sort column
           int sortOrder = sorts.indexOf(c);
-          column = new Column(c, sortOrder, false);
+          column = new Column(c, iri, sortOrder, false);
           break;
         } else if (s.equalsIgnoreCase("*" + c)) {
           // Reverse sort column
           int sortOrder = sorts.indexOf("*" + c);
-          column = new Column(c, sortOrder, true);
+          column = new Column(c, iri, sortOrder, true);
           break;
         }
       }
       if (column == null) {
         // Not a sort column
-        column = new Column(c);
+        column = new Column(c, iri);
       }
       table.addColumn(column);
     }
@@ -127,21 +138,10 @@ public class ExportOperation {
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
             Collections.emptyMap());
 
-    // Get a label map of all labels -> IRIs
-    Map<String, IRI> labelMap = OntologyHelper.getLabelIRIs(ontology);
-
     // Get the cell values based on columns
     for (OWLEntity entity : entities) {
       table.addRow(
-          getRow(
-              ontology,
-              ioHelper,
-              labelMap,
-              checker,
-              labelProvider,
-              table.getColumns(),
-              entity,
-              excludeAnonymous));
+          getRow(ontology, checker, labelProvider, table.getColumns(), entity, excludeAnonymous));
     }
 
     // Sort the rows by sort column or columns
@@ -197,8 +197,6 @@ public class ExportOperation {
    * Create a Row.
    *
    * @param ontology OWLOntology to get row details from
-   * @param ioHelper IOHelper to resolve CURIEs
-   * @param labelMap labels -> IRIs map
    * @param checker QuotedEntityChecker to resolve labels
    * @param provider QuotedAnnotationValueShortFormProvider to render labels
    * @param columns List of Columns in order
@@ -209,8 +207,6 @@ public class ExportOperation {
    */
   private static Row getRow(
       OWLOntology ontology,
-      IOHelper ioHelper,
-      Map<String, IRI> labelMap,
       QuotedEntityChecker checker,
       QuotedAnnotationValueShortFormProvider provider,
       List<Column> columns,
@@ -220,6 +216,7 @@ public class ExportOperation {
     Row row = new Row();
     for (Column col : columns) {
       String colName = col.getName();
+
       switch (colName) {
         case "IRI":
           row.add(new Cell(col, Collections.singletonList(entity.getIRI().toString())));
@@ -237,18 +234,11 @@ public class ExportOperation {
           break;
       }
 
-      // Try to resolve a CURIE
-      IRI iri = ioHelper.createIRI(colName);
-
-      // Or a label
-      if (iri == null) {
-        iri = labelMap.getOrDefault(col, null);
-      }
-
+      IRI colIRI = col.getIRI();
       // Set to IRI string or empty string
       String iriStr;
-      if (iri != null) {
-        iriStr = iri.toString();
+      if (colIRI != null) {
+        iriStr = colIRI.toString();
       } else {
         iriStr = "";
       }
@@ -386,7 +376,7 @@ public class ExportOperation {
               new Cell(col, getPropertyValues(ontology, provider, entity, op, excludeAnonymous)));
           continue;
         }
-        throw new Exception(String.format(invalidColumnError, col));
+        throw new Exception(String.format(invalidColumnError, colName));
       }
     }
 

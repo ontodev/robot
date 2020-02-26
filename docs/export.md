@@ -3,7 +3,7 @@
 ROBOT can export details about ontology entities as a table (TSV or CSV). At minimum, the `export` command expects an input ontology (`--input`), a set of column headers (`--header`), and a file to write to (`--export`):
 
 ```
-robot export --input nucleus.owl \
+robot export --input nucleus_part_of.owl \
   --header "CURIE,LABEL" \
   --export nucleus.csv
 ```
@@ -29,7 +29,7 @@ Various `--header` types are supported:
 
 The first header in the `--header` list is used to sort the rows of the export. You can change the column that is sorted on by including `--sort <header>`. This can either be one header, or a pipe-separated list of headers that will be sorted in-order:
 
-    robot export --input nucleus.owl \
+    robot export --input nucleus_part_of.owl \
       --header "CURIE|LABEL|SubClass Of" \
       --sort "LABEL|SubClass Of" \
       --export results/nucleus-sorted.csv
@@ -38,7 +38,7 @@ In the example above, the rows are first sorted on the `LABEL` field, and then s
 
 If the `--sort` header starts with `*`, the column will be sorted in reverse order.
 
-    robot export --input nucleus.owl \
+    robot export --input nucleus_part_of.owl \
       --header "CURIE|LABEL|SubClass Of" \
       --sort "*LABEL" \
       --export results/nucleus-reversed.csv
@@ -47,7 +47,7 @@ All special keyword columns will include both named OWL objects (named classes, 
 
 By default, multiple values in a cell are separated with a pipe character (`|`). You can update this to anything you'd like with the `--split` option. For example, you could separate with commas:
 ```
-robot export --input nucleus.owl \
+robot export --input nucleus_part_of.owl \
   --header "LABEL|SubClass Of" --split ", "
 ```
 
@@ -69,7 +69,7 @@ For example, to return the details of *individuals only*:
 
 To return details of *classes and properties*:
 
-    robot export --input nucleus.owl \
+    robot export --input nucleus_part_of.owl \
       --header "CURIE|LABEL|SubClass Of|SubProperty Of" \
       --include "classes properties" \
       --export results/classes-properties.csv
@@ -78,7 +78,7 @@ The `--include` option does not need to be specified if you are getting details 
 
 Finally, the export will include anonymous expressions (subclasses, equivalent classes, property expressions). If you only wish to include *named* entities, add `--exclude-anonymous true`:
 
-    robot export --input nucleus.owl \
+    robot export --input nucleus_part_of.owl \
       --header "LABEL|SubClass Of|part of" \
       --exclude-anonymous true \
       --export results/nucleus.csv

@@ -1,7 +1,7 @@
-@prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix GO:    <http://purl.obolibrary.org/obo/GO_> .
-@prefix BFO:   <http://purl.obolibrary.org/obo/BFO_> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix BFO:   <http://purl.obolibrary.org/obo/BFO_> .
 
 GO:0031981  BFO:0000050  GO:0005634 .
