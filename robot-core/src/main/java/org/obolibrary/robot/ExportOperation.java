@@ -1,11 +1,12 @@
 package org.obolibrary.robot;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.jena.ext.com.google.common.collect.Lists;
+import org.obolibrary.robot.export.Cell;
+import org.obolibrary.robot.export.Column;
+import org.obolibrary.robot.export.Row;
+import org.obolibrary.robot.export.Table;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
@@ -29,6 +30,9 @@ public class ExportOperation {
   private static final String includeNothingError =
       NS + "INCLUDE NOTHING ERROR you must include some types of ontology terms";
 
+  private static final String unknownFormatError =
+      NS + "UNKNOWN FORMAT ERROR '%s' is an unknown export format";
+
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
   /**
@@ -40,8 +44,9 @@ public class ExportOperation {
     Map<String, String> options = new HashMap<>();
     options.put("include", "classes individuals");
     options.put("exclude-anonymous", "false");
+    options.put("format", "tsv");
     options.put("sort", null);
-    options.put("delimiter", null);
+    options.put("split", "|");
     return options;
   }
 
@@ -52,7 +57,7 @@ public class ExportOperation {
    *
    * @param ontology OWLOntology to export to table
    * @param ioHelper IOHelper to handle labels
-   * @param columns List of columns, in order
+   * @param columnNames List of column names, in order
    * @param exportFile File to export to
    * @param options Map of Export options
    * @throws Exception if file does not exist to write to or a column is not a valid property
@@ -60,32 +65,49 @@ public class ExportOperation {
   public static void export(
       OWLOntology ontology,
       IOHelper ioHelper,
-      List<String> columns,
+      List<String> columnNames,
       File exportFile,
       Map<String, String> options)
       throws Exception {
     boolean excludeAnonymous = OptionsHelper.optionIsTrue(options, "exclude-anonymous");
-    String sortColumn = OptionsHelper.getOption(options, "sort");
+
+    // Get column or columns to sort on
+    // If not provided, use the first column
+    String sortColumn = OptionsHelper.getOption(options, "sort", columnNames.get(0));
     if (sortColumn == null) {
-      sortColumn = columns.get(0);
+      sortColumn = columnNames.get(0);
     }
 
-    String delimiter = OptionsHelper.getOption(options, "delimiter");
-    if (delimiter == null) {
-      // Use the path to determine delimiter
-      if (exportFile.getPath().endsWith(".csv")) {
-        delimiter = ",";
-      } else {
-        delimiter = "\t";
+    // Create table object
+    Table table = new Table();
+
+    // Create the Column objects and add to table
+    List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
+    for (String c : columnNames) {
+      Column column = null;
+      for (String s : sorts) {
+        if (c.equalsIgnoreCase(s)) {
+          // Regular sort column
+          int sortOrder = sorts.indexOf(c);
+          column = new Column(c, sortOrder, false);
+          break;
+        } else if (s.equalsIgnoreCase("*" + c)) {
+          // Reverse sort column
+          int sortOrder = sorts.indexOf("*" + c);
+          column = new Column(c, sortOrder, true);
+          break;
+        }
       }
+      if (column == null) {
+        // Not a sort column
+        column = new Column(c);
+      }
+      table.addColumn(column);
     }
+    // Order the sort columns
+    table.setSortColumns();
 
-    String[] sorts = {sortColumn.trim()};
-    if (sortColumn.contains(delimiter)) {
-      sorts = sortColumn.split(delimiter);
-    }
-
-    // Create a QuotedEntityChecker to handle column names
+    // Create a QuotedEntityChecker to handle names
     QuotedEntityChecker checker = new QuotedEntityChecker();
     checker.setIOHelper(ioHelper);
     checker.addProvider(new SimpleShortFormProvider());
@@ -105,76 +127,39 @@ public class ExportOperation {
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
             Collections.emptyMap());
 
+    // Get a label map of all labels -> IRIs
+    Map<String, IRI> labelMap = OntologyHelper.getLabelIRIs(ontology);
+
     // Get the cell values based on columns
-    List<Map<String, String>> cellMaps = new ArrayList<>();
-    for (OWLEntity e : entities) {
-      cellMaps.add(
-          getCellValues(ontology, ioHelper, checker, e, columns, labelProvider, excludeAnonymous));
+    for (OWLEntity entity : entities) {
+      table.addRow(
+          getRow(
+              ontology,
+              ioHelper,
+              labelMap,
+              checker,
+              labelProvider,
+              table.getColumns(),
+              entity,
+              excludeAnonymous));
     }
 
-    // Sort the lines by sort column(s) (default is first column)
-    // We need to reverse the list first so that its sorted in backwards order
-    List<String> sortList = Lists.reverse(Arrays.asList(sorts));
-    for (String s : sortList) {
-      boolean reverse = false;
-      if (s.startsWith("*")) {
-        reverse = true;
-        s = s.substring(1);
-      }
-      final String comparator = s;
-      Comparator<Map<String, String>> mapComparator =
-          (m1, m2) -> {
-            String o1 = m1.getOrDefault(comparator, "");
-            String o2 = m2.getOrDefault(comparator, "");
-            // Make sure empty strings end up last
-            if (o1.isEmpty()) return Integer.MAX_VALUE;
-            else if (o2.isEmpty()) return Integer.MIN_VALUE;
-            else return o1.compareTo(o2);
-          };
-      if (reverse) {
-        cellMaps.sort(Collections.reverseOrder(mapComparator));
-      } else {
-        cellMaps.sort(mapComparator);
-      }
-    }
+    // Sort the rows by sort column or columns
+    table.sortRows();
 
-    // Format the lines for the file
-    List<String> lines = new ArrayList<>();
-    lines.add(buildHeaders(columns, delimiter));
-    for (Map<String, String> cellMap : cellMaps) {
-      List<String> line = new ArrayList<>();
-      for (String col : columns) {
-        String value = cellMap.get(col);
-        // Value may be "null" as string
-        if (value == null || value.equalsIgnoreCase("null")) {
-          value = "";
-        }
-        // Quote the value if it contains delim character
-        if (value.contains(delimiter)) {
-          value = String.format("\"%s\"", value);
-        }
-        line.add(value);
-      }
-      String lineStr = String.join(delimiter, line);
-      lines.add(lineStr);
+    String split = OptionsHelper.getOption(options, "split", "|");
+    List<String[]> tableAsList = table.toList(split);
+    String format = OptionsHelper.getOption(options, "format", "tsv");
+    switch (format) {
+      case "tsv":
+        IOHelper.writeTable(tableAsList, exportFile, '\t');
+        break;
+      case "csv":
+        IOHelper.writeTable(tableAsList, exportFile, ',');
+        break;
+      default:
+        throw new Exception(String.format(unknownFormatError, format));
     }
-
-    // Write lines to file
-    try (PrintWriter pw = new PrintWriter(exportFile)) {
-      lines.forEach(pw::println);
-    }
-  }
-
-  /**
-   * Given a list of columns and a delimiter, return the table headers as a string.
-   *
-   * @param columns List of columns
-   * @param delimiter character to separate cells
-   * @return headers as one string
-   */
-  private static String buildHeaders(List<String> columns, String delimiter) {
-    List<String> headers = new ArrayList<>(columns);
-    return String.join(delimiter, headers);
   }
 
   /**
@@ -187,7 +172,7 @@ public class ExportOperation {
    * @param excludeAnonymous if true, exclude anonymous class expressions
    * @return String of class expressions or null
    */
-  private static String classExpressionsToString(
+  private static List<String> classExpressionsToString(
       Collection<OWLClassExpression> classes,
       QuotedAnnotationValueShortFormProvider provider,
       boolean excludeAnonymous) {
@@ -203,57 +188,57 @@ public class ExportOperation {
       }
     }
     if (strings.isEmpty()) {
-      return "";
+      return Collections.emptyList();
     }
-    List<String> sorted =
-        strings.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
-    return String.join("|", sorted);
+    return strings.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
   }
 
   /**
-   * Given an ontology, a quoted entity checker, an entity, a list of columns, a label function, and
-   * a boolean indicating to exclude anonymous classes, return a map of cell values for this entity.
+   * Create a Row.
    *
-   * @param ontology OWLOntology to get details from
+   * @param ontology OWLOntology to get row details from
    * @param ioHelper IOHelper to resolve CURIEs
-   * @param checker QuotedEntityChecker to resolve entities
-   * @param e OWLEntity to get details of
-   * @param columns List of columns indicating the details to get
-   * @param provider QuotedAnnotationValueShortFormProvider for Manchester expressions
-   * @param excludeAnonymous if true, exclude anonymous class expressions
-   * @return Map of column names to cell values
-   * @throws Exception if a property (from columns) cannot be resolved
+   * @param labelMap labels -> IRIs map
+   * @param checker QuotedEntityChecker to resolve labels
+   * @param provider QuotedAnnotationValueShortFormProvider to render labels
+   * @param columns List of Columns in order
+   * @param entity OWL Entity to get details of
+   * @param excludeAnonymous if true, exclude anonymous expressions
+   * @return Row
+   * @throws Exception on invalid column
    */
-  private static Map<String, String> getCellValues(
+  private static Row getRow(
       OWLOntology ontology,
       IOHelper ioHelper,
+      Map<String, IRI> labelMap,
       QuotedEntityChecker checker,
-      OWLEntity e,
-      List<String> columns,
       QuotedAnnotationValueShortFormProvider provider,
+      List<Column> columns,
+      OWLEntity entity,
       boolean excludeAnonymous)
       throws Exception {
-    Map<String, String> cellMap = new HashMap<>();
-    Map<String, IRI> labelMap = OntologyHelper.getLabelIRIs(ontology);
-    for (String col : columns) {
-      // Each column is a label, CURIE, or IRI
-      // First check for the special keywords
-      switch (col) {
+    Row row = new Row();
+    for (Column col : columns) {
+      String colName = col.getName();
+      switch (colName) {
         case "IRI":
-          cellMap.put("IRI", e.getIRI().toString());
+          row.add(new Cell(col, Collections.singletonList(entity.getIRI().toString())));
           continue;
         case "CURIE":
-          cellMap.put("CURIE", e.getIRI().getShortForm().replace("_", ":"));
+          row.add(
+              new Cell(
+                  col,
+                  Collections.singletonList(entity.getIRI().getShortForm().replace("_", ":"))));
           continue;
         case "LABEL":
-          cellMap.put("LABEL", provider.getShortForm(e));
+          row.add(new Cell(col, Collections.singletonList(provider.getShortForm(entity))));
           continue;
         default:
           break;
       }
 
       // Try to resolve a CURIE
-      IRI iri = ioHelper.createIRI(col);
+      IRI iri = ioHelper.createIRI(colName);
 
       // Or a label
       if (iri == null) {
@@ -269,137 +254,143 @@ public class ExportOperation {
       }
 
       // Check for default column names or IRI matches
-      if (col.equalsIgnoreCase("subclass of")
+      if (colName.equalsIgnoreCase("subclass of")
           || iriStr.equals("http://www.w3.org/2000/01/rdf-schema#subClassOf")) {
-        if (e.isOWLClass()) {
-          cellMap.put(
-              col,
-              classExpressionsToString(
-                  EntitySearcher.getSuperClasses(e.asOWLClass(), ontology),
-                  provider,
-                  excludeAnonymous));
-        }
-      } else if (col.equalsIgnoreCase("subproperty of")
-          || iriStr.equals("http://www.w3.org/2000/01/rdf-schema#subPropertyOf")) {
-        if (e.isOWLAnnotationProperty()) {
+        if (entity.isOWLClass()) {
           List<String> supers =
-              EntitySearcher.getSuperProperties(e.asOWLAnnotationProperty(), ontology)
+              classExpressionsToString(
+                  EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology),
+                  provider,
+                  excludeAnonymous);
+          row.add(new Cell(col, supers));
+        }
+
+      } else if (colName.equalsIgnoreCase("subproperty of")
+          || iriStr.equals("http://www.w3.org/2000/01/rdf-schema#subPropertyOf")) {
+        if (entity.isOWLAnnotationProperty()) {
+          List<String> supers =
+              EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), ontology)
                   .stream()
                   .map(provider::getShortForm)
                   .collect(Collectors.toList());
-          cellMap.put(col, String.join("|", supers));
-        } else if (e.isOWLDataProperty()) {
-          cellMap.put(
-              col,
+          row.add(new Cell(col, supers));
+
+        } else if (entity.isOWLDataProperty()) {
+          List<String> supers =
               propertyExpressionsToString(
-                  EntitySearcher.getSuperProperties(e.asOWLDataProperty(), ontology),
+                  EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology),
                   provider,
-                  excludeAnonymous));
-        } else if (e.isOWLObjectProperty()) {
-          cellMap.put(
-              col,
+                  excludeAnonymous);
+          row.add(new Cell(col, supers));
+
+        } else if (entity.isOWLObjectProperty()) {
+          List<String> supers =
               propertyExpressionsToString(
-                  EntitySearcher.getSuperProperties(e.asOWLObjectProperty(), ontology),
+                  EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology),
                   provider,
-                  excludeAnonymous));
+                  excludeAnonymous);
+          row.add(new Cell(col, supers));
         }
-      } else if (col.equalsIgnoreCase("equivalent class")
+      } else if (colName.equalsIgnoreCase("equivalent class")
           || iriStr.equals("http://www.w3.org/2002/07/owl#equivalentClass")) {
-        if (e.isOWLClass()) {
-          cellMap.put(
-              col,
+        if (entity.isOWLClass()) {
+          List<String> supers =
               classExpressionsToString(
-                  EntitySearcher.getEquivalentClasses(e.asOWLClass(), ontology),
+                  EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology),
                   provider,
-                  excludeAnonymous));
+                  excludeAnonymous);
+          row.add(new Cell(col, supers));
         }
-      } else if (col.equalsIgnoreCase("equivalent property")
+      } else if (colName.equalsIgnoreCase("equivalent property")
           || iriStr.equals("http://www.w3.org/2002/07/owl#equivalentProperty")) {
-        if (e.isOWLAnnotationProperty()) {
+        if (entity.isOWLAnnotationProperty()) {
           List<String> eqs =
-              EntitySearcher.getEquivalentProperties(e.asOWLAnnotationProperty(), ontology)
+              EntitySearcher.getEquivalentProperties(entity.asOWLAnnotationProperty(), ontology)
                   .stream()
                   .map(provider::getShortForm)
                   .collect(Collectors.toList());
-          cellMap.put(col, String.join("|", eqs));
-        } else if (e.isOWLDataProperty()) {
-          cellMap.put(
-              col,
+          row.add(new Cell(col, eqs));
+        } else if (entity.isOWLDataProperty()) {
+          List<String> eqs =
               propertyExpressionsToString(
-                  EntitySearcher.getEquivalentProperties(e.asOWLDataProperty(), ontology),
+                  EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology),
                   provider,
-                  excludeAnonymous));
-        } else if (e.isOWLObjectProperty()) {
-          cellMap.put(
-              col,
+                  excludeAnonymous);
+          row.add(new Cell(col, eqs));
+        } else if (entity.isOWLObjectProperty()) {
+          List<String> eqs =
               propertyExpressionsToString(
-                  EntitySearcher.getEquivalentProperties(e.asOWLObjectProperty(), ontology),
+                  EntitySearcher.getEquivalentProperties(entity.asOWLObjectProperty(), ontology),
                   provider,
-                  excludeAnonymous));
+                  excludeAnonymous);
+          row.add(new Cell(col, eqs));
         }
-      } else if (col.equalsIgnoreCase("disjoint with")
+      } else if (colName.equalsIgnoreCase("disjoint with")
           || iriStr.equals("http://www.w3.org/2002/07/owl#disjointWith")) {
-        if (e.isOWLClass()) {
-          cellMap.put(
-              col,
+        if (entity.isOWLClass()) {
+          List<String> disjoints =
               classExpressionsToString(
-                  EntitySearcher.getDisjointClasses(e.asOWLClass(), ontology),
+                  EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology),
                   provider,
-                  excludeAnonymous));
-        } else if (e.isOWLAnnotationProperty()) {
-          List<String> eqs =
-              EntitySearcher.getDisjointProperties(e.asOWLAnnotationProperty(), ontology)
+                  excludeAnonymous);
+          row.add(new Cell(col, disjoints));
+        } else if (entity.isOWLAnnotationProperty()) {
+          List<String> disjoints =
+              EntitySearcher.getDisjointProperties(entity.asOWLAnnotationProperty(), ontology)
                   .stream()
                   .map(provider::getShortForm)
                   .collect(Collectors.toList());
-          cellMap.put(col, String.join("|", eqs));
-        } else if (e.isOWLDataProperty()) {
-          cellMap.put(
-              col,
+          row.add(new Cell(col, disjoints));
+        } else if (entity.isOWLDataProperty()) {
+          List<String> disjoints =
               propertyExpressionsToString(
-                  EntitySearcher.getDisjointProperties(e.asOWLDataProperty(), ontology),
+                  EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology),
                   provider,
-                  excludeAnonymous));
-        } else if (e.isOWLObjectProperty()) {
-          cellMap.put(
-              col,
+                  excludeAnonymous);
+          row.add(new Cell(col, disjoints));
+        } else if (entity.isOWLObjectProperty()) {
+          List<String> disjoints =
               propertyExpressionsToString(
-                  EntitySearcher.getDisjointProperties(e.asOWLObjectProperty(), ontology),
+                  EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology),
                   provider,
-                  excludeAnonymous));
+                  excludeAnonymous);
+          row.add(new Cell(col, disjoints));
         }
-      } else if (col.equalsIgnoreCase("type")
+      } else if (colName.equalsIgnoreCase("type")
           || iriStr.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
-        if (e.isOWLNamedIndividual()) {
-          cellMap.put(
-              col,
+        if (entity.isOWLNamedIndividual()) {
+          List<String> types =
               classExpressionsToString(
-                  EntitySearcher.getTypes(e.asOWLNamedIndividual(), ontology),
+                  EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology),
                   provider,
-                  excludeAnonymous));
+                  excludeAnonymous);
+          row.add(new Cell(col, types));
         }
       } else {
         // Not a default column
         // Attempt to get property based on label/CURIE/IRI
-        OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(col, false);
+        OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(colName, false);
         if (ap != null) {
-          cellMap.put(col, getPropertyValue(ontology, e, ap));
+          row.add(new Cell(col, getPropertyValues(ontology, entity, ap)));
           continue;
         }
-        OWLDataProperty dp = checker.getOWLDataProperty(col);
+        OWLDataProperty dp = checker.getOWLDataProperty(colName);
         if (dp != null) {
-          cellMap.put(col, getPropertyValue(ontology, provider, e, dp, excludeAnonymous));
+          row.add(
+              new Cell(col, getPropertyValues(ontology, provider, entity, dp, excludeAnonymous)));
           continue;
         }
-        OWLObjectProperty op = checker.getOWLObjectProperty(col);
+        OWLObjectProperty op = checker.getOWLObjectProperty(colName);
         if (op != null) {
-          cellMap.put(col, getPropertyValue(ontology, provider, e, op, excludeAnonymous));
+          row.add(
+              new Cell(col, getPropertyValues(ontology, provider, entity, op, excludeAnonymous)));
           continue;
         }
         throw new Exception(String.format(invalidColumnError, col));
       }
     }
-    return cellMap;
+
+    return row;
   }
 
   /**
@@ -483,7 +474,7 @@ public class ExportOperation {
    * @param ap OWLAnnotationProperty to get the value(s) of
    * @return String of values or null
    */
-  private static String getPropertyValue(
+  private static List<String> getPropertyValues(
       OWLOntology ontology, OWLEntity entity, OWLAnnotationProperty ap) {
     List<String> values = new ArrayList<>();
     for (OWLAnnotationAssertionAxiom a :
@@ -500,10 +491,7 @@ public class ExportOperation {
         }
       }
     }
-    if (values.isEmpty()) {
-      return "";
-    }
-    return String.join("|", values);
+    return values;
   }
 
   /**
@@ -518,7 +506,7 @@ public class ExportOperation {
    * @param excludeAnonymous if true, do not include anonymous class expressions
    * @return String of values or null
    */
-  private static String getPropertyValue(
+  private static List<String> getPropertyValues(
       OWLOntology ontology,
       QuotedAnnotationValueShortFormProvider provider,
       OWLEntity entity,
@@ -527,16 +515,14 @@ public class ExportOperation {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
       Collection<OWLLiteral> propVals = EntitySearcher.getDataPropertyValues(i, dp, ontology);
-      List<String> pvStrings =
-          propVals
-              .stream()
-              .map(OWLLiteral::toString)
-              .sorted(String::compareToIgnoreCase)
-              .collect(Collectors.toList());
-      return String.join("|", pvStrings);
+      return propVals
+          .stream()
+          .map(OWLLiteral::toString)
+          .sorted(String::compareToIgnoreCase)
+          .collect(Collectors.toList());
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
-      Set<String> vals = new HashSet<>();
+      List<String> vals = new ArrayList<>();
       for (OWLClassExpression expr :
           EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
         if (!expr.isAnonymous()) {
@@ -554,13 +540,9 @@ public class ExportOperation {
         // break down into conjuncts
         vals.addAll(getRestrictionFillers(expr.asConjunctSet(), dp, provider, excludeAnonymous));
       }
-      if (vals.isEmpty()) {
-        return "";
-      }
-      // Return values separated by pipes
-      return String.join("|", vals);
+      return vals;
     } else {
-      return "";
+      return Collections.emptyList();
     }
   }
 
@@ -576,7 +558,7 @@ public class ExportOperation {
    * @param excludeAnonymous if true, do not include anonymous class expressions
    * @return String of values or null
    */
-  private static String getPropertyValue(
+  private static List<String> getPropertyValues(
       OWLOntology ontology,
       QuotedAnnotationValueShortFormProvider provider,
       OWLEntity entity,
@@ -585,17 +567,15 @@ public class ExportOperation {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
       Collection<OWLIndividual> propVals = EntitySearcher.getObjectPropertyValues(i, op, ontology);
-      List<String> pvStrings =
-          propVals
-              .stream()
-              .filter(OWLIndividual::isNamed)
-              .map(pv -> provider.getShortForm(pv.asOWLNamedIndividual()))
-              .sorted(String::compareToIgnoreCase)
-              .collect(Collectors.toList());
-      return String.join("|", pvStrings);
+      return propVals
+          .stream()
+          .filter(OWLIndividual::isNamed)
+          .map(pv -> provider.getShortForm(pv.asOWLNamedIndividual()))
+          .sorted(String::compareToIgnoreCase)
+          .collect(Collectors.toList());
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
-      Set<String> exprs = new HashSet<>();
+      List<String> exprs = new ArrayList<>();
       for (OWLClassExpression expr :
           EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
         if (!expr.isAnonymous()) {
@@ -613,12 +593,9 @@ public class ExportOperation {
         // break down into conjuncts
         exprs.addAll(getRestrictionFillers(expr.asConjunctSet(), op, provider, excludeAnonymous));
       }
-      if (exprs.isEmpty()) {
-        return "";
-      }
-      return String.join("|", exprs);
+      return exprs;
     } else {
-      return "";
+      return Collections.emptyList();
     }
   }
 
@@ -657,7 +634,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString("only", f, null, provider));
+              fillers.add(renderRestrictionString(f, null, provider));
             }
           }
           break;
@@ -671,7 +648,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString("some", f, null, provider));
+              fillers.add(renderRestrictionString(f, null, provider));
             }
           }
           break;
@@ -686,7 +663,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString("exactly", f, n, provider));
+              fillers.add(renderRestrictionString(f, n, provider));
             }
           }
           break;
@@ -701,7 +678,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString("min", f, n, provider));
+              fillers.add(renderRestrictionString(f, n, provider));
             }
           }
           break;
@@ -716,7 +693,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString("max", f, n, provider));
+              fillers.add(renderRestrictionString(f, n, provider));
             }
           }
           break;
@@ -761,7 +738,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString("only", f, null, provider));
+              fillers.add(renderRestrictionString(f, null, provider));
             }
           }
           break;
@@ -776,7 +753,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString("some", f, null, provider));
+              fillers.add(renderRestrictionString(f, null, provider));
             }
           }
           break;
@@ -792,7 +769,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString("exactly", f, n, provider));
+              fillers.add(renderRestrictionString(f, n, provider));
             }
           }
           break;
@@ -808,7 +785,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString("min", f, n, provider));
+              fillers.add(renderRestrictionString(f, n, provider));
             }
           }
           break;
@@ -824,7 +801,7 @@ public class ExportOperation {
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString("max", f, n, provider));
+              fillers.add(renderRestrictionString(f, n, provider));
             }
           }
           break;
@@ -862,7 +839,7 @@ public class ExportOperation {
    * @param excludeAnonymous if true, exclude anonymous expressions
    * @return String of property expressions or null
    */
-  private static String propertyExpressionsToString(
+  private static List<String> propertyExpressionsToString(
       Collection<?> props,
       QuotedAnnotationValueShortFormProvider provider,
       boolean excludeAnonymous) {
@@ -906,23 +883,34 @@ public class ExportOperation {
       }
     }
     // Sort alphabetically
-    List<String> sorted =
-        strings.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
-
-    // Return split by pipe character
-    return String.join("|", sorted);
+    return strings.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
   }
 
+  /**
+   * Render a restriction filler in Manchester syntax. Maybe include cardinality. If the object is a
+   * named OWLEntity, the label will be used. Otherwise, the expression will be rendered and
+   * surrounded by parentheses.
+   *
+   * @param f OWLObject filler of restriction
+   * @param n Integer cardinality restriction, or null
+   * @param provider QuotedAnnotationValueShortFormProvider to resolve labels
+   * @return Manchester rendering of filler
+   */
   private static String renderRestrictionString(
-      String restriction, OWLObject f, Integer n, QuotedAnnotationValueShortFormProvider provider) {
-    if (f.isAnonymous() && n != null) {
-      return String.format("%s %d (%s)", restriction, n, renderManchester(f, provider));
-    } else if (!f.isAnonymous() && n != null) {
-      return String.format("%s %d %s", restriction, n, renderManchester(f, provider));
-    } else if (f.isAnonymous() && n == null) {
-      return String.format("%s (%s)", restriction, renderManchester(f, provider));
+      OWLObject f, Integer n, QuotedAnnotationValueShortFormProvider provider) {
+    if (f instanceof OWLEntity && n != null) {
+      // Not anonymous, has cardinality
+      String label = provider.getShortForm((OWLEntity) f);
+      return String.format("%d %s", n, label);
+    } else if (f instanceof OWLEntity) {
+      // Not anonymous, no cardinality
+      return provider.getShortForm((OWLEntity) f);
+    } else if (n != null) {
+      // Expression, has cardinality
+      return String.format("%d (%s)", n, renderManchester(f, provider));
     } else {
-      return String.format("%s %s", restriction, renderManchester(f, provider));
+      // Expression, no cardinality
+      return String.format("(%s)", renderManchester(f, provider));
     }
   }
 

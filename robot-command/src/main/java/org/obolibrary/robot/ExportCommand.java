@@ -24,7 +24,8 @@ public class ExportCommand implements Command {
     o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous entities");
     o.addOption("s", "sort", true, "column to sort on (default: first column)");
     o.addOption("n", "include", true, "groups of terms to include");
-    o.addOption("d", "delimiter", true, "override default delimiter character");
+    o.addOption("f", "format", true, "output file format (TSV, CSV)");
+    o.addOption("S", "split", true, "character to split multiple values on (default: |)");
 
     options = o;
   }
@@ -121,19 +122,16 @@ public class ExportCommand implements Command {
     String exportPath =
         CommandLineHelper.getRequiredValue(line, "export", "an export file must be specified");
 
-    // Maybe get an override delimiter
-    String delimiter = CommandLineHelper.getOptionalValue(line, "delimiter");
-    if (delimiter == null) {
-      // Use the path to determine the delimiter
+    // Maybe get a format
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    if (format == null) {
+      // Use the path to determine the delimiter (default TSV)
       if (exportPath.endsWith(".csv")) {
-        delimiter = ",";
-      } else {
-        // Tab is default for anything else
-        delimiter = "\t";
+        exportOptions.put("format", "csv");
       }
     }
     // Get the split columns
-    List<String> columns = Arrays.asList(headerString.split(delimiter));
+    List<String> columns = Arrays.asList(headerString.split("\\|"));
 
     ExportOperation.export(ontology, ioHelper, columns, new File(exportPath), exportOptions);
     return state;
