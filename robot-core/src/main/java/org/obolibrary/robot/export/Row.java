@@ -86,7 +86,7 @@ public class Row {
    */
   public String toHTML(List<Column> columns, String split) {
     StringBuilder sb = new StringBuilder();
-    sb.append("\t<tr resource=\"").append(subject.toString()).append("\">");
+    sb.append("\t<tr resource=\"").append(subject.toString()).append("\">\n");
     for (Column c : columns) {
       String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);
@@ -98,6 +98,7 @@ public class Row {
       }
       sb.append("\t\t<td>").append(value).append("</td>\n");
     }
+    sb.append("\t</tr>\n");
     return sb.toString();
   }
 }
