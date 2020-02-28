@@ -1,5 +1,6 @@
 package org.obolibrary.robot.export;
 
+import java.util.Collections;
 import java.util.List;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
@@ -9,17 +10,59 @@ public class Cell {
   private Column column;
 
   // List of output values for this cell
-  private List<String> outputValues;
+  private List<String> displayValues;
+
+  // TODO - sort values string with split instead of list string
+
+  // List of sort values for this cell (may be different than the display value)
+  private List<String> sortValues;
 
   /**
-   * Init a new Cell for a Column.
+   * @param column
+   * @param displayValues
+   */
+  public Cell(Column column, List<String> displayValues) {
+    this.column = column;
+    this.displayValues = displayValues;
+    this.sortValues = displayValues;
+  }
+
+  /**
+   * Init a new Cell for a Column with mulitple values in a cell.
    *
    * @param column Column for the cell
-   * @param outputValues List of string output values
+   * @param displayValues List of string output values
+   * @param sortValues List of string sort values
    */
-  public Cell(Column column, List<String> outputValues) {
+  public Cell(Column column, List<String> displayValues, List<String> sortValues) {
     this.column = column;
-    this.outputValues = outputValues;
+    this.displayValues = displayValues;
+    this.sortValues = sortValues;
+  }
+
+  /**
+   * Init a Cell for a Column with single value in cell with no sort value.
+   *
+   * @param column
+   * @param displayValue
+   */
+  public Cell(Column column, String displayValue) {
+    this.column = column;
+    displayValues = Collections.singletonList(displayValue);
+    sortValues = displayValues;
+  }
+
+  /**
+   * Init a Cell for a Column with single value in cell.
+   *
+   * @param column
+   * @param displayValue
+   * @param sortValue
+   */
+  public Cell(Column column, String displayValue, String sortValue) {
+    this.column = column;
+    displayValues = Collections.singletonList(displayValue);
+    sortValues = Collections.singletonList(sortValue);
   }
 
   /**
@@ -36,7 +79,16 @@ public class Cell {
    *
    * @return String value
    */
-  public List<String> getValue() {
-    return outputValues;
+  public List<String> getDisplayValues() {
+    return displayValues;
+  }
+
+  /**
+   * Get the sort value of a cell.
+   *
+   * @return String value
+   */
+  public List<String> getSortValues() {
+    return sortValues;
   }
 }

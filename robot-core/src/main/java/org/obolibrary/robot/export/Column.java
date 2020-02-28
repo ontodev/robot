@@ -1,6 +1,6 @@
 package org.obolibrary.robot.export;
 
-import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.*;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Column {
@@ -10,6 +10,9 @@ public class Column {
 
   // Optional header IRI if a property is used in this column
   private IRI iri = null;
+  private OWLAnnotationProperty annotationProperty = null;
+  private OWLDataProperty dataProperty = null;
+  private OWLObjectProperty objectProperty = null;
 
   // Target object (e.g., annotation) for cell values
   // private OWLObject targetObject;
@@ -20,50 +23,51 @@ public class Column {
   // If true, reverse sort
   private boolean reverseSort = false;
 
-  /**
-   * Init a new Column.
-   *
-   * @param name String name of column
-   */
-  public Column(String name) {
-    this.name = name;
-  }
-
-  /**
-   * Init a new Column.
-   *
-   * @param name String name of column
-   * @param iri IRI of the property used in this column
-   */
   public Column(String name, IRI iri) {
     this.name = name;
     this.iri = iri;
   }
 
-  /**
-   * Init a new Column.
-   *
-   * @param name String name of column
-   * @param sortOrder int sort order
-   * @param reverseSort boolean if true, sort in reverse
-   */
-  public Column(String name, int sortOrder, boolean reverseSort) {
+  public Column(String name, OWLAnnotationProperty annotationProperty) {
     this.name = name;
+    this.annotationProperty = annotationProperty;
+  }
+
+  public Column(String name, OWLDataProperty dataProperty) {
+    this.name = name;
+    this.dataProperty = dataProperty;
+  }
+
+  public Column(String name, OWLObjectProperty objectProperty) {
+    this.name = name;
+    this.objectProperty = objectProperty;
+  }
+
+  public Column(String name, IRI iri, int sortOrder, boolean reverseSort) {
+    this.name = name;
+    this.iri = iri;
     this.sortOrder = sortOrder;
     this.reverseSort = reverseSort;
   }
 
-  /**
-   * Init a new Column.
-   *
-   * @param name String name of column
-   * @param iri IRI of the property used in this column
-   * @param sortOrder int sort order
-   * @param reverseSort boolean if true, sort in reverse
-   */
-  public Column(String name, IRI iri, int sortOrder, boolean reverseSort) {
+  public Column(
+      String name, OWLAnnotationProperty annotationProperty, int sortOrder, boolean reverseSort) {
     this.name = name;
-    this.iri = iri;
+    this.annotationProperty = annotationProperty;
+    this.sortOrder = sortOrder;
+    this.reverseSort = reverseSort;
+  }
+
+  public Column(String name, OWLDataProperty dataProperty, int sortOrder, boolean reverseSort) {
+    this.name = name;
+    this.dataProperty = dataProperty;
+    this.sortOrder = sortOrder;
+    this.reverseSort = reverseSort;
+  }
+
+  public Column(String name, OWLObjectProperty objectProperty, int sortOrder, boolean reverseSort) {
+    this.name = name;
+    this.objectProperty = objectProperty;
     this.sortOrder = sortOrder;
     this.reverseSort = reverseSort;
   }
@@ -77,11 +81,17 @@ public class Column {
     return name;
   }
 
-  /**
-   * Get the IRI of a column.
-   *
-   * @return IRI of property used in column
-   */
+  public OWLProperty getProperty() {
+    if (annotationProperty != null) {
+      return annotationProperty;
+    } else if (dataProperty != null) {
+      return dataProperty;
+    } else if (objectProperty != null) {
+      return objectProperty;
+    }
+    return null;
+  }
+
   public IRI getIRI() {
     return iri;
   }

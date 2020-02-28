@@ -1,12 +1,24 @@
 # Export
 
-ROBOT can export details about ontology entities as a table (TSV or CSV). At minimum, the `export` command expects an input ontology (`--input`), a set of column headers (`--header`), and a file to write to (`--export`):
+ROBOT can export details about ontology entities as a table. At minimum, the `export` command expects an input ontology (`--input`), a set of column headers (`--header`), and a file to write to (`--export`):
 
 ```
 robot export --input nucleus_part_of.owl \
   --header "CURIE,LABEL" \
   --export nucleus.csv
 ```
+
+### Formats
+
+The following formats are currently supported:
+
+* `tsv`
+* `csv`
+* `html`
+
+These can be specified with the `--format` option. If this option is not included, `export` will predict the format based on the file extension. If the extension does not match with an existing format, it will default to `tsv`.
+
+The `html` format will output an HTML table with [Bootstrap](https://getbootstrap.com/) styling. All entities referenced will be rendered as clickable links.
 
 ### Columns
 

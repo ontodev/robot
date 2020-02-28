@@ -5,21 +5,36 @@ import java.util.*;
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Table {
 
+  private String format;
+
   // Ordered list of Columns
-  List<Column> columns;
+  private List<Column> columns;
 
   // Ordered list of Rows
-  List<Row> rows;
+  private List<Row> rows;
 
   // Ordered list of columns to sort on
   // e.g., the first item in the list will be sorted first
-  List<Column> sortColumns;
+  private List<Column> sortColumns;
+
+  private RendererType displayRenderer;
+  private RendererType sortRenderer;
 
   /** Init a new Table. */
-  public Table() {
+  public Table(String format) {
+    this.format = format;
     columns = new ArrayList<>();
     rows = new ArrayList<>();
     sortColumns = new ArrayList<>();
+
+    // Set renderer types based on format
+    if (format.equalsIgnoreCase("tsv") || format.equalsIgnoreCase("csv")) {
+      displayRenderer = RendererType.OBJECT_RENDERER;
+      sortRenderer = displayRenderer;
+    } else if (format.equalsIgnoreCase("html")) {
+      displayRenderer = RendererType.OBJECT_HTML_RENDERER;
+      sortRenderer = RendererType.OBJECT_RENDERER;
+    }
   }
 
   /**
@@ -40,6 +55,14 @@ public class Table {
     rows.add(row);
   }
 
+  public RendererType getDisplayRendererType() {
+    return displayRenderer;
+  }
+
+  public RendererType getSortRendererType() {
+    return sortRenderer;
+  }
+
   /**
    * Get the Columns in a Table.
    *
@@ -47,6 +70,10 @@ public class Table {
    */
   public List<Column> getColumns() {
     return columns;
+  }
+
+  public String getFormat() {
+    return format;
   }
 
   /**
@@ -79,7 +106,7 @@ public class Table {
       String sortName = sc.getName();
       Comparator<Row> rowComparator =
           (r1, r2) -> {
-            List<String> vals1 = r1.get(sortName);
+            List<String> vals1 = r1.getSortValues(sortName);
             String v1;
             if (vals1.isEmpty()) {
               v1 = "";
@@ -87,7 +114,7 @@ public class Table {
               v1 = String.join("|", vals1);
             }
 
-            List<String> vals2 = r2.get(sortName);
+            List<String> vals2 = r2.getSortValues(sortName);
             String v2;
             if (vals2.isEmpty()) {
               v2 = "";
@@ -109,7 +136,7 @@ public class Table {
   }
 
   /**
-   * Render the Table as List of Arrays.
+   * Render the Table as List of Arrays for writing to CSV/TSV.
    *
    * @param split String to split mulitple cell values on (default |)
    * @return List of String[]
@@ -128,5 +155,35 @@ public class Table {
       table.add(rowArray);
     }
     return table;
+  }
+
+  /**
+   * @param split
+   * @return
+   */
+  public String toHTML(String split) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<head>\n")
+        .append(
+            "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
+        .append("</head>\n")
+        .append("<body>\n")
+        .append("<table class=\"table table-striped\">\n")
+        .append("<tr>\n");
+
+    for (Column c : columns) {
+      sb.append("\t<th>").append(c.getName()).append("</th>\n");
+    }
+
+    sb.append("</tr>\n");
+
+    for (Row row : rows) {
+      String rowString = row.toString(columns, split, "\t<td>", "</td>", "\n");
+      // TODO - add entity to tr (RDFa) resource="iri"
+      sb.append("<tr>\n").append(rowString).append("</tr>\n");
+    }
+    sb.append("</table>");
+    sb.append("</body>");
+    return sb.toString();
   }
 }

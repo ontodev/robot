@@ -125,9 +125,11 @@ public class ExportCommand implements Command {
     // Maybe get a format
     String format = CommandLineHelper.getOptionalValue(line, "format");
     if (format == null) {
-      // Use the path to determine the delimiter (default TSV)
+      // Use the path to determine the format (default is TSV)
       if (exportPath.endsWith(".csv")) {
         exportOptions.put("format", "csv");
+      } else if (exportPath.endsWith(".html")) {
+        exportOptions.put("format", "html");
       }
     }
     // Get the split columns
