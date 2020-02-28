@@ -1,5 +1,13 @@
 # Export
 
+## Contents
+
+1. [Formats](#formats)
+2. [Columns](#columns)
+3. [Including and Excluding Entities](#including-and-excluding-entities)
+4. [Rendering Cell Values](#rendering-cell-values)
+5. [Preparing the Ontology](#preparing-the-ontology)
+
 ROBOT can export details about ontology entities as a table. At minimum, the `export` command expects an input ontology (`--input`), a set of column headers (`--header`), and a file to write to (`--export`):
 
 ```
