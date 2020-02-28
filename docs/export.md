@@ -12,7 +12,7 @@ ROBOT can export details about ontology entities as a table. At minimum, the `ex
 
 ```
 robot export --input nucleus_part_of.owl \
-  --header "CURIE,LABEL" \
+  --header "CURIE|LABEL" \
   --export nucleus.csv
 ```
 
@@ -53,7 +53,7 @@ The first header in the `--header` list is used to sort the rows of the export. 
     robot export --input nucleus_part_of.owl \
       --header "CURIE|LABEL|SubClass Of" \
       --sort "LABEL|SubClass Of" \
-      --export nucleus-sorted.csv
+      --export results/nucleus-sorted.csv
       
 In the example above, the rows are first sorted on the `LABEL` field, and then sorted by `SubClass Of`. This means that entities with the same parent will be grouped in alphabetical order.
 

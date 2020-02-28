@@ -1059,13 +1059,29 @@ public class ExportOperation {
       RendererType rt, ShortFormProvider provider, OWLObject object) {
     ManchesterOWLSyntaxObjectRenderer renderer;
     StringWriter sw = new StringWriter();
-    if (rt == RendererType.OBJECT_HTML_RENDERER) {
-      renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, provider);
+
+    if (provider instanceof QuotedAnnotationValueShortFormProvider && object.isAnonymous()) {
+      // Handle quoting
+      QuotedAnnotationValueShortFormProvider qavsfp =
+          (QuotedAnnotationValueShortFormProvider) provider;
+      qavsfp.toggleQuoting();
+      if (rt == RendererType.OBJECT_HTML_RENDERER) {
+        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, qavsfp);
+      } else {
+        // Default renderer
+        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, qavsfp);
+      }
+      object.accept(renderer);
+      qavsfp.toggleQuoting();
     } else {
-      // Default renderer
-      renderer = new ManchesterOWLSyntaxObjectRenderer(sw, provider);
+      if (rt == RendererType.OBJECT_HTML_RENDERER) {
+        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, provider);
+      } else {
+        // Default renderer
+        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, provider);
+      }
+      object.accept(renderer);
     }
-    object.accept(renderer);
     return sw.toString().replace("\n", "").replaceAll(" +", " ");
   }
 
