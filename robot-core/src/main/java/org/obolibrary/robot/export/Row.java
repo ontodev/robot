@@ -1,19 +1,20 @@
 package org.obolibrary.robot.export;
 
 import java.util.*;
+import org.semanticweb.owlapi.model.IRI;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Row {
 
-  // TODO - add IRI
-  // TODO - Add toHTML function that returns resource="iri" in <tr>
+  // The subject of this row
+  private IRI subject;
 
   // List of cells in this row
-  private Map<String, Cell> cells;
+  private Map<String, Cell> cells = new HashMap<>();
 
   /** Init a new Row. */
-  public Row() {
-    cells = new HashMap<>();
+  public Row(IRI subject) {
+    this.subject = subject;
   }
 
   /**
@@ -42,9 +43,13 @@ public class Row {
    * @param columnName column name
    * @return one or more cell values (List)
    */
-  public List<String> getSortValues(String columnName) {
+  public String getSortValueString(String columnName) {
     Cell c = cells.getOrDefault(columnName, null);
-    return c.getSortValues();
+    return c.getSortValueString();
+  }
+
+  public IRI getSubject() {
+    return subject;
   }
 
   /**
@@ -58,7 +63,7 @@ public class Row {
 
     int i = 0;
     for (Column c : columns) {
-      String columnName = c.getName();
+      String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);
       String value;
       if (cell != null) {
@@ -72,15 +77,18 @@ public class Row {
     return row;
   }
 
+  /**
+   * Render the Row as a row in an HTML table.
+   *
+   * @param columns list of Columns
+   * @param split character to split multiple values on
+   * @return
+   */
   public String toHTML(List<Column> columns, String split) {
-    return "";
-  }
-
-  public String toString(
-      List<Column> columns, String split, String leftQuote, String rightQuote, String delimiter) {
     StringBuilder sb = new StringBuilder();
+    sb.append("\t<tr resource=\"").append(subject.toString()).append("\">");
     for (Column c : columns) {
-      String columnName = c.getName();
+      String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);
       String value;
       if (cell != null) {
@@ -88,8 +96,7 @@ public class Row {
       } else {
         value = "";
       }
-      String quotedValue = leftQuote + value + rightQuote + delimiter;
-      sb.append(quotedValue);
+      sb.append("\t\t<td>").append(value).append("</td>\n");
     }
     return sb.toString();
   }

@@ -17,8 +17,8 @@ public class Table {
   // e.g., the first item in the list will be sorted first
   private List<Column> sortColumns;
 
-  private RendererType displayRenderer;
-  private RendererType sortRenderer;
+  private RendererType displayRenderer = null;
+  private RendererType sortRenderer = null;
 
   /** Init a new Table. */
   public Table(String format) {
@@ -30,7 +30,6 @@ public class Table {
     // Set renderer types based on format
     if (format.equalsIgnoreCase("tsv") || format.equalsIgnoreCase("csv")) {
       displayRenderer = RendererType.OBJECT_RENDERER;
-      sortRenderer = displayRenderer;
     } else if (format.equalsIgnoreCase("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
       sortRenderer = RendererType.OBJECT_RENDERER;
@@ -103,24 +102,11 @@ public class Table {
   public void sortRows() {
     for (Column sc : sortColumns) {
       // Sort name is used to get the value
-      String sortName = sc.getName();
+      String sortName = sc.getDisplayName();
       Comparator<Row> rowComparator =
           (r1, r2) -> {
-            List<String> vals1 = r1.getSortValues(sortName);
-            String v1;
-            if (vals1.isEmpty()) {
-              v1 = "";
-            } else {
-              v1 = String.join("|", vals1);
-            }
-
-            List<String> vals2 = r2.getSortValues(sortName);
-            String v2;
-            if (vals2.isEmpty()) {
-              v2 = "";
-            } else {
-              v2 = String.join("|", vals2);
-            }
+            String v1 = r1.getSortValueString(sortName);
+            String v2 = r2.getSortValueString(sortName);
 
             // Make sure empty strings end up last
             if (v1.isEmpty()) return Integer.MAX_VALUE;
@@ -146,7 +132,7 @@ public class Table {
     String[] header = new String[columns.size()];
     Iterator<Column> iterator = columns.iterator();
     for (int i = 0; i < header.length; i++) {
-      header[i] = iterator.next().getName();
+      header[i] = iterator.next().getDisplayName();
     }
     table.add(header);
 
@@ -158,8 +144,10 @@ public class Table {
   }
 
   /**
-   * @param split
-   * @return
+   * Render the Table as an HTML string.
+   *
+   * @param split character to split multiple cell values on
+   * @return HTML string
    */
   public String toHTML(String split) {
     StringBuilder sb = new StringBuilder();
@@ -172,15 +160,13 @@ public class Table {
         .append("<tr>\n");
 
     for (Column c : columns) {
-      sb.append("\t<th>").append(c.getName()).append("</th>\n");
+      sb.append("\t<th>").append(c.getDisplayName()).append("</th>\n");
     }
 
     sb.append("</tr>\n");
 
     for (Row row : rows) {
-      String rowString = row.toString(columns, split, "\t<td>", "</td>", "\n");
-      // TODO - add entity to tr (RDFa) resource="iri"
-      sb.append("<tr>\n").append(rowString).append("</tr>\n");
+      sb.append(row.toHTML(columns, split));
     }
     sb.append("</table>");
     sb.append("</body>");

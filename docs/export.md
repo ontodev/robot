@@ -31,6 +31,7 @@ Various `--header` types are supported:
 	* `CURIE`: creates a "CURIE" column based on the short form of the unique identifier
 	* `LABEL`: creates a "Label" column based on `rdfs:label`
 	* `SubClass Of`: creates a "SubClass Of" column based on `rdfs:subClassOf`
+	* `SubClasses`: creates a "SubClasses" column based on direct children of a class
 	* `Eqivalent Class`: creates an "Equivalent Classes" column based on `owl:equivalentClass`
 	* `SubProperty Of`: creates a "SubProperty Of" column based on `rdfs:subPropertyOf`
 	* `Equivalent Property`: creates an "Equivalent Properties" column based on `owl:equivalentProperty`
@@ -44,7 +45,7 @@ The first header in the `--header` list is used to sort the rows of the export. 
     robot export --input nucleus_part_of.owl \
       --header "CURIE|LABEL|SubClass Of" \
       --sort "LABEL|SubClass Of" \
-      --export results/nucleus-sorted.csv
+      --export nucleus-sorted.csv
       
 In the example above, the rows are first sorted on the `LABEL` field, and then sorted by `SubClass Of`. This means that entities with the same parent will be grouped in alphabetical order.
 
@@ -97,6 +98,19 @@ Finally, the export will include anonymous expressions (subclasses, equivalent c
 
 Note that in the example above, the first two headers are special keywords and the third is the label of a property used in the ontology.
 
+### Rendering Cell Values
+
+By default, cell values are rendered with the label of the corresponding OWLObject (an entity, an expression, or an annotation value).
+
+You can render entities by other values by including a special tag after the column name. To render by CURIE, include `[ID]`. To render by IRI, include `[IRI]`:
+
+    robot export --input nucleus_part_of.owl \
+      --header "LABEL|SubClass Of [ID]|SubClass Of [IRI]" \
+      --exclude-anonymous true \
+      --export results/nucleus-iris.csv
+      
+These tags should not be used with the following default columns: `LABEL`, `CURIE`, `IRI`, as they will not change the rendered values.
+
 ### Preparing the Ontology
 
 When exporting details on classes using object or data properties, we recommend running [reason](/reason), [relax](/relax), and [reduce](/reduce) first. You can also create a subset of entities using [remove](/remove) or [filter](/filter).
@@ -112,3 +126,11 @@ When exporting details on classes using object or data properties, we recommend 
 ### Invalid Column Error
 
 A property cannot be resolved, usually meaning that the label cannot be resolved. Ensure that the property label is defined in the input ontology or the column name provided is one of the special keywords.
+
+### Unknown Format Error
+
+The following formats are currently supported: `tsv`, `csv`, and `html`. Please make sure you are using one of these formats.
+
+### Unknown Tag Error
+
+The tag for rendering following a column name must be one of: `[ID]`, `[IRI]`, `[LABEL]`.
