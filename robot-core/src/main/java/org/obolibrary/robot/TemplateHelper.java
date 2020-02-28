@@ -1066,7 +1066,7 @@ public class TemplateHelper {
       return true;
     } else
       // Individuals can be I, II (does not need to be followed by space), SI, or DI
-      return template.matches("^(I .*|II.?|[SD]I .*)");
+      return template.matches("^(I .*|II.?|[TSD]I .*)");
 
     // TODO - future support for DT datatype axioms
   }
