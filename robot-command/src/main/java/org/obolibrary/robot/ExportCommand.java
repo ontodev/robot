@@ -24,7 +24,7 @@ public class ExportCommand implements Command {
     o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous entities");
     o.addOption("s", "sort", true, "column to sort on (default: first column)");
     o.addOption("n", "include", true, "groups of terms to include");
-    o.addOption("f", "format", true, "output file format (TSV, CSV)");
+    o.addOption("f", "format", true, "output file format (TSV, CSV, or HTML)");
     o.addOption("S", "split", true, "character to split multiple values on (default: |)");
 
     options = o;

@@ -1,18 +1,18 @@
-"LABEL","SubClass Of [ID]","SubClass Of [IRI]"
-"cell","obo:GO_0005575","http://purl.obolibrary.org/obo/GO_0005575"
-"cell part","obo:GO_0005575","http://purl.obolibrary.org/obo/GO_0005575"
-"cellular_component","",""
-"intracellular","obo:GO_0044464","http://purl.obolibrary.org/obo/GO_0044464"
-"intracellular membrane-bounded organelle","obo:GO_0043227|obo:GO_0043229","http://purl.obolibrary.org/obo/GO_0043227|http://purl.obolibrary.org/obo/GO_0043229"
-"intracellular organelle","obo:GO_0043226|obo:GO_0044424","http://purl.obolibrary.org/obo/GO_0043226|http://purl.obolibrary.org/obo/GO_0044424"
-"intracellular organelle lumen","obo:GO_0043233|obo:GO_0044446","http://purl.obolibrary.org/obo/GO_0043233|http://purl.obolibrary.org/obo/GO_0044446"
-"intracellular organelle part","obo:GO_0044422|obo:GO_0044424","http://purl.obolibrary.org/obo/GO_0044422|http://purl.obolibrary.org/obo/GO_0044424"
-"intracellular part","obo:GO_0044464","http://purl.obolibrary.org/obo/GO_0044464"
-"membrane-bounded organelle","obo:GO_0043226","http://purl.obolibrary.org/obo/GO_0043226"
-"membrane-enclosed lumen","obo:GO_0005575","http://purl.obolibrary.org/obo/GO_0005575"
-"nuclear lumen","obo:GO_0044428|obo:GO_0070013","http://purl.obolibrary.org/obo/GO_0044428|http://purl.obolibrary.org/obo/GO_0070013"
-"nuclear part","obo:GO_0044446","http://purl.obolibrary.org/obo/GO_0044446"
-"nucleus","obo:GO_0043231","http://purl.obolibrary.org/obo/GO_0043231"
-"organelle","obo:GO_0005575","http://purl.obolibrary.org/obo/GO_0005575"
-"organelle lumen","obo:GO_0031974|obo:GO_0044422","http://purl.obolibrary.org/obo/GO_0031974|http://purl.obolibrary.org/obo/GO_0044422"
-"organelle part","obo:GO_0005575","http://purl.obolibrary.org/obo/GO_0005575"
+LABEL,SubClass Of [ID],SubClass Of [IRI]
+cell,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575
+cell part,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575
+cellular_component,,
+intracellular,GO:0044464,http://purl.obolibrary.org/obo/GO_0044464
+intracellular membrane-bounded organelle,GO:0043227|GO:0043229,http://purl.obolibrary.org/obo/GO_0043227|http://purl.obolibrary.org/obo/GO_0043229
+intracellular organelle,GO:0043226|GO:0044424,http://purl.obolibrary.org/obo/GO_0043226|http://purl.obolibrary.org/obo/GO_0044424
+intracellular organelle lumen,GO:0043233|GO:0044446,http://purl.obolibrary.org/obo/GO_0043233|http://purl.obolibrary.org/obo/GO_0044446
+intracellular organelle part,GO:0044422|GO:0044424,http://purl.obolibrary.org/obo/GO_0044422|http://purl.obolibrary.org/obo/GO_0044424
+intracellular part,GO:0044464,http://purl.obolibrary.org/obo/GO_0044464
+membrane-bounded organelle,GO:0043226,http://purl.obolibrary.org/obo/GO_0043226
+membrane-enclosed lumen,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575
+nuclear lumen,GO:0044428|GO:0070013,http://purl.obolibrary.org/obo/GO_0044428|http://purl.obolibrary.org/obo/GO_0070013
+nuclear part,GO:0044446,http://purl.obolibrary.org/obo/GO_0044446
+nucleus,GO:0043231,http://purl.obolibrary.org/obo/GO_0043231
+organelle,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575
+organelle lumen,GO:0031974|GO:0044422,http://purl.obolibrary.org/obo/GO_0031974|http://purl.obolibrary.org/obo/GO_0044422
+organelle part,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575

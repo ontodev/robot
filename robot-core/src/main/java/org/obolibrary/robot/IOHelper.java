@@ -1235,11 +1235,14 @@ public class IOHelper {
    */
   public static void writeTable(List<String[]> table, Writer writer, char separator)
       throws IOException {
-    try (ICSVWriter csv =
-        new CSVWriterBuilder(writer)
-            .withParser(new CSVParserBuilder().withSeparator(separator).build())
-            .build()) {
-      csv.writeAll(table);
+    try (CSVWriter csv =
+        new CSVWriter(
+            writer,
+            separator,
+            CSVWriter.DEFAULT_QUOTE_CHARACTER,
+            CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+            CSVWriter.DEFAULT_LINE_END)) {
+      csv.writeAll(table, false);
     }
   }
 

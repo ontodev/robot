@@ -1,2 +1,2 @@
-"CURIE","LABEL","Type"
-"rat-1234","rat 1234","F 344/N"
+ID,LABEL,Type
+example:rat-1234,rat 1234,F 344/N

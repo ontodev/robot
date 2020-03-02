@@ -76,7 +76,7 @@ public class ExportOperation {
     }
 
     // Create table object
-    String format = OptionsHelper.getOption(options, "format", "tsv");
+    String format = OptionsHelper.getOption(options, "format", "tsv").toLowerCase();
     Table table = new Table(format);
 
     // Get a label map of all labels -> IRIs
@@ -103,9 +103,18 @@ public class ExportOperation {
 
       // Try to resolve a CURIE or a label
       IRI iri = ioHelper.createIRI(colName);
-
       if (iri == null) {
         iri = labelMap.getOrDefault(colName, null);
+      }
+
+      // Handle the default column rendering
+      if (c.equalsIgnoreCase("ID")) {
+        tag = "ID";
+      } else if (c.equalsIgnoreCase("IRI")) {
+        tag = "IRI";
+      } else if (c.equalsIgnoreCase("LABEL")) {
+        // Special renderer for handling labels so that labels can come up blank if they don't exist
+        tag = "LABEL-ONLY";
       }
 
       // Maybe get a property
@@ -117,7 +126,7 @@ public class ExportOperation {
       ShortFormProvider provider;
       switch (tag.toUpperCase()) {
         case "ID":
-          provider = new QNameShortFormProvider(ioHelper.getPrefixes());
+          provider = new OBOShortFormProvider(ioHelper.getPrefixes());
           break;
         case "IRI":
           provider = new IRIValueShortFormProvider();
@@ -131,6 +140,13 @@ public class ExportOperation {
                   pm,
                   Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
                   Collections.emptyMap());
+          break;
+        case "LABEL-ONLY":
+          provider =
+              new AnnotationValueShortFormProvider(
+                  Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+                  Collections.emptyMap(),
+                  ontology.getOWLOntologyManager());
           break;
         default:
           throw new Exception(String.format(unknownTagError, c, tag));
@@ -758,26 +774,21 @@ public class ExportOperation {
           }
           row.add(cell);
           continue;
-        case "CURIE":
-          String curie = entity.getIRI().getShortForm().replace("_", ":");
-          if (format.equalsIgnoreCase("html")) {
-            String display =
-                String.format("<a href=\"%s'\">%s</a>", entity.getIRI().toString(), curie);
-            cell = new Cell(col, display, curie);
-          } else {
-            cell = new Cell(col, curie);
-          }
-          row.add(cell);
+        case "ID":
+          String display = renderManchester(displayRendererType, provider, entity);
+          String sort = renderManchester(sortRendererType, provider, entity);
+          row.add(new Cell(col, display, sort));
           continue;
         case "LABEL":
-          String display = renderManchester(displayRendererType, provider, entity);
-          String sort;
-          if (sortRendererType != null) {
-            sort = renderManchester(sortRendererType, provider, entity);
-          } else {
-            sort = display;
+          // Provider returns IRI short form if the label doesn't exist
+          // So we can compare and see if this is what was returned
+          String shortForm = entity.getIRI().getShortForm();
+          String providerLabel = provider.getShortForm(entity);
+          if (providerLabel.equals(shortForm)) {
+            providerLabel = "";
           }
-          row.add(new Cell(col, display, sort));
+          row.add(new Cell(col, providerLabel, providerLabel));
+
           continue;
         default:
           break;
@@ -1059,6 +1070,17 @@ public class ExportOperation {
       RendererType rt, ShortFormProvider provider, OWLObject object) {
     ManchesterOWLSyntaxObjectRenderer renderer;
     StringWriter sw = new StringWriter();
+
+    if (object instanceof OWLAnnotationValue) {
+      // Just return the value of literal annotations, don't render
+      OWLAnnotationValue v = (OWLAnnotationValue) object;
+      if (v.isLiteral()) {
+        OWLLiteral lit = v.asLiteral().orNull();
+        if (lit != null) {
+          return lit.getLiteral();
+        }
+      }
+    }
 
     if (provider instanceof QuotedAnnotationValueShortFormProvider && object.isAnonymous()) {
       // Handle quoting

@@ -12,7 +12,7 @@ ROBOT can export details about ontology entities as a table. At minimum, the `ex
 
 ```
 robot export --input nucleus_part_of.owl \
-  --header "CURIE|LABEL" \
+  --header "ID|LABEL" \
   --export nucleus.csv
 ```
 
@@ -42,7 +42,7 @@ Various `--header` types are supported:
 
 * **Special Headers**:
 	* `IRI`: creates an "IRI" column based on the full unique identifier
-	* `CURIE`: creates a "CURIE" column based on the short form of the unique identifier
+	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE)
 	* `LABEL`: creates a "Label" column based on `rdfs:label`
 	* `SubClass Of`: creates a "SubClass Of" column based on `rdfs:subClassOf`
 	* `SubClasses`: creates a "SubClasses" column based on direct children of a class
@@ -57,7 +57,7 @@ Various `--header` types are supported:
 The first header in the `--header` list is used to sort the rows of the export. You can change the column that is sorted on by including `--sort <header>`. This can either be one header, or a pipe-separated list of headers that will be sorted in-order:
 
     robot export --input nucleus_part_of.owl \
-      --header "CURIE|LABEL|SubClass Of" \
+      --header "ID|LABEL|SubClass Of" \
       --sort "LABEL|SubClass Of" \
       --export results/nucleus-sorted.csv
       
@@ -66,7 +66,7 @@ In the example above, the rows are first sorted on the `LABEL` field, and then s
 If the `--sort` header starts with `*`, the column will be sorted in reverse order.
 
     robot export --input nucleus_part_of.owl \
-      --header "CURIE|LABEL|SubClass Of" \
+      --header "ID|LABEL|SubClass Of" \
       --sort "*LABEL" \
       --export results/nucleus-reversed.csv
 
@@ -90,14 +90,14 @@ By default, the export includes details on the classes and individuals in an ont
 For example, to return the details of *individuals only*:
 
     robot export --input template.owl \
-      --header "CURIE|LABEL|Type" \
+      --header "ID|LABEL|Type" \
       --include "individuals" \
       --export results/individuals.csv
 
 To return details of *classes and properties*:
 
     robot export --input nucleus_part_of.owl \
-      --header "CURIE|LABEL|SubClass Of|SubProperty Of" \
+      --header "ID|LABEL|SubClass Of|SubProperty Of" \
       --include "classes properties" \
       --export results/classes-properties.csv
 
@@ -116,14 +116,14 @@ Note that in the example above, the first two headers are special keywords and t
 
 By default, cell values are rendered with the label of the corresponding OWLObject (an entity, an expression, or an annotation value).
 
-You can render entities by other values by including a special tag after the column name. To render by CURIE, include `[ID]`. To render by IRI, include `[IRI]`:
+You can render entities by other values by including a special tag after the column name. To render by ID/CURIE, include `[ID]`. To render by IRI, include `[IRI]`:
 
     robot export --input nucleus_part_of.owl \
       --header "LABEL|SubClass Of [ID]|SubClass Of [IRI]" \
       --exclude-anonymous true \
       --export results/nucleus-iris.csv
       
-These tags should not be used with the following default columns: `LABEL`, `CURIE`, `IRI`, as they will not change the rendered values.
+These tags should not be used with the following default columns: `LABEL`, `ID`, `IRI`, as they will not change the rendered values.
 
 ### Preparing the Ontology
 
