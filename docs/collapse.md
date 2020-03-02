@@ -9,7 +9,7 @@ robot collapse \
  --output minimized_module.owl
 ```
 
-Any intermediate class (has one or more subclasses) that has *less* than the threshold number of subclasses will be removed. Top-level classes (do not have a named superclass) and bottom-level classes (do not have any subclasses) will not be removed. 
+Collapse will not remove root classes or leaf classes (i.e. top-level classes, without a named superclass, and bottom-level classes, without any subclasses). For each intermediate class, if it has *fewer* subclasses than the threshold, then it will be removed.
 
 For example, given `--threshold 2`:
 
@@ -61,6 +61,6 @@ For example, given `--threshold 2` and `--precious class:D`, that same example f
  
  ## Error Messages
  
- ### Threshold Error
+   ### Threshold Error
  
- The `--threshold` input must be an integer.
+ The `--threshold` input must be an integer greater than 1.
