@@ -1,31 +1,225 @@
 # Validate
 
-OWL 2 has a number of <a href="https://www.w3.org/TR/owl2-profiles/" target="_blank">profiles</a> that strike different balances between expressive power and reasoning efficiency. ROBOT can validate an input ontology against a profile (EL, DL, RL, QL, and Full) and generate a report. For example:
+Validates tables (CSV or TSV files) against an ontology using the sets of rules defined (per table) in the table files, and writes the output to TXT, HTML, or XLSX files. (If no output format is specified then the output is directed to STDOUT.) For example:
 
-    robot validate-profile --profile EL \
-      --input merged.owl \
-      --output results/merged-validation.txt
+    robot validate --input immune_exposures.owl \
+      --table immune_exposures.csv \
+      --reasoner hermit \
+      --format TXT \
+      --output-dir results/
 
-## Profiles
+In this case the command will generate a single file called immune_exposures.txt in the results/ directory.
 
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_EL" target="_blank">EL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_RL" target="_blank">RL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_QL">QL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full" target="_blank">DL</a>
-* <a href="https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full" target="_blank">Full</a>
+One can also specify multiple table files as input. In that case there will be multiple output files corresponding to each table in the output directory. For example:
 
----
+    robot validate --input immune_exposures.owl \
+      --table immune_exposures.csv \
+      --table immune_exposures_2.csv \
+      --reasoner hermit \
+      --format HTML \
+      --output-dir results/
+
+In this case two files: immune_exposures.html and immune_exposures_2.html will appear in the results/ directory.
+
+## Validation rules
+
+### Data file organisation
+
+Validation rules are read from the second row of the CSV or TSV file. If the `--skip-row k` option is used, then the 'second row' is the second of the rows remaining in the table _after_ the kth row has been removed. Below is an example table. Note that validation rules must be specified per column, and are applied to the data in that column.
+
+|header A                        |header B                        |header C                     |
+|--------------------------------|--------------------------------|-----------------------------|
+|rule A1; rule A2; rule A3 ...   |rule B1; rule B2; rule B3 ...   |rule C1; rule C2; rule C3 ...|
+|data                            |data                            |data                         |
+|data                            |data                            |data                         |
+|...                             |                                |                             |
+
+* Data cells must either be in the form of a named class, e.g. 'Dengue virus', a named individual, e.g. 'Dr. Smith', or a general class expression, e.g. ('Dengue virus' or 'Dengue virus 2'). IRIs or short-form IRIs may be be used in lieu of labels if desired.
+
+* Rules for a given column must be separated by semicolons. To comment out all of the rules for a given column, the list should be prefixed by '##'. To comment out particular rules from among the rules belonging to a given column, prefix those rules with '#'. For example:
+
+_To comment out all rules:_
+
+	## rule 1; rule 2; rule 3
+
+_To comment out rule 1 but not rule 2:_
+
+	# rule 1; rule 2
+
+_To comment out rule 2 but not rule 1:_
+
+	rule 1; # rule 2
+
+### Validation rule syntax
+
+Individual rules must be of the form:
+
+	<main-rule-type> <rule> [(when <when-subject-expr-1> <when-rule-type-1> <when-rule-1> & ...)]
+
+Where:
+
+* `<main-rule-type>` can be one of (or a combination of -- see below):
+
+    * is-required
+    * is-excluded
+    * subclass-of
+    * direct-subclass-of
+    * superclass-of
+    * direct-superclass-of
+    * equivalent-to
+    * instance-of
+    * direct-instance-of
+
+* `<when-rule-type>` can be one of (or a combination of -- see below):
+
+    * subclass-of
+    * direct-subclass-of
+    * superclass-of
+    * direct-superclass-of
+    * equivalent-to
+    * instance-of
+    * direct-instance-of
+
+#### Presence types and Query types
+
+* The following rule types are called _presence_ rule types. They place restrictions on whether a cell in a given column can have data or not, and may take a value of either `true` (equivalently: `t`, `yes`, `y`) or `false` (equivalently: `f`, `no`, `n`). If no truth value is supplied, `true` is assumed.
+
+    * is-required
+        * When set to `true` (implicitly or explicitly), this indicates that cells in this column should have data, possibly conditional upon an optional when-clause. E.g. `is-required (when 'Crotalus atrox' subclass-of 'vaccine')`
+    * is-excluded
+        * When set to `true` (implicitly or explicitly), this indicates that cells in this column must be empty, possibly conditional upon an optional when-clause. E.g. `is-excluded (when 'Crotalus atrox' subclass-of 'vaccine')`
+
+* The following rule types are called _query_ rule types. They involve queries to the reasoner. Consider the example rule: `<query-type> 'vaccine'`. Replacing `<query-type>` with each of the below results in the following corresponding reasoner queries:
+
+    * subclass-of
+        * queries the reasoner to verify that the class represented in the current cell is a subclass of the class 'vaccine'
+    * direct-subclass-of
+        * queries the reasoner to verify that the class represented in the current cell is a direct subclass of the class 'vaccine'
+    * superclass-of
+        * queries the reasoner to verify that the class represented in the current cell is a superclass of the class 'vaccine'
+    * direct-superclass-of
+        * queries the reasoner to verify that the class represented in the current cell is a direct superclass of the class 'vaccine'
+    * equivalent-to
+        * queries the reasoner to verify that the class represented in the current cell is equivalent to the class 'vaccine'
+    * instance-of
+        * queries the reasoner to verify that the individual represented in the current cell is an instance of the class 'vaccine'
+    * direct-instance-of
+        * queries the reasoner to verify that the individual represented in the current cell is a direct instance of the class 'vaccine'
+
+#### Further notes on `<rule>` and `<when-rule>`
+
+* For the rule types: `is-required` and `is-excluded`, `<rule>` is _optional_ and if not specified defaults to _true_.
+
+* For other rule types, `<rule>` is _mandatory_ and must be in the form of a description logic (DL) expression query, in Manchester syntax.
+
+* `instance-of` and `direct-instance-of` may only be applied to named individuals. `subclass-of`, `direct-subclass-of`, `superclass-of`, `direct-superclass-of`, and `equivalent-to` may be applied only to classes or general class expressions.
+
+* `<when-subject-expr>` must describe an individual, a class, or a generalised class expression and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, a general DL expression, or a wildcard.
+
+#### Wildcards
+
+Wildcards of the form `%n` can be specified within `<rule>`, `<when-rule>`, and `<when-subject-expr>` clauses, and are used to indicate the entity described by the data in the _nth_ cell of a given row. E.g. the rule:
+
+    subclass-of hasBasisIn in some %2 (when %1 subclass-of ('Dengue virus' or 'Dengue virus 2'))
+
+requires that, whenever the class indicated in column 1 of the current row is a subclass of the class consisting of the union of `'Dengue virus'` and `'Dengue virus 2'`, the data in the current cell must be a subclass of the set of classes that bear the relation `hasBasisIn` to the class indicated in column 2 of the same row.
+
+#### When-clauses
+
+The optional when-clause indicates that the rule given in the main clause should be validated only when the when-clause is satisfied. If multiple when-clauses are specified (separated by `'&'`, then each when-clause must evaluate to _true_ in order for the main validation rule to execute. E.g.:
+
+	direct-subclass-of %2 (when %5 superclass-of 'exposure process' & %2 superclass-of vaccine)
+
+indicates that the validation rule `'direct-subclass-of %2'` should only be run against the current cell when both the cell in column 5 is a superclass of `'exposure process'` and the cell in column 2 is a superclass of `vaccine`.
+
+#### Compound rule-types
+
+`<rule-type>` and `<when-rule-type>` can take the form: `rule-type-1|rule-type-2|rule-type-3|...`
+
+E.g.
+
+	subclass-of|equivalent-to %3 (when %4 subclass-of|equivalent-to %2)
+
+requires that, whenever the contents of the cell in column 4 of the given row are either a subclass-of or equivalent-to the contents of the cell in column 2, then the contents of the current cell must be a subclass-of or equivalent-to the contents of the cell in column 3.
+
+#### Literals
+
+Literal `rdfs:label` expressions must be enclosed in single quotes if they contain spaces.
+E.g. in the first example below, single quotes are required around `Dengue virus` but in the second example no single quotes are necessary around `vaccination`.
+
+	subclass-of 'Dengue virus'
+	hasBasisIn some vaccination
+
+_Note that double quotes are not allowed._
+
+#### `is-required` and `is-excluded`
+
+`is-required` indicates that the given cell must be non-empty, while `is-excluded` requires that it be empty. These rules can be used with an optional when-clause. E.g.:
+
+	is-required (when %1 subclass-of 'exposure process')
+
+indicates that the current cell must be non-empty whenever the cell in column 1 of the current
+row is a subclass of `'exposure process'`.
+
+#### Multi-cells
+
+A data cell can contain more than one logical entity if these are separated using the pipe ('|') character. Such cells are called multi-cells. When a rule is defined over a multi-cell, it will be validated for each logical entity in that multi-cell, and if the rule contains a wildcard that refers to a multi-cell, then all possible interpretations of that rule will be validatd against the current cell (which may itself be a multi-cell). Consider, for example:
+
+|header 1                        |header 2                        |
+|--------------------------------|--------------------------------|
+|                                |subclass-of %1                  |
+|data1A \| data1B                |data2A \| data2B                |
+|...                             |                                |
+
+In this case, the following validations will be performed:
+
+* data2A subclass-of data1A
+* data2A subclass-of data1B
+* data2B subclass-of data1A
+* data2B subclass-of data1B
 
 ## Error Messages
 
-### Missing Profile Error
+### Malformed Rule Error
 
-Occurs when a `--profile` option is not provided.
+The indicated rule could not be parsed. See: [Validation Rule Syntax](#validation-rule-syntax).
 
-### Invalid Profile Error
+### Invalid Presence Rule Error
 
-Occurs when the argument to `--profile` is not one of the following: EL, DL, RL, QL, or Full. See the above documentation for more details.
+A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Presence Types and Query Types](#presence-types-and-query-types).
 
-### Profile Violation Error
+### Column Out of Range Error
 
-Occurs when the `--input` ontology does not conform to the `--profile`. See the profile descriptions for more details.
+When a wildcard is used as part of a rule, the column number indicated must not be greater than the number of columns that are in the table data provided. See: [Wildcards](#wildcards).
+
+### No Main Error
+
+When a when-clause is specified, a main clause must also be specified, with the latter being evaluated only when the when-clause is satisfied. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Malformed When Clause Error
+
+The indicated when-clause could not be parsed. See: [When-Clauses](#when-clauses).
+
+### Invalid When Type Error
+
+The indicated when rule type is not one of the rule types allowed in a when-clause. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Unrecognized Query Type Error
+
+The query type indicated is not one of the recognized query types. See: [Presence Types and Query Types](#presence-types-and-query-types).
+
+### Unrecognized Rule Type Error
+
+The rule type indicated is not one of the recognized rule types. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Table Not Provided Error
+
+The name of a `.csv` or `.tsv` file containing the table data to validate must be supplied using the `--table` option of the `validate` command. E.g. `robot validate --input myontology.owl --table mytable.csv`.
+
+### Incorrect Table Format Error
+
+The name of the file specified using the `--table` option must end in either `.csv` or `.tsv`.
+
+### Invalid Skip Row Error
+
+The value of the `--skip-row` option must be an integer.

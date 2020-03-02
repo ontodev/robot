@@ -1,0 +1,33 @@
+    <table class="table table-bordered table-striped">
+      <thead class="bg-dark text-white header-row">
+        <tr>
+          {% for cell in headerRow %}
+            <th>
+              {{ cell }}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <thead class="bg-secondary text-white">
+        <tr>
+          {% for cell in rulesRow %}
+            <th>
+              {{ cell }}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      {% for row in dataRows %}
+        <tr>
+          {% for cell in row %}
+            <td class="{% if cell.comment is defined %}bg-danger text-white{% else %}bg-light text-dark{% endif %}"
+              <div {% if cell.comment is defined %}
+                     data-toggle="popover" title="Validation failure" data-content="{{ cell.comment|e }}"
+                   {% endif %}>
+                   {{ cell.content }}
+              </div>
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>

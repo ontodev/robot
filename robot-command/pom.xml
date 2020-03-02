@@ -12,6 +12,13 @@
   <name>robot-command</name>
   <description>Command-line interface for ROBOT: Commands for working with OWL ontologies, especially Open Biological and Biomedical Ontologes (OBO).</description>
 
+  <!-- It can be convenient to temporarily set this to true during initial development. One can do
+       that either by changing its value here, or alternately by callen the mvn command with the
+       flag: -Dmaven.test.skip=true -->
+  <properties>
+    <maven.test.skip>false</maven.test.skip>
+  </properties>
+
   <build>
     <plugins>
       <!-- Enforce Google Java Style -->
@@ -67,6 +74,16 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <showDeprecation>true</showDeprecation>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
