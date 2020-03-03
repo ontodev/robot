@@ -1,6 +1,6 @@
 # Collapse
 
-Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `collapse` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option. If `--threshold` is not provided, it will default to `2`.
+Sometimes, a class hierarchy can contain more intermediate classes than necessary, especially when extracting modules. ROBOT includes `collapse` to remove intermediate classes based on a minimal number of subclasses, using the `--threshold` option. If `--threshold` is not provided, it will default to `2`. The threshold must be a positive integer greater than or equal to 2.
 
 ```
 robot collapse \
@@ -64,3 +64,8 @@ For example, given `--threshold 2` and `--precious class:D`, that same example f
  ### Threshold Error
  
  The `--threshold` input must be an integer.
+ 
+ ### Threshold Value Error
+ 
+ The `--threshold` must be a positive integer greater than or equal to 2.
+ 

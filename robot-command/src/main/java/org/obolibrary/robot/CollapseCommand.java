@@ -16,6 +16,10 @@ public class CollapseCommand implements Command {
   private static final String thresholdError =
       NS + "THRESHOLD ERROR threshold ('%s') must be a valid integer.";
 
+  /** Error message when --threshold is not an integer. */
+  private static final String thresholdValueError =
+      NS + "THRESHOLD VALUE ERROR threshold ('%d') must be 2 or greater.";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -100,6 +104,12 @@ public class CollapseCommand implements Command {
       threshold = Integer.parseInt(thresholdString);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(String.format(thresholdError, thresholdString));
+    }
+
+    // If threshold is not 2 or greater
+    // Nothing will be done
+    if (threshold < 2) {
+      throw new Exception(String.format(thresholdValueError, threshold));
     }
 
     Set<IRI> precious = CommandLineHelper.getTerms(ioHelper, line, "precious", "precious-terms");
