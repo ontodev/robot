@@ -1,4 +1,4 @@
-package org.obolibrary.robot;
+package org.obolibrary.robot.providers;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class OBOShortFormProvider implements ShortFormProvider {
    *
    * @param prefix2Ns Map of prefixes to namespaces
    */
-  OBOShortFormProvider(Map<String, String> prefix2Ns) {
+  public OBOShortFormProvider(Map<String, String> prefix2Ns) {
     prefix2Ns.forEach((key, v) -> namespaceUtil.setPrefix(v, key));
   }
 

@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.obolibrary.robot.export.*;
+import org.obolibrary.robot.providers.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
@@ -32,6 +33,18 @@ public class ExportOperation {
 
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
+  private static final EmptyShortFormProvider emptyProvider = new EmptyShortFormProvider();
+  private static final EmptyIRIShortFormProvider emptyIRIProvider = new EmptyIRIShortFormProvider();
+
+  // All synonym property IRIs
+  private static final List<String> synonymProperties =
+      Arrays.asList(
+          "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym",
+          "http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym",
+          "http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym",
+          "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym",
+          "http://purl.obolibrary.org/obo/IAO_0000118");
+
   /**
    * Return a map from option name to default option value, for all the available export options.
    *
@@ -44,6 +57,7 @@ public class ExportOperation {
     options.put("format", "tsv");
     options.put("sort", null);
     options.put("split", "|");
+    options.put("entity-format", "NAME");
     return options;
   }
 
@@ -89,17 +103,23 @@ public class ExportOperation {
     checker.addProperty(dataFactory.getRDFSLabel());
     checker.addAll(ontology);
 
+    // Default tag for entity rendering when not specified
+    String entityFormat = OptionsHelper.getOption(options, "entity-format", "NAME");
+
     // Create the Column objects and add to table
     List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
     for (String c : columnNames) {
-      String tag = "LABEL";
+      String tag = entityFormat;
       String colName = c;
       // Determine if this has a tag for rendering
-      Matcher m = Pattern.compile("(.+) \\[(ID|id|IRI|iri|LABEL|label)]").matcher(c);
+      Matcher m = Pattern.compile("(.+) \\[(ID|id|IRI|iri|LABEL|label|NAME|name)]").matcher(c);
       if (m.find()) {
         colName = m.group(1);
         tag = m.group(2);
       }
+
+      // Add some other defaults to the label map
+      updateLabelMap(labelMap);
 
       // Try to resolve a CURIE or a label
       IRI iri = ioHelper.createIRI(colName);
@@ -108,13 +128,12 @@ public class ExportOperation {
       }
 
       // Handle the default column rendering
-      if (c.equalsIgnoreCase("ID")) {
+      if (c.equalsIgnoreCase("ID") || c.equalsIgnoreCase("CURIE")) {
         tag = "ID";
       } else if (c.equalsIgnoreCase("IRI")) {
         tag = "IRI";
       } else if (c.equalsIgnoreCase("LABEL")) {
-        // Special renderer for handling labels so that labels can come up blank if they don't exist
-        tag = "LABEL-ONLY";
+        tag = "LABEL";
       }
 
       // Maybe get a property
@@ -126,12 +145,13 @@ public class ExportOperation {
       ShortFormProvider provider;
       switch (tag.toUpperCase()) {
         case "ID":
+        case "CURIE":
           provider = new OBOShortFormProvider(ioHelper.getPrefixes());
           break;
         case "IRI":
           provider = new IRIValueShortFormProvider();
           break;
-        case "LABEL":
+        case "NAME":
           DefaultPrefixManager pm = ioHelper.getPrefixManager();
           provider =
               new QuotedAnnotationValueShortFormProvider(
@@ -141,12 +161,14 @@ public class ExportOperation {
                   Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
                   Collections.emptyMap());
           break;
-        case "LABEL-ONLY":
+        case "LABEL":
           provider =
               new AnnotationValueShortFormProvider(
+                  ontology.getOWLOntologyManager(),
+                  emptyProvider,
+                  emptyIRIProvider,
                   Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-                  Collections.emptyMap(),
-                  ontology.getOWLOntologyManager());
+                  Collections.emptyMap());
           break;
         default:
           throw new Exception(String.format(unknownTagError, c, tag));
@@ -169,9 +191,9 @@ public class ExportOperation {
           // Regular sort column
           column.setSort(sorts.indexOf(c), false);
           break;
-        } else if (s.equalsIgnoreCase("*" + c)) {
+        } else if (s.equalsIgnoreCase("^" + c)) {
           // Reverse sort column
-          column.setSort(sorts.indexOf("*" + c), true);
+          column.setSort(sorts.indexOf("^" + c), true);
           break;
         }
       }
@@ -775,23 +797,34 @@ public class ExportOperation {
           row.add(cell);
           continue;
         case "ID":
+        case "CURIE":
           String display = renderManchester(displayRendererType, provider, entity);
           String sort = renderManchester(sortRendererType, provider, entity);
           row.add(new Cell(col, display, sort));
           continue;
         case "LABEL":
-          // Provider returns IRI short form if the label doesn't exist
-          // So we can compare and see if this is what was returned
-          String shortForm = entity.getIRI().getShortForm();
+          // Display and sort will always be the same since this is a literal annotation
           String providerLabel = provider.getShortForm(entity);
-          if (providerLabel.equals(shortForm)) {
-            providerLabel = "";
-          }
           row.add(new Cell(col, providerLabel, providerLabel));
-
           continue;
-        default:
-          break;
+        case "SYNONYMS":
+          List<String> values = getSynonyms(ontology, entity);
+          row.add(new Cell(col, values));
+          continue;
+        case "subclasses":
+          if (entity.isOWLClass()) {
+            Collection<OWLClassExpression> subclasses =
+                EntitySearcher.getSubClasses(entity.asOWLClass(), ontology);
+            row.add(
+                getClassCell(
+                    subclasses,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
+          }
+          continue;
       }
 
       // If a property exists, use this property to get values
@@ -855,151 +888,189 @@ public class ExportOperation {
         iriStr = "";
       }
 
-      // Check for default column names or IRI matches
-      if (colName.equalsIgnoreCase("subclasses")) {
-        if (entity.isOWLClass()) {
-          Collection<OWLClassExpression> subclasses =
-              EntitySearcher.getSubClasses(entity.asOWLClass(), ontology);
-          row.add(
-              getClassCell(
-                  subclasses,
-                  col,
-                  displayRendererType,
-                  sortRendererType,
-                  provider,
-                  excludeAnonymous));
-        }
-      } else if (colName.equalsIgnoreCase("subclass of")
-          || iriStr.equals("http://www.w3.org/2000/01/rdf-schema#subClassOf")) {
-        if (entity.isOWLClass()) {
-          Collection<OWLClassExpression> supers =
-              EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology);
-          row.add(
-              getClassCell(
-                  supers, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
-        }
+      // Check for IRI matches
+      switch (iriStr) {
+        case "http://www.w3.org/2000/01/rdf-schema#subClassOf":
+          // SubClass Of
+          if (entity.isOWLClass()) {
+            Collection<OWLClassExpression> supers =
+                EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology);
+            // owl:Thing should not be included in the subclass of column
+            supers.remove(dataFactory.getOWLThing());
+            row.add(
+                getClassCell(
+                    supers,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
+          }
+          break;
+        case "http://www.w3.org/2000/01/rdf-schema#subPropertyOf":
+          // SubProperty Of
+          if (entity.isOWLAnnotationProperty()) {
+            // Annotation properties always render as labels (no expressions)
+            Collection<OWLAnnotationProperty> supers =
+                EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    supers,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
 
-      } else if (colName.equalsIgnoreCase("subproperty of")
-          || iriStr.equals("http://www.w3.org/2000/01/rdf-schema#subPropertyOf")) {
-        if (entity.isOWLAnnotationProperty()) {
-          // Annotation properties always render as labels (no expressions)
-          Collection<OWLAnnotationProperty> supers =
-              EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  supers, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          } else if (entity.isOWLDataProperty()) {
+            Collection<OWLDataPropertyExpression> supers =
+                EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    supers,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
 
-        } else if (entity.isOWLDataProperty()) {
-          Collection<OWLDataPropertyExpression> supers =
-              EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  supers, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          } else if (entity.isOWLObjectProperty()) {
+            Collection<OWLObjectPropertyExpression> supers =
+                EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    supers,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
+          }
+          break;
+        case "http://www.w3.org/2002/07/owl#equivalentClass":
+          // Equivalent Classes
+          if (entity.isOWLClass()) {
+            Collection<OWLClassExpression> eqs =
+                EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology);
+            row.add(
+                getClassCell(
+                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          }
+          break;
+        case "http://www.w3.org/2002/07/owl#equivalentProperty":
+          // Equivalent Properties
+          if (entity.isOWLAnnotationProperty()) {
+            Collection<OWLAnnotationProperty> eqs =
+                EntitySearcher.getEquivalentProperties(entity.asOWLAnnotationProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
 
-        } else if (entity.isOWLObjectProperty()) {
-          Collection<OWLObjectPropertyExpression> supers =
-              EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  supers, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
-        }
-      } else if (colName.equalsIgnoreCase("equivalent class")
-          || iriStr.equals("http://www.w3.org/2002/07/owl#equivalentClass")) {
-        if (entity.isOWLClass()) {
-          Collection<OWLClassExpression> eqs =
-              EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology);
-          row.add(
-              getClassCell(
-                  eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
-        }
-      } else if (colName.equalsIgnoreCase("equivalent property")
-          || iriStr.equals("http://www.w3.org/2002/07/owl#equivalentProperty")) {
-        if (entity.isOWLAnnotationProperty()) {
-          Collection<OWLAnnotationProperty> eqs =
-              EntitySearcher.getEquivalentProperties(entity.asOWLAnnotationProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          } else if (entity.isOWLDataProperty()) {
+            Collection<OWLDataPropertyExpression> eqs =
+                EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
 
-        } else if (entity.isOWLDataProperty()) {
-          Collection<OWLDataPropertyExpression> eqs =
-              EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          } else if (entity.isOWLObjectProperty()) {
+            Collection<OWLObjectPropertyExpression> eqs =
+                EntitySearcher.getEquivalentProperties(entity.asOWLObjectProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          }
+          break;
+        case "http://www.w3.org/2002/07/owl#disjointWith":
+          // Disjoint Entities
+          if (entity.isOWLClass()) {
+            Collection<OWLClassExpression> disjoints =
+                EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology);
+            row.add(
+                getClassCell(
+                    disjoints,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
 
-        } else if (entity.isOWLObjectProperty()) {
-          Collection<OWLObjectPropertyExpression> eqs =
-              EntitySearcher.getEquivalentProperties(entity.asOWLObjectProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
-        }
-      } else if (colName.equalsIgnoreCase("disjoint with")
-          || iriStr.equals("http://www.w3.org/2002/07/owl#disjointWith")) {
-        if (entity.isOWLClass()) {
-          Collection<OWLClassExpression> disjoints =
-              EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology);
-          row.add(
-              getClassCell(
-                  disjoints,
-                  col,
-                  displayRendererType,
-                  sortRendererType,
-                  provider,
-                  excludeAnonymous));
+          } else if (entity.isOWLAnnotationProperty()) {
+            Collection<OWLAnnotationProperty> disjoints =
+                EntitySearcher.getDisjointProperties(entity.asOWLAnnotationProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    disjoints,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
 
-        } else if (entity.isOWLAnnotationProperty()) {
-          Collection<OWLAnnotationProperty> disjoints =
-              EntitySearcher.getDisjointProperties(entity.asOWLAnnotationProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  disjoints,
-                  col,
-                  displayRendererType,
-                  sortRendererType,
-                  provider,
-                  excludeAnonymous));
+          } else if (entity.isOWLDataProperty()) {
+            Collection<OWLDataPropertyExpression> disjoints =
+                EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    disjoints,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
 
-        } else if (entity.isOWLDataProperty()) {
-          Collection<OWLDataPropertyExpression> disjoints =
-              EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  disjoints,
-                  col,
-                  displayRendererType,
-                  sortRendererType,
-                  provider,
-                  excludeAnonymous));
-
-        } else if (entity.isOWLObjectProperty()) {
-          Collection<OWLObjectPropertyExpression> disjoints =
-              EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology);
-          row.add(
-              getPropertyCell(
-                  disjoints,
-                  col,
-                  displayRendererType,
-                  sortRendererType,
-                  provider,
-                  excludeAnonymous));
-        }
-      } else if (colName.equalsIgnoreCase("type")
-          || iriStr.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
-        if (entity.isOWLNamedIndividual()) {
-          Collection<OWLClassExpression> types =
-              EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology);
-          row.add(
-              getClassCell(
-                  types, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
-        }
-      } else {
-        throw new Exception(String.format(invalidColumnError, colName));
+          } else if (entity.isOWLObjectProperty()) {
+            Collection<OWLObjectPropertyExpression> disjoints =
+                EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology);
+            row.add(
+                getPropertyCell(
+                    disjoints,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    excludeAnonymous));
+          }
+          break;
+        case "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":
+          // Class Assertioons
+          if (entity.isOWLNamedIndividual()) {
+            Collection<OWLClassExpression> types =
+                EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology);
+            row.add(
+                getClassCell(
+                    types, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+          }
+          break;
+        default:
+          throw new Exception(String.format(invalidColumnError, colName));
       }
     }
 
     return row;
+  }
+
+  /**
+   * Get a list of the synonyms for an entity. Synonyms are one of: oboInOwl broad, narrow, related,
+   * or exact synonym, or IAO alternative term.
+   *
+   * @param ontology OWLOntology to get annotation assertiono axioms from
+   * @param entity OWLEntity to get synonyms of
+   * @return list of string synonyms
+   */
+  private static List<String> getSynonyms(OWLOntology ontology, OWLEntity entity) {
+    List<String> synonyms = new ArrayList<>();
+    for (OWLAnnotationAssertionAxiom ax : ontology.getAnnotationAssertionAxioms(entity.getIRI())) {
+      String apIRI = ax.getProperty().getIRI().toString();
+      if (synonymProperties.contains(apIRI)) {
+        OWLLiteral lit = ax.getValue().asLiteral().orNull();
+        if (lit != null) {
+          synonyms.add(lit.getLiteral());
+        }
+      }
+    }
+    Collections.sort(synonyms);
+    return synonyms;
   }
 
   /**
@@ -1134,5 +1205,71 @@ public class ExportOperation {
       // Expression, no cardinality
       return String.format("(%s)", render);
     }
+  }
+
+  /**
+   * Add some defaults to the label map.
+   *
+   * @param labelMap label map to update
+   */
+  private static void updateLabelMap(Map<String, IRI> labelMap) {
+    // Uppercase with space
+    labelMap.put("SubClass Of", IRI.create("http://www.w3.org/2000/01/rdf-schema#subClassOf"));
+    labelMap.put(
+        "SubProperty Of", IRI.create("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"));
+    labelMap.put("Equivalent Class", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put("Equivalent Classes", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put(
+        "Equivalent Property", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put(
+        "Equivalent Properties", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put("Disjoint With", IRI.create("http://www.w3.org/2002/07/owl#disjointWith"));
+    labelMap.put("Type", IRI.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"));
+
+    // Uppercase no space
+    labelMap.put("SubClassOf", IRI.create("http://www.w3.org/2000/01/rdf-schema#subClassOf"));
+    labelMap.put("SubPropertyOf", IRI.create("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"));
+    labelMap.put("EquivalentClass", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put("EquivalentClasses", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put(
+        "EquivalentProperty", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put(
+        "EquivalentProperties", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put("DisjointWith", IRI.create("http://www.w3.org/2002/07/owl#disjointWith"));
+
+    // Camel case
+    labelMap.put("subClassOf", IRI.create("http://www.w3.org/2000/01/rdf-schema#subClassOf"));
+    labelMap.put("subPropertyOf", IRI.create("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"));
+    labelMap.put("equivalentClass", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put("equivalentClasses", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put(
+        "equivalentProperty", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put(
+        "equivalentProperties", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put("disjointWith", IRI.create("http://www.w3.org/2002/07/owl#disjointWith"));
+
+    // Lowercase with space
+    labelMap.put("subclass of", IRI.create("http://www.w3.org/2000/01/rdf-schema#subClassOf"));
+    labelMap.put(
+        "subproperty of", IRI.create("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"));
+    labelMap.put("equivalent class", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put("equivalent classes", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put(
+        "equivalent property", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put(
+        "equivalent properties", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put("disjoint with", IRI.create("http://www.w3.org/2002/07/owl#disjointWith"));
+    labelMap.put("type", IRI.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"));
+
+    // Lowercase no space
+    labelMap.put("subclassof", IRI.create("http://www.w3.org/2000/01/rdf-schema#subClassOf"));
+    labelMap.put("subpropertyof", IRI.create("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"));
+    labelMap.put("equivalentclass", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put("equivalentclasses", IRI.create("http://www.w3.org/2002/07/owl#equivalentClass"));
+    labelMap.put(
+        "equivalentproperty", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put(
+        "equivalentproperties", IRI.create("http://www.w3.org/2002/07/owl#equivalentProperty"));
+    labelMap.put("disjointwith", IRI.create("http://www.w3.org/2002/07/owl#disjointWith"));
   }
 }

@@ -1,6 +1,7 @@
 package org.obolibrary.robot.export;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import org.semanticweb.owlapi.model.IRI;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
@@ -27,17 +28,6 @@ public class Row {
   }
 
   /**
-   * Get the Cell value of a column.
-   *
-   * @param columnName column name
-   * @return one or more cell values (List)
-   */
-  public List<String> getDisplayValues(String columnName) {
-    Cell c = cells.getOrDefault(columnName, null);
-    return c.getDisplayValues();
-  }
-
-  /**
    * Get the Cell sort value of a column.
    *
    * @param columnName column name
@@ -48,6 +38,11 @@ public class Row {
     return c.getSortValueString();
   }
 
+  /**
+   * Return the subject of this row as an IRI.
+   *
+   * @return IRI of the subject
+   */
   public IRI getSubject() {
     return subject;
   }
@@ -67,7 +62,13 @@ public class Row {
       Cell cell = cells.getOrDefault(columnName, null);
       String value;
       if (cell != null) {
-        value = String.join(split, cell.getDisplayValues());
+        List<String> values = cell.getDisplayValues();
+        if (values.size() > 1) {
+          // If size is greater than 1, escape any split characters with a backslash
+          values =
+              values.stream().map(x -> x.replace(split, "\\" + split)).collect(Collectors.toList());
+        }
+        value = String.join(split, values);
       } else {
         value = "";
       }
@@ -82,17 +83,23 @@ public class Row {
    *
    * @param columns list of Columns
    * @param split character to split multiple values on
-   * @return
+   * @return HTML string rendering of row
    */
   public String toHTML(List<Column> columns, String split) {
     StringBuilder sb = new StringBuilder();
-    sb.append("\t<tr resource=\"").append(subject.toString()).append("\">\n");
+    sb.append("\t<tr>\n");
     for (Column c : columns) {
       String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);
       String value;
       if (cell != null) {
-        value = String.join(split, cell.getDisplayValues());
+        List<String> values = cell.getDisplayValues();
+        if (values.size() > 1) {
+          // If size is greater than 1, escape any split characters with a backslash
+          values =
+              values.stream().map(x -> x.replace(split, "\\" + split)).collect(Collectors.toList());
+        }
+        value = String.join(split, values);
       } else {
         value = "";
       }

@@ -1,4 +1,4 @@
-package org.obolibrary.robot;
+package org.obolibrary.robot.providers;
 
 import java.util.List;
 import java.util.Map;

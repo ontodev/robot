@@ -44,9 +44,10 @@ Various `--header` types are supported:
 	* `IRI`: creates an "IRI" column based on the full unique identifier
 	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE)
 	* `LABEL`: creates a "Label" column based on `rdfs:label`
+	* `SYNONYMS`: creates a "SYNONYMS" column based on all synonyms (oboInOwl exact, broad, narrow, related, or IAO alternative term)
 	* `SubClass Of`: creates a "SubClass Of" column based on `rdfs:subClassOf`
 	* `SubClasses`: creates a "SubClasses" column based on direct children of a class
-	* `Eqivalent Class`: creates an "Equivalent Classes" column based on `owl:equivalentClass`
+	* `Equivalent Class`: creates an "Equivalent Classes" column based on `owl:equivalentClass`
 	* `SubProperty Of`: creates a "SubProperty Of" column based on `rdfs:subPropertyOf`
 	* `Equivalent Property`: creates an "Equivalent Properties" column based on `owl:equivalentProperty`
 	* `Disjoint With`: creates a "Disjoint With" column based on `owl:disjointWith`
@@ -61,13 +62,13 @@ The first header in the `--header` list is used to sort the rows of the export. 
       --sort "LABEL|SubClass Of" \
       --export results/nucleus-sorted.csv
       
-In the example above, the rows are first sorted on the `LABEL` field, and then sorted by `SubClass Of`. This means that entities with the same parent will be grouped in alphabetical order.
+In the example above, the rows are first sorted on the `NAME` field, and then sorted by `SubClass Of`. This means that entities with the same parent will be grouped in alphabetical order.
 
-If the `--sort` header starts with `*`, the column will be sorted in reverse order.
+If the `--sort` header starts with `^`, the column will be sorted in reverse order.
 
     robot export --input nucleus_part_of.owl \
       --header "ID|LABEL|SubClass Of" \
-      --sort "*LABEL" \
+      --sort "^LABEL" \
       --export results/nucleus-reversed.csv
 
 All special keyword columns will include both named OWL objects (named classes, properties, and individuals) and anonymous expressions (class expressions, property expressions). When using another object or data property, the values will include both individuals and class expressions (from subclass or equivalent statements) in Manchester syntax. When using an annotation property, the literal value will be returned.
@@ -75,9 +76,10 @@ All special keyword columns will include both named OWL objects (named classes, 
 By default, multiple values in a cell are separated with a pipe character (`|`). You can update this to anything you'd like with the `--split` option. For example, you could separate with commas:
 ```
 robot export --input nucleus_part_of.owl \
-  --header "LABEL|SubClass Of" --split ", "
+  --header "NAME|SubClass Of" --split ", "
 ```
 
+The output of any cell with multiple values is sorted in alphabetical order.
 
 ### Including and Excluding Entities
 
@@ -114,16 +116,31 @@ Note that in the example above, the first two headers are special keywords and t
 
 ### Rendering Cell Values
 
-By default, cell values are rendered with the label of the corresponding OWLObject (an entity, an expression, or an annotation value).
+Entities used in cell values are rendered by one of four different strategies:
 
-You can render entities by other values by including a special tag after the column name. To render by ID/CURIE, include `[ID]`. To render by IRI, include `[IRI]`:
+* `NAME` - render the entity by label (if label does not exist, entity is rendered by CURIE)
+* `ID` - render the entity by short form ID/CURIE
+* `IRI` - render the entity by full IRI
+* `LABEL` - render the entity by label ONLY (if label does not exist, entity is rendered as an empty string)
+
+By default, values are rendered with the `NAME` strategy. To update the strategy globally, you can use the `--entity-format` option and provide one of the above values:
+  
+    robot export --input nucleus_part_of.owl \
+      --header "ID|SubClass Of" \
+      --entity-format ID \
+      --exclude-anonymous true \
+      --export results/nucleus-ids.csv
+
+In the above example, all the "subclass of" values will be rendered by their short form ID.
+
+You can also specify different rendering strategies for different columns by including the strategy name in a square-bracket-enclosed tag after the column name:
 
     robot export --input nucleus_part_of.owl \
       --header "LABEL|SubClass Of [ID]|SubClass Of [IRI]" \
       --exclude-anonymous true \
       --export results/nucleus-iris.csv
-      
-These tags should not be used with the following default columns: `LABEL`, `ID`, `IRI`, as they will not change the rendered values.
+
+These tags should not be used with the following default columns: `LABEL`, `ID`, or `IRI` as they will not change the rendered values.
 
 ### Preparing the Ontology
 
@@ -147,4 +164,4 @@ The following formats are currently supported: `tsv`, `csv`, and `html`. Please 
 
 ### Unknown Tag Error
 
-The tag for rendering following a column name must be one of: `[ID]`, `[IRI]`, `[LABEL]`.
+The tag for rendering following a column name must be one of: `[ID]`, `[IRI]`, `[NAME]`.

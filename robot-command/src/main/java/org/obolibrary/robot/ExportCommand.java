@@ -26,6 +26,11 @@ public class ExportCommand implements Command {
     o.addOption("n", "include", true, "groups of terms to include");
     o.addOption("f", "format", true, "output file format (TSV, CSV, or HTML)");
     o.addOption("S", "split", true, "character to split multiple values on (default: |)");
+    o.addOption(
+        "E",
+        "entity-format",
+        true,
+        "rendering format for entities when not specified (default: NAME)");
 
     options = o;
   }
