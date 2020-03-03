@@ -7,107 +7,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
 ## [1.6.0] - 2020-03-03
-
-This release adds the [`collapse`](http://robot.obolibrary.org/collapse) command.
-
-## [1.5.0] - 2019-11-28
-
-This release includes the new [`python`](http://robot.obolibrary.org/python) command, allowing ROBOT to be controlled from Python using [Py4j](https://www.py4j.org/).
-
-Other new features include:
-
-- `internal`/`external` selectors for `remove`/`filter` (#570)
-- language selectors for `remove`/`filter` (#574)
-- `tautologies` and `structural-tautologies` selectors for `remove`/`filter`(#579)
-- catalog options for right-side of `diff` (#584)
-
-And there have been some minor bug fixes.
-
-## [1.4.3] - 2019-09-12
-
-This release addresses excessive logging (see #567 and #374).
-
-## [1.4.2] - 2019-09-11
-
-This release includes a few new features and several bug fixes:
-
-- update `repair` to migrate annotations (#510)
-- use Jena TDB for `report` (#558)
-- add `--exclude-tautologies` option (#560)
-- follow redirects for gzipped input IRIs (#537)
-- fix bug with imported axioms (#523)
-- fix index out of bounds for `report --print` (#546)
-- fix stack overflow in `remove`/`filter` (#547)
-- fix query when chaining with `--input-iri` (#555)
-- fix template bug with equivalent classes (#559)
-- fix template bug with nested annotation (#564)
-
-## [1.4.1] - 2019-06-27
-
-This release adds several options and fixes some bugs:
-
-- major update to `template` command (#403)
-- add `--tdb true` option to `query` for Jena TDB on-disk storage (#475)
-- add IRI pattern matching to `remove`/`filter` (#448)
-- add `--signature` option to `remove`/`filter`, improve docs (#484)
-- add more output options to `diff` (#461)
-- specify prefixes for output (#488)
-- fix invalid reference errors for OWL built-ins (#455)
-- fix import handling for SPARQL UPDATE (#471)
-- fix `remove`/`filter` for terms not in ontology (#507)
-
-## [1.4.0] - 2019-03-14
-
-This release adds the `rename` command (see #419), allowing you to replace lists of old IRIs with new IRIs. It also adds SPARQL Update support (#352), for adding and removing triples from ontologies using SPARQL. This feature builds on Apache Jena, but note the warning in the 'Update' section of the documentation at http://robot.obolibrary.org/query.
-
-Other improvements include:
-
-- new `--annotate-with-source` option for `extract` (#392)
-- new `--intermediates` option for `extract` (#441)
-- new `--individuals` option for `extract` (#385)
-- improvements to the built-in reports (#438)
-- new selectors for `remove` and `filter`: domain and range (#427), ontology (#452)
-
-## [1.3.0] - 2019-01-18
-
-This release of ROBOT introduces the `explain` command, contributed by Jim Balhoff, which finds explanations for axioms inferred by a reasoner. See http://robot.obolibrary.org/explain
-
-## [1.2.0] - 2018-12-06
-
-This release of ROBOT introduces the `remove` and `filter` commands, which allow you to remove selected axioms from an ontology. See <http://robot.obolibrary.org/remove>.
-
-**Breaking Change**: We have upgraded from Apache Jena 2.13.0 to 3.8.0 (#314), which involves the renaming of several packages and changes to the return types of `QueryOperation`. One other change we've noted is that the new Jena adds fewer `xsd:string` datatypes than the previous version.
-
-Other changes:
-
-- `--use-graphs true` option for `query` allows queries over imports as named graphs, #158
-- upgrade to OWLAPI 4.5.6 sometimes changes the ordering of elements in RDFXML format, causing spurious differences in line order when comparing output from previous versions of ROBOT. But note that Protege5.5 uses the same version of the OWLAPI so orderings should be consistent between the two.
-- add `--labels` option to `diff` command, #363
-- add support for gzipped files, #371
-
-## [1.1.0] - 2018-08-04
-
-This release of ROBOT includes the new `report` command and a number of other improvements.
 
 ### Added
 
-- `--collapse-import-closure` option for `merge`: When `true` (the default) all imports will be merged and all `owl:import` statements will be removed. **Possible breaking change**: In previous versions of ROBOT, `owl:import` statements were not removed. #275
-- global `--catalog FILE` option #274
-- `--check` option for `convert` allows conversion of more OBO-format files
-- `--include-annotations` option for `merge` allows better control of ontology annotations #277
-- `--copy-ontology-annotations` option for `extract`, #319
-- `--dump-unsatisfiable` option for `reason`, #174
+- Add [`collapse`] command [#578]
+
+## [1.5.0] - 2019-11-28
+
+### Added
+
+- Add new [`python`] command, allowing ROBOT to be controlled from Python using [Py4j](https://www.py4j.org/).
+- Add `internal`/`external` selectors for [`remove`]/[`filter`] in [#570]
+- Add language selectors for [`remove`]/[`filter`] in [#574]
+- Add `tautologies` and `structural-tautologies` selectors for [`remove`]/[`filter`] in [#579]
+- Add catalog options for right-side of [`diff`] in [#584]
+
+## [1.4.3] - 2019-09-12
 
 ### Fixed
-- improved error messages, linking to ROBOT website #246
 
+- Fix excessive logging, [#567] and [#374]
+
+## [1.4.2] - 2019-09-11
+
+### Added
+
+- Update [`repair`] to migrate annotations [#510]
+- Allow use of Jena TDB for [`report`] in [#558]
+- Add `--exclude-tautologies` option for [`reason`] in [#560]
+
+### Changed
+
+- Follow redirects for gzipped input IRIs [#537]
+
+### Fixed
+
+- Fix bug with imported axioms [#523]
+- Fix index out of bounds for [`report`] `--print` in [#546]
+- Fix stack overflow in [`remove`]/[`filter`] in [#547]
+- Fix [`query`] when chaining with `--input-iri` [#555]
+- Fix [`template`] bug with equivalent classes [#559]
+- Fix [`template`] bug with nested annotation [#564]
+
+## [1.4.1] - 2019-06-27
+
+### Added
+
+- Add `--tdb true` option to [`query`] for Jena TDB on-disk storage [#475]
+- Add IRI pattern matching to [`remove`]/[`filter`] in [#448]
+- Add `--signature` option to [`remove`]/[`filter`], improve docs [#484]
+- Add more output options to [`diff`] in [#461]
+- Allow specified prefixes for output [#488]
+
+### Changed
+
+- Made major update to [`template`] command [#403]
+
+### Fixed
+
+- Fix invalid reference errors for OWL built-ins [#455]
+- Fix import handling for SPARQL UPDATE [#471]
+- Fix [`remove`]/[`filter`] for terms not in ontology [#507]
+
+## [1.4.0] - 2019-03-14
+
+### Added
+
+- Add [`rename`] command [#419], allowing you to replace lists of old IRIs with new IRIs
+- Add SPARQL Update support [#352], but note the warning in the 'Update' section of the documentation at <http://robot.obolibrary.org/query>
+- Add `--annotate-with-source` option for [`extract`] in [#392]
+- Add `--intermediates` option for [`extract`] [#441]
+- Add `--individuals` option for [`extract`] [#385]
+- Add new selectors for [`remove`] and [`filter`]: `domain` and `range` [#427], `ontology` [#452]
+
+### Changed
+
+- Made improvements to the built-in reports [#438]
+
+## [1.3.0] - 2019-01-18
+
+### Added
+
+- Add [`explain`] command, contributed by [Jim Balhoff](https://github/balhoff)
+
+## [1.2.0] - 2018-12-06
+
+### Added
+
+- Add [`remove`] command for removing axioms from an ontology
+- Add [`filter`] command for copying selected axioms to a new ontology
+- Add `--use-graphs true` option for [`query`] allows queries over imports as named graphs [#158]
+- Add `--labels` option to [`diff`] command [#363]
+- Add support for gzipped files [#371]
+
+### Changed
+
+- **Breaking Change**: We have upgraded from Apache Jena 2.13.0 to 3.8.0 [#314], which involves the renaming of several packages and changes to the return types of `QueryOperation`. One other change we've noted is that the new Jena adds fewer `xsd:string` datatypes than the previous version.
+- Upgrade to OWLAPI 4.5.6 sometimes changes the ordering of elements in RDFXML format, causing spurious differences in line order when comparing output from previous versions of ROBOT. But note that Protege5.5 uses the same version of the OWLAPI so orderings should be consistent between the two.
+
+## [1.1.0] - 2018-08-04
+
+### Added
+
+- Add [`report`] command
+- Add `--collapse-import-closure` option for [`merge`]: When `true` (the default) all imports will be merged and all `owl:import` statements will be removed. **Possible breaking change**: In previous versions of ROBOT, `owl:import` statements were not removed. [#275]
+- Add global `--catalog FILE` option [#274]
+- Add `--check` option for [`convert`] allows conversion of more OBO-format files
+- Add `--include-annotations` option for [`merge`] allows better control of ontology annotations [#277]
+- Add `--copy-ontology-annotations` option for [`extract`] in [#319]
+- Add `--dump-unsatisfiable` option for [`reason`] [#174]
+
+### Fixed
+
+- improved error messages, linking to ROBOT website [#246]
 
 ## [1.0.0] - 2018-02-08
 
 First official release of ROBOT!
-
 
 [Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.6.0...HEAD
 [1.6.0]: https://github.com/ontodev/robot/compare/v1.5.0...v1.6.0
@@ -119,4 +136,67 @@ First official release of ROBOT!
 [1.3.0]: https://github.com/ontodev/robot/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/ontodev/robot/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ontodev/robot/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/ontodev/robo/releases/tag/v1.0.0
+[1.0.0]: https://github.com/ontodev/robot/releases/tag/v1.0.0
+
+[Jim Balhoff]: https://github/balhoff
+
+[`collapse`]: http://robot.obolibrary.org/collapse
+[`convert`]: http://robot.obolibrary.org/convert
+[`diff`]: http://robot.obolibrary.org/diff
+[`explain`]: http://robot.obolibrary.org/explain
+[`extract`]: http://robot.obolibrary.org/extract
+[`filter`]: http://robot.obolibrary.org/filter
+[`merge`]: http://robot.obolibrary.org/merge
+[`python`]: http://robot.obolibrary.org/python
+[`query`]: http://robot.obolibrary.org/query
+[`reason`]: http://robot.obolibrary.org/reason
+[`remove`]: http://robot.obolibrary.org/remove
+[`rename`]: http://robot.obolibrary.org/rename
+[`repair`]: http://robot.obolibrary.org/repair
+[`report`]: http://robot.obolibrary.org/report
+[`template`]: http://robot.obolibrary.org/template
+
+[#584]: https://github.com/ontodev/robot/issues/584
+[#579]: https://github.com/ontodev/robot/issues/579
+[#578]: https://github.com/ontodev/robot/issues/579
+[#574]: https://github.com/ontodev/robot/issues/574
+[#570]: https://github.com/ontodev/robot/issues/570
+[#567]: https://github.com/ontodev/robot/issues/567
+[#564]: https://github.com/ontodev/robot/issues/564
+[#560]: https://github.com/ontodev/robot/issues/560
+[#559]: https://github.com/ontodev/robot/issues/559
+[#558]: https://github.com/ontodev/robot/issues/558
+[#555]: https://github.com/ontodev/robot/issues/555
+[#547]: https://github.com/ontodev/robot/issues/547
+[#546]: https://github.com/ontodev/robot/issues/546
+[#537]: https://github.com/ontodev/robot/issues/537
+[#523]: https://github.com/ontodev/robot/issues/523
+[#510]: https://github.com/ontodev/robot/issues/510
+[#507]: https://github.com/ontodev/robot/issues/507
+[#488]: https://github.com/ontodev/robot/issues/488
+[#484]: https://github.com/ontodev/robot/issues/484
+[#475]: https://github.com/ontodev/robot/issues/475
+[#471]: https://github.com/ontodev/robot/issues/471
+[#461]: https://github.com/ontodev/robot/issues/461
+[#455]: https://github.com/ontodev/robot/issues/455
+[#452]: https://github.com/ontodev/robot/issues/452
+[#448]: https://github.com/ontodev/robot/issues/448
+[#441]: https://github.com/ontodev/robot/issues/441
+[#438]: https://github.com/ontodev/robot/issues/438
+[#427]: https://github.com/ontodev/robot/issues/427
+[#419]: https://github.com/ontodev/robot/issues/419
+[#403]: https://github.com/ontodev/robot/issues/403
+[#392]: https://github.com/ontodev/robot/issues/392
+[#385]: https://github.com/ontodev/robot/issues/385
+[#374]: https://github.com/ontodev/robot/issues/374
+[#371]: https://github.com/ontodev/robot/issues/371
+[#363]: https://github.com/ontodev/robot/issues/363
+[#352]: https://github.com/ontodev/robot/issues/352
+[#319]: https://github.com/ontodev/robot/issues/319
+[#314]: https://github.com/ontodev/robot/issues/314
+[#277]: https://github.com/ontodev/robot/issues/277
+[#275]: https://github.com/ontodev/robot/issues/275
+[#274]: https://github.com/ontodev/robot/issues/274
+[#246]: https://github.com/ontodev/robot/issues/246
+[#174]: https://github.com/ontodev/robot/issues/174
+[#158]: https://github.com/ontodev/robot/issues/158
