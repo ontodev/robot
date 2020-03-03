@@ -3,6 +3,9 @@ package org.obolibrary.robot.export;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Column {
 
@@ -14,7 +17,8 @@ public class Column {
   // The display name includes the tag, but the name does not
   private String displayName;
 
-  // Optional header IRI if a property is used in this column
+  // Optional header IRI or property used in this column
+  // One of these must not be null
   private IRI iri = null;
   private OWLAnnotationProperty annotationProperty = null;
   private OWLDataProperty dataProperty = null;
@@ -32,46 +36,83 @@ public class Column {
   // If true, reverse sort
   private boolean reverseSort = false;
 
-  public Column(String name, String displayName, IRI iri, ShortFormProvider shortFormProvider) {
+  /**
+   * Init a new Column using an IRI.
+   *
+   * @param name Column name
+   * @param displayName Column display name
+   * @param iri IRI of column property
+   * @param shortFormProvider ShortFormProvider to use when rendering values
+   */
+  public Column(String name, String displayName, @Nonnull IRI iri, @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.displayName = displayName;
     this.iri = iri;
     this.shortFormProvider = shortFormProvider;
   }
 
+  /**
+   * Init a new Column using an annotation property.
+   *
+   * @param name Column name
+   * @param displayName Column display name
+   * @param annotationProperty column OWLAnnotationProperty
+   * @param shortFormProvider ShortFormProvider to use when rendering values
+   */
   public Column(
       String name,
       String displayName,
-      OWLAnnotationProperty annotationProperty,
-      ShortFormProvider shortFormProvider) {
+      @Nonnull OWLAnnotationProperty annotationProperty,
+      @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.displayName = displayName;
     this.annotationProperty = annotationProperty;
     this.shortFormProvider = shortFormProvider;
   }
 
+  /**
+   * Init a new Column using a data property.
+   *
+   * @param name Column name
+   * @param displayName Column display name
+   * @param dataProperty column OWLDataProperty
+   * @param shortFormProvider ShortFormProvider to use when rendering values
+   */
   public Column(
       String name,
       String displayName,
-      OWLDataProperty dataProperty,
-      ShortFormProvider shortFormProvider) {
+      @Nonnull OWLDataProperty dataProperty,
+      @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.displayName = displayName;
     this.dataProperty = dataProperty;
     this.shortFormProvider = shortFormProvider;
   }
 
+  /**
+   * Init a new column using an object property.
+   *
+   * @param name Column name
+   * @param displayName Column display name
+   * @param objectProperty column OWLObjectProperty
+   * @param shortFormProvider ShortFormProvider to use when rendering values
+   */
   public Column(
       String name,
       String displayName,
-      OWLObjectProperty objectProperty,
-      ShortFormProvider shortFormProvider) {
+      @Nonnull OWLObjectProperty objectProperty,
+      @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.displayName = displayName;
     this.objectProperty = objectProperty;
     this.shortFormProvider = shortFormProvider;
   }
 
+  /**
+   * Get the display name of a column.
+   *
+   * @return String display name
+   */
   public String getDisplayName() {
     return displayName;
   }
@@ -85,6 +126,12 @@ public class Column {
     return name;
   }
 
+  /**
+   * Return the OWLProperty used in a column, or null.
+   *
+   * @return OWLProperty or null
+   */
+  @Nullable
   public OWLProperty getProperty() {
     if (annotationProperty != null) {
       return annotationProperty;
@@ -96,6 +143,12 @@ public class Column {
     return null;
   }
 
+  /**
+   * Return the IRI used in a column, or null.
+   *
+   * @return IRI or null
+   */
+  @Nullable
   public IRI getIRI() {
     return iri;
   }
@@ -105,6 +158,7 @@ public class Column {
    *
    * @return ShortFormProvider
    */
+  @Nonnull
   public ShortFormProvider getShortFormProvider() {
     return shortFormProvider;
   }

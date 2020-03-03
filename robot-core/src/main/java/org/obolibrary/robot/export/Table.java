@@ -20,7 +20,11 @@ public class Table {
   private RendererType displayRenderer = null;
   private RendererType sortRenderer = null;
 
-  /** Init a new Table. */
+  /**
+   * Init a new Table.
+   *
+   * @param format format of the table (tsv, csv, html)
+   */
   public Table(String format) {
     this.format = format;
     columns = new ArrayList<>();
@@ -54,10 +58,20 @@ public class Table {
     rows.add(row);
   }
 
+  /**
+   * Get the type of display renderer
+   *
+   * @return RendererType
+   */
   public RendererType getDisplayRendererType() {
     return displayRenderer;
   }
 
+  /**
+   * Get thee type of sort renderer
+   *
+   * @return RendererType
+   */
   public RendererType getSortRendererType() {
     return sortRenderer;
   }
@@ -71,6 +85,10 @@ public class Table {
     return columns;
   }
 
+  /**
+   * Get the format of this table
+   * @return table format (csv, tsv, or html)
+   */
   public String getFormat() {
     return format;
   }

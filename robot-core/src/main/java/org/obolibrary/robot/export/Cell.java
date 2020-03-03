@@ -18,8 +18,10 @@ public class Cell {
   private String sortValueString;
 
   /**
-   * @param column
-   * @param displayValues
+   * Init a new Cell for a Column with multiple display values and no sort values.
+   *
+   * @param column Column for the cell
+   * @param displayValues List of string output values
    */
   public Cell(Column column, List<String> displayValues) {
     this.column = column;
@@ -52,8 +54,8 @@ public class Cell {
   /**
    * Init a Cell for a Column with single value in cell with no sort value.
    *
-   * @param column
-   * @param displayValue
+   * @param column Column for the cell
+   * @param displayValue String output value
    */
   public Cell(Column column, String displayValue) {
     this.column = column;
@@ -65,9 +67,9 @@ public class Cell {
   /**
    * Init a Cell for a Column with single value in cell.
    *
-   * @param column
-   * @param displayValue
-   * @param sortValue
+   * @param column Column for the cell
+   * @param displayValue String ouput value
+   * @param sortValue String sort value
    */
   public Cell(Column column, String displayValue, String sortValue) {
     this.column = column;
@@ -103,7 +105,9 @@ public class Cell {
     return sortValueString;
   }
 
-  /** */
+  /**
+   * Sort cell values alphabetically.
+   */
   private void sortCellValues() {
     Comparator<CellValue> cvComparator =
         (cv1, cv2) -> {
@@ -118,7 +122,9 @@ public class Cell {
     values.sort(cvComparator);
   }
 
-  /** */
+  /**
+   * Set a Cell's display and sort values with the sort value becoming one string to sort on.
+   */
   private void setSortAndDisplayValues() {
     List<String> sortValues = new ArrayList<>();
     for (CellValue cv : values) {
@@ -138,15 +144,31 @@ public class Cell {
     String displayValue;
     String sortValue;
 
+    /**
+     * Init a new CellValue.
+     *
+     * @param displayValue String display value
+     * @param sortValue String sort value
+     */
     public CellValue(String displayValue, String sortValue) {
       this.displayValue = displayValue;
       this.sortValue = sortValue;
     }
 
+    /**
+     * Return the single display value.
+     *
+     * @return String display value
+     */
     public String getDisplayValue() {
       return displayValue;
     }
 
+    /**
+     * Return the single sort value.
+     *
+     * @return String sort value
+     */
     public String getSortValue() {
       return sortValue;
     }

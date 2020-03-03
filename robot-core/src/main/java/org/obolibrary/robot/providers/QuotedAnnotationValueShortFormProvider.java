@@ -12,7 +12,7 @@ import org.semanticweb.owlapi.util.ShortFormProvider;
 
 /**
  * A custom AnnotationValueShortFormProvider that surrounds multi-word values with single quotes
- * when returning the short form.
+ * when returning the short form when quoting is true.
  */
 public class QuotedAnnotationValueShortFormProvider extends AnnotationValueShortFormProvider {
 
