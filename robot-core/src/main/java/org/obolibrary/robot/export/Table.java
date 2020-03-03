@@ -87,6 +87,7 @@ public class Table {
 
   /**
    * Get the format of this table
+   *
    * @return table format (csv, tsv, or html)
    */
   public String getFormat() {

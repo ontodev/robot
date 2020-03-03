@@ -105,9 +105,7 @@ public class Cell {
     return sortValueString;
   }
 
-  /**
-   * Sort cell values alphabetically.
-   */
+  /** Sort cell values alphabetically. */
   private void sortCellValues() {
     Comparator<CellValue> cvComparator =
         (cv1, cv2) -> {
@@ -122,9 +120,7 @@ public class Cell {
     values.sort(cvComparator);
   }
 
-  /**
-   * Set a Cell's display and sort values with the sort value becoming one string to sort on.
-   */
+  /** Set a Cell's display and sort values with the sort value becoming one string to sort on. */
   private void setSortAndDisplayValues() {
     List<String> sortValues = new ArrayList<>();
     for (CellValue cv : values) {

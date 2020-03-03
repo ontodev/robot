@@ -1,10 +1,9 @@
 package org.obolibrary.robot.export;
 
-import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.util.ShortFormProvider;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.util.ShortFormProvider;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Column {
@@ -44,7 +43,11 @@ public class Column {
    * @param iri IRI of column property
    * @param shortFormProvider ShortFormProvider to use when rendering values
    */
-  public Column(String name, String displayName, @Nonnull IRI iri, @Nonnull ShortFormProvider shortFormProvider) {
+  public Column(
+      String name,
+      String displayName,
+      @Nonnull IRI iri,
+      @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.displayName = displayName;
     this.iri = iri;

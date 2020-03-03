@@ -1,8 +1,6 @@
 package org.obolibrary.robot.export;
 
-/**
- * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
- */
+/** @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a> */
 public enum RendererType {
   // Regular manchester renderer
   OBJECT_RENDERER,
