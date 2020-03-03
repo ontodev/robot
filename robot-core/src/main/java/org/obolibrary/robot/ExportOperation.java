@@ -106,6 +106,24 @@ public class ExportOperation {
     // Default tag for entity rendering when not specified
     String entityFormat = OptionsHelper.getOption(options, "entity-format", "NAME");
 
+    // Create some providers for rendering entities
+    ShortFormProvider oboProvider = new OBOShortFormProvider(ioHelper.getPrefixes());
+    ShortFormProvider iriProvider = new IRIValueShortFormProvider();
+    ShortFormProvider quotedProvider =
+        new QuotedAnnotationValueShortFormProvider(
+            ontology.getOWLOntologyManager(),
+            oboProvider,
+            ioHelper.getPrefixManager(),
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
+    ShortFormProvider labelProvider =
+        new AnnotationValueShortFormProvider(
+            ontology.getOWLOntologyManager(),
+            emptyProvider,
+            emptyIRIProvider,
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
+
     // Create the Column objects and add to table
     List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
     for (String c : columnNames) {
@@ -146,29 +164,16 @@ public class ExportOperation {
       switch (tag.toUpperCase()) {
         case "ID":
         case "CURIE":
-          provider = new OBOShortFormProvider(ioHelper.getPrefixes());
+          provider = oboProvider;
           break;
         case "IRI":
-          provider = new IRIValueShortFormProvider();
+          provider = iriProvider;
           break;
         case "NAME":
-          DefaultPrefixManager pm = ioHelper.getPrefixManager();
-          provider =
-              new QuotedAnnotationValueShortFormProvider(
-                  ontology.getOWLOntologyManager(),
-                  pm,
-                  pm,
-                  Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-                  Collections.emptyMap());
+          provider = quotedProvider;
           break;
         case "LABEL":
-          provider =
-              new AnnotationValueShortFormProvider(
-                  ontology.getOWLOntologyManager(),
-                  emptyProvider,
-                  emptyIRIProvider,
-                  Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-                  Collections.emptyMap());
+          provider = labelProvider;
           break;
         default:
           throw new Exception(String.format(unknownTagError, c, tag));
