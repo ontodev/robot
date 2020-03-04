@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add [`collapse`] command [#578]
-- Add support for anonymous class assertions in templates [#630]
+- Add support for anonymous class assertions in [`template`] in [#630]
 - Add maven plugin to update OBO context [#608]
-- Add more efficient mode for `reduce` when only considering named classes [#619]
+- Add more efficient mode for [`reduce`] when only considering named classes [#619]
 
 ### Changed
 - Switch whitespace queries to regex [#606]
@@ -137,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.6.0...HEAD
 [1.6.0]: https://github.com/ontodev/robot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ontodev/robot/compare/v1.4.3...v1.5.0
 [1.4.3]: https://github.com/ontodev/robot/compare/v1.4.2...v1.4.3
@@ -161,6 +161,7 @@ First official release of ROBOT!
 [`python`]: http://robot.obolibrary.org/python
 [`query`]: http://robot.obolibrary.org/query
 [`reason`]: http://robot.obolibrary.org/reason
+[`reduce`]: http://robot.obolibrary.org/reduce
 [`remove`]: http://robot.obolibrary.org/remove
 [`rename`]: http://robot.obolibrary.org/rename
 [`repair`]: http://robot.obolibrary.org/repair
