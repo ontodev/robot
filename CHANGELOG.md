@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.6.0] - 2020-03-03
+## [1.6.0] - 2020-03-04
 
 ### Added
-
 - Add [`collapse`] command [#578]
+- Add support for anonymous class assertions in templates [#630]
+- Add maven plugin to update OBO context [#608]
+- Add more efficient mode for `reduce` when only considering named classes [#619]
+
+### Changed
+- Switch whitespace queries to regex [#606]
+- Update nucleus import for tests [#597]
+
+### Fixed
+- Fix warning when term is in imports (extract command) [#625]
+- Fix index out of bounds error in extract [#617]
+- Use URIs to fix resource path issues [#603]
 
 ## [1.5.0] - 2019-11-28
 
@@ -156,6 +167,14 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#630]: https://github.com/ontodev/robot/issues/630
+[#625]: https://github.com/ontodev/robot/issues/625
+[#619]: https://github.com/ontodev/robot/issues/619
+[#617]: https://github.com/ontodev/robot/issues/617
+[#608]: https://github.com/ontodev/robot/issues/608
+[#606]: https://github.com/ontodev/robot/issues/606
+[#603]: https://github.com/ontodev/robot/issues/603
+[#597]: https://github.com/ontodev/robot/issues/597
 [#584]: https://github.com/ontodev/robot/issues/584
 [#579]: https://github.com/ontodev/robot/issues/579
 [#578]: https://github.com/ontodev/robot/issues/579
