@@ -125,11 +125,7 @@ For CURIEs, the pattern must always come after the prefix and colon.
 
 ## Axioms
 
-The `--axioms` option allows you to specify the type of OWLAxiom to remove.
-
-More than one type can be provided, either by including multiple types in a quoted, spaced-separated string (e.g., `--axioms "DisjointClasses ClassAssertion"`, or by including multiple `--axioms` options (e.g., `--axioms DisjointUnion --axioms ClassAssertion`.
-
-For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
+The `--axioms` option allows you to specify the type of OWLAxiom to remove. More than one type can be provided and these will be processed **in order**. For each axiom in the ontology (not including its imports closure), if the axiom implements one of the specified axiom types AND *any* of the selected terms are in the axiom's signature, then the axiom is removed from the ontology.
 
 Basic axiom selectors select the axiom(s) based on the OWLAPI AxiomType. We have included some special shortcuts to group related axiom types together.
 - `all` (default)
@@ -204,6 +200,12 @@ Remove structural tautologies (e.g., `owl:Nothing`):
     robot remove --input tautologies.owl \
       --axioms structural-tautologies \
       --output results/no-tautologies.owl
+
+Remove disjoint classes and class assertions:
+
+    robot remove --input template.owl \
+      --axioms "DisjointClasses ClassAssertion" \
+      --output results/no-class-logic.owl
 
 Create a "base" subset by removing external axioms (alternatively, use `filter --axioms internal`):
 
