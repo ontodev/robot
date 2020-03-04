@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix filtering axioms with multiple axiom selectors [#644]
+
 ## [1.6.0] - 2020-03-04
 
 ### Added
@@ -168,6 +171,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#644]: https://github.com/ontodev/robot/issues/644
 [#630]: https://github.com/ontodev/robot/issues/630
 [#625]: https://github.com/ontodev/robot/issues/625
 [#619]: https://github.com/ontodev/robot/issues/619

@@ -201,6 +201,12 @@ Remove structural tautologies (e.g., `owl:Nothing`):
       --axioms structural-tautologies \
       --output results/no-tautologies.owl
 
+Remove disjoint classes and class assertions:
+
+    robot remove --input template.owl \
+      --axioms "DisjointClasses ClassAssertion" \
+      --output results/no-class-logic.owl
+
 Create a "base" subset by removing external axioms (alternatively, use `filter --axioms internal`):
 
     robot remove --input template.owl \
