@@ -23,6 +23,7 @@ The following formats are currently supported:
 * `tsv`
 * `csv`
 * `html`
+* `json`
 
 These can be specified with the `--format` option:
 
@@ -30,7 +31,13 @@ These can be specified with the `--format` option:
       --header "LABEL|SubClass Of" \
       --format html --export results/nucleus.html
  
-If this option is not included, `export` will predict the format based on the file extension. If the extension does not match with an existing format, it will default to `tsv`.
+If this option is not included, `export` will predict the format based on the file extension:
+ 
+    robot export --input nucleus_part_of.owl \
+      --header "ID|LABEL|SubClass Of" \
+      --export results/nucleus.json
+ 
+If the extension does not match with an existing format, it will default to `tsv`.
 
 The `html` format will output an HTML table with [Bootstrap](https://getbootstrap.com/) styling. All entities referenced will be rendered as clickable links.
 
