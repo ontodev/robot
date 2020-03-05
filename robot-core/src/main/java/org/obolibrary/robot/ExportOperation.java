@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.obolibrary.robot.export.*;
 import org.obolibrary.robot.providers.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -69,15 +70,13 @@ public class ExportOperation {
    * @param ontology OWLOntology to export to table
    * @param ioHelper IOHelper to handle labels
    * @param columnNames List of column names, in order
-   * @param exportFile File to export to
    * @param options Map of Export options
    * @throws Exception if file does not exist to write to or a column is not a valid property
    */
-  public static void export(
+  public static Table createExportTable(
       OWLOntology ontology,
       IOHelper ioHelper,
       List<String> columnNames,
-      File exportFile,
       Map<String, String> options)
       throws Exception {
     boolean excludeAnonymous = OptionsHelper.optionIsTrue(options, "exclude-anonymous");
@@ -217,8 +216,22 @@ public class ExportOperation {
 
     // Sort the rows by sort column or columns
     table.sortRows();
+    return table;
+  }
 
+  /**
+   * Save the Table object as: csv, tsv, html, json, or xlsx.
+   *
+   * @param table Table object to save
+   * @param exportPath path to export file
+   * @param options map of export options
+   * @throws Exception on writing file, or if format is unknown
+   */
+  public static void saveTable(Table table, String exportPath, Map<String, String> options)
+    throws Exception {
+    String format = OptionsHelper.getOption(options, "format", "tsv").toLowerCase();
     String split = OptionsHelper.getOption(options, "split", "|");
+    File exportFile = new File(exportPath);
     switch (format) {
       case "tsv":
         IOHelper.writeTable(table.toList(split), exportFile, '\t');
@@ -234,6 +247,12 @@ public class ExportOperation {
       case "json":
         try (PrintWriter out = new PrintWriter(exportFile)) {
           out.print(table.toJSON());
+        }
+        break;
+      case "xlsx":
+        try (Workbook wb = table.asWorkbook(split);
+             FileOutputStream fos = new FileOutputStream(exportFile)) {
+          wb.write(fos);
         }
         break;
       default:

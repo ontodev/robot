@@ -20,10 +20,11 @@ robot export --input nucleus_part_of.owl \
 
 The following formats are currently supported:
 
-* `tsv`
-* `csv`
-* `html`
-* `json`
+* `tsv` - tab-separated file, default format for unknown extensions
+* `csv` - comma-separated file
+* `html` - HTML table with with [Bootstrap](https://getbootstrap.com/) styling
+* `json` - JSON file with values as arrays (except for ID/CURIE and IRI, which are single strings)
+* `xlsx` - Excel workbook with contents on first sheet
 
 These can be specified with the `--format` option:
 
@@ -36,10 +37,6 @@ If this option is not included, `export` will predict the format based on the fi
     robot export --input nucleus_part_of.owl \
       --header "ID|LABEL|SubClass Of" \
       --export results/nucleus.json
- 
-If the extension does not match with an existing format, it will default to `tsv`.
-
-The `html` format will output an HTML table with [Bootstrap](https://getbootstrap.com/) styling. All entities referenced will be rendered as clickable links.
 
 ### Columns
 
@@ -167,7 +164,7 @@ A property cannot be resolved, usually meaning that the label cannot be resolved
 
 ### Unknown Format Error
 
-The following formats are currently supported: `tsv`, `csv`, and `html`. Please make sure you are using one of these formats.
+The following formats are currently supported: `tsv`, `csv`, `html`, `json`, and `xlsx`. Please make sure you are using one of these formats.
 
 ### Unknown Tag Error
 

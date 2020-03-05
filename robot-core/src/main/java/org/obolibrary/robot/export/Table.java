@@ -4,6 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import java.util.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Table {
@@ -59,6 +63,41 @@ public class Table {
    */
   public void addRow(Row row) {
     rows.add(row);
+  }
+
+  /**
+   * Render the Table as a Workbook.
+   *
+   * @param split character to split multiple cell values on
+   * @return Workbook
+   */
+  public Workbook asWorkbook(String split) {
+    Workbook wb = new XSSFWorkbook();
+    wb.createSheet();
+
+    // Add headers
+    Sheet sheet = wb.getSheetAt(0);
+    org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+    int colIdx = 0;
+    for (Column c : columns) {
+      String name = c.getDisplayName();
+      Cell xlsxCell = headerRow.createCell(colIdx);
+      xlsxCell.setCellValue(name);
+      colIdx++;
+    }
+
+    // Add rows
+    for (Row row : rows) {
+      row.addToWorkbook(wb, columns, split);
+    }
+
+    // Set auto sizing
+    // TODO - this takes up, relatively, a lot of time.
+    /* for (int idx = 0; idx < columns.size(); idx++) {
+      sheet.autoSizeColumn(idx);
+    } */
+
+    return wb;
   }
 
   /**
