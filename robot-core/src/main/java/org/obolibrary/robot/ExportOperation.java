@@ -228,7 +228,7 @@ public class ExportOperation {
    * @throws Exception on writing file, or if format is unknown
    */
   public static void saveTable(Table table, String exportPath, Map<String, String> options)
-    throws Exception {
+      throws Exception {
     String format = OptionsHelper.getOption(options, "format", "tsv").toLowerCase();
     String split = OptionsHelper.getOption(options, "split", "|");
     File exportFile = new File(exportPath);
@@ -251,7 +251,7 @@ public class ExportOperation {
         break;
       case "xlsx":
         try (Workbook wb = table.asWorkbook(split);
-             FileOutputStream fos = new FileOutputStream(exportFile)) {
+            FileOutputStream fos = new FileOutputStream(exportFile)) {
           wb.write(fos);
         }
         break;
