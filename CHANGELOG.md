@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add [`export`] command [#481]
-- Add JSON format to [`export`] [#645]
-- Add Excel format to [`export`] [#646]
+- Add JSON format to [`export`] in [#645]
+- Add Excel format to [`export`] in [#646]
 
 ### Fixed
 - Fix filtering axioms with multiple axiom selectors [#644]
