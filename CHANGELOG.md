@@ -163,6 +163,7 @@ First official release of ROBOT!
 [`convert`]: http://robot.obolibrary.org/convert
 [`diff`]: http://robot.obolibrary.org/diff
 [`explain`]: http://robot.obolibrary.org/explain
+[`export`]: http://robot.obolibrary.org/export
 [`extract`]: http://robot.obolibrary.org/extract
 [`filter`]: http://robot.obolibrary.org/filter
 [`merge`]: http://robot.obolibrary.org/merge
@@ -176,6 +177,8 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#646]: https://github.com/ontodev/robot/issues/646
+[#645]: https://github.com/ontodev/robot/issues/645
 [#644]: https://github.com/ontodev/robot/issues/644
 [#630]: https://github.com/ontodev/robot/issues/630
 [#625]: https://github.com/ontodev/robot/issues/625
@@ -204,6 +207,7 @@ First official release of ROBOT!
 [#507]: https://github.com/ontodev/robot/issues/507
 [#488]: https://github.com/ontodev/robot/issues/488
 [#484]: https://github.com/ontodev/robot/issues/484
+[#481]: https://github.com/ontodev/robot/issues/481
 [#475]: https://github.com/ontodev/robot/issues/475
 [#471]: https://github.com/ontodev/robot/issues/471
 [#461]: https://github.com/ontodev/robot/issues/461
