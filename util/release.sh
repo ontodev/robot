@@ -30,7 +30,7 @@ confirm() {
 STEP="0. Initializing"
 step() {
   STEP=$1
-  echo ${STEP}
+  echo "${STEP}"
 }
 
 
@@ -44,10 +44,10 @@ trap 'print_usage' INT TERM EXIT
 
 # Arguments
 VERSION=$1 # the version of this release
-NEXT="$(semver bump minor ${VERSION})-SNAPSHOT" # next version after this release
+NEXT="$(semver bump minor "${VERSION}")-SNAPSHOT" # next version after this release
 TOPLEVEL=$(git rev-parse --show-toplevel)
 
-if [ ${TOPLEVEL} != $(pwd) ]; then
+if [ "${TOPLEVEL}" != "$(pwd)" ]; then
   echo "ERROR: Please run this script from the root of the repository as 'util/release.sh'"
   exit 1
 fi
@@ -81,7 +81,7 @@ step "Check Jenkins"
 curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" | jq --exit-status '.result | test("SUCCESS")'
 
 step "Set the the version number for this release"
-mvn versions:set -DnewVersion=${VERSION}
+mvn versions:set -DnewVersion="${VERSION}"
 
 step "Manually update CHANGELOG.md"
 confirm "Updated?"
@@ -121,7 +121,7 @@ step "Update JAPICMP target version in robot-core/pom.xml"
 sed -i "s|<version>\(.*\)</version> <!-- japicmp target -->|<version>${VERSION}</version> <!-- japicmp target -->|" robot-core/pom.xml
 
 step "Set the next SNAPSHOT version number"
-mvn versions:set -DnewVersion=${NEXT}
+mvn versions:set -DnewVersion="${NEXT}"
 
 step "Review changes for SNAPSHOT version"
 git diff
@@ -145,8 +145,8 @@ ROBOT is a command-line tool for automating ontology development tasks. This rel
 See our homepage for more information about ROBOT: http://robot.obolibrary.org
 
 James"
-if [ $(command -v draft-email) ]; then
-  [ -z "${IMAP_PASSWORD-}" ] || read -s -p "Enter IMAP password:" IMAP_PASSWORD
+if [ "$(command -v draft-email)" ]; then
+  [ -z "${IMAP_PASSWORD-}" ] || read -rsp "Enter IMAP password:" IMAP_PASSWORD
   echo "${EMAIL}" | draft-email
   echo "A draft email has been created"
 else
