@@ -1,17 +1,27 @@
 package org.obolibrary.robot;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.FilenameUtils;
+import org.obolibrary.robot.export.Table;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 public class ExportCommand implements Command {
 
   /** Store the command-line options for the command. */
   private Options options;
+
+  /** Namespace for error messages. */
+  private static final String NS = "export#";
+
+  private static final String unknownFormatError =
+      NS + "UNKNOWN FORMAT ERROR --format %s must be one of: csv, html, json, tsv, or xlsx";
+
+  /** Supported output formats. If the output format is not one of these, it will default to TSV. */
+  private final List<String> supportedFormats = Arrays.asList("csv", "html", "json", "tsv", "xlsx");
 
   /** Initialize the command. */
   public ExportCommand() {
@@ -24,7 +34,7 @@ public class ExportCommand implements Command {
     o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous entities");
     o.addOption("s", "sort", true, "column to sort on (default: first column)");
     o.addOption("n", "include", true, "groups of terms to include");
-    o.addOption("f", "format", true, "output file format (TSV, CSV, or HTML)");
+    o.addOption("f", "format", true, "output file format");
     o.addOption("S", "split", true, "character to split multiple values on (default: |)");
     o.addOption(
         "E",
@@ -131,18 +141,23 @@ public class ExportCommand implements Command {
     String format = CommandLineHelper.getOptionalValue(line, "format");
     if (format == null) {
       // Use the path to determine the format (default is TSV)
-      if (exportPath.endsWith(".csv")) {
-        exportOptions.put("format", "csv");
-      } else if (exportPath.endsWith(".html")) {
-        exportOptions.put("format", "html");
-      } else if (exportPath.endsWith(".json")) {
-        exportOptions.put("format", "json");
+      String ext = FilenameUtils.getExtension(exportPath).toLowerCase();
+      if (supportedFormats.contains(ext)) {
+        exportOptions.put("format", ext);
+      } else {
+        // Unknown extension, use tab-separated
+        exportOptions.put("format", "tsv");
       }
+    } else if (!supportedFormats.contains(format)) {
+      // If a format WAS provided and it's not in the supported formats, throw an error
+      throw new Exception(String.format(unknownFormatError, format));
     }
+
     // Get the split columns
     List<String> columns = Arrays.asList(headerString.split("\\|"));
 
-    ExportOperation.export(ontology, ioHelper, columns, new File(exportPath), exportOptions);
+    Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, exportOptions);
+    ExportOperation.saveTable(t, exportPath, exportOptions);
     return state;
   }
 }

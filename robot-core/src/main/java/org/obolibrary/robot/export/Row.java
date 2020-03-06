@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.poi.ss.usermodel.*;
 import org.semanticweb.owlapi.model.IRI;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
@@ -30,6 +31,84 @@ public class Row {
    */
   public void add(Cell cell) {
     cells.put(cell.getColumnName(), cell);
+  }
+
+  /**
+   * Add this Row to a Workbook.
+   *
+   * @param wb Workbook to add a row to
+   * @param columns list of Columns
+   * @param split character to split multiple cell values on
+   */
+  public void addToWorkbook(Workbook wb, List<Column> columns, String split) {
+    // Create a new XLSX Row
+    Sheet sheet = wb.getSheetAt(0);
+    int rowIdx = sheet.getLastRowNum() + 1;
+    org.apache.poi.ss.usermodel.Row xlsxRow = sheet.createRow(rowIdx);
+
+    // Objects used to add Comments to cells
+    CreationHelper factory = wb.getCreationHelper();
+    ClientAnchor anchor = factory.createClientAnchor();
+    Drawing drawing = sheet.createDrawingPatriarch();
+
+    int cellIdx = 0;
+    for (Column c : columns) {
+      // Create a new XLSX Cell
+      org.apache.poi.ss.usermodel.Cell xlsxCell = xlsxRow.createCell(cellIdx);
+
+      String columnName = c.getDisplayName();
+      Cell cell = cells.getOrDefault(columnName, null);
+
+      String value;
+      String comment = null;
+      CellStyle style = wb.createCellStyle();
+      Font font = wb.createFont();
+      if (cell != null) {
+        List<String> values = cell.getDisplayValues();
+        if (values.size() > 1) {
+          // If size is greater than 1, escape any split characters with a backslash
+          values =
+              values.stream().map(x -> x.replace(split, "\\" + split)).collect(Collectors.toList());
+        }
+        value = String.join(split, values);
+
+        // Maybe set styles
+        IndexedColors cellColor = cell.getCellColor();
+        if (cellColor != null) {
+          style.setFillBackgroundColor(cellColor.getIndex());
+        }
+        FillPatternType cellPattern = cell.getCellPattern();
+        if (cellPattern != null) {
+          style.setFillPattern(cellPattern);
+        }
+        IndexedColors fontColor = cell.getFontColor();
+        if (fontColor != null) {
+          font.setColor(fontColor.getIndex());
+        }
+
+        // Maybe get a comment or null
+        comment = cell.getComment();
+      } else {
+        // Empty value, no styles to set
+        value = "";
+      }
+
+      // Add value to cell
+      xlsxCell.setCellValue(value);
+
+      // Add style to cell
+      style.setFont(font);
+      xlsxCell.setCellStyle(style);
+
+      // Maybe add a comment
+      if (comment != null) {
+        Comment xlsxComment = drawing.createCellComment(anchor);
+        xlsxComment.setString(factory.createRichTextString(comment));
+        xlsxCell.setCellComment(xlsxComment);
+      }
+
+      cellIdx++;
+    }
   }
 
   /**
