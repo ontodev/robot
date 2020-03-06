@@ -1,5 +1,7 @@
 package org.obolibrary.robot.export;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.semanticweb.owlapi.model.IRI;
@@ -12,6 +14,9 @@ public class Row {
 
   // List of cells in this row
   private Map<String, Cell> cells = new HashMap<>();
+
+  // For JSON rendering, these should never be arrays
+  private static final List<String> singles = Arrays.asList("CURIE", "ID", "IRI");
 
   /** Init a new Row. */
   public Row(IRI subject) {
@@ -107,5 +112,37 @@ public class Row {
     }
     sb.append("\t</tr>\n");
     return sb.toString();
+  }
+
+  /**
+   * Render the Row as a JsonObject
+   *
+   * @param columns list of Columns
+   * @return JsonObject representation of the row
+   */
+  public JsonObject toJSON(List<Column> columns) {
+    JsonObject row = new JsonObject();
+    for (Column c : columns) {
+      String columnName = c.getDisplayName();
+      Cell cell = cells.getOrDefault(columnName, null);
+      if (cell != null) {
+        List<String> values = cell.getDisplayValues();
+        if (singles.contains(columnName.toUpperCase())) {
+          if (values.size() == 1) {
+            // Add single value
+            row.addProperty(columnName, values.get(0));
+          }
+        } else {
+          if (!values.isEmpty()) {
+            // Render everything else as an array
+            JsonArray valArray = new JsonArray();
+            // Add each value to array
+            values.forEach(valArray::add);
+            row.add(columnName, valArray);
+          }
+        }
+      }
+    }
+    return row;
   }
 }

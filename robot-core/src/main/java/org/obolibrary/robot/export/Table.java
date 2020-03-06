@@ -1,5 +1,8 @@
 package org.obolibrary.robot.export;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import java.util.*;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
@@ -190,5 +193,20 @@ public class Table {
     sb.append("</table>");
     sb.append("</body>");
     return sb.toString();
+  }
+
+  /**
+   * Render the Table as a JSON string.
+   *
+   * @return JSON string
+   */
+  public String toJSON() {
+    JsonArray table = new JsonArray();
+    for (Row row : rows) {
+      table.add(row.toJSON(columns));
+    }
+
+    Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    return gson.toJson(table);
   }
 }

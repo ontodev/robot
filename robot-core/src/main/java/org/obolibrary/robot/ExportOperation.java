@@ -231,6 +231,11 @@ public class ExportOperation {
           out.print(table.toHTML(split));
         }
         break;
+      case "json":
+        try (PrintWriter out = new PrintWriter(exportFile)) {
+          out.print(table.toJSON());
+        }
+        break;
       default:
         throw new Exception(String.format(unknownFormatError, format));
     }

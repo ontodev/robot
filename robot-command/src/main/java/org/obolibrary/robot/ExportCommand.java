@@ -135,6 +135,8 @@ public class ExportCommand implements Command {
         exportOptions.put("format", "csv");
       } else if (exportPath.endsWith(".html")) {
         exportOptions.put("format", "html");
+      } else if (exportPath.endsWith(".json")) {
+        exportOptions.put("format", "json");
       }
     }
     // Get the split columns
