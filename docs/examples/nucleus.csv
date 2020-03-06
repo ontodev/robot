@@ -1,0 +1,18 @@
+LABEL,SubClass Of,part of
+cell,cellular_component,
+cell part,cellular_component,cell
+cellular_component,,
+intracellular,cell part,
+intracellular membrane-bounded organelle,intracellular organelle|membrane-bounded organelle,
+intracellular organelle,intracellular part|organelle,intracellular
+intracellular organelle lumen,intracellular organelle part|organelle lumen,intracellular organelle
+intracellular organelle part,intracellular part|organelle part,intracellular|intracellular organelle|organelle
+intracellular part,cell part,intracellular
+membrane-bounded organelle,organelle,
+membrane-enclosed lumen,cellular_component,
+nuclear lumen,intracellular organelle lumen|nuclear part,nucleus
+nuclear part,intracellular organelle part,nucleus
+nucleus,intracellular membrane-bounded organelle,
+organelle,cellular_component,
+organelle lumen,membrane-enclosed lumen|organelle part,organelle
+organelle part,cellular_component,organelle
