@@ -94,6 +94,10 @@ mvn clean verify
 
 echo "Everything looks good!"
 
+# This extra step is required to avoid issue https://github.com/ontodev/robot/issues/411
+step "Make a copy of robot.jar for upload to GitHub"
+cp bin/robot.jar robot.jar
+
 step "Review changes for release"
 git diff
 
@@ -114,7 +118,7 @@ step "Manually create GitHub release"
 echo "Open https://raw.githubusercontent.com/ontodev/robot/master/CHANGELOG.md"
 echo "Open https://github.com/ontodev/robot/releases/new?tag=v${VERSION}&title=v${VERSION}"
 echo "Add release notes based on CHANGELOG"
-echo "Upload bin/robot.jar"
+echo "Upload robot.jar"
 confirm "Done?"
 
 step "Update JAPICMP target version in robot-core/pom.xml"
