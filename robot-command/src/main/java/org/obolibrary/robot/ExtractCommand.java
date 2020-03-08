@@ -5,8 +5,11 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -83,6 +86,16 @@ public class ExtractCommand implements Command {
     o.addOption("n", "individuals", true, "handle individuals (default: include)");
     o.addOption("M", "imports", true, "handle imports (default: include)");
     o.addOption("N", "intermediates", true, "specify how to handle intermediate entities");
+    o.addOption(
+      null,
+      "annotation-property",
+      true,
+      "annotation property to include (MIREOT and RDFXML)");
+    o.addOption(
+      null,
+      "annotation-properties",
+      true,
+      "annotation properties to include (MIREOT and RDFXML)");
     options = o;
   }
 
@@ -156,8 +169,6 @@ public class ExtractCommand implements Command {
     }
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
 
     // Override default reasoner options with command-line options
     Map<String, String> extractOptions = ExtractOperation.getDefaultOptions();
@@ -169,9 +180,20 @@ public class ExtractCommand implements Command {
 
     // Get method, make sure it has been specified
     String method =
-        CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
-            .trim()
-            .toLowerCase();
+      CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
+        .trim()
+        .toLowerCase();
+
+    // RDFXML method never loads OWLOntology object
+    if (method.equals("RDFXML")) {
+      outputOntology = rdfxmlExtract(ioHelper, line, extractOptions);
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
+
+    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology inputOntology = state.getOntology();
 
     ModuleType moduleType = null;
     switch (method) {
@@ -266,11 +288,27 @@ public class ExtractCommand implements Command {
       Map<IRI, IRI> sourceMap =
           getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
 
+      // Get optional annotation properties to include
+      // If this isn't included, all annotation properties are included
+      OWLDataFactory df = OWLManager.getOWLDataFactory();
+      Set<IRI> annotationPropertyIRIs =
+        CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+      Set<OWLAnnotationProperty> annotationProperties;
+      if (annotationPropertyIRIs.isEmpty()) {
+        annotationProperties = null;
+      } else {
+        annotationProperties =
+          annotationPropertyIRIs
+            .stream()
+            .map(df::getOWLAnnotationProperty)
+            .collect(Collectors.toSet());
+      }
+
       // First check for lower IRIs, upper IRIs can be null or not
       if (lowerIRIs != null) {
         outputOntologies.add(
             MireotOperation.getAncestors(
-                inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
+                inputOntology, upperIRIs, lowerIRIs, annotationProperties, extractOptions, sourceMap));
         // If there are no lower IRIs, there shouldn't be any upper IRIs
       } else if (upperIRIs != null) {
         throw new IllegalArgumentException(missingLowerTermError);
@@ -279,7 +317,7 @@ public class ExtractCommand implements Command {
       if (branchIRIs != null) {
         outputOntologies.add(
             MireotOperation.getDescendants(
-                inputOntology, branchIRIs, null, extractOptions, sourceMap));
+                inputOntology, branchIRIs, annotationProperties, extractOptions, sourceMap));
       }
     }
     // Get the output IRI and create the output ontology
@@ -292,6 +330,38 @@ public class ExtractCommand implements Command {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
     }
     return outputOntology;
+  }
+
+  /**
+   * Perform a RDFXML extraction.
+   *
+   * @param ioHelper IOHelper to handle resolving terms
+   * @param line CommadLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws Exception on any problem
+   */
+  private static OWLOntology rdfxmlExtract(
+    IOHelper ioHelper, CommandLine line, Map<String, String> extractOptions) throws Exception {
+    String fileName = CommandLineHelper.getOptionalValue(line, "input");
+    String iriString = CommandLineHelper.getOptionalValue(line, "input-iri");
+    if (fileName == null && iriString == null) {
+      throw new Exception(CommandLineHelper.missingInputError);
+    }
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+
+    Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
+    Set<IRI> annotationProperties =
+      CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+
+    XMLHelper xmlHelper;
+    if (fileName != null) {
+      xmlHelper = new XMLHelper(fileName, outputIRI);
+    } else {
+      IRI inputIRI = IRI.create(iriString);
+      xmlHelper = new XMLHelper(inputIRI, outputIRI);
+    }
+    return xmlHelper.extract(terms, annotationProperties, extractOptions);
   }
 
   /**
