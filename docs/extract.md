@@ -68,7 +68,29 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 
 To only include all descendants of a term or set of terms, use `--branch-from-term` or `--branch-from-terms`, respectively. `--lower-term` or `--lower-terms` are not required when using this option.
 
+You may specify which annotation properties to include with `--annotation-property`, or `--annotation-properties` for a text file of annotation properties. These should be referenced by CURIE or IRI.
+
+If neither `--annotation-property` nor `--annotation-properties` is specified, all annotation properties will be included in the output.
+
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
+
+## RDFXML
+
+Loading very large ontologies into ROBOT can require a lot of time and memory. Because of this, it can be easier to parse large RDF/XML files using a streaming XML processor instead of fully loading them into memory.
+
+**Please note** that this method can only be used on files in RDF/XML format.
+
+    robot extract --method RDFXML \
+        --input uberon_fragment.owl \
+        --term UBERON:0000465 \
+        --term UBERON:0001017 \
+        --term UBERON:0002369 \
+        --output uberon_simple.owl
+        
+For this method, one or more `--annotation-property` options can be provided in order to add annotations to the entities. If not included, all annotations will be included in the output. To provide a text file of annotation properties, use `--annotation-properties`.
+
+The `RDFXML` method is similar to MIREOT in that no anonymous class expressions or equivalent classes are included.
+
 
 ### Intermediates
 

@@ -32,7 +32,7 @@ public class XMLHelper {
 
   // Entity types
   private final String ANNOTATION_PROPERTY_TAG =
-    "{http://www.w3.org/2002/07/owl#}AnnotationProperty";
+      "{http://www.w3.org/2002/07/owl#}AnnotationProperty";
   private final String CLASS_TAG = "{http://www.w3.org/2002/07/owl#}Class";
   private final String DATA_PROPERTY_TAG = "{http://www.w3.org/2002/07/owl#}DatatypeProperty";
   private final String OWL_DATATYPE_TAG = "{http://www.w3.org/2002/07/owl#}Datatype";
@@ -85,7 +85,7 @@ public class XMLHelper {
    * @throws OWLOntologyCreationException if empty ontology cannot be created
    */
   public XMLHelper(String fileName, IRI outputIRI)
-    throws IOException, OWLOntologyCreationException {
+      throws IOException, OWLOntologyCreationException {
     this.fileName = fileName;
     // Create an empty ontology
     outputOntology = manager.createOntology();
@@ -123,7 +123,7 @@ public class XMLHelper {
     // Download ontology, following redirects
     logger.info(String.format("Starting download from <%s>", iri.toString()));
     CloseableHttpClient httpclient =
-      HttpClients.custom().setRedirectStrategy(new LaxRedirectStrategy()).build();
+        HttpClients.custom().setRedirectStrategy(new LaxRedirectStrategy()).build();
     try {
       HttpGet get = new HttpGet(iri.toURI());
       HttpResponse r = httpclient.execute(get);
@@ -163,8 +163,8 @@ public class XMLHelper {
    * @throws OWLOntologyCreationException on problem creating empty ontology
    */
   public OWLOntology extract(
-    Set<IRI> targets, Set<IRI> annotationProperties, Map<String, String> options)
-    throws IOException, OWLOntologyCreationException {
+      Set<IRI> targets, Set<IRI> annotationProperties, Map<String, String> options)
+      throws IOException, OWLOntologyCreationException {
     String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
     boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
 
@@ -191,8 +191,8 @@ public class XMLHelper {
       OWLAnnotationProperty isDefinedBy = dataFactory.getRDFSIsDefinedBy();
       for (IRI iri : allTargets) {
         manager.addAxiom(
-          outputOntology,
-          dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, iri, outputIRI));
+            outputOntology,
+            dataFactory.getOWLAnnotationAssertionAxiom(isDefinedBy, iri, outputIRI));
       }
     }
 
@@ -408,7 +408,7 @@ public class XMLHelper {
    * @throws OWLOntologyCreationException on issue creating empty ontology
    */
   private void initOntology(Set<IRI> targets, String intermediates)
-    throws OWLOntologyCreationException {
+      throws OWLOntologyCreationException {
     for (IRI iri : targets) {
       EntityType<?> et = getEntityType(iri);
       if (et == null) {
@@ -443,11 +443,11 @@ public class XMLHelper {
   }
 
   private void addOWLAxiomsToSource(
-    Set<OWLAnnotation> annotations,
-    String source,
-    String property,
-    String target,
-    String targetContent) {
+      Set<OWLAnnotation> annotations,
+      String source,
+      String property,
+      String target,
+      String targetContent) {
     if (!annotations.isEmpty() && source != null && property != null) {
       // We must have a source, a property, and annotations
       // Target (resource) might be null - requires target content
@@ -480,7 +480,7 @@ public class XMLHelper {
         }
         OWLAnnotation parentAnnotation = dataFactory.getOWLAnnotation(ap, lit);
         OWLAxiom ax =
-          dataFactory.getOWLAnnotationAssertionAxiom(sourceIRI, parentAnnotation, annotations);
+            dataFactory.getOWLAnnotationAssertionAxiom(sourceIRI, parentAnnotation, annotations);
         manager.addAxiom(outputOntology, ax);
 
       } else if (targetIRI != null) {
@@ -492,22 +492,22 @@ public class XMLHelper {
         cls.add(targetClass);
 
         if (propertyIRI
-          .toString()
-          .equalsIgnoreCase("http://www.w3.org/2000/01/rdf-schema#subClassOf")) {
+            .toString()
+            .equalsIgnoreCase("http://www.w3.org/2000/01/rdf-schema#subClassOf")) {
           OWLSubClassOfAxiom subClassOfAxiom =
-            dataFactory.getOWLSubClassOfAxiom(sourceClass, targetClass, annotations);
+              dataFactory.getOWLSubClassOfAxiom(sourceClass, targetClass, annotations);
           manager.addAxiom(outputOntology, subClassOfAxiom);
         } else if (propertyIRI
-          .toString()
-          .equalsIgnoreCase("http://www.w3.org/2002/07/owl#equivalentClasses")) {
+            .toString()
+            .equalsIgnoreCase("http://www.w3.org/2002/07/owl#equivalentClasses")) {
           OWLDisjointClassesAxiom disjointClassesAxiom =
-            dataFactory.getOWLDisjointClassesAxiom(cls, annotations);
+              dataFactory.getOWLDisjointClassesAxiom(cls, annotations);
           manager.addAxiom(outputOntology, disjointClassesAxiom);
         } else if (propertyIRI
-          .toString()
-          .equalsIgnoreCase("http://www.w3.org/2002/07/owl#disjointClasses")) {
+            .toString()
+            .equalsIgnoreCase("http://www.w3.org/2002/07/owl#disjointClasses")) {
           OWLEquivalentClassesAxiom eqClassesAxiom =
-            dataFactory.getOWLEquivalentClassesAxiom(cls, annotations);
+              dataFactory.getOWLEquivalentClassesAxiom(cls, annotations);
           manager.addAxiom(outputOntology, eqClassesAxiom);
         }
       }
@@ -522,7 +522,7 @@ public class XMLHelper {
    * @throws XMLStreamException on issue parsing XML
    */
   private void addOWLAxioms(FileInputStream fis, Set<IRI> annotationProperties)
-    throws XMLStreamException {
+      throws XMLStreamException {
     if (annotationProperties == null || annotationProperties.isEmpty()) {
       // Add all annotation properties if they were not provided
       annotationProperties = allAnnotationProperties;
@@ -570,7 +570,7 @@ public class XMLHelper {
                     targetContentBuilder = null;
 
                   } else if (node.equalsIgnoreCase(annotationNode)
-                    && annotationContentBuilder != null) {
+                      && annotationContentBuilder != null) {
                     // End of annotation with content
                     String annotationContent = annotationContentBuilder.toString();
 
@@ -584,11 +584,11 @@ public class XMLHelper {
                     }
 
                     IRI annotationIRI =
-                      IRI.create(annotationNode.replace("{", "").replace("}", ""));
+                        IRI.create(annotationNode.replace("{", "").replace("}", ""));
                     if (annotationProperties.contains(annotationIRI)) {
                       // Only include the annotation if the annotation property is in our set
                       OWLAnnotationProperty ap =
-                        dataFactory.getOWLAnnotationProperty(annotationIRI);
+                          dataFactory.getOWLAnnotationProperty(annotationIRI);
                       OWLAnnotation a = dataFactory.getOWLAnnotation(ap, literal);
                       annotations.add(a);
                       annotationContentBuilder = null;
@@ -687,7 +687,7 @@ public class XMLHelper {
    * @throws XMLStreamException on issue parsing XML
    */
   private void addAnnotations(FileInputStream fis, Set<IRI> annotationProperties)
-    throws XMLStreamException {
+      throws XMLStreamException {
     if (annotationProperties == null || annotationProperties.isEmpty()) {
       // Add all annotation properties if they were not provided
       annotationProperties = allAnnotationProperties;
@@ -832,7 +832,7 @@ public class XMLHelper {
                 lit = dataFactory.getOWLLiteral(content);
               }
               manager.addAxiom(
-                outputOntology, dataFactory.getOWLAnnotationAssertionAxiom(ap, iri, lit));
+                  outputOntology, dataFactory.getOWLAnnotationAssertionAxiom(ap, iri, lit));
 
               // Reset tracking variables
               apIRI = null;
@@ -901,7 +901,7 @@ public class XMLHelper {
       OWLAnnotationProperty child = dataFactory.getOWLAnnotationProperty(childIRI);
       OWLAnnotationProperty parent = dataFactory.getOWLAnnotationProperty(parentIRI);
       manager.addAxiom(
-        outputOntology, dataFactory.getOWLSubAnnotationPropertyOfAxiom(child, parent));
+          outputOntology, dataFactory.getOWLSubAnnotationPropertyOfAxiom(child, parent));
     } else if (et == EntityType.DATA_PROPERTY) {
       OWLDataProperty child = dataFactory.getOWLDataProperty(childIRI);
       OWLDataProperty parent = dataFactory.getOWLDataProperty(parentIRI);

@@ -57,7 +57,8 @@ public class CommandLineHelper {
   private static final String missingRequirementError = NS + "MISSING REQUIREMENT ERROR %s";
 
   /** Error message when no input ontology is provided. */
-  protected static final String missingInputError = NS + "MISSING INPUT ERROR an --input is required";
+  protected static final String missingInputError =
+      NS + "MISSING INPUT ERROR an --input is required";
 
   /** Error message when no input ontology is provided for methods that accept multiple inputs. */
   private static final String missingInputsError =

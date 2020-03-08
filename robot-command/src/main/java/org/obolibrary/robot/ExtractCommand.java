@@ -6,7 +6,6 @@ import com.opencsv.CSVReaderBuilder;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -87,15 +86,12 @@ public class ExtractCommand implements Command {
     o.addOption("M", "imports", true, "handle imports (default: include)");
     o.addOption("N", "intermediates", true, "specify how to handle intermediate entities");
     o.addOption(
-      null,
-      "annotation-property",
-      true,
-      "annotation property to include (MIREOT and RDFXML)");
+        null, "annotation-property", true, "annotation property to include (MIREOT and RDFXML)");
     o.addOption(
-      null,
-      "annotation-properties",
-      true,
-      "annotation properties to include (MIREOT and RDFXML)");
+        null,
+        "annotation-properties",
+        true,
+        "annotation properties to include (MIREOT and RDFXML)");
     options = o;
   }
 
@@ -180,12 +176,12 @@ public class ExtractCommand implements Command {
 
     // Get method, make sure it has been specified
     String method =
-      CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
-        .trim()
-        .toLowerCase();
+        CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
+            .trim()
+            .toLowerCase();
 
     // RDFXML method never loads OWLOntology object
-    if (method.equals("RDFXML")) {
+    if (method.equals("rdfxml")) {
       outputOntology = rdfxmlExtract(ioHelper, line, extractOptions);
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
@@ -292,23 +288,29 @@ public class ExtractCommand implements Command {
       // If this isn't included, all annotation properties are included
       OWLDataFactory df = OWLManager.getOWLDataFactory();
       Set<IRI> annotationPropertyIRIs =
-        CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+          CommandLineHelper.getTerms(
+              ioHelper, line, "annotation-property", "annotation-properties");
       Set<OWLAnnotationProperty> annotationProperties;
       if (annotationPropertyIRIs.isEmpty()) {
         annotationProperties = null;
       } else {
         annotationProperties =
-          annotationPropertyIRIs
-            .stream()
-            .map(df::getOWLAnnotationProperty)
-            .collect(Collectors.toSet());
+            annotationPropertyIRIs
+                .stream()
+                .map(df::getOWLAnnotationProperty)
+                .collect(Collectors.toSet());
       }
 
       // First check for lower IRIs, upper IRIs can be null or not
       if (lowerIRIs != null) {
         outputOntologies.add(
             MireotOperation.getAncestors(
-                inputOntology, upperIRIs, lowerIRIs, annotationProperties, extractOptions, sourceMap));
+                inputOntology,
+                upperIRIs,
+                lowerIRIs,
+                annotationProperties,
+                extractOptions,
+                sourceMap));
         // If there are no lower IRIs, there shouldn't be any upper IRIs
       } else if (upperIRIs != null) {
         throw new IllegalArgumentException(missingLowerTermError);
@@ -342,7 +344,7 @@ public class ExtractCommand implements Command {
    * @throws Exception on any problem
    */
   private static OWLOntology rdfxmlExtract(
-    IOHelper ioHelper, CommandLine line, Map<String, String> extractOptions) throws Exception {
+      IOHelper ioHelper, CommandLine line, Map<String, String> extractOptions) throws Exception {
     String fileName = CommandLineHelper.getOptionalValue(line, "input");
     String iriString = CommandLineHelper.getOptionalValue(line, "input-iri");
     if (fileName == null && iriString == null) {
@@ -352,7 +354,7 @@ public class ExtractCommand implements Command {
 
     Set<IRI> terms = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
     Set<IRI> annotationProperties =
-      CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+        CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
 
     XMLHelper xmlHelper;
     if (fileName != null) {
