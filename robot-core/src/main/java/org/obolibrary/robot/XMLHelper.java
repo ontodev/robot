@@ -763,11 +763,16 @@ public class XMLHelper {
             // IRI = null for entities we don't care about
             if (!allTargets.contains(iri) && isEntity) {
               iri = null;
+              apIRI = null;
+              currentContent = null;
+              annotationDatatype = null;
+              lang = null;
               continue;
             }
 
             // Could be an annotation with a datatype or language
-            if (sr.getAttributeCount() > 0 && !isEntity) {
+            // We only care about the annotations on target IRIs
+            if (sr.getAttributeCount() > 0 && !isEntity && iri != null) {
               String attr = sr.getAttributeName(0).toString();
               if (attr.equals(RDFS_DATATYPE_TAG)) {
                 IRI dtIRI = IRI.create(sr.getAttributeValue(0));
