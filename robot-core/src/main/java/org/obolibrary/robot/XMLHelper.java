@@ -180,6 +180,7 @@ public class XMLHelper {
       throw new IOException("Unable to parse XML from " + this.fileName, e);
     }
 
+    // Add annotations from OWLAxiom objects
     try (FileInputStream fis = new FileInputStream(this.fileName)) {
       addOWLAxioms(fis, annotationProperties);
     } catch (XMLStreamException e) {
@@ -231,15 +232,10 @@ public class XMLHelper {
    * Get the set of parent IRIs for a child entity.
    *
    * @param child IRI to get parents of
-   * @return set of IRIs (maybe empty if no parents), or null if child IRI does not exist
+   * @return set of IRIs (maybe empty if no parents or it doesn't exist)
    */
   public Set<IRI> getParents(IRI child) {
-    if (typeMap.containsKey(child)) {
-      return childParentMap.getOrDefault(child, new HashSet<>());
-    } else {
-      // Entity does not exist in input ontology
-      return null;
-    }
+    return childParentMap.getOrDefault(child, new HashSet<>());
   }
 
   /**
@@ -409,16 +405,22 @@ public class XMLHelper {
    */
   private void initOntology(Set<IRI> targets, String intermediates)
       throws OWLOntologyCreationException {
+    Set<IRI> doesNotExist = new HashSet<>();
     for (IRI iri : targets) {
       EntityType<?> et = getEntityType(iri);
       if (et == null) {
-        System.out.println(String.format("Unable to create entity from <%s>", iri.toString()));
+        // Entity does not exist in the target ontology
+        logger.error(String.format("<%s> does not exist in input ontology", iri.toString()));
+        doesNotExist.add(iri);
         continue;
       }
       // Add declaration
       OWLEntity e = dataFactory.getOWLEntity(et, iri);
       manager.addAxiom(outputOntology, dataFactory.getOWLDeclarationAxiom(e));
     }
+
+    // Remove any that do not exist from the target set
+    targets.removeAll(doesNotExist);
 
     // Handle parents
     for (IRI iri : targets) {
@@ -442,6 +444,15 @@ public class XMLHelper {
     OntologyHelper.getEntities(outputOntology).forEach(e -> allTargets.add(e.getIRI()));
   }
 
+  /**
+   * Add OWLAxioms to their source entity.
+   *
+   * @param annotations Set of OWLAnnotations to add from OWLAxiom
+   * @param source String source IRI
+   * @param property String property IRI
+   * @param target String target IRI or null
+   * @param targetContent String target content or null
+   */
   private void addOWLAxiomsToSource(
       Set<OWLAnnotation> annotations,
       String source,
