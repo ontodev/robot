@@ -1,9 +1,7 @@
 package org.obolibrary.robot;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.Lists;
+import java.util.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -33,7 +31,23 @@ public class ExtractOperation {
   /** Namespace for errors. */
   private static final String NS = "extract#";
 
-  /** Error message when an invalid intermediates opiton is provided. */
+  /** Error message when user provides invalid extraction method. */
+  private static final String invalidMethodError =
+      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT, or mireot-rdfxml";
+
+  /** Error message when upper or lower terms are used for SLME or mireot-rdfxml methods. */
+  private static final String invalidTermsInConfigError =
+      NS + "INVALID TERMS IN CONFIG The '%s' option should only be used for MIREOT";
+
+  /** Error message when 'terms' is missing for SLME or mireot-rdfxml methods. */
+  private static final String missingTermsInConfigError =
+      NS + "MISSING TERMS IN CONFIG 'terms' is a required option in the configuration file";
+
+  /** Error when 'input' or 'input-iri' is missing. */
+  protected static final String missingInputInConfigError =
+      NS + "MISSING INPUT IN CONFIG an 'input' or 'input-iri' is required in configuration file";
+
+  /** Error message when an invalid intermediates option is provided. */
   private static final String unknownIntermediatesError =
       NS + "UNKNOWN INTERMEDIATES ERROR '%s' is not a valid --intermediates arg";
 
@@ -215,6 +229,370 @@ public class ExtractOperation {
   }
 
   /**
+   * Perform a extraction using parameters from a configuration file.
+   *
+   * @param ioHelper IOHelper to handle creating IRIs
+   * @param options Map of options from config file
+   * @return extracted subset
+   * @throws Exception on any problem
+   */
+  public static OWLOntology extractFromConfig(IOHelper ioHelper, Map<String, List<String>> options)
+      throws Exception {
+    // Make sure we have terms to extract
+    if (!options.containsKey("terms")) {
+      throw new Exception(missingTermsInConfigError);
+    }
+    if (options.containsKey("lower-terms")) {
+      throw new Exception(String.format(invalidTermsInConfigError, "lower-terms"));
+    }
+    if (options.containsKey("upper-terms")) {
+      throw new Exception(String.format(invalidTermsInConfigError, "upper-terms"));
+    }
+
+    // Get an input
+    OWLOntology inputOntology;
+    if (options.containsKey("input")) {
+      String inputPath = options.get("input").get(0);
+      inputOntology = ioHelper.loadOntology(inputPath);
+    } else if (options.containsKey("input-iri")) {
+      IRI inputIRI = IRI.create(options.get("input-iri").get(0));
+      inputOntology = ioHelper.loadOntology(inputIRI);
+    } else {
+      throw new Exception(missingInputInConfigError);
+    }
+
+    // Maybe get a target
+    OWLOntology target = null;
+    if (options.containsKey("target")) {
+      String targetPath = options.get("target").get(0);
+      target = ioHelper.loadOntology(targetPath);
+    } else if (options.containsKey("target-iri")) {
+      IRI targetIRI = IRI.create(options.get("target-iri").get(0));
+      target = ioHelper.loadOntology(targetIRI);
+    }
+
+    // Init the checker for label processing
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.setIOHelper(ioHelper);
+    checker.addProperty(dataFactory.getRDFSLabel());
+    checker.addAll(inputOntology);
+    if (target != null) {
+      checker.addAll(target);
+    }
+
+    // Parse terms
+    Set<IRI> terms = new HashSet<>();
+    Map<OWLEntity, Set<OWLEntity>> replaceParents = new HashMap<>();
+    for (String termLine : options.get("terms")) {
+      List<String> split = Lists.newArrayList(termLine.split("\t"));
+      String termString = split.remove(0).trim();
+
+      OWLEntity e = checker.getOWLEntity(termString);
+      if (e == null) {
+        logger.error(String.format("Unable to create entity from '%s'", termString));
+        continue;
+      }
+      terms.add(e.getIRI());
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      // IF there are remaining splits, add them as replacement parents
+      Set<OWLEntity> replaceParentsForCurrent = new HashSet<>();
+      for (String s : split) {
+        if (s.trim().equals("")) {
+          continue;
+        }
+        OWLEntity e2 = checker.getOWLEntity(s);
+        if (e2 == null) {
+          logger.error(String.format("Unable to create entity from '%s'", s));
+          continue;
+        }
+        replaceParentsForCurrent.add(e2);
+      }
+      if (!replaceParentsForCurrent.isEmpty()) {
+        replaceParents.put(e, replaceParentsForCurrent);
+      }
+    }
+
+    // Parse annotation properties
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations = new HashMap<>();
+    for (String apLine : options.getOrDefault("annotations", new ArrayList<>())) {
+      List<String> split = Lists.newArrayList(apLine.split("\t"));
+      String apString = split.remove(0).trim();
+
+      // Try to create an annotation property from the string
+      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(apString, true);
+      if (ap == null) {
+        logger.error(String.format("Unable to create annotation property from '%s'", apString));
+        continue;
+      }
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      String apOpt = split.remove(0);
+      for (String s : split) {
+        OWLAnnotationProperty ap2 = checker.getOWLAnnotationProperty(s, true);
+        if (ap2 == null) {
+          logger.error(String.format("Unable to create annotation property from '%s'", s));
+          continue;
+        }
+        if (apOpt.equalsIgnoreCase("mapto")) {
+          mapToAnnotations.put(ap, ap2);
+        } else if (apOpt.equalsIgnoreCase("copyto")) {
+          copyToAnnotations.put(ap, ap2);
+        }
+      }
+    }
+
+    // Map options from list to string
+    Map<String, String> extractOptions = new HashMap<>();
+    for (String key : getDefaultOptions().keySet()) {
+      if (options.containsKey(key)) {
+        String o = options.get(key).get(0);
+        extractOptions.put(key, o);
+      } else {
+        extractOptions.put(key, getDefaultOptions().get(key));
+      }
+    }
+
+    IRI outputIRI = null;
+    if (options.containsKey("output-iri")) {
+      String iriString = options.get("output-iri").get(0);
+      outputIRI = IRI.create(iriString);
+    }
+
+    String method = options.get("method").get(0);
+    ModuleType m;
+    OWLOntology outputOntology;
+    switch (method.toLowerCase()) {
+      case "star":
+        m = ModuleType.STAR;
+        outputOntology =
+            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
+        break;
+      case "top":
+        m = ModuleType.TOP;
+        outputOntology =
+            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
+        break;
+      case "bot":
+        m = ModuleType.BOT;
+        outputOntology =
+            ExtractOperation.extract(inputOntology, terms, outputIRI, m, extractOptions);
+        break;
+      default:
+        throw new Exception(invalidMethodError);
+    }
+
+    updateExtractedModule(
+        outputOntology, terms, copyToAnnotations, mapToAnnotations, replaceParents);
+    return outputOntology;
+  }
+
+  /**
+   * Perform a 'mireot-rdfxml' extraction using parameters from a configuration file. This method
+   * never loads the ontology object, just parses XML. This is recommended for very large
+   * ontologies.
+   *
+   * @param ioHelper IOHelper to handle creating IRIs
+   * @param options Map of options from config file
+   * @return extracted subset
+   * @throws Exception on any problem
+   */
+  public static OWLOntology mireotRDFXMLExtractFromConfig(
+      IOHelper ioHelper, Map<String, List<String>> options) throws Exception {
+    // Make sure we have terms to extract
+    if (!options.containsKey("terms")) {
+      throw new Exception(missingTermsInConfigError);
+    }
+    if (options.containsKey("lower-terms")) {
+      throw new Exception(String.format(invalidTermsInConfigError, "lower-terms"));
+    }
+    if (options.containsKey("upper-terms")) {
+      throw new Exception(String.format(invalidTermsInConfigError, "upper-terms"));
+    }
+
+    // Get an input
+    String inputPath = null;
+    IRI inputIRI = null;
+    if (options.containsKey("input")) {
+      inputPath = options.get("input").get(0);
+    } else if (options.containsKey("input-iri")) {
+      inputIRI = IRI.create(options.get("input-iri").get(0));
+    } else {
+      throw new Exception(missingInputInConfigError);
+    }
+
+    // Maybe get a target
+    // TODO - maybe allow simple parsing for this too
+    OWLOntology target = null;
+    if (options.containsKey("target")) {
+      String targetPath = options.get("target").get(0);
+      target = ioHelper.loadOntology(targetPath);
+    } else if (options.containsKey("target-iri")) {
+      IRI targetIRI = IRI.create(options.get("target-iri").get(0));
+      target = ioHelper.loadOntology(targetIRI);
+    }
+
+    // If we have a target, we can init a checker
+    QuotedEntityChecker checker = null;
+    if (target != null) {
+      checker = new QuotedEntityChecker();
+      checker.setIOHelper(ioHelper);
+      checker.addProperty(dataFactory.getRDFSLabel());
+      checker.addAll(target);
+    }
+
+    IRI outputIRI = null;
+    if (options.containsKey("output-iri")) {
+      String outputIRIString = options.get("output-iri").get(0);
+      outputIRI = IRI.create(outputIRIString);
+    }
+
+    // Init XML Helper
+    XMLHelper xmlHelper;
+    if (inputPath != null) {
+      xmlHelper = new XMLHelper(inputPath, outputIRI);
+    } else {
+      // IRI should never be null here
+      assert inputIRI != null;
+      xmlHelper = new XMLHelper(inputIRI, outputIRI);
+    }
+
+    // Parse terms
+    Set<IRI> terms = new HashSet<>();
+    Map<OWLEntity, Set<OWLEntity>> replaceParents = new HashMap<>();
+    for (String termLine : options.get("terms")) {
+      List<String> split = Lists.newArrayList(termLine.split("\t"));
+      String termString = split.remove(0).trim();
+
+      // Try to get an IRI
+      IRI iri = xmlHelper.getIRI(termString);
+      if (iri == null) {
+        iri = ioHelper.createIRI(termString);
+      }
+      if (iri == null) {
+        logger.error(String.format("Unable to create IRI from '%s'", termString));
+        continue;
+      }
+
+      EntityType<?> et = xmlHelper.getEntityType(iri);
+      if (et == null) {
+        logger.error(
+            String.format(
+                "Unable to create entity from '%s' - check that this entity exists in the input ontology!",
+                termString));
+        continue;
+      }
+      terms.add(iri);
+      OWLEntity e = dataFactory.getOWLEntity(et, iri);
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      // IF there are remaining splits, add them as replacement parents
+      Set<OWLEntity> replaceParentsForCurrent = new HashSet<>();
+      for (String s : split) {
+        if (s.trim().equals("")) {
+          continue;
+        }
+        IRI iri2 = xmlHelper.getIRI(s);
+        if (iri2 == null) {
+          iri2 = ioHelper.createIRI(s);
+        }
+
+        OWLEntity e2 = null;
+        if (iri2 == null && checker != null) {
+          // Maybe get the entity from the target ontology
+          e2 = checker.getOWLEntity(s);
+        } else if (iri2 == null) {
+          // No target, no IRI -> we cannot add
+          logger.error(String.format("Unable to create IRI from '%s'", s));
+          continue;
+        }
+
+        if (e2 == null && iri2 != null) {
+          // If the entity wasn't found in target, but has an IRI,
+          // we can try to create an entity from input ontology
+          EntityType<?> et2 = xmlHelper.getEntityType(iri2);
+          if (et2 == null) {
+            logger.error(
+                String.format(
+                    "Unable to create entity from '%s' - check that this entity exists in the input ontology!",
+                    s));
+            continue;
+          }
+          e2 = dataFactory.getOWLEntity(et2, iri2);
+        }
+
+        replaceParentsForCurrent.add(e2);
+      }
+      if (!replaceParentsForCurrent.isEmpty()) {
+        replaceParents.put(e, replaceParentsForCurrent);
+      }
+    }
+
+    // Parse annotation properties
+    Set<IRI> annotationProperties = new HashSet<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations = new HashMap<>();
+    for (String apLine : options.getOrDefault("annotations", new ArrayList<>())) {
+      List<String> split = Lists.newArrayList(apLine.split("\t"));
+      String apString = split.remove(0).trim();
+
+      // Try to create an annotation property from the string
+      OWLAnnotationProperty ap = getAnnotationProperty(ioHelper, xmlHelper, checker, apString);
+      if (ap == null) {
+        logger.error(String.format("Unable to create annotation property from '%s'", apString));
+        continue;
+      }
+      annotationProperties.add(ap.getIRI());
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      String apOpt = split.remove(0);
+      for (String s : split) {
+        OWLAnnotationProperty ap2 = getAnnotationProperty(ioHelper, xmlHelper, checker, s);
+        if (ap2 == null) {
+          logger.error(String.format("Unable to create annotation property from '%s'", apString));
+          continue;
+        }
+        if (apOpt.equalsIgnoreCase("mapto")) {
+          mapToAnnotations.put(ap, ap2);
+        } else if (apOpt.equalsIgnoreCase("copyto")) {
+          copyToAnnotations.put(ap, ap2);
+        }
+      }
+    }
+
+    // Map options from list to string
+    Map<String, String> extractOptions = new HashMap<>();
+    for (String key : getDefaultOptions().keySet()) {
+      if (options.containsKey(key)) {
+        String o = options.get(key).get(0);
+        extractOptions.put(key, o);
+      } else {
+        extractOptions.put(key, getDefaultOptions().get(key));
+      }
+    }
+
+    // Create the output ontology
+    OWLOntology outputOntology = xmlHelper.extract(terms, annotationProperties, extractOptions);
+
+    updateExtractedModule(
+        outputOntology, terms, copyToAnnotations, mapToAnnotations, replaceParents);
+    return outputOntology;
+  }
+
+  /**
    * Given an input ontology, an output ontology, and an Imports specification, copy individuals
    * used in logical definitions from the input to the output ontology.
    *
@@ -298,6 +676,31 @@ public class ExtractOperation {
   }
 
   /**
+   * Given an IOHelper, an XMLHelper, a checker, and a string representing an annotation property,
+   * create the OWLAnnotationProperty object.
+   *
+   * @param ioHelper IOHelper to create IRI
+   * @param xmlHelper XMLHelper to get IRI
+   * @param checker QuotedEntityChecker to create AP from (maybe) label
+   * @param apString String to create AP from
+   * @return OWLAnnotationProperty object
+   */
+  private static OWLAnnotationProperty getAnnotationProperty(
+      IOHelper ioHelper, XMLHelper xmlHelper, QuotedEntityChecker checker, String apString) {
+    IRI iri = xmlHelper.getIRI(apString);
+    if (iri == null) {
+      iri = ioHelper.createIRI(apString);
+    }
+
+    if (iri == null) {
+      // Maybe find it in the target ontology
+      return checker.getOWLAnnotationProperty(apString);
+    } else {
+      return dataFactory.getOWLAnnotationProperty(iri);
+    }
+  }
+
+  /**
    * Given an OWLEntity, return an OWLAnnotationAssertionAxiom indicating the source ontology with
    * rdfs:isDefinedBy.
    *
@@ -369,5 +772,56 @@ public class ExtractOperation {
                 RelatedObjectsHelper.selectComplement(outputOntology, precious)),
             null);
     manager.removeAxioms(outputOntology, removeAxioms);
+  }
+
+  /**
+   * Update an extracted module. First copy needed annotations, keeping original annotations. Then
+   * map new annotations, removing the original annotations. Finally, update parents by replacing
+   * old parents with new parents. If terms are dangling after updating parents (and they are not in
+   * the target IRIs), remove these.
+   *
+   * @param outputOntology OWLOntology to update
+   * @param terms Set of IRIs to keep after updating parents
+   * @param copyToAnnotations Map of annotation properties to copy
+   * @param mapToAnnotations Map of annotation properties to replace
+   * @param replaceParents Map of OWLEntity child -> new parent
+   * @throws Exception on any problem
+   */
+  protected static void updateExtractedModule(
+      OWLOntology outputOntology,
+      Set<IRI> terms,
+      Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations,
+      Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations,
+      Map<OWLEntity, Set<OWLEntity>> replaceParents)
+      throws Exception {
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    // Handle annotation options
+    if (!copyToAnnotations.isEmpty()) {
+      OntologyHelper.copyAnnotationObjects(outputOntology, copyToAnnotations);
+    }
+    if (!mapToAnnotations.isEmpty()) {
+      OntologyHelper.mapAnnotationObjects(outputOntology, mapToAnnotations);
+    }
+
+    // Handle parent replacements
+    if (!replaceParents.isEmpty()) {
+      OntologyHelper.replaceParents(outputOntology, replaceParents);
+      // Clean up ontology after moving terms around
+      // If there is a dangling term not in target, remove it
+      Set<OWLObject> remove = new HashSet<>();
+      for (OWLClass c : outputOntology.getClassesInSignature()) {
+        Collection<OWLSubClassOfAxiom> subAxs = outputOntology.getSubClassAxiomsForSubClass(c);
+        // Remove subclass of OWL Thing
+        subAxs.remove(dataFactory.getOWLSubClassOfAxiom(c, dataFactory.getOWLThing()));
+        Collection<OWLSubClassOfAxiom> superAxs = outputOntology.getSubClassAxiomsForSuperClass(c);
+        if (subAxs.isEmpty() && superAxs.isEmpty()) {
+          if (!terms.contains(c.getIRI())) {
+            remove.add(c);
+          }
+        }
+      }
+      Set<OWLAxiom> removeAxs = RelatedObjectsHelper.getPartialAxioms(outputOntology, remove, null);
+      manager.removeAxioms(outputOntology, removeAxs);
+    }
   }
 }

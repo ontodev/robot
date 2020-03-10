@@ -342,6 +342,69 @@ public class OntologyHelper {
   }
 
   /**
+   * Copy a set of annotations with a given annotation property to another annotation property for
+   * all entities. The original annotation is not deleted.
+   *
+   * @param ontology OWLOntology to copy annotations in
+   * @param copyToAnnotations map of existing annotation property -> new annotation property
+   */
+  public static void copyAnnotationObjects(
+      OWLOntology ontology, Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+    Set<OWLEntity> entities = getEntities(ontology);
+    for (OWLEntity e : entities) {
+      for (Map.Entry<OWLAnnotationProperty, OWLAnnotationProperty> copyTo :
+          copyToAnnotations.entrySet()) {
+        OWLAnnotationProperty ap1 = copyTo.getKey();
+        OWLAnnotationProperty ap2 = copyTo.getValue();
+        Collection<OWLAnnotation> annotations =
+            EntitySearcher.getAnnotationObjects(e, ontology, ap1);
+        for (OWLAnnotation a : annotations) {
+          OWLAnnotationValue val = a.getValue();
+          OWLAnnotationAssertionAxiom ax =
+              dataFactory.getOWLAnnotationAssertionAxiom(ap2, e.getIRI(), val);
+          manager.addAxiom(ontology, ax);
+        }
+      }
+    }
+  }
+
+  /**
+   * Map a set of annotations with a given annotation property to another annotation property for
+   * all entities. The original annotation is deleted.
+   *
+   * @param ontology OWLOntology to map annotations in
+   * @param mapToAnnotations map of existing annotation property -> new annotation property
+   */
+  public static void mapAnnotationObjects(
+      OWLOntology ontology, Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+    Set<OWLEntity> entities = getEntities(ontology);
+    for (OWLEntity e : entities) {
+      for (Map.Entry<OWLAnnotationProperty, OWLAnnotationProperty> mapTo :
+          mapToAnnotations.entrySet()) {
+        OWLAnnotationProperty ap1 = mapTo.getKey();
+        OWLAnnotationProperty ap2 = mapTo.getValue();
+        Collection<OWLAnnotation> annotations =
+            EntitySearcher.getAnnotationObjects(e, ontology, ap1);
+        for (OWLAnnotation a : annotations) {
+          OWLAnnotationValue val = a.getValue();
+          OWLAnnotationAssertionAxiom ax1 =
+              dataFactory.getOWLAnnotationAssertionAxiom(ap1, e.getIRI(), val);
+          OWLAnnotationAssertionAxiom ax2 =
+              dataFactory.getOWLAnnotationAssertionAxiom(ap2, e.getIRI(), val);
+          manager.removeAxiom(ontology, ax1);
+          manager.addAxiom(ontology, ax2);
+        }
+      }
+    }
+  }
+
+  /**
    * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
    * the ontology. Always include terms in imports.
    *
@@ -1431,6 +1494,188 @@ public class OntologyHelper {
     for (OWLAnnotation annotation : ontology.getAnnotations()) {
       RemoveOntologyAnnotation remove = new RemoveOntologyAnnotation(ontology, annotation);
       manager.applyChange(remove);
+    }
+  }
+
+  /**
+   * Replace parents in an ontology using the map of child -> new parent(s) OWLEntities. For
+   * individuals, the "new parents" are added as types. Old parents are removed.
+   *
+   * @param ontology OWLOntology to replace parents in
+   * @param addParents Map of OWLEntity child -> Set of OWLEntities parents
+   * @throws Exception if a illegal EntityType is provided (e.g., a DataType)
+   */
+  public static void replaceParents(OWLOntology ontology, Map<OWLEntity, Set<OWLEntity>> addParents)
+      throws Exception {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    OWLDataFactory dataFactory = manager.getOWLDataFactory();
+
+    for (Map.Entry<OWLEntity, Set<OWLEntity>> addParent : addParents.entrySet()) {
+      String t = addParent.getKey().getEntityType().getName();
+      switch (t) {
+        case "Class":
+          OWLClass childCls = addParent.getKey().asOWLClass();
+          Set<OWLClass> parentClss = new HashSet<>();
+
+          // Add parents, making sure they are all classes
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLClass()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as a superclass for <%s>!",
+                      e.getIRI(), et, childCls.getIRI()));
+            } else {
+              OWLClass p = e.asOWLClass();
+              parentClss.add(p);
+            }
+          }
+
+          // Remove existing parents - NAMED only
+          for (OWLSubClassOfAxiom scAx : ontology.getSubClassAxiomsForSubClass(childCls)) {
+            if (!scAx.getSuperClass().isAnonymous()) {
+              manager.removeAxiom(ontology, scAx);
+            }
+          }
+          for (OWLClass p : parentClss) {
+            // Add the new parents
+            OWLSubClassOfAxiom ax = dataFactory.getOWLSubClassOfAxiom(childCls, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+
+        case "AnnotationProperty":
+          OWLAnnotationProperty childAp = addParent.getKey().asOWLAnnotationProperty();
+          Set<OWLAnnotationProperty> parentAps = new HashSet<>();
+
+          // Add parents, making sure they are all annotation properties
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLAnnotationProperty()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as an annotation super-property for <%s>!",
+                      e.getIRI(), et, childAp.getIRI()));
+            } else {
+              OWLAnnotationProperty p = e.asOWLAnnotationProperty();
+              parentAps.add(p);
+            }
+          }
+
+          // Remove existing parents (all named)
+          manager.removeAxioms(ontology, ontology.getSubAnnotationPropertyOfAxioms(childAp));
+          for (OWLAnnotationProperty p : parentAps) {
+            // Add the new parents
+            OWLSubAnnotationPropertyOfAxiom ax =
+                dataFactory.getOWLSubAnnotationPropertyOfAxiom(childAp, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+
+        case "DataProperty":
+          OWLDataProperty childDp = addParent.getKey().asOWLDataProperty();
+          Set<OWLDataProperty> parentDps = new HashSet<>();
+
+          // Add parents, making sure they are all data properties
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLDataProperty()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as a data super-property for <%s>!",
+                      e.getIRI(), et, childDp.getIRI()));
+            } else {
+              OWLDataProperty p = e.asOWLDataProperty();
+              parentDps.add(p);
+            }
+          }
+
+          // Remove existing parents (all named)
+          manager.removeAxioms(ontology, ontology.getDataSubPropertyAxiomsForSubProperty(childDp));
+          for (OWLDataProperty p : parentDps) {
+            // Add the new parents
+            OWLSubDataPropertyOfAxiom ax = dataFactory.getOWLSubDataPropertyOfAxiom(childDp, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+
+        case "ObjectProperty":
+          OWLObjectProperty childOp = addParent.getKey().asOWLObjectProperty();
+          Set<OWLObjectProperty> parentOps = new HashSet<>();
+
+          // Add parents, making sure they are all object properties
+          for (OWLEntity e : addParent.getValue()) {
+            if (e == null) {
+              continue;
+            }
+            if (!e.isOWLObjectProperty()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as an object super-property for <%s>!",
+                      e.getIRI(), et, childOp.getIRI()));
+            } else {
+              OWLObjectProperty p = e.asOWLObjectProperty();
+              parentOps.add(p);
+            }
+          }
+
+          // Remove existing parents - NAMED only
+          for (OWLSubObjectPropertyOfAxiom spAx :
+              ontology.getObjectSubPropertyAxiomsForSubProperty(childOp)) {
+            if (!spAx.getSuperProperty().isAnonymous()) {
+              manager.removeAxiom(ontology, spAx);
+            }
+          }
+          for (OWLObjectProperty p : parentOps) {
+            // Add the new parents
+            OWLSubObjectPropertyOfAxiom ax = dataFactory.getOWLSubObjectPropertyOfAxiom(childOp, p);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+
+        case "NamedIndividual":
+          OWLNamedIndividual indv = addParent.getKey().asOWLNamedIndividual();
+          Set<OWLClass> types = new HashSet<>();
+
+          // Add types, making sure they are all classes
+          for (OWLEntity e : addParent.getValue()) {
+            if (!e.isOWLClass()) {
+              String et = e.getEntityType().getPrintName();
+              logger.error(
+                  String.format(
+                      "\n<%s> (%s) cannot be used as a type for individual <%s>!",
+                      e.getIRI(), et, indv.getIRI()));
+            } else {
+              types.add(e.asOWLClass());
+            }
+          }
+
+          // Remove existing types - NAMED only
+          for (OWLClassAssertionAxiom caAx : ontology.getClassAssertionAxioms(indv)) {
+            if (!caAx.getClassExpression().isAnonymous()) {
+              manager.removeAxiom(ontology, caAx);
+            }
+          }
+          for (OWLClass c : types) {
+            // Add the new types
+            OWLClassAssertionAxiom ax = dataFactory.getOWLClassAssertionAxiom(c, indv);
+            manager.addAxiom(ontology, ax);
+          }
+          break;
+
+        default:
+          throw new Exception(String.format("Cannot add parents for entity type: %s", t));
+      }
     }
   }
 

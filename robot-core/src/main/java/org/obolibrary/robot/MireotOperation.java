@@ -1,9 +1,7 @@
 package org.obolibrary.robot;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.Lists;
+import java.util.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -25,6 +23,21 @@ public class MireotOperation {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(MireotOperation.class);
 
+  /** Namespace for error messages. */
+  private static final String NS = "extract#";
+
+  /** Error message when only upper terms are specified with MIREOT. */
+  private static final String missingLowerTermError =
+      NS
+          + "MISSING LOWER TERMS ERROR "
+          + "lower term(s) must be specified with upper term(s) for MIREOT";
+
+  /** Error message when lower or branch terms are not specified with MIREOT. */
+  private static final String missingMireotTermsError =
+      NS
+          + "MISSING MIREOT TERMS ERROR "
+          + "either '! lower-terms' or '! branch-from-terms' must be specified for MIREOT in the config file";
+
   /** Shared data factory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
@@ -39,6 +52,289 @@ public class MireotOperation {
 
   /** Specify a map of sources. */
   private static Map<IRI, IRI> sourceMap;
+
+  /**
+   * Extract a module from an input ontology using the MIREOT method.
+   *
+   * @param inputOntology OWLOntology to extract from
+   * @param lowerIRIs set of low-level IRIs
+   * @param upperIRIs set of top-level IRIs
+   * @param branchIRIs set of IRIs to branch from
+   * @param extractOptions map of options
+   * @param sourceMap map of entity IRI to source IRI
+   * @return OWLOntology extracted module
+   * @throws OWLOntologyCreationException on issue creating ontology
+   */
+  public static OWLOntology mireot(
+      OWLOntology inputOntology,
+      Set<IRI> lowerIRIs,
+      Set<IRI> upperIRIs,
+      Set<IRI> branchIRIs,
+      Map<String, String> extractOptions,
+      Map<IRI, IRI> sourceMap,
+      Set<OWLAnnotationProperty> annotationProperties)
+      throws OWLOntologyCreationException {
+    List<OWLOntology> outputOntologies = new ArrayList<>();
+
+    // First check for lower IRIs, upper IRIs can be null or not
+    if (lowerIRIs != null) {
+      outputOntologies.add(
+          MireotOperation.getAncestors(
+              inputOntology,
+              upperIRIs,
+              lowerIRIs,
+              annotationProperties,
+              extractOptions,
+              sourceMap));
+      // If there are no lower IRIs, there shouldn't be any upper IRIs
+    } else if (upperIRIs != null) {
+      throw new IllegalArgumentException(missingLowerTermError);
+    }
+    // Check for branch IRIs
+    if (branchIRIs != null) {
+      outputOntologies.add(
+          MireotOperation.getDescendants(
+              inputOntology, branchIRIs, annotationProperties, extractOptions, sourceMap));
+    }
+
+    return MergeOperation.merge(outputOntologies);
+  }
+
+  /**
+   * Extract a module from an input ontology using the MIREOT method with parameters from a
+   * configuration file.
+   *
+   * @param ioHelper IOHelper to load ontology, resolve IRIs
+   * @param options Map of config options
+   * @return OWLOntology extracted module
+   * @throws Exception on problem with config options or any issue extracting module
+   */
+  public static OWLOntology mireotFromConfig(IOHelper ioHelper, Map<String, List<String>> options)
+      throws Exception {
+    // Make sure we have terms to extract
+    if (!options.containsKey("lower-terms") && !options.containsKey("branch-from-terms")) {
+      throw new Exception(missingMireotTermsError);
+    }
+    if (options.containsKey("terms")) {
+      logger.error("'terms' should not be used for MIREOT, these entries will be ignored...");
+    }
+
+    // Get an input
+    OWLOntology inputOntology;
+    if (options.containsKey("input")) {
+      String inputPath = options.get("input").get(0);
+      inputOntology = ioHelper.loadOntology(inputPath);
+    } else if (options.containsKey("input-iri")) {
+      IRI inputIRI = IRI.create(options.get("input-iri").get(0));
+      inputOntology = ioHelper.loadOntology(inputIRI);
+    } else {
+      throw new Exception(ExtractOperation.missingInputInConfigError);
+    }
+
+    IRI inputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+
+    // Maybe get a target
+    OWLOntology target = null;
+    if (options.containsKey("target")) {
+      String targetPath = options.get("target").get(0);
+      target = ioHelper.loadOntology(targetPath);
+    } else if (options.containsKey("target-iri")) {
+      IRI targetIRI = IRI.create(options.get("target-iri").get(0));
+      target = ioHelper.loadOntology(targetIRI);
+    }
+
+    // Init the checker for label processing
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.setIOHelper(ioHelper);
+    checker.addProperty(dataFactory.getRDFSLabel());
+    checker.addAll(inputOntology);
+    if (target != null) {
+      checker.addAll(target);
+    }
+
+    Map<OWLEntity, Set<OWLEntity>> replaceParents = new HashMap<>();
+    Map<IRI, IRI> sourceMap = new HashMap<>();
+
+    // Parse lower terms
+    Set<IRI> lowerTerms = new HashSet<>();
+    for (String termLine : options.get("lower-terms")) {
+      List<String> split = Lists.newArrayList(termLine.split("\t"));
+      String termString = split.remove(0).trim();
+
+      OWLEntity e = checker.getOWLEntity(termString);
+      if (e == null) {
+        IRI iri = ioHelper.createIRI(termString);
+        logger.error(String.format("Unable to create entity from '%s'", termString));
+        continue;
+      }
+      lowerTerms.add(e.getIRI());
+      if (inputIRI != null) {
+        sourceMap.put(e.getIRI(), inputIRI);
+      }
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      // IF there are remaining splits, add them as replacement parents
+      Set<OWLEntity> replaceParentsForCurrent = new HashSet<>();
+      for (String s : split) {
+        if (s.trim().equals("")) {
+          continue;
+        }
+        OWLEntity e2 = checker.getOWLEntity(s);
+        if (e2 == null) {
+          logger.error(String.format("Unable to create entity from '%s'", s));
+          continue;
+        }
+        replaceParentsForCurrent.add(e2);
+      }
+      if (!replaceParentsForCurrent.isEmpty()) {
+        replaceParents.put(e, replaceParentsForCurrent);
+      }
+    }
+
+    // Parse upper terms
+    Set<IRI> upperTerms = new HashSet<>();
+    for (String termLine : options.getOrDefault("upper-terms", new ArrayList<>())) {
+      List<String> split = Lists.newArrayList(termLine.split("\t"));
+      String termString = split.remove(0).trim();
+
+      OWLEntity e = checker.getOWLEntity(termString);
+      if (e == null) {
+        logger.error(String.format("Unable to create entity from '%s'", termString));
+        continue;
+      }
+      upperTerms.add(e.getIRI());
+      if (inputIRI != null) {
+        sourceMap.put(e.getIRI(), inputIRI);
+      }
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      // IF there are remaining splits, add them as replacement parents
+      Set<OWLEntity> replaceParentsForCurrent = new HashSet<>();
+      for (String s : split) {
+        if (s.trim().equals("")) {
+          continue;
+        }
+        OWLEntity e2 = checker.getOWLEntity(s);
+        if (e2 == null) {
+          logger.error(String.format("Unable to create entity from '%s'", s));
+          continue;
+        }
+        replaceParentsForCurrent.add(e2);
+      }
+      if (!replaceParentsForCurrent.isEmpty()) {
+        replaceParents.put(e, replaceParentsForCurrent);
+      }
+    }
+
+    // Parse branch-from terms
+    Set<IRI> branchTerms = new HashSet<>();
+    for (String termLine : options.getOrDefault("branch-from-terms", new ArrayList<>())) {
+      List<String> split = Lists.newArrayList(termLine.split("\t"));
+      String termString = split.remove(0).trim();
+
+      OWLEntity e = checker.getOWLEntity(termString);
+      if (e == null) {
+        logger.error(String.format("Unable to create entity from '%s'", termString));
+        continue;
+      }
+      branchTerms.add(e.getIRI());
+      if (inputIRI != null) {
+        sourceMap.put(e.getIRI(), inputIRI);
+      }
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      // IF there are remaining splits, add them as replacement parents
+      Set<OWLEntity> replaceParentsForCurrent = new HashSet<>();
+      for (String s : split) {
+        if (s.trim().equals("")) {
+          continue;
+        }
+        OWLEntity e2 = checker.getOWLEntity(s);
+        if (e2 == null) {
+          logger.error(String.format("Unable to create entity from '%s'", s));
+          continue;
+        }
+        replaceParentsForCurrent.add(e2);
+      }
+      if (!replaceParentsForCurrent.isEmpty()) {
+        replaceParents.put(e, replaceParentsForCurrent);
+      }
+    }
+
+    // Parse annotation properties
+    Set<OWLAnnotationProperty> annotationProperties = new HashSet<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> mapToAnnotations = new HashMap<>();
+    Map<OWLAnnotationProperty, OWLAnnotationProperty> copyToAnnotations = new HashMap<>();
+    for (String apLine : options.getOrDefault("annotations", new ArrayList<>())) {
+      List<String> split = Lists.newArrayList(apLine.split("\t"));
+      String apString = split.remove(0).trim();
+
+      // Try to create an annotation property from the string
+      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(apString, true);
+      if (ap == null) {
+        logger.error(String.format("Unable to create annotation property from '%s'", apString));
+        continue;
+      }
+      annotationProperties.add(ap);
+
+      if (split.isEmpty()) {
+        continue;
+      }
+
+      String apOpt = split.remove(0);
+      for (String s : split) {
+        OWLAnnotationProperty ap2 = checker.getOWLAnnotationProperty(s, true);
+        if (ap2 == null) {
+          logger.error(String.format("Unable to create annotation property from '%s'", s));
+          continue;
+        }
+        if (apOpt.equalsIgnoreCase("mapto")) {
+          mapToAnnotations.put(ap, ap2);
+        } else if (apOpt.equalsIgnoreCase("copyto")) {
+          copyToAnnotations.put(ap, ap2);
+        }
+      }
+    }
+
+    // If no APs were provided, add them all
+    if (annotationProperties.isEmpty()) {
+      annotationProperties.addAll(inputOntology.getAnnotationPropertiesInSignature());
+    }
+
+    // Map options from list to string
+    Map<String, String> extractOptions = new HashMap<>();
+    for (String key : ExtractOperation.getDefaultOptions().keySet()) {
+      if (options.containsKey(key)) {
+        String o = options.get(key).get(0);
+        extractOptions.put(key, o);
+      } else {
+        extractOptions.put(key, ExtractOperation.getDefaultOptions().get(key));
+      }
+    }
+    OWLOntology outputOntology =
+        mireot(
+            inputOntology,
+            lowerTerms,
+            upperTerms,
+            branchTerms,
+            extractOptions,
+            sourceMap,
+            annotationProperties);
+    Set<IRI> allTerms = new HashSet<>(upperTerms);
+    allTerms.addAll(lowerTerms);
+    ExtractOperation.updateExtractedModule(
+        outputOntology, allTerms, copyToAnnotations, mapToAnnotations, replaceParents);
+    return outputOntology;
+  }
 
   /**
    * Get a set of default annotation properties. Currenly includes only RDFS label.
@@ -742,7 +1038,10 @@ public class MireotOperation {
     Set<OWLAnnotationValue> existingValues =
         OntologyHelper.getAnnotationValues(ontology, isDefinedBy, entity.getIRI());
     if (existingValues == null || existingValues.size() == 0) {
-      manager.addAxiom(ontology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
+      OWLAxiom ax = ExtractOperation.getIsDefinedBy(entity, sourceMap);
+      if (ax != null) {
+        manager.addAxiom(ontology, ax);
+      }
     }
   }
 

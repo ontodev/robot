@@ -464,9 +464,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   }
 
   /**
-   * Find any entity with the given name. Quotation marks will be removed if necessary.
+   * Find any entity with the given name or ID. Quotation marks will be removed if necessary.
    *
-   * @param name the name of the entity to find
+   * @param name the name or ID of the entity to find
    * @return an entity, or null
    */
   public OWLEntity getOWLEntity(String name) {
@@ -482,6 +482,14 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return getOWLIndividual(name);
     } else if (classes.containsKey(name)) {
       return getOWLClass(name);
+    }
+    // If we get here, try again by creating an IRI
+    IRI iri = ioHelper.createIRI(name);
+    if (iri != null) {
+      String label = labels.getOrDefault(iri, null);
+      if (label != null) {
+        return getOWLEntity(label);
+      }
     }
     return null;
   }
