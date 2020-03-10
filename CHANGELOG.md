@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add JSON format to [`export`] in [#645]
 - Add Excel format to [`export`] in [#646]
 - Add `RDFXML` method to [`extract`] in [#650]
+- Add `--config` option to [`extract`] in [#652]
 
 ### Fixed
 - Fix filtering axioms with multiple axiom selectors [#644]
@@ -178,6 +179,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#652]: https://github.com/ontodev/robot/pull/652
 [#650]: https://github.com/ontodev/robot/issues/650
 [#646]: https://github.com/ontodev/robot/issues/646
 [#645]: https://github.com/ontodev/robot/issues/645
