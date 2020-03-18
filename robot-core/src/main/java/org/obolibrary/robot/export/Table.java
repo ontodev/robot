@@ -8,9 +8,13 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author <a href="mailto@rbca.jackson@gmail.com">Becky Jackson</a> */
 public class Table {
+  /** Logger. */
+  private static final Logger logger = LoggerFactory.getLogger(Table.class);
 
   private String format;
 
@@ -164,15 +168,15 @@ public class Table {
     for (Column sc : sortColumns) {
       // Sort name is used to get the value
       String sortName = sc.getDisplayName();
+      logger.info("Sorting on column " + sortName);
       Comparator<Row> rowComparator =
           (r1, r2) -> {
-            String v1 = r1.getSortValueString(sortName);
-            String v2 = r2.getSortValueString(sortName);
-
-            // Make sure empty strings end up last
-            if (v1.isEmpty()) return Integer.MAX_VALUE;
-            else if (v2.isEmpty()) return Integer.MIN_VALUE;
-            else return v1.compareTo(v2);
+            String o1 = r1.getSortValueString(sortName);
+            String o2 = r2.getSortValueString(sortName);
+            if (o1.trim().isEmpty() && o2.trim().isEmpty()) return 0;
+            else if (o1.trim().isEmpty()) return 1;
+            else if (o2.trim().isEmpty()) return -1;
+            else return o1.compareTo(o2);
           };
       if (sc.isReverseSort()) {
         rows.sort(Collections.reverseOrder(rowComparator));
