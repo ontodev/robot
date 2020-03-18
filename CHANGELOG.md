@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix filtering axioms with multiple axiom selectors [#644]
+- Fix comparator method for sorting empty strings with [`export`] in [#654]
 
 ## [1.6.0] - 2020-03-04
 
@@ -177,6 +178,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#654]: https://github.com/ontodev/robot/issues/654
 [#646]: https://github.com/ontodev/robot/issues/646
 [#645]: https://github.com/ontodev/robot/issues/645
 [#644]: https://github.com/ontodev/robot/issues/644
