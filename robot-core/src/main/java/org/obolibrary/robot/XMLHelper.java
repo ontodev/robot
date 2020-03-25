@@ -4,6 +4,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import java.io.*;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.compress.utils.IOUtils;
@@ -94,10 +95,18 @@ public class XMLHelper {
     }
 
     // Create maps: IRI -> label, child -> parents
-    try (FileInputStream fis = new FileInputStream(this.fileName)) {
-      getBasicDetails(fis);
-    } catch (XMLStreamException e) {
-      throw new IOException("Unable to parse XML from " + fileName, e);
+    if (fileName.endsWith(".gz")) {
+      try (GZIPInputStream fis = new GZIPInputStream(new FileInputStream(fileName))) {
+        getBasicDetails(fis);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
+    } else {
+      try (FileInputStream fis = new FileInputStream(fileName)) {
+        getBasicDetails(fis);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
     }
   }
 
@@ -144,16 +153,24 @@ public class XMLHelper {
     }
 
     // Create map of IRI -> label
-    try (FileInputStream fis = new FileInputStream(this.fileName)) {
-      getBasicDetails(fis);
-    } catch (XMLStreamException e) {
-      throw new IOException("Unable to parse XML from " + this.fileName, e);
+    if (fileName.endsWith(".gz")) {
+      try (GZIPInputStream fis = new GZIPInputStream(new FileInputStream(fileName))) {
+        getBasicDetails(fis);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
+    } else {
+      try (FileInputStream fis = new FileInputStream(fileName)) {
+        getBasicDetails(fis);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
     }
   }
 
   /**
-   * Perform an extraction to create a subset containing the target IRIs with their target
-   * annotation properties.
+   * Perform an extraction on contents of file at fileName to create a subset containing the target
+   * IRIs with their target annotation properties.
    *
    * @param targets IRIs to extract
    * @param annotationProperties IRIs of annotation properties to include
@@ -165,27 +182,52 @@ public class XMLHelper {
   public OWLOntology extract(
       Set<IRI> targets, Set<IRI> annotationProperties, Map<String, String> options)
       throws IOException, OWLOntologyCreationException {
-    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
-    boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
-
     // Add declarations and hierarchy structure
+    String intermediates = OptionsHelper.getOption(options, "intermediates", "all");
     initOntology(targets, intermediates);
 
     // Add desired annotations on targets
     // If 'all' or 'minimal' intermediates, more targets have been added
     // If 'none' intermediates, targets are the same as the provided targets
-    try (FileInputStream fis = new FileInputStream(this.fileName)) {
-      addAnnotations(fis, annotationProperties);
-    } catch (XMLStreamException e) {
-      throw new IOException("Unable to parse XML from " + this.fileName, e);
+    // Also add OWLAxioms
+    if (this.fileName.endsWith(".gz")) {
+      try (GZIPInputStream fis = new GZIPInputStream(new FileInputStream(this.fileName))) {
+        addAnnotations(fis, annotationProperties);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
+      try (GZIPInputStream fis = new GZIPInputStream(new FileInputStream(this.fileName))) {
+        addOWLAxioms(fis, annotationProperties);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
+    } else {
+      try (FileInputStream fis = new FileInputStream(this.fileName)) {
+        addAnnotations(fis, annotationProperties);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
+      try (FileInputStream fis = new FileInputStream(this.fileName)) {
+        addOWLAxioms(fis, annotationProperties);
+      } catch (XMLStreamException e) {
+        throw new IOException("Unable to parse XML from " + fileName, e);
+      }
     }
+    // Finally, build the ontology
+    return extract(options);
+  }
 
-    // Add annotations from OWLAxiom objects
-    try (FileInputStream fis = new FileInputStream(this.fileName)) {
-      addOWLAxioms(fis, annotationProperties);
-    } catch (XMLStreamException e) {
-      throw new IOException("unable to parse XML");
-    }
+  /**
+   * Perform an extraction on contents of fis to create a subset containing the target IRIs with
+   * their target annotation properties.
+   *
+   * @param options Map of extract options
+   * @return extracted subset
+   * @throws OWLOntologyCreationException on problem creating empty ontology
+   */
+  private OWLOntology extract(Map<String, String> options) throws OWLOntologyCreationException {
+
+    boolean annotateSource = OptionsHelper.optionIsTrue(options, "annotate-with-source");
 
     // Maybe add source annotations
     if (annotateSource && outputIRI != null) {
@@ -242,10 +284,10 @@ public class XMLHelper {
    * Get the basic details for all entities in an ontology. This includes parent-child
    * relationships, entity types, and labels.
    *
-   * @param fis FileInputStream of XML
+   * @param fis InputStream of XML
    * @throws XMLStreamException on issue parsing XML
    */
-  private void getBasicDetails(FileInputStream fis) throws XMLStreamException {
+  private void getBasicDetails(InputStream fis) throws XMLStreamException {
     XMLInputFactory2 inf = (XMLInputFactory2) XMLInputFactory2.newInstance();
     XMLStreamReader2 sr = (XMLStreamReader2) inf.createXMLStreamReader(fileName, fis);
 
@@ -528,11 +570,11 @@ public class XMLHelper {
   /**
    * Add OWLAxiom objects to output ontology for all targets that are sources of OWLAxioms.
    *
-   * @param fis FileInputStream of XML
+   * @param fis InputStream of XML
    * @param annotationProperties set of IRIs for annotation properties to include
    * @throws XMLStreamException on issue parsing XML
    */
-  private void addOWLAxioms(FileInputStream fis, Set<IRI> annotationProperties)
+  private void addOWLAxioms(InputStream fis, Set<IRI> annotationProperties)
       throws XMLStreamException {
     if (annotationProperties == null || annotationProperties.isEmpty()) {
       // Add all annotation properties if they were not provided
@@ -693,11 +735,11 @@ public class XMLHelper {
   /**
    * Add annotations to output ontology for all targets.
    *
-   * @param fis FileInputStream of XML
+   * @param fis InputStream of XML
    * @param annotationProperties set of IRIs for annotation properties to include
    * @throws XMLStreamException on issue parsing XML
    */
-  private void addAnnotations(FileInputStream fis, Set<IRI> annotationProperties)
+  private void addAnnotations(InputStream fis, Set<IRI> annotationProperties)
       throws XMLStreamException {
     if (annotationProperties == null || annotationProperties.isEmpty()) {
       // Add all annotation properties if they were not provided
