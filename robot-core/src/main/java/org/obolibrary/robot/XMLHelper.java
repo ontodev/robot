@@ -452,7 +452,7 @@ public class XMLHelper {
       EntityType<?> et = getEntityType(iri);
       if (et == null) {
         // Entity does not exist in the target ontology
-        logger.error(String.format("<%s> does not exist in input ontology", iri.toString()));
+        logger.warn(String.format("<%s> does not exist in input ontology", iri.toString()));
         doesNotExist.add(iri);
         continue;
       }
