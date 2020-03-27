@@ -1,0 +1,49 @@
+Prefix(:=<http://example.org/>)
+Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(xml:=<http://www.w3.org/XML/1998/namespace>)
+Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+
+
+Ontology(<http://example.org/>
+
+Declaration(Class(<http://purl.obolibrary.org/obo/A>))
+Declaration(Class(<http://purl.obolibrary.org/obo/B>))
+Declaration(Class(<http://purl.obolibrary.org/obo/C>))
+Declaration(Class(<http://purl.obolibrary.org/obo/D1>))
+Declaration(Class(<http://purl.obolibrary.org/obo/D1a>))
+Declaration(Class(<http://purl.obolibrary.org/obo/D2>))
+Declaration(Class(<http://purl.obolibrary.org/obo/D2a>))
+############################
+#   Classes
+############################
+
+# Class: <http://purl.obolibrary.org/obo/B> (<http://purl.obolibrary.org/obo/B>)
+
+SubClassOf(<http://purl.obolibrary.org/obo/B> <http://purl.obolibrary.org/obo/A>)
+
+# Class: <http://purl.obolibrary.org/obo/C> (<http://purl.obolibrary.org/obo/C>)
+
+SubClassOf(<http://purl.obolibrary.org/obo/C> <http://purl.obolibrary.org/obo/B>)
+
+# Class: <http://purl.obolibrary.org/obo/D1> (<http://purl.obolibrary.org/obo/D1>)
+
+SubClassOf(<http://purl.obolibrary.org/obo/D1> <http://purl.obolibrary.org/obo/C>)
+
+# Class: <http://purl.obolibrary.org/obo/D1a> (<http://purl.obolibrary.org/obo/D1a>)
+
+SubClassOf(<http://purl.obolibrary.org/obo/D1a> <http://purl.obolibrary.org/obo/D1>)
+SubClassOf(<http://purl.obolibrary.org/obo/D1a> <http://purl.obolibrary.org/obo/D2>)
+
+# Class: <http://purl.obolibrary.org/obo/D2> (<http://purl.obolibrary.org/obo/D2>)
+
+SubClassOf(<http://purl.obolibrary.org/obo/D2> <http://purl.obolibrary.org/obo/C>)
+
+# Class: <http://purl.obolibrary.org/obo/D2a> (<http://purl.obolibrary.org/obo/D2a>)
+
+SubClassOf(<http://purl.obolibrary.org/obo/D2a> <http://purl.obolibrary.org/obo/D1>)
+SubClassOf(<http://purl.obolibrary.org/obo/D2a> <http://purl.obolibrary.org/obo/D2>)
+
+
+)

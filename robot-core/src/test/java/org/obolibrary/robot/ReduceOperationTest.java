@@ -169,7 +169,7 @@ public class ReduceOperationTest extends CoreTest {
 
   /** Test reduce only named classes vs. including expressions */
   @Test
-  public void testReducedNamedOnly() throws OWLOntologyCreationException, IOException {
+  public void testReduceNamedOnly() throws OWLOntologyCreationException, IOException {
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
 
     OWLOntology ontologyA = loadOntology("/reduce-named-only-test.ofn");
@@ -183,5 +183,17 @@ public class ReduceOperationTest extends CoreTest {
     optionsB.put("named-classes-only", "false");
     ReduceOperation.reduce(ontologyB, reasonerFactory, optionsB);
     assertIdentical("/reduce-named-only-test-named-only-false-reduced.ofn", ontologyB);
+  }
+
+  /** Ensure that reciprocal subclasses aren't cut off from their superclasses */
+  @Test
+  public void testReduceNamedOnlyReciprocalSubclasses()
+      throws IOException, OWLOntologyCreationException {
+    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+    OWLOntology ontology = loadOntology("/reduce-reciprocal-subclasses-named-only.ofn");
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("named-classes-only", "true");
+    ReduceOperation.reduce(ontology, reasonerFactory, options);
+    assertIdentical("/reduce-reciprocal-subclasses-named-only-reduced.ofn", ontology);
   }
 }
