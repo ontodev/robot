@@ -112,7 +112,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>obographs</artifactId>
-      <version>0.0.8</version>
+      <version>0.2.1</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

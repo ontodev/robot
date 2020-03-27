@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add JSON format to [`export`] in [#645]
 - Add Excel format to [`export`] in [#646]
 
+### Changed
+- Updated `obographs` from 0.0.8 to 0.2.1 [#657]
+
 ### Fixed
 - Fix filtering axioms with multiple axiom selectors [#644]
 - Fix comparator method for sorting empty strings with [`export`] in [#654]
@@ -178,6 +181,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#657]: https://github.com/ontodev/robot/pull/657
 [#654]: https://github.com/ontodev/robot/issues/654
 [#646]: https://github.com/ontodev/robot/issues/646
 [#645]: https://github.com/ontodev/robot/issues/645
