@@ -71,9 +71,10 @@ public class QueryOperation {
    *
    * @param ontology ontology to query
    * @return dataset to query
-   * @throws IOException on issue converting ontology Jena model
+   * @throws OWLOntologyStorageException on issue converting ontology Jena model
    */
-  public static Dataset loadOntologyAsDataset(OWLOntology ontology) throws IOException {
+  public static Dataset loadOntologyAsDataset(OWLOntology ontology)
+      throws OWLOntologyStorageException {
     return loadOntologyAsDataset(ontology, false);
   }
 
@@ -84,10 +85,10 @@ public class QueryOperation {
    * @param ontology ontology to query
    * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
-   * @throws IOException on issue converting ontology Jena model
+   * @throws OWLOntologyStorageException on issue converting ontology Jena model
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
-      throws IOException {
+      throws OWLOntologyStorageException {
     long start = System.currentTimeMillis();
     Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
@@ -125,13 +126,17 @@ public class QueryOperation {
    *
    * @param ontology OWLOntology to convert to Model
    * @return Model of axioms (imports ignored)
-   * @throws IOException on issue rendering ontology to triples
+   * @throws OWLOntologyStorageException on issue rendering ontology to triples
    */
-  public static Model loadOntologyAsModel(OWLOntology ontology) throws IOException {
+  public static Model loadOntologyAsModel(OWLOntology ontology) throws OWLOntologyStorageException {
     long start = System.currentTimeMillis();
     JenaTriplesHandler handler = new JenaTriplesHandler();
     RioRenderer renderer = new RioRenderer(ontology, handler, null);
-    renderer.render();
+    try {
+      renderer.render();
+    } catch (IOException e) {
+      throw new OWLOntologyStorageException(e);
+    }
     Model model = handler.getModel();
     long end = System.currentTimeMillis();
     logger.debug(

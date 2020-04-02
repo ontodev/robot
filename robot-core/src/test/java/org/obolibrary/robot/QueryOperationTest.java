@@ -116,7 +116,8 @@ public class QueryOperationTest extends CoreTest {
    * @throws OWLOntologyCreationException on ontology error
    */
   @Test
-  public void testExecUpdate() throws IOException, OWLOntologyCreationException {
+  public void testExecUpdate()
+      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
     OWLOntology inputOntology = loadOntology("/simple.owl");
     Model model = QueryOperation.loadOntologyAsModel(inputOntology);
     String updateString =
