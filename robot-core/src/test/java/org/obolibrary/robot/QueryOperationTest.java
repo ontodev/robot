@@ -74,7 +74,7 @@ public class QueryOperationTest extends CoreTest {
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, true);
     String query =
         "PREFIX robot: <https://github.com/ontodev/robot/robot-core/src/test/resources/>\n"
-            + "SELECT * FROM NAMED robot:simple.owl WHERE {?s ?p ?o}";
+            + "SELECT * FROM robot:simple.owl WHERE {?s ?p ?o}";
     ResultSet results = QueryOperation.execQuery(dataset, query);
     assertEquals(6, QueryOperation.countResults(results));
   }
@@ -113,12 +113,10 @@ public class QueryOperationTest extends CoreTest {
    * Tests an update statement that adds a label.
    *
    * @throws IOException on IO error
-   * @throws OWLOntologyStorageException on ontology error
    * @throws OWLOntologyCreationException on ontology error
    */
   @Test
-  public void testExecUpdate()
-      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
+  public void testExecUpdate() throws IOException, OWLOntologyCreationException {
     OWLOntology inputOntology = loadOntology("/simple.owl");
     Model model = QueryOperation.loadOntologyAsModel(inputOntology);
     String updateString =
