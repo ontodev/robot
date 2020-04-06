@@ -24,6 +24,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.tdb.transaction.TDBTransactionException;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
 import org.semanticweb.owlapi.model.IRI;
@@ -338,7 +339,12 @@ public class ReportOperation {
     } finally {
       // Close and release
       dataset.close();
-      TDBFactory.release(dataset);
+      try {
+        TDBFactory.release(dataset);
+      } catch (TDBTransactionException e) {
+        // Do nothing - already released
+      }
+
       if (!keepMappings) {
         // Maybe delete
         boolean success = IOHelper.cleanTDB(tdbDir);
@@ -371,6 +377,11 @@ public class ReportOperation {
 
     String profilePath = OptionsHelper.getOption(options, "profile", null);
 
+    // The profile is a map of rule name and reporting level
+    Map<String, String> profile = getProfile(profilePath);
+    // The queries is a map of rule name and query string
+    Map<String, String> queries = getQueryStrings(profile.keySet());
+
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
     Map<IRI, String> labelMap = null;
     if (useLabels) {
@@ -378,19 +389,19 @@ public class ReportOperation {
       // Run query over dataset to retrive all labels
       String query =
           "SELECT ?s ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }";
-      ResultSet labelResults = QueryOperation.execQuery(dataset, query);
-      while (labelResults.hasNext()) {
-        QuerySolution qs = labelResults.next();
-        IRI iri = IRI.create(qs.getResource("s").getURI());
-        String label = qs.getLiteral("label").getString();
-        labelMap.put(iri, label);
+      dataset.begin(ReadWrite.READ);
+      try {
+        ResultSet labelResults = QueryOperation.execQuery(dataset, query);
+        while (labelResults.hasNext()) {
+          QuerySolution qs = labelResults.next();
+          IRI iri = IRI.create(qs.getResource("s").getURI());
+          String label = qs.getLiteral("label").getString();
+          labelMap.put(iri, label);
+        }
+      } finally {
+        dataset.end();
       }
     }
-
-    // The profile is a map of rule name and reporting level
-    Map<String, String> profile = getProfile(profilePath);
-    // The queries is a map of rule name and query string
-    Map<String, String> queries = getQueryStrings(profile.keySet());
 
     // Create the report object (maybe using labels)
     Report report = new Report(labelMap);
