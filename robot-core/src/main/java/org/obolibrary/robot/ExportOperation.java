@@ -106,7 +106,7 @@ public class ExportOperation {
     String entityFormat = OptionsHelper.getOption(options, "entity-format", "NAME");
 
     // Create some providers for rendering entities
-    ShortFormProvider oboProvider = new OBOShortFormProvider(ioHelper.getPrefixes());
+    ShortFormProvider oboProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
     ShortFormProvider iriProvider = new IRIValueShortFormProvider();
     ShortFormProvider quotedProvider =
         new QuotedAnnotationValueShortFormProvider(
