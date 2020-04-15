@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix filtering axioms with multiple axiom selectors [#644]
 - Fix comparator method for sorting empty strings with [`export`] in [#654]
 - Fix releasing dataset after exception when running [`report`] with `--tdb true` [#659]
-- Fix writing JSON format to use `OutputStream` with ['convert'] in [#670]
+- Reduced time spent loading datasets for [`query`] in [#666]
+- Fix writing JSON format to use `OutputStream` with ['convert'] in [#671]
+
 
 ## [1.6.0] - 2020-03-04
 
@@ -183,6 +185,8 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#671]: https://github.com/ontodev/robot/pull/671
+[#666]: https://github.com/ontodev/robot/pull/666
 [#659]: https://github.com/ontodev/robot/issues/659
 [#657]: https://github.com/ontodev/robot/pull/657
 [#654]: https://github.com/ontodev/robot/issues/654
