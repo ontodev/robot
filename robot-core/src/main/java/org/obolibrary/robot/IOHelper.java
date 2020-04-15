@@ -1,5 +1,8 @@
 package org.obolibrary.robot;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.github.jsonldjava.core.Context;
 import com.github.jsonldjava.core.JsonLdApi;
 import com.github.jsonldjava.core.JsonLdError;
@@ -1406,9 +1409,11 @@ public class IOHelper {
     if (format instanceof OboGraphJsonDocumentFormat) {
       FromOwl fromOwl = new FromOwl();
       GraphDocument gd = fromOwl.generateGraphDocument(ontology);
-      String doc = OgJsonGenerator.render(gd);
       File outfile = new File(ontologyIRI.toURI());
-      FileUtils.writeStringToFile(outfile, doc);
+      ObjectMapper mapper = new ObjectMapper();
+      mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+      ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+      writer.writeValue(new FileOutputStream(outfile), gd);
     } else if (format instanceof OBODocumentFormat && !checkOBO) {
       // only use this method when ignoring OBO checking, otherwise use native save
       OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
