@@ -26,6 +26,8 @@ public class ExportOperationTest extends CoreTest {
   public void testExportToXLSX() throws Exception {
     OWLOntology ontology = loadOntology("/simple.owl");
     IOHelper ioHelper = new IOHelper();
+    ioHelper.addPrefix(
+        "simple", "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#");
     List<String> columns = Arrays.asList("ID", "SubClass Of [ID]");
     Map<String, String> options = ExportOperation.getDefaultOptions();
 

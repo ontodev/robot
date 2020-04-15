@@ -46,7 +46,7 @@ Various `--header` types are supported:
 
 * **Special Headers**:
 	* `IRI`: creates an "IRI" column based on the full unique identifier
-	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE)
+	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE) - please note that all IRIs must have [defined prefixes](global/prefixes), or the full IRI will be returned.
 	* `LABEL`: creates a "Label" column based on `rdfs:label`
 	* `SYNONYMS`: creates a "SYNONYMS" column based on all synonyms (oboInOwl exact, broad, narrow, related, or IAO alternative term)
 	* `SubClass Of`: creates a "SubClass Of" column based on `rdfs:subClassOf`
@@ -95,7 +95,8 @@ By default, the export includes details on the classes and individuals in an ont
 
 For example, to return the details of *individuals only*:
 
-    robot export --input template.owl \
+    robot --prefix "example: http://example.com/" \
+      export --input template.owl \
       --header "ID|LABEL|Type" \
       --include "individuals" \
       --export results/individuals.csv
