@@ -1,22 +1,32 @@
 package org.obolibrary.robot;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.*;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.ResultSetMgr;
 import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.apache.jena.tdb.TDB;
-import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.update.UpdateAction;
+import org.openrdf.model.BNode;
+import org.openrdf.model.Literal;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.rio.RioRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +71,7 @@ public class QueryOperation {
    *
    * @param ontology ontology to query
    * @return dataset to query
-   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   * @throws OWLOntologyStorageException on issue converting ontology Jena model
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology)
       throws OWLOntologyStorageException {
@@ -75,18 +85,18 @@ public class QueryOperation {
    * @param ontology ontology to query
    * @param useGraphs if true, load imports as separate graphs
    * @return dataset to query
-   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   * @throws OWLOntologyStorageException on issue converting ontology Jena model
    */
   public static Dataset loadOntologyAsDataset(OWLOntology ontology, boolean useGraphs)
       throws OWLOntologyStorageException {
+    long start = System.currentTimeMillis();
     Set<OWLOntology> ontologies = new HashSet<>();
     ontologies.add(ontology);
     if (useGraphs) {
       ontologies.addAll(ontology.getImports());
     }
     // Instantiate an empty dataset
-    Dataset dataset = TDBFactory.createDataset();
-    TDB.getContext().set(TDB.symUnionDefaultGraph, true);
+    Dataset dataset = DatasetFactory.createGeneral();
     // Load each ontology in the set as a named model
     for (OWLOntology ont : ontologies) {
       Model m = loadOntologyAsModel(ont);
@@ -97,11 +107,17 @@ public class QueryOperation {
         name = iri.toString();
       } else {
         // If there is no IRI, generate a random ID
-        name = UUID.randomUUID().toString();
+        name = "urn:uuid:" + UUID.randomUUID().toString();
       }
       logger.info("Named graph added: " + name);
       dataset.addNamedModel(name, m);
     }
+    dataset.setDefaultModel(dataset.getUnionModel());
+    long end = System.currentTimeMillis();
+    logger.debug(
+        String.format(
+            "Loaded ontology into Jena dataset - took %s seconds",
+            String.valueOf((end - start) / 1000.0)));
     return dataset;
   }
 
@@ -110,15 +126,84 @@ public class QueryOperation {
    *
    * @param ontology OWLOntology to convert to Model
    * @return Model of axioms (imports ignored)
-   * @throws OWLOntologyStorageException on issue writing ontology to TTL format
+   * @throws OWLOntologyStorageException on issue rendering ontology to triples
    */
   public static Model loadOntologyAsModel(OWLOntology ontology) throws OWLOntologyStorageException {
-    Model model = ModelFactory.createDefaultModel();
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    ontology.getOWLOntologyManager().saveOntology(ontology, new TurtleDocumentFormat(), os);
-    String content = new String(os.toByteArray(), StandardCharsets.UTF_8);
-    RDFParser.fromString(content).lang(RDFLanguages.TTL).parse(model);
+    long start = System.currentTimeMillis();
+    JenaTriplesHandler handler = new JenaTriplesHandler();
+    RioRenderer renderer = new RioRenderer(ontology, handler, null);
+    try {
+      renderer.render();
+    } catch (IOException e) {
+      throw new OWLOntologyStorageException(e);
+    }
+    Model model = handler.getModel();
+    long end = System.currentTimeMillis();
+    logger.debug(
+        String.format(
+            "Converted ontology to model - took %s seconds",
+            String.valueOf((end - start) / 1000.0)));
     return model;
+  }
+
+  /** Sesame RDFHandler which converts triples to Jena objects */
+  private static class JenaTriplesHandler implements RDFHandler {
+
+    private final Model model = ModelFactory.createDefaultModel();
+    // We need to use the blank node IDs from Sesame when creating matching Jena blank nodes.
+    // However we must ensure that these do not happen to be the same for another ontology
+    // rendered into triples.
+    private final String modelUniqueBlankNodePrefix = UUID.randomUUID().toString();
+
+    @Override
+    public void handleStatement(Statement triple) throws RDFHandlerException {
+      Resource subject;
+      if (triple.getSubject() instanceof BNode) {
+        subject =
+            new ResourceImpl(
+                new AnonId(modelUniqueBlankNodePrefix + ((BNode) triple.getSubject()).getID()));
+      } else {
+        subject = ResourceFactory.createResource(((URI) triple.getSubject()).stringValue());
+      }
+      Property predicate = ResourceFactory.createProperty(triple.getPredicate().stringValue());
+      RDFNode object;
+      if (triple.getObject() instanceof BNode) {
+        object =
+            new ResourceImpl(
+                new AnonId(modelUniqueBlankNodePrefix + ((BNode) triple.getObject()).getID()));
+      } else if (triple.getObject() instanceof URI) {
+        object = ResourceFactory.createResource(((URI) triple.getObject()).stringValue());
+      } else {
+        Literal literal = (Literal) (triple.getObject());
+        if (literal.getLanguage() != null) {
+          object = ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage());
+        } else if (literal.getDatatype() != null) {
+          object =
+              ResourceFactory.createTypedLiteral(
+                  literal.getLabel(),
+                  TypeMapper.getInstance().getSafeTypeByName(literal.getDatatype().stringValue()));
+        } else {
+          object = ResourceFactory.createStringLiteral(literal.getLabel());
+        }
+      }
+      model.add(subject, predicate, object);
+    }
+
+    public Model getModel() {
+      return model;
+    }
+
+    @Override
+    public void startRDF() throws RDFHandlerException {}
+
+    @Override
+    public void endRDF() throws RDFHandlerException {}
+
+    @Override
+    public void handleNamespace(String prefix, String uri) throws RDFHandlerException {}
+
+    @Override
+    public void handleComment(String comment) throws RDFHandlerException {}
   }
 
   /**
