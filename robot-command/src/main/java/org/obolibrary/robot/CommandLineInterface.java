@@ -20,9 +20,11 @@ public class CommandLineInterface {
   private static CommandManager initManager() {
     CommandManager m = new CommandManager();
     m.addCommand("annotate", new AnnotateCommand());
+    m.addCommand("collapse", new CollapseCommand());
     m.addCommand("convert", new ConvertCommand());
     m.addCommand("diff", new DiffCommand());
     m.addCommand("explain", new ExplainCommand());
+    m.addCommand("export", new ExportCommand());
     m.addCommand("export-prefixes", new ExportPrefixesCommand());
     m.addCommand("extract", new ExtractCommand());
     m.addCommand("filter", new FilterCommand());

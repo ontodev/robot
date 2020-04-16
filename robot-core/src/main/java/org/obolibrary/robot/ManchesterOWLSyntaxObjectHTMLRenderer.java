@@ -55,7 +55,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   public void visit(OWLAnnotationProperty property) {
     write(
         String.format(
-            "<a href=\"%s\" target=\"__blank\">%s</a>",
+            "<a href=\"%s\">%s</a>",
             property.getIRI().toString(), getShortFormProvider().getShortForm(property)));
   }
 
@@ -64,7 +64,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   public void visit(OWLClass cls) {
     write(
         String.format(
-            "<a href=\"%s\" target=\"__blank\">%s</a>",
+            "<a href=\"%s\">%s</a>",
             cls.getIRI().toString(), getShortFormProvider().getShortForm(cls)));
   }
 
@@ -73,7 +73,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   public void visit(OWLDataProperty property) {
     write(
         String.format(
-            "<a href=\"%s\" target=\"__blank\">%s</a>",
+            "<a href=\"%s\">%s</a>",
             property.getIRI().toString(), getShortFormProvider().getShortForm(property)));
   }
 
@@ -82,7 +82,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   public void visit(OWLDatatype node) {
     write(
         String.format(
-            "<a href=\"%s\" target=\"__blank\">%s</a>",
+            "<a href=\"%s\">%s</a>",
             node.getIRI().toString(), getShortFormProvider().getShortForm(node)));
   }
 
@@ -91,7 +91,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   public void visit(OWLNamedIndividual individual) {
     write(
         String.format(
-            "<a href=\"%s\" target=\"__blank\">%s</a>",
+            "<a href=\"%s\">%s</a>",
             individual.getIRI().toString(), getShortFormProvider().getShortForm(individual)));
   }
 
@@ -100,7 +100,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   public void visit(OWLObjectProperty property) {
     write(
         String.format(
-            "<a href=\"%s\" target=\"__blank\">%s</a>",
+            "<a href=\"%s\">%s</a>",
             property.getIRI().toString(), getShortFormProvider().getShortForm(property)));
   }
 

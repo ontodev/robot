@@ -141,7 +141,8 @@ public class OntologyHelper {
   /**
    * Given an ontology and a set of IRIs that must be retained, remove intermediate superclasses
    * (classes that only have one child) and update the subclass relationships to preserve structure.
-   * The ontology passed in is updated.
+   * The ontology passed in is updated. Do not perform collapse multiple times (some intermediate
+   * classes will remain after only one pass).
    *
    * @param ontology ontology to remove intermediates in
    * @param precious set of OWLEntities that should not be removed
@@ -149,60 +150,112 @@ public class OntologyHelper {
    */
   public static void collapseOntology(OWLOntology ontology, Set<IRI> precious)
       throws OWLOntologyCreationException {
+    collapseOntology(ontology, 2, precious, false);
+  }
 
-    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    OWLClass thing = manager.getOWLDataFactory().getOWLThing();
+  /**
+   * Given an ontology, a threshold, and a set of precious IRIs (or empty set), minimize the input
+   * ontology's class hierarchy based on the threshold. The threshold is the minimum number of child
+   * classes that an intermediate class should have. Any intermediate class that has less than the
+   * threshold number of children will be removed and its children will become children of the next
+   * level up. Bottom-level and top-level classes are not removed. Any class with an IRI in the
+   * precious set is not removed. If not repeat, collapse will only be performed once, meaning that
+   * some intermediate classes may remain.
+   *
+   * @param ontology OWLOntology to minimize
+   * @param threshold minimum number of child classes
+   * @param precious set of IRIs to keep
+   * @param repeat if true, repeat collapsing until no intermediate classes remain
+   */
+  public static void collapseOntology(
+      OWLOntology ontology, int threshold, Set<IRI> precious, boolean repeat)
+      throws OWLOntologyCreationException {
+    OWLOntology copy =
+        OWLManager.createOWLOntologyManager().copyOntology(ontology, OntologyCopy.DEEP);
+    logger.debug("Classes before collapsing: " + ontology.getClassesInSignature().size());
 
-    Set<OWLObject> removeObjects = new HashSet<>();
+    Set<OWLObject> removeClasses = getClassesToRemove(ontology, threshold, precious);
 
-    for (OWLEntity e : OntologyHelper.getEntities(ontology)) {
-      // Skip anything that is not a class
-      if (!e.isOWLClass()) {
+    boolean collapsedOnce = false;
+
+    // Remove axioms based on classes
+    // Get all axioms that involve these classes
+    // Continue to get remove classes until there's no more to remove
+    while (!removeClasses.isEmpty()) {
+      if (collapsedOnce && !repeat) {
+        break;
+      }
+      Set<OWLAxiom> axiomsToRemove =
+          RelatedObjectsHelper.getPartialAxioms(ontology, removeClasses, null);
+      OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      manager.removeAxioms(ontology, axiomsToRemove);
+      // Span gaps to maintain hierarchy
+      manager.addAxioms(
+          ontology, RelatedObjectsHelper.spanGaps(copy, OntologyHelper.getObjects(ontology)));
+      // Repeat until there's no more to remove
+      removeClasses = getClassesToRemove(ontology, threshold, precious);
+      collapsedOnce = true;
+    }
+    logger.debug("Classes after collapsing: " + ontology.getClassesInSignature().size());
+  }
+
+  /**
+   * Given an ontology, a threshold, and a set of precious IRIs (or empty set), return the classes
+   * to remove to minimize the class hierarchy. Top-level and bottom-level classes are not removed.
+   * Any class with a precious IRI is not removed. Any class with a number of named subclasses that
+   * is less than the threshold will be removed.
+   *
+   * @param ontology OWLOntology to minimize
+   * @param threshold minimum number of child classes
+   * @param precious set of IRIs to keep
+   */
+  private static Set<OWLObject> getClassesToRemove(
+      OWLOntology ontology, int threshold, Set<IRI> precious) {
+    Set<OWLClass> classes = ontology.getClassesInSignature();
+    Set<OWLObject> remove = new HashSet<>();
+
+    for (OWLClass cls : classes) {
+      if (cls.isOWLThing() || precious.contains(cls.getIRI())) {
+        // Ignore if the IRI is in precious or is OWL Thing
         continue;
       }
-      // Skip any precious classes
-      OWLClass cls = e.asOWLClass();
-      if (precious.contains(cls.getIRI())) {
-        continue;
-      }
-      // Skip anything that is a SC of owl:Thing
-      Collection<OWLClassExpression> superClasses = EntitySearcher.getSuperClasses(cls, ontology);
-      if (superClasses.contains(thing)) {
-        continue;
-      }
-      // Skip anything that does not have a named SC (default SC of owl:Thing)
-      boolean hasNamedSuperClass = false;
-      for (OWLClassExpression superExpr : superClasses) {
-        if (!superExpr.isAnonymous()) {
-          hasNamedSuperClass = true;
+
+      // Check for superclasses
+      Set<OWLSubClassOfAxiom> superAxioms = ontology.getSubClassAxiomsForSubClass(cls);
+      boolean hasNamedSuperclass = false;
+      for (OWLSubClassOfAxiom superAx : superAxioms) {
+        OWLClassExpression expr = superAx.getSuperClass();
+        if (!expr.isAnonymous() && !expr.asOWLClass().isOWLThing()) {
+          hasNamedSuperclass = true;
           break;
         }
       }
-      if (!hasNamedSuperClass) {
+
+      if (!hasNamedSuperclass) {
+        // Also ignore if there are no named superclasses
+        // Or just no superclasses in general
+        // This means it is directly placed under owl:Thing
         continue;
       }
-      Collection<OWLClassExpression> subClasses = EntitySearcher.getSubClasses(cls, ontology);
-      if (subClasses.size() == 1) {
-        removeObjects.add(cls);
+
+      Set<OWLSubClassOfAxiom> subAxioms = ontology.getSubClassAxiomsForSuperClass(cls);
+      int scCount = 0;
+      for (OWLSubClassOfAxiom subAx : subAxioms) {
+        OWLClassExpression expr = subAx.getSubClass();
+        if (!expr.isAnonymous()) {
+          // Only count the named subclasses
+          scCount++;
+        }
+      }
+
+      if (scCount != 0 && scCount < threshold) {
+        // If the class has subclasses, but LESS subclasses than the threshold,
+        // add it to the set of classes to be removed
+        remove.add(cls);
       }
     }
 
-    logger.debug("Removing " + removeObjects.size() + " classes and associated axioms...");
-
-    // Remove the unnecessary intermediate classes
-    Set<OWLAxiom> axiomsToRemove =
-        RelatedObjectsHelper.getPartialAxioms(
-            ontology, removeObjects, new HashSet<>(Collections.singletonList(OWLAxiom.class)));
-    // Make copy before removing to preserve structure
-    OWLOntology copy = manager.copyOntology(ontology, OntologyCopy.DEEP);
-    manager.removeAxioms(ontology, axiomsToRemove);
-
-    // Then re-associate classes with new superclasses
-    Set<OWLObject> relatedObjects = RelatedObjectsHelper.selectComplement(ontology, removeObjects);
-    manager.addAxioms(ontology, RelatedObjectsHelper.spanGaps(copy, relatedObjects));
-
-    // Discard copy
-    manager.removeOntology(copy);
+    return remove;
   }
 
   /**
@@ -290,7 +343,7 @@ public class OntologyHelper {
 
   /**
    * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
-   * the ontology.
+   * the ontology. Always include terms in imports.
    *
    * @param ontology the ontology to check for IRIs
    * @param IRIs Set of IRIs to filter
@@ -299,9 +352,24 @@ public class OntologyHelper {
    */
   public static Set<IRI> filterExistingTerms(
       OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty) {
+    return filterExistingTerms(ontology, IRIs, allowEmpty, Imports.INCLUDED);
+  }
+
+  /**
+   * Given an ontology and a set of IRIs, filter the set of IRIs to only include those that exist in
+   * the ontology. Maybe include terms in imports.
+   *
+   * @param ontology the ontology to check for IRIs
+   * @param IRIs Set of IRIs to filter
+   * @param allowEmpty boolean specifying if an empty set can be returned
+   * @param imports Imports INCLUDED or EXCLUDED
+   * @return Set of filtered IRIs
+   */
+  public static Set<IRI> filterExistingTerms(
+      OWLOntology ontology, Set<IRI> IRIs, boolean allowEmpty, Imports imports) {
     Set<IRI> missingIRIs = new HashSet<>();
     for (IRI iri : IRIs) {
-      if (!ontology.containsEntityInSignature(iri)) {
+      if (!ontology.containsEntityInSignature(iri, imports)) {
         logger.warn("Ontology does not contain {}", iri.toQuotedString());
         missingIRIs.add(iri);
       }
@@ -1131,7 +1199,11 @@ public class OntologyHelper {
       if (ax.getProperty().isLabel()
           && ax.getSubject() instanceof IRI
           && ax.getValue() instanceof OWLLiteral) {
-        labelMap.put((IRI) ax.getSubject(), ax.getValue().asLiteral().toString());
+        OWLLiteral lit = ax.getValue().asLiteral().orNull();
+        if (lit == null) {
+          continue;
+        }
+        labelMap.put((IRI) ax.getSubject(), lit.getLiteral());
       }
     }
     return (obj) -> {

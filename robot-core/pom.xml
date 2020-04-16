@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.obolibrary.robot</groupId>
     <artifactId>robot</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
   </parent>
   <artifactId>robot-core</artifactId>
   <name>robot-core</name>
@@ -45,7 +45,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.5.0</version>
+              <version>1.6.0</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -98,6 +98,16 @@
       <version>3.8.0</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi</artifactId>
+      <version>3.15</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>3.15</version>
+    </dependency>
+    <dependency>
       <groupId>com.github.jsonld-java</groupId>
       <artifactId>jsonld-java</artifactId>
       <version>0.5.1</version>
@@ -125,7 +135,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>obographs</artifactId>
-      <version>0.0.8</version>
+      <version>0.2.1</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -175,6 +185,11 @@
       <groupId>org.geneontology</groupId>
       <artifactId>owl-diff_2.12</artifactId>
       <version>1.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.0</version>
     </dependency>
   </dependencies>
 </project>
