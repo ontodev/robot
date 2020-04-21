@@ -859,6 +859,39 @@ public class TreeBuilder {
       attrs.add("Disjoint Properties", disjointClasses);
     }
 
+    // Get domain(s)
+    renderValues = new HashSet<>(EntitySearcher.getDomains(property, ontology));
+    renderValues.remove(property);
+    renderedValues = renderExpressions(renderValues);
+    if (!renderedValues.isEmpty()) {
+      // Add to JSON array
+      JsonArray domains = new JsonArray();
+      renderedValues.iterator().forEachRemaining(domains::add);
+      attrs.add("Domains", domains);
+    }
+
+    // Get range(s)
+    renderValues = new HashSet<>(EntitySearcher.getRanges(property, ontology));
+    renderValues.remove(property);
+    renderedValues = renderExpressions(renderValues);
+    if (!renderedValues.isEmpty()) {
+      // Add to JSON array
+      JsonArray ranges = new JsonArray();
+      renderedValues.iterator().forEachRemaining(ranges::add);
+      attrs.add("Ranges", ranges);
+    }
+
+    // Get characteristics
+    renderedValues = new HashSet<>();
+    if (EntitySearcher.isFunctional(property, ontology)) {
+      renderedValues.add("Functional");
+    }
+    if (!renderedValues.isEmpty()) {
+      JsonArray characteristics = new JsonArray();
+      renderedValues.iterator().forEachRemaining(characteristics::add);
+      attrs.add("Characteristics", characteristics);
+    }
+
     // Maybe get children nodes (recursively)
     JsonArray children = getSubPropertyArray(property, annotationProperties);
     if (children != null) {
@@ -926,6 +959,57 @@ public class TreeBuilder {
       JsonArray disjointClasses = new JsonArray();
       renderedValues.iterator().forEachRemaining(disjointClasses::add);
       attrs.add("Disjoint Properties", disjointClasses);
+    }
+
+    // Get domain(s)
+    renderValues = new HashSet<>(EntitySearcher.getDomains(property, ontology));
+    renderValues.remove(property);
+    renderedValues = renderExpressions(renderValues);
+    if (!renderedValues.isEmpty()) {
+      // Add to JSON array
+      JsonArray domains = new JsonArray();
+      renderedValues.iterator().forEachRemaining(domains::add);
+      attrs.add("Domains", domains);
+    }
+
+    // Get range(s)
+    renderValues = new HashSet<>(EntitySearcher.getRanges(property, ontology));
+    renderValues.remove(property);
+    renderedValues = renderExpressions(renderValues);
+    if (!renderedValues.isEmpty()) {
+      // Add to JSON array
+      JsonArray ranges = new JsonArray();
+      renderedValues.iterator().forEachRemaining(ranges::add);
+      attrs.add("Ranges", ranges);
+    }
+
+    // Get characteristics
+    renderedValues = new HashSet<>();
+    if (EntitySearcher.isAsymmetric(property, ontology)) {
+      renderedValues.add("Asymmetric");
+    }
+    if (EntitySearcher.isFunctional(property, ontology)) {
+      renderedValues.add("Functional");
+    }
+    if (EntitySearcher.isInverseFunctional(property, ontology)) {
+      renderedValues.add("Inverse Functional");
+    }
+    if (EntitySearcher.isIrreflexive(property, ontology)) {
+      renderedValues.add("Irreflexive");
+    }
+    if (EntitySearcher.isReflexive(property, ontology)) {
+      renderedValues.add("Reflexive");
+    }
+    if (EntitySearcher.isSymmetric(property, ontology)) {
+      renderedValues.add("Symmetric");
+    }
+    if (EntitySearcher.isTransitive(property, ontology)) {
+      renderedValues.add("Transitive");
+    }
+    if (!renderedValues.isEmpty()) {
+      JsonArray characteristics = new JsonArray();
+      renderedValues.iterator().forEachRemaining(characteristics::add);
+      attrs.add("Characteristics", characteristics);
     }
 
     // Maybe get children nodes (recursively)
