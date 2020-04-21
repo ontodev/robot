@@ -1,0 +1,18 @@
+ID,LABEL,SubClass Of
+GO:0044446,intracellular organelle part,'part of' some 'intracellular organelle'|'part of' some intracellular|'part of' some organelle|intracellular part|organelle part
+GO:0070013,intracellular organelle lumen,'part of' some 'intracellular organelle'|intracellular organelle part|organelle lumen
+GO:0044464,cell part,'part of' some cell|cellular_component
+GO:0044424,intracellular part,'part of' some intracellular|cell part
+GO:0043229,intracellular organelle,'part of' some intracellular|intracellular part|organelle
+GO:0031981,nuclear lumen,'part of' some nucleus|intracellular organelle lumen|nuclear part
+GO:0044428,nuclear part,'part of' some nucleus|intracellular organelle part
+GO:0044422,organelle part,'part of' some organelle|cellular_component
+GO:0043233,organelle lumen,'part of' some organelle|membrane-enclosed lumen|organelle part
+GO:0005622,intracellular,cell part
+GO:0005623,cell,cellular_component
+GO:0031974,membrane-enclosed lumen,cellular_component
+GO:0043226,organelle,cellular_component
+GO:0005634,nucleus,intracellular membrane-bounded organelle
+GO:0043231,intracellular membrane-bounded organelle,intracellular organelle|membrane-bounded organelle
+GO:0043227,membrane-bounded organelle,organelle
+GO:0005575,cellular_component,

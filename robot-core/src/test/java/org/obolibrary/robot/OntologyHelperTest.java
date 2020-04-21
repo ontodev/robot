@@ -7,11 +7,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import junit.framework.TestCase;
 import org.junit.Test;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 
 /** Tests for OntologyHelper. */
 public class OntologyHelperTest extends CoreTest {
@@ -109,5 +107,36 @@ public class OntologyHelperTest extends CoreTest {
 
     OntologyHelper.removeOntologyAnnotations(simple);
     assertEquals(0, simple.getAnnotations().size());
+  }
+
+  /**
+   * Test collapse ontology method.
+   *
+   * @throws IOException on issue loading ontology or running minimize
+   * @throws OWLOntologyCreationException on loading ontology
+   */
+  @Test
+  public void testCollapse() throws IOException, OWLOntologyCreationException {
+    OWLOntology ontology = loadOntology("/uberon.owl");
+    OntologyHelper.collapseOntology(ontology, 3, new HashSet<>(), true);
+    int after = ontology.getClassesInSignature().size();
+    TestCase.assertEquals(7, after);
+  }
+
+  /**
+   * Test collapse ontology method with a precious class.
+   *
+   * @throws IOException on issue loading ontology or running minimize
+   * @throws OWLOntologyCreationException on loading ontology
+   */
+  @Test
+  public void testCollapseWithPrecious() throws IOException, OWLOntologyCreationException {
+    OWLOntology ontology = loadOntology("/uberon.owl");
+    Set<IRI> precious = new HashSet<>();
+    // 'skeletal joint' will be kept
+    precious.add(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000982"));
+    OntologyHelper.collapseOntology(ontology, 3, precious, true);
+    int after = ontology.getClassesInSignature().size();
+    TestCase.assertEquals(8, after);
   }
 }

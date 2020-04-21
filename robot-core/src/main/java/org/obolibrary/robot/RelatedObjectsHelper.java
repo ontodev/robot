@@ -89,7 +89,7 @@ public class RelatedObjectsHelper {
   /**
    * Filter a set of OWLAxioms based on the provided arguments.
    *
-   * @param axioms Set of OWLAxioms to filter
+   * @param inputAxioms Set of OWLAxioms to filter
    * @param objects Set of OWLObjects to get axioms for
    * @param axiomSelectors List of string selectors for types of axioms
    * @param baseNamespaces List of string base namespaces used for internal/external selections
@@ -99,7 +99,7 @@ public class RelatedObjectsHelper {
    * @throws OWLOntologyCreationException on issue creating empty ontology for tautology checker
    */
   public static Set<OWLAxiom> filterAxioms(
-      Set<OWLAxiom> axioms,
+      Set<OWLAxiom> inputAxioms,
       Set<OWLObject> objects,
       List<String> axiomSelectors,
       List<String> baseNamespaces,
@@ -110,34 +110,37 @@ public class RelatedObjectsHelper {
     // Go through the axiom selectors in order and process selections
     boolean internal = false;
     boolean external = false;
+    Set<OWLAxiom> filteredAxioms = new HashSet<>();
     for (String axiomSelector : axiomSelectors) {
       if (axiomSelector.equalsIgnoreCase("internal")) {
         if (external) {
           logger.error(
               "ignoring 'internal' axiom selector - 'internal' and 'external' together will remove all axioms");
         }
-        axioms = RelatedObjectsHelper.filterInternalAxioms(axioms, baseNamespaces);
+        filteredAxioms.addAll(
+            RelatedObjectsHelper.filterInternalAxioms(inputAxioms, baseNamespaces));
         internal = true;
       } else if (axiomSelector.equalsIgnoreCase("external")) {
         if (internal) {
           logger.error(
               "ignoring 'external' axiom selector - 'internal' and 'external' together will remove all axioms");
         }
-        axioms = RelatedObjectsHelper.filterExternalAxioms(axioms, baseNamespaces);
+        filteredAxioms.addAll(
+            RelatedObjectsHelper.filterExternalAxioms(inputAxioms, baseNamespaces));
         external = true;
       } else if (axiomSelector.equalsIgnoreCase("tautologies")) {
-        axioms = RelatedObjectsHelper.filterTautologicalAxioms(axioms, false);
+        filteredAxioms.addAll(RelatedObjectsHelper.filterTautologicalAxioms(inputAxioms, false));
       } else if (axiomSelector.equalsIgnoreCase("structural-tautologies")) {
-        axioms = RelatedObjectsHelper.filterTautologicalAxioms(axioms, true);
+        filteredAxioms.addAll(RelatedObjectsHelper.filterTautologicalAxioms(inputAxioms, true));
       } else {
         // Assume this is a normal OWLAxiom type
         Set<Class<? extends OWLAxiom>> axiomTypes =
             RelatedObjectsHelper.getAxiomValues(axiomSelector);
-        axioms = filterAxiomsByAxiomType(axioms, objects, axiomTypes, partial, namedOnly);
+        filteredAxioms.addAll(
+            filterAxiomsByAxiomType(inputAxioms, objects, axiomTypes, partial, namedOnly));
       }
     }
-
-    return axioms;
+    return filteredAxioms;
   }
 
   /**

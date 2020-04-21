@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -42,10 +44,10 @@ public class CoreTest {
    * @return the loaded ontology
    * @throws IOException on file problems
    */
-  public OWLOntology loadOntologyWithCatalog(String path) throws IOException {
+  public OWLOntology loadOntologyWithCatalog(String path) throws IOException, URISyntaxException {
     IOHelper ioh = new IOHelper();
-    String fullpath = this.getClass().getResource(path).getFile();
-    return ioh.loadOntology(fullpath);
+    URI uri = this.getClass().getResource(path).toURI();
+    return ioh.loadOntology(new File(uri));
   }
 
   /**

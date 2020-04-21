@@ -443,7 +443,6 @@ public class TemplateHelper {
         // Get the template without identifier by breaking on the first space
         String sub = template.substring(template.indexOf(" ")).trim().replaceAll("%", content);
         parser.setStringToParse(sub);
-        logger.info("Parsing expression '%s'", sub);
         try {
           expressions.addAll(parser.parseDataPropertyList());
         } catch (OWLParserException e) {
@@ -784,7 +783,6 @@ public class TemplateHelper {
         // Get the template without identifier by breaking on the first space
         String sub = template.substring(template.indexOf(" ")).trim().replaceAll("%", content);
         parser.setStringToParse(sub);
-        logger.info("Parsing expression '%s'", sub);
         try {
           expressions.addAll(parser.parseObjectPropertyList());
         } catch (OWLParserException e) {
@@ -1038,8 +1036,6 @@ public class TemplateHelper {
       return true;
     } else if (template.equals("LABEL")) {
       return true;
-    } else if (template.equals("TYPE")) {
-      return true;
     } else if (template.equals("CLASS_TYPE")) {
       return true;
     } else if (template.equals("PROPERTY_TYPE")) {
@@ -1048,12 +1044,13 @@ public class TemplateHelper {
       return true;
     } else if (template.equals("RANGE")) {
       return true;
+    } else if (template.equals("INDIVIDUAL_TYPE")) {
+      return true;
+    } else if (template.matches("^TYPE( SPLIT=.+)?$")) {
+      // TYPE can be followed by a split for individuals
+      return true;
     } else if (template.matches("^CHARACTERISTIC( SPLIT=.+)?$")) {
       // CHARACTERISTIC can have a split
-      // Should only be followed by SPLIT, nothing else
-      return true;
-    } else if (template.matches("^INDIVIDUAL_TYPE( SPLIT=.+)?$")) {
-      // INDIVIDUAL_TYPE can have a split
       // Should only be followed by SPLIT, nothing else
       return true;
     } else if (template.matches("^>{0,2}A[LTI]? .*")) {
@@ -1069,7 +1066,7 @@ public class TemplateHelper {
       return true;
     } else
       // Individuals can be I, II (does not need to be followed by space), SI, or DI
-      return template.matches("^(I .*|II.?|[SD]I .*)");
+      return template.matches("^(I .*|II.?|[TSD]I .*)");
 
     // TODO - future support for DT datatype axioms
   }

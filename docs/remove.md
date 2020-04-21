@@ -5,7 +5,7 @@
 1. [Overview](#overview)
 2. [Preserving the Structure (`--preserve-structure`)](#preserving-the-structure)
 2. [Selectors (`--select`)](#selectors)
-3. [Axioms (`--aximos`)](#axioms)
+3. [Axioms (`--axioms`)](#axioms)
 4. [Examples](#examples)
 
 ## Overview
@@ -200,6 +200,12 @@ Remove structural tautologies (e.g., `owl:Nothing`):
     robot remove --input tautologies.owl \
       --axioms structural-tautologies \
       --output results/no-tautologies.owl
+
+Remove disjoint classes and class assertions:
+
+    robot remove --input template.owl \
+      --axioms "DisjointClasses ClassAssertion" \
+      --output results/no-class-logic.owl
 
 Create a "base" subset by removing external axioms (alternatively, use `filter --axioms internal`):
 
