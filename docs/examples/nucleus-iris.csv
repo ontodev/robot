@@ -1,4 +1,4 @@
-LABEL,SubClass Of [ID],SubClass Of [IRI]
+rdfs:label,SubClass Of [ID],SubClass Of [IRI]
 cell,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575
 cell part,GO:0005575,http://purl.obolibrary.org/obo/GO_0005575
 cellular_component,,
