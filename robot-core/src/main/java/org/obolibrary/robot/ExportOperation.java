@@ -413,11 +413,6 @@ public class ExportOperation {
     if (provider instanceof CURIEShortFormProvider) {
       CURIEShortFormProvider sfp = (CURIEShortFormProvider) provider;
       cellValue = sfp.getShortForm(type.getIRI());
-    } else if (provider instanceof QuotedAnnotationValueShortFormProvider) {
-      cellValue = type.getPrintName();
-      if (cellValue.contains(" ")) {
-        cellValue = String.format("'%s'", cellValue);
-      }
     } else if (provider instanceof AnnotationValueShortFormProvider) {
       cellValue = type.getPrintName();
     } else {
@@ -1108,8 +1103,13 @@ public class ExportOperation {
                 EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology);
             if (!types.isEmpty()) {
               row.add(
-                getClassCell(
-                  types, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+                  getClassCell(
+                      types,
+                      col,
+                      displayRendererType,
+                      sortRendererType,
+                      provider,
+                      excludeAnonymous));
             } else {
               // No class assertions, just provide the entity type
               row.add(getEntityTypeCell(entity.getEntityType(), col));
