@@ -1106,13 +1106,18 @@ public class ExportOperation {
           if (entity.isOWLNamedIndividual()) {
             Collection<OWLClassExpression> types =
                 EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology);
-            row.add(
+            if (!types.isEmpty()) {
+              row.add(
                 getClassCell(
-                    types, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+                  types, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+            } else {
+              // No class assertions, just provide the entity type
+              row.add(getEntityTypeCell(entity.getEntityType(), col));
+            }
+
           } else {
             // Not an individual, just return the entity type
-            EntityType type = entity.getEntityType();
-            row.add(getEntityTypeCell(type, col));
+            row.add(getEntityTypeCell(entity.getEntityType(), col));
           }
           break;
         default:
