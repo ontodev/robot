@@ -2,6 +2,7 @@ package org.obolibrary.robot.providers;
 
 import java.util.*;
 import javax.annotation.Nonnull;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ public class CURIEShortFormProvider implements ShortFormProvider {
   }
 
   /**
-   * Get the short form as a CURIE.
+   * Get the short form of an OWLEntity as a CURIE.
    *
    * @param entity OWLEntity to get short form of
    * @return CURIE
@@ -41,18 +42,28 @@ public class CURIEShortFormProvider implements ShortFormProvider {
   @Override
   @Nonnull
   public String getShortForm(@Nonnull OWLEntity entity) {
-    String iri = entity.getIRI().toString();
+    return getShortForm(entity.getIRI());
+  }
+
+  /**
+   * Get the short form of an IRI as a CURIE.
+   *
+   * @param iri IRI to get short form of
+   * @return CURIE
+   */
+  public String getShortForm(IRI iri) {
+    String iriString = iri.toString();
     // Find the first (longest) match from sorted prefix/ns entries
     for (Map.Entry<String, String> prefix2Ns : sortedPrefixMap) {
       String prefix = prefix2Ns.getKey() + ":";
       String ns = prefix2Ns.getValue();
-      if (iri.startsWith(ns)) {
-        return iri.replace(ns, prefix);
+      if (iriString.startsWith(ns)) {
+        return iriString.replace(ns, prefix);
       }
     }
     // Could not match, just return full IRI
     logger.error("Unable to find namespace for: " + iri);
-    return iri;
+    return iriString;
   }
 
   /** Dispose of the ShortFormProvider */

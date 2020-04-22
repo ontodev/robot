@@ -401,6 +401,28 @@ public class ExportOperation {
   }
 
   /**
+   * Return a cell containing entity type, rendered based on the provider for the Column.
+   *
+   * @param type EntityType of the target entity
+   * @param column Column for this cell
+   * @return Cell for this Column containing entity type as string rendering
+   */
+  private static Cell getEntityTypeCell(EntityType type, Column column) {
+    ShortFormProvider provider = column.getShortFormProvider();
+    String cellValue;
+    if (provider instanceof CURIEShortFormProvider) {
+      CURIEShortFormProvider sfp = (CURIEShortFormProvider) provider;
+      cellValue = sfp.getShortForm(type.getIRI());
+    } else if (provider instanceof AnnotationValueShortFormProvider) {
+      cellValue = type.getPrintName();
+    } else {
+      // IRI provider
+      cellValue = type.getIRI().toString();
+    }
+    return new Cell(column, cellValue);
+  }
+
+  /**
    * Return a Cell containing property expressions.
    *
    * @param exprs Collection of OWLPropertyExpressions to render in property cell
@@ -1079,9 +1101,23 @@ public class ExportOperation {
           if (entity.isOWLNamedIndividual()) {
             Collection<OWLClassExpression> types =
                 EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology);
-            row.add(
-                getClassCell(
-                    types, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+            if (!types.isEmpty()) {
+              row.add(
+                  getClassCell(
+                      types,
+                      col,
+                      displayRendererType,
+                      sortRendererType,
+                      provider,
+                      excludeAnonymous));
+            } else {
+              // No class assertions, just provide the entity type
+              row.add(getEntityTypeCell(entity.getEntityType(), col));
+            }
+
+          } else {
+            // Not an individual, just return the entity type
+            row.add(getEntityTypeCell(entity.getEntityType(), col));
           }
           break;
         default:
