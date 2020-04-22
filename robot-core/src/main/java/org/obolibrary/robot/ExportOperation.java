@@ -160,7 +160,6 @@ public class ExportOperation {
       IRI colIRI = ioHelper.createIRI(colName);
       if (colIRI != null
           && colIRI.toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
-        System.out.println(colIRI);
         tag = "LABEL";
         ap = dataFactory.getRDFSLabel();
       }
