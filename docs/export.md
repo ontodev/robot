@@ -55,7 +55,7 @@ Various `--header` types are supported:
 	* `SubProperty Of`: creates a "SubProperty Of" column based on `rdfs:subPropertyOf`
 	* `Equivalent Property`: creates an "Equivalent Properties" column based on `owl:equivalentProperty`
 	* `Disjoint With`: creates a "Disjoint With" column based on `owl:disjointWith`
-	* `Type`: creates an "Instance Of" column based on `rdf:type` for named individuals
+	* `Type`: creates an "Instance Of" column based on `rdf:type` for named individuals or the OWL EntityType for all others (e.g., `Class`)
 * **Property CURIES**: you can always reference a property by the short form of the unique identifier (e.g. `oboInOwl:hasDbXref`). Any prefix used [must be defined](global/prefixes).
 * **Property Labels**: as long as a property label is defined in the input ontology, you can reference a property by label (e.g. `database_cross_reference`). This label will also be used as the column header.
 
@@ -104,7 +104,7 @@ For example, to return the details of *individuals only*:
 To return details of *classes and properties*:
 
     robot export --input nucleus_part_of.owl \
-      --header "ID|LABEL|SubClass Of|SubProperty Of" \
+      --header "ID|LABEL|Type|SubClass Of|SubProperty Of" \
       --include "classes properties" \
       --export results/classes-properties.csv
 
