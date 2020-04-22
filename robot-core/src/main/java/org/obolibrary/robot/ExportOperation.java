@@ -155,6 +155,16 @@ public class ExportOperation {
 
       // Maybe get a property
       OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(colName, false);
+
+      // Handle some defaults
+      IRI colIRI = ioHelper.createIRI(colName);
+      if (colIRI != null
+          && colIRI.toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
+        System.out.println(colIRI);
+        tag = "LABEL";
+        ap = dataFactory.getRDFSLabel();
+      }
+
       OWLDataProperty dp = checker.getOWLDataProperty(colName);
       OWLObjectProperty op = checker.getOWLObjectProperty(colName);
 
@@ -766,13 +776,9 @@ public class ExportOperation {
           }
           break;
         case OBJECT_ONE_OF:
-          System.out.println("ONE OF " + ce);
-          break;
         case OBJECT_UNION_OF:
-          System.out.println("UNION OF " + ce);
-          break;
         case OBJECT_INTERSECTION_OF:
-          System.out.println("INTERSECTION OF " + ce);
+          // TODO
           break;
       }
     }
@@ -811,6 +817,14 @@ public class ExportOperation {
     for (Column col : table.getColumns()) {
 
       String colName = col.getName();
+      OWLProperty maybeAnnotation = col.getProperty();
+      if (maybeAnnotation instanceof OWLAnnotationProperty) {
+        OWLAnnotationProperty maybeLabel = (OWLAnnotationProperty) maybeAnnotation;
+        if (maybeLabel.isLabel()) {
+          // Handle like we do default LABEL columns
+          colName = "LABEL";
+        }
+      }
       ShortFormProvider provider = col.getShortFormProvider();
 
       Cell cell;
