@@ -17,5 +17,4 @@ GO:0044428,nuclear part,Class,'part of' some nucleus|intracellular organelle par
 GO:0044446,intracellular organelle part,Class,'part of' some 'intracellular organelle'|'part of' some intracellular|'part of' some organelle|intracellular part|organelle part,
 GO:0044464,cell part,Class,'part of' some cell|cellular_component,
 GO:0070013,intracellular organelle lumen,Class,'part of' some 'intracellular organelle'|intracellular organelle part|organelle lumen,
-dc:test1,Test 1 AP,Annotation property,,
 rdfs:label,,Annotation property,,
