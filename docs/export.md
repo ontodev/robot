@@ -47,7 +47,7 @@ Various `--header` types are supported:
 * **Special Headers**:
 	* `IRI`: creates an "IRI" column based on the full unique identifier
 	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE) - please note that all IRIs must have [defined prefixes](global/prefixes), or the full IRI will be returned.
-	* `LABEL`: creates a "Label" column based on `rdfs:label`
+	* `LABEL`: creates a "Label" column based on `rdfs:label` (`rdfs:label` can also be used in place of this column)
 	* `SYNONYMS`: creates a "SYNONYMS" column based on all synonyms (oboInOwl exact, broad, narrow, related, or IAO alternative term)
 	* `SubClass Of`: creates a "SubClass Of" column based on `rdfs:subClassOf`
 	* `SubClasses`: creates a "SubClasses" column based on direct children of a class
@@ -141,7 +141,7 @@ In the above example, all the "subclass of" values will be rendered by their sho
 You can also specify different rendering strategies for different columns by including the strategy name in a square-bracket-enclosed tag after the column name:
 
     robot export --input nucleus_part_of.owl \
-      --header "LABEL|SubClass Of [ID]|SubClass Of [IRI]" \
+      --header "rdfs:label|SubClass Of [ID]|SubClass Of [IRI]" \
       --exclude-anonymous true \
       --export results/nucleus-iris.csv
 
