@@ -21,7 +21,7 @@ build:
     mkdir -p build
 
 build/robot.jar: | build
-   curl -L -o build/robot.jar "https://github.com/ontodev/robot/releases/latest/downloads/robot.jar"
+   curl -L -o build/robot.jar "https://github.com/ontodev/robot/releases/latest/download/robot.jar"
 
 ROBOT := java -jar build/robot.jar
 ```
