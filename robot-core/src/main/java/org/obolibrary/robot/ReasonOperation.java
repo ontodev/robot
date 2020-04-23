@@ -581,7 +581,7 @@ public class ReasonOperation {
     }
 
     if (filteredViolations.size() > 0) {
-      logger.error(
+      logger.warn(
           "Reference violations found: "
               + filteredViolations.size()
               + " - reasoning may be incomplete");
@@ -591,10 +591,10 @@ public class ReasonOperation {
       for (InvalidReferenceViolation v : filteredViolations) {
         if (v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)
             && danglings < maxDanglings) {
-          logger.error("Reference violation: " + v);
+          logger.warn("Reference violation: " + v);
           danglings++;
         } else if (!v.getCategory().equals(InvalidReferenceViolation.Category.DANGLING)) {
-          logger.error("Reference violation: " + v);
+          logger.warn("Reference violation: " + v);
         }
       }
 
