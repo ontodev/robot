@@ -220,7 +220,7 @@ public class ExportOperation {
 
     // Get the cell values based on columns
     for (OWLEntity entity : entities) {
-      table.addRow(getRow(ontology, table, entity, excludeAnonymous));
+      table.addRow(getRow(ontology, checker, table, entity, excludeAnonymous));
     }
 
     // Sort the rows by sort column or columns
@@ -467,12 +467,23 @@ public class ExportOperation {
       RendererType rt,
       ShortFormProvider provider,
       OWLEntity entity,
-      OWLAnnotationProperty ap) {
+      OWLAnnotationProperty ap,
+      QuotedEntityChecker c) {
     List<String> values = new ArrayList<>();
     for (OWLAnnotationAssertionAxiom a :
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
       if (a.getProperty().getIRI() == ap.getIRI()) {
-        values.add(renderManchester(rt, provider, a.getValue()));
+        if (a.getValue().isIRI()) {
+          IRI iri = a.getValue().asIRI().orNull();
+          if (iri != null) {
+            Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
+            for (OWLEntity e : entities) {
+              values.add(renderManchester(rt, provider, e));
+            }
+          }
+        } else {
+          values.add(renderManchester(rt, provider, a.getValue()));
+        }
       }
     }
     return values;
@@ -826,7 +837,11 @@ public class ExportOperation {
    * @throws Exception on invalid column
    */
   private static Row getRow(
-      OWLOntology ontology, Table table, OWLEntity entity, boolean excludeAnonymous)
+      OWLOntology ontology,
+      QuotedEntityChecker c,
+      Table table,
+      OWLEntity entity,
+      boolean excludeAnonymous)
       throws Exception {
 
     String format = table.getFormat();
@@ -897,10 +912,10 @@ public class ExportOperation {
         if (colProperty instanceof OWLAnnotationProperty) {
           OWLAnnotationProperty ap = (OWLAnnotationProperty) colProperty;
           List<String> display =
-              getPropertyValues(ontology, displayRendererType, provider, entity, ap);
+              getPropertyValues(ontology, displayRendererType, provider, entity, ap, c);
           List<String> sort;
           if (sortRendererType != null) {
-            sort = getPropertyValues(ontology, sortRendererType, provider, entity, ap);
+            sort = getPropertyValues(ontology, sortRendererType, provider, entity, ap, c);
           } else {
             sort = display;
           }
