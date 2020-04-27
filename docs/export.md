@@ -147,6 +147,8 @@ You can also specify different rendering strategies for different columns by inc
 
 These tags should not be used with the following default columns: `LABEL`, `ID`, or `IRI` as they will not change the rendered values.
 
+These tags can be used for object and annotation property columns as well. When using these tags with annotation properties, the value in the cell will only change if the annotation value is an IRI. For literals, the annotation value will always be rendered the same, no matter what the tag is.
+
 ### Preparing the Ontology
 
 When exporting details on classes using object or data properties, we recommend running [reason](/reason), [relax](/relax), and [reduce](/reduce) first. You can also create a subset of entities using [remove](/remove) or [filter](/filter).
