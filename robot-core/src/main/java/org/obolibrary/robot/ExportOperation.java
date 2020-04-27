@@ -220,7 +220,7 @@ public class ExportOperation {
 
     // Get the cell values based on columns
     for (OWLEntity entity : entities) {
-      table.addRow(getRow(ontology, checker, table, entity, excludeAnonymous));
+      table.addRow(getRow(ontology, table, entity, excludeAnonymous));
     }
 
     // Sort the rows by sort column or columns
@@ -467,8 +467,7 @@ public class ExportOperation {
       RendererType rt,
       ShortFormProvider provider,
       OWLEntity entity,
-      OWLAnnotationProperty ap,
-      QuotedEntityChecker c) {
+      OWLAnnotationProperty ap) {
     List<String> values = new ArrayList<>();
     for (OWLAnnotationAssertionAxiom a :
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
@@ -837,11 +836,7 @@ public class ExportOperation {
    * @throws Exception on invalid column
    */
   private static Row getRow(
-      OWLOntology ontology,
-      QuotedEntityChecker c,
-      Table table,
-      OWLEntity entity,
-      boolean excludeAnonymous)
+      OWLOntology ontology, Table table, OWLEntity entity, boolean excludeAnonymous)
       throws Exception {
 
     String format = table.getFormat();
@@ -912,10 +907,10 @@ public class ExportOperation {
         if (colProperty instanceof OWLAnnotationProperty) {
           OWLAnnotationProperty ap = (OWLAnnotationProperty) colProperty;
           List<String> display =
-              getPropertyValues(ontology, displayRendererType, provider, entity, ap, c);
+              getPropertyValues(ontology, displayRendererType, provider, entity, ap);
           List<String> sort;
           if (sortRendererType != null) {
-            sort = getPropertyValues(ontology, sortRendererType, provider, entity, ap, c);
+            sort = getPropertyValues(ontology, sortRendererType, provider, entity, ap);
           } else {
             sort = display;
           }
