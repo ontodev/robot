@@ -472,7 +472,17 @@ public class ExportOperation {
     for (OWLAnnotationAssertionAxiom a :
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
       if (a.getProperty().getIRI() == ap.getIRI()) {
-        values.add(renderManchester(rt, provider, a.getValue()));
+        if (a.getValue().isIRI()) {
+          IRI iri = a.getValue().asIRI().orNull();
+          if (iri != null) {
+            Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
+            for (OWLEntity e : entities) {
+              values.add(renderManchester(rt, provider, e));
+            }
+          }
+        } else {
+          values.add(renderManchester(rt, provider, a.getValue()));
+        }
       }
     }
     return values;
