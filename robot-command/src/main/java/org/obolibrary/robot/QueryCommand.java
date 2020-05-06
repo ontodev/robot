@@ -54,6 +54,7 @@ public class QueryCommand implements Command {
     o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
     o.addOption("u", "update", true, "run a SPARQL UPDATE");
     o.addOption("t", "tdb", true, "if true, load RDF/XML or TTL onto disk");
+    o.addOption("C", "create-tdb", true, "if true, create a TDB directory without querying");
     o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
     o.addOption("d", "tdb-directory", true, "directory to put TDB mappings (default: .tdb)");
 
@@ -158,6 +159,15 @@ public class QueryCommand implements Command {
       return state;
     }
 
+    boolean createTDB = CommandLineHelper.getBooleanValue(line, "create-tdb", false);
+    if (createTDB) {
+      // Create and close without deleting TDB directory
+      Dataset dataset = createTDBDataset(line);
+      dataset.close();
+      TDBFactory.release(dataset);
+      return state;
+    }
+
     List<List<String>> queries = getQueries(line);
 
     boolean useTDB = CommandLineHelper.getBooleanValue(line, "tdb", false);
@@ -172,6 +182,17 @@ public class QueryCommand implements Command {
     }
 
     return state;
+  }
+
+  /**
+   * @param line
+   * @return
+   */
+  private static Dataset createTDBDataset(CommandLine line) {
+    String inputPath =
+        CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
+    String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
+    return IOHelper.loadToTDBDataset(inputPath, tdbDir);
   }
 
   /**
@@ -205,13 +226,9 @@ public class QueryCommand implements Command {
    */
   private static void executeOnDisk(CommandLine line, List<List<String>> queries)
       throws IOException {
-    String inputPath =
-        CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
-    String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
+    Dataset dataset = createTDBDataset(line);
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
-
-    Dataset dataset = IOHelper.loadToTDBDataset(inputPath, tdbDir);
-
+    String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     try {
       runQueries(line, dataset, queries);
     } finally {
