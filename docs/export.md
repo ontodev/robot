@@ -110,14 +110,38 @@ To return details of *classes and properties*:
 
 The `--include` option does not need to be specified if you are getting details on individuals and classes. If you do specify an `--include`, it cannot be an empty string, as no entities will be included in the export.
 
-Finally, the export will include anonymous expressions (subclasses, equivalent classes, property expressions). If you only wish to include *named* entities, add `--exclude-anonymous true`:
+Finally, the export will include both named entities and anonymous expressions (subclasses, equivalent classes, property expressions). You can change this with the `--entity-select` option:
+* `--entity-select ANY`: include both named and anonymous expressions in all columns (default)
+* `--entity-select NAMED`: include only named entities in all columns
+* `--entity-select ANON` or `--entity-select ANONYMOUS`: include only anonymous expressions in all columns
+
 
     robot export --input nucleus_part_of.owl \
       --header "LABEL|SubClass Of|part of" \
-      --exclude-anonymous true \
+      --entity-select NAMED \
       --export results/nucleus.csv
 
 Note that in the example above, the first two headers are special keywords and the third is the label of a property used in the ontology.
+
+These export-wide defaults can be overridden in specific columns by including the keyword in a square-bracket-enclosed tag following the column name:
+* `col name [ANY]`: include both named entities and anonymous expressions in this column
+* `col name [NAMED]`: include only named entities in this column
+* `col name [ANON]`/`col name [ANONYMOUS]`: include only anonymous expressions in this column
+
+
+    robot export --input nucleus_part_of.owl \
+      --header "LABEL|SubClass Of [ANON]" \
+      --export results/nucleus_anon.csv
+      
+Without the `ANON` tag in the example above, `SubClass Of` would include both anonymous expressions and named classes. Now, it only includes the anonymous expressions.
+
+These tags can be combined with the [rendering tags](#rendering-cell-values), for example:
+* `col name [NAME ANON]`: renders anonymous expressions using the name (label or CURIE) of the entities used in the expression
+* `col name [ID ANON]`: renders anonymous expressions using the CURIE of entities used in the expression
+* `col name [ID NAMED]`: renders named entities only using their CURIE
+* `col name [NAME ANY]`: renders with both named entities and anonymous expressions
+
+It is not recommended to use the `ANON` tag in combination with `LABEL`, as if an entity used in an anonymous expression does not have a label, it will be rendered as an empty string. Additionally, the entity selection tags will have no effect on annotation property values.
 
 ### Rendering Cell Values
 
@@ -133,7 +157,7 @@ By default, values are rendered with the `NAME` strategy. To update the strategy
     robot export --input nucleus_part_of.owl \
       --header "ID|SubClass Of" \
       --entity-format ID \
-      --exclude-anonymous true \
+      --entity-select NAMED \
       --export results/nucleus-ids.csv
 
 In the above example, all the "subclass of" values will be rendered by their short form ID.
@@ -142,12 +166,13 @@ You can also specify different rendering strategies for different columns by inc
 
     robot export --input nucleus_part_of.owl \
       --header "rdfs:label|SubClass Of [ID]|SubClass Of [IRI]" \
-      --exclude-anonymous true \
+      --entity-select NAMED \
       --export results/nucleus-iris.csv
 
 These tags should not be used with the following default columns: `LABEL`, `ID`, or `IRI` as they will not change the rendered values.
 
 These tags can be used for object and annotation property columns as well. When using these tags with annotation properties, the value in the cell will only change if the annotation value is an IRI. For literals, the annotation value will always be rendered the same, no matter what the tag is.
+
 
 ### Preparing the Ontology
 
@@ -156,6 +181,14 @@ When exporting details on classes using object or data properties, we recommend 
 ---
 
 ## Error Messages
+
+### Entity Format Error
+
+The allowed `--entity-format` values are: `ID`, `IRI`, `NAME`, and `LABEL`
+
+### Entity Select Error
+
+The allowed `--entity-select` values are: `NAMED`, `ANON` or `ANONYMOUS`, and `ANY`
 
 ### Include Nothing Error
 
@@ -171,4 +204,4 @@ The following formats are currently supported: `tsv`, `csv`, `html`, `json`, and
 
 ### Unknown Tag Error
 
-The tag for rendering following a column name must be one of: `[ID]`, `[IRI]`, `[NAME]`.
+The allowed tag values are: `ID`, `IRI`, `NAME`, `LABEL`, `NAMED`, `ANON`, `ANONYMOUS`, or `ANY`.

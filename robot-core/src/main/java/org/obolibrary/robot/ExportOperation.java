@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -19,6 +20,12 @@ public class ExportOperation {
 
   /** Namespace for error messages. */
   private static final String NS = "export#";
+
+  private static final String entitySelectError =
+      NS + "ENTITY SELECT ERROR '%s' is not a valid entity selection";
+
+  private static final String entityFormatError =
+      NS + "ENTITY FORMAT ERROR '%s' is not a valid entity rendering format";
 
   private static final String invalidColumnError =
       NS + "INVALID COLUMN ERROR unable to find property for column header '%s'";
@@ -54,13 +61,18 @@ public class ExportOperation {
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
     options.put("include", "classes individuals");
-    options.put("exclude-anonymous", "false");
     options.put("format", "tsv");
     options.put("sort", null);
     options.put("split", "|");
     options.put("entity-format", "NAME");
+    options.put("entity-select", "ANY");
     return options;
   }
+
+  private static final List<String> entityFormatTags =
+      Lists.newArrayList("id", "iri", "label", "name");
+  private static final List<String> entitySelectTags =
+      Lists.newArrayList("any", "named", "anon", "anonymous");
 
   /**
    * Given an ontology, an ioHelper, a list of columns, an output export file, and a map of options,
@@ -79,8 +91,6 @@ public class ExportOperation {
       List<String> columnNames,
       Map<String, String> options)
       throws Exception {
-    boolean excludeAnonymous = OptionsHelper.optionIsTrue(options, "exclude-anonymous");
-
     // Get column or columns to sort on
     // If not provided, use the first column
     String sortColumn = OptionsHelper.getOption(options, "sort", columnNames.get(0));
@@ -104,6 +114,13 @@ public class ExportOperation {
 
     // Default tag for entity rendering when not specified
     String entityFormat = OptionsHelper.getOption(options, "entity-format", "NAME");
+    if (!entityFormatTags.contains(entityFormat.toLowerCase())) {
+      throw new Exception(String.format(entityFormatError, entityFormat));
+    }
+    String entitySelect = OptionsHelper.getOption(options, "entity-select", "ANY");
+    if (!entitySelectTags.contains(entitySelect.toLowerCase())) {
+      throw new Exception(String.format(entitySelectError, entitySelect));
+    }
 
     // Create some providers for rendering entities
     ShortFormProvider oboProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
@@ -126,13 +143,27 @@ public class ExportOperation {
     // Create the Column objects and add to table
     List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
     for (String c : columnNames) {
-      String tag = entityFormat;
+      String currentEntityFormat = entityFormat;
+      String currentEntitySelect = entitySelect;
       String colName = c;
       // Determine if this has a tag for rendering
-      Matcher m = Pattern.compile("(.+) \\[(ID|id|IRI|iri|LABEL|label|NAME|name)]").matcher(c);
+      Matcher m =
+          Pattern.compile(
+                  "(.+) \\[(ID|id|IRI|iri|LABEL|label|NAME|name|NAMED|named|ANON|anon|ANONYMOUS|anonymous).*]")
+              .matcher(c);
       if (m.find()) {
         colName = m.group(1);
-        tag = m.group(2);
+        String tag = m.group(2);
+        // Process one or more tags
+        for (String subTag : tag.split(" ")) {
+          if (entityFormatTags.contains(subTag.toLowerCase())) {
+            currentEntityFormat = subTag;
+          } else if (entitySelectTags.contains(subTag.toLowerCase())) {
+            currentEntitySelect = subTag;
+          } else {
+            throw new Exception(String.format(unknownTagError, c, subTag));
+          }
+        }
       }
 
       // Add some other defaults to the label map
@@ -146,11 +177,14 @@ public class ExportOperation {
 
       // Handle the default column rendering
       if (c.equalsIgnoreCase("ID") || c.equalsIgnoreCase("CURIE")) {
-        tag = "ID";
+        currentEntityFormat = "ID";
+        currentEntitySelect = "NAMED";
       } else if (c.equalsIgnoreCase("IRI")) {
-        tag = "IRI";
+        currentEntityFormat = "IRI";
+        currentEntitySelect = "NAMED";
       } else if (c.equalsIgnoreCase("LABEL")) {
-        tag = "LABEL";
+        currentEntityFormat = "LABEL";
+        currentEntitySelect = "NAMED";
       }
 
       // Maybe get a property
@@ -160,7 +194,8 @@ public class ExportOperation {
       IRI colIRI = ioHelper.createIRI(colName);
       if (colIRI != null
           && colIRI.toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
-        tag = "LABEL";
+        currentEntityFormat = "LABEL";
+        currentEntitySelect = "NAMED";
         ap = dataFactory.getRDFSLabel();
       }
 
@@ -169,7 +204,7 @@ public class ExportOperation {
 
       // Maybe get a short form provider
       ShortFormProvider provider;
-      switch (tag.toUpperCase()) {
+      switch (currentEntityFormat.toUpperCase()) {
         case "ID":
         case "CURIE":
           provider = oboProvider;
@@ -184,18 +219,18 @@ public class ExportOperation {
           provider = labelProvider;
           break;
         default:
-          throw new Exception(String.format(unknownTagError, c, tag));
+          throw new Exception(String.format(unknownTagError, c, currentEntityFormat));
       }
 
       Column column;
       if (ap != null) {
         column = new Column(colName, c, ap, provider);
       } else if (dp != null) {
-        column = new Column(colName, c, dp, provider);
+        column = new Column(colName, c, dp, provider, currentEntitySelect);
       } else if (op != null) {
-        column = new Column(colName, c, op, provider);
+        column = new Column(colName, c, op, provider, currentEntitySelect);
       } else {
-        column = new Column(colName, c, iri, provider);
+        column = new Column(colName, c, iri, provider, currentEntitySelect);
       }
 
       // Maybe set sort info
@@ -220,7 +255,7 @@ public class ExportOperation {
 
     // Get the cell values based on columns
     for (OWLEntity entity : entities) {
-      table.addRow(getRow(ontology, table, entity, excludeAnonymous));
+      table.addRow(getRow(ontology, table, entity));
     }
 
     // Sort the rows by sort column or columns
@@ -277,21 +312,23 @@ public class ExportOperation {
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
    * @param classes Set of class expressions to convert to string
-   * @param excludeAnonymous if true, exclude anonymous class expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return String of class expressions or null
    */
   private static List<String> classExpressionsToString(
       RendererType rt,
       ShortFormProvider provider,
       Collection<OWLClassExpression> classes,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     List<String> strings = new ArrayList<>();
     for (OWLClassExpression expr : classes) {
-      if (expr.isAnonymous() && !excludeAnonymous) {
+      if (expr.isAnonymous() && includeAnonymous) {
         // Get a Manchester string using labels
         String manString = renderManchester(rt, provider, expr);
         strings.add(manString);
-      } else if (!expr.isAnonymous()) {
+      } else if (!expr.isAnonymous() && includeNamed) {
         OWLClass sc = expr.asOWLClass();
         strings.add(renderManchester(rt, provider, sc));
       }
@@ -307,7 +344,8 @@ public class ExportOperation {
    * @param displayRendererType RendererType for display value
    * @param sortRendererType RendererType for sort value
    * @param provider ShortFormProvider to resolve entities
-   * @param excludeAnonymous if true, exclude anonymous expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return Cell for this Column containing class expressions
    */
   private static Cell getClassCell(
@@ -316,12 +354,16 @@ public class ExportOperation {
       RendererType displayRendererType,
       RendererType sortRendererType,
       ShortFormProvider provider,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     List<String> displays =
-        classExpressionsToString(displayRendererType, provider, exprs, excludeAnonymous);
+        classExpressionsToString(
+            displayRendererType, provider, exprs, includeNamed, includeAnonymous);
     List<String> sorts;
     if (sortRendererType != null) {
-      sorts = classExpressionsToString(sortRendererType, provider, exprs, excludeAnonymous);
+      sorts =
+          classExpressionsToString(
+              sortRendererType, provider, exprs, includeNamed, includeAnonymous);
     } else {
       sorts = displays;
     }
@@ -430,7 +472,8 @@ public class ExportOperation {
    * @param displayRendererType RendererType for display value
    * @param sortRendererType RendererType for sort value
    * @param provider ShortFormProvider to resolve entities
-   * @param excludeAnonymous if true, exclude anonymous expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return Cell for this Column containing property expressions
    */
   private static Cell getPropertyCell(
@@ -439,12 +482,16 @@ public class ExportOperation {
       RendererType displayRendererType,
       RendererType sortRendererType,
       ShortFormProvider provider,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     List<String> displays =
-        propertyExpressionsToString(displayRendererType, provider, exprs, excludeAnonymous);
+        propertyExpressionsToString(
+            displayRendererType, provider, exprs, includeNamed, includeAnonymous);
     List<String> sorts;
     if (sortRendererType != null) {
-      sorts = propertyExpressionsToString(sortRendererType, provider, exprs, excludeAnonymous);
+      sorts =
+          propertyExpressionsToString(
+              sortRendererType, provider, exprs, includeNamed, includeAnonymous);
     } else {
       sorts = displays;
     }
@@ -498,7 +545,8 @@ public class ExportOperation {
    * @param provider ShortFormProvider to resolve entities
    * @param entity OWLEntity to get relations of
    * @param dp OWLDataProperty to get the value(s) of
-   * @param excludeAnonymous if true, do not include anonymous class expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return String of values or null
    */
   private static List<String> getPropertyValues(
@@ -507,7 +555,8 @@ public class ExportOperation {
       ShortFormProvider provider,
       OWLEntity entity,
       OWLDataProperty dp,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
       Collection<OWLLiteral> propVals = EntitySearcher.getDataPropertyValues(i, dp, ontology);
@@ -522,7 +571,8 @@ public class ExportOperation {
         }
         // break down into conjuncts
         vals.addAll(
-            getRestrictionFillers(expr.asConjunctSet(), dp, rt, provider, excludeAnonymous));
+            getRestrictionFillers(
+                expr.asConjunctSet(), dp, rt, provider, includeNamed, includeAnonymous));
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
@@ -532,7 +582,8 @@ public class ExportOperation {
         }
         // break down into conjuncts
         vals.addAll(
-            getRestrictionFillers(expr.asConjunctSet(), dp, rt, provider, excludeAnonymous));
+            getRestrictionFillers(
+                expr.asConjunctSet(), dp, rt, provider, includeNamed, includeAnonymous));
       }
       return vals;
     } else {
@@ -550,7 +601,8 @@ public class ExportOperation {
    * @param provider ShortFormProvider to resolve entities
    * @param entity OWLEntity to get annotations on
    * @param op OWLObjectProperty to get the value(s) of
-   * @param excludeAnonymous if true, do not include anonymous class expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return String of values or null
    */
   private static List<String> getPropertyValues(
@@ -559,7 +611,8 @@ public class ExportOperation {
       ShortFormProvider provider,
       OWLEntity entity,
       OWLObjectProperty op,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
       Collection<OWLIndividual> propVals = EntitySearcher.getObjectPropertyValues(i, op, ontology);
@@ -578,7 +631,8 @@ public class ExportOperation {
         }
         // break down into conjuncts
         exprs.addAll(
-            getRestrictionFillers(expr.asConjunctSet(), op, rt, provider, excludeAnonymous));
+            getRestrictionFillers(
+                expr.asConjunctSet(), op, rt, provider, includeNamed, includeAnonymous));
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
@@ -588,7 +642,8 @@ public class ExportOperation {
         }
         // break down into conjuncts
         exprs.addAll(
-            getRestrictionFillers(expr.asConjunctSet(), op, rt, provider, excludeAnonymous));
+            getRestrictionFillers(
+                expr.asConjunctSet(), op, rt, provider, includeNamed, includeAnonymous));
       }
       return exprs;
     } else {
@@ -606,7 +661,8 @@ public class ExportOperation {
    * @param dp OWLDataProperty to look for
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
-   * @param excludeAnonymous if true, exclude anonymous data ranges
+   * @param includeNamed
+   * @param includeAnonymous
    * @return set of fillers that are 'values' of the data property
    */
   private static Set<String> getRestrictionFillers(
@@ -614,7 +670,8 @@ public class ExportOperation {
       OWLDataProperty dp,
       RendererType rt,
       ShortFormProvider provider,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     Set<String> fillers = new HashSet<>();
     for (OWLClassExpression ce : exprs) {
       // Determine the type of restriction
@@ -627,13 +684,12 @@ public class ExportOperation {
           OWLDataAllValuesFrom avf = (OWLDataAllValuesFrom) ce;
           f = avf.getFiller();
           pe = avf.getProperty();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, null));
+              if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
+                fillers.add(renderRestrictionString(rt, provider, f, null));
+              }
             }
           }
           break;
@@ -641,13 +697,12 @@ public class ExportOperation {
           OWLDataSomeValuesFrom svf = (OWLDataSomeValuesFrom) ce;
           f = svf.getFiller();
           pe = svf.getProperty();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, null));
+              if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
+                fillers.add(renderRestrictionString(rt, provider, f, null));
+              }
             }
           }
           break;
@@ -656,13 +711,12 @@ public class ExportOperation {
           f = ec.getFiller();
           pe = ec.getProperty();
           n = ec.getCardinality();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, n));
+              if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
+                fillers.add(renderRestrictionString(rt, provider, f, n));
+              }
             }
           }
           break;
@@ -671,13 +725,12 @@ public class ExportOperation {
           f = minc.getFiller();
           pe = minc.getProperty();
           n = minc.getCardinality();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, n));
+              if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
+                fillers.add(renderRestrictionString(rt, provider, f, n));
+              }
             }
           }
           break;
@@ -686,13 +739,12 @@ public class ExportOperation {
           f = maxc.getFiller();
           pe = maxc.getProperty();
           n = maxc.getCardinality();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
             if (prop.getIRI() == dp.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, n));
+              if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
+                fillers.add(renderRestrictionString(rt, provider, f, n));
+              }
             }
           }
           break;
@@ -711,7 +763,8 @@ public class ExportOperation {
    * @param op OWLObjectProperty to look for
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
-   * @param excludeAnonymous if true, exclude anonymous class expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return set of fillers that are 'values' of the object property
    */
   private static Set<String> getRestrictionFillers(
@@ -719,7 +772,8 @@ public class ExportOperation {
       OWLObjectProperty op,
       RendererType rt,
       ShortFormProvider provider,
-      boolean excludeAnonymous) {
+      boolean includeNamed,
+      boolean includeAnonymous) {
     Set<String> fillers = new HashSet<>();
     for (OWLClassExpression ce : exprs) {
       // Determine the type of restriction
@@ -733,13 +787,12 @@ public class ExportOperation {
           OWLObjectAllValuesFrom avf = (OWLObjectAllValuesFrom) ce;
           pe = avf.getProperty();
           f = avf.getFiller();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, null));
+              if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
+                fillers.add(renderRestrictionString(rt, provider, f, null));
+              }
             }
           }
           break;
@@ -748,13 +801,12 @@ public class ExportOperation {
           OWLObjectSomeValuesFrom svf = (OWLObjectSomeValuesFrom) ce;
           pe = svf.getProperty();
           f = svf.getFiller();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, null));
+              if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
+                fillers.add(renderRestrictionString(rt, provider, f, null));
+              }
             }
           }
           break;
@@ -764,13 +816,12 @@ public class ExportOperation {
           pe = ec.getProperty();
           f = ec.getFiller();
           n = ec.getCardinality();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, n));
+              if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
+                fillers.add(renderRestrictionString(rt, provider, f, n));
+              }
             }
           }
           break;
@@ -780,13 +831,12 @@ public class ExportOperation {
           pe = minc.getProperty();
           f = minc.getFiller();
           n = minc.getCardinality();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, n));
+              if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
+                fillers.add(renderRestrictionString(rt, provider, f, n));
+              }
             }
           }
           break;
@@ -796,13 +846,12 @@ public class ExportOperation {
           pe = maxc.getProperty();
           f = maxc.getFiller();
           n = maxc.getCardinality();
-          if (excludeAnonymous && f.isAnonymous()) {
-            continue;
-          }
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
             if (prop.getIRI() == op.getIRI()) {
-              fillers.add(renderRestrictionString(rt, provider, f, n));
+              if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
+                fillers.add(renderRestrictionString(rt, provider, f, n));
+              }
             }
           }
           break;
@@ -831,13 +880,10 @@ public class ExportOperation {
    * @param ontology OWLOntology to get details from
    * @param table Table to get rendering information and columns
    * @param entity OWLEntity to get details of
-   * @param excludeAnonymous if true, exclude anonymous expressions
    * @return Row object for the OWLEntity
    * @throws Exception on invalid column
    */
-  private static Row getRow(
-      OWLOntology ontology, Table table, OWLEntity entity, boolean excludeAnonymous)
-      throws Exception {
+  private static Row getRow(OWLOntology ontology, Table table, OWLEntity entity) throws Exception {
 
     String format = table.getFormat();
 
@@ -846,6 +892,9 @@ public class ExportOperation {
 
     Row row = new Row(entity.getIRI());
     for (Column col : table.getColumns()) {
+
+      boolean includeNamed = col.getIncludeNamed();
+      boolean includeAnonymous = col.getIncludeAnonymous();
 
       String colName = col.getName();
       OWLProperty maybeAnnotation = col.getProperty();
@@ -896,7 +945,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
           }
           continue;
       }
@@ -921,12 +971,24 @@ public class ExportOperation {
           OWLDataProperty dp = (OWLDataProperty) colProperty;
           List<String> display =
               getPropertyValues(
-                  ontology, displayRendererType, provider, entity, dp, excludeAnonymous);
+                  ontology,
+                  displayRendererType,
+                  provider,
+                  entity,
+                  dp,
+                  includeNamed,
+                  includeAnonymous);
           List<String> sort;
           if (sortRendererType != null) {
             sort =
                 getPropertyValues(
-                    ontology, sortRendererType, provider, entity, dp, excludeAnonymous);
+                    ontology,
+                    sortRendererType,
+                    provider,
+                    entity,
+                    dp,
+                    includeNamed,
+                    includeAnonymous);
           } else {
             sort = display;
           }
@@ -938,12 +1000,24 @@ public class ExportOperation {
           OWLObjectProperty op = (OWLObjectProperty) colProperty;
           List<String> display =
               getPropertyValues(
-                  ontology, displayRendererType, provider, entity, op, excludeAnonymous);
+                  ontology,
+                  displayRendererType,
+                  provider,
+                  entity,
+                  op,
+                  includeNamed,
+                  includeAnonymous);
           List<String> sort;
           if (sortRendererType != null) {
             sort =
                 getPropertyValues(
-                    ontology, sortRendererType, provider, entity, op, excludeAnonymous);
+                    ontology,
+                    sortRendererType,
+                    provider,
+                    entity,
+                    op,
+                    includeNamed,
+                    includeAnonymous);
           } else {
             sort = display;
           }
@@ -978,7 +1052,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
           }
           break;
         case "http://www.w3.org/2000/01/rdf-schema#subPropertyOf":
@@ -994,7 +1069,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> supers =
@@ -1006,7 +1082,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> supers =
@@ -1018,7 +1095,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
           }
           break;
         case "http://www.w3.org/2002/07/owl#equivalentClass":
@@ -1028,7 +1106,13 @@ public class ExportOperation {
                 EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology);
             row.add(
                 getClassCell(
-                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+                    eqs,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    includeNamed,
+                    includeAnonymous));
           }
           break;
         case "http://www.w3.org/2002/07/owl#equivalentProperty":
@@ -1038,21 +1122,39 @@ public class ExportOperation {
                 EntitySearcher.getEquivalentProperties(entity.asOWLAnnotationProperty(), ontology);
             row.add(
                 getPropertyCell(
-                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+                    eqs,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> eqs =
                 EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology);
             row.add(
                 getPropertyCell(
-                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+                    eqs,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> eqs =
                 EntitySearcher.getEquivalentProperties(entity.asOWLObjectProperty(), ontology);
             row.add(
                 getPropertyCell(
-                    eqs, col, displayRendererType, sortRendererType, provider, excludeAnonymous));
+                    eqs,
+                    col,
+                    displayRendererType,
+                    sortRendererType,
+                    provider,
+                    includeNamed,
+                    includeAnonymous));
           }
           break;
         case "http://www.w3.org/2002/07/owl#disjointWith":
@@ -1067,7 +1169,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLAnnotationProperty()) {
             Collection<OWLAnnotationProperty> disjoints =
@@ -1079,7 +1182,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> disjoints =
@@ -1091,7 +1195,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
 
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> disjoints =
@@ -1103,7 +1208,8 @@ public class ExportOperation {
                     displayRendererType,
                     sortRendererType,
                     provider,
-                    excludeAnonymous));
+                    includeNamed,
+                    includeAnonymous));
           }
           break;
         case "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":
@@ -1119,7 +1225,8 @@ public class ExportOperation {
                       displayRendererType,
                       sortRendererType,
                       provider,
-                      excludeAnonymous));
+                      includeNamed,
+                      includeAnonymous));
             } else {
               // No class assertions, just provide the entity type
               row.add(getEntityTypeCell(entity.getEntityType(), col));
@@ -1169,11 +1276,16 @@ public class ExportOperation {
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
    * @param props Set of property expressions to convert to string
-   * @param excludeAnonymous if true, exclude anonymous expressions
+   * @param includeNamed
+   * @param includeAnonymous
    * @return String of property expressions or null
    */
   private static List<String> propertyExpressionsToString(
-      RendererType rt, ShortFormProvider provider, Collection<?> props, boolean excludeAnonymous) {
+      RendererType rt,
+      ShortFormProvider provider,
+      Collection<?> props,
+      boolean includeNamed,
+      boolean includeAnonymous) {
     // Try to convert to object property expressions
     Collection<OWLObjectPropertyExpression> opes =
         props
@@ -1195,20 +1307,20 @@ public class ExportOperation {
     // Only one of the above collections will have entries
     // Maybe process object property expressions
     for (OWLObjectPropertyExpression expr : opes) {
-      if (expr.isAnonymous() && !excludeAnonymous) {
+      if (expr.isAnonymous() && includeAnonymous) {
         String manString = renderManchester(rt, provider, expr);
         strings.add(manString);
-      } else if (!expr.isAnonymous()) {
+      } else if (!expr.isAnonymous() && includeNamed) {
         OWLObjectProperty op = expr.asOWLObjectProperty();
         strings.add(renderManchester(rt, provider, op));
       }
     }
     // Maybe process data property expressions
     for (OWLDataPropertyExpression expr : dpes) {
-      if (expr.isAnonymous() && !excludeAnonymous) {
+      if (expr.isAnonymous() && includeAnonymous) {
         String manString = renderManchester(rt, provider, expr);
         strings.add(manString);
-      } else if (!expr.isAnonymous()) {
+      } else if (!expr.isAnonymous() && includeNamed) {
         OWLDataProperty dp = expr.asOWLDataProperty();
         strings.add(renderManchester(rt, provider, dp));
       }
