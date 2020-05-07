@@ -40,7 +40,7 @@ public class ExportCommand implements Command {
         "entity-format",
         true,
         "rendering format for entities when not specified (default: NAME)");
-    o.addOption("s", "entity-select", true, "type of entity to render (default: any)");
+    o.addOption("l", "entity-select", true, "type of entity to render (default: any)");
 
     options = o;
   }
