@@ -149,7 +149,7 @@ public class ExportOperation {
       // Determine if this has a tag for rendering
       Matcher m =
           Pattern.compile(
-                  "(.+) \\[(ID|id|IRI|iri|LABEL|label|NAME|name|NAMED|named|ANON|anon|ANONYMOUS|anonymous).*]")
+                  "(.+) \\[(id|iri|label|name|named|anon|anonymous).*]", Pattern.CASE_INSENSITIVE)
               .matcher(c);
       if (m.find()) {
         colName = m.group(1);
