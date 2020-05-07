@@ -1,0 +1,18 @@
+LABEL,SubClass Of [ANON]
+cell,
+cell part,'part of' some cell
+cellular_component,
+intracellular,
+intracellular membrane-bounded organelle,
+intracellular organelle,'part of' some intracellular
+intracellular organelle lumen,'part of' some 'intracellular organelle'
+intracellular organelle part,'part of' some 'intracellular organelle'|'part of' some intracellular|'part of' some organelle
+intracellular part,'part of' some intracellular
+membrane-bounded organelle,
+membrane-enclosed lumen,
+nuclear lumen,'part of' some nucleus
+nuclear part,'part of' some nucleus
+nucleus,
+organelle,
+organelle lumen,'part of' some organelle
+organelle part,'part of' some organelle
