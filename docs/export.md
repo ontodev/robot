@@ -135,11 +135,11 @@ These export-wide defaults can be overridden in specific columns by including th
 
 For example:
 
-    robot export --input nucleus_part_of.owl \
-      --header "LABEL|SubClass Of [ANON]" \
-      --export results/nucleus_anon.csv
+    robot export --input nucleus.owl \
+      --header "ID|LABEL|SubClass Of [NAMED]|SubClass Of [ANON]|SubClass Of [ANY]" \
+      --export results/nucleus_export.csv
       
-Without the `ANON` tag in the example above, `SubClass Of` would include both anonymous expressions and named classes. Now, it only includes the anonymous expressions.
+Each `SubClass Of` column in this output is different. The `SubClass Of [ANY]` column is a combination of both `NAMED` and `ANON`.
 
 These tags can be combined with the [rendering tags](#rendering-cell-values), for example:
 * `col name [NAME ANON]`: renders anonymous expressions using the name (label or CURIE) of the entities used in the expression
