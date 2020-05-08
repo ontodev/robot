@@ -146,7 +146,6 @@ public class ExportOperation {
       String currentEntityFormat = entityFormat;
       String currentEntitySelect = entitySelect;
       String colName = c;
-      System.out.println(c);
       // Determine if this has a tag for rendering
       Matcher m =
           Pattern.compile(
@@ -156,7 +155,6 @@ public class ExportOperation {
       if (m.find()) {
         colName = m.group(1);
         String tag = m.group(2);
-        System.out.println(tag);
         // Process one or more tags
         for (String subTag : tag.split(" ")) {
           if (entityFormatTags.contains(subTag.toLowerCase())) {
