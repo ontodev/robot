@@ -23,7 +23,6 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.util.FileManager;
@@ -781,12 +780,7 @@ public class IOHelper {
       if (result != null) {
         iri = IRI.create(result);
       } else {
-        // Validate that this is an IRI and not a CURIE
-        if (IRIResolver.checkIRI(term)) {
-          iri = IRI.create(term);
-        } else {
-          return null;
-        }
+        iri = IRI.create(term);
       }
     } catch (Exception e) {
       logger.warn("Could not create IRI for {}", term);
