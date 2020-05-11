@@ -229,6 +229,9 @@ Annotation properties should not have any value in the `CHARACTERISTIC` column, 
 ### Annotation Property Error
 
 The annotation property provided could not be resolved. Check your template to ensure the provided annotation property is in a correct IRI or CURIE format. For legibility, using CURIEs is recommended, but you must ensure that the prefix is defined.
+
+If you are using a label, make sure that the label is defined either in the template or input ontology.
+
 ```
 A rdfs:label
 A http://www.w3.org/2000/01/rdf-schema#label

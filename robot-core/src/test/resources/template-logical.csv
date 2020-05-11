@@ -1,0 +1,5 @@
+Label,Label Comment,Nested Comment,See Also,Parent,Parts,Parts Annotation,Equivalent,Eq Annotation
+A rdfs:label,>AL rdfs:comment@en,>>A rdfs:comment,>AI rdfs:seeAlso,SC %,SC part_of some %,>A rdfs:comment,EC %,>A rdfs:comment
+,skip this row,,,,,,,
+test 3,test 3 comment,test 3 comment comment,http://robot.obolibrary.org/,test2,test one,test one comment,,
+test 4,test 4 comment,,,,,,'test one' and (part_of some (test2 and 'test 3')),test2 and test 3 comment
