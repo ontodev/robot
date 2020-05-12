@@ -1,5 +1,7 @@
 package org.obolibrary.robot.export;
 
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.semanticweb.owlapi.model.*;
@@ -22,6 +24,8 @@ public class Column {
   private OWLAnnotationProperty annotationProperty = null;
   private OWLDataProperty dataProperty = null;
   private OWLObjectProperty objectProperty = null;
+  private Map<String, List<String>> rules = null;
+  private String displayRule = null;
 
   // Target object (e.g., annotation) for cell values
   // private OWLObject targetObject;
@@ -112,12 +116,34 @@ public class Column {
   }
 
   /**
+   * Init a new column using one or more rules for validate.
+   *
+   * @param name Column name
+   * @param rules Column rules
+   * @param displayRule String raw display rule for output
+   */
+  public Column(String name, Map<String, List<String>> rules, String displayRule) {
+    this.name = name;
+    this.rules = rules;
+    this.displayRule = displayRule;
+  }
+
+  /**
    * Get the display name of a column.
    *
    * @return String display name
    */
   public String getDisplayName() {
     return displayName;
+  }
+
+  /**
+   * Get the display rule of a column for validation.
+   *
+   * @return String display rule
+   */
+  public String getDisplayRule() {
+    return displayRule;
   }
 
   /**
@@ -154,6 +180,16 @@ public class Column {
   @Nullable
   public IRI getIRI() {
     return iri;
+  }
+
+  /**
+   * Return the rules used in column for validate, or null.
+   *
+   * @return map of rules or null
+   */
+  @Nullable
+  public Map<String, List<String>> getRules() {
+    return rules;
   }
 
   /**

@@ -8,7 +8,7 @@ Validates tables (CSV or TSV files) against an ontology using the sets of rules 
       --format TXT \
       --output-dir results/
 
-In this case the command will generate a single file called immune_exposures.txt in the results/ directory.
+In this case the command will generate a single file called `immune_exposures.txt` in the `results/` directory.
 
 One can also specify multiple table files as input. In that case there will be multiple output files corresponding to each table in the output directory. For example:
 
@@ -19,7 +19,7 @@ One can also specify multiple table files as input. In that case there will be m
       --format HTML \
       --output-dir results/
 
-In this case two files: immune_exposures.html and immune_exposures_2.html will appear in the results/ directory.
+In this case two files: `immune_exposures.html` and `immune_exposures_2.html` will appear in the `results/` directory.
 
 ## Validation rules
 

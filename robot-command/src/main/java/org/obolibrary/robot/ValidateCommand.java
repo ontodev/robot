@@ -167,12 +167,16 @@ public class ValidateCommand implements Command {
     }
     OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line, true);
 
-    // Get the requested output directory and output format, and the value of the standalone option.
-    // Note that standalone only applies to html formatted output, and will be ignored by
-    // ValidateOperation if html hasn't been specified.
-    String outFormat = CommandLineHelper.getOptionalValue(line, "format");
-    boolean standalone = CommandLineHelper.getBooleanValue(line, "standalone", false);
-    String outDir = CommandLineHelper.getOptionalValue(line, "output-dir");
+    // Override default reasoner options with command-line options
+    Map<String, String> validateOptions = ValidateOperation.getDefaultOptions();
+    for (String option : validateOptions.keySet()) {
+      if (line.hasOption(option)) {
+        validateOptions.put(option, line.getOptionValue(option));
+      }
+    }
+
+    String outFormat = OptionsHelper.getOption(validateOptions, "format");
+    String outDir = OptionsHelper.getOption(validateOptions, "output-dir");
 
     // If an output format has been specified, make sure that it is of a supported kind and that
     // the output directory is valid. If it hasn't been specified it will just be passed as null to
@@ -202,13 +206,13 @@ public class ValidateCommand implements Command {
 
     // Extract all of the data from each of the given table paths. Only TSV and CSV tables
     // are currently supported.
-    Map<String, List<List<String>>> tables = new HashMap();
+    Map<String, List<List<String>>> tables = new HashMap<>();
     for (String tablePath : tablePaths) {
       List<List<String>> tableData;
       if (tablePath.toLowerCase().endsWith(".tsv")) {
-        tableData = ioHelper.readTSV(tablePath);
+        tableData = IOHelper.readTSV(tablePath);
       } else if (tablePath.toLowerCase().endsWith(".csv")) {
-        tableData = ioHelper.readCSV(tablePath);
+        tableData = IOHelper.readCSV(tablePath);
       } else {
         throw new IllegalArgumentException(incorrectTableFormatError);
       }
@@ -236,7 +240,7 @@ public class ValidateCommand implements Command {
     }
 
     // Finally send everything to the validate operation:
-    ValidateOperation.validate(tables, ontology, reasonerFactory, outDir, outFormat, standalone);
+    ValidateOperation.validate(tables, ontology, reasonerFactory, validateOptions);
 
     return state;
   }

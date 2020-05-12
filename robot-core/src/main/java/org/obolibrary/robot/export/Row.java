@@ -20,6 +20,15 @@ public class Row {
   private static final List<String> singles = Arrays.asList("CURIE", "ID", "IRI");
 
   /** Init a new Row. */
+  public Row() {
+    // empty constructor
+  }
+
+  /**
+   * Init a new Row with a subject.
+   *
+   * @param subject IRI of subject of row
+   */
   public Row(IRI subject) {
     this.subject = subject;
   }

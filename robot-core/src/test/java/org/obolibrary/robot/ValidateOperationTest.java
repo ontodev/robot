@@ -2,11 +2,7 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -27,19 +23,19 @@ public class ValidateOperationTest extends CoreTest {
    * @throws IOException
    */
   @Test
-  public void testImmuneExposuresValidation() throws Exception, IOException {
+  public void testImmuneExposuresValidation() throws Exception {
     IOHelper ioHelper = new IOHelper();
 
     InputStream tableStream = this.getClass().getResourceAsStream("/immune_exposures.csv");
     assert (tableStream != null);
-    List<List<String>> tableData = ioHelper.readCSV(tableStream);
+    List<List<String>> tableData = IOHelper.readCSV(tableStream);
     assert (tableData != null);
 
     URL res = this.getClass().getResource("/immune_exposures.csv");
     File file = Paths.get(res.toURI()).toFile();
     String tablePath = file.getAbsolutePath();
 
-    Map<String, List<List<String>>> tables = new HashMap();
+    Map<String, List<List<String>>> tables = new HashMap<>();
     tables.put(tablePath, tableData);
 
     InputStream owlStream = this.getClass().getResourceAsStream("/immune_exposures.owl");
@@ -54,7 +50,7 @@ public class ValidateOperationTest extends CoreTest {
 
     // Call validate() with an outputPath of null to send output to STDOUT:
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
-    ValidateOperation.validate(tables, ontology, reasonerFactory, null, null, false);
+    ValidateOperation.validate(tables, ontology, reasonerFactory, null);
 
     // Compare the output with the contents of a file in the resources directory which contains
     // the output we expect to get:
@@ -62,6 +58,12 @@ public class ValidateOperationTest extends CoreTest {
         this.getClass().getResource("/immune_exposures-result.txt").getPath();
     assertNotEquals(fileWithExpectedContents, "");
     String expectedResult = FileUtils.readFileToString(new File(fileWithExpectedContents));
+
+    String output = outStream.toString();
+    FileWriter fw = new FileWriter(new File("test.txt"));
+    fw.write(output);
+    fw.close();
+
     assertEquals(outStream.toString(), expectedResult);
   }
 }

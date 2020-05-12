@@ -1,5 +1,6 @@
 package org.obolibrary.robot.export;
 
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -31,6 +32,8 @@ public class Table {
   private RendererType displayRenderer = null;
   private RendererType sortRenderer = null;
 
+  private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+
   /**
    * Init a new Table.
    *
@@ -43,11 +46,13 @@ public class Table {
     sortColumns = new ArrayList<>();
 
     // Set renderer types based on format
-    if (format.equalsIgnoreCase("tsv") || format.equalsIgnoreCase("csv")) {
+    if (format == null || basicFormats.contains(format.toLowerCase())) {
       displayRenderer = RendererType.OBJECT_RENDERER;
     } else if (format.equalsIgnoreCase("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
       sortRenderer = RendererType.OBJECT_RENDERER;
+    } else {
+      // TODO - unknown format
     }
   }
 
@@ -83,11 +88,29 @@ public class Table {
     Sheet sheet = wb.getSheetAt(0);
     org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
     int colIdx = 0;
+    Map<Integer, String> rules = new HashMap<>();
     for (Column c : columns) {
       String name = c.getDisplayName();
       Cell xlsxCell = headerRow.createCell(colIdx);
       xlsxCell.setCellValue(name);
+
+      String displayRule = c.getDisplayRule();
+      if (displayRule != null) {
+        rules.put(colIdx, displayRule);
+      }
       colIdx++;
+    }
+
+    // Maybe add rules
+    if (!rules.isEmpty()) {
+      org.apache.poi.ss.usermodel.Row rulesRow = sheet.createRow(1);
+      for (int idx = 0; idx <= colIdx; idx++) {
+        if (rules.containsKey(idx)) {
+          String rule = rules.get(idx);
+          Cell xlsxCell = rulesRow.createCell(colIdx);
+          xlsxCell.setCellValue(rule);
+        }
+      }
     }
 
     // Add rows
@@ -224,8 +247,28 @@ public class Table {
         .append("<table class=\"table table-striped\">\n")
         .append("<tr>\n");
 
+    Map<Integer, String> rules = new HashMap<>();
+    int colIdx = 0;
     for (Column c : columns) {
       sb.append("\t<th>").append(c.getDisplayName()).append("</th>\n");
+      String displayRule = c.getDisplayRule();
+      if (displayRule != null) {
+        rules.put(colIdx, displayRule);
+      }
+      colIdx++;
+    }
+
+    // Maybe add rules
+    if (!rules.isEmpty()) {
+      sb.append("<tr>\n");
+      for (int idx = 0; idx <= colIdx; idx++) {
+        if (rules.containsKey(idx)) {
+          sb.append("\t<td>").append(rules.get(idx)).append("</td>\n");
+        } else {
+          sb.append("\t<td></td>\n");
+        }
+      }
+      sb.append("</tr>\n");
     }
 
     sb.append("</tr>\n");
