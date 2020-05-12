@@ -9,10 +9,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.obolibrary.robot.export.Cell;
-import org.obolibrary.robot.export.Column;
-import org.obolibrary.robot.export.Row;
-import org.obolibrary.robot.export.Table;
+import org.obolibrary.robot.export.*;
+import org.obolibrary.robot.providers.CURIEShortFormProvider;
+import org.obolibrary.robot.providers.QuotedAnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
@@ -20,6 +19,7 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,8 +120,11 @@ public class TableValidator {
 
   private Cell currentCell = null;
 
+  private ShortFormProvider provider;
+
   public TableValidator(
       OWLOntology ontology,
+      IOHelper ioHelper,
       ManchesterOWLSyntaxClassExpressionParser parser,
       OWLReasoner reasoner,
       String outFormat,
@@ -135,9 +138,26 @@ public class TableValidator {
     // Extract from the ontology two convenience maps from rdfs:labels to IRIs and vice versa:
     iriToLabelMap = OntologyHelper.getLabels(ontology);
     labelToIRIMap = reverseIRILabelMap(iriToLabelMap);
+
+    // Create some providers for rendering entities
+    ShortFormProvider oboProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
+    provider =
+        new QuotedAnnotationValueShortFormProvider(
+            ontology.getOWLOntologyManager(),
+            oboProvider,
+            ioHelper.getPrefixManager(),
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
   }
 
-  public void validate(Map<String, List<List<String>>> tables) throws Exception {
+  /**
+   * @param tables
+   * @param standalone
+   * @throws Exception
+   */
+  public void validate(Map<String, List<List<String>>> tables, boolean standalone)
+      throws Exception {
+
     // Validate all of the tables in turn:
     for (Map.Entry<String, List<List<String>>> table : tables.entrySet()) {
       outTable = new Table(outFormat);
@@ -170,7 +190,8 @@ public class TableValidator {
       // Add header and rules rows to Table object
       for (int i = 0; i < headerRow.size(); i++) {
         String rawRule = i < rulesRow.size() ? rulesRow.get(i) : "";
-        Column c = new Column(headerRow.get(i), parseRules(rawRule), rawRule);
+        // TODO - allow different providers?
+        Column c = new Column(headerRow.get(i), parseRules(rawRule), rawRule, provider);
         outTable.addColumn(c);
       }
 
@@ -200,7 +221,7 @@ public class TableValidator {
           List<String> cellData = Lists.newArrayList(cellString.trim().split("\\|"));
 
           // Create the cell object
-          currentCell = new Cell(c, cellData);
+          currentCell = getCell(c, cellData);
 
           if (rules == null || rules.isEmpty()) {
             // No rules to validate, just add the cell exactly as is
@@ -244,7 +265,7 @@ public class TableValidator {
             break;
           case "html":
             try (PrintWriter out = new PrintWriter(outPath)) {
-              out.print(outTable.toHTML("|"));
+              out.print(outTable.toHTML("|", standalone));
             }
             break;
           default:
@@ -537,6 +558,64 @@ public class TableValidator {
       }
     }
     return ce;
+  }
+
+  /**
+   * @param column
+   * @param cellData
+   * @return
+   */
+  private Cell getCell(Column column, List<String> cellData) {
+    if (outFormat == null) {
+      return new Cell(column, cellData);
+    }
+
+    RendererType displayRenderer = outTable.getDisplayRendererType();
+    RendererType sortRenderer = outTable.getSortRendererType();
+    ShortFormProvider provider = column.getShortFormProvider();
+
+    List<String> display = new ArrayList<>();
+    List<String> sort = new ArrayList<>();
+
+    for (String val : cellData) {
+      // Try to get IRI based on label
+      IRI iri = labelToIRIMap.getOrDefault(val, null);
+      if (iri == null) {
+        // Try to use parser as a backup if we couldn't get the IRI
+        // e.g., if value provided was a CURIE or other short form
+        OWLClassExpression expr;
+        try {
+          expr = parser.parse(val);
+        } catch (Exception e) {
+          expr = null;
+        }
+        if (expr == null) {
+          // Not a class expression
+          display.add(val);
+          sort.add(val);
+          continue;
+        }
+        // Render based on display/sort renderers and provider
+        display.add(ExportOperation.renderManchester(displayRenderer, provider, expr));
+        sort.add(ExportOperation.renderManchester(sortRenderer, provider, expr));
+      } else {
+        // We have an IRI from the label -> IRI map so we can get a label as well
+        // Right now we are only displaying labels, we don't have another provider option for
+        // validate
+        String label = iriToLabelMap.getOrDefault(iri, null);
+        if (label != null) {
+          val = label;
+        }
+        // Maybe add HTML link
+        if (outFormat.equalsIgnoreCase("html")) {
+          display.add(String.format("<a href=\"%s\">%s</a>", iri.toString(), val));
+        } else {
+          display.add(val);
+        }
+        sort.add(val);
+      }
+    }
+    return new Cell(column, display, sort);
   }
 
   /**

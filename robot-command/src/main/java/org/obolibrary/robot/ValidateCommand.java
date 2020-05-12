@@ -240,7 +240,7 @@ public class ValidateCommand implements Command {
     }
 
     // Finally send everything to the validate operation:
-    ValidateOperation.validate(tables, ontology, reasonerFactory, validateOptions);
+    ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, validateOptions);
 
     return state;
   }

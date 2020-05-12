@@ -26,6 +26,7 @@ public class ValidateOperation {
   public static void validate(
       Map<String, List<List<String>>> tables,
       OWLOntology ontology,
+      IOHelper ioHelper,
       OWLReasonerFactory reasonerFactory,
       Map<String, String> options)
       throws Exception {
@@ -54,8 +55,10 @@ public class ValidateOperation {
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
     String outFormat = options.getOrDefault("format", null);
     String outDir = options.getOrDefault("output-dir", ".");
+    boolean standalone = OptionsHelper.optionIsTrue(options, "standalone");
 
-    TableValidator validator = new TableValidator(ontology, parser, reasoner, outFormat, outDir);
-    validator.validate(tables);
+    TableValidator validator =
+        new TableValidator(ontology, ioHelper, parser, reasoner, outFormat, outDir);
+    validator.validate(tables, standalone);
   }
 }

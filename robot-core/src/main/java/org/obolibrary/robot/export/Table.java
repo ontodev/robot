@@ -103,11 +103,11 @@ public class Table {
 
     // Maybe add rules
     if (!rules.isEmpty()) {
-      org.apache.poi.ss.usermodel.Row rulesRow = sheet.createRow(1);
+      org.apache.poi.ss.usermodel.Row rulesRow = sheet.createRow(sheet.getLastRowNum() + 1);
       for (int idx = 0; idx <= colIdx; idx++) {
         if (rules.containsKey(idx)) {
           String rule = rules.get(idx);
-          Cell xlsxCell = rulesRow.createCell(colIdx);
+          Cell xlsxCell = rulesRow.createCell(idx);
           xlsxCell.setCellValue(rule);
         }
       }
@@ -238,13 +238,28 @@ public class Table {
    * @return HTML string
    */
   public String toHTML(String split) {
+    return toHTML(split, true);
+  }
+
+  /**
+   * Render the Table as an HTML string.
+   *
+   * @param split character to split multiple cell values on
+   * @param standalone if true, include header
+   * @return HTML string
+   */
+  public String toHTML(String split, boolean standalone) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<head>\n")
-        .append(
-            "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
-        .append("</head>\n")
-        .append("<body>\n")
-        .append("<table class=\"table table-striped\">\n")
+    if (standalone) {
+      sb.append("<head>\n")
+          .append(
+              "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
+          .append("</head>\n")
+          .append("<body>\n");
+    }
+    // Table start
+    sb.append("<table class=\"table table-bordered table-striped\">\n")
+        .append("<thead class=\"bg-dark text-white header-row\">\n")
         .append("<tr>\n");
 
     Map<Integer, String> rules = new HashMap<>();
@@ -257,27 +272,28 @@ public class Table {
       }
       colIdx++;
     }
+    sb.append("</tr>\n").append("</thead>\n");
 
     // Maybe add rules
     if (!rules.isEmpty()) {
-      sb.append("<tr>\n");
+      sb.append("<thead class=\"bg-secondary text-white\">\n").append("<tr>\n");
       for (int idx = 0; idx <= colIdx; idx++) {
         if (rules.containsKey(idx)) {
-          sb.append("\t<td>").append(rules.get(idx)).append("</td>\n");
+          sb.append("\t<th>").append(rules.get(idx)).append("</th>\n");
         } else {
-          sb.append("\t<td></td>\n");
+          sb.append("\t<th></th>\n");
         }
       }
-      sb.append("</tr>\n");
+      sb.append("</tr>\n").append("</thead>\n");
     }
-
-    sb.append("</tr>\n");
 
     for (Row row : rows) {
       sb.append(row.toHTML(columns, split));
     }
     sb.append("</table>");
-    sb.append("</body>");
+    if (standalone) {
+      sb.append("</body>");
+    }
     return sb.toString();
   }
 

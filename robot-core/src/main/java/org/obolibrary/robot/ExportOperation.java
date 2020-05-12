@@ -34,8 +34,9 @@ public class ExportOperation {
 
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
-  private static final EmptyShortFormProvider emptyProvider = new EmptyShortFormProvider();
-  private static final EmptyIRIShortFormProvider emptyIRIProvider = new EmptyIRIShortFormProvider();
+  protected static final EmptyShortFormProvider emptyProvider = new EmptyShortFormProvider();
+  protected static final EmptyIRIShortFormProvider emptyIRIProvider =
+      new EmptyIRIShortFormProvider();
 
   // All synonym property IRIs
   private static final List<String> synonymProperties =
@@ -1166,7 +1167,7 @@ public class ExportOperation {
    * @param object OWLObject to render
    * @return String rendering of OWLObject based on renderer type
    */
-  private static String renderManchester(
+  protected static String renderManchester(
       RendererType rt, ShortFormProvider provider, OWLObject object) {
     ManchesterOWLSyntaxObjectRenderer renderer;
     StringWriter sw = new StringWriter();

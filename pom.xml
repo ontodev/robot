@@ -154,19 +154,9 @@
       <version>4.12</version>
     </dependency>
     <dependency>
-        <groupId>org.apache.poi</groupId>
-        <artifactId>poi-ooxml</artifactId>
-        <version>4.1.0</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
       <version>1.7.10</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.4</version>
     </dependency>
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
@@ -201,11 +191,6 @@
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>jfact</artifactId>
       <version>4.0.4</version>
-    </dependency>
-    <dependency>
-      <groupId>net.sf.py4j</groupId>
-      <artifactId>py4j</artifactId>
-      <version>0.10.8.1</version>
     </dependency>
   </dependencies>
 

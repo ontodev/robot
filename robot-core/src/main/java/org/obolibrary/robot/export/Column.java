@@ -122,10 +122,16 @@ public class Column {
    * @param rules Column rules
    * @param displayRule String raw display rule for output
    */
-  public Column(String name, Map<String, List<String>> rules, String displayRule) {
+  public Column(
+      String name,
+      Map<String, List<String>> rules,
+      String displayRule,
+      @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
+    this.displayName = name;
     this.rules = rules;
     this.displayRule = displayRule;
+    this.shortFormProvider = shortFormProvider;
   }
 
   /**

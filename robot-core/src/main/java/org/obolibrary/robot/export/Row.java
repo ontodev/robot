@@ -196,7 +196,7 @@ public class Row {
       } else {
         value = "";
       }
-      sb.append("\t\t<td>").append(value).append("</td>\n");
+      sb.append("\t\t<td class=\"bg-light text-dark\">").append(value).append("</td>\n");
     }
     sb.append("\t</tr>\n");
     return sb.toString();

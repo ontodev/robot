@@ -50,7 +50,7 @@ public class ValidateOperationTest extends CoreTest {
 
     // Call validate() with an outputPath of null to send output to STDOUT:
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
-    ValidateOperation.validate(tables, ontology, reasonerFactory, null);
+    ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, null);
 
     // Compare the output with the contents of a file in the resources directory which contains
     // the output we expect to get:
