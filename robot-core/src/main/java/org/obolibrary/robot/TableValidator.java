@@ -154,7 +154,8 @@ public class TableValidator {
    * Validate a set of tables.
    *
    * @param tables tables to validate (map of table name to table contents)
-   * @param standalone if true and format is HTML, create a standalone HTML page with headers for each table
+   * @param standalone if true and format is HTML, create a standalone HTML page with headers for
+   *     each table
    * @throws Exception on any problem
    */
   public void validate(Map<String, List<List<String>>> tables, boolean standalone)
