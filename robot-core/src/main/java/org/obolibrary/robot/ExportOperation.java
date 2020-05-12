@@ -149,7 +149,7 @@ public class ExportOperation {
       // Determine if this has a tag for rendering
       Matcher m =
           Pattern.compile(
-                  "(.+) \\[(id|iri|label|named|name|anon|anonymous|any) ?.*]",
+                  "(.+) \\[((id ?|iri ?|label ?|named ?|name ?|anon ?|anonymous ?|any ?)+)]",
                   Pattern.CASE_INSENSITIVE)
               .matcher(c);
       if (m.find()) {
@@ -157,9 +157,9 @@ public class ExportOperation {
         String tag = m.group(2);
         // Process one or more tags
         for (String subTag : tag.split(" ")) {
-          if (entityFormatTags.contains(subTag.toLowerCase())) {
+          if (entityFormatTags.contains(subTag.trim().toLowerCase())) {
             currentEntityFormat = subTag;
-          } else if (entitySelectTags.contains(subTag.toLowerCase())) {
+          } else if (entitySelectTags.contains(subTag.trim().toLowerCase())) {
             currentEntitySelect = subTag;
           } else {
             throw new Exception(String.format(unknownTagError, c, subTag));
