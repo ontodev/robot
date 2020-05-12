@@ -187,14 +187,16 @@ public class Column {
     return null;
   }
 
-  /** @return */
-  @Nonnull
+  /**
+   * @return true if including anonymous entities in this column
+   */
   public boolean getIncludeAnonymous() {
     return includeAnonymous;
   }
 
-  /** @return */
-  @Nonnull
+  /**
+   * @return true if including named entities in this column
+   */
   public boolean getIncludeNamed() {
     return includeNamed;
   }
@@ -252,7 +254,11 @@ public class Column {
     this.reverseSort = reverseSort;
   }
 
-  /** @param entitySelect */
+  /**
+   * Set the entity selection values (includeNamed and includeAnonymous) based on the entity select string: NAMED, ANON/ANONYMOUS, or ANY.
+   *
+   * @param entitySelect entity select string
+   */
   private void setEntitySelect(String entitySelect) {
     switch (entitySelect.toLowerCase()) {
       case "named":

@@ -15,6 +15,11 @@ import org.semanticweb.owlapi.util.SimpleShortFormProvider;
  */
 public class ValidateOperation {
 
+  /**
+   * Return the default Validate options.
+   *
+   * @return map of default options
+   */
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
     options.put("format", null);
@@ -23,6 +28,16 @@ public class ValidateOperation {
     return options;
   }
 
+  /**
+   * Validate tables based on an ontology.
+   *
+   * @param tables tables to validate (map of table name to table contents)
+   * @param ontology OWLOntology to use to validate tables
+   * @param ioHelper IOHelper to resolve entities
+   * @param reasonerFactory OWLReasonerFactory to create reasoner
+   * @param options map of validate options
+   * @throws Exception on any problem
+   */
   public static void validate(
       Map<String, List<List<String>>> tables,
       OWLOntology ontology,

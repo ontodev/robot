@@ -20,7 +20,7 @@ public class ValidateOperationTest extends CoreTest {
   /**
    * Test of the validation operation on a sample 'immune exposures' CSV file.
    *
-   * @throws IOException
+   * @throws IOException on any problem
    */
   @Test
   public void testImmuneExposuresValidation() throws Exception {

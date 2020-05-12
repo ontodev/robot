@@ -151,9 +151,11 @@ public class TableValidator {
   }
 
   /**
-   * @param tables
-   * @param standalone
-   * @throws Exception
+   * Validate a set of tables.
+   *
+   * @param tables tables to validate (map of table name to table contents)
+   * @param standalone if true and format is HTML, create a standalone HTML page with headers for each table
+   * @throws Exception on any problem
    */
   public void validate(Map<String, List<List<String>>> tables, boolean standalone)
       throws Exception {
@@ -561,9 +563,11 @@ public class TableValidator {
   }
 
   /**
-   * @param column
-   * @param cellData
-   * @return
+   * Create a Cell object based on cell data from the input table.
+   *
+   * @param column Column that this Cell will go into
+   * @param cellData list of strings from the cell
+   * @return Cell object for output Table
    */
   private Cell getCell(Column column, List<String> cellData) {
     if (outFormat == null) {
