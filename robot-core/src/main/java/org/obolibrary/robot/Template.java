@@ -143,6 +143,10 @@ public class Template {
       NS
           + "UNKNOWN TEMPLATE ERROR could not interpret template string \"%4$s\" for column %2$d (\"%3$s\") in table \"%1$s\".";
 
+  private static final String unknownEntityError =
+      NS
+          + "UNKNOWN ENTITY ERROR could not interpret '%1$s' in row %2$d, column %3$d (\"%4$s\") in table \"%5$s\".";
+
   private static final List<String> validClassTypes =
       new ArrayList<>(Arrays.asList("subclass", "disjoint", "equivalent"));
 
@@ -549,13 +553,13 @@ public class Template {
         type = "class";
       }
 
-      IRI iri = ioHelper.createIRI(id);
+      IRI iri = ioHelper.createIRI(id, true);
       if (iri == null) {
         iri = IRI.create(id);
       }
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type);
+      IRI typeIRI = ioHelper.createIRI(type, true);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -626,18 +630,27 @@ public class Template {
     String id = null;
     try {
       id = row.get(idColumn);
+      if (id.trim().isEmpty()) {
+        id = null;
+      }
     } catch (IndexOutOfBoundsException e) {
       // ignore
     }
     String label = null;
     try {
       label = row.get(labelColumn);
+      if (label.trim().isEmpty()) {
+        label = null;
+      }
     } catch (IndexOutOfBoundsException e) {
       // ignore
     }
     String type = null;
     try {
       type = row.get(typeColumn);
+      if (type.trim().isEmpty()) {
+        type = null;
+      }
     } catch (IndexOutOfBoundsException e) {
       // ignore
     }
@@ -647,7 +660,7 @@ public class Template {
       return;
     }
 
-    if (type == null || type.trim().isEmpty()) {
+    if (type == null) {
       // Try to guess the type from already existing entities
       if (label != null) {
         OWLEntity e = checker.getOWLEntity(label);
@@ -668,13 +681,28 @@ public class Template {
       }
     }
 
+    // Create an IRI for the subject of this row
     IRI iri = getIRI(id, label);
     if (iri == null) {
-      return;
+      // Unable to create an IRI from the entity
+      if (idColumn != -1) {
+        if (id != null) {
+          // Has an ID column with contents that could not be resolved
+          throw new RowParseException(
+              String.format(unknownEntityError, id, rowNum, idColumn, "ID", name));
+        } else {
+          // Has an ID column, but it's empty
+          return;
+        }
+      } else {
+        // No ID column and label could not be resolved
+        throw new RowParseException(
+            String.format(unknownEntityError, label, rowNum, labelColumn, "LABEL", name));
+      }
     }
 
     // Try to resolve a CURIE
-    IRI typeIRI = ioHelper.createIRI(type);
+    IRI typeIRI = ioHelper.createIRI(type, true);
 
     // Set to IRI string or to type string
     String typeOrIRI = type;
@@ -1734,7 +1762,7 @@ public class Template {
       type = type.trim();
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type);
+      IRI typeIRI = ioHelper.createIRI(type, true);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -2122,7 +2150,7 @@ public class Template {
       throw new Exception("You must specify either an ID or a label");
     }
     if (id != null) {
-      return ioHelper.createIRI(id);
+      return ioHelper.createIRI(id, true);
     }
     return checker.getIRI(label, true);
   }

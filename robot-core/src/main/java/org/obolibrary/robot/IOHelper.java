@@ -37,6 +37,7 @@ import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.rdf.rdfxml.renderer.IllegalElementNameException;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
@@ -748,9 +749,22 @@ public class IOHelper {
    */
   @SuppressWarnings("unchecked")
   public IRI createIRI(String term) {
+    return createIRI(term, false);
+  }
+
+  /**
+   * Given a term string, use the current prefixes to create an IRI.
+   *
+   * @param term the term to convert to an IRI
+   * @param qName if true, check that the expanded IRI is a valid QName (if not, return null)
+   * @return the new IRI or null
+   */
+  @SuppressWarnings("unchecked")
+  public IRI createIRI(String term, boolean qName) {
     if (term == null) {
       return null;
     }
+    IRI iri;
 
     try {
       // This is stupid, because better methods aren't public.
@@ -764,15 +778,21 @@ public class IOHelper {
       Object expanded = new JsonLdApi().expand(context, jsonMap);
       String result = ((Map<String, Object>) expanded).keySet().iterator().next();
       if (result != null) {
-        return IRI.create(result);
+        iri = IRI.create(result);
       } else {
-        return IRI.create(term);
+        iri = IRI.create(term);
       }
     } catch (Exception e) {
       logger.warn("Could not create IRI for {}", term);
       logger.warn(e.getMessage());
+      return null;
     }
-    return null;
+
+    // Check that this is a valid QName
+    if (qName && !iri.getRemainder().isPresent()) {
+      return null;
+    }
+    return iri;
   }
 
   /**
@@ -1434,6 +1454,8 @@ public class IOHelper {
       // use native save functionality
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
+      } catch (IllegalElementNameException e) {
+        throw new IOException("ELEMENT NAME EXCEPTION " + e.getCause().getMessage());
       } catch (OWLOntologyStorageException e) {
         // Determine if its caused by an OBO Format error
         if (format instanceof OBODocumentFormat

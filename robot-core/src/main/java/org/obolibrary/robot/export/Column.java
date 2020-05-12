@@ -39,6 +39,9 @@ public class Column {
   // If true, reverse sort
   private boolean reverseSort = false;
 
+  private boolean includeNamed = false;
+  private boolean includeAnonymous = false;
+
   /**
    * Init a new Column using an IRI.
    *
@@ -51,11 +54,13 @@ public class Column {
       String name,
       String displayName,
       @Nonnull IRI iri,
-      @Nonnull ShortFormProvider shortFormProvider) {
+      @Nonnull ShortFormProvider shortFormProvider,
+      @Nonnull String entitySelect) {
     this.name = name;
     this.displayName = displayName;
     this.iri = iri;
     this.shortFormProvider = shortFormProvider;
+    setEntitySelect(entitySelect);
   }
 
   /**
@@ -89,11 +94,13 @@ public class Column {
       String name,
       String displayName,
       @Nonnull OWLDataProperty dataProperty,
-      @Nonnull ShortFormProvider shortFormProvider) {
+      @Nonnull ShortFormProvider shortFormProvider,
+      @Nonnull String entitySelect) {
     this.name = name;
     this.displayName = displayName;
     this.dataProperty = dataProperty;
     this.shortFormProvider = shortFormProvider;
+    setEntitySelect(entitySelect);
   }
 
   /**
@@ -108,11 +115,13 @@ public class Column {
       String name,
       String displayName,
       @Nonnull OWLObjectProperty objectProperty,
-      @Nonnull ShortFormProvider shortFormProvider) {
+      @Nonnull ShortFormProvider shortFormProvider,
+      @Nonnull String entitySelect) {
     this.name = name;
     this.displayName = displayName;
     this.objectProperty = objectProperty;
     this.shortFormProvider = shortFormProvider;
+    setEntitySelect(entitySelect);
   }
 
   /**
@@ -178,6 +187,18 @@ public class Column {
     return null;
   }
 
+  /** @return */
+  @Nonnull
+  public boolean getIncludeAnonymous() {
+    return includeAnonymous;
+  }
+
+  /** @return */
+  @Nonnull
+  public boolean getIncludeNamed() {
+    return includeNamed;
+  }
+
   /**
    * Return the IRI used in a column, or null.
    *
@@ -229,5 +250,24 @@ public class Column {
   public void setSort(int sortOrder, boolean reverseSort) {
     this.sortOrder = sortOrder;
     this.reverseSort = reverseSort;
+  }
+
+  /** @param entitySelect */
+  private void setEntitySelect(String entitySelect) {
+    switch (entitySelect.toLowerCase()) {
+      case "named":
+        this.includeNamed = true;
+        this.includeAnonymous = false;
+        break;
+      case "anon":
+      case "anonymous":
+        this.includeNamed = false;
+        this.includeAnonymous = true;
+        break;
+      case "any":
+      default:
+        this.includeNamed = true;
+        this.includeAnonymous = true;
+    }
   }
 }

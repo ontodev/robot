@@ -1,4 +1,0 @@
-Label,Synonyms,Type,Parent,Parts
-LABEL,A IAO:0000118 SPLIT=|,CLASS_TYPE,C % SPLIT=|,C part_of some %
-test 3,synonym 1|synonym 2,subclass,test one|test2,test one
-test 4,,equivalent,test one,(test2 and 'test 3')

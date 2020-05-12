@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add [`export`] command [#481]
 - Add JSON format to [`export`] in [#645]
 - Add Excel format to [`export`] in [#646]
+- Add `--create-tdb <true/false>` option to [`query`] in [#685]
 
 ### Changed
 - Updated `obographs` from 0.0.8 to 0.2.1 [#657]
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix releasing dataset after exception when running [`report`] with `--tdb true` [#659]
 - Reduced time spent loading datasets for [`query`] in [#666]
 - Fix writing JSON format to use `OutputStream` with ['convert'] in [#671]
+- Fix IRI resolution for `template` in [#689]
 
 
 ## [1.6.0] - 2020-03-04
@@ -185,6 +187,8 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#689]: https://github.com/ontodev/robot/pull/689
+[#685]: https://github.com/ontodev/robot/pull/685
 [#671]: https://github.com/ontodev/robot/pull/671
 [#666]: https://github.com/ontodev/robot/pull/666
 [#659]: https://github.com/ontodev/robot/issues/659

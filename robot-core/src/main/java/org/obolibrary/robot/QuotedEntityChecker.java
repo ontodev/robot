@@ -293,7 +293,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
   public IRI getIRI(String name, boolean create) {
     IRI iri = iris.getOrDefault(name, null);
     if (iri == null && ioHelper != null && create) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
     }
     return iri;
   }
@@ -337,7 +337,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLAnnotationProperty(iri);
     }
     if (create && ioHelper != null) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
       if (iri != null) {
         return dataFactory.getOWLAnnotationProperty(iri);
       }
@@ -358,7 +358,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLClass(iri);
     }
     if (ioHelper != null) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
       if (iri != null) {
         return dataFactory.getOWLClass(iri);
       }
@@ -379,7 +379,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLDataProperty(iri);
     }
     if (ioHelper != null) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
       if (iri != null) {
         return dataFactory.getOWLDataProperty(iri);
       }
@@ -413,7 +413,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLDatatype(iri);
     }
     if (create && ioHelper != null) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
       if (iri != null) {
         return dataFactory.getOWLDatatype(iri);
       }
@@ -434,7 +434,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLNamedIndividual(iri);
     }
     if (ioHelper != null) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
       if (iri != null) {
         return dataFactory.getOWLNamedIndividual(iri);
       }
@@ -455,7 +455,7 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLObjectProperty(iri);
     }
     if (ioHelper != null) {
-      iri = ioHelper.createIRI(name);
+      iri = ioHelper.createIRI(name, true);
       if (iri != null) {
         return dataFactory.getOWLObjectProperty(iri);
       }
