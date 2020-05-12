@@ -157,9 +157,9 @@ public class ExportOperation {
         String tag = m.group(2);
         // Process one or more tags
         for (String subTag : tag.split(" ")) {
-          if (entityFormatTags.contains(subTag.trim().toLowerCase())) {
+          if (entityFormatTags.contains(subTag.toLowerCase())) {
             currentEntityFormat = subTag;
-          } else if (entitySelectTags.contains(subTag.trim().toLowerCase())) {
+          } else if (entitySelectTags.contains(subTag.toLowerCase())) {
             currentEntitySelect = subTag;
           } else {
             throw new Exception(String.format(unknownTagError, c, subTag));

@@ -142,10 +142,10 @@ For example:
 Each `SubClass Of` column in this output is different. The `SubClass Of [ANY]` column is a combination of both `NAMED` and `ANON`.
 
 These tags can be combined with the [rendering tags](#rendering-cell-values), for example:
-* `col name [NAME ANON]`: renders anonymous expressions using the name (label or CURIE) of the entities used in the expression
-* `col name [ID ANON]`: renders anonymous expressions using the CURIE of entities used in the expression
-* `col name [ID NAMED]`: renders named entities only using their CURIE
-* `col name [NAME ANY]`: renders with both named entities and anonymous expressions
+
+    robot export --input nucleus.owl \
+      --header "ID|LABEL|SubClass Of [NAME NAMED]|SubClass Of [ID NAMED]|SubClass Of [NAME ANON]|SubClass Of [ID ANON]" \
+      --export results/nucleus_logic.csv
 
 It is not recommended to use the `ANON` tag in combination with `LABEL`, as if an entity used in an anonymous expression does not have a label, it will be rendered as an empty string. Additionally, the entity selection tags will have no effect on annotation property values.
 
