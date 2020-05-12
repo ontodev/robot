@@ -1,4 +1,3 @@
-Label,Synonyms,Parent,Subclass Parts,Equivalent,Equivalent Parts
-LABEL,A IAO:0000118 SPLIT=|,SC % SPLIT=|,SC part_of some %,EC %,EC part_of some %
-test 3,synonym 1|synonym 2,test one|test2,test one,,
-test 4,,,,test one,(test2 and 'test 3')
+Label,Synonyms
+LABEL,A IAO:0000118 SPLIT=|
+test 3,synonym 1|synonym 2

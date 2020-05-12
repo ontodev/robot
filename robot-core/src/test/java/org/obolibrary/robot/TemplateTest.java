@@ -2,10 +2,10 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.Lists;
 import java.util.*;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
@@ -59,20 +59,20 @@ public class TemplateTest extends CoreTest {
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
     path = "/template-labels.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
-    path = "/template.csv";
+    path = "/template-logical.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
-    OWLOntology simpleParts = loadOntology("/simple_parts.owl");
+    OWLOntology in = loadOntology("/simple_parts.owl");
 
     List<OWLOntology> ontologies = new ArrayList<>();
+    OWLOntology out;
     for (String table : tables.keySet()) {
-      Template t = new Template(table, tables.get(table), simpleParts);
-      ontologies.add(t.generateOutputOntology());
+      Template t = new Template(table, tables.get(table), in);
+      out = t.generateOutputOntology();
+      ontologies.add(out);
+      in = MergeOperation.merge(Lists.newArrayList(in, out));
     }
 
     OWLOntology template = MergeOperation.merge(ontologies);
-    for (OWLAxiom cls : template.getAxioms()) {
-      System.out.println(cls);
-    }
     assertEquals("Count classes", 4, template.getClassesInSignature().size());
     assertEquals("Count logical axioms", 3, template.getLogicalAxiomCount());
     assertEquals("Count all axioms", 11, template.getAxiomCount());
@@ -88,22 +88,22 @@ public class TemplateTest extends CoreTest {
     Map<String, List<List<String>>> tables = new LinkedHashMap<>();
     String path = "/template-ids.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
-    path = "/legacy-template-labels.csv";
+    path = "/template-labels.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
-    path = "/legacy-template.csv";
+    path = "/legacy-template-logical.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
-    OWLOntology simpleParts = loadOntology("/simple_parts.owl");
+    OWLOntology in = loadOntology("/simple_parts.owl");
 
     List<OWLOntology> ontologies = new ArrayList<>();
+    OWLOntology out;
     for (String table : tables.keySet()) {
-      Template t = new Template(table, tables.get(table), simpleParts);
-      ontologies.add(t.generateOutputOntology());
+      Template t = new Template(table, tables.get(table), in);
+      out = t.generateOutputOntology();
+      ontologies.add(out);
+      in = MergeOperation.merge(Lists.newArrayList(in, out));
     }
 
     OWLOntology template = MergeOperation.merge(ontologies);
-    for (OWLAxiom cls : template.getAxioms()) {
-      System.out.println(cls);
-    }
     assertEquals("Count classes", 4, template.getClassesInSignature().size());
     assertEquals("Count logical axioms", 3, template.getLogicalAxiomCount());
     assertEquals("Count all axioms", 11, template.getAxiomCount());
@@ -115,7 +115,7 @@ public class TemplateTest extends CoreTest {
    * @throws Exception on any issue
    */
   @Test
-  public void testLegacyTemplate() throws Exception {
+  public void testLegacyDocsTemplate() throws Exception {
     Map<String, String> options = TemplateOperation.getDefaultOptions();
     IOHelper ioHelper = new IOHelper();
     ioHelper.addPrefix("ex", "http://example.com/");

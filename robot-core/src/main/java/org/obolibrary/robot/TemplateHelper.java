@@ -328,10 +328,10 @@ public class TemplateHelper {
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
-          annotations.add(maybeGetIRIAnnotation(tableName, checker, template, v, rowNum, column));
+          annotations.add(maybeGetIRIAnnotation(checker, template, v));
         }
       } else {
-        annotations.add(maybeGetIRIAnnotation(tableName, checker, template, value, rowNum, column));
+        annotations.add(maybeGetIRIAnnotation(checker, template, value));
       }
       return annotations;
     } else if (template.equals("LABEL")) {
@@ -640,7 +640,7 @@ public class TemplateHelper {
       if (id == null || id.trim().isEmpty()) {
         continue;
       }
-      IRI iri = ioHelper.createIRI(id);
+      IRI iri = ioHelper.createIRI(id, true);
       if (iri == null) {
         continue;
       }
@@ -1225,29 +1225,19 @@ public class TemplateHelper {
   /**
    * Given a checker, a template string, and a value for the template, return an IRI annotation.
    *
-   * @param tableName name of table
    * @param checker QuotedEntityChecker to resolve entities
    * @param template template string
    * @param value value to use with the template string
-   * @param rowNum the row number for logging
-   * @param column the column number for logging
    * @return OWLAnnotation created from template and value
    * @throws RowParseException if entities cannot be resolved
    */
   private static OWLAnnotation maybeGetIRIAnnotation(
-      String tableName,
-      QuotedEntityChecker checker,
-      String template,
-      String value,
-      int rowNum,
-      int column)
-      throws Exception {
+      QuotedEntityChecker checker, String template, String value) throws Exception {
     IRI iri = checker.getIRI(value, true);
-    if (iri != null) {
-      return getIRIAnnotation(checker, template, iri);
-    } else {
-      throw new RowParseException(String.format(iriError, rowNum, column + 1, tableName, value));
+    if (iri == null) {
+      iri = IRI.create(value);
     }
+    return getIRIAnnotation(checker, template, iri);
   }
 
   /**
