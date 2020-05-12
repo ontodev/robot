@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add JSON format to [`export`] in [#645]
 - Add Excel format to [`export`] in [#646]
 - Add `--create-tdb <true/false>` option to [`query`] in [#685]
+- Add [`validate`] command [#691]
 
 ### Changed
 - Updated `obographs` from 0.0.8 to 0.2.1 [#657]
@@ -186,7 +187,9 @@ First official release of ROBOT!
 [`repair`]: http://robot.obolibrary.org/repair
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
+[`validate`]: http://robot.obolibrary.org/validate
 
+[#691]: https://github.com/ontodev/robot/pull/691
 [#689]: https://github.com/ontodev/robot/pull/689
 [#685]: https://github.com/ontodev/robot/pull/685
 [#671]: https://github.com/ontodev/robot/pull/671
