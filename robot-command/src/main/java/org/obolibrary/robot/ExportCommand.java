@@ -31,7 +31,6 @@ public class ExportCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology to merge from an IRI");
     o.addOption("e", "export", true, "target file for export");
     o.addOption("c", "header", true, "ordered list of column names for header");
-    o.addOption("A", "exclude-anonymous", true, "if true, exclude anonymous entities");
     o.addOption("s", "sort", true, "column to sort on (default: first column)");
     o.addOption("n", "include", true, "groups of terms to include");
     o.addOption("f", "format", true, "output file format");
@@ -41,6 +40,7 @@ public class ExportCommand implements Command {
         "entity-format",
         true,
         "rendering format for entities when not specified (default: NAME)");
+    o.addOption("l", "entity-select", true, "type of entity to render (default: any)");
 
     options = o;
   }
