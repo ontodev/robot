@@ -199,6 +199,14 @@ The allowed `--entity-select` values are: `NAMED`, `ANON` or `ANONYMOUS`, and `A
 
 A property cannot be resolved, usually meaning that the label cannot be resolved. Ensure that the property label is defined in the input ontology or the column name provided is one of the special keywords.
 
+### Multiple Format Error
+
+A column header can only have one [entity format tag](#rendering-cell-values) in the square brackets after the column name.
+
+### Multiple Select Error
+
+A column header can only have one [entity selection tag](#including-and-excluding-entities) in the square brackets after the column name.
+
 ### Unknown Format Error
 
 The following formats are currently supported: `tsv`, `csv`, `html`, `json`, and `xlsx`. Please make sure you are using one of these formats.

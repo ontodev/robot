@@ -33,6 +33,12 @@ public class ExportOperation {
   private static final String includeNothingError =
       NS + "INCLUDE NOTHING ERROR you must include some types of ontology terms";
 
+  private static final String multipleFormatError =
+      NS + "MULTIPLE FORMAT ERROR column header '%s' contains more than one entity format tag";
+
+  private static final String multipleSelectError =
+      NS + "MULTIPLE SELECT ERROR column header '%s' contains more than one entity selection tag";
+
   private static final String unknownFormatError =
       NS + "UNKNOWN FORMAT ERROR '%s' is an unknown export format";
 
@@ -143,8 +149,8 @@ public class ExportOperation {
     // Create the Column objects and add to table
     List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
     for (String c : columnNames) {
-      String currentEntityFormat = entityFormat;
-      String currentEntitySelect = entitySelect;
+      String currentEntityFormat = null;
+      String currentEntitySelect = null;
       String colName = c;
 
       // Determine if this has a tag for rendering
@@ -159,18 +165,34 @@ public class ExportOperation {
             case "ANON":
             case "ANONYMOUS":
             case "ANY":
+              if (currentEntitySelect != null) {
+                // entity select was already set
+                throw new Exception(String.format(multipleSelectError, c));
+              }
               currentEntitySelect = subTag;
               break;
             case "NAME":
             case "LABEL":
             case "ID":
             case "IRI":
+              if (currentEntityFormat != null) {
+                // entity format was already set
+                throw new Exception(String.format(multipleFormatError, c));
+              }
               currentEntityFormat = subTag;
               break;
             default:
               throw new Exception(String.format(unknownTagError, c, subTag));
           }
         }
+      }
+
+      // The column did not have the given tags so set these to defaults
+      if (currentEntityFormat == null) {
+        currentEntityFormat = entityFormat;
+      }
+      if (currentEntitySelect == null) {
+        currentEntitySelect = entitySelect;
       }
 
       // Add some other defaults to the label map
