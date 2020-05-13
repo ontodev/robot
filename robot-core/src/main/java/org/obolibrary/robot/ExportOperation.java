@@ -53,6 +53,11 @@ public class ExportOperation {
           "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym",
           "http://purl.obolibrary.org/obo/IAO_0000118");
 
+  private static final List<String> entityFormatTags =
+      Lists.newArrayList("id", "iri", "label", "name");
+  private static final List<String> entitySelectTags =
+      Lists.newArrayList("any", "named", "anon", "anonymous");
+
   /**
    * Return a map from option name to default option value, for all the available export options.
    *
@@ -68,11 +73,6 @@ public class ExportOperation {
     options.put("entity-select", "ANY");
     return options;
   }
-
-  private static final List<String> entityFormatTags =
-      Lists.newArrayList("id", "iri", "label", "name");
-  private static final List<String> entitySelectTags =
-      Lists.newArrayList("any", "named", "anon", "anonymous");
 
   /**
    * Given an ontology, an ioHelper, a list of columns, an output export file, and a map of options,
@@ -146,23 +146,29 @@ public class ExportOperation {
       String currentEntityFormat = entityFormat;
       String currentEntitySelect = entitySelect;
       String colName = c;
+
       // Determine if this has a tag for rendering
-      Matcher m =
-          Pattern.compile(
-                  "(.+) \\[((id ?|iri ?|label ?|named ?|name ?|anon ?|anonymous ?|any ?)+)]",
-                  Pattern.CASE_INSENSITIVE)
-              .matcher(c);
+      Matcher m = Pattern.compile("^(.+) \\[([^\\[\\]]+)]$", Pattern.CASE_INSENSITIVE).matcher(c);
       if (m.find()) {
         colName = m.group(1);
         String tag = m.group(2);
         // Process one or more tags
         for (String subTag : tag.split(" ")) {
-          if (entityFormatTags.contains(subTag.toLowerCase())) {
-            currentEntityFormat = subTag;
-          } else if (entitySelectTags.contains(subTag.toLowerCase())) {
-            currentEntitySelect = subTag;
-          } else {
-            throw new Exception(String.format(unknownTagError, c, subTag));
+          switch (subTag.toUpperCase()) {
+            case "NAMED":
+            case "ANON":
+            case "ANONYMOUS":
+            case "ANY":
+              currentEntitySelect = subTag;
+              break;
+            case "NAME":
+            case "LABEL":
+            case "ID":
+            case "IRI":
+              currentEntityFormat = subTag;
+              break;
+            default:
+              throw new Exception(String.format(unknownTagError, c, subTag));
           }
         }
       }
