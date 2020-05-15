@@ -33,6 +33,12 @@ public class ExportOperation {
   private static final String includeNothingError =
       NS + "INCLUDE NOTHING ERROR you must include some types of ontology terms";
 
+  private static final String multipleFormatError =
+      NS + "MULTIPLE FORMAT ERROR column header '%s' contains more than one entity format tag";
+
+  private static final String multipleSelectError =
+      NS + "MULTIPLE SELECT ERROR column header '%s' contains more than one entity selection tag";
+
   private static final String unknownFormatError =
       NS + "UNKNOWN FORMAT ERROR '%s' is an unknown export format";
 
@@ -53,6 +59,11 @@ public class ExportOperation {
           "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym",
           "http://purl.obolibrary.org/obo/IAO_0000118");
 
+  private static final List<String> entityFormatTags =
+      Lists.newArrayList("id", "iri", "label", "name");
+  private static final List<String> entitySelectTags =
+      Lists.newArrayList("any", "named", "anon", "anonymous");
+
   /**
    * Return a map from option name to default option value, for all the available export options.
    *
@@ -68,11 +79,6 @@ public class ExportOperation {
     options.put("entity-select", "ANY");
     return options;
   }
-
-  private static final List<String> entityFormatTags =
-      Lists.newArrayList("id", "iri", "label", "name");
-  private static final List<String> entitySelectTags =
-      Lists.newArrayList("any", "named", "anon", "anonymous");
 
   /**
    * Given an ontology, an ioHelper, a list of columns, an output export file, and a map of options,
@@ -143,28 +149,50 @@ public class ExportOperation {
     // Create the Column objects and add to table
     List<String> sorts = Arrays.asList(sortColumn.trim().split("\\|"));
     for (String c : columnNames) {
-      String currentEntityFormat = entityFormat;
-      String currentEntitySelect = entitySelect;
+      String currentEntityFormat = null;
+      String currentEntitySelect = null;
       String colName = c;
+
       // Determine if this has a tag for rendering
-      Matcher m =
-          Pattern.compile(
-                  "(.+) \\[(id|iri|label|named|name|anon|anonymous|any) ?.*]",
-                  Pattern.CASE_INSENSITIVE)
-              .matcher(c);
+      Matcher m = Pattern.compile("^(.+) \\[([^\\[\\]]+)]$", Pattern.CASE_INSENSITIVE).matcher(c);
       if (m.find()) {
         colName = m.group(1);
         String tag = m.group(2);
         // Process one or more tags
         for (String subTag : tag.split(" ")) {
-          if (entityFormatTags.contains(subTag.toLowerCase())) {
-            currentEntityFormat = subTag;
-          } else if (entitySelectTags.contains(subTag.toLowerCase())) {
-            currentEntitySelect = subTag;
-          } else {
-            throw new Exception(String.format(unknownTagError, c, subTag));
+          switch (subTag.toUpperCase()) {
+            case "NAMED":
+            case "ANON":
+            case "ANONYMOUS":
+            case "ANY":
+              if (currentEntitySelect != null) {
+                // entity select was already set
+                throw new Exception(String.format(multipleSelectError, c));
+              }
+              currentEntitySelect = subTag;
+              break;
+            case "NAME":
+            case "LABEL":
+            case "ID":
+            case "IRI":
+              if (currentEntityFormat != null) {
+                // entity format was already set
+                throw new Exception(String.format(multipleFormatError, c));
+              }
+              currentEntityFormat = subTag;
+              break;
+            default:
+              throw new Exception(String.format(unknownTagError, c, subTag));
           }
         }
+      }
+
+      // The column did not have the given tags so set these to defaults
+      if (currentEntityFormat == null) {
+        currentEntityFormat = entityFormat;
+      }
+      if (currentEntitySelect == null) {
+        currentEntitySelect = entitySelect;
       }
 
       // Add some other defaults to the label map
