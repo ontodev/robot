@@ -41,6 +41,11 @@ public class ExportCommand implements Command {
         true,
         "rendering format for entities when not specified (default: NAME)");
     o.addOption("l", "entity-select", true, "type of entity to render (default: any)");
+    o.addOption(
+        null,
+        "standalone",
+        true,
+        "If true, and the output format is HTML, generate the HTML report as a standalone file (this option is ignored if the output format is not HTML)");
 
     options = o;
   }

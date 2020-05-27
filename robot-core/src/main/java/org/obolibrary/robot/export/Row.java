@@ -13,13 +13,29 @@ public class Row {
   // The subject of this row
   private IRI subject;
 
+  // The violation level of this row for Report
+  private String violationLevel;
+
   // List of cells in this row
   private Map<String, Cell> cells = new HashMap<>();
 
   // For JSON rendering, these should never be arrays
   private static final List<String> singles = Arrays.asList("CURIE", "ID", "IRI");
 
-  /** Init a new Row. */
+  /**
+   * Init a new Row for a Report.
+   *
+   * @param violationLevel String violation level - error, warn, or info
+   */
+  public Row(String violationLevel) {
+    this.violationLevel = violationLevel;
+  }
+
+  /**
+   * Init a new Row for an export Table.
+   *
+   * @param subject IRI subject of the row
+   */
   public Row(IRI subject) {
     this.subject = subject;
   }
@@ -74,13 +90,31 @@ public class Row {
 
         // Maybe set styles
         IndexedColors cellColor = cell.getCellColor();
-        if (cellColor != null) {
-          style.setFillBackgroundColor(cellColor.getIndex());
+        if (violationLevel != null) {
+          switch (violationLevel.toLowerCase()) {
+            case "error":
+              cellColor = IndexedColors.ROSE;
+              break;
+            case "warn":
+              cellColor = IndexedColors.LEMON_CHIFFON;
+              break;
+            case "info":
+              cellColor = IndexedColors.LIGHT_CORNFLOWER_BLUE;
+          }
         }
+
+        if (cellColor != null) {
+          style.setFillForegroundColor(cellColor.getIndex());
+        }
+
         FillPatternType cellPattern = cell.getCellPattern();
+        if (cellColor != null && cellPattern == null) {
+          cellPattern = FillPatternType.SOLID_FOREGROUND;
+        }
         if (cellPattern != null) {
           style.setFillPattern(cellPattern);
         }
+
         IndexedColors fontColor = cell.getFontColor();
         if (fontColor != null) {
           font.setColor(fontColor.getIndex());
@@ -170,8 +204,26 @@ public class Row {
    * @return HTML string rendering of row
    */
   public String toHTML(List<Column> columns, String split) {
+    String trClass = null;
+    if (violationLevel != null) {
+      switch (violationLevel.toLowerCase()) {
+        case "error":
+          trClass = "table-danger";
+          break;
+        case "warn":
+          trClass = "table-warning";
+          break;
+        case "info":
+          trClass = "table-info";
+          break;
+      }
+    }
     StringBuilder sb = new StringBuilder();
-    sb.append("\t<tr>\n");
+    if (trClass != null) {
+      sb.append("\t<tr class=\"").append(trClass).append("\">\n");
+    } else {
+      sb.append("\t<tr>\n");
+    }
     for (Column c : columns) {
       String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);

@@ -77,6 +77,7 @@ public class ExportOperation {
     options.put("split", "|");
     options.put("entity-format", "NAME");
     options.put("entity-select", "ANY");
+    options.put("standalone", "true");
     return options;
   }
 
@@ -314,7 +315,7 @@ public class ExportOperation {
         break;
       case "html":
         try (PrintWriter out = new PrintWriter(exportFile)) {
-          out.print(table.toHTML(split));
+          out.print(table.toHTML(split, OptionsHelper.optionIsTrue(options, "standalone")));
         }
         break;
       case "json":
@@ -341,8 +342,8 @@ public class ExportOperation {
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
    * @param classes Set of class expressions to convert to string
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return String of class expressions or null
    */
   private static List<String> classExpressionsToString(
@@ -373,8 +374,8 @@ public class ExportOperation {
    * @param displayRendererType RendererType for display value
    * @param sortRendererType RendererType for sort value
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return Cell for this Column containing class expressions
    */
   private static Cell getClassCell(
@@ -501,8 +502,8 @@ public class ExportOperation {
    * @param displayRendererType RendererType for display value
    * @param sortRendererType RendererType for sort value
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return Cell for this Column containing property expressions
    */
   private static Cell getPropertyCell(
@@ -574,8 +575,8 @@ public class ExportOperation {
    * @param provider ShortFormProvider to resolve entities
    * @param entity OWLEntity to get relations of
    * @param dp OWLDataProperty to get the value(s) of
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return String of values or null
    */
   private static List<String> getPropertyValues(
@@ -630,8 +631,8 @@ public class ExportOperation {
    * @param provider ShortFormProvider to resolve entities
    * @param entity OWLEntity to get annotations on
    * @param op OWLObjectProperty to get the value(s) of
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return String of values or null
    */
   private static List<String> getPropertyValues(
@@ -690,8 +691,8 @@ public class ExportOperation {
    * @param dp OWLDataProperty to look for
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return set of fillers that are 'values' of the data property
    */
   private static Set<String> getRestrictionFillers(
@@ -792,8 +793,8 @@ public class ExportOperation {
    * @param op OWLObjectProperty to look for
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return set of fillers that are 'values' of the object property
    */
   private static Set<String> getRestrictionFillers(
@@ -1305,8 +1306,8 @@ public class ExportOperation {
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
    * @param props Set of property expressions to convert to string
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named values
+   * @param includeAnonymous if true, include anonymous values
    * @return String of property expressions or null
    */
   private static List<String> propertyExpressionsToString(
@@ -1366,7 +1367,7 @@ public class ExportOperation {
    * @param object OWLObject to render
    * @return String rendering of OWLObject based on renderer type
    */
-  private static String renderManchester(
+  public static String renderManchester(
       RendererType rt, ShortFormProvider provider, OWLObject object) {
     ManchesterOWLSyntaxObjectRenderer renderer;
     StringWriter sw = new StringWriter();

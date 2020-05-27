@@ -1,17 +1,22 @@
 package org.obolibrary.robot.checks;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.IOException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import org.obolibrary.robot.ExportOperation;
 import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.QuotedEntityChecker;
+import org.obolibrary.robot.export.*;
+import org.obolibrary.robot.providers.CURIEShortFormProvider;
+import org.obolibrary.robot.providers.QuotedAnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +34,6 @@ public class Report {
 
   /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
-
-  /** New line separator. */
-  private static final String NEW_LINE = System.getProperty("line.separator");
 
   /** Map of rules and the violations for INFO level. */
   public Map<String, List<Violation>> info = new HashMap<>();
@@ -57,8 +59,15 @@ public class Report {
   /** IOHelper to use. */
   private IOHelper ioHelper;
 
+  /** Manager to use. */
+  private OWLOntologyManager manager;
+
   /** QuotedEntityChecker to use. */
   private QuotedEntityChecker checker = null;
+
+  /** Report headers. */
+  private final List<String> header =
+      Lists.newArrayList("Level", "Rule Name", "Subject", "Property", "Value");
 
   /**
    * Create a new report object without an ontology or predefined IOHelper.
@@ -77,6 +86,12 @@ public class Report {
    * @throws IOException on problem creating IOHelper
    */
   public Report(OWLOntology ontology, boolean useLabels) throws IOException {
+    if (ontology != null) {
+      manager = ontology.getOWLOntologyManager();
+    } else {
+      manager = OWLManager.createOWLOntologyManager();
+    }
+
     ioHelper = new IOHelper();
 
     if (useLabels) {
@@ -98,6 +113,7 @@ public class Report {
    * @throws IOException on problem creating IOHelper
    */
   public Report(Map<IRI, String> labelMap) throws IOException {
+    manager = OWLManager.createOWLOntologyManager();
     this.ioHelper = new IOHelper();
     checker = new QuotedEntityChecker();
     checker.setIOHelper(ioHelper);
@@ -122,6 +138,12 @@ public class Report {
    * @param useLabels if true, use labels for output
    */
   public Report(OWLOntology ontology, IOHelper ioHelper, boolean useLabels) {
+    if (ontology != null) {
+      manager = ontology.getOWLOntologyManager();
+    } else {
+      manager = OWLManager.createOWLOntologyManager();
+    }
+
     this.ioHelper = ioHelper;
     if (useLabels) {
       checker = new QuotedEntityChecker();
@@ -188,49 +210,6 @@ public class Report {
   }
 
   /**
-   * Return all the IRI strings in the current Violations.
-   *
-   * @return a set of IRI strings
-   */
-  public Set<String> getIRIs() {
-    Set<String> iris = new HashSet<>();
-    iris.addAll(getIRIs(error));
-    iris.addAll(getIRIs(warn));
-    iris.addAll(getIRIs(info));
-    return iris;
-  }
-
-  /**
-   * Return all the IRI strings in the given list of Violations.
-   *
-   * @param violationSets map of rule name and violations
-   * @return a set of IRI strings
-   */
-  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
-    Set<String> iris = new HashSet<>();
-
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      for (Violation v : vs.getValue()) {
-        iris.add(v.subject);
-        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          iris.add(statement.getKey());
-          for (String value : statement.getValue()) {
-            if (!iris.contains(value)) {
-              try {
-                iris.add(IRI.create(new URL(value)).toString());
-              } catch (Exception e) {
-                // do nothing
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return iris;
-  }
-
-  /**
    * Return the total violations from reporting.
    *
    * @return number of violations
@@ -281,29 +260,50 @@ public class Report {
   }
 
   /**
-   * Return the report in CSV format.
+   * Convert the report details to a Table object to save.
    *
-   * @return CSV string
+   * @param format String output format
+   * @return export Table object
    */
-  public String toCSV() {
-    return "Level,Rule Name,Subject,Property,Value"
-        + NEW_LINE
-        + csvHelper(ERROR, error)
-        + csvHelper(WARN, warn)
-        + csvHelper(INFO, info);
+  public Table toTable(String format) {
+    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
+    QuotedAnnotationValueShortFormProvider nameProvider =
+        new QuotedAnnotationValueShortFormProvider(
+            manager,
+            curieProvider,
+            ioHelper.getPrefixManager(),
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
+    ShortFormProvider provider;
+    if (useLabels) {
+      provider = nameProvider;
+    } else {
+      provider = curieProvider;
+    }
+
+    Table table = new Table(format);
+    for (String h : header) {
+      Column c = new Column(h, provider);
+      table.addColumn(c);
+    }
+
+    addToTable(table, provider, ERROR, error);
+    addToTable(table, provider, WARN, warn);
+    addToTable(table, provider, INFO, info);
+
+    return table;
   }
 
   /**
-   * Return the report in TSV format.
+   * Return the report in JSON format. This converts the YAML format of the report to JSON.
    *
-   * @return TSV string
+   * @return JSON String
+   * @throws IOException on issue converting YAML -> JSON
    */
-  public String toTSV() {
-    return "Level\tRule Name\tSubject\tProperty\tValue"
-        + NEW_LINE
-        + tsvHelper(ERROR, error)
-        + tsvHelper(WARN, warn)
-        + tsvHelper(INFO, info);
+  public String toJSON() throws IOException {
+    Object obj = new ObjectMapper(new YAMLFactory()).readValue(toYAML(), Object.class);
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    return gson.toJson(obj);
   }
 
   /**
@@ -312,42 +312,86 @@ public class Report {
    * @return YAML string
    */
   public String toYAML() {
-    return yamlHelper(ERROR, error) + yamlHelper(WARN, warn) + yamlHelper(INFO, info);
-  }
-
-  /**
-   * Given a reporting level and a map of rules and violations, build a CSV output.
-   *
-   * @param level reporting level
-   * @param violationSets map of rules and violations
-   * @return CSV string representation of the violations
-   */
-  private String csvHelper(String level, Map<String, List<Violation>> violationSets) {
-    return tableHelper(level, violationSets, ",", "\"", "'");
-  }
-
-  /**
-   * Given a PrefixManager and a value as a string, return the label or CURIE of the value if
-   * possible. Otherwise, return the value.
-   *
-   * @param pm PrefixManager to use to create CURIEs
-   * @param value value of cell - may be IRI or literal value
-   * @return display name as label, CURIE, or the original value
-   */
-  private String getDisplayName(PrefixManager pm, String value) {
-    String label = null;
+    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
+    QuotedAnnotationValueShortFormProvider nameProvider =
+        new QuotedAnnotationValueShortFormProvider(
+            manager,
+            curieProvider,
+            ioHelper.getPrefixManager(),
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
+    ShortFormProvider provider;
     if (useLabels) {
-      label = maybeGetLabel(value);
-    }
-    String curie = maybeGetCURIE(pm, value);
-    if (label != null && curie != null) {
-      return label + " [" + curie + "]";
-    } else if (label != null) {
-      return label + " <" + value + ">";
-    } else if (curie != null) {
-      return curie;
+      provider = nameProvider;
     } else {
-      return value;
+      provider = curieProvider;
+    }
+    return yamlHelper(provider, ERROR, error)
+        + yamlHelper(provider, WARN, warn)
+        + yamlHelper(provider, INFO, info);
+  }
+
+  /**
+   * Add violations to the Table object.
+   *
+   * @param table Table to add to
+   * @param provider ShortFormProvider used to render objects
+   * @param level String violation level
+   * @param violations Map of violations (rule -> violations)
+   */
+  private void addToTable(
+      Table table,
+      ShortFormProvider provider,
+      String level,
+      Map<String, List<Violation>> violations) {
+    List<Column> columns = table.getColumns();
+    RendererType displayRenderer = table.getDisplayRendererType();
+    for (Entry<String, List<Violation>> vs : violations.entrySet()) {
+      String ruleName = getRuleName(vs.getKey());
+      Cell levelCell = new Cell(columns.get(0), level);
+      Cell ruleCell = new Cell(columns.get(1), ruleName);
+      for (Violation v : vs.getValue()) {
+        // Subject of the violation for the following rows
+        String subject = ExportOperation.renderManchester(displayRenderer, provider, v.subject);
+        Cell subjectCell = new Cell(columns.get(2), subject);
+        for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
+          // Property of the violation for the following rows
+          String property = "";
+          if (statement.getKey() != null) {
+            property =
+                ExportOperation.renderManchester(displayRenderer, provider, statement.getKey());
+          }
+          Cell propertyCell = new Cell(columns.get(3), property);
+
+          if (statement.getValue().isEmpty()) {
+            Row row = new Row(level);
+            Cell valueCell = new Cell(columns.get(4), "");
+            row.add(levelCell);
+            row.add(ruleCell);
+            row.add(subjectCell);
+            row.add(propertyCell);
+            row.add(valueCell);
+            table.addRow(row);
+          } else {
+            for (OWLObject o : statement.getValue()) {
+              Row row = new Row(level);
+
+              String value = "";
+              if (o != null) {
+                value = ExportOperation.renderManchester(displayRenderer, provider, o);
+              }
+
+              Cell valueCell = new Cell(columns.get(4), value);
+              row.add(levelCell);
+              row.add(ruleCell);
+              row.add(subjectCell);
+              row.add(propertyCell);
+              row.add(valueCell);
+              table.addRow(row);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -370,165 +414,54 @@ public class Report {
   }
 
   /**
-   * Given a prefix manager and an IRI as a string, return the CURIE if the prefix is available.
-   * Otherwise, return null.
-   *
-   * @param pm PrefixManager to use
-   * @param iriString IRI to convert to CURIE
-   * @return CURIE, or null
-   */
-  private String maybeGetCURIE(PrefixManager pm, String iriString) {
-    IRI iri = IRI.create(iriString);
-    String prefix = pm.getPrefixIRI(iri);
-    // Strip the default OBO prefix to have ontology-specific prefixes
-    if (prefix != null && prefix.startsWith("obo:")) {
-      return prefix.substring(4).replace("_", ":");
-    }
-    return prefix;
-  }
-
-  /**
-   * Given an IRI as a string, return the label if it exists in the QuotedEntityChecker. Otherwise,
-   * return null.
-   *
-   * @param iriString IRI to find label
-   * @return label of IRI, or null
-   */
-  private String maybeGetLabel(String iriString) {
-    IRI iri = IRI.create(iriString);
-    if (checker != null) {
-      String label = checker.getLabel(iri);
-      if (label == null || label.equals("")) {
-        if (iriString.matches("[a-z0-9]{32}")) {
-          // Label blank nodes
-          return "blank node";
-        } else {
-          return null;
-        }
-      }
-      return label;
-    }
-    return null;
-  }
-
-  /**
-   * Given a reporting level and a map of rules and violations, build a table output.
-   *
-   * @param level reporting level
-   * @param violationSets map of rules and violations
-   * @param separator cell separator (e.g. comma)
-   * @param qualifier text qualifier (e.g. double quote)
-   * @param replacement text replacement for qualifier in literal values
-   * @return table string representation of the violations
-   */
-  private String tableHelper(
-      String level,
-      Map<String, List<Violation>> violationSets,
-      String separator,
-      String qualifier,
-      String replacement) {
-    // Get a prefix manager for creating CURIEs
-    PrefixManager pm = ioHelper.getPrefixManager();
-    if (violationSets.isEmpty()) {
-      return "";
-    }
-    StringBuilder sb = new StringBuilder();
-    // Map of rule names and their violations
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      String ruleName = getRuleName(vs.getKey());
-      for (Violation v : vs.getValue()) {
-        String subject = getDisplayName(pm, v.subject);
-        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          String property = getDisplayName(pm, statement.getKey());
-          for (String value : statement.getValue()) {
-            if (value == null) {
-              value = "";
-            } else {
-              String display = getDisplayName(pm, value);
-              if (!display.equals("")) {
-                value = display;
-              }
-            }
-            // Replace qualifiers, newlines, and tabs in literals
-            value =
-                value
-                    .replace(qualifier, replacement)
-                    .replace(NEW_LINE, "    ")
-                    .replace("\t", "    ");
-            // Build table row
-            sb.append(qualifier).append(level).append(qualifier).append(separator);
-            sb.append(qualifier).append(ruleName).append(qualifier).append(separator);
-            sb.append(qualifier).append(subject).append(qualifier).append(separator);
-            sb.append(qualifier).append(property).append(qualifier).append(separator);
-            sb.append(qualifier).append(value).append(qualifier).append(separator);
-            sb.append(NEW_LINE);
-          }
-        }
-      }
-    }
-    return sb.toString();
-  }
-
-  /**
-   * Given a reporting level and a map of rules and violations, build a TSV output.
-   *
-   * @param level reporting level
-   * @param violationSets map of rules and violations
-   * @return TSV string representation of the violations
-   */
-  private String tsvHelper(String level, Map<String, List<Violation>> violationSets) {
-    return tableHelper(level, violationSets, "\t", "", "");
-  }
-
-  /**
    * Given a reporting level and a map of rules and violations, build a YAML output.
    *
    * @param level reporting level
    * @param violationSets map of rules and violations
    * @return YAML string representation of the violations
    */
-  private String yamlHelper(String level, Map<String, List<Violation>> violationSets) {
+  private String yamlHelper(
+      ShortFormProvider provider, String level, Map<String, List<Violation>> violationSets) {
     // Get a prefix manager for creating CURIEs
-    PrefixManager pm = ioHelper.getPrefixManager();
     if (violationSets.isEmpty()) {
       return "";
     }
     StringBuilder sb = new StringBuilder();
-    sb.append("- level : '").append(level).append("'");
-    sb.append(NEW_LINE);
-    sb.append("  violations :");
-    sb.append(NEW_LINE);
+    sb.append("- level: '").append(level).append("'");
+    sb.append("\n");
+    sb.append("  violations:");
+    sb.append("\n");
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       String ruleName = getRuleName(vs.getKey());
       if (vs.getValue().isEmpty()) {
         continue;
       }
-      sb.append("  - rule : '").append(ruleName).append("'");
-      sb.append(NEW_LINE);
+      sb.append("  - ").append(ruleName).append(":");
+      sb.append("\n");
       for (Violation v : vs.getValue()) {
-        String subject = getDisplayName(pm, v.subject);
-        sb.append("    - subject : '").append(subject).append("'");
-        sb.append(NEW_LINE);
-        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
-          String property = getDisplayName(pm, statement.getKey());
-          sb.append("      property : '").append(property).append("':");
-          sb.append(NEW_LINE);
+        String subject =
+            ExportOperation.renderManchester(RendererType.OBJECT_RENDERER, provider, v.subject);
+        sb.append("    - subject: \"").append(subject).append("\"");
+        sb.append("\n");
+        for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
+          String property =
+              ExportOperation.renderManchester(
+                  RendererType.OBJECT_RENDERER, provider, statement.getKey());
+          sb.append("      property: \"").append(property).append("\"");
+          sb.append("\n");
           if (statement.getValue().isEmpty()) {
             continue;
           }
-          sb.append("      values :");
-          sb.append(NEW_LINE);
-          for (String value : statement.getValue()) {
-            if (value == null) {
-              value = "";
-            } else {
-              String display = getDisplayName(pm, value);
-              if (!display.equals("")) {
-                value = display;
-              }
+          sb.append("      values:");
+          sb.append("\n");
+          for (OWLObject value : statement.getValue()) {
+            String display = "";
+            if (value != null) {
+              display =
+                  ExportOperation.renderManchester(RendererType.OBJECT_RENDERER, provider, value);
             }
-            sb.append("        - '").append(value).append("'");
-            sb.append(NEW_LINE);
+            sb.append("        - \"").append(display.replace("\"", "\\\"")).append("\"");
+            sb.append("\n");
           }
         }
       }

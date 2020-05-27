@@ -1,28 +1,34 @@
 package org.obolibrary.robot.checks;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLObject;
 
 public class Violation {
 
-  public String subject;
-  public Map<String, List<String>> statements;
+  public OWLEntity subject;
+  public Map<OWLEntity, List<OWLObject>> statements;
 
-  public Violation(String subject) {
+  public Violation(OWLEntity subject) {
     this.subject = subject;
     this.statements = new HashMap<>();
   }
 
-  public void addStatement(String property, String value) {
-    List<String> values = new ArrayList<>();
+  public void addStatement(OWLEntity property, OWLObject value) {
+    List<OWLObject> values;
     if (statements.get(property) != null) {
-      values.addAll(statements.get(property));
+      // This property already has one value in the map
+      // Add this value to the existing list
+      values = new ArrayList<>(statements.get(property));
       values.add(value);
     } else {
-      values = Arrays.asList(value);
+      // This property is not yet in the map
+      // Instantiate a new list
+      if (value != null) {
+        values = Collections.singletonList(value);
+      } else {
+        values = Collections.emptyList();
+      }
     }
     statements.put(property, values);
   }

@@ -1,8 +1,12 @@
 package org.obolibrary.robot.export;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import java.io.IOException;
 import java.util.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -214,15 +218,16 @@ public class Table {
    * @param split character to split multiple cell values on
    * @return HTML string
    */
-  public String toHTML(String split) {
+  public String toHTML(String split, boolean standalone) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<head>\n")
-        .append(
-            "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
-        .append("</head>\n")
-        .append("<body>\n")
-        .append("<table class=\"table table-striped\">\n")
-        .append("<tr>\n");
+    if (!standalone) {
+      sb.append("<head>\n")
+          .append(
+              "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
+          .append("</head>\n")
+          .append("<body>\n");
+    }
+    sb.append("<table class=\"table table-striped\">\n").append("<tr>\n");
 
     for (Column c : columns) {
       sb.append("\t<th>").append(c.getDisplayName()).append("</th>\n");
@@ -234,7 +239,9 @@ public class Table {
       sb.append(row.toHTML(columns, split));
     }
     sb.append("</table>");
-    sb.append("</body>");
+    if (!standalone) {
+      sb.append("</body>");
+    }
     return sb.toString();
   }
 
@@ -251,5 +258,15 @@ public class Table {
 
     Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     return gson.toJson(table);
+  }
+
+  /**
+   * Render the Table as a YAML string.
+   *
+   * @return YAML string
+   */
+  public String toYAML() throws IOException {
+    JsonNode jsonNodeTree = new ObjectMapper().readTree(toJSON());
+    return new YAMLMapper().writeValueAsString(jsonNodeTree);
   }
 }
