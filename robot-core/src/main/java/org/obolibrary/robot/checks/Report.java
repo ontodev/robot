@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 import org.obolibrary.robot.ExportOperation;
@@ -352,7 +353,7 @@ public class Report {
       Cell ruleCell = new Cell(columns.get(1), ruleName);
       for (Violation v : vs.getValue()) {
         // Subject of the violation for the following rows
-        String subject = ExportOperation.renderManchester(displayRenderer, provider, v.subject);
+        String subject = ExportOperation.renderManchester(displayRenderer, provider, v.entity);
         Cell subjectCell = new Cell(columns.get(2), subject);
         for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
           // Property of the violation for the following rows
@@ -440,7 +441,7 @@ public class Report {
       sb.append("\n");
       for (Violation v : vs.getValue()) {
         String subject =
-            ExportOperation.renderManchester(RendererType.OBJECT_RENDERER, provider, v.subject);
+            ExportOperation.renderManchester(RendererType.OBJECT_RENDERER, provider, v.entity);
         sb.append("    - subject: \"").append(subject).append("\"");
         sb.append("\n");
         for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
@@ -465,6 +466,81 @@ public class Report {
           }
         }
       }
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Return all the IRI strings in the current Violations.
+   *
+   * @return a set of IRI strings
+   */
+  @Deprecated
+  public Set<String> getIRIs() {
+    Set<String> iris = new HashSet<>();
+    iris.addAll(getIRIs(error));
+    iris.addAll(getIRIs(warn));
+    iris.addAll(getIRIs(info));
+    return iris;
+  }
+
+  /**
+   * Return all the IRI strings in the given list of Violations.
+   *
+   * @param violationSets map of rule name and violations
+   * @return a set of IRI strings
+   */
+  @Deprecated
+  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
+    Set<String> iris = new HashSet<>();
+
+    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
+      for (Violation v : vs.getValue()) {
+        iris.add(v.entity.getIRI().toString());
+        for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
+          iris.add(statement.getKey().getIRI().toString());
+          for (OWLObject value : statement.getValue()) {
+            if (value instanceof OWLEntity) {
+              OWLEntity e = (OWLEntity) value;
+              iris.add(e.getIRI().toString());
+            } else if (value instanceof IRI) {
+              IRI iri = (IRI) value;
+              iris.add(iri.toString());
+            }
+          }
+        }
+      }
+    }
+
+    return iris;
+  }
+
+  /**
+   * Return the report in CSV format.
+   *
+   * @return CSV string
+   */
+  @Deprecated
+  public String toCSV() {
+    Table t = toTable("csv");
+    StringBuilder sb = new StringBuilder();
+    for (String[] row : t.toList("")) {
+      sb.append(String.join(",", row));
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Return the report in TSV format.
+   *
+   * @return TSV string
+   */
+  @Deprecated
+  public String toTSV() {
+    Table t = toTable("tsv");
+    StringBuilder sb = new StringBuilder();
+    for (String[] row : t.toList("")) {
+      sb.append(String.join("\t", row));
     }
     return sb.toString();
   }
