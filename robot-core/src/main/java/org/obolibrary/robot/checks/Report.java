@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 import org.obolibrary.robot.ExportOperation;

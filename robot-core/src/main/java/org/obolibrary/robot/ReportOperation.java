@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.Lists;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -490,7 +489,8 @@ public class ReportOperation {
 
     // Process different output formats while writing print lines if requested
     // First check if format is JSON or YAML
-    // We don't use the Table for these formats because we want to group by violation level and rule name
+    // We don't use the Table for these formats because we want to group by violation level and rule
+    // name
     if (format.equalsIgnoreCase("yaml")) {
       if (print > 0) {
         // We use the Table to get a list of rows to print as TSV

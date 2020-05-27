@@ -48,25 +48,22 @@ public class Violation {
     statements.put(property, values);
   }
 
-  @Deprecated
-  public String subject;
+  @Deprecated public String subject;
 
-  /**
-   *
-   * @param subject String subject
-   */
+  /** @param subject String subject */
   @Deprecated
   public Violation(String subject) {
-    logger.error("new Violation(subject) is no longer supported - please use new Violation(OWLEntity) instead.");
+    logger.error(
+        "new Violation(subject) is no longer supported - please use new Violation(OWLEntity) instead.");
   }
 
   /**
-   *
    * @param property String property
    * @param value String value
    */
   @Deprecated
   public void addStatement(String property, String value) {
-    logger.error("addStatement(String, String) is no longer supported - please use addStatement(OWLEntity, OWLObject) instead.");
+    logger.error(
+        "addStatement(String, String) is no longer supported - please use addStatement(OWLEntity, OWLObject) instead.");
   }
 }

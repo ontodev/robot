@@ -220,7 +220,7 @@ public class Table {
    */
   public String toHTML(String split, boolean standalone) {
     StringBuilder sb = new StringBuilder();
-    if (!standalone) {
+    if (standalone) {
       sb.append("<head>\n")
           .append(
               "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
@@ -239,7 +239,7 @@ public class Table {
       sb.append(row.toHTML(columns, split));
     }
     sb.append("</table>");
-    if (!standalone) {
+    if (standalone) {
       sb.append("</body>");
     }
     return sb.toString();
