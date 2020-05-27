@@ -923,8 +923,6 @@ public class ReportOperation {
         } else {
           violation.addStatement(e, null);
         }
-      } else {
-        violation.addStatement(null, null);
       }
       violations.add(violation);
 
