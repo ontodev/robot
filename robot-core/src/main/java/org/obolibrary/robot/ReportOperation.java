@@ -354,6 +354,16 @@ public class ReportOperation {
     return report;
   }
 
+  /**
+   * Given a dataset and a map of options, create a Report object and run (on TDB dataset) the
+   * report queries specified in a profile (from options, or default). Return the completed Report
+   * object. The labels option is not supported with TDB.
+   *
+   * @param dataset TDB Dataset to perform Report operation on
+   * @param options Map of report options
+   * @return Report object with violation details
+   * @throws Exception on any reporting error
+   */
   public static Report getTDBReport(Dataset dataset, Map<String, String> options) throws Exception {
     IOHelper ioHelper = new IOHelper();
     return getTDBReport(ioHelper, dataset, options);
@@ -364,6 +374,7 @@ public class ReportOperation {
    * report queries specified in a profile (from options, or default). Return the completed Report
    * object. The labels option is not supported with TDB.
    *
+   * @param ioHelper IOHelper to resolve IRIs
    * @param dataset TDB Dataset to perform Report operation on
    * @param options Map of report options
    * @return Report object with violation details
@@ -433,9 +444,6 @@ public class ReportOperation {
     return report;
   }
 
-  private static final List<String> otherFormats =
-      Lists.newArrayList("csv", "yaml", "html", "xlsx", "json");
-
   /**
    * Given a Report, an output path, and a map of report options, process the Report results and
    * save the report to the output path.
@@ -475,19 +483,17 @@ public class ReportOperation {
     String format = OptionsHelper.getOption(options, "format");
     if (format == null && outputPath != null) {
       format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
-      if (!otherFormats.contains(format.toLowerCase())) {
-        // Non-known formats are written as TSV
-        format = "tsv";
-      }
     } else if (format == null) {
       // Null format means no output file, will be printed as TSV
       format = "tsv";
     }
 
     // Process different output formats while writing print lines if requested
+    // First check if format is JSON or YAML
+    // We don't use the Table for these formats because we want to group by violation level and rule name
     if (format.equalsIgnoreCase("yaml")) {
-      // YAML does not become a Table object because the toYAML on Table writes in the wrong format
       if (print > 0) {
+        // We use the Table to get a list of rows to print as TSV
         Table t = report.toTable("tsv");
         printNViolations(t.toList(""), print, "\t");
       }
@@ -497,9 +503,10 @@ public class ReportOperation {
         logger.debug("Writing report to: " + outputPath);
         bw.write(yaml);
       }
+
     } else if (format.equalsIgnoreCase("json")) {
-      // JSON does not become a Table object because the toJSON on Table writes in the wrong format
       if (print > 0) {
+        // We use the Table to get a list of rows to print as TSV
         Table t = report.toTable("tsv");
         printNViolations(t.toList(""), print, "\t");
       }
@@ -509,8 +516,9 @@ public class ReportOperation {
         logger.debug("Writing report to: " + outputPath);
         bw.write(json);
       }
+
     } else {
-      // All other formats are converted to export Table
+      // All other formats are converted to export Table to get the output
       Table reportTable = report.toTable(format);
       List<String[]> rows;
       switch (format) {
@@ -525,6 +533,7 @@ public class ReportOperation {
             bw.write(html);
           }
           break;
+
         case "csv":
           rows = reportTable.toList("");
           if (outputPath != null) {
@@ -543,6 +552,7 @@ public class ReportOperation {
             printNViolations(rows, print, ",");
           }
           break;
+
         case "xlsx":
           if (print > 0) {
             printNViolations(reportTable.toList(""), print, "\t");
@@ -552,7 +562,9 @@ public class ReportOperation {
             wb.write(fos);
           }
           break;
+
         case "tsv":
+        default:
           System.out.print("tsv!");
           rows = reportTable.toList("");
           if (outputPath != null) {
