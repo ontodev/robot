@@ -37,7 +37,6 @@ public class OBOExtractHelper {
   private IRI outputIRI;
 
   // Maps to resolve labels, relationships, and types from IRIs
-  private BiMap<IRI, String> labelMap = HashBiMap.create();
   private Map<IRI, Set<IRI>> childParentMap = new HashMap<>();
   private Map<IRI, Set<IRI>> instanceTypeMap = new HashMap<>();
   private Map<IRI, EntityType> entityTypeMap = new HashMap<>();
@@ -495,17 +494,54 @@ public class OBOExtractHelper {
           }
 
         } else if (line.startsWith("disjoint_from: ")) {
-          // TODO - anonymous?
-          String curie = line.substring(15).split(" ")[0];
-          IRI disjointIRI = ioHelper.createIRI(curie);
-          if (disjointIRI == null) {
-            logger.error(String.format("Unable to create IRI from term '%s' on line %d", curie, n));
-            continue;
+          String[] parts = line.substring(15).split(" ");
+
+          if (parts.length >= 4) {
+            // Anonymous
+            String property = parts[0];
+            IRI propertyIRI;
+            if (propertyMap.containsKey(property)) {
+              propertyIRI = propertyMap.get(property);
+            } else {
+              propertyIRI = ioHelper.createIRI(property);
+              if (propertyIRI == null) {
+                propertyIRI = ioHelper.createIRI(namespace + property);
+              }
+            }
+            if (propertyIRI == null) {
+              logger.error(
+                String.format("Unable to create property IRI from '%s' on line %d", property, n));
+              continue;
+            }
+            String value = parts[1];
+            IRI valueIRI = ioHelper.createIRI(value);
+            if (valueIRI == null) {
+              logger.error(
+                String.format("Unable to create class IRI from '%s' on line %d", value, n));
+              continue;
+            }
+            if (allTargets.contains(valueIRI)) {
+              OWLClassExpression svf =
+                dataFactory.getOWLObjectSomeValuesFrom(
+                  dataFactory.getOWLObjectProperty(propertyIRI),
+                  dataFactory.getOWLClass(valueIRI));
+              OWLAxiom ax = dataFactory.getOWLDisjointClassesAxiom(dataFactory.getOWLClass(iri), svf);
+              manager.addAxiom(outputOntology, ax);
+            }
+          } else {
+            // Named
+            String value = parts[0];
+            IRI valueIRI = ioHelper.createIRI(value);
+            if (valueIRI == null) {
+              logger.error(
+                String.format("Unable to create class IRI from '%s' on line %d", value, n));
+              continue;
+            }
+            if (allTargets.contains(valueIRI)) {
+              OWLAxiom ax = dataFactory.getOWLDisjointClassesAxiom(dataFactory.getOWLClass(iri), dataFactory.getOWLClass(valueIRI));
+              manager.addAxiom(outputOntology, ax);
+            }
           }
-          OWLAxiom ax =
-              dataFactory.getOWLDisjointClassesAxiom(
-                  dataFactory.getOWLClass(iri), dataFactory.getOWLClass(disjointIRI));
-          manager.addAxiom(outputOntology, ax);
 
           // Annotations
         } else if (line.startsWith("name: ")
@@ -880,7 +916,6 @@ public class OBOExtractHelper {
         entityTypeMap.put(iri, EntityType.NAMED_INDIVIDUAL);
 
       } else if (line.startsWith("property_value: ")) {
-        // Annotation property OR data property - TODO: how can we tell difference?
         String curie = line.substring(16).split(" ")[0];
         if (propertyMap.containsKey(curie)) {
           // Already found
