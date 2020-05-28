@@ -5,8 +5,10 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -57,6 +59,11 @@ public class ExtractCommand implements Command {
   private static final String invalidSourceMapError =
       NS + "INVALID SOURCE MAP ERROR --sources input must be .tsv or .csv";
 
+  /** Error message when a non-OBO file is provided with OBO-Extract method. */
+  private static final String oboExtractError =
+      NS
+          + "OBO EXTRACT ERROR OBO-Extract method can only be used with files ending in .obo or .obo.gz";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -83,6 +90,16 @@ public class ExtractCommand implements Command {
     o.addOption("n", "individuals", true, "handle individuals (default: include)");
     o.addOption("M", "imports", true, "handle imports (default: include)");
     o.addOption("N", "intermediates", true, "specify how to handle intermediate entities");
+    o.addOption(
+        null,
+        "annotation-property",
+        true,
+        "annotation property to include (MIREOT and OBO-Extract)");
+    o.addOption(
+        null,
+        "annotation-properties",
+        true,
+        "annotation properties to include (MIREOT and OBO-Extract)");
     options = o;
   }
 
@@ -156,8 +173,6 @@ public class ExtractCommand implements Command {
     }
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
-    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
-    OWLOntology inputOntology = state.getOntology();
 
     // Override default reasoner options with command-line options
     Map<String, String> extractOptions = ExtractOperation.getDefaultOptions();
@@ -172,6 +187,17 @@ public class ExtractCommand implements Command {
         CommandLineHelper.getRequiredValue(line, "method", "method of extraction must be specified")
             .trim()
             .toLowerCase();
+
+    // OBO-Extract never loads OWLOntology object
+    if (method.equals("obo-extract")) {
+      outputOntology = oboExtract(ioHelper, line, extractOptions);
+      CommandLineHelper.maybeSaveOutput(line, outputOntology);
+      state.setOntology(outputOntology);
+      return state;
+    }
+
+    state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLOntology inputOntology = state.getOntology();
 
     ModuleType moduleType = null;
     switch (method) {
@@ -266,11 +292,33 @@ public class ExtractCommand implements Command {
       Map<IRI, IRI> sourceMap =
           getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
 
+      // Get optional annotation properties to include
+      // If this isn't included, all annotation properties are included
+      OWLDataFactory df = OWLManager.getOWLDataFactory();
+      Set<IRI> annotationPropertyIRIs =
+          CommandLineHelper.getTerms(
+              ioHelper, line, "annotation-property", "annotation-properties");
+      Set<OWLAnnotationProperty> annotationProperties;
+      if (annotationPropertyIRIs.isEmpty()) {
+        annotationProperties = null;
+      } else {
+        annotationProperties =
+            annotationPropertyIRIs
+                .stream()
+                .map(df::getOWLAnnotationProperty)
+                .collect(Collectors.toSet());
+      }
+
       // First check for lower IRIs, upper IRIs can be null or not
       if (lowerIRIs != null) {
         outputOntologies.add(
             MireotOperation.getAncestors(
-                inputOntology, upperIRIs, lowerIRIs, null, extractOptions, sourceMap));
+                inputOntology,
+                upperIRIs,
+                lowerIRIs,
+                annotationProperties,
+                extractOptions,
+                sourceMap));
         // If there are no lower IRIs, there shouldn't be any upper IRIs
       } else if (upperIRIs != null) {
         throw new IllegalArgumentException(missingLowerTermError);
@@ -279,7 +327,7 @@ public class ExtractCommand implements Command {
       if (branchIRIs != null) {
         outputOntologies.add(
             MireotOperation.getDescendants(
-                inputOntology, branchIRIs, null, extractOptions, sourceMap));
+                inputOntology, branchIRIs, annotationProperties, extractOptions, sourceMap));
       }
     }
     // Get the output IRI and create the output ontology
@@ -292,6 +340,51 @@ public class ExtractCommand implements Command {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);
     }
     return outputOntology;
+  }
+
+  /**
+   * Perform an OBO-Extract extraction on an OBO format file.
+   *
+   * @param ioHelper IOHelper to resolve IRIs
+   * @param line CommandLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws Exception on issue parsing terms or creating new ontology
+   */
+  private static OWLOntology oboExtract(
+      IOHelper ioHelper, CommandLine line, Map<String, String> extractOptions) throws Exception {
+    String fileName = CommandLineHelper.getOptionalValue(line, "input");
+    String iriString = CommandLineHelper.getOptionalValue(line, "input-iri");
+    if (fileName == null && iriString == null) {
+      throw new Exception(CommandLineHelper.missingInputError);
+    }
+
+    // Validate file format (OBO only)
+    if (fileName != null) {
+      if (!fileName.endsWith(".obo.gz") && !fileName.endsWith(".obo")) {
+        throw new Exception(oboExtractError);
+      }
+    } else {
+      if (!iriString.endsWith(".obo.gz") && !iriString.endsWith(".obo")) {
+        throw new Exception(oboExtractError);
+      }
+    }
+
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+
+    Set<IRI> lowerTerms = CommandLineHelper.getTerms(ioHelper, line, "lower-term", "lower-terms");
+    Set<IRI> upperTerms = CommandLineHelper.getTerms(ioHelper, line, "upper-term", "lower-terms");
+    Set<IRI> annotationProperties =
+        CommandLineHelper.getTerms(ioHelper, line, "annotation-property", "annotation-properties");
+
+    OBOExtractHelper oboExtractHelper;
+    if (fileName != null) {
+      oboExtractHelper = new OBOExtractHelper(ioHelper, fileName, outputIRI);
+    } else {
+      IRI inputIRI = IRI.create(iriString);
+      oboExtractHelper = new OBOExtractHelper(ioHelper, inputIRI, outputIRI);
+    }
+    return oboExtractHelper.extract(upperTerms, lowerTerms, annotationProperties, extractOptions);
   }
 
   /**

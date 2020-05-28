@@ -5,9 +5,10 @@
 1. [Overview](#overview)
 2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
 3. [Extraction method: MIREOT](#mireot)
-4. [Handling Imports (`--imports`)](#handling-imports)
-5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
-6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
+4. [Extraction method: OBO-Extract](#obo-extract)
+5. [Handling Imports (`--imports`)](#handling-imports)
+6. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
+7. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
 
 ## Overview
 
@@ -20,12 +21,13 @@ The reuse of ontology terms creates links between data, making the ontology and 
 
 See <a href="/examples/uberon_module.txt" target="_blank">`uberon_module.txt`</a> for an example of a term file. Terms should be listed line by line, and comments can be included with `#`. Individual terms can be specified with `--term` followed by the CURIE.
 
-The `--method` options fall into two groups: Syntactic Locality Module Extractor (SLME) and Minimum Information to Reference an External Ontology Term (MIREOT).
+The `--method` options fall into three groups: Syntactic Locality Module Extractor (SLME), Minimum Information to Reference an External Ontology Term (MIREOT), and OBO-Extract.
 
 - STAR: use the SLME to extract a fixpoint-nested module
 - TOP: use the SLME to extract a top module
 - BOT: use the SLME to extract a bottom module
 - MIREOT: extract a simple hierarchy of terms
+- OBO-Extract: extract terms from an OBO format file - this method is great for large files, as the contents are never loaded into memory
 
 ## Syntactic Locality Module Extractor (SLME)
 
@@ -127,6 +129,37 @@ Would result in:
 ```
 
 Any term specified as an input term will not be pruned.
+
+## OBO Extract
+
+The `OBO-Extract` method is based on MIREOT principles, but streams the contents of an OBO-format file to reduce strain on memory. This is much faster for large files, but only works for files in OBO format (`.obo` or `.obo.gz`). These files must follow the [OBO Flat File Format Guide](https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_2.html).
+
+Like MIREOT, this method uses "upper" and "lower" terms. The "lower" term or terms are required, whereas "upper" terms are optional.
+
+    robot extract --method OBO-Extract \
+        --input example.obo \
+        --upper-term UBERON:0000465 \
+        --lower-term UBERON:0002369 \
+        --output obo_extract.owl
+        
+Unlike MIREOT, equivalence axiom will be included, but *only* if all classes used in the axiom are between the target terms.
+
+For this method, one or more `--annotation-property` options can be provided in order to add annotations to the entities. If not included, all annotations will be included in the output. To provide a text file of annotation properties, use `--annotation-properties`. The `--intermediates` may also be used with this method.
+
+    robot extract --method OBO-Extract \
+        --input example.obo \
+        --upper-term UBERON:0000465 \
+        --lower-term UBERON:0002369 \
+        --intermediates none \
+        --annotation-property rdfs:label \
+        --output obo_extract_small.owl
+
+### Disclaimers
+
+Please note that `[Instance]` tags are not currently supported by OWLAPI's `OBOFormatParser` so they will be lost if you convert an OWL file to OBO, but the `OBO-Extract` method *will* capture instances.
+
+Additionally, anonymous subclass expressions are stored in an `owl-axioms` field in the ontology header. This field is not parsed by the `OBO-Extract` method. This may be updated in future releases.
+
 
 ## Handling Imports
 
