@@ -521,7 +521,7 @@ public class ReportOperation {
       // All other formats are converted to export Table to get the output
       Table reportTable = report.toTable(format);
       List<String[]> rows;
-      switch (format) {
+      switch (format.toLowerCase()) {
         case "html":
           if (print > 0) {
             printNViolations(reportTable.toList(""), print, "\t");

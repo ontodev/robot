@@ -127,7 +127,8 @@ public class ReportCommand implements Command {
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
     String format = CommandLineHelper.getOptionalValue(line, "format");
     if (format != null) {
-      if (Lists.newArrayList("html", "json", "yaml").contains(format) && outputPath == null) {
+      if (Lists.newArrayList("html", "json", "yaml").contains(format.toLowerCase())
+          && outputPath == null) {
         throw new IllegalArgumentException(String.format(missingOutputError, format));
       }
     }
