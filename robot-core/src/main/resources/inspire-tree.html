@@ -458,13 +458,13 @@ p {
     n.select();
   }
 
-  // Funciton to update tree nodes to have text displays
+  // Function to update tree nodes to have text displays
   function update(node) {
     var id = node.id;
-    // Appending -type to IDs for individuals by types prevents collision
+    // Appending {OWLClass} to IDs for individuals by types prevents collision
     // Remove it for the text display
-    if (id.endsWith('-type')) {
-      id = id.replace('-type', '');
+    if (id.endsWith('{OWLClass}')) {
+      id = id.replace('{OWLClass}', '');
     }
     // Some nodes might have text different than their ID
     // Do not override these

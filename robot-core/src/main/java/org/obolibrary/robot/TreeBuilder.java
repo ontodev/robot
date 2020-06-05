@@ -274,7 +274,7 @@ public class TreeBuilder {
         JsonObject typeClass = new JsonObject();
 
         // These appear more than once in the tree and will have the same ID
-        // Do it needs to be overidden by appending something
+        // So it needs to be overidden by appending something
         // This is removed for the text display in the tree view
         typeClass.addProperty("id", typeLabel + "{OWLClass}");
         typeClass.add("children", getIndiviudalArray(t, annPropMap));
@@ -547,6 +547,48 @@ public class TreeBuilder {
     ontologyObj.addProperty("id", strIRI);
     ontologyObj.addProperty("text", strIRI);
     return ontologyObj;
+  }
+
+  /**
+   * Add links to a rendered expression.
+   *
+   * @param render String rendered expression
+   * @return rendered expression with Javascript links
+   */
+  private String addLinks(String render) {
+    Matcher m = Pattern.compile("([^\\s()]+[_:][^\\s()]+)").matcher(render);
+    if (!m.find()) {
+      return render;
+    }
+    String id = m.group(1);
+    IRI iri;
+    if (id.startsWith("<") && id.endsWith(">")) {
+      // Angle brackets mean it's already an IRI
+      iri = IRI.create(id.replace("<", "").replace(">", ""));
+    } else {
+      // No angle brackets mean it's a CURIE
+      iri = ioHelper.createIRI(id);
+    }
+
+    if (iri != null) {
+      // Short form used if label does not exist in ontology
+      // Sometimes ends up with extra brackets
+      String shortForm = IOHelper.getShortForm(iri);
+      String label = checker.getLabel(iri, shortForm);
+
+      // Maybe create the quoted label
+      String quotedLabel = label.replace("\\'", "'");
+      if (label.contains(" ")) {
+        // add quotes to anything with more than one word
+        quotedLabel = "'" + quotedLabel + "'";
+      }
+
+      // Click search function on click
+      label = String.format("<a href=\"javascript:jumpTo('%s')\">%s</a>", label, quotedLabel);
+      // Replace the IDs with the click to search links
+      return render.replace(id, label);
+    }
+    return render;
   }
 
   /**
@@ -1381,42 +1423,24 @@ public class TreeBuilder {
   private Set<String> renderExpressions(Set<OWLObject> values) {
     Set<String> renderedValues = new HashSet<>();
     for (OWLObject v : values) {
+
       // Render the value in Manchester Syntax
       String render = r.render(v);
-      // Match term IDs
-      Matcher m = Pattern.compile("([^\\s()]+[_:][^\\s()]+)").matcher(render);
-      while (m.find()) {
-        // Maybe replace term IDs with their labels
-        String id = m.group(1);
-        IRI iri;
-        if (id.startsWith("<") && id.endsWith(">")) {
-          // Angle brackets mean it's already an IRI
-          iri = IRI.create(id.replace("<", "").replace(">", ""));
-        } else {
-          // No angle brackets mean it's a CURIE
-          iri = ioHelper.createIRI(id);
+
+      Matcher m = Pattern.compile("^\\{(.+)}$").matcher(render);
+      if (m.matches()) {
+        // This is a list e.g., one of
+        List<String> listValues = new ArrayList<>();
+        String list = m.group(1);
+        for (String itm : list.split(",")) {
+          listValues.add(addLinks(itm));
         }
-
-        if (iri != null) {
-          // Short form used if label does not exist in ontology
-          // Sometimes ends up with extra brackets
-          String shortForm = IOHelper.getShortForm(iri);
-          String label = checker.getLabel(iri, shortForm);
-
-          // Maybe create the quoted label
-          String quotedLabel = label.replace("\\'", "'");
-          if (label.contains(" ")) {
-            // add quotes to anything with more than one word
-            quotedLabel = "'" + quotedLabel + "'";
-          }
-
-          // Click search function on click
-          label = String.format("<a href=\"javascript:jumpTo('%s')\">%s</a>", label, quotedLabel);
-          // Replace the IDs with the click to search links
-          render = render.replace(id, label);
-        }
+        renderedValues.add(String.format("{%s}", String.join(", ", listValues)));
+      } else {
+        // Single element in values
+        render = addLinks(render);
+        renderedValues.add(render);
       }
-      renderedValues.add(render);
     }
     return renderedValues;
   }
