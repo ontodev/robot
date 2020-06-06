@@ -56,7 +56,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
     write(
         String.format(
             "<a href=\"%s\">%s</a>",
-            property.getIRI().toString(), getShortFormProvider().getShortForm(property)));
+            property.getIRI().toString(), escape(getShortFormProvider().getShortForm(property))));
   }
 
   /** Given an OWLClass, write a hyperlink describing it to the writer. */
@@ -65,7 +65,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
     write(
         String.format(
             "<a href=\"%s\">%s</a>",
-            cls.getIRI().toString(), getShortFormProvider().getShortForm(cls)));
+            cls.getIRI().toString(), escape(getShortFormProvider().getShortForm(cls))));
   }
 
   /** Given an OWLDataProperty, write a hyperlink describing it to the writer. */
@@ -74,7 +74,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
     write(
         String.format(
             "<a href=\"%s\">%s</a>",
-            property.getIRI().toString(), getShortFormProvider().getShortForm(property)));
+            property.getIRI().toString(), escape(getShortFormProvider().getShortForm(property))));
   }
 
   /** Given an OWLDataType, write a hyperlink describing it to the writer. */
@@ -83,7 +83,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
     write(
         String.format(
             "<a href=\"%s\">%s</a>",
-            node.getIRI().toString(), getShortFormProvider().getShortForm(node)));
+            node.getIRI().toString(), escape(getShortFormProvider().getShortForm(node))));
   }
 
   /** Given an OWLNamedIndividual, write a hyperlink describing it to the writer. */
@@ -92,7 +92,8 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
     write(
         String.format(
             "<a href=\"%s\">%s</a>",
-            individual.getIRI().toString(), getShortFormProvider().getShortForm(individual)));
+            individual.getIRI().toString(),
+            escape(getShortFormProvider().getShortForm(individual))));
   }
 
   /** Given an OWLObjectProperty, write a hyperlink describing it to the writer. */
@@ -101,7 +102,7 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
     write(
         String.format(
             "<a href=\"%s\">%s</a>",
-            property.getIRI().toString(), getShortFormProvider().getShortForm(property)));
+            property.getIRI().toString(), escape(getShortFormProvider().getShortForm(property))));
   }
 
   /**
@@ -151,5 +152,15 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
           ce.toString(),
           ce.getClass().toString());
     }
+  }
+
+  /**
+   * Get an HTML-safe rendering of a string by replacing & and <
+   *
+   * @param str String to escape
+   * @return HTML-safe string
+   */
+  private String escape(String str) {
+    return str.replace("&", "&amp;").replace("<", "&lt;");
   }
 }

@@ -28,7 +28,7 @@ public class Table {
   // e.g., the first item in the list will be sorted first
   private List<Column> sortColumns;
 
-  private RendererType displayRenderer = null;
+  private RendererType displayRenderer;
   private RendererType sortRenderer = null;
 
   /**
@@ -43,11 +43,11 @@ public class Table {
     sortColumns = new ArrayList<>();
 
     // Set renderer types based on format
-    if (format.equalsIgnoreCase("tsv") || format.equalsIgnoreCase("csv")) {
-      displayRenderer = RendererType.OBJECT_RENDERER;
-    } else if (format.equalsIgnoreCase("html")) {
+    if (format.toLowerCase().startsWith("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
       sortRenderer = RendererType.OBJECT_RENDERER;
+    } else {
+      displayRenderer = RendererType.OBJECT_RENDERER;
     }
   }
 
@@ -234,6 +234,20 @@ public class Table {
       sb.append(row.toHTML(columns, split));
     }
     sb.append("</table>");
+    sb.append("</body>");
+    return sb.toString();
+  }
+
+  public String toHTMLList() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<head>\n")
+        .append(
+            "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
+        .append("</head>\n")
+        .append("<body>\n");
+    for (Row row : rows) {
+      sb.append(row.toHTMLList(columns));
+    }
     sb.append("</body>");
     return sb.toString();
   }

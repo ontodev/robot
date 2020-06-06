@@ -312,6 +312,11 @@ public class ExportOperation {
       case "csv":
         IOHelper.writeTable(table.toList(split), exportFile, ',');
         break;
+      case "html-list":
+        try (PrintWriter out = new PrintWriter(exportFile)) {
+          out.print(table.toHTMLList());
+        }
+        break;
       case "html":
         try (PrintWriter out = new PrintWriter(exportFile)) {
           out.print(table.toHTML(split));
@@ -940,8 +945,9 @@ public class ExportOperation {
       switch (colName) {
         case "IRI":
           String iriString = entity.getIRI().toString();
-          if (format.equalsIgnoreCase("html")) {
-            String display = String.format("<a href=\"%s'\">%s</a>", iriString, iriString);
+          if (format.toLowerCase().startsWith("html")) {
+            String display =
+                String.format("<a href=\"%s\">%s</a>", iriString, iriString.replace("&", "&amp;"));
             cell = new Cell(col, display, iriString);
           } else {
             cell = new Cell(col, iriString);
