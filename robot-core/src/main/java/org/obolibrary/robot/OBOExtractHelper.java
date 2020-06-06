@@ -1,7 +1,5 @@
 package org.obolibrary.robot;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Sets;
 import java.io.*;
 import java.util.*;
@@ -47,9 +45,6 @@ public class OBOExtractHelper {
   // Tracking all annotation properties, if none are specified
   private Set<IRI> allAnnotationProperties = new HashSet<>();
 
-  // Namespaces for IRIs
-  // If 'ontology' is not defined in ontology header, TEMP_NAMESPACE is used
-  private final String TEMP_NAMESPACE = "http://purl.obolibrary.org/obo/TEMP#";
   private String namespace = null;
 
   // Map of subset names (ID) -> IRIs
@@ -59,20 +54,23 @@ public class OBOExtractHelper {
   private Map<String, IRI> propertyMap = new HashMap<>();
 
   private final String OBO_IN_OWL = "http://www.geneontology.org/formats/oboInOwl#";
+  private final String OBO = "http://purl.obolibrary.org/obo/";
 
   // Default annotation properties in OBO format
   private final IRI ALT_ID = IRI.create(OBO_IN_OWL + "hasAlternativeId");
+  private final IRI ANTI_SYMMETRIC = IRI.create(OBO + "IAO_0000427");
   private final IRI BROAD_SYNONYM = IRI.create(OBO_IN_OWL + "hasBroadSynonym");
   private final IRI COMMENT = dataFactory.getRDFSComment().getIRI();
   private final IRI CREATED_BY = IRI.create(OBO_IN_OWL + "createdBy");
   private final IRI CREATION_DATE = IRI.create(OBO_IN_OWL + "creationDate");
+  private final IRI CYCLIC = IRI.create(OBO_IN_OWL + "isCyclic");
   private final IRI DB_XREF = IRI.create(OBO_IN_OWL + "hasDbXref");
-  private final IRI DEFINITION = IRI.create("http://purl.obolibrary.org/obo/IAO_0000115");
+  private final IRI DEFINITION = IRI.create(OBO + "IAO_0000115");
   private final IRI EXACT_SYNONYM = IRI.create(OBO_IN_OWL + "hasExactSynonym");
   private final IRI NARROW_SYNONYM = IRI.create(OBO_IN_OWL + "hasNarrowSynonym");
   private final IRI OBSOLETE = IRI.create("http://www.w3.org/2002/07/owl#deprecated");
   private final IRI RELATED_SYNONYM = IRI.create(OBO_IN_OWL + "hasRelatedSynonym");
-  private final IRI REPLACED_BY = IRI.create("http://temp.com/replaced_by");
+  private final IRI REPLACED_BY = IRI.create(OBO_IN_OWL + "replacedBy");
   private final IRI SUBSET = IRI.create(OBO_IN_OWL + "inSubset");
 
   /**
@@ -322,7 +320,7 @@ public class OBOExtractHelper {
     // Current entity IRI
     IRI iri = null;
 
-    // Track all interesections
+    // Track all intersections
     Set<OWLClassExpression> intersections = new HashSet<>();
     int intersectionCount = 0;
 
@@ -340,6 +338,21 @@ public class OBOExtractHelper {
       String line = br.readLine();
 
       // TODO - ontology annotations
+      // format-version
+      // data-version
+      // date
+      // saved-by
+      // auto-generated-by
+      // import
+      // synonymtypedef
+      // default-namespace
+      // namespace-id-rule
+      // idspace
+      // treat-xrefs-as-equivalent
+      // treat-xrefs-as-genus-differentia
+      // treat-xrefs-as-relationship
+      // treat-xrefs-as-is_a
+      // remark
       if (inHeader) {
         if (line.isEmpty()) {
           inHeader = false;
@@ -397,6 +410,7 @@ public class OBOExtractHelper {
         }
 
       } else if (iri != null && allTargets.contains(iri)) {
+
         // Logic
         if (line.startsWith("intersection_of: ")) {
           intersectionCount++;
@@ -405,32 +419,9 @@ public class OBOExtractHelper {
           if (parts.length >= 4) {
             // Anonymous
             String property = parts[0];
-            IRI propertyIRI;
-            if (propertyMap.containsKey(property)) {
-              propertyIRI = propertyMap.get(property);
-            } else {
-              propertyIRI = ioHelper.createIRI(property);
-              if (propertyIRI == null) {
-                propertyIRI = ioHelper.createIRI(namespace + property);
-              }
-            }
-            if (propertyIRI == null) {
-              logger.error(
-                  String.format("Unable to create property IRI from '%s' on line %d", property, n));
-              continue;
-            }
             String value = parts[1];
-            IRI valueIRI = ioHelper.createIRI(value);
-            if (valueIRI == null) {
-              logger.error(
-                  String.format("Unable to create class IRI from '%s' on line %d", value, n));
-              continue;
-            }
-            if (allTargets.contains(valueIRI)) {
-              OWLClassExpression svf =
-                  dataFactory.getOWLObjectSomeValuesFrom(
-                      dataFactory.getOWLObjectProperty(propertyIRI),
-                      dataFactory.getOWLClass(valueIRI));
+            OWLClassExpression svf = getSomeValuesFrom(property, value, n);
+            if (svf != null) {
               intersections.add(svf);
             }
           } else {
@@ -455,32 +446,11 @@ public class OBOExtractHelper {
           if (parts.length >= 4) {
             // Anonymous
             String property = parts[0];
-            IRI propertyIRI;
-            if (propertyMap.containsKey(property)) {
-              propertyIRI = propertyMap.get(property);
-            } else {
-              propertyIRI = ioHelper.createIRI(property);
-              if (propertyIRI == null) {
-                propertyIRI = ioHelper.createIRI(namespace + property);
-              }
-            }
-            if (propertyIRI == null) {
-              logger.error(
-                  String.format("Unable to create property IRI from '%s' on line %d", property, n));
-              continue;
-            }
             String value = parts[1];
-            IRI valueIRI = ioHelper.createIRI(value);
-            if (valueIRI == null) {
-              logger.error(
-                  String.format("Unable to create class IRI from '%s' on line %d", value, n));
-              continue;
+            OWLClassExpression svf = getSomeValuesFrom(property, value, n);
+            if (svf != null) {
+              unions.add(svf);
             }
-            OWLClassExpression svf =
-                dataFactory.getOWLObjectSomeValuesFrom(
-                    dataFactory.getOWLObjectProperty(propertyIRI),
-                    dataFactory.getOWLClass(valueIRI));
-            unions.add(svf);
           } else {
             // Named
             String value = parts[0];
@@ -494,54 +464,8 @@ public class OBOExtractHelper {
           }
 
         } else if (line.startsWith("disjoint_from: ")) {
-          String[] parts = line.substring(15).split(" ");
-
-          if (parts.length >= 4) {
-            // Anonymous
-            String property = parts[0];
-            IRI propertyIRI;
-            if (propertyMap.containsKey(property)) {
-              propertyIRI = propertyMap.get(property);
-            } else {
-              propertyIRI = ioHelper.createIRI(property);
-              if (propertyIRI == null) {
-                propertyIRI = ioHelper.createIRI(namespace + property);
-              }
-            }
-            if (propertyIRI == null) {
-              logger.error(
-                String.format("Unable to create property IRI from '%s' on line %d", property, n));
-              continue;
-            }
-            String value = parts[1];
-            IRI valueIRI = ioHelper.createIRI(value);
-            if (valueIRI == null) {
-              logger.error(
-                String.format("Unable to create class IRI from '%s' on line %d", value, n));
-              continue;
-            }
-            if (allTargets.contains(valueIRI)) {
-              OWLClassExpression svf =
-                dataFactory.getOWLObjectSomeValuesFrom(
-                  dataFactory.getOWLObjectProperty(propertyIRI),
-                  dataFactory.getOWLClass(valueIRI));
-              OWLAxiom ax = dataFactory.getOWLDisjointClassesAxiom(dataFactory.getOWLClass(iri), svf);
-              manager.addAxiom(outputOntology, ax);
-            }
-          } else {
-            // Named
-            String value = parts[0];
-            IRI valueIRI = ioHelper.createIRI(value);
-            if (valueIRI == null) {
-              logger.error(
-                String.format("Unable to create class IRI from '%s' on line %d", value, n));
-              continue;
-            }
-            if (allTargets.contains(valueIRI)) {
-              OWLAxiom ax = dataFactory.getOWLDisjointClassesAxiom(dataFactory.getOWLClass(iri), dataFactory.getOWLClass(valueIRI));
-              manager.addAxiom(outputOntology, ax);
-            }
-          }
+          String value = line.substring(15);
+          addDisjointAxiom(iri, value, n);
 
           // Annotations
         } else if (line.startsWith("name: ")
@@ -565,39 +489,7 @@ public class OBOExtractHelper {
           manager.addAxiom(outputOntology, ax);
 
         } else if (line.startsWith("def: ") && annotationProperties.contains(DEFINITION)) {
-          // Extract text between quotes
-          String def = line.substring(6).split("\"")[0];
-
-          // Check for DB xrefs - if the xrefs are empty, ignore this
-          Set<OWLAnnotation> xrefs = new HashSet<>();
-          if (!line.endsWith("[]")) {
-            Matcher m = Pattern.compile("\".+\"\\[(.+)]").matcher(line);
-            if (m.matches()) {
-              String xrefString = m.group(1);
-              if (xrefString.contains(", ")) {
-                for (String x : xrefString.split(", ")) {
-                  OWLLiteral l = dataFactory.getOWLLiteral(x);
-                  OWLAnnotation a =
-                      dataFactory.getOWLAnnotation(
-                          dataFactory.getOWLAnnotationProperty(DB_XREF), l);
-                  xrefs.add(a);
-                }
-              } else {
-                OWLLiteral l = dataFactory.getOWLLiteral(xrefString);
-                OWLAnnotation a =
-                    dataFactory.getOWLAnnotation(dataFactory.getOWLAnnotationProperty(DB_XREF), l);
-                xrefs.add(a);
-              }
-            }
-          }
-
-          // Add definition axiom to output
-          OWLLiteral l = dataFactory.getOWLLiteral(def);
-          OWLAnnotation a =
-              dataFactory.getOWLAnnotation(
-                  dataFactory.getOWLAnnotationProperty(DEFINITION), l, xrefs);
-          OWLAnnotationAxiom ax = dataFactory.getOWLAnnotationAssertionAxiom(iri, a);
-          manager.addAxiom(outputOntology, ax);
+          addDefinition(iri, line);
 
         } else if (line.startsWith("comment: ") && annotationProperties.contains(COMMENT)) {
           // Add an rdfs:comment
@@ -705,49 +597,295 @@ public class OBOExtractHelper {
           manager.addAxiom(outputOntology, ax);
 
         } else if (line.startsWith("property_value: ")) {
-          String property = line.substring(16).split(" ")[0];
+          addPropertyValue(iri, line, annotationProperties, n);
 
-          IRI propertyIRI;
-          if (propertyMap.containsKey(property)) {
-            propertyIRI = propertyMap.get(property);
-          } else {
-            propertyIRI = ioHelper.createIRI(property);
-            if (propertyIRI == null) {
-              propertyIRI = ioHelper.createIRI(namespace + property);
-            }
-          }
-
-          if (propertyIRI == null) {
+        } else if (line.startsWith("domain: ")) {
+          String value = line.substring(8).split(" ")[0];
+          IRI valueIRI = ioHelper.createIRI(value);
+          if (valueIRI == null) {
             logger.error(
-                String.format("Unable to create property IRI from '%s' on line %d", property, n));
+                String.format("Unable to create class IRI from '%s' on line %d", value, n));
             continue;
           }
-
-          if (!annotationProperties.contains(propertyIRI)) {
+          if (!allTargets.contains(valueIRI)) {
             continue;
           }
-
-          OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(propertyIRI);
-          OWLAnnotation a;
-
-          String[] parts = line.substring(16).split(" ");
-          String last = parts[parts.length - 1];
-          if (last.contains("xsd:")) {
-            IRI xsdIRI = ioHelper.createIRI(last);
-            Matcher m = Pattern.compile(".+\"(.+)\"").matcher(line);
-            String value = m.group(1);
-            OWLLiteral l = dataFactory.getOWLLiteral(value, dataFactory.getOWLDatatype(xsdIRI));
-            a = dataFactory.getOWLAnnotation(ap, l);
-          } else {
-            // IRI value
-            IRI valueIRI = ioHelper.createIRI(last);
-            a = dataFactory.getOWLAnnotation(ap, valueIRI);
-          }
-          OWLAxiom ax = dataFactory.getOWLAnnotationAssertionAxiom(iri, a);
+          OWLClass c = dataFactory.getOWLClass(valueIRI);
+          OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+          OWLAxiom ax = dataFactory.getOWLObjectPropertyDomainAxiom(op, c);
           manager.addAxiom(outputOntology, ax);
+
+        } else if (line.startsWith("range: ")) {
+          String value = line.substring(7).split(" ")[0];
+          IRI valueIRI = ioHelper.createIRI(value);
+          if (valueIRI == null) {
+            logger.error(
+                String.format("Unable to create class IRI from '%s' on line %d", value, n));
+            continue;
+          }
+          if (!allTargets.contains(valueIRI)) {
+            continue;
+          }
+          OWLClass c = dataFactory.getOWLClass(valueIRI);
+          OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+          OWLAxiom ax = dataFactory.getOWLObjectPropertyRangeAxiom(op, c);
+          manager.addAxiom(outputOntology, ax);
+
+        } else if (line.startsWith("inverse_of: ")) {
+          // Inverse object properties
+          String value = line.substring(12);
+          IRI valueIRI = ioHelper.createIRI(value);
+          if (valueIRI == null) {
+            logger.error(
+                String.format("Unable to create property IRI from '%s' on line %d", value, n));
+            continue;
+          }
+          if (!allTargets.contains(valueIRI)) {
+            continue;
+          }
+          OWLObjectProperty subjectOP = dataFactory.getOWLObjectProperty(iri);
+          OWLObjectProperty valueOP = dataFactory.getOWLObjectProperty(valueIRI);
+          OWLAxiom ax = dataFactory.getOWLInverseObjectPropertiesAxiom(subjectOP, valueOP);
+          manager.addAxiom(outputOntology, ax);
+
+        } else if (line.startsWith("is_anti_symmetric: ")) {
+          String value = line.substring(19);
+          addBooleanAnnotation(iri, ANTI_SYMMETRIC, value);
+
+        } else if (line.startsWith("is_cyclic: ")) {
+          String value = line.substring(11);
+          addBooleanAnnotation(iri, CYCLIC, value);
+
+        } else if (line.startsWith("is_reflexive: ")) {
+          String value = line.substring(15);
+          boolean val = value.trim().equalsIgnoreCase("true");
+          if (val) {
+            OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+            OWLAxiom ax = dataFactory.getOWLReflexiveObjectPropertyAxiom(op);
+            manager.addAxiom(outputOntology, ax);
+          }
+
+        } else if (line.startsWith("is_symmetric: ")) {
+          String value = line.substring(15);
+          boolean val = value.trim().equalsIgnoreCase("true");
+          if (val) {
+            OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+            OWLAxiom ax = dataFactory.getOWLSymmetricObjectPropertyAxiom(op);
+            manager.addAxiom(outputOntology, ax);
+          }
+
+        } else if (line.startsWith("is_transitive: ")) {
+          String value = line.substring(15);
+          boolean val = value.trim().equalsIgnoreCase("true");
+          if (val) {
+            OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+            OWLAxiom ax = dataFactory.getOWLTransitiveObjectPropertyAxiom(op);
+            manager.addAxiom(outputOntology, ax);
+          }
+
+        } else if (line.startsWith("is_functional: ")) {
+          String value = line.substring(15);
+          boolean val = value.trim().equalsIgnoreCase("true");
+          if (val) {
+            OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+            OWLAxiom ax = dataFactory.getOWLFunctionalObjectPropertyAxiom(op);
+            manager.addAxiom(outputOntology, ax);
+          }
+
+        } else if (line.startsWith("is_inverse_functional: ")) {
+          String value = line.substring(15);
+          boolean val = value.trim().equalsIgnoreCase("true");
+          if (val) {
+            OWLObjectProperty op = dataFactory.getOWLObjectProperty(iri);
+            OWLAxiom ax = dataFactory.getOWLInverseFunctionalObjectPropertyAxiom(op);
+            manager.addAxiom(outputOntology, ax);
+          }
+
+        } else if (line.startsWith("is_obsolete: ") && annotationProperties.contains(OBSOLETE)) {
+          String value = line.substring(13);
+          addBooleanAnnotation(iri, OBSOLETE, value);
+        }
+
+        // TODO - not supported class
+        // - relationship
+
+        // TODO - not supported typedef
+        // - relationship
+        // - transitive_over
+        // - holds_over_chain
+        // - equivalent_to_chain
+        // - disjoint_over (annotation)
+        // - expand_expression_to
+        // - expand_assertion_to
+      }
+    }
+  }
+
+  /**
+   * Add an annotation with a boolean value to a subject.
+   *
+   * @param iri IRI of annotation subject
+   * @param apIRI IRI of annotation property
+   * @param value String value to be converted to boolean
+   */
+  private void addBooleanAnnotation(IRI iri, IRI apIRI, String value) {
+    OWLLiteral l;
+    if (value.trim().equalsIgnoreCase("true")) {
+      l = dataFactory.getOWLLiteral(true);
+    } else {
+      l = dataFactory.getOWLLiteral(false);
+    }
+    OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(apIRI);
+    OWLAnnotation a = dataFactory.getOWLAnnotation(ap, l);
+    OWLAxiom ax = dataFactory.getOWLAnnotationAssertionAxiom(iri, a);
+    manager.addAxiom(outputOntology, ax);
+  }
+
+  /**
+   * Add a definition to the output ontology.
+   *
+   * @param iri IRI of subject
+   * @param line def line from OBO file
+   */
+  private void addDefinition(IRI iri, String line) {
+    // Extract text between quotes
+    String def = line.substring(6).split("\"")[0];
+
+    // Check for DB xrefs - if the xrefs are empty, ignore this
+    Set<OWLAnnotation> xrefs = new HashSet<>();
+    if (!line.endsWith("[]")) {
+      Matcher m = Pattern.compile("\".+\"\\[(.+)]").matcher(line);
+      if (m.matches()) {
+        String xrefString = m.group(1);
+        if (xrefString.contains(", ")) {
+          for (String x : xrefString.split(", ")) {
+            OWLLiteral l = dataFactory.getOWLLiteral(x);
+            OWLAnnotation a =
+                dataFactory.getOWLAnnotation(dataFactory.getOWLAnnotationProperty(DB_XREF), l);
+            xrefs.add(a);
+          }
+        } else {
+          OWLLiteral l = dataFactory.getOWLLiteral(xrefString);
+          OWLAnnotation a =
+              dataFactory.getOWLAnnotation(dataFactory.getOWLAnnotationProperty(DB_XREF), l);
+          xrefs.add(a);
         }
       }
     }
+
+    // Add definition axiom to output
+    OWLLiteral l = dataFactory.getOWLLiteral(def);
+    OWLAnnotation a =
+        dataFactory.getOWLAnnotation(dataFactory.getOWLAnnotationProperty(DEFINITION), l, xrefs);
+    OWLAnnotationAxiom ax = dataFactory.getOWLAnnotationAssertionAxiom(iri, a);
+    manager.addAxiom(outputOntology, ax);
+  }
+
+  /**
+   * Add a disjoint axiom between the subject IRI and any expression in the array.
+   *
+   * @param iri IRI to add disjoint axiom to
+   * @param value the disjoint class or class expression
+   * @param n int line number
+   */
+  private void addDisjointAxiom(IRI iri, String value, int n) {
+    String[] parts = value.split(" ");
+    if (parts.length >= 4) {
+      // Anonymous
+      String property = parts[0];
+      IRI propertyIRI;
+      if (propertyMap.containsKey(property)) {
+        propertyIRI = propertyMap.get(property);
+      } else {
+        propertyIRI = ioHelper.createIRI(property);
+        if (propertyIRI == null) {
+          propertyIRI = ioHelper.createIRI(namespace + property);
+        }
+      }
+      if (propertyIRI == null) {
+        logger.error(
+            String.format("Unable to create property IRI from '%s' on line %d", property, n));
+        return;
+      }
+      String v = parts[1];
+      IRI valueIRI = ioHelper.createIRI(v);
+      if (valueIRI == null) {
+        logger.error(String.format("Unable to create class IRI from '%s' on line %d", v, n));
+        return;
+      }
+      if (allTargets.contains(valueIRI)) {
+        OWLClassExpression svf =
+            dataFactory.getOWLObjectSomeValuesFrom(
+                dataFactory.getOWLObjectProperty(propertyIRI), dataFactory.getOWLClass(valueIRI));
+        OWLAxiom ax = dataFactory.getOWLDisjointClassesAxiom(dataFactory.getOWLClass(iri), svf);
+        manager.addAxiom(outputOntology, ax);
+      }
+    } else {
+      // Named
+      String v = parts[0];
+      IRI valueIRI = ioHelper.createIRI(v);
+      if (valueIRI == null) {
+        logger.error(String.format("Unable to create class IRI from '%s' on line %d", v, n));
+        return;
+      }
+      if (allTargets.contains(valueIRI)) {
+        OWLAxiom ax =
+            dataFactory.getOWLDisjointClassesAxiom(
+                dataFactory.getOWLClass(iri), dataFactory.getOWLClass(valueIRI));
+        manager.addAxiom(outputOntology, ax);
+      }
+    }
+  }
+
+  /**
+   * Add a property value to the output ontology.
+   *
+   * @param iri IRI of subject
+   * @param line String line from file
+   * @param annotationProperties set of IRIs of annotation properties to include
+   * @param n int line number
+   */
+  private void addPropertyValue(IRI iri, String line, Set<IRI> annotationProperties, int n) {
+    String property = line.substring(16).split(" ")[0];
+
+    IRI propertyIRI;
+    if (propertyMap.containsKey(property)) {
+      propertyIRI = propertyMap.get(property);
+    } else {
+      propertyIRI = ioHelper.createIRI(property);
+      if (propertyIRI == null) {
+        propertyIRI = ioHelper.createIRI(namespace + property);
+      }
+    }
+
+    if (propertyIRI == null) {
+      logger.error(
+          String.format("Unable to create property IRI from '%s' on line %d", property, n));
+      return;
+    }
+
+    if (!annotationProperties.contains(propertyIRI)) {
+      return;
+    }
+
+    OWLAnnotationProperty ap = dataFactory.getOWLAnnotationProperty(propertyIRI);
+    OWLAnnotation a;
+
+    String[] parts = line.substring(16).split(" ");
+    String last = parts[parts.length - 1];
+    if (last.contains("xsd:")) {
+      IRI xsdIRI = ioHelper.createIRI(last);
+      Matcher m = Pattern.compile(".+\"(.+)\"").matcher(line);
+      String value = m.group(1);
+      OWLLiteral l = dataFactory.getOWLLiteral(value, dataFactory.getOWLDatatype(xsdIRI));
+      a = dataFactory.getOWLAnnotation(ap, l);
+    } else {
+      // IRI value
+      IRI valueIRI = ioHelper.createIRI(last);
+      a = dataFactory.getOWLAnnotation(ap, valueIRI);
+    }
+    OWLAxiom ax = dataFactory.getOWLAnnotationAssertionAxiom(iri, a);
+    manager.addAxiom(outputOntology, ax);
   }
 
   /**
@@ -855,6 +993,8 @@ public class OBOExtractHelper {
       String line = br.readLine().trim();
 
       // Ontology header details
+      // If 'ontology' is not defined in ontology header, TEMP_NAMESPACE is used
+      String tempNamespace = "http://purl.obolibrary.org/obo/TEMP#";
       if (inHeader) {
         if (line.startsWith("ontology: ")) {
           String value = line.substring(10);
@@ -871,7 +1011,7 @@ public class OBOExtractHelper {
           if (namespace != null) {
             subsetIRI = ioHelper.createIRI(namespace + subset);
           } else {
-            subsetIRI = ioHelper.createIRI(TEMP_NAMESPACE + subset);
+            subsetIRI = ioHelper.createIRI(tempNamespace + subset);
           }
           subsetMap.put(subset, subsetIRI);
 
@@ -904,7 +1044,7 @@ public class OBOExtractHelper {
         if (namespace != null) {
           iri = ioHelper.createIRI(namespace + propertyID);
         } else {
-          iri = ioHelper.createIRI(TEMP_NAMESPACE + propertyID);
+          iri = ioHelper.createIRI(tempNamespace + propertyID);
         }
         // entityTypeMap.put(iri, EntityType.OBJECT_PROPERTY);
         propertyMap.put(propertyID, iri);
@@ -970,6 +1110,41 @@ public class OBOExtractHelper {
         }
       }
     }
+  }
+
+  /**
+   * Return a ObjectSomeValuesFrom class expression, if the value is in the targets.
+   *
+   * @param property Object Property to use in SVF expression
+   * @param value Class to use in SVF expression
+   * @param n int line number of OBO file
+   * @return OWLClassExpression {property} some {value}
+   */
+  private OWLClassExpression getSomeValuesFrom(String property, String value, int n) {
+    IRI propertyIRI;
+    if (propertyMap.containsKey(property)) {
+      propertyIRI = propertyMap.get(property);
+    } else {
+      propertyIRI = ioHelper.createIRI(property);
+      if (propertyIRI == null) {
+        propertyIRI = ioHelper.createIRI(namespace + property);
+      }
+    }
+    if (propertyIRI == null) {
+      logger.error(
+          String.format("Unable to create property IRI from '%s' on line %d", property, n));
+      return null;
+    }
+    IRI valueIRI = ioHelper.createIRI(value);
+    if (valueIRI == null) {
+      logger.error(String.format("Unable to create class IRI from '%s' on line %d", value, n));
+      return null;
+    }
+    if (allTargets.contains(valueIRI)) {
+      return dataFactory.getOWLObjectSomeValuesFrom(
+          dataFactory.getOWLObjectProperty(propertyIRI), dataFactory.getOWLClass(valueIRI));
+    }
+    return null;
   }
 
   /**

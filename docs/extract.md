@@ -132,7 +132,7 @@ Any term specified as an input term will not be pruned.
 
 ## OBO Extract
 
-The `OBO-Extract` method is based on MIREOT principles, but streams the contents of an OBO-format file to reduce strain on memory. This is much faster for large files, but only works for files in OBO format (`.obo` or `.obo.gz`). These files must follow the [OBO Flat File Format Guide](https://owlcollab.github.io/oboformat/doc/obo-syntax.html).
+The `OBO-Extract` method is based on MIREOT principles, but streams the contents of an OBO-format file to reduce strain on memory. This is much faster for large files, but only works for files in OBO format (`.obo` or `.obo.gz`). These files must follow the [OBO Flat File Format Guide 1.4](https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html). The `OBO-Extract` methods translate the OBO syntax based on the [OBO Flat File Format 1.4 Syntax and Semantics](https://owlcollab.github.io/oboformat/doc/obo-syntax.html). 
 
 Like MIREOT, this method uses "upper" and "lower" terms. The "lower" term or terms are required, whereas "upper" terms are optional.
 
@@ -142,7 +142,7 @@ Like MIREOT, this method uses "upper" and "lower" terms. The "lower" term or ter
         --lower-term UBERON:0002369 \
         --output obo_extract.owl
         
-Unlike MIREOT, equivalence axiom will be included, but *only* if all classes used in the axiom are between the target terms.
+Unlike MIREOT, logic like equivalence axioms, domain, and range will be included, but *only* if all classes used in the axiom are between the target terms.
 
 For this method, one or more `--annotation-property` options can be provided in order to add annotations to the entities. If not included, all annotations will be included in the output. To provide a text file of annotation properties, use `--annotation-properties`. The `--intermediates` may also be used with this method.
 
@@ -154,12 +154,38 @@ For this method, one or more `--annotation-property` options can be provided in 
         --annotation-property rdfs:label \
         --output obo_extract_small.owl
 
+Imports are *always* ignored with `OBO-Extract`.
+
 ### Disclaimers
 
-Please note that `[Instance]` tags are not currently supported by OWLAPI's `OBOFormatParser` so they will be lost if you convert an OWL file to OBO, but the `OBO-Extract` method *will* capture instances.
+`[Instance]` tags are not currently supported by OWLAPI's `OBOFormatParser` so they will be lost if you convert an OWL file to OBO, but the `OBO-Extract` method *will* capture instances.
 
-Additionally, anonymous subclass expressions are stored in an `owl-axioms` field in the ontology header. This field is not parsed by the `OBO-Extract` method. This may be updated in future releases.
+Additionally, anonymous subclass expressions stored in the `owl-axioms` field in the ontology header are not parsed by the `OBO-Extract` method. This may be updated in future releases.
 
+The following tags for entities are not currently supported:
+- `relationship`
+- `transitive_over`
+- `holds_over_chain`
+- `equivalent_to_chain`
+- `expand_expression_to`
+- `expand_assertion_to`
+
+The following ontology header tags are not currently supported (`--copy-ontology-annotations` is ignored):
+- `format-version`
+- `data-version`
+- `date`
+- `saved-by`
+- `auto-generated-by`
+- `import`
+- `synonymtypedef`
+- `default-namespace`
+- `namespace-id-rule`
+- `idspace`
+- `treat-xrefs-as-equivalent`
+- `treat-xrefs-as-genus-differentia`
+- `treat-xrefs-as-relationship`
+- `treat-xrefs-as-is_a`
+- `remark`
 
 ## Handling Imports
 
