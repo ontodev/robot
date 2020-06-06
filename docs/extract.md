@@ -132,7 +132,7 @@ Any term specified as an input term will not be pruned.
 
 ## OBO Extract
 
-The `OBO-Extract` method is based on MIREOT principles, but streams the contents of an OBO-format file to reduce strain on memory. This is much faster for large files, but only works for files in OBO format (`.obo` or `.obo.gz`). These files must follow the [OBO Flat File Format Guide](https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_2.html).
+The `OBO-Extract` method is based on MIREOT principles, but streams the contents of an OBO-format file to reduce strain on memory. This is much faster for large files, but only works for files in OBO format (`.obo` or `.obo.gz`). These files must follow the [OBO Flat File Format Guide](https://owlcollab.github.io/oboformat/doc/obo-syntax.html).
 
 Like MIREOT, this method uses "upper" and "lower" terms. The "lower" term or terms are required, whereas "upper" terms are optional.
 
