@@ -21,6 +21,8 @@ One can also specify multiple table files as input. In that case there will be m
 
 In this case two files: `immune_exposures.html` and `immune_exposures_2.html` will appear in the `results/` directory.
 
+If there are any rule violations, `validate` will fail by default with exit code `1`. You can override this with `--no-fail true`. Also by default, `validate` will print all rule violations (location and message). If you do not want any logging, you can run it with `--silent true`.
+
 ## Validation rules
 
 ### Data file organisation
