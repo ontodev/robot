@@ -82,6 +82,8 @@ public class ValidateCommand implements Command {
         true,
         "If true, and the output format is HTML, generate the HTML report as a standalone file "
             + "(this option is ignored if the output format is not HTML)");
+    o.addOption("n", "no-fail", true, "If true, do not fail even if there are rule violations");
+    o.addOption("S", "silent", true, "If true, do not print rule violations");
     options = o;
   }
 
@@ -239,9 +241,22 @@ public class ValidateCommand implements Command {
       tables.put(tablePath, tableData);
     }
 
-    // Finally send everything to the validate operation:
-    ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, validateOptions);
+    boolean noFail = CommandLineHelper.getBooleanValue(line, "no-fail", false);
+    boolean silent = CommandLineHelper.getBooleanValue(line, "silent", false);
 
+    // Finally send everything to the validate operation:
+    List<String> invalidTables =
+        ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, validateOptions);
+
+    if (!invalidTables.isEmpty() && !noFail) {
+      if (!silent) {
+        logger.error(
+            String.format(
+                "The following table(s) had one or more rule violation:\n - %s",
+                String.join("\n - ", invalidTables)));
+      }
+      System.exit(1);
+    }
     return state;
   }
 }

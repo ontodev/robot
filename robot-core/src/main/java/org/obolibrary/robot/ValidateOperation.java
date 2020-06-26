@@ -25,6 +25,7 @@ public class ValidateOperation {
     options.put("format", null);
     options.put("standalone", "false");
     options.put("output-dir", null);
+    options.put("silent", "false");
     return options;
   }
 
@@ -38,7 +39,7 @@ public class ValidateOperation {
    * @param options map of validate options
    * @throws Exception on any problem
    */
-  public static void validate(
+  public static List<String> validate(
       Map<String, List<List<String>>> tables,
       OWLOntology ontology,
       IOHelper ioHelper,
@@ -74,6 +75,11 @@ public class ValidateOperation {
 
     TableValidator validator =
         new TableValidator(ontology, ioHelper, parser, reasoner, outFormat, outDir);
-    validator.validate(tables, standalone);
+
+    boolean silent = OptionsHelper.optionIsTrue(options, "silent");
+    if (silent) {
+      validator.toggleLogging();
+    }
+    return validator.validate(tables, standalone);
   }
 }

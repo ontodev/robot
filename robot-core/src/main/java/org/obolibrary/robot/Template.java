@@ -417,18 +417,18 @@ public class Template {
       } catch (IndexOutOfBoundsException e) {
         // Template row is longer than header row
         // Which means there is at least one header missing
-        throw new ColumnException(String.format(columnMismatchError, column + 1, name));
+        throw new ColumnException(String.format(columnMismatchError, column, name));
       }
       if (header.isEmpty()) {
         // Template string is not empty
         // Header string is empty
-        throw new ColumnException(String.format(columnMismatchError, column + 1, name));
+        throw new ColumnException(String.format(columnMismatchError, column, name));
       }
 
       // Validate the template string
       if (!TemplateHelper.validateTemplateString(template)) {
         throw new ColumnException(
-            String.format(unknownTemplateError, name, column + 1, headers.get(column), template));
+            String.format(unknownTemplateError, name, column, headers.get(column), template));
       }
 
       // Get the location of important columns
@@ -505,8 +505,22 @@ public class Template {
     }
 
     // Add the rest of the tableRows to Template
-    for (int row = 2; row < rows.size(); row++) {
-      tableRows.add(rows.get(row));
+    for (int rowNum = 2; rowNum < rows.size(); rowNum++) {
+      List<String> row = rows.get(rowNum);
+      if (idColumn != -1) {
+        if (row.size() > idColumn && row.get(idColumn).trim().equals("")) {
+          continue;
+        } else if (row.size() <= idColumn) {
+          continue;
+        }
+      } else if (labelColumn != -1) {
+        if (row.size() > labelColumn && row.get(labelColumn).equals("")) {
+          continue;
+        } else if (row.size() <= labelColumn) {
+          continue;
+        }
+      }
+      tableRows.add(row);
     }
   }
 
@@ -822,37 +836,34 @@ public class Template {
         // Subclass expression
         subclassExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1));
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
       } else if (template.startsWith("EC")) {
         // Equivalent expression
         equivalentExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1));
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
       } else if (template.startsWith("DC")) {
         // Disjoint expression
         disjointExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1));
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
       } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
         // Use class type to determine what to do with the expression
         switch (classType) {
           case "subclass":
             subclassExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(
-                    name, parser, template, value, rowNum, column + 1));
+                TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
             break;
           case "equivalent":
             intersectionEquivalentExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(
-                    name, parser, template, value, rowNum, column + 1));
+                TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
             break;
           case "disjoint":
             disjointExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(
-                    name, parser, template, value, rowNum, column + 1));
+                TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
             break;
           default:
             break;
@@ -1106,7 +1117,7 @@ public class Template {
             // Unknown property type
             throw new RowParseException(
                 String.format(
-                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name));
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column, name));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1356,7 +1367,7 @@ public class Template {
         // Cannot use inverse with data properties
         throw new RowParseException(
             String.format(
-                propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name));
+                propertyTypeError, iri.getShortForm(), propertyType, rowNum, column, name));
       } else if (template.startsWith("P ") && !template.startsWith("PROPERTY_TYPE")) {
         // Use property type to handle expression type
         Set<OWLDataPropertyExpression> expressions =
@@ -1376,7 +1387,7 @@ public class Template {
             // Unknown property type
             throw new RowParseException(
                 String.format(
-                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name));
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column, name));
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1832,7 +1843,7 @@ public class Template {
           template = template + " SPLIT=" + split;
         }
         Set<OWLClassExpression> typeExpressions =
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column + 1);
+            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
         for (OWLClassExpression ce : typeExpressions) {
           axioms.add(dataFactory.getOWLClassAssertionAxiom(ce, individual));
         }
@@ -1876,12 +1887,7 @@ public class Template {
           default:
             throw new RowParseException(
                 String.format(
-                    individualTypeError,
-                    iri.getShortForm(),
-                    individualType,
-                    rowNum,
-                    column + 1,
-                    name));
+                    individualTypeError, iri.getShortForm(), individualType, rowNum, column, name));
         }
       }
     }

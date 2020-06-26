@@ -113,10 +113,15 @@ public class TableValidator {
   private Map<IRI, String> iriToLabelMap;
   private Map<String, IRI> labelToIRIMap;
 
+  private List<String> invalidTables = new ArrayList<>();
+
   private Table outTable = null;
   private Writer writer = null;
+  private String currentTable;
   private int colNum;
   private int rowNum;
+  private boolean valid;
+  private boolean silent;
 
   private Cell currentCell = null;
 
@@ -150,19 +155,27 @@ public class TableValidator {
             Collections.emptyMap());
   }
 
+  /** Turn logging on or off. */
+  public void toggleLogging() {
+    silent = !silent;
+  }
+
   /**
    * Validate a set of tables.
    *
    * @param tables tables to validate (map of table name to table contents)
    * @param standalone if true and format is HTML, create a standalone HTML page with headers for
    *     each table
+   * @return List of invalid tables (or empty list on success)
    * @throws Exception on any problem
    */
-  public void validate(Map<String, List<List<String>>> tables, boolean standalone)
+  public List<String> validate(Map<String, List<List<String>>> tables, boolean standalone)
       throws Exception {
 
     // Validate all of the tables in turn:
     for (Map.Entry<String, List<List<String>>> table : tables.entrySet()) {
+      // Reset valid for new table
+      valid = true;
       outTable = new Table(outFormat);
       String tablePath = table.getKey();
       List<List<String>> data = table.getValue();
@@ -179,11 +192,11 @@ public class TableValidator {
         }
       }
 
+      currentTable =
+          String.format(
+              "%s.%s", FilenameUtils.getBaseName(tablePath), FilenameUtils.getExtension(tablePath));
       if (writer == null && outFormat == null) {
-        System.out.println(
-            String.format(
-                "Validating %s.%s ...",
-                FilenameUtils.getBaseName(tablePath), FilenameUtils.getExtension(tablePath)));
+        System.out.println(String.format("Validating %s ...", currentTable));
       }
 
       // Get the header and rules rows
@@ -255,6 +268,10 @@ public class TableValidator {
         }
       }
 
+      if (!valid) {
+        invalidTables.add(currentTable);
+      }
+
       // Save table or close writer before moving on to next
       if (writer != null) {
         writer.close();
@@ -276,6 +293,7 @@ public class TableValidator {
         }
       }
     }
+    return invalidTables;
   }
 
   /** Given a map from IRIs to strings, return its inverse. */
@@ -817,7 +835,18 @@ public class TableValidator {
    * string.
    */
   private void report(String format, Object... positionalArgs) throws IOException {
+    // Any report of error means validation failed
+    valid = false;
+
+    // Format the error message
+    String outStr =
+        String.format("At %s row %d, column %d: ", currentTable, rowNum + 1, colNum + 1);
+    outStr += String.format(format, positionalArgs);
+    System.out.println(outStr);
+
     if (outFormat != null && writer == null) {
+      // Output format is not null, so it is either HTML or XLSX
+      // We want to put formatting on cells with errors
       if (outFormat.equals("xlsx")) {
         // Set the style of the current cell to a red background with a white font:
         currentCell.setFontColor(IndexedColors.WHITE);
@@ -832,18 +861,9 @@ public class TableValidator {
         commentString = currentComment + "; " + commentString;
       }
       currentCell.setComment(commentString);
-    } else {
-      // Either output format is txt (has writer)
-      // Or output format is null (write to outstream)
-      String outStr = String.format("At row: %d, column: %d: ", rowNum + 1, colNum + 1);
-      outStr += String.format(format, positionalArgs);
-
+    } else if (writer != null) {
       // Write validation failure to text file
-      if (writer != null) {
-        writer.write(outStr + "\n");
-      } else {
-        System.out.print(outStr + "\n");
-      }
+      writer.write(outStr + "\n");
     }
   }
 
