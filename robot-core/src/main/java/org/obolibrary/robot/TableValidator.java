@@ -346,18 +346,22 @@ public class TableValidator {
       }
 
       RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
-      if (qType == RTypeEnum.SUB || qType == RTypeEnum.DIRECT_SUB) {
+      if (qType == RTypeEnum.SUB || qType == RTypeEnum.DIRECT_SUB || qType == RTypeEnum.NOT_SUB) {
         // Check to see if the subjectClass is a (direct) subclass of the given rule:
         NodeSet<OWLClass> subClassesFound =
             reasoner.getSubClasses(ruleCE, qType == RTypeEnum.DIRECT_SUB);
-        if (subClassesFound.containsEntity(subjectClass)) {
+        if (qType == RTypeEnum.NOT_SUB && !subClassesFound.containsEntity(subjectClass)
+            || qType != RTypeEnum.NOT_SUB && subClassesFound.containsEntity(subjectClass)) {
           return true;
         }
-      } else if (qType == RTypeEnum.SUPER || qType == RTypeEnum.DIRECT_SUPER) {
+      } else if (qType == RTypeEnum.SUPER
+          || qType == RTypeEnum.DIRECT_SUPER
+          || qType == RTypeEnum.NOT_SUPER) {
         // Check to see if the subjectClass is a (direct) superclass of the given rule:
         NodeSet<OWLClass> superClassesFound =
             reasoner.getSuperClasses(ruleCE, qType == RTypeEnum.DIRECT_SUPER);
-        if (superClassesFound.containsEntity(subjectClass)) {
+        if (qType == RTypeEnum.NOT_SUPER && !superClassesFound.containsEntity(subjectClass)
+            || qType != RTypeEnum.NOT_SUPER && superClassesFound.containsEntity(subjectClass)) {
           return true;
         }
       } else if (qType == RTypeEnum.EQUIV) {
@@ -1136,11 +1140,14 @@ public class TableValidator {
    */
   private enum RTypeEnum {
     DIRECT_SUPER("direct-superclass-of", RCatEnum.QUERY),
+    NOT_SUPER("not-superclass-of", RCatEnum.QUERY),
     SUPER("superclass-of", RCatEnum.QUERY),
     EQUIV("equivalent-to", RCatEnum.QUERY),
     DIRECT_SUB("direct-subclass-of", RCatEnum.QUERY),
+    NOT_SUB("not-subclass-of", RCatEnum.QUERY),
     SUB("subclass-of", RCatEnum.QUERY),
     DIRECT_INSTANCE("direct-instance-of", RCatEnum.QUERY),
+    NOT_INSTANCE("not-instance-of", RCatEnum.QUERY),
     INSTANCE("instance-of", RCatEnum.QUERY),
     REQUIRED("is-required", RCatEnum.PRESENCE),
     EXCLUDED("is-excluded", RCatEnum.PRESENCE);

@@ -66,11 +66,14 @@ Where:
     * is-excluded
     * subclass-of
     * direct-subclass-of
+    * not-subclass-of
     * superclass-of
     * direct-superclass-of
+    * not-superclass-of
     * equivalent-to
     * instance-of
     * direct-instance-of
+    * not-instance-of
 
 * `<when-rule-type>` can be one of (or a combination of -- see below):
 
