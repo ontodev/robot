@@ -348,29 +348,61 @@ public class TableValidator {
       }
 
       RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
-      if (qType == RTypeEnum.SUB || qType == RTypeEnum.DIRECT_SUB || qType == RTypeEnum.NOT_SUB) {
+      if (qType == RTypeEnum.SUB
+          || qType == RTypeEnum.DIRECT_SUB
+          || qType == RTypeEnum.NOT_SUB
+          || qType == RTypeEnum.NOT_DIRECT_SUB) {
         // Check to see if the subjectClass is a (direct) subclass of the given rule:
-        NodeSet<OWLClass> subClassesFound =
-            reasoner.getSubClasses(ruleCE, qType == RTypeEnum.DIRECT_SUB);
-        if (qType == RTypeEnum.NOT_SUB && !subClassesFound.containsEntity(subjectClass)
-            || qType != RTypeEnum.NOT_SUB && subClassesFound.containsEntity(subjectClass)) {
+        // Get direct and not bools
+        boolean direct = false;
+        if (qType == RTypeEnum.DIRECT_SUB || qType == RTypeEnum.NOT_DIRECT_SUB) {
+          direct = true;
+        }
+        boolean not = false;
+        if (qType == RTypeEnum.NOT_SUB || qType == RTypeEnum.NOT_DIRECT_SUB) {
+          not = true;
+        }
+        NodeSet<OWLClass> subClassesFound = reasoner.getSubClasses(ruleCE, direct);
+        if (not && !subClassesFound.containsEntity(subjectClass)
+            || !not && subClassesFound.containsEntity(subjectClass)) {
+          // NOT and not in set OR in set
           return true;
         }
+
       } else if (qType == RTypeEnum.SUPER
           || qType == RTypeEnum.DIRECT_SUPER
-          || qType == RTypeEnum.NOT_SUPER) {
+          || qType == RTypeEnum.NOT_SUPER
+          || qType == RTypeEnum.NOT_DIRECT_SUPER) {
         // Check to see if the subjectClass is a (direct) superclass of the given rule:
-        NodeSet<OWLClass> superClassesFound =
-            reasoner.getSuperClasses(ruleCE, qType == RTypeEnum.DIRECT_SUPER);
-        if (qType == RTypeEnum.NOT_SUPER && !superClassesFound.containsEntity(subjectClass)
-            || qType != RTypeEnum.NOT_SUPER && superClassesFound.containsEntity(subjectClass)) {
+        // Get direct and not bools
+        boolean direct = false;
+        if (qType == RTypeEnum.DIRECT_SUPER || qType == RTypeEnum.NOT_DIRECT_SUPER) {
+          direct = true;
+        }
+        boolean not = false;
+        if (qType == RTypeEnum.NOT_SUPER || qType == RTypeEnum.NOT_DIRECT_SUPER) {
+          not = true;
+        }
+
+        NodeSet<OWLClass> superClassesFound = reasoner.getSuperClasses(ruleCE, direct);
+        if (not && !superClassesFound.containsEntity(subjectClass)
+            || !not && superClassesFound.containsEntity(subjectClass)) {
+          // NOT and not in set OR in set
           return true;
         }
-      } else if (qType == RTypeEnum.EQUIV) {
+
+      } else if (qType == RTypeEnum.EQUIV || qType == RTypeEnum.NOT_EQUIV) {
+        // Check to see if the subjectClass is an equivalent of the given rule:
+        boolean not = false;
+        if (qType == RTypeEnum.NOT_EQUIV) {
+          not = true;
+        }
         Node<OWLClass> equivClassesFound = reasoner.getEquivalentClasses(ruleCE);
-        if (equivClassesFound.contains(subjectClass)) {
+        if (!not && equivClassesFound.contains(subjectClass)
+            || not && !equivClassesFound.contains(subjectClass)) {
           return true;
         }
+
       } else {
         // Spit out an error in this case but continue validating the other rules:
         logger.error(
@@ -481,10 +513,17 @@ public class TableValidator {
       }
 
       RTypeEnum qType = query_type_to_rtenum_map.get(queryType);
-      if (qType == RTypeEnum.INSTANCE || qType == RTypeEnum.DIRECT_INSTANCE) {
+      if (qType == RTypeEnum.INSTANCE
+          || qType == RTypeEnum.DIRECT_INSTANCE
+          || qType == RTypeEnum.NOT_INSTANCE) {
+        boolean not = false;
+        if (qType == RTypeEnum.NOT_INSTANCE) {
+          not = true;
+        }
         NodeSet<OWLNamedIndividual> instancesFound =
             reasoner.getInstances(ruleCE, qType == RTypeEnum.DIRECT_INSTANCE);
-        if (instancesFound.containsEntity(subjectIndividual)) {
+        if (not && !instancesFound.containsEntity(subjectIndividual)
+            || !not && instancesFound.containsEntity(subjectIndividual)) {
           return true;
         }
       } else {
@@ -1149,10 +1188,13 @@ public class TableValidator {
   private enum RTypeEnum {
     DIRECT_SUPER("direct-superclass-of", RCatEnum.QUERY),
     NOT_SUPER("not-superclass-of", RCatEnum.QUERY),
+    NOT_DIRECT_SUPER("not-direct-superclass-of", RCatEnum.QUERY),
     SUPER("superclass-of", RCatEnum.QUERY),
     EQUIV("equivalent-to", RCatEnum.QUERY),
+    NOT_EQUIV("not-equivalent-to", RCatEnum.QUERY),
     DIRECT_SUB("direct-subclass-of", RCatEnum.QUERY),
-    NOT_SUB("not-subclass-of", RCatEnum.QUERY),
+    NOT_SUB("not-direct-subclass-of", RCatEnum.QUERY),
+    NOT_DIRECT_SUB("not-subclass-of", RCatEnum.QUERY),
     SUB("subclass-of", RCatEnum.QUERY),
     DIRECT_INSTANCE("direct-instance-of", RCatEnum.QUERY),
     NOT_INSTANCE("not-instance-of", RCatEnum.QUERY),

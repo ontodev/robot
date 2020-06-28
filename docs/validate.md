@@ -114,23 +114,18 @@ Where:
     * subclass-of
     * direct-subclass-of
     * not-subclass-of
+    * not-direct-subclass-of
     * superclass-of
     * direct-superclass-of
     * not-superclass-of
+    * not-direct-superclass-of
     * equivalent-to
+    * not-equivalent-to
     * instance-of
     * direct-instance-of
     * not-instance-of
 
-* `<when-rule-type>` can be one of (or a combination of -- see [Compound rule-types](#compound-rule-types)):
-
-    * subclass-of
-    * direct-subclass-of
-    * superclass-of
-    * direct-superclass-of
-    * equivalent-to
-    * instance-of
-    * direct-instance-of
+* `<when-rule-type>` can be any of the above rule types (or a combination of -- see [Compound rule-types](#compound-rule-types)) _except_ `is-required` and `is-excluded`
 
 ### Rule types
 
@@ -149,14 +144,20 @@ Where:
         * queries the reasoner to verify that the class represented in the current cell is a direct subclass of the class 'vaccine'
     * not-subclass-of
         * queries the reasoner to verify that the class represented in the current cell is **not** a subclass of the class 'vaccine'
+    * not-direct-subclass-of
+        * queries the reasoner to verify that the class represented in the current cell is **not** a direct subclass of the class 'vaccine'
     * superclass-of
         * queries the reasoner to verify that the class represented in the current cell is a superclass of the class 'vaccine'
     * direct-superclass-of
         * queries the reasoner to verify that the class represented in the current cell is a direct superclass of the class 'vaccine'
     * not-superclass-of
         * queries the reasoner to verify that the class represented in the current cell is **not** a superclass of the class 'vaccine'
+    * not-superclass-of
+        * queries the reasoner to verify that the class represented in the current cell is **not** a direct superclass of the class 'vaccine'
     * equivalent-to
         * queries the reasoner to verify that the class represented in the current cell is equivalent to the class 'vaccine'
+    * not-equivalent-to
+        * queries the reasoner to verify that the class represented in the current cell is **not** equivalent to the class 'vaccine'
     * instance-of
         * queries the reasoner to verify that the individual represented in the current cell is an instance of the class 'vaccine'
     * direct-instance-of
