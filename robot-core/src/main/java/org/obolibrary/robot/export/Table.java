@@ -238,7 +238,7 @@ public class Table {
    * @return HTML string
    */
   public String toHTML(String split) {
-    return toHTML(split, true);
+    return toHTML(split, true, false);
   }
 
   /**
@@ -246,22 +246,31 @@ public class Table {
    *
    * @param split character to split multiple cell values on
    * @param standalone if true, include header
+   * @param includeJS if true and standalone, include JS script for tooltips
    * @return HTML string
    */
-  public String toHTML(String split, boolean standalone) {
+  public String toHTML(String split, boolean standalone, boolean includeJS) {
     StringBuilder sb = new StringBuilder();
     if (standalone) {
+      // Add opening tags, style, and maybe js scripts
       sb.append("<head>\n")
-          .append(
-              "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
-          .append("</head>\n")
-          .append("<body>\n");
+          .append("\t<link rel=\"stylesheet\" href=\"")
+          .append("https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n");
+      if (includeJS) {
+        sb.append("\t<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
+            .append(
+                "\t<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
+            .append(
+                "\t<script src=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js\"></script>\n");
+      }
+      sb.append("</head>\n").append("<body>\n");
     }
     // Table start
     sb.append("<table class=\"table table-bordered table-striped\">\n")
         .append("<thead class=\"bg-dark text-white header-row\">\n")
         .append("<tr>\n");
 
+    // Add column headers
     Map<Integer, String> rules = new HashMap<>();
     int colIdx = 0;
     for (Column c : columns) {
@@ -277,7 +286,7 @@ public class Table {
     // Maybe add rules
     if (!rules.isEmpty()) {
       sb.append("<thead class=\"bg-secondary text-white\">\n").append("<tr>\n");
-      for (int idx = 0; idx <= colIdx; idx++) {
+      for (int idx = 0; idx < colIdx; idx++) {
         if (rules.containsKey(idx)) {
           sb.append("\t<th>").append(rules.get(idx)).append("</th>\n");
         } else {
@@ -287,12 +296,22 @@ public class Table {
       sb.append("</tr>\n").append("</thead>\n");
     }
 
+    // Add all table rows
     for (Row row : rows) {
       sb.append(row.toHTML(columns, split));
     }
-    sb.append("</table>");
+    sb.append("</table>\n");
+
     if (standalone) {
-      sb.append("</body>");
+      // Add closing tag and script to activate tooltips
+      sb.append("</body>\n");
+      if (includeJS) {
+        sb.append("<script>\n")
+            .append("\t$(function () {\n")
+            .append("\t\t$('[data-toggle=\"tooltip\"]').tooltip()\n")
+            .append("\t})")
+            .append("</script>\n");
+      }
     }
     return sb.toString();
   }

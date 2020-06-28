@@ -100,7 +100,7 @@ public class TableValidator {
   }
 
   private OWLOntology ontology;
-  private String outFormat;
+  private String outFormat = null;
   private String outDir;
 
   /** The parser to use when validating class expressions */
@@ -137,7 +137,9 @@ public class TableValidator {
     this.ontology = ontology;
     this.parser = parser;
     this.reasoner = reasoner;
-    this.outFormat = outFormat;
+    if (outFormat != null) {
+      this.outFormat = outFormat.toLowerCase();
+    }
     this.outDir = outDir;
 
     // Extract from the ontology two convenience maps from rdfs:labels to IRIs and vice versa:
@@ -285,7 +287,7 @@ public class TableValidator {
             break;
           case "html":
             try (PrintWriter out = new PrintWriter(outPath)) {
-              out.print(outTable.toHTML("|", standalone));
+              out.print(outTable.toHTML("|", standalone, true));
             }
             break;
           default:
@@ -846,7 +848,10 @@ public class TableValidator {
     String outStr =
         String.format("At %s row %d, column %d: ", currentTable, rowNum + 1, colNum + 1);
     outStr += String.format(format, positionalArgs);
-    System.out.println(outStr);
+    if (!silent) {
+      // Print error if not silent
+      System.out.println(outStr);
+    }
 
     if (outFormat != null && writer == null) {
       // Output format is not null, so it is either HTML or XLSX
@@ -856,6 +861,9 @@ public class TableValidator {
         currentCell.setFontColor(IndexedColors.WHITE);
         currentCell.setCellPattern(FillPatternType.FINE_DOTS);
         currentCell.setCellColor(IndexedColors.RED);
+      } else {
+        // Set the HTML class to bg-danger (red background with a white font)
+        currentCell.setHTMLClass("bg-danger");
       }
       // Attach a comment to the cell
       // If one for this cell already exists, add new comment to existing comment
@@ -866,7 +874,7 @@ public class TableValidator {
       }
       currentCell.setComment(commentString);
     } else if (writer != null) {
-      // Write validation failure to text file
+      // Write validation failure to text file (txt format)
       writer.write(outStr + "\n");
     }
   }

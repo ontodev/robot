@@ -23,9 +23,9 @@ public class ValidateOperation {
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
     options.put("format", null);
-    options.put("standalone", "false");
+    options.put("standalone", "true");
     options.put("output-dir", null);
-    options.put("silent", "false");
+    options.put("silent", "true");
     return options;
   }
 
@@ -77,7 +77,8 @@ public class ValidateOperation {
         new TableValidator(ontology, ioHelper, parser, reasoner, outFormat, outDir);
 
     boolean silent = OptionsHelper.optionIsTrue(options, "silent");
-    if (silent) {
+    if (silent && outFormat != null) {
+      // Only toggle to silent if results are written to a file
       validator.toggleLogging();
     }
     return validator.validate(tables, standalone);

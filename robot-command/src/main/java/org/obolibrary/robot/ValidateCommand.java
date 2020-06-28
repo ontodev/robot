@@ -80,10 +80,9 @@ public class ValidateCommand implements Command {
         "s",
         "standalone",
         true,
-        "If true, and the output format is HTML, generate the HTML report as a standalone file "
-            + "(this option is ignored if the output format is not HTML)");
-    o.addOption("n", "no-fail", true, "If true, do not fail even if there are rule violations");
-    o.addOption("S", "silent", true, "If true, do not print rule violations");
+        "If false, do not put HTML headers/script in the HTML output (this option is ignored for other formats)");
+    o.addOption("n", "no-fail", true, "If true, do not fail even if there are failed validations");
+    o.addOption("S", "silent", true, "If false, print all failed validations");
     options = o;
   }
 
@@ -113,7 +112,7 @@ public class ValidateCommand implements Command {
   public String getUsage() {
     return "validate --table <file> [--table <file> ...] [--skip-row k] --input <file> "
         + "[--reasoner <name>] [--format (HTML|XLSX|TXT)] [--output-dir <directory>] "
-        + "[--standalone (true|false)]";
+        + "[--standalone (true|false)] [--no-fail (true|false)] [--silent (true|false)]";
   }
 
   /**
@@ -242,19 +241,30 @@ public class ValidateCommand implements Command {
     }
 
     boolean noFail = CommandLineHelper.getBooleanValue(line, "no-fail", false);
-    boolean silent = CommandLineHelper.getBooleanValue(line, "silent", false);
 
     // Finally send everything to the validate operation:
     List<String> invalidTables =
         ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, validateOptions);
 
     if (!invalidTables.isEmpty() && !noFail) {
-      if (!silent) {
-        logger.error(
-            String.format(
-                "The following table(s) had one or more rule violation:\n - %s",
-                String.join("\n - ", invalidTables)));
+      // Print last error message - a summary of tables with errors
+      StringBuilder sb = new StringBuilder();
+      sb.append("VALIDATION FAILED - the following table(s) had one or more rule violation:");
+      for (String it : invalidTables) {
+        sb.append("\n- ").append(it);
+        if (outDir != null && outFormat != null) {
+          // If there is an output for this (not just printed to console)
+          // provide the path to the output file
+          sb.append(" (")
+              .append(new File(outDir).getPath())
+              .append("/")
+              .append(it.split("\\.")[0])
+              .append(".")
+              .append(outFormat.toLowerCase())
+              .append(")");
+        }
       }
+      System.out.println(sb.toString());
       System.exit(1);
     }
     return state;

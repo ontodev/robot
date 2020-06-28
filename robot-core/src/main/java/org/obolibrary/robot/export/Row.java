@@ -180,11 +180,18 @@ public class Row {
    */
   public String toHTML(List<Column> columns, String split) {
     StringBuilder sb = new StringBuilder();
+
+    // Start table row
     sb.append("\t<tr>\n");
+
+    // Iterate through columns and get the cell for each
     for (Column c : columns) {
       String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);
       String value;
+      String htmlClass = null;
+      String comment = null;
+
       if (cell != null) {
         List<String> values = cell.getDisplayValues();
         if (values.size() > 1) {
@@ -193,11 +200,28 @@ public class Row {
               values.stream().map(x -> x.replace(split, "\\" + split)).collect(Collectors.toList());
         }
         value = String.join(split, values);
+        htmlClass = cell.getHTMLClass();
+        comment = cell.getComment();
       } else {
         value = "";
       }
-      sb.append("\t\t<td class=\"bg-light text-dark\">").append(value).append("</td>\n");
+
+      // Set default HTML class
+      if (htmlClass == null) {
+        htmlClass = "bg-light";
+      }
+      // Write cell as HTML
+      sb.append("\t\t<td class=\"").append(htmlClass).append("\"");
+      if (comment != null) {
+        // If cell has a comment, write into the td element
+        sb.append(" data-toggle=\"tooltip\" data-placement=\"right\" title=\"")
+            .append(comment.replace("\"", "&quot;"))
+            .append("\"");
+      }
+      sb.append(">").append(value).append("</td>\n");
     }
+
+    // Close table row
     sb.append("\t</tr>\n");
     return sb.toString();
   }
