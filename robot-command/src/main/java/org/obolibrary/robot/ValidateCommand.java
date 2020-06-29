@@ -83,6 +83,11 @@ public class ValidateCommand implements Command {
         "If false, do not put HTML headers/script in the HTML output (this option is ignored for other formats)");
     o.addOption("n", "no-fail", true, "If true, do not fail even if there are failed validations");
     o.addOption("S", "silent", true, "If false, print all failed validations");
+    o.addOption(
+        "w",
+        "write-all",
+        true,
+        "If true, write all tables to output directory - including tables with no failed validations");
     options = o;
   }
 

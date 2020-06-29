@@ -71,7 +71,6 @@ public class ValidateOperation {
     OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
     String outFormat = options.getOrDefault("format", null);
     String outDir = options.getOrDefault("output-dir", ".");
-    boolean standalone = OptionsHelper.optionIsTrue(options, "standalone");
 
     TableValidator validator =
         new TableValidator(ontology, ioHelper, parser, reasoner, outFormat, outDir);
@@ -81,6 +80,6 @@ public class ValidateOperation {
       // Only toggle to silent if results are written to a file
       validator.toggleLogging();
     }
-    return validator.validate(tables, standalone);
+    return validator.validate(tables, options);
   }
 }

@@ -43,6 +43,10 @@ public class TableValidator {
           + "INVALID PRESENCE RULE ERROR in column %d: invalid rule: \"%s\" for rule type: %s. Must be "
           + "one of: true, t, 1, yes, y, false, f, 0, no, n";
 
+  /** Error message for invalid output format. */
+  private static final String invalidFormatError =
+      NS + "INVALID FORMAT ERROR '%s' must be one of: html, xlsx, or txt";
+
   /**
    * Error reported when a wildcard in a rule specifies a column greater than the number of columns
    * in the table.
@@ -114,9 +118,9 @@ public class TableValidator {
   private Map<String, IRI> labelToIRIMap;
 
   private List<String> invalidTables = new ArrayList<>();
+  private List<String> messages = new ArrayList<>();
 
   private Table outTable = null;
-  private Writer writer = null;
   private String currentTable;
   private int colNum;
   private int rowNum;
@@ -138,7 +142,11 @@ public class TableValidator {
     this.parser = parser;
     this.reasoner = reasoner;
     if (outFormat != null) {
+      // Add the format and validate it
       this.outFormat = outFormat.toLowerCase();
+      if (!Lists.newArrayList("xlsx", "html", "txt").contains(this.outFormat)) {
+        throw new IllegalArgumentException(String.format(invalidFormatError, outFormat));
+      }
     }
     this.outDir = outDir;
 
@@ -166,12 +174,11 @@ public class TableValidator {
    * Validate a set of tables.
    *
    * @param tables tables to validate (map of table name to table contents)
-   * @param standalone if true and format is HTML, create a standalone HTML page with headers for
-   *     each table
+   * @param options map of validate options
    * @return List of invalid tables (or empty list on success)
    * @throws Exception on any problem
    */
-  public List<String> validate(Map<String, List<List<String>>> tables, boolean standalone)
+  public List<String> validate(Map<String, List<List<String>>> tables, Map<String, String> options)
       throws Exception {
 
     // Validate all of the tables in turn:
@@ -181,23 +188,11 @@ public class TableValidator {
       outTable = new Table(outFormat);
       String tablePath = table.getKey();
       List<List<String>> data = table.getValue();
-      // Generate the output path to write the validation results to, based on the format and the
-      // output dir
-      // If no format is provided then we interpret that as a request to write to STDOUT
-      String outPath = null;
-      if (outFormat != null) {
-        outPath =
-            outDir + "/" + FilenameUtils.getBaseName(tablePath) + "." + outFormat.toLowerCase();
-        if (outFormat.equals("txt")) {
-          // Prepare the writer
-          writer = new FileWriter(outPath);
-        }
-      }
 
       currentTable =
           String.format(
               "%s.%s", FilenameUtils.getBaseName(tablePath), FilenameUtils.getExtension(tablePath));
-      if (writer == null && outFormat == null) {
+      if (outFormat == null) {
         System.out.println(String.format("Validating %s ...", currentTable));
       }
 
@@ -274,10 +269,13 @@ public class TableValidator {
         invalidTables.add(currentTable);
       }
 
-      // Save table or close writer before moving on to next
-      if (writer != null) {
-        writer.close();
-      } else if (outTable != null && outFormat != null && outPath != null) {
+      boolean standalone = OptionsHelper.optionIsTrue(options, "standalone");
+      boolean writeAll = OptionsHelper.optionIsTrue(options, "write-all");
+
+      // Write table if: write-all is true OR table is not valid (for non-null formats)
+      if ((writeAll || !valid) && outFormat != null) {
+        String outPath =
+            outDir + "/" + FilenameUtils.getBaseName(tablePath) + "." + outFormat.toLowerCase();
         switch (outFormat.toLowerCase()) {
           case "xlsx":
             try (Workbook wb = outTable.asWorkbook("|");
@@ -290,8 +288,13 @@ public class TableValidator {
               out.print(outTable.toHTML("|", standalone, true));
             }
             break;
-          default:
-            // TODO - unsupported format?
+          case "txt":
+            try (PrintWriter out = new PrintWriter(outPath)) {
+              for (String m : messages) {
+                out.println(m);
+              }
+            }
+            break;
         }
       }
     }
@@ -879,7 +882,7 @@ public class TableValidator {
    * parameter `showCoords` is true, then include the current row and column number in the output
    * string.
    */
-  private void report(String format, Object... positionalArgs) throws IOException {
+  private void report(String format, Object... positionalArgs) {
     // Any report of error means validation failed
     valid = false;
 
@@ -892,8 +895,7 @@ public class TableValidator {
       System.out.println(outStr);
     }
 
-    if (outFormat != null && writer == null) {
-      // Output format is not null, so it is either HTML or XLSX
+    if (outFormat != null && !outFormat.equals("txt")) {
       // We want to put formatting on cells with errors
       if (outFormat.equals("xlsx")) {
         // Set the style of the current cell to a red background with a white font:
@@ -912,9 +914,9 @@ public class TableValidator {
         commentString = currentComment + "; " + commentString;
       }
       currentCell.setComment(commentString);
-    } else if (writer != null) {
-      // Write validation failure to text file (txt format)
-      writer.write(outStr + "\n");
+    } else if (outFormat != null) {
+      // Add outStr to messages to be written to file
+      messages.add(outStr);
     }
   }
 

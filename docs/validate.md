@@ -1,6 +1,8 @@
 # Validate
 
 - [Overview](#overview)
+    - [Formats](#formats)
+    - [Other configuration](#other-configuration)
 - [Input file organisation](#input-file-organisation)
     - [Validation rules](#validation-rules)
     - [Comments](#comments)
@@ -15,7 +17,7 @@
 
 ## Overview
 
-Validates tables (CSV or TSV files) against an ontology using the sets of rules defined (per table) in the table files, and writes the output to TXT, HTML, or XLSX files. (If no output format is specified then the output is directed to STDOUT.) For example:
+Validates tables (CSV or TSV files) (`--table`) against an input ontology (`--input`) using the sets of rules defined (per table) in the table files, and writes the output to TXT, HTML, or XLSX files in the output directory (`--output-dir`) with the same base filename. If no output format is specified then the output is directed to STDOUT. For example:
 
     robot validate --input immune_exposures.owl \
       --table immune_exposures.csv \
@@ -26,7 +28,7 @@ Validates tables (CSV or TSV files) against an ontology using the sets of rules 
 
 In this case the command will generate a single file called `immune_exposures.txt` in the `results/` directory.
 
-One can also specify multiple table files as input. In that case there will be multiple output files corresponding to each table in the output directory. For example:
+One can also specify multiple table files to validate against a single input ontology. In that case there will be multiple output files corresponding to each table in the output directory. For example:
 
     robot validate --input immune_exposures.owl \
       --table immune_exposures.csv \
@@ -38,7 +40,34 @@ One can also specify multiple table files as input. In that case there will be m
 
 In this case two files: `immune_exposures.html` and `immune_exposures_2.html` will appear in the `results/` directory.
 
-If there are any invalid cells, `validate` will fail by default with exit code `1`. You can override this with `--no-fail true` as shown in the above examples. Also by default, `validate` will only print a summary message at the end if there were any failures (unless no `--format` is specified, in which case it will always print to STDOUT). If you would like to print all invalid data, include `--silent false`.
+### Formats
+
+* `txt`: a list of failed validations. E.g.:
+```
+At immune_exposures.csv row 17, column 2: Cell is empty but rule: "is-required true" does not allow this.
+```
+* `html`: a [Bootstrap](https://getbootstrap.com/) HTML version of the `--table`. Cells containing bad data (failed validations) are highlighted red. Hovering over the red cells shows a tooltip with the message. These tables use CSS and JavaScript plugins from the BootstrapCDN, therefore they require an internet connection to properly view the table. See [HTML Tables](#html-tables-standalone) for more details.
+* `xlsx`: an Excel spreadsheet version of the `--table`. Cells containing bad data are highlighted red and have a Comment on them containing the message.
+
+### Other options
+
+#### Exit Codes (`--no-fail`)
+
+If there are any invalid cells, `validate` will fail by default with exit code `1`. This is good for use in [`Makefile` workflows](/make), as it will stop the workflow when there is a non-zero exit code. You can override this with `--no-fail true` as shown in the above examples if you want to bypass failures and always exit with code `0`.
+
+#### Logging (`--silent`)
+
+`validate` will only print a summary message at the end if there were any failures (unless no `--format` is specified, in which case it will always print to STDOUT). If you would like to print all invalid data messages, include `--silent false`.
+
+#### Output Files (`--write-all`)
+
+`validate` will only write tables with failed validations to the output directory. If you wish to write _all_ tables, including those that did not have any failed validation, specify `--write-all true`.
+
+#### HTML Tables (`--standalone`)
+
+If the output format is HTML, all output tables will be written as "standalone" files. This means that they have a header containing the Bootstrap stylesheet and scripts ([for tooltips](https://getbootstrap.com/docs/4.5/components/tooltips)). If you want to plug the table data into an existing HTML file, you can use `--standalone true` to generate _just_ the table element.
+
+Note that the tooltips and styling will not work until the table is inserted into a file containing the required CSS and JavaScript from [BootstrapCDN](https://getbootstrap.com/docs/4.5/getting-started/introduction/). For offline viewing, you can also [download](https://getbootstrap.com/docs/4.5/getting-started/download/) the required files and provide a local path in the HTML header. The Bootstrap download does not include [jQuery](https://jquery.com/download/) or [Popper.js](https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js), which are required to enable tooltips (as well as a [small piece of JavaScript](https://getbootstrap.com/docs/4.5/components/tooltips/#example-enable-tooltips-everywhere)).
 
 ## Input file organisation
 
