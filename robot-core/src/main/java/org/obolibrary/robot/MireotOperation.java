@@ -133,7 +133,13 @@ public class MireotOperation {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if ("none".equals(intermediates)) {
         copyAncestorsNoIntermediates(
-            inputOntology, outputOntology, reasoner, upperEntities, entity, entity, annotationProperties);
+            inputOntology,
+            outputOntology,
+            reasoner,
+            upperEntities,
+            entity,
+            entity,
+            annotationProperties);
       } else {
         copyAncestorsAllIntermediates(
             inputOntology, outputOntology, reasoner, upperEntities, entity, annotationProperties);
@@ -244,12 +250,12 @@ public class MireotOperation {
    * @throws OWLOntologyCreationException on problems creating new ontology
    */
   public static OWLOntology getDescendants(
-    OWLOntology inputOntology,
-    Set<IRI> upperIRIs,
-    Set<OWLAnnotationProperty> annotationProperties,
-    Map<String, String> options,
-    Map<IRI, IRI> inputSourceMap)
-    throws OWLOntologyCreationException {
+      OWLOntology inputOntology,
+      Set<IRI> upperIRIs,
+      Set<OWLAnnotationProperty> annotationProperties,
+      Map<String, String> options,
+      Map<IRI, IRI> inputSourceMap)
+      throws OWLOntologyCreationException {
     logger.debug("Extract with MIREOT ...");
 
     // Get options
@@ -262,15 +268,15 @@ public class MireotOperation {
     Set<OWLEntity> entities = getAllEntities(inputOntology);
 
     Set<OWLEntity> upperEntities =
-      entities.stream().filter(e -> upperIRIs.contains(e.getIRI())).collect(Collectors.toSet());
+        entities.stream().filter(e -> upperIRIs.contains(e.getIRI())).collect(Collectors.toSet());
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if ("none".equals(intermediates)) {
         copyDescendantsNoIntermediates(
-          inputOntology, outputOntology, entity, entity, annotationProperties);
+            inputOntology, outputOntology, entity, entity, annotationProperties);
       } else {
         copyDescendantsAllIntermediates(
-          inputOntology, outputOntology, entity, annotationProperties);
+            inputOntology, outputOntology, entity, annotationProperties);
       }
       if (annotateSource) {
         maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
@@ -751,10 +757,10 @@ public class MireotOperation {
     Set<IRI> classIRIs = classes.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
     Set<OWLNamedIndividual> individuals = inputOntology.getIndividualsInSignature();
     individuals =
-      individuals
-        .stream()
-        .filter(i -> !classIRIs.contains(i.getIRI()))
-        .collect(Collectors.toSet());
+        individuals
+            .stream()
+            .filter(i -> !classIRIs.contains(i.getIRI()))
+            .collect(Collectors.toSet());
 
     entities.addAll(classes);
     entities.addAll(individuals);
