@@ -74,35 +74,6 @@ public class MireotOperation {
   }
 
   /**
-   * Return a set of all OWLEntities from an ontology. If an entity is both an individual and a
-   * class, exclude the indiviudal and only include the class.
-   *
-   * @param inputOntology OWLOntology to get entities from
-   * @return set of OWLEntities
-   */
-  private static Set<OWLEntity> getAllEntities(OWLOntology inputOntology) {
-    Set<OWLEntity> entities = new HashSet<>();
-
-    // Filter out any individuals that have the same IRI as a class (we prefer the class in MIREOT)
-    Set<OWLClass> classes = inputOntology.getClassesInSignature();
-    Set<IRI> classIRIs = classes.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
-    Set<OWLNamedIndividual> individuals = inputOntology.getIndividualsInSignature();
-    individuals =
-        individuals
-            .stream()
-            .filter(i -> !classIRIs.contains(i.getIRI()))
-            .collect(Collectors.toSet());
-
-    entities.addAll(classes);
-    entities.addAll(individuals);
-    entities.addAll(inputOntology.getAnnotationPropertiesInSignature());
-    entities.addAll(inputOntology.getDataPropertiesInSignature());
-    entities.addAll(inputOntology.getObjectPropertiesInSignature());
-
-    return entities;
-  }
-
-  /**
    * Given an input ontology, a set of upper IRIs, a set of lower IRIs, a set of annotation
    * properties (or null for all), and a map of extract options, get the ancestors of the lower IRIs
    * up to the upper IRIs. Include the specified annotation properties.
@@ -158,17 +129,17 @@ public class MireotOperation {
     // For each lower entity, get the ancestors (all or none)
     Set<OWLEntity> lowerEntities =
         entities.stream().filter(e -> lowerIRIs.contains(e.getIRI())).collect(Collectors.toSet());
-    for (OWLEntity cls : lowerEntities) {
-      OntologyHelper.copy(inputOntology, outputOntology, cls, annotationProperties);
+    for (OWLEntity entity : lowerEntities) {
+      OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if ("none".equals(intermediates)) {
         copyAncestorsNoIntermediates(
-            inputOntology, outputOntology, reasoner, upperEntities, cls, cls, annotationProperties);
+            inputOntology, outputOntology, reasoner, upperEntities, entity, entity, annotationProperties);
       } else {
         copyAncestorsAllIntermediates(
-            inputOntology, outputOntology, reasoner, upperEntities, cls, annotationProperties);
+            inputOntology, outputOntology, reasoner, upperEntities, entity, annotationProperties);
       }
       if (annotateSource) {
-        maybeAnnotateSource(outputOntology, outputManager, cls, sourceMap);
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
       }
     }
 
@@ -257,6 +228,60 @@ public class MireotOperation {
       Set<OWLAnnotationProperty> annotationProperties)
       throws OWLOntologyCreationException {
     return getDescendants(inputOntology, upperIRIs, annotationProperties, null, null);
+  }
+
+  /**
+   * Given an ontology, a set of upper-level IRIs, and a set of annotation properties, return a new
+   * ontology with just those terms and their named descendants, their subclass relations, and the
+   * selected annotations. The input ontology is not changed.
+   *
+   * @param inputOntology the ontology to extract from
+   * @param upperIRIs these terms and their descendants will be copied
+   * @param annotationProperties the annotation properties to copy; if null, all will be copied
+   * @param options map of options
+   * @param inputSourceMap map of source IRIs (or null)
+   * @return a new ontology with the target terms and their named ancestors
+   * @throws OWLOntologyCreationException on problems creating new ontology
+   */
+  public static OWLOntology getDescendants(
+    OWLOntology inputOntology,
+    Set<IRI> upperIRIs,
+    Set<OWLAnnotationProperty> annotationProperties,
+    Map<String, String> options,
+    Map<IRI, IRI> inputSourceMap)
+    throws OWLOntologyCreationException {
+    logger.debug("Extract with MIREOT ...");
+
+    // Get options
+    setOptions(options, inputSourceMap);
+
+    OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
+    OWLOntology outputOntology = outputManager.createOntology();
+
+    // Get all entities in the ontology (preferring Class over NamedIndividual)
+    Set<OWLEntity> entities = getAllEntities(inputOntology);
+
+    Set<OWLEntity> upperEntities =
+      entities.stream().filter(e -> upperIRIs.contains(e.getIRI())).collect(Collectors.toSet());
+    for (OWLEntity entity : upperEntities) {
+      OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
+      if ("none".equals(intermediates)) {
+        copyDescendantsNoIntermediates(
+          inputOntology, outputOntology, entity, entity, annotationProperties);
+      } else {
+        copyDescendantsAllIntermediates(
+          inputOntology, outputOntology, entity, annotationProperties);
+      }
+      if (annotateSource) {
+        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
+      }
+    }
+
+    if ("minimal".equalsIgnoreCase(intermediates)) {
+      OntologyHelper.collapseOntology(outputOntology, upperIRIs);
+    }
+
+    return outputOntology;
   }
 
   /**
@@ -712,57 +737,32 @@ public class MireotOperation {
   }
 
   /**
-   * Given an ontology, a set of upper-level IRIs, and a set of annotation properties, return a new
-   * ontology with just those terms and their named descendants, their subclass relations, and the
-   * selected annotations. The input ontology is not changed.
+   * Return a set of all OWLEntities from an ontology. If an entity is both an individual and a
+   * class, exclude the indiviudal and only include the class.
    *
-   * @param inputOntology the ontology to extract from
-   * @param upperIRIs these terms and their descendants will be copied
-   * @param annotationProperties the annotation properties to copy; if null, all will be copied
-   * @param options map of options
-   * @param inputSourceMap map of source IRIs (or null)
-   * @return a new ontology with the target terms and their named ancestors
-   * @throws OWLOntologyCreationException on problems creating new ontology
+   * @param inputOntology OWLOntology to get entities from
+   * @return set of OWLEntities
    */
-  public static OWLOntology getDescendants(
-      OWLOntology inputOntology,
-      Set<IRI> upperIRIs,
-      Set<OWLAnnotationProperty> annotationProperties,
-      Map<String, String> options,
-      Map<IRI, IRI> inputSourceMap)
-      throws OWLOntologyCreationException {
-    logger.debug("Extract with MIREOT ...");
+  private static Set<OWLEntity> getAllEntities(OWLOntology inputOntology) {
+    Set<OWLEntity> entities = new HashSet<>();
 
-    // Get options
-    setOptions(options, inputSourceMap);
+    // Filter out any individuals that have the same IRI as a class (we prefer the class in MIREOT)
+    Set<OWLClass> classes = inputOntology.getClassesInSignature();
+    Set<IRI> classIRIs = classes.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
+    Set<OWLNamedIndividual> individuals = inputOntology.getIndividualsInSignature();
+    individuals =
+      individuals
+        .stream()
+        .filter(i -> !classIRIs.contains(i.getIRI()))
+        .collect(Collectors.toSet());
 
-    OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
-    OWLOntology outputOntology = outputManager.createOntology();
+    entities.addAll(classes);
+    entities.addAll(individuals);
+    entities.addAll(inputOntology.getAnnotationPropertiesInSignature());
+    entities.addAll(inputOntology.getDataPropertiesInSignature());
+    entities.addAll(inputOntology.getObjectPropertiesInSignature());
 
-    // Get all entities in the ontology (preferring Class over NamedIndividual)
-    Set<OWLEntity> entities = getAllEntities(inputOntology);
-
-    Set<OWLEntity> upperEntities =
-        entities.stream().filter(e -> upperIRIs.contains(e.getIRI())).collect(Collectors.toSet());
-    for (OWLEntity entity : upperEntities) {
-      OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
-      if ("none".equals(intermediates)) {
-        copyDescendantsNoIntermediates(
-            inputOntology, outputOntology, entity, entity, annotationProperties);
-      } else {
-        copyDescendantsAllIntermediates(
-            inputOntology, outputOntology, entity, annotationProperties);
-      }
-      if (annotateSource) {
-        maybeAnnotateSource(outputOntology, outputManager, entity, sourceMap);
-      }
-    }
-
-    if ("minimal".equalsIgnoreCase(intermediates)) {
-      OntologyHelper.collapseOntology(outputOntology, upperIRIs);
-    }
-
-    return outputOntology;
+    return entities;
   }
 
   /**
