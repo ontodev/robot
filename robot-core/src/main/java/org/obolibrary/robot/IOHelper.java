@@ -742,6 +742,36 @@ public class IOHelper {
   }
 
   /**
+   * Convert a row index and column index for a cell to A1 notation.
+   *
+   * @param rowNum row index
+   * @param colNum column index
+   * @return A1 notation for cell location
+   */
+  public static String cellToA1(int rowNum, int colNum) {
+    // To store result (Excel column name)
+    StringBuilder colLabel = new StringBuilder();
+
+    while (colNum > 0) {
+      // Find remainder
+      int rem = colNum % 26;
+
+      // If remainder is 0, then a
+      // 'Z' must be there in output
+      if (rem == 0) {
+        colLabel.append("Z");
+        colNum = (colNum / 26) - 1;
+      } else {
+        colLabel.append((char) ((rem - 1) + 'A'));
+        colNum = colNum / 26;
+      }
+    }
+
+    // Reverse the string and print result
+    return colLabel.reverse().toString() + rowNum;
+  }
+
+  /**
    * Given a term string, use the current prefixes to create an IRI.
    *
    * @param term the term to convert to an IRI
@@ -1231,6 +1261,21 @@ public class IOHelper {
    */
   public static List<List<String>> readTable(String path) throws IOException {
     return TemplateHelper.readTable(path);
+  }
+
+  /**
+   * Write a table from a list of arrays.
+   *
+   * @param table List of arrays to write
+   * @param path path to write to
+   * @throws IOException
+   */
+  public static void writeTable(List<String[]> table, String path) throws IOException {
+    char separator = '\t';
+    if (path.endsWith(".csv")) {
+      separator = ',';
+    }
+    writeTable(table, new File(path), separator);
   }
 
   /**

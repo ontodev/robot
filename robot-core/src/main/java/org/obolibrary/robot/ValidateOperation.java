@@ -26,6 +26,7 @@ public class ValidateOperation {
     options.put("standalone", "true");
     options.put("output-dir", null);
     options.put("silent", "true");
+    options.put("errors", null);
     return options;
   }
 
@@ -80,6 +81,19 @@ public class ValidateOperation {
       // Only toggle to silent if results are written to a file
       validator.toggleLogging();
     }
-    return validator.validate(tables, options);
+
+    // Run validation over all tables
+    List<String> result = validator.validate(tables, options);
+
+    // Maybe save errors to their own table
+    String errorsPath = OptionsHelper.getOption(options, "errors", null);
+    if (errorsPath != null) {
+      List<String[]> errors = validator.getErrors();
+      if (errors.size() > 1) {
+        // Only one item in the errors means it is just the header
+        IOHelper.writeTable(errors, errorsPath);
+      }
+    }
+    return result;
   }
 }

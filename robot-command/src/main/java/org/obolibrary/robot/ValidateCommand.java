@@ -88,6 +88,7 @@ public class ValidateCommand implements Command {
         "write-all",
         true,
         "If true, write all tables to output directory - including tables with no failed validations");
+    o.addOption("e", "errors", true, "Write errors-only for all tables to given path");
     options = o;
   }
 
