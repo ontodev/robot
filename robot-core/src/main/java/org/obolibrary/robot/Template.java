@@ -345,10 +345,23 @@ public class Template {
   }
 
   /**
+   * Generate an OWLOntology based on the rows of the template.
+   *
+   * @param outputIRI IRI for final ontology
+   * @param force if true, do not exit on errors
+   * @return new OWLOntology
+   * @throws Exception on issue parsing rows to axioms or creating new ontology
+   */
+  public OWLOntology generateOutputOntology(String outputIRI, boolean force) throws Exception {
+    return generateOutputOntology(outputIRI, force, null);
+  }
+
+  /**
    * Generate an OWLOntology with given IRI based on the rows of the template.
    *
    * @param outputIRI IRI for final ontology
    * @param force if true, do not exit on errors
+   * @param errorsPath path to errors table when force=true
    * @return new OWLOntology
    * @throws Exception on issue parsing rows to axioms or creating new ontology
    */
