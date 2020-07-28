@@ -69,6 +69,20 @@ If the output format is HTML, all output tables will be written as "standalone" 
 
 Note that the tooltips and styling will not work until the table is inserted into a file containing the required CSS and JavaScript from [BootstrapCDN](https://getbootstrap.com/docs/4.5/getting-started/introduction/). For offline viewing, you can also [download](https://getbootstrap.com/docs/4.5/getting-started/download/) the required files and provide a local path in the HTML header. The Bootstrap download does not include [jQuery](https://jquery.com/download/) or [Popper.js](https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js), which are required to enable tooltips (as well as a [small piece of JavaScript](https://getbootstrap.com/docs/4.5/components/tooltips/#example-enable-tooltips-everywhere)).
 
+#### Errors Table (`--errors`)
+
+The results that are written to the output directory contain all lines from the input tables, even if those lines don't have errors. You can choose to also output a table containing just the errors by specifying `--errors <path>`. If this path ends with `.csv`, the output will be comma-separated. Otherwise, the output will be tab-separated.
+
+This output will contain the following columns:
+* **ID**: an ID for the error - this starts at 1 and increases with each error
+* **table**: the name of the table this cell is in
+* **cell**: the A1 notation for the location of the cell
+* **level**: the violation level (at this time, this value will always be `error`)
+* **rule ID**: a combination of `<table name>!<location>` for the cell that the rule is written in
+* **rule name**: the written text of the rule
+* **value**: the value of the cell that failed
+* **fix**: how to fix this error (at this time, this cell will always be empty)
+
 ## Input file organisation
 
 ### Validation rules
