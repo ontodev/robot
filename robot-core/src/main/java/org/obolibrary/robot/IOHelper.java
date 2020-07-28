@@ -1236,6 +1236,21 @@ public class IOHelper {
   /**
    * Write a table from a list of arrays.
    *
+   * @param table List of arrays to write
+   * @param path path to write to
+   * @throws IOException
+   */
+  public static void writeTable(List<String[]> table, String path) throws IOException {
+    char separator = '\t';
+    if (path.endsWith(".csv")) {
+      separator = ',';
+    }
+    writeTable(table, new File(path), separator);
+  }
+
+  /**
+   * Write a table from a list of arrays.
+   *
    * @param file File to write to
    * @param table List of arrays to write
    * @param separator table separator
