@@ -1099,8 +1099,10 @@ public class IOHelper {
   }
 
   /**
-   * @param context1
-   * @throws IOException
+   * Given a Context, add the prefix mappings to the current JSON-LD context.
+   *
+   * @param context1 Context to add
+   * @throws IOException if the Context cannot be set
    */
   public void addPrefixes(Context context1) throws IOException {
     context.putAll(context1.getPrefixes(false));
