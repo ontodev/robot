@@ -1095,7 +1095,17 @@ public class IOHelper {
       throw new IOException(String.format(fileDoesNotExistError, prefixPath));
     }
     Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    addPrefixes(context1);
+  }
+
+  /**
+   * @param context1
+   * @throws IOException
+   */
+  public void addPrefixes(Context context1) throws IOException {
     context.putAll(context1.getPrefixes(false));
+    context.remove("@base");
+    setContext((Map<String, Object>) context);
   }
 
   /**

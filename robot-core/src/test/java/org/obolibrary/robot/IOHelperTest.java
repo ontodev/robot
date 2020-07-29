@@ -20,6 +20,27 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /** Tests for IOHelper. */
 public class IOHelperTest extends CoreTest {
+
+  /**
+   * Test adding prefixes using the addPrefixes method
+   *
+   * @throws IOException on problem creating IOHelper or adding prefixes
+   */
+  @Test
+  public void testAddPrefixes() throws IOException {
+    // IOHelper without default prefixes
+    IOHelper ioh = new IOHelper(false);
+
+    // Single prefix to add from a context
+    String inputContext = "{\n  \"@context\" : {\n    \"foo\" : \"http://foo.bar\"\n  }\n}";
+    Context context = IOHelper.parseContext(inputContext);
+    ioh.addPrefixes(context);
+
+    // Get the context back from IOHelper
+    String outputContext = ioh.getContextString();
+    assertEquals(inputContext, outputContext);
+  }
+
   /**
    * Test loading JSON files.
    *
