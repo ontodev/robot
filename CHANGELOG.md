@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced time spent loading datasets for [`query`] in [#666]
 - Fix writing JSON format to use `OutputStream` with ['convert'] in [#671]
 - Fix IRI resolution for `template` in [#689]
+- Fix issue with `--add-prefixes` option in [#715]
 
 
 ## [1.6.0] - 2020-03-04
@@ -187,6 +188,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#715]: https://github.com/ontodev/robot/pull/715
 [#689]: https://github.com/ontodev/robot/pull/689
 [#685]: https://github.com/ontodev/robot/pull/685
 [#671]: https://github.com/ontodev/robot/pull/671
