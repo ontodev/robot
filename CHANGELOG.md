@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2020-07-31
+
 ### Added
 - Add [`export`] command [#481]
 - Add JSON format to [`export`] in [#645]
@@ -25,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix IRI resolution for `template` in [#689]
 - Fix MIREOT [`extract`] on overlapping class/individual entity for [#709] in [#710]
 - Fix issue with `--add-prefixes` option in [#715]
-
 
 ## [1.6.0] - 2020-03-04
 
@@ -157,7 +158,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/ontodev/robot/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/ontodev/robot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ontodev/robot/compare/v1.4.3...v1.5.0
 [1.4.3]: https://github.com/ontodev/robot/compare/v1.4.2...v1.4.3
