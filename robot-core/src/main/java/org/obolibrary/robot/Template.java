@@ -1029,6 +1029,8 @@ public class Template {
         case "transitive":
           axioms.add(dataFactory.getOWLTransitiveObjectPropertyAxiom(property));
           break;
+        case "":
+          break;
         default:
           throw new Exception(
               String.format(
@@ -2185,11 +2187,15 @@ public class Template {
    */
   private List<String> getCharacteristics(List<String> row) {
     if (characteristicColumn != -1) {
-      String characteristicString = row.get(characteristicColumn);
-      if (characteristicSplit != null && characteristicString.contains(characteristicSplit)) {
-        return Arrays.asList(characteristicString.split(Pattern.quote(characteristicSplit)));
-      } else {
-        return Collections.singletonList(characteristicString.trim());
+      // If characteristics is the last column and there are no characteristics for
+      // this entry, the list will be one element short.
+      if (characteristicColumn <= (row.size() - 1)) {
+        String characteristicString = row.get(characteristicColumn);
+        if (characteristicSplit != null && characteristicString.contains(characteristicSplit)) {
+          return Arrays.asList(characteristicString.split(Pattern.quote(characteristicSplit)));
+        } else {
+          return Collections.singletonList(characteristicString.trim());
+        }
       }
     }
     return new ArrayList<>();
