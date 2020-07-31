@@ -67,44 +67,44 @@ trap 'print_step' INT TERM EXIT
 
 ### Steps
 
-#echo "This script will walk you through making a ROBOT release ${VERSION}"
-#confirm "Ready?"
-#
-#step "Update git"
-#git checkout master
-#git pull
-#
-#step "Check Travis"
-#travis status --skip-version-check --exit-code --fail-pending
-#
-#step "Check Jenkins"
-#curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" | jq --exit-status '.result | test("SUCCESS")'
-#
-#step "Set the the version number for this release"
-#mvn versions:set -DnewVersion="${VERSION}"
-#
-#step "Manually update CHANGELOG.md"
-#confirm "Updated?"
-#
-#step "Check the JavaDocs"
-#mvn clean site
-#
-#step "Check the test suite"
-#mvn clean verify
-#
-#echo "Everything looks good!"
-#
-## This extra step is required to avoid issue https://github.com/ontodev/robot/issues/411
-#step "Make a copy of robot.jar for upload to GitHub"
-#cp bin/robot.jar robot.jar
-#
-#step "Review changes for release"
-#git diff
-#
-#step "Commit and push this release"
-#confirm "Commit and push?"
-#git commit --all --message "Bump version to ${VERSION}"
-#git push
+echo "This script will walk you through making a ROBOT release ${VERSION}"
+confirm "Ready?"
+
+step "Update git"
+git checkout master
+git pull
+
+step "Check Travis"
+travis status --skip-version-check --exit-code --fail-pending
+
+step "Check Jenkins"
+curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" | jq --exit-status '.result | test("SUCCESS")'
+
+step "Set the the version number for this release"
+mvn versions:set -DnewVersion="${VERSION}"
+
+step "Manually update CHANGELOG.md"
+confirm "Updated?"
+
+step "Check the JavaDocs"
+mvn clean site
+
+step "Check the test suite"
+mvn clean verify
+
+echo "Everything looks good!"
+
+# This extra step is required to avoid issue https://github.com/ontodev/robot/issues/411
+step "Make a copy of robot.jar for upload to GitHub"
+cp bin/robot.jar robot.jar
+
+step "Review changes for release"
+git diff
+
+step "Commit and push this release"
+confirm "Commit and push?"
+git commit --all --message "Bump version to ${VERSION}"
+git push
 
 ### Maven Central Release
 #
