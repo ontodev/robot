@@ -1029,8 +1029,6 @@ public class Template {
         case "transitive":
           axioms.add(dataFactory.getOWLTransitiveObjectPropertyAxiom(property));
           break;
-        case "":
-          break;
         default:
           throw new Exception(
               String.format(
