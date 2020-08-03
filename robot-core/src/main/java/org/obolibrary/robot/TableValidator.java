@@ -267,19 +267,20 @@ public class TableValidator {
               List<String> interpolatedRules = interpolateRule(rule, row);
               for (String interpolatedRule : interpolatedRules) {
                 for (String d : cellData) {
-                  boolean result = validateRule(d, interpolatedRule, row, ruleEntry.getKey());
-                  if (!result) {
+                  String errorMsg = validateRule(d, interpolatedRule, row, ruleEntry.getKey());
+                  if (errorMsg != null) {
+                    // An error was returned, add to errors
                     errCount++;
                     errors.add(
                         new String[] {
                           String.valueOf(errCount),
                           currentTable,
-                          IOHelper.cellToA1(rowNum + 1, colNum + 1),
+                          IOHelper.cellToA1(rowNum + 3, colNum + 1),
                           "error",
                           FilenameUtils.getBaseName(currentTable)
                               + "!"
                               + IOHelper.cellToA1(ruleRowIdx, colNum + 1),
-                          ruleEntry.getKey() + " " + interpolatedRule,
+                          errorMsg,
                           d,
                           ""
                         });
@@ -1042,7 +1043,7 @@ public class TableValidator {
    * from the CSV, determine whether the cell satisfies the given presence rule (e.g. is-required,
    * is-empty).
    */
-  private boolean validatePresenceRule(String rule, RTypeEnum rType, String cell) throws Exception {
+  private String validatePresenceRule(String rule, RTypeEnum rType, String cell) throws Exception {
 
     logger.debug(
         String.format(
@@ -1063,35 +1064,42 @@ public class TableValidator {
     if (Arrays.asList("true", "t", "1", "yes", "y").indexOf(rule.toLowerCase()) == -1) {
       logger.debug(
           String.format("Nothing to validate for rule: \"%s %s\"", rType.getRuleType(), rule));
-      return true;
+      return null;
     }
 
+    String msg;
     switch (rType) {
       case REQUIRED:
         if (cell.trim().equals("")) {
-          report(
-              "Cell is empty but rule: \"%s %s\" does not allow this.", rType.getRuleType(), rule);
-          return false;
+          msg =
+              String.format(
+                  "Cell is empty but rule: \"%s %s\" does not allow this.",
+                  rType.getRuleType(), rule);
+          report(msg);
+          return msg;
         }
         break;
       case EXCLUDED:
         if (!cell.trim().equals("")) {
-          report(
-              "Cell is non-empty (\"%s\") but rule: \"%s %s\" does not allow this.",
-              cell, rType.getRuleType(), rule);
-          return false;
+          msg =
+              String.format(
+                  "Cell is non-empty (\"%s\") but rule: \"%s %s\" does not allow this.",
+                  cell, rType.getRuleType(), rule);
+          report(msg);
+          return msg;
         }
         break;
       default:
-        logger.error(
+        msg =
             String.format(
                 "%s validation of rule type: \"%s\" is not yet implemented.",
-                rType.getRuleCat(), rType.getRuleType()));
-        return false;
+                rType.getRuleCat(), rType.getRuleType());
+        logger.error(msg);
+        return msg;
     }
     logger.info(
         String.format("Validated \"%s %s\" against \"%s\".", rType.getRuleType(), rule, cell));
-    return true;
+    return null;
   }
 
   /**
@@ -1100,7 +1108,7 @@ public class TableValidator {
    * containing the given cell, validate the cell, indicating any validation errors via the output
    * writer (or XLSX workbook).
    */
-  private boolean validateRule(String cell, String rule, List<String> row, String ruleType)
+  private String validateRule(String cell, String rule, List<String> row, String ruleType)
       throws Exception {
 
     logger.debug(
@@ -1123,7 +1131,7 @@ public class TableValidator {
     // Evaluate and validate any when clauses for this rule first:
     if (!validateWhenClauses(separatedRule.getValue(), row, colNum)) {
       logger.debug("Not all when clauses have been satisfied. Skipping main clause");
-      return true;
+      return null;
     }
 
     // Once all of the when clauses have been validated, get the RTypeEnum representation of the
@@ -1140,7 +1148,7 @@ public class TableValidator {
     // If the cell contents are empty, just return to the caller silently (if the cell is not
     // expected to be empty, this will have been caught by one of the presence rules in the
     // previous step, assuming such a rule is constraining the column).
-    if (cell.trim().equals("")) return true;
+    if (cell.trim().equals("")) return null;
 
     // Get the axiom that the cell will be validated against:
     String axiom = separatedRule.getKey();
@@ -1150,12 +1158,14 @@ public class TableValidator {
     // failure
     // Non-empty strings get added to the Cell
     boolean result = executeQuery(cell, axiom, row, ruleType);
+    String msg = null;
     if (!result) {
-      report("Validation failed for rule: \"%s %s %s\".", cell, ruleType, axiom);
+      msg = String.format("Validation failed for rule: \"%s %s %s\".", cell, ruleType, axiom);
+      report(msg);
     } else {
       logger.info(String.format("Validated: \"%s %s %s\".", cell, ruleType, axiom));
     }
-    return result;
+    return msg;
   }
 
   /**

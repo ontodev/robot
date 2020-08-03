@@ -32,7 +32,7 @@ public class IOHelperTest extends CoreTest {
     a1 = IOHelper.cellToA1(39, 8459);
     assertEquals("LMI39", a1);
   }
-  
+
   /**
    * Test loading JSON files.
    *
