@@ -2186,16 +2186,16 @@ public class Template {
    * @return characteristics
    */
   private List<String> getCharacteristics(List<String> row) {
-    if (characteristicColumn != -1) {
+    if (characteristicColumn != -1 && characteristicColumn <= (row.size() - 1)) {
       // If characteristics is the last column and there are no characteristics for
       // this entry, the list will be one element short.
-      if (characteristicColumn <= (row.size() - 1)) {
-        String characteristicString = row.get(characteristicColumn);
-        if (characteristicSplit != null && characteristicString.contains(characteristicSplit)) {
-          return Arrays.asList(characteristicString.split(Pattern.quote(characteristicSplit)));
-        } else {
-          return Collections.singletonList(characteristicString.trim());
-        }
+      String characteristicString = row.get(characteristicColumn).trim();
+      if (characteristicString.equalsIgnoreCase("")) {
+        return new ArrayList<>();
+      } else if (characteristicSplit != null && characteristicString.contains(characteristicSplit)) {
+        return Arrays.asList(characteristicString.split(Pattern.quote(characteristicSplit)));
+      } else {
+        return Collections.singletonList(characteristicString.trim());
       }
     }
     return new ArrayList<>();
