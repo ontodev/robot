@@ -2190,7 +2190,8 @@ public class Template {
       String characteristicString = row.get(characteristicColumn).trim();
       if (characteristicString.equalsIgnoreCase("")) {
         return new ArrayList<>();
-      } else if (characteristicSplit != null && characteristicString.contains(characteristicSplit)) {
+      } else if (characteristicSplit != null
+          && characteristicString.contains(characteristicSplit)) {
         return Arrays.asList(characteristicString.split(Pattern.quote(characteristicSplit)));
       } else {
         return Collections.singletonList(characteristicString.trim());
