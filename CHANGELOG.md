@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Handle empty [`template`] property charactersitics in [#719]
+
 ## [1.7.0] - 2020-07-31
 
 ### Added
@@ -191,6 +194,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 
+[#719]: https://github.com/ontodev/robot/pull/716
 [#715]: https://github.com/ontodev/robot/pull/715
 [#710]: https://github.com/ontodev/robot/pull/710
 [#709]: https://github.com/ontodev/robot/issues/709
