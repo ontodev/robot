@@ -8,11 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add [`validate`] command [#691]
+
+### Fixed
+- Handle empty [`template`] property charactersitics in [#719]
+
+## [1.7.0] - 2020-07-31
+
+### Added
 - Add [`export`] command [#481]
 - Add JSON format to [`export`] in [#645]
 - Add Excel format to [`export`] in [#646]
 - Add `--create-tdb <true/false>` option to [`query`] in [#685]
-- Add [`validate`] command [#691]
 
 ### Changed
 - Updated `obographs` from 0.0.8 to 0.2.1 [#657]
@@ -24,7 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced time spent loading datasets for [`query`] in [#666]
 - Fix writing JSON format to use `OutputStream` with ['convert'] in [#671]
 - Fix IRI resolution for `template` in [#689]
-
+- Fix MIREOT [`extract`] on overlapping class/individual entity for [#709] in [#710]
+- Fix issue with `--add-prefixes` option in [#715]
 
 ## [1.6.0] - 2020-03-04
 
@@ -156,7 +164,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/ontodev/robot/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/ontodev/robot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ontodev/robot/compare/v1.4.3...v1.5.0
 [1.4.3]: https://github.com/ontodev/robot/compare/v1.4.2...v1.4.3
@@ -189,6 +198,10 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#719]: https://github.com/ontodev/robot/pull/716
+[#715]: https://github.com/ontodev/robot/pull/715
+[#710]: https://github.com/ontodev/robot/pull/710
+[#709]: https://github.com/ontodev/robot/issues/709
 [#691]: https://github.com/ontodev/robot/pull/691
 [#689]: https://github.com/ontodev/robot/pull/689
 [#685]: https://github.com/ontodev/robot/pull/685

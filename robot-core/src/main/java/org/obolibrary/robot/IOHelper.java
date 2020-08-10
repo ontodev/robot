@@ -1125,7 +1125,19 @@ public class IOHelper {
       throw new IOException(String.format(fileDoesNotExistError, prefixPath));
     }
     Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    addPrefixes(context1);
+  }
+
+  /**
+   * Given a Context, add the prefix mappings to the current JSON-LD context.
+   *
+   * @param context1 Context to add
+   * @throws IOException if the Context cannot be set
+   */
+  public void addPrefixes(Context context1) throws IOException {
     context.putAll(context1.getPrefixes(false));
+    context.remove("@base");
+    setContext((Map<String, Object>) context);
   }
 
   /**

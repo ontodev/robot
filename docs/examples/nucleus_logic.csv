@@ -1,0 +1,18 @@
+ID,LABEL,SubClass Of [NAME NAMED],SubClass Of [ID NAMED],SubClass Of [NAME ANON],SubClass Of [ID ANON]
+GO:0005575,cellular_component,,,,
+GO:0005622,intracellular,cell part,GO:0044464,,
+GO:0005623,cell,cellular_component,GO:0005575,,
+GO:0005634,nucleus,intracellular membrane-bounded organelle,GO:0043231,,
+GO:0031974,membrane-enclosed lumen,cellular_component,GO:0005575,,
+GO:0031981,nuclear lumen,intracellular organelle lumen|nuclear part,GO:0044428|GO:0070013,BFO:0000050 some nucleus,BFO:0000050 some GO:0005634
+GO:0043226,organelle,cellular_component,GO:0005575,,
+GO:0043227,membrane-bounded organelle,organelle,GO:0043226,,
+GO:0043229,intracellular organelle,intracellular part|organelle,GO:0043226|GO:0044424,BFO:0000050 some intracellular,BFO:0000050 some GO:0005622
+GO:0043231,intracellular membrane-bounded organelle,intracellular organelle|membrane-bounded organelle,GO:0043227|GO:0043229,,
+GO:0043233,organelle lumen,membrane-enclosed lumen|organelle part,GO:0031974|GO:0044422,BFO:0000050 some organelle,BFO:0000050 some GO:0043226
+GO:0044422,organelle part,cellular_component,GO:0005575,BFO:0000050 some organelle,BFO:0000050 some GO:0043226
+GO:0044424,intracellular part,cell part,GO:0044464,BFO:0000050 some intracellular,BFO:0000050 some GO:0005622
+GO:0044428,nuclear part,intracellular organelle part,GO:0044446,BFO:0000050 some nucleus,BFO:0000050 some GO:0005634
+GO:0044446,intracellular organelle part,intracellular part|organelle part,GO:0044422|GO:0044424,BFO:0000050 some 'intracellular organelle'|BFO:0000050 some intracellular|BFO:0000050 some organelle,BFO:0000050 some GO:0005622|BFO:0000050 some GO:0043226|BFO:0000050 some GO:0043229
+GO:0044464,cell part,cellular_component,GO:0005575,BFO:0000050 some cell,BFO:0000050 some GO:0005623
+GO:0070013,intracellular organelle lumen,intracellular organelle part|organelle lumen,GO:0043233|GO:0044446,BFO:0000050 some 'intracellular organelle',BFO:0000050 some GO:0043229

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -101,12 +102,19 @@ public class MireotOperation {
     // Get options
     setOptions(options, inputSourceMap);
 
+    // Get all entities in the ontology (preferring Class over NamedIndividual)
+    Set<OWLEntity> entities = getAllEntities(inputOntology);
+
     // The other OWLAPI extract methods use the source ontology IRI
     // so we'll use it here too.
     OWLOntology outputOntology = outputManager.createOntology(inputOntology.getOntologyID());
 
     // Directly copy all upper entities
-    Set<OWLEntity> upperEntities = OntologyHelper.getEntities(inputOntology, upperIRIs);
+    Set<OWLEntity> upperEntities = new HashSet<>();
+    if (upperIRIs != null && upperIRIs.size() > 0) {
+      upperEntities =
+          entities.stream().filter(e -> upperIRIs.contains(e.getIRI())).collect(Collectors.toSet());
+    }
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if (annotateSource) {
@@ -114,11 +122,13 @@ public class MireotOperation {
       }
     }
 
+    // Create a reasoner to get ancestors
     OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
     OWLReasoner reasoner = reasonerFactory.createReasoner(inputOntology);
 
     // For each lower entity, get the ancestors (all or none)
-    Set<OWLEntity> lowerEntities = OntologyHelper.getEntities(inputOntology, lowerIRIs);
+    Set<OWLEntity> lowerEntities =
+        entities.stream().filter(e -> lowerIRIs.contains(e.getIRI())).collect(Collectors.toSet());
     for (OWLEntity entity : lowerEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if ("none".equals(intermediates)) {
@@ -254,7 +264,11 @@ public class MireotOperation {
     OWLOntologyManager outputManager = OWLManager.createOWLOntologyManager();
     OWLOntology outputOntology = outputManager.createOntology();
 
-    Set<OWLEntity> upperEntities = OntologyHelper.getEntities(inputOntology, upperIRIs);
+    // Get all entities in the ontology (preferring Class over NamedIndividual)
+    Set<OWLEntity> entities = getAllEntities(inputOntology);
+
+    Set<OWLEntity> upperEntities =
+        entities.stream().filter(e -> upperIRIs.contains(e.getIRI())).collect(Collectors.toSet());
     for (OWLEntity entity : upperEntities) {
       OntologyHelper.copy(inputOntology, outputOntology, entity, annotationProperties);
       if ("none".equals(intermediates)) {
@@ -729,6 +743,35 @@ public class MireotOperation {
   }
 
   /**
+   * Return a set of all OWLEntities from an ontology. If an entity is both an individual and a
+   * class, exclude the indiviudal and only include the class.
+   *
+   * @param inputOntology OWLOntology to get entities from
+   * @return set of OWLEntities
+   */
+  private static Set<OWLEntity> getAllEntities(OWLOntology inputOntology) {
+    Set<OWLEntity> entities = new HashSet<>();
+
+    // Filter out any individuals that have the same IRI as a class (we prefer the class in MIREOT)
+    Set<OWLClass> classes = inputOntology.getClassesInSignature();
+    Set<IRI> classIRIs = classes.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
+    Set<OWLNamedIndividual> individuals = inputOntology.getIndividualsInSignature();
+    individuals =
+        individuals
+            .stream()
+            .filter(i -> !classIRIs.contains(i.getIRI()))
+            .collect(Collectors.toSet());
+
+    entities.addAll(classes);
+    entities.addAll(individuals);
+    entities.addAll(inputOntology.getAnnotationPropertiesInSignature());
+    entities.addAll(inputOntology.getDataPropertiesInSignature());
+    entities.addAll(inputOntology.getObjectPropertiesInSignature());
+
+    return entities;
+  }
+
+  /**
    * Given an ontology, a manager for that ontology, an entity to annotate, and a map of source
    * replacements, add the rdfs:isDefinedBy annotation to the entity.
    *
@@ -742,7 +785,10 @@ public class MireotOperation {
     Set<OWLAnnotationValue> existingValues =
         OntologyHelper.getAnnotationValues(ontology, isDefinedBy, entity.getIRI());
     if (existingValues == null || existingValues.size() == 0) {
-      manager.addAxiom(ontology, ExtractOperation.getIsDefinedBy(entity, sourceMap));
+      OWLAnnotationAxiom isDefinedBy = ExtractOperation.getIsDefinedBy(entity, sourceMap);
+      if (isDefinedBy != null) {
+        manager.addAxiom(ontology, isDefinedBy);
+      }
     }
   }
 
