@@ -65,7 +65,7 @@ If there are any invalid cells, `validate` will fail by default with exit code `
 
 #### HTML Tables (`--standalone`)
 
-If the output format is HTML, all output tables will be written as "standalone" files. This means that they have a header containing the Bootstrap stylesheet and scripts ([for tooltips](https://getbootstrap.com/docs/4.5/components/tooltips)). If you want to plug the table data into an existing HTML file, you can use `--standalone true` to generate _just_ the table element.
+If the output format is HTML, all output tables will be written as "standalone" files. This means that they have a header containing the Bootstrap stylesheet and scripts ([for tooltips](https://getbootstrap.com/docs/4.5/components/tooltips)). If you want to plug the table data into an existing HTML file, you can use `--standalone false` to generate _just_ the table element.
 
 Note that the tooltips and styling will not work until the table is inserted into a file containing the required CSS and JavaScript from [BootstrapCDN](https://getbootstrap.com/docs/4.5/getting-started/introduction/). For offline viewing, you can also [download](https://getbootstrap.com/docs/4.5/getting-started/download/) the required files and provide a local path in the HTML header. The Bootstrap download does not include [jQuery](https://jquery.com/download/) or [Popper.js](https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js), which are required to enable tooltips (as well as a [small piece of JavaScript](https://getbootstrap.com/docs/4.5/components/tooltips/#example-enable-tooltips-everywhere)).
 
