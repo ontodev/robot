@@ -14,244 +14,113 @@
 	<th>disease reported</th>
 	<th>disease ontology id</th>
 	<th>disease stage reported</th>
-	<th>comment</th>
 </tr>
 </thead>
 <thead class="bg-secondary text-white">
 <tr>
 	<th>is-required; subclass-of 'exposure process';</th>
-	<th>subclass-of|equivalent-to 'exposure material'; equivalent-to %3; is-required (when %1 subclass-of (administration or 'exposure without disease' or 'infectious disease' or 'allergic disease')); is-excluded (when %1 equivalent-to disease); is-excluded (when %1 subclass-of ('autoimmune disease' or cancer or 'no exposure' or unknown))</th>
+	<th>subclass-of|equivalent-to 'material entity'; equivalent-to %3; is-required (when %1 subclass-of ('administering substance in vivo' or 'exposure to substance without evidence for disease' or 'occurrence of infectious disease' or 'occurrence of allergic disease')); is-excluded (when %1 equivalent-to 'occurrence of disease'); is-excluded (when %1 subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer' or 'no exposure' or unknown))</th>
 	<th>equivalent-to %2</th>
-	<th>subclass-of 'disease name'; subclass-of hasMaterialBasisIn some %2 (when %1 subclass-of not ('autoimmune disease' or cancer)); equivalent-to %5; is-required (when %1 subclass-of disease); is-excluded (when %1 equivalent-to administration); is-excluded (when %1 subclass-of (vaccination or transplant/transfusion or 'exposure without disease' or 'no exposure' or unknown))</th>
+	<th>subclass-of disease; subclass-of 'has material basis in' some %2 (when %1 not-subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer')); equivalent-to %5; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 equivalent-to 'administering substance in vivo'); is-excluded (when %1 subclass-of (vaccination or 'transplant or transfusion' or 'exposure to substance without evidence for disease' or 'no exposure' or unknown))</th>
 	<th>equivalent-to %4</th>
-	<th>subclass-of 'disease stage'; is-required (when %1 subclass-of disease); is-excluded (when %1 subclass-of not disease)</th>
-	<th></th>
+	<th>subclass-of 'disease stage'; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 not-subclass-of 'occurrence of disease')</th>
 </tr>
 </thead>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Vaccination">vaccination</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/VO_0000669">Varicella-zoster virus vaccine</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/VO_0000669">Varicella-zoster virus vaccine</a></td>
+		<td class="bg-light"><a href="ONTIE:0003310">unknown</a></td>
 		<td class="bg-light"></td>
 		<td class="bg-light"></td>
 		<td class="bg-light"></td>
-		<td class="bg-light">PASS: vacciniation has only material</td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge">infectious challenge</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">Hepacivirus C</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">Hepacivirus C</a></td>
+		<td class="bg-light"><a href="ONTIE:0003314">administering substance in vivo</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_11103">Hepacivirus C</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_11103">NCBITaxon:11103</a></td>
 		<td class="bg-light"></td>
 		<td class="bg-light"></td>
 		<td class="bg-light"></td>
-		<td class="bg-light">PASS: infectious challenge requires only material</td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#TransplantOrTransfusion">transplant/transfusion</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/UBERON_0000178">blood</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/UBERON_0000178">blood</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: transplant requires only material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
+		<td class="bg-light"><a href="ONTIE:0003305">exposure to substance without evidence for disease</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
+	</tr>
+	<tr>
+		<td class="bg-light"><a href="ONTIE:0003322">occurrence of disease</a></td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
+		<td class="bg-light"></td>
+	</tr>
+	<tr>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">PASS: infectious disease requires material, disease, stage</td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AllergicDisease">allergic disease</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_4565">Triticum aestivum</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_4565">Triticum aestivum</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_3660">wheat allergy</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_3660">wheat allergy</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Post">post</a></td>
-		<td class="bg-light">PASS: allergic disease requires material, disease, stage</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AutoImmuneDisease">autoimmune disease</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_635">acquired immunodeficiency syndrome</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_635">acquired immunodeficiency syndrome</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic">chronic</a></td>
-		<td class="bg-light">PASS: autoimmune disease requires disease, state; excludes material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Cancer">cancer</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_219">colon cancer</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_219">colon cancer</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic">chronic</a></td>
-		<td class="bg-light">PASS: cancer requires disease, state; excludes material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AsymptomaticInfectionOrColonization">asymptomatic infection/colonization</a></td>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: asymptomatic requires only material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithImmuneReactivity">exposure with immune reactivity</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: exposure with immune reactivity requires only material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithDocumentation">exposure with documentation</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: exposure with documentation requires only material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureToEndemicOrUbiquitousAgent">exposure to endemic/ubiquitous agent</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: exposure to endemic requires only material</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NoExposure">no exposure</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: none requires no fields</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#UnknownExposure">unknown</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS: unknown requires no fields</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure">administration</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">Hepacivirus C</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_11103">Hepacivirus C</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease">exposure without disease</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure">disease</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light">PASS</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
 		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is empty but rule: &quot;is-required true&quot; does not allow this."></td>
 		<td class="bg-light"></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Unable to parse rule &quot;subclass-of hasMaterialBasisIn some (null)&quot;.; Validation failed for rule: &quot;dengue hemorrhagic fever subclass-of hasMaterialBasisIn some (null)&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+	<tr>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">FAIL: material required</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#DiseaseExposure">disease</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousChallenge">'infectious challenge'</a></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">'dengue hemorrhagic fever'</a> or <a href="http://purl.obolibrary.org/obo/DOID_3660">'wheat allergy'</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">'dengue hemorrhagic fever'</a> or <a href="http://purl.obolibrary.org/obo/DOID_3660">'wheat allergy'</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">'acute/recent onset'</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic">chronic</a></td>
-		<td class="bg-light">PASS</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
 		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is empty but rule: &quot;is-required true&quot; does not allow this."></td>
-		<td class="bg-light"></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">FAIL: disease required</td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;Dengue virus equivalent-to (NCBITaxon:11060)&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;NCBITaxon:11060 equivalent-to 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">NCBITaxon:11060</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is empty but rule: &quot;is-required true&quot; does not allow this."></td>
-		<td class="bg-light">FAIL: stage required</td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;Dengue virus equivalent-to 'Dengue virus 2'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;NCBITaxon_11060 equivalent-to 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">FAIL: exposure material must match exposure material ID</td>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;Dengue virus 2 subclass-of disease&quot;.; Validation failed for rule: &quot;Dengue virus 2 subclass-of 'has material basis in' some 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">NCBITaxon:11060</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;Dengue virus 2 subclass-of 'disease name'&quot;.; Validation failed for rule: &quot;Dengue virus 2 subclass-of hasMaterialBasisIn some 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">FAIL: disease value must be a disease</td>
-	</tr>
-	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AdministrationExposure">administration</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#ExposureWithoutDisease">'exposure without disease'</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;'Hepatovirus A' or blood equivalent-to 'blood'&quot;."><a href="http://purl.obolibrary.org/obo/UBERON_0000178">blood</a> or <a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#NCBITaxon_12092">'Hepatovirus A'</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;UBERON_0000178 equivalent-to ('Hepatovirus A' or blood)&quot;."><a href="http://purl.obolibrary.org/obo/UBERON_0000178">blood</a></td>
+		<td class="bg-light"><a href="ONTIE:0003305">'exposure to substance without evidence for disease'</a> or <a href="ONTIE:0003314">'administering substance in vivo'</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;blood or 'Hepacivirus C' equivalent-to (UBERON:0000178)&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11103">'Hepacivirus C'</a> or <a href="http://purl.obolibrary.org/obo/UBERON_0000178">blood</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;UBERON:0000178 equivalent-to (blood or 'Hepacivirus C')&quot;."><a href="http://purl.obolibrary.org/obo/UBERON_0000178">UBERON:0000178</a></td>
 		<td class="bg-light"></td>
 		<td class="bg-light"></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is non-empty (&quot;chronic&quot;) but rule: &quot;is-excluded true&quot; does not allow this."><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#Chronic">chronic</a></td>
-		<td class="bg-light">FAIL: exposure material must match exposure material ID, disease must be excluded when exposure process is not a subclass of disease</td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is non-empty (&quot;Chronic&quot;) but rule: &quot;is-excluded true&quot; does not allow this."><a href="http://purl.obolibrary.org/obo/OGMS_000094">Chronic</a></td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;wheat allergy equivalent-to 'dengue hemorrhagic fever'&quot;.; Validation failed for rule: &quot;dengue hemorrhagic fever equivalent-to 'wheat allergy'&quot;.; Validation failed for rule: &quot;wheat allergy subclass-of hasMaterialBasisIn some 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_3660">wheat allergy</a></td>
-		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;DOID_3660 equivalent-to 'dengue hemorrhagic fever'&quot;.; Validation failed for rule: &quot;DOID_12206 equivalent-to 'wheat allergy'&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_3660">wheat allergy</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">FAIL: not all combinations of the entries in the multi-cells for columns D and E satisfy the given rules</td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;wheat allergy equivalent-to (DOID:12206)&quot;.; Validation failed for rule: &quot;dengue hemorrhagic fever equivalent-to (DOID:3660)&quot;.; Validation failed for rule: &quot;wheat allergy subclass-of 'has material basis in' some 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_3660">wheat allergy</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;DOID:3660 equivalent-to 'dengue hemorrhagic fever'&quot;.; Validation failed for rule: &quot;DOID:12206 equivalent-to 'wheat allergy'&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a>|<a href="http://purl.obolibrary.org/obo/DOID_3660">DOID:3660</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
 	</tr>
 	<tr>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#InfectiousDisease">infectious disease</a></td>
+		<td class="bg-light"><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
 		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
-		<td class="bg-light"><a href="http://www.semanticweb.org/mike/ontologies/2019/6/immune-exposures-ontology#AcuteOrRecentOnset">acute/recent onset</a></td>
-		<td class="bg-light">PASS</td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a>|<a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td class="bg-light"><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
 	</tr>
 </table>
 </body>

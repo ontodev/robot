@@ -490,16 +490,34 @@ public class TableValidator {
         if (reasoner.isEntailed(axiom)) {
           return true;
         }
+      } else if (qType == RTypeEnum.NOT_SUB) {
+        // Check to see if the subjectClass is a subclass of the given rule:
+        OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(subjectCE, ruleCE);
+        if (!reasoner.isEntailed(axiom)) {
+          return true;
+        }
       } else if (qType == RTypeEnum.SUPER) {
         // Check to see if the subjectClass is a superclass of the given rule:
         OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(ruleCE, subjectCE);
         if (reasoner.isEntailed(axiom)) {
           return true;
         }
+      } else if (qType == RTypeEnum.NOT_SUPER) {
+        // Check to see if the subjectClass is a superclass of the given rule:
+        OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(ruleCE, subjectCE);
+        if (!reasoner.isEntailed(axiom)) {
+          return true;
+        }
       } else if (qType == RTypeEnum.EQUIV) {
         OWLEquivalentClassesAxiom axiom =
             dataFactory.getOWLEquivalentClassesAxiom(subjectCE, ruleCE);
         if (reasoner.isEntailed(axiom)) {
+          return true;
+        }
+      } else if (qType == RTypeEnum.NOT_EQUIV) {
+        OWLEquivalentClassesAxiom axiom =
+            dataFactory.getOWLEquivalentClassesAxiom(subjectCE, ruleCE);
+        if (!reasoner.isEntailed(axiom)) {
           return true;
         }
       } else {
@@ -684,14 +702,14 @@ public class TableValidator {
     for (String val : cellData) {
       // Try to get IRI based on label
       IRI iri = labelToIRIMap.getOrDefault(val, null);
+      OWLClassExpression expr = null;
       if (iri == null) {
         // Try to use parser as a backup if we couldn't get the IRI
         // e.g., if value provided was a CURIE or other short form
-        OWLClassExpression expr;
         try {
           expr = parser.parse(val);
         } catch (Exception e) {
-          expr = null;
+          // Do nothing
         }
         if (expr == null) {
           // Not a class expression
@@ -699,17 +717,12 @@ public class TableValidator {
           sort.add(val);
           continue;
         }
-        // Render based on display/sort renderers and provider
-        display.add(ExportOperation.renderManchester(displayRenderer, provider, expr));
-        sort.add(ExportOperation.renderManchester(sortRenderer, provider, expr));
-      } else {
-        // We have an IRI from the label -> IRI map so we can get a label as well
-        // Right now we are only displaying labels, we don't have another provider option for
-        // validate
-        String label = iriToLabelMap.getOrDefault(iri, null);
-        if (label != null) {
-          val = label;
+        if (!expr.isAnonymous()) {
+          iri = expr.asOWLClass().getIRI();
         }
+      }
+
+      if (iri != null) {
         // Maybe add HTML link
         if (outFormat.equalsIgnoreCase("html")) {
           display.add(String.format("<a href=\"%s\">%s</a>", iri.toString(), val));
@@ -717,6 +730,11 @@ public class TableValidator {
           display.add(val);
         }
         sort.add(val);
+      } else {
+        // No IRI, the expression is anonymous
+        // Render based on display/sort renderers and provider
+        display.add(ExportOperation.renderManchester(displayRenderer, provider, expr));
+        sort.add(ExportOperation.renderManchester(sortRenderer, provider, expr));
       }
     }
     return new Cell(column, display, sort);
@@ -1238,8 +1256,8 @@ public class TableValidator {
     EQUIV("equivalent-to", RCatEnum.QUERY),
     NOT_EQUIV("not-equivalent-to", RCatEnum.QUERY),
     DIRECT_SUB("direct-subclass-of", RCatEnum.QUERY),
-    NOT_SUB("not-direct-subclass-of", RCatEnum.QUERY),
-    NOT_DIRECT_SUB("not-subclass-of", RCatEnum.QUERY),
+    NOT_SUB("not-subclass-of", RCatEnum.QUERY),
+    NOT_DIRECT_SUB("not-direct-subclass-of", RCatEnum.QUERY),
     SUB("subclass-of", RCatEnum.QUERY),
     DIRECT_INSTANCE("direct-instance-of", RCatEnum.QUERY),
     NOT_INSTANCE("not-instance-of", RCatEnum.QUERY),

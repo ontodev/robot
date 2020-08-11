@@ -59,11 +59,6 @@ public class ValidateOperationTest extends CoreTest {
     assertNotEquals(fileWithExpectedContents, "");
     String expectedResult = FileUtils.readFileToString(new File(fileWithExpectedContents));
 
-    String output = outStream.toString();
-    FileWriter fw = new FileWriter(new File("test.txt"));
-    fw.write(output);
-    fw.close();
-
     assertEquals(outStream.toString(), expectedResult);
   }
 }
