@@ -227,10 +227,15 @@ public class TableValidator {
       List<Column> columns = outTable.getColumns();
 
       // Validate data row by row, column by column
+      int add = 0;
       for (rowNum = 0; rowNum < data.size(); rowNum++) {
+        if (rowNum + 1 == skippedRow) {
+          // Add 1 to each row num we report on to compensate for skipped row
+          add = 1;
+        }
         List<String> row = data.get(rowNum);
         if (!hasContent(row)) {
-          logger.debug(String.format("Skipping empty row %d", rowNum + 1));
+          logger.debug(String.format("Skipping empty row %d", rowNum + 1 + add));
           continue;
         }
 
@@ -275,7 +280,7 @@ public class TableValidator {
                         new String[] {
                           String.valueOf(errCount),
                           currentTable,
-                          IOHelper.cellToA1(rowNum + 3, colNum + 1),
+                          IOHelper.cellToA1(rowNum + 3 + add, colNum + 1),
                           "error",
                           FilenameUtils.getBaseName(currentTable)
                               + "!"

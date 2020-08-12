@@ -27,6 +27,7 @@ public class ValidateOperation {
     options.put("output-dir", null);
     options.put("silent", "true");
     options.put("errors", null);
+    options.put("skip-row", "0");
     return options;
   }
 
