@@ -387,17 +387,21 @@ public class Template {
         hasException = true;
         errCount++;
         logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
-        errors.add(
-            new String[] {
-              String.valueOf(errCount),
-              this.name,
-              cellToA1(e.rowNum, e.colNum),
-              "",
-              e.ruleID,
-              e.ruleName,
-              e.cellValue,
-              ""
-            });
+
+        // Only add to errors table if we have a row & col num
+        if (e.rowNum != -1 && e.colNum != -1) {
+          errors.add(
+              new String[] {
+                String.valueOf(errCount),
+                this.name,
+                cellToA1(e.rowNum, e.colNum),
+                "error",
+                e.ruleID,
+                e.ruleName,
+                e.cellValue,
+                ""
+              });
+        }
       }
     }
 

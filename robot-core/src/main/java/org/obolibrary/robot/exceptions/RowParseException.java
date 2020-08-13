@@ -4,8 +4,8 @@ package org.obolibrary.robot.exceptions;
 public class RowParseException extends Exception {
   private static final long serialVersionUID = -646778731149993824L;
 
-  public int rowNum;
-  public int colNum;
+  public int rowNum = -1;
+  public int colNum = -1;
   public String ruleID;
   public String ruleName;
   public String cellValue;
