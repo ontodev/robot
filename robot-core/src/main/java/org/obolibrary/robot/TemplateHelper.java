@@ -448,7 +448,7 @@ public class TemplateHelper {
         } catch (OWLParserException e) {
           String cause = getManchesterErrorCause(e);
           throw new RowParseException(
-              String.format(manchesterParseError, sub, rowNum, column + 1, tableName, cause));
+              String.format(manchesterParseError, sub, rowNum, column, tableName, cause));
         }
       }
     }
@@ -788,7 +788,7 @@ public class TemplateHelper {
         } catch (OWLParserException e) {
           String cause = getManchesterErrorCause(e);
           throw new RowParseException(
-              String.format(manchesterParseError, sub, rowNum, column + 1, tableName, cause));
+              String.format(manchesterParseError, sub, rowNum, column, tableName, cause));
         }
       }
     }
@@ -1098,7 +1098,7 @@ public class TemplateHelper {
     } catch (OWLParserException e) {
       String cause = getManchesterErrorCause(e);
       throw new RowParseException(
-          String.format(manchesterParseError, content, rowNum, column + 1, tableName, cause));
+          String.format(manchesterParseError, content, rowNum, column, tableName, cause));
     }
     return expr;
   }

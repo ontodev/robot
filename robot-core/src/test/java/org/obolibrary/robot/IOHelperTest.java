@@ -21,6 +21,19 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 /** Tests for IOHelper. */
 public class IOHelperTest extends CoreTest {
 
+  /** Tests converting row and column numbers to A1 notation. */
+  @Test
+  public void testA1Notation() {
+    String a1 = IOHelper.cellToA1(1, 1);
+    assertEquals("A1", a1);
+
+    a1 = IOHelper.cellToA1(100, 200);
+    assertEquals("GR100", a1);
+
+    a1 = IOHelper.cellToA1(39, 8459);
+    assertEquals("LMI39", a1);
+  }
+
   /**
    * Test adding prefixes using the addPrefixes method
    *

@@ -1,0 +1,709 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.w3.org/2002/07/owl#"
+     xml:base="http://www.w3.org/2002/07/owl"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <Ontology/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IDO_0000664 -->
+
+    <ObjectProperty rdf:about="http://purl.obolibrary.org/obo/IDO_0000664">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has material basis in</rdfs:label>
+    </ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- ONTIE:0003304 -->
+
+    <Class rdf:about="ONTIE:0003304">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003314"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Adminstering a vaccine to an organism with the intention of inducing immunity against antigen components of the vaccine.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">vaccination</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/VO_0000002</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003305 -->
+
+    <Class rdf:about="ONTIE:0003305">
+        <rdfs:subClassOf rdf:resource="http://example.com/IE_1"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An unplanned process in which an organism comes into contact with a substance without evidence for a disease caused by that exposure.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">exposure to substance without evidence for disease</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003306 -->
+
+    <Class rdf:about="ONTIE:0003306">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003305"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A process in which an infectious agent is in or on the body of an organism without causing detectable disease .</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of asymptomatic infection</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003307 -->
+
+    <Class rdf:about="ONTIE:0003307">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003305"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A process in which an organism is exposed to a substance which is evident from that process having been observed or documented.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">documented exposure without evidence for disease</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003308 -->
+
+    <Class rdf:about="ONTIE:0003308">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003305"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A process in which an organism&apos;s exposure to a material entity is assumed from that material being commonly present in the environment of the organism.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">environmental exposure to endemic/ubiquitous agent without evidence for disease</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003309 -->
+
+    <Class rdf:about="ONTIE:0003309">
+        <rdfs:subClassOf rdf:resource="http://example.com/IE_1"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An organism&apos;s lifspan which does not include exposure to a substance of interest.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">no exposure</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003310 -->
+
+    <Class rdf:about="ONTIE:0003310">
+        <rdfs:subClassOf rdf:resource="http://example.com/IE_1"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An organism&apos;s lifespan for which there is no available information on an exposure to a material entity of interest.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">unknown</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003311 -->
+
+    <Class rdf:about="ONTIE:0003311">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003316"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A planned process in which solid tissue is transferred to an organism</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">solid tissue transplantation</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003312 -->
+
+    <Class rdf:about="ONTIE:0003312">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003316"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A planned process in which a bodily fluid is transferred into an organism</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">transfusion</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003313 -->
+
+    <Class rdf:about="ONTIE:0003313">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003320"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An occurrence of cancer where there is evidence for the presence of a cancer causing oncovirus in the tumor.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of cancer associated with virus</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003314 -->
+
+    <Class rdf:about="ONTIE:0003314">
+        <rdfs:subClassOf rdf:resource="http://example.com/IE_1"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A planned process by which a material is intentionally given to an organism resulting in exposure of the organism to that substance.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">administering substance in vivo</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_0600007</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003315 -->
+
+    <Class rdf:about="ONTIE:0003315">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003314"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Administering an infectious agent to an organism in order to test if and how an infection will occur.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">infectious challenge</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_0000712</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003316 -->
+
+    <Class rdf:about="ONTIE:0003316">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003314"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Transferring a solid tissue (transplant) or bodily fluid (transfusion) to an organism.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">transplant or transfusion</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_0000105</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003317 -->
+
+    <Class rdf:about="ONTIE:0003317">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003322"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The process in which an infectious disease unfolds.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of infectious disease</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/DOID_0050117</rdfs:seeAlso>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_1110008</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003318 -->
+
+    <Class rdf:about="ONTIE:0003318">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003322"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The process in which an allergic disease unfolds.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of allergic disease</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/DOID_1205</rdfs:seeAlso>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_1110012</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003319 -->
+
+    <Class rdf:about="ONTIE:0003319">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003322"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The process in which an autoimmune disease unfolds.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of autoimmune disease</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/DOID_417</rdfs:seeAlso>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_1110054</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003320 -->
+
+    <Class rdf:about="ONTIE:0003320">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003322"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The process in which cancer unfolds</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of cancer</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/DOID_162</rdfs:seeAlso>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_1110053</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003321 -->
+
+    <Class rdf:about="ONTIE:0003321">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003305"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A process in which an organism is exposed to a material entity which is evident by a detectable immune reactivity against it.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">exposure with existing immune reactivity without evidence for disease</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OBI_1110061</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003322 -->
+
+    <Class rdf:about="ONTIE:0003322">
+        <rdfs:subClassOf rdf:resource="http://example.com/IE_1"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The process in which a disease unfolds.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurrence of disease</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/DOID_4</rdfs:seeAlso>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://purl.obolibrary.org/obo/OGMS_0000031</rdfs:seeAlso>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003544 -->
+
+    <Class rdf:about="ONTIE:0003544">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/OBI_0000278"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Post</rdfs:label>
+    </Class>
+    
+
+
+    <!-- ONTIE:0003545 -->
+
+    <Class rdf:about="ONTIE:0003545">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/OBI_0000278"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Unknown</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://example.com/IE_1 -->
+
+    <Class rdf:about="http://example.com/IE_1">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">exposure process</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/BFO_0000040 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/BFO_0000040">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">material entity</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_1205 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_1205">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:label>allergic disease</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_12206 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_12206">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://purl.obolibrary.org/obo/IDO_0000664"/>
+                <someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_12637"/>
+            </Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>dengue hemorrhagic fever</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_162 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_162">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:label>cancer</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_219 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_219">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_162"/>
+        <rdfs:label>colon cancer</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_3660 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_3660">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_1205"/>
+        <rdfs:subClassOf>
+            <Restriction>
+                <onProperty rdf:resource="http://purl.obolibrary.org/obo/IDO_0000664"/>
+                <someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_4565"/>
+            </Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label>wheat allergy</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_4 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_4">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disease</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_417 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_417">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_4"/>
+        <rdfs:label>autoimmune disease</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/DOID_635 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/DOID_635">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/DOID_417"/>
+        <rdfs:label>acquired immunodeficiency syndrome</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_1 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_1">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000040"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organism</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_11053 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_11053">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dengue virus 1</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_11060 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_11060">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dengue virus 2</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_11103 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_11103">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hepacivirus C</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_12637 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_12637">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dengue virus</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_4565 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_4565">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_1"/>
+        <rdfs:label>Triticum aestivum</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OBI_0000278 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/OBI_0000278">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disease stage</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OGMS_0000094 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/OGMS_0000094">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/OBI_0000278"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Acute/Recent onset</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OGMS_000094 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/OGMS_000094">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/OBI_0000278"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Chronic</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000178 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000178">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000040"/>
+        <rdfs:label>blood</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000035 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000035">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dryvax</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000044 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000044">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FluMist</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000045 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000045">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Fluarix</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000046 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000046">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Fluvirin</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000047 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000047">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Fluzone</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000071 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000071">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Menactra</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000081 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000081">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Influenza A (H1N1) 2009 Monovalent Vaccine (Novartis)</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000087 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000087">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Plasmodium falciparum vaccine</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000088 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000088">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Pneumovax 23 (USA)</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000121 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000121">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">YF-Vax</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000122 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000122">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Yellow fever 17D vaccine vector</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000124 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000124">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Zostavax</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000642 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000642">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Influenza virus vaccine</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Trivalent inactivated influenza</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000669 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000669">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Varicella-zoster virus vaccine</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0000771 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0000771">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BCG Vaccine</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0001246 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0001246">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Menveo</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0003120 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0003120">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MVA85A</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0003133 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0003133">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MRKAd5 HIV-1 gag/pol/nef</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0003138 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0003138">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ACWY Vax</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0003139 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0003139">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stamaril</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0003152 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0003152">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">HEPLISAV-B</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0004091 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0004091">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">LC16m8</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0004660 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0004660">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">rVSV-EBOV</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0004809 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0004809">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2008-2009 trivalent influenza vaccine</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0010711 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0010711">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Engerix-B</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_0010725 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_0010725">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/VO_1"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Meningococcal Polysaccharide Vaccine, Groups A &amp; C, Menomune A/C</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/VO_1 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/VO_1">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000040"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">vaccine</rdfs:label>
+    </Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/XCO_0000248 -->
+
+    <Class rdf:about="http://purl.obolibrary.org/obo/XCO_0000248">
+        <rdfs:subClassOf rdf:resource="ONTIE:0003316"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kidney transplant</rdfs:label>
+    </Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+
