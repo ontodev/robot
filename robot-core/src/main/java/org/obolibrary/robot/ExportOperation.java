@@ -220,7 +220,7 @@ public class ExportOperation {
       OWLAnnotationProperty ap = null;
 
       // Handle rdfs:label defaults
-      if (iri != null && iri.toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
+      if (iri != null && iri.equals(dataFactory.getRDFSLabel().getIRI())) {
         currentEntityFormat = "LABEL";
         currentEntitySelect = "NAMED";
         ap = dataFactory.getRDFSLabel();
@@ -575,7 +575,7 @@ public class ExportOperation {
     List<String> values = new ArrayList<>();
     for (OWLAnnotationAssertionAxiom a :
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
-      if (a.getProperty().getIRI().toString().equals(ap.getIRI().toString())) {
+      if (a.getProperty().getIRI().equals(ap.getIRI())) {
         if (a.getValue().isIRI()) {
           IRI iri = a.getValue().asIRI().orNull();
           if (iri != null) {
@@ -743,7 +743,7 @@ public class ExportOperation {
           pe = avf.getProperty();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI().toString().equals(dp.getIRI().toString())) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -756,7 +756,7 @@ public class ExportOperation {
           pe = svf.getProperty();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI().toString().equals(dp.getIRI().toString())) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -770,7 +770,7 @@ public class ExportOperation {
           n = ec.getCardinality();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI().toString().equals(dp.getIRI().toString())) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -784,7 +784,7 @@ public class ExportOperation {
           n = minc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI().toString().equals(dp.getIRI().toString())) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -798,7 +798,7 @@ public class ExportOperation {
           n = maxc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI().toString().equals(dp.getIRI().toString())) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -846,7 +846,7 @@ public class ExportOperation {
           f = avf.getFiller();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI().toString().equals(op.getIRI().toString())) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -860,7 +860,7 @@ public class ExportOperation {
           f = svf.getFiller();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI().toString().equals(op.getIRI().toString())) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -875,7 +875,7 @@ public class ExportOperation {
           n = ec.getCardinality();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI().toString().equals(op.getIRI().toString())) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -890,7 +890,7 @@ public class ExportOperation {
           n = minc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI().toString().equals(op.getIRI().toString())) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -905,7 +905,7 @@ public class ExportOperation {
           n = maxc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI().toString().equals(op.getIRI().toString())) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
