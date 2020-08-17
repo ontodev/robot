@@ -120,17 +120,18 @@ public class TemplateHelper {
    * @param checker QuotedEntityChecker to get properties
    * @param value value or values to parse to properties
    * @param split character to split value on or null
+   * @param column the column number for logging
    * @return set of OWLAnnotationProperties
    * @throws RowParseException if property cannot be found or created
    */
   public static Set<OWLAnnotationProperty> getAnnotationProperties(
-      QuotedEntityChecker checker, String value, String split) throws Exception {
+      QuotedEntityChecker checker, String value, String split, int column) throws Exception {
     List<String> allValues = getAllValues(value, split);
 
     Set<OWLAnnotationProperty> properties = new HashSet<>();
     for (String v : allValues) {
       String content = QuotedEntityChecker.wrap(v);
-      properties.add(getAnnotationProperty(checker, content));
+      properties.add(getAnnotationProperty(checker, content, column));
     }
 
     return properties;
@@ -141,142 +142,17 @@ public class TemplateHelper {
    *
    * @param checker used to search by rdfs:label (for example)
    * @param name the name to search for
+   * @param column the column number for logging
    * @return an annotation property
    * @throws RowParseException if the name cannot be resolved
    */
   public static OWLAnnotationProperty getAnnotationProperty(
-      QuotedEntityChecker checker, String name) throws Exception {
+      QuotedEntityChecker checker, String name, int column) throws Exception {
     OWLAnnotationProperty property = checker.getOWLAnnotationProperty(name);
     if (property != null) {
       return property;
     }
-    throw new RowParseException(String.format(annotationPropertyError, name));
-  }
-
-  /**
-   * Create an OWLAnnotation based on the template string and cell value.
-   *
-   * @param checker used to resolve the annotation property
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return OWLAnnotation, or null if template string is not supported
-   * @throws Exception if annotation cannot be created
-   */
-  @Deprecated
-  public static OWLAnnotation getAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    if (template.startsWith("A ")) {
-      return getStringAnnotation(checker, template, value);
-    } else if (template.startsWith("AT ")) {
-      if (template.contains("^^")) {
-        return getTypedAnnotation(checker, template, value);
-      } else {
-        throw new Exception(
-            String.format("TYPED FORMAT ERROR invalid typed annotation string: %s", template));
-      }
-    } else if (template.startsWith("AL ")) {
-      if (template.contains("@")) {
-        return getLanguageAnnotation(checker, template, value);
-      } else {
-        throw new Exception(
-            String.format(
-                "LANGUAGE FORMAT ERROR invalid language annotation template string: %s", template));
-      }
-    } else if (template.startsWith("AI ")) {
-      return getIRIAnnotation(checker, template, value);
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Create an OWLAnnotation based on the template string and cell value. Replaced by
-   * getAnnotation(QuotedEntityChecker checker, String template, String value).
-   *
-   * @param tableName name of table
-   * @param checker used to resolve the annotation property
-   * @param ioHelper IOHelper used to create IRIs from values
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return OWLAnnotation, or null if template string is not supported
-   * @throws Exception if annotation property cannot be found
-   */
-  @Deprecated
-  public static OWLAnnotation getAnnotation(
-      String tableName,
-      QuotedEntityChecker checker,
-      IOHelper ioHelper,
-      String template,
-      String value)
-      throws Exception {
-    if (template.startsWith("A ")) {
-      return getStringAnnotation(checker, template, value);
-    } else if (template.startsWith("AT ")) {
-      if (template.contains("^^")) {
-        return getTypedAnnotation(checker, template, value);
-      } else {
-        throw new Exception(
-            String.format("TYPED FORMAT ERROR invalid typed annotation string: %s", template));
-      }
-    } else if (template.startsWith("AL ")) {
-      if (template.contains("@")) {
-        return getLanguageAnnotation(checker, template, value);
-      } else {
-        throw new Exception(
-            String.format(
-                "LANGUAGE FORMAT ERROR invalid language annotation template string: %s", template));
-      }
-    } else if (template.startsWith("AI ")) {
-      IRI iri = ioHelper.createIRI(value);
-      if (iri != null) {
-        return getIRIAnnotation(checker, template, iri);
-      } else {
-        throw new RowParseException(String.format(iriError, 0, 0, tableName, value));
-      }
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Create an OWLAnnotation based on the template string and cell value. Replaced by
-   * getAnnotation(QuotedEntityChecker checker, String template, String value).
-   *
-   * @param checker used to resolve the annotation property
-   * @param ioHelper IOHelper used to create IRIs from values
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return OWLAnnotation, or null if template string is not supported
-   * @throws Exception if annotation property cannot be found
-   */
-  @Deprecated
-  public static OWLAnnotation getAnnotation(
-      QuotedEntityChecker checker, IOHelper ioHelper, String template, String value)
-      throws Exception {
-    if (template.startsWith("A ")) {
-      return getStringAnnotation(checker, template, value);
-    } else if (template.startsWith("AT ")) {
-      if (template.contains("^^")) {
-        return getTypedAnnotation(checker, template, value);
-      } else {
-        throw new Exception(String.format(typedFormatError, 0, "", template));
-      }
-    } else if (template.startsWith("AL ")) {
-      if (template.contains("@")) {
-        return getLanguageAnnotation(checker, template, value);
-      } else {
-        throw new Exception(String.format(languageFormatError, 0, "", template));
-      }
-    } else if (template.startsWith("AI ")) {
-      IRI iri = ioHelper.createIRI(value);
-      if (iri != null) {
-        return getIRIAnnotation(checker, template, iri);
-      } else {
-        throw new Exception(String.format(iriError, 0, 0, "", value));
-      }
-    } else {
-      return null;
-    }
+    throw new RowParseException(String.format(annotationPropertyError, name), 2, column + 1, name);
   }
 
   /**
@@ -310,7 +186,7 @@ public class TemplateHelper {
     }
 
     if (template.startsWith("A ") || template.startsWith("C ")) {
-      return getStringAnnotations(checker, template, split, value);
+      return getStringAnnotations(checker, template, split, value, column);
     } else if (template.startsWith("AT ") || template.startsWith("CT ")) {
       if (template.contains("^^")) {
         return getTypedAnnotations(tableName, checker, template, split, value, rowNum, column);
@@ -319,7 +195,7 @@ public class TemplateHelper {
       }
     } else if (template.startsWith("AL ") || template.startsWith("CL ")) {
       if (template.contains("@")) {
-        return getLanguageAnnotations(checker, template, split, value);
+        return getLanguageAnnotations(checker, template, split, value, column);
       } else {
         throw new ColumnException(String.format(languageFormatError, column, tableName, template));
       }
@@ -328,15 +204,15 @@ public class TemplateHelper {
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
-          annotations.add(maybeGetIRIAnnotation(checker, template, v));
+          annotations.add(maybeGetIRIAnnotation(checker, template, v, column));
         }
       } else {
-        annotations.add(maybeGetIRIAnnotation(checker, template, value));
+        annotations.add(maybeGetIRIAnnotation(checker, template, value, column));
       }
       return annotations;
     } else if (template.equals("LABEL")) {
       // Handle special LABEL case
-      return getStringAnnotations(checker, template, split, value);
+      return getStringAnnotations(checker, template, split, value, column);
     } else {
       return new HashSet<>();
     }
@@ -448,9 +324,9 @@ public class TemplateHelper {
         } catch (OWLParserException e) {
           String cause = getManchesterErrorCause(e);
           throw new RowParseException(
-              String.format(manchesterParseError, sub, rowNum, column, tableName, cause),
+              String.format(manchesterParseError, sub, rowNum, column + 1, tableName, cause),
               rowNum,
-              column,
+              column + 1,
               v);
         }
       }
@@ -477,7 +353,11 @@ public class TemplateHelper {
     if (datatype != null) {
       return datatype;
     }
-    throw new RowParseException(String.format(datatypeError, name, rowNum, column + 1, tableName));
+    throw new RowParseException(
+        String.format(datatypeError, name, rowNum, column + 1, tableName),
+        rowNum,
+        column + 1,
+        name);
   }
 
   /**
@@ -555,17 +435,18 @@ public class TemplateHelper {
    * @param checker used to resolve the annotation property
    * @param template the template string
    * @param value the value for the annotation
+   * @param column the column number for logging
    * @return a new annotation axiom with property and an IRI value
    * @throws RowParseException if the annotation property cannot be found or the IRI cannot be
    *     created
    */
   public static OWLAnnotation getIRIAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
+      QuotedEntityChecker checker, String template, String value, int column) throws Exception {
     IRI iri = checker.getIRI(value, true);
     if (iri == null) {
       return null;
     }
-    return getIRIAnnotation(checker, template, iri);
+    return getIRIAnnotation(checker, template, iri, column);
   }
 
   /**
@@ -575,13 +456,14 @@ public class TemplateHelper {
    * @param checker used to resolve the annotation property
    * @param template the template string
    * @param value the IRI value for the annotation
+   * @param column the column number for logging
    * @return a new annotation axiom with property and an IRI value
    * @throws RowParseException if the annotation property cannot be found
    */
   public static OWLAnnotation getIRIAnnotation(
-      QuotedEntityChecker checker, String template, IRI value) throws Exception {
+      QuotedEntityChecker checker, String template, IRI value, int column) throws Exception {
     String name = template.substring(2).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
+    OWLAnnotationProperty property = getAnnotationProperty(checker, name, column);
     return dataFactory.getOWLAnnotation(property, value);
   }
 
@@ -654,25 +536,6 @@ public class TemplateHelper {
   }
 
   /**
-   * Return a set of language tagged annotations for the given template and value. The template
-   * string format is "AL [name]@[lang]" and the value is any string. Replaced by sets of
-   * annotations to support splits.
-   *
-   * @param checker used to resolve the annotation property
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return a new annotation with property and language tagged literal
-   * @throws Exception if the annotation property cannot be found
-   */
-  @Deprecated
-  public static OWLAnnotation getLanguageAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "@");
-    String lang = template.substring(template.indexOf("@") + 1).trim();
-    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, lang));
-  }
-
-  /**
    * Return a set of language tagged annotations for the given template and value(s). The template
    * string format is "AL [name]@[lang]" and the value is any string.
    *
@@ -684,8 +547,9 @@ public class TemplateHelper {
    * @throws RowParseException if the annotation property cannot be found
    */
   public static Set<OWLAnnotation> getLanguageAnnotations(
-      QuotedEntityChecker checker, String template, String split, String value) throws Exception {
-    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "@");
+      QuotedEntityChecker checker, String template, String split, String value, int column)
+      throws Exception {
+    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "@", column);
     String lang = template.substring(template.indexOf("@") + 1).trim();
 
     Set<OWLAnnotation> annotations = new HashSet<>();
@@ -791,9 +655,9 @@ public class TemplateHelper {
         } catch (OWLParserException e) {
           String cause = getManchesterErrorCause(e);
           throw new RowParseException(
-              String.format(manchesterParseError, sub, rowNum, column, tableName, cause),
+              String.format(manchesterParseError, sub, rowNum, column + 1, tableName, cause),
               rowNum,
-              column,
+              column + 1,
               v);
         }
       }
@@ -803,35 +667,19 @@ public class TemplateHelper {
   }
 
   /**
-   * Return a string annotation for the given template string and value. Replaced by sets of
-   * annotations to support splits.
-   *
-   * @param checker used to resolve the annotation property
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return a new annotation with property and string literal value
-   * @throws Exception if the annotation property cannot be found
-   */
-  @Deprecated
-  public static OWLAnnotation getStringAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    String name = template.substring(1).trim();
-    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
-    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value));
-  }
-
-  /**
    * Return a set of string annotations for the given template string and value(s).
    *
    * @param checker used to resolve the annotation property
    * @param template the template string
    * @param split the character to split values on
    * @param value the value for the annotation
+   * @param column the index of the column
    * @return a set of new annotation(s) with property and string literal value
    * @throws RowParseException if the annotation property cannot be found
    */
   public static Set<OWLAnnotation> getStringAnnotations(
-      QuotedEntityChecker checker, String template, String split, String value) throws Exception {
+      QuotedEntityChecker checker, String template, String split, String value, int column)
+      throws Exception {
 
     OWLAnnotationProperty property;
     if (template.equals("LABEL")) {
@@ -839,7 +687,7 @@ public class TemplateHelper {
       property = dataFactory.getRDFSLabel();
     } else {
       String name = template.substring(1).trim();
-      property = getAnnotationProperty(checker, name);
+      property = getAnnotationProperty(checker, name, column);
     }
 
     Set<OWLAnnotation> annotations = new HashSet<>();
@@ -853,26 +701,6 @@ public class TemplateHelper {
     }
 
     return annotations;
-  }
-
-  /**
-   * Return a set of typed annotations for the given template string and value. The template string
-   * format is "AT [name]^^[datatype]" and the value is any string. Replaced by sets of annotations
-   * to support splits.
-   *
-   * @param checker used to resolve the annotation property and datatype
-   * @param template the template string
-   * @param value the value for the annotation
-   * @return a new annotation with property and typed literal value
-   * @throws Exception if the annotation property cannot be found
-   */
-  @Deprecated
-  public static OWLAnnotation getTypedAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
-    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "^^");
-    String typeName = template.substring(template.indexOf("^^") + 2).trim();
-    OWLDatatype datatype = getDatatype(checker, typeName);
-    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, datatype));
   }
 
   /**
@@ -898,7 +726,7 @@ public class TemplateHelper {
       int rowNum,
       int column)
       throws Exception {
-    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "^^");
+    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "^^", column);
     String typeName = template.substring(template.indexOf("^^") + 2).trim();
     OWLDatatype datatype = getDatatype(tableName, checker, typeName, rowNum, column);
 
@@ -1104,9 +932,9 @@ public class TemplateHelper {
     } catch (OWLParserException e) {
       String cause = getManchesterErrorCause(e);
       throw new RowParseException(
-          String.format(manchesterParseError, content, rowNum, column, tableName, cause),
+          String.format(manchesterParseError, content, rowNum, column + 1, tableName, cause),
           rowNum,
-          column,
+          column + 1,
           content);
     }
     return expr;
@@ -1163,14 +991,15 @@ public class TemplateHelper {
    * @param checker QuotedEntityChecker to resolve properties
    * @param template template string
    * @param chr character to split template string
+   * @param column the column number for logging
    * @return OWLAnnotationProperty
    * @throws RowParseException on issue resolving property
    */
   private static OWLAnnotationProperty getAnnotationProperty(
-      QuotedEntityChecker checker, String template, String chr) throws Exception {
+      QuotedEntityChecker checker, String template, String chr, int column) throws Exception {
     template = template.substring(2).trim();
     String name = template.substring(0, template.indexOf(chr)).trim();
-    return getAnnotationProperty(checker, name);
+    return getAnnotationProperty(checker, name, column);
   }
 
   /**
@@ -1237,16 +1066,17 @@ public class TemplateHelper {
    * @param checker QuotedEntityChecker to resolve entities
    * @param template template string
    * @param value value to use with the template string
+   * @param column the column number for logging
    * @return OWLAnnotation created from template and value
    * @throws RowParseException if entities cannot be resolved
    */
   private static OWLAnnotation maybeGetIRIAnnotation(
-      QuotedEntityChecker checker, String template, String value) throws Exception {
+      QuotedEntityChecker checker, String template, String value, int column) throws Exception {
     IRI iri = checker.getIRI(value, true);
     if (iri == null) {
       iri = IRI.create(value);
     }
-    return getIRIAnnotation(checker, template, iri);
+    return getIRIAnnotation(checker, template, iri, column);
   }
 
   /**
@@ -1268,6 +1098,133 @@ public class TemplateHelper {
     }
     csv.close();
     return rows;
+  }
+
+  /**
+   * Create an OWLAnnotation based on the template string and cell value. Replaced by more-specific
+   * methods to get annotations by their type (e.g., getStringAnnotation).
+   *
+   * @param tableName name of table
+   * @param checker used to resolve the annotation property
+   * @param ioHelper IOHelper used to create IRIs from values
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return OWLAnnotation, or null if template string is not supported
+   * @throws Exception if annotation property cannot be found
+   */
+  @Deprecated
+  public static OWLAnnotation getAnnotation(
+      String tableName,
+      QuotedEntityChecker checker,
+      IOHelper ioHelper,
+      String template,
+      String value)
+      throws Exception {
+    if (template.startsWith("A ")) {
+      return getStringAnnotation(checker, template, value);
+    } else if (template.startsWith("AT ")) {
+      if (template.contains("^^")) {
+        return getTypedAnnotation(checker, template, value);
+      } else {
+        throw new Exception(
+            String.format("TYPED FORMAT ERROR invalid typed annotation string: %s", template));
+      }
+    } else if (template.startsWith("AL ")) {
+      if (template.contains("@")) {
+        return getLanguageAnnotation(checker, template, value);
+      } else {
+        throw new Exception(
+            String.format(
+                "LANGUAGE FORMAT ERROR invalid language annotation template string: %s", template));
+      }
+    } else if (template.startsWith("AI ")) {
+      IRI iri = ioHelper.createIRI(value);
+      if (iri != null) {
+        return getIRIAnnotation(checker, template, iri, 0);
+      } else {
+        throw new RowParseException(String.format(iriError, 0, 0, tableName, value));
+      }
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Create an OWLAnnotation based on the template string and cell value. Replaced by more-specific
+   * methods to get annotations by their type (e.g., getStringAnnotation).
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return OWLAnnotation, or null if template string is not supported
+   * @throws Exception if annotation cannot be created
+   */
+  @Deprecated
+  public static OWLAnnotation getAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    if (template.startsWith("A ")) {
+      return getStringAnnotation(checker, template, value);
+    } else if (template.startsWith("AT ")) {
+      if (template.contains("^^")) {
+        return getTypedAnnotation(checker, template, value);
+      } else {
+        throw new Exception(
+            String.format("TYPED FORMAT ERROR invalid typed annotation string: %s", template));
+      }
+    } else if (template.startsWith("AL ")) {
+      if (template.contains("@")) {
+        return getLanguageAnnotation(checker, template, value);
+      } else {
+        throw new Exception(
+            String.format(
+                "LANGUAGE FORMAT ERROR invalid language annotation template string: %s", template));
+      }
+    } else if (template.startsWith("AI ")) {
+      return getIRIAnnotation(checker, template, value, 0);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Create an OWLAnnotation based on the template string and cell value. Replaced by more-specific
+   * methods to get annotations by their type (e.g., getStringAnnotation).
+   *
+   * @param checker used to resolve the annotation property
+   * @param ioHelper IOHelper used to create IRIs from values
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return OWLAnnotation, or null if template string is not supported
+   * @throws Exception if annotation property cannot be found
+   */
+  @Deprecated
+  public static OWLAnnotation getAnnotation(
+      QuotedEntityChecker checker, IOHelper ioHelper, String template, String value)
+      throws Exception {
+    if (template.startsWith("A ")) {
+      return getStringAnnotation(checker, template, value);
+    } else if (template.startsWith("AT ")) {
+      if (template.contains("^^")) {
+        return getTypedAnnotation(checker, template, value);
+      } else {
+        throw new Exception(String.format(typedFormatError, 0, "", template));
+      }
+    } else if (template.startsWith("AL ")) {
+      if (template.contains("@")) {
+        return getLanguageAnnotation(checker, template, value);
+      } else {
+        throw new Exception(String.format(languageFormatError, 0, "", template));
+      }
+    } else if (template.startsWith("AI ")) {
+      IRI iri = ioHelper.createIRI(value);
+      if (iri != null) {
+        return getIRIAnnotation(checker, template, iri, 0);
+      } else {
+        throw new Exception(String.format(iriError, 0, 0, "", value));
+      }
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -1316,6 +1273,48 @@ public class TemplateHelper {
               entity.getIRI(), annotation, axiomAnnotations));
     }
     return axioms;
+  }
+
+  /**
+   * Given a QuotedEntityChecker, a string value, and a character to split the value string on (or
+   * null), return the value or values as a set of OWLAnnotationProperties.
+   *
+   * @param checker QuotedEntityChecker to get properties
+   * @param value value or values to parse to properties
+   * @param split character to split value on or null
+   * @return set of OWLAnnotationProperties
+   * @throws RowParseException if property cannot be found or created
+   */
+  @Deprecated
+  public static Set<OWLAnnotationProperty> getAnnotationProperties(
+      QuotedEntityChecker checker, String value, String split) throws Exception {
+    List<String> allValues = getAllValues(value, split);
+
+    Set<OWLAnnotationProperty> properties = new HashSet<>();
+    for (String v : allValues) {
+      String content = QuotedEntityChecker.wrap(v);
+      properties.add(getAnnotationProperty(checker, content));
+    }
+
+    return properties;
+  }
+
+  /**
+   * Find an annotation property with the given name or create one.
+   *
+   * @param checker used to search by rdfs:label (for example)
+   * @param name the name to search for
+   * @return an annotation property
+   * @throws RowParseException if the name cannot be resolved
+   */
+  @Deprecated
+  public static OWLAnnotationProperty getAnnotationProperty(
+      QuotedEntityChecker checker, String name) throws Exception {
+    OWLAnnotationProperty property = checker.getOWLAnnotationProperty(name);
+    if (property != null) {
+      return property;
+    }
+    throw new RowParseException(String.format(annotationPropertyError, name));
   }
 
   /**
@@ -1409,6 +1408,70 @@ public class TemplateHelper {
   }
 
   /**
+   * Return an IRI annotation for the given template string and IRI value. The template string
+   * format is "AI [name]" and the value is an IRI.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the IRI value for the annotation
+   * @return a new annotation axiom with property and an IRI value
+   * @throws RowParseException if the annotation property cannot be found
+   */
+  @Deprecated
+  public static OWLAnnotation getIRIAnnotation(
+      QuotedEntityChecker checker, String template, IRI value) throws Exception {
+    String name = template.substring(2).trim();
+    OWLAnnotationProperty property = getAnnotationProperty(checker, name);
+    return dataFactory.getOWLAnnotation(property, value);
+  }
+
+  /**
+   * Return a set of language tagged annotations for the given template and value. The template
+   * string format is "AL [name]@[lang]" and the value is any string. Replaced by sets of
+   * annotations to support splits.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation with property and language tagged literal
+   * @throws Exception if the annotation property cannot be found
+   */
+  @Deprecated
+  public static OWLAnnotation getLanguageAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "@", 0);
+    String lang = template.substring(template.indexOf("@") + 1).trim();
+    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, lang));
+  }
+
+  /**
+   * Return a set of language tagged annotations for the given template and value(s). The template
+   * string format is "AL [name]@[lang]" and the value is any string.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param split the character to split values on
+   * @param value the value for the annotation
+   * @return a set of new annotation(s) with property and language tagged literal
+   * @throws RowParseException if the annotation property cannot be found
+   */
+  @Deprecated
+  public static Set<OWLAnnotation> getLanguageAnnotations(
+      QuotedEntityChecker checker, String template, String split, String value) throws Exception {
+    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "@", 0);
+    String lang = template.substring(template.indexOf("@") + 1).trim();
+
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    List<String> allValues = getAllValues(value, split);
+
+    for (String v : allValues) {
+      annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v, lang)));
+    }
+
+    return annotations;
+  }
+
+  /**
    * Get a set of OWLAxioms (subclass or equivalent) for an OWLClass. Supports axiom annotations.
    *
    * @deprecated TemplateOperation replaced with Template class
@@ -1458,6 +1521,80 @@ public class TemplateHelper {
       default:
         throw new ColumnException(String.format(classTypeError, classType));
     }
+  }
+
+  /**
+   * Return a string annotation for the given template string and value. Replaced by sets of
+   * annotations to support splits.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation with property and string literal value
+   * @throws Exception if the annotation property cannot be found
+   */
+  @Deprecated
+  public static OWLAnnotation getStringAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    String name = template.substring(1).trim();
+    OWLAnnotationProperty property = getAnnotationProperty(checker, name, 0);
+    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value));
+  }
+
+  /**
+   * Return a set of string annotations for the given template string and value(s).
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param split the character to split values on
+   * @param value the value for the annotation
+   * @return a set of new annotation(s) with property and string literal value
+   * @throws RowParseException if the annotation property cannot be found
+   */
+  @Deprecated
+  public static Set<OWLAnnotation> getStringAnnotations(
+      QuotedEntityChecker checker, String template, String split, String value) throws Exception {
+
+    OWLAnnotationProperty property;
+    if (template.equals("LABEL")) {
+      // Handle special LABEL case
+      property = dataFactory.getRDFSLabel();
+    } else {
+      String name = template.substring(1).trim();
+      property = getAnnotationProperty(checker, name);
+    }
+
+    Set<OWLAnnotation> annotations = new HashSet<>();
+    if (split != null) {
+      String[] values = value.split(Pattern.quote(split));
+      for (String v : values) {
+        annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v)));
+      }
+    } else {
+      annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value)));
+    }
+
+    return annotations;
+  }
+
+  /**
+   * Return a set of typed annotations for the given template string and value. The template string
+   * format is "AT [name]^^[datatype]" and the value is any string. Replaced by sets of annotations
+   * to support splits.
+   *
+   * @param checker used to resolve the annotation property and datatype
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation with property and typed literal value
+   * @throws Exception if the annotation property cannot be found
+   */
+  @Deprecated
+  public static OWLAnnotation getTypedAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    OWLAnnotationProperty property = getAnnotationProperty(checker, template, "^^", 0);
+    String typeName = template.substring(template.indexOf("^^") + 2).trim();
+    OWLDatatype datatype = getDatatype(checker, typeName);
+    return dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(value, datatype));
   }
 
   /**

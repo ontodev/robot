@@ -394,7 +394,7 @@ public class Template {
               new String[] {
                 String.valueOf(errCount),
                 this.name,
-                cellToA1(e.rowNum, e.colNum),
+                IOHelper.cellToA1(e.rowNum, e.colNum),
                 "error",
                 e.ruleID,
                 e.ruleName,
@@ -643,18 +643,15 @@ public class Template {
           entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#Individual":
-        case "individual":
-        case "http://www.w3.org/2002/07/owl#NamedIndividual":
-        case "named individual":
-          entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
-          break;
-
         case "http://www.w3.org/2002/07/owl#Datatype":
         case "datatype":
           entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
           break;
 
+        case "http://www.w3.org/2002/07/owl#Individual":
+        case "individual":
+        case "http://www.w3.org/2002/07/owl#NamedIndividual":
+        case "named individual":
         default:
           // Assume type is an individual (checked later)
           entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
@@ -1662,7 +1659,7 @@ public class Template {
           || template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
         // Handle property logic
         Set<OWLAnnotationProperty> parents =
-            TemplateHelper.getAnnotationProperties(checker, value, split);
+            TemplateHelper.getAnnotationProperties(checker, value, split, column);
         addSubAnnotationPropertyAxioms(property, parents, row, column);
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -2068,36 +2065,6 @@ public class Template {
     // Generate axioms
     differentIndividuals.add(individual);
     axioms.add(dataFactory.getOWLDifferentIndividualsAxiom(differentIndividuals, axiomAnnotations));
-  }
-
-  /**
-   * Convert a row index and column index for a cell to A1 notation.
-   *
-   * @param rowNum row index
-   * @param colNum column index
-   * @return A1 notation for cell location
-   */
-  private String cellToA1(int rowNum, int colNum) {
-    // To store result (Excel column name)
-    StringBuilder colLabel = new StringBuilder();
-
-    while (colNum > 0) {
-      // Find remainder
-      int rem = colNum % 26;
-
-      // If remainder is 0, then a
-      // 'Z' must be there in output
-      if (rem == 0) {
-        colLabel.append("Z");
-        colNum = (colNum / 26) - 1;
-      } else {
-        colLabel.append((char) ((rem - 1) + 'A'));
-        colNum = colNum / 26;
-      }
-    }
-
-    // Reverse the string and print result
-    return colLabel.reverse().toString() + rowNum;
   }
 
   /* ANNOTATION HELPERS */

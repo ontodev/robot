@@ -424,8 +424,8 @@ public class TemplateOperation {
             String.format(columnMismatchError, tableName, headers.size(), templates.size()));
       }
 
-      Integer idColumn = -1;
-      Integer labelColumn = -1;
+      int idColumn = -1;
+      int labelColumn = -1;
       for (int column = 0; column < templates.size(); column++) {
         String template = templates.get(column);
         if (template == null) {
