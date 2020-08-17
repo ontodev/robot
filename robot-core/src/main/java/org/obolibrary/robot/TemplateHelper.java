@@ -1408,6 +1408,27 @@ public class TemplateHelper {
   }
 
   /**
+   * Return an IRI annotation for the given template string and string value. The template string
+   * format is "AI [name]" and the value is the name of an entity or an IRI.
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param value the value for the annotation
+   * @return a new annotation axiom with property and an IRI value
+   * @throws RowParseException if the annotation property cannot be found or the IRI cannot be
+   *     created
+   */
+  @Deprecated
+  public static OWLAnnotation getIRIAnnotation(
+      QuotedEntityChecker checker, String template, String value) throws Exception {
+    IRI iri = checker.getIRI(value, true);
+    if (iri == null) {
+      return null;
+    }
+    return getIRIAnnotation(checker, template, iri);
+  }
+
+  /**
    * Return an IRI annotation for the given template string and IRI value. The template string
    * format is "AI [name]" and the value is an IRI.
    *
