@@ -24,6 +24,9 @@ public class Cell {
   private FillPatternType cellPattern = null;
   private IndexedColors fontColor = null;
 
+  // Styles for HTML output
+  private String htmlClass = null;
+
   // Comment can appear as an XLSX Comment or an HTML tooltip
   // This is not required and can be returned null
   private String comment = null;
@@ -135,6 +138,15 @@ public class Cell {
   }
 
   /**
+   * Get the HTML class of a cell.
+   *
+   * @return String HTML bootstrap class, or null
+   */
+  public String getHTMLClass() {
+    return htmlClass;
+  }
+
+  /**
    * Get the font color for this cell in an XLSX workbook.
    *
    * @return IndexedColors value for font
@@ -177,6 +189,15 @@ public class Cell {
    */
   public void setComment(String comment) {
     this.comment = comment;
+  }
+
+  /**
+   * Add an HTML class to this Cell.
+   *
+   * @param htmlClass String Bootstrap HTML class
+   */
+  public void setHTMLClass(String htmlClass) {
+    this.htmlClass = htmlClass;
   }
 
   /**
