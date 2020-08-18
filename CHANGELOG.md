@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add [`validate`] command [#691]
+- Add `--errors <path>` option to [`template`] in [#713]
 
 ### Fixed
 - Handle empty [`template`] property charactersitics in [#719]
@@ -202,6 +203,7 @@ First official release of ROBOT!
 [#722]: https://github.com/ontodev/robot/pull/722
 [#719]: https://github.com/ontodev/robot/pull/716
 [#715]: https://github.com/ontodev/robot/pull/715
+[#713]: https://github.com/ontodev/robot/pull/713
 [#710]: https://github.com/ontodev/robot/pull/710
 [#709]: https://github.com/ontodev/robot/issues/709
 [#691]: https://github.com/ontodev/robot/pull/691

@@ -341,11 +341,11 @@ public class Template {
    * @throws Exception on issue parsing rows to axioms or creating new ontology
    */
   public OWLOntology generateOutputOntology() throws Exception {
-    return generateOutputOntology(null, false);
+    return generateOutputOntology(null, false, null);
   }
 
   /**
-   * Generate an OWLOntology with given IRI based on the rows of the template.
+   * Generate an OWLOntology based on the rows of the template.
    *
    * @param outputIRI IRI for final ontology
    * @param force if true, do not exit on errors
@@ -353,9 +353,27 @@ public class Template {
    * @throws Exception on issue parsing rows to axioms or creating new ontology
    */
   public OWLOntology generateOutputOntology(String outputIRI, boolean force) throws Exception {
+    return generateOutputOntology(outputIRI, force, null);
+  }
+
+  /**
+   * Generate an OWLOntology with given IRI based on the rows of the template.
+   *
+   * @param outputIRI IRI for final ontology
+   * @param force if true, do not exit on errors
+   * @param errorsPath path to errors table when force=true
+   * @return new OWLOntology
+   * @throws Exception on issue parsing rows to axioms or creating new ontology
+   */
+  public OWLOntology generateOutputOntology(String outputIRI, boolean force, String errorsPath)
+      throws Exception {
     // Set to true on first exception
     boolean hasException = false;
 
+    List<String[]> errors = new ArrayList<>();
+    errors.add(
+        new String[] {"ID", "table", "cell", "level", "rule ID", "rule name", "value", "fix"});
+    int errCount = 0;
     for (List<String> row : tableRows) {
       try {
         processRow(row);
@@ -364,14 +382,35 @@ public class Template {
         if (!force) {
           throw e;
         }
+
         // otherwise print exceptions as they show up
         hasException = true;
+        errCount++;
         logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
+
+        // Only add to errors table if we have a row & col num
+        if (e.rowNum != -1 && e.colNum != -1) {
+          errors.add(
+              new String[] {
+                String.valueOf(errCount),
+                this.name,
+                IOHelper.cellToA1(e.rowNum, e.colNum),
+                "error",
+                e.ruleID,
+                e.ruleName,
+                e.cellValue,
+                ""
+              });
+        }
       }
     }
 
     if (hasException) {
       logger.warn("Ontology created from template with errors");
+      if (errorsPath != null) {
+        // Write errors to file
+        IOHelper.writeTable(errors, errorsPath);
+      }
     }
 
     // Create a new ontology object to add axioms to
@@ -604,18 +643,15 @@ public class Template {
           entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#Individual":
-        case "individual":
-        case "http://www.w3.org/2002/07/owl#NamedIndividual":
-        case "named individual":
-          entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
-          break;
-
         case "http://www.w3.org/2002/07/owl#Datatype":
         case "datatype":
           entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
           break;
 
+        case "http://www.w3.org/2002/07/owl#Individual":
+        case "individual":
+        case "http://www.w3.org/2002/07/owl#NamedIndividual":
+        case "named individual":
         default:
           // Assume type is an individual (checked later)
           entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
@@ -703,7 +739,10 @@ public class Template {
         if (id != null) {
           // Has an ID column with contents that could not be resolved
           throw new RowParseException(
-              String.format(unknownEntityError, id, rowNum, idColumn, "ID", name));
+              String.format(unknownEntityError, id, rowNum, idColumn + 1, "ID", name),
+              rowNum,
+              idColumn + 1,
+              id);
         } else {
           // Has an ID column, but it's empty
           return;
@@ -711,7 +750,10 @@ public class Template {
       } else {
         // No ID column and label could not be resolved
         throw new RowParseException(
-            String.format(unknownEntityError, label, rowNum, labelColumn, "LABEL", name));
+            String.format(unknownEntityError, label, rowNum, labelColumn + 1, "LABEL", name),
+            rowNum,
+            labelColumn + 1,
+            label);
       }
     }
 
@@ -800,8 +842,11 @@ public class Template {
               cls.getIRI().getShortForm(),
               classType,
               rowNum,
-              classTypeColumn,
-              name));
+              classTypeColumn + 1,
+              name),
+          rowNum,
+          classTypeColumn + 1,
+          classType);
     }
 
     // Iterate through all columns and add annotations as we go
@@ -1117,7 +1162,10 @@ public class Template {
             // Unknown property type
             throw new RowParseException(
                 String.format(
-                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column, name));
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name),
+                rowNum,
+                column + 1,
+                value);
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1367,7 +1415,10 @@ public class Template {
         // Cannot use inverse with data properties
         throw new RowParseException(
             String.format(
-                propertyTypeError, iri.getShortForm(), propertyType, rowNum, column, name));
+                propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name),
+            rowNum,
+            column + 1,
+            value);
       } else if (template.startsWith("P ") && !template.startsWith("PROPERTY_TYPE")) {
         // Use property type to handle expression type
         Set<OWLDataPropertyExpression> expressions =
@@ -1387,7 +1438,10 @@ public class Template {
             // Unknown property type
             throw new RowParseException(
                 String.format(
-                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column, name));
+                    propertyTypeError, iri.getShortForm(), propertyType, rowNum, column + 1, name),
+                rowNum,
+                column + 1,
+                value);
         }
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1550,7 +1604,10 @@ public class Template {
       // Annotation properties can only have type "subproperty"
       throw new RowParseException(
           String.format(
-              annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn, name));
+              annotationPropertyTypeError, iri, propertyType, rowNum, propertyTypeColumn + 1, name),
+          rowNum,
+          propertyTypeColumn + 1,
+          propertyType);
     }
 
     // Annotation properties should not have characteristics
@@ -1562,8 +1619,11 @@ public class Template {
                 annotationPropertyCharacteristicError,
                 iri.getShortForm(),
                 rowNum,
-                characteristicColumn,
-                name));
+                characteristicColumn + 1,
+                name),
+            rowNum,
+            characteristicColumn + 1,
+            propertyCharacteristicString);
       }
     }
 
@@ -1599,7 +1659,7 @@ public class Template {
           || template.startsWith("P") && !template.startsWith("PROPERTY_TYPE")) {
         // Handle property logic
         Set<OWLAnnotationProperty> parents =
-            TemplateHelper.getAnnotationProperties(checker, value, split);
+            TemplateHelper.getAnnotationProperties(checker, value, split, column);
         addSubAnnotationPropertyAxioms(property, parents, row, column);
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
@@ -1887,7 +1947,15 @@ public class Template {
           default:
             throw new RowParseException(
                 String.format(
-                    individualTypeError, iri.getShortForm(), individualType, rowNum, column, name));
+                    individualTypeError,
+                    iri.getShortForm(),
+                    individualType,
+                    rowNum,
+                    column + 1,
+                    name),
+                rowNum,
+                column + 1,
+                value);
         }
       }
     }
