@@ -127,6 +127,8 @@ public class TableValidator {
   private boolean valid;
   private boolean silent;
 
+  private Map<OWLAxiom, Boolean> checkedAxioms = new HashMap<>();
+
   private List<String[]> errors = new ArrayList<>();
   private int errCount = 0;
 
@@ -492,39 +494,27 @@ public class TableValidator {
       if (qType == RTypeEnum.SUB) {
         // Check to see if the subjectClass is a subclass of the given rule:
         OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(subjectCE, ruleCE);
-        if (reasoner.isEntailed(axiom)) {
-          return true;
-        }
+        return isEntailed(axiom);
       } else if (qType == RTypeEnum.NOT_SUB) {
         // Check to see if the subjectClass is a subclass of the given rule:
         OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(subjectCE, ruleCE);
-        if (!reasoner.isEntailed(axiom)) {
-          return true;
-        }
+        return isNotEntailed(axiom);
       } else if (qType == RTypeEnum.SUPER) {
         // Check to see if the subjectClass is a superclass of the given rule:
         OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(ruleCE, subjectCE);
-        if (reasoner.isEntailed(axiom)) {
-          return true;
-        }
+        return isEntailed(axiom);
       } else if (qType == RTypeEnum.NOT_SUPER) {
         // Check to see if the subjectClass is a superclass of the given rule:
         OWLSubClassOfAxiom axiom = dataFactory.getOWLSubClassOfAxiom(ruleCE, subjectCE);
-        if (!reasoner.isEntailed(axiom)) {
-          return true;
-        }
+        return isNotEntailed(axiom);
       } else if (qType == RTypeEnum.EQUIV) {
         OWLEquivalentClassesAxiom axiom =
             dataFactory.getOWLEquivalentClassesAxiom(subjectCE, ruleCE);
-        if (reasoner.isEntailed(axiom)) {
-          return true;
-        }
+        return isEntailed(axiom);
       } else if (qType == RTypeEnum.NOT_EQUIV) {
         OWLEquivalentClassesAxiom axiom =
             dataFactory.getOWLEquivalentClassesAxiom(subjectCE, ruleCE);
-        if (!reasoner.isEntailed(axiom)) {
-          return true;
-        }
+        return isNotEntailed(axiom);
       } else {
         // Spit out an error in this case but continue validating the other rules:
         logger.error(
@@ -932,6 +922,42 @@ public class TableValidator {
   }
 
   /**
+   * Determine if an axiom is entailed in an ontology.
+   *
+   * @param axiom OWLAxiom to check
+   * @return true if axiom is entailed
+   */
+  private boolean isEntailed(OWLAxiom axiom) {
+    if (checkedAxioms.containsKey(axiom.toString())) {
+      return checkedAxioms.get(axiom.toString());
+    }
+    if (reasoner.isEntailed(axiom)) {
+      checkedAxioms.put(axiom, true);
+      return true;
+    }
+    checkedAxioms.put(axiom, false);
+    return false;
+  }
+
+  /**
+   * Determine if an axiom is not entailed in an ontology.
+   *
+   * @param axiom OWLAxiom to check
+   * @return true if axiom is not entailed
+   */
+  private boolean isNotEntailed(OWLAxiom axiom) {
+    if (checkedAxioms.containsKey(axiom.toString())) {
+      return !checkedAxioms.get(axiom.toString());
+    }
+    if (!reasoner.isEntailed(axiom)) {
+      checkedAxioms.put(axiom, false);
+      return true;
+    }
+    checkedAxioms.put(axiom, true);
+    return false;
+  }
+
+  /**
    * Given the string `format` and a number of formatting variables, use the formatting variables to
    * fill in the format string in the manner of C's printf function, and write the string to the
    * Writer object (or XLSX workbook, or Jinja context) that belongs to ValidateOperation. If the
@@ -1030,8 +1056,7 @@ public class TableValidator {
     ArrayList<String[]> whenClauses = new ArrayList<>();
     for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
       m =
-          Pattern.compile(
-                  "^([^\'\\s()]+|\'[^\'()]+\'|\\(.+?\\))" + "\\s+([a-z\\-|]+)" + "\\s+(.*)$")
+          Pattern.compile("^([^\'\\s()]+|\'[^\']+\'|\\(.+?\\))" + "\\s+([a-z\\-|]+)" + "\\s+(.*)$")
               .matcher(whenClause);
 
       if (!m.find()) {
