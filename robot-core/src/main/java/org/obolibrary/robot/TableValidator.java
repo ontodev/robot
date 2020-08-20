@@ -127,7 +127,7 @@ public class TableValidator {
   private boolean valid;
   private boolean silent;
 
-  private Map<OWLAxiom, Boolean> checkedAxioms = new HashMap<>();
+  private Map<String, Boolean> checkedAxioms = new HashMap<>();
 
   private List<String[]> errors = new ArrayList<>();
   private int errCount = 0;
@@ -932,10 +932,10 @@ public class TableValidator {
       return checkedAxioms.get(axiom.toString());
     }
     if (reasoner.isEntailed(axiom)) {
-      checkedAxioms.put(axiom, true);
+      checkedAxioms.put(axiom.toString(), true);
       return true;
     }
-    checkedAxioms.put(axiom, false);
+    checkedAxioms.put(axiom.toString(), false);
     return false;
   }
 
@@ -950,10 +950,10 @@ public class TableValidator {
       return !checkedAxioms.get(axiom.toString());
     }
     if (!reasoner.isEntailed(axiom)) {
-      checkedAxioms.put(axiom, false);
+      checkedAxioms.put(axiom.toString(), false);
       return true;
     }
-    checkedAxioms.put(axiom, true);
+    checkedAxioms.put(axiom.toString(), true);
     return false;
   }
 
