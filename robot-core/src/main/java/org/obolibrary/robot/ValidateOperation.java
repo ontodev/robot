@@ -28,6 +28,7 @@ public class ValidateOperation {
     options.put("silent", "true");
     options.put("errors", null);
     options.put("skip-row", "0");
+    options.put("write-all", "false");
     return options;
   }
 

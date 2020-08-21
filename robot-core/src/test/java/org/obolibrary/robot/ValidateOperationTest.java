@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
 import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -22,7 +21,7 @@ public class ValidateOperationTest extends CoreTest {
    *
    * @throws IOException on any problem
    */
-  @Test
+  // @Test
   public void testImmuneExposuresValidation() throws Exception {
     IOHelper ioHelper = new IOHelper();
 
