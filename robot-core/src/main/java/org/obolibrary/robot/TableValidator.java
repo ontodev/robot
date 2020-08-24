@@ -123,6 +123,7 @@ public class TableValidator {
   private Table outTable = null;
   private String currentTable;
   private int colNum;
+  private int rowIdx;
   private int rowNum;
   private boolean valid;
   private boolean silent;
@@ -211,9 +212,22 @@ public class TableValidator {
       // Get the header and rules rows
       List<String> headerRow = data.remove(0);
       List<String> rulesRow = data.remove(0);
+
+      // Get correct index for the rule row based on if a row was skipped
       int ruleRowIdx = 2;
       if (skippedRow < 3) {
         ruleRowIdx = 3;
+      }
+
+      // Get number to add to rowIdx to get true row number from input table
+      // This will be either 3 or 4 (skipped row in header)
+      // as rowIdx starts at 0 and does not include header and rule rows
+      int addToRow;
+      if (skippedRow <= 3) {
+        // Skipped row is in header, add 1 to our reporting
+        addToRow = 4;
+      } else {
+        addToRow = 3;
       }
 
       // Add header and rules rows to Table object
@@ -223,19 +237,19 @@ public class TableValidator {
         Column c = new Column(headerRow.get(i), parseRules(rawRule), rawRule, provider);
         outTable.addColumn(c);
       }
-
       List<Column> columns = outTable.getColumns();
 
       // Validate data row by row, column by column
-      int add = 0;
-      for (rowNum = 0; rowNum < data.size(); rowNum++) {
-        if (rowNum + 1 == skippedRow) {
-          // Add 1 to each row num we report on to compensate for skipped row
-          add = 1;
+      for (rowIdx = 0; rowIdx < data.size(); rowIdx++) {
+        rowNum = rowIdx + addToRow;
+        if (rowNum == skippedRow) {
+          // Skipped row occurs in the data
+          addToRow = 4;
         }
-        List<String> row = data.get(rowNum);
+
+        List<String> row = data.get(rowIdx);
         if (!hasContent(row)) {
-          logger.debug(String.format("Skipping empty row %d", rowNum + 1 + add));
+          logger.debug(String.format("Skipping empty row %d", rowNum));
           continue;
         }
 
@@ -280,7 +294,7 @@ public class TableValidator {
                         new String[] {
                           String.valueOf(errCount),
                           currentTable,
-                          IOHelper.cellToA1(rowNum + 3 + add, colNum + 1),
+                          IOHelper.cellToA1(rowNum, colNum + 1),
                           "error",
                           FilenameUtils.getBaseName(currentTable)
                               + "!"
@@ -617,7 +631,9 @@ public class TableValidator {
     // Get the class expression corresponding to the rule that has been passed:
     OWLClassExpression ruleCE = getClassExpression(rule);
     if (ruleCE == null) {
-      report(String.format("Unable to parse rule \"%s %s\".", unsplitQueryType, rule));
+      report(
+          String.format(
+              "Unable to parse rule \"%s %s\" at column %d.", unsplitQueryType, rule, colNum + 1));
       return false;
     }
 
@@ -649,7 +665,10 @@ public class TableValidator {
       // class expression and run a generalised query on it:
       OWLClassExpression subjectCE = getClassExpression(subject);
       if (subjectCE == null) {
-        logger.error(String.format("Unable to parse subject \"%s\".", subject));
+        logger.error(
+            String.format(
+                "Unable to parse subject \"%s\" at row %d.",
+                subject, rowNum));
         return false;
       }
 
@@ -943,8 +962,7 @@ public class TableValidator {
     valid = false;
 
     // Format the error message
-    String outStr =
-        String.format("At %s row %d, column %d: ", currentTable, rowNum + 1, colNum + 1);
+    String outStr = String.format("At %s row %d, column %d: ", currentTable, rowNum, colNum + 1);
     outStr += String.format(format, positionalArgs);
     if (!silent) {
       // Print error if not silent
@@ -1030,8 +1048,7 @@ public class TableValidator {
     ArrayList<String[]> whenClauses = new ArrayList<>();
     for (String whenClause : whenClauseStr.split("\\s*&\\s*")) {
       m =
-          Pattern.compile(
-                  "^([^\'\\s()]+|\'[^\'()]+\'|\\(.+?\\))" + "\\s+([a-z\\-|]+)" + "\\s+(.*)$")
+          Pattern.compile("^([^\'\\s()]+|\'[^\']+\'|\\(.+?\\))" + "\\s+([a-z\\-|]+)" + "\\s+(.*)$")
               .matcher(whenClause);
 
       if (!m.find()) {
