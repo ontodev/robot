@@ -223,7 +223,7 @@ public class TableValidator {
       // This will be either 3 or 4 (skipped row in header)
       // as rowIdx starts at 0 and does not include header and rule rows
       int addToRow;
-      if (skippedRow <= 3) {
+      if (skippedRow > 0 && skippedRow <= 3) {
         // Skipped row is in header, add 1 to our reporting
         addToRow = 4;
       } else {
@@ -665,10 +665,7 @@ public class TableValidator {
       // class expression and run a generalised query on it:
       OWLClassExpression subjectCE = getClassExpression(subject);
       if (subjectCE == null) {
-        logger.error(
-            String.format(
-                "Unable to parse subject \"%s\" at row %d.",
-                subject, rowNum));
+        logger.error(String.format("Unable to parse subject \"%s\" at row %d.", subject, rowNum));
         return false;
       }
 
