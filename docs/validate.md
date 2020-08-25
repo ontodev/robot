@@ -71,7 +71,15 @@ Note that the tooltips and styling will not work until the table is inserted int
 
 #### Errors Table (`--errors`)
 
-The results that are written to the output directory contain all lines from the input tables, even if those lines don't have errors. You can choose to also output a table containing just the errors by specifying `--errors <path>`. If this path ends with `.csv`, the output will be comma-separated. Otherwise, the output will be tab-separated.
+The results that are written to the output directory contain all lines from the input tables, even if those lines don't have errors. You can choose to also output a table containing just the errors by specifying `--errors <path>`:
+
+    robot validate --input immune_exposures.owl \
+      --table immune_exposures.csv \
+      --reasoner hermit \
+      --no-fail true \
+      --errors errors.csv
+
+If this path ends with `.csv`, the output will be comma-separated. Otherwise, the output will be tab-separated.
 
 This output will contain the following columns:
 * **ID**: an ID for the error - this starts at 1 and increases with each error

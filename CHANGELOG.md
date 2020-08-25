@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle empty [`template`] property charactersitics in [#719]
 - Fix referencing properties by CURIE in [`export`] in [#722]
 - Fix [`validate`] `--write-all true` in [#726]
+- Fix reported row number in [`validate`] error tables in [#727]
 
 ## [1.7.0] - 2020-07-31
 
@@ -201,6 +202,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#726]: https://github.com/ontodev/robot/pull/727
 [#726]: https://github.com/ontodev/robot/pull/726
 [#722]: https://github.com/ontodev/robot/pull/722
 [#719]: https://github.com/ontodev/robot/pull/716
