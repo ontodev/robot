@@ -926,7 +926,11 @@ public class Template {
     if (!intersectionEquivalentExpressionColumns.isEmpty()) {
       // Special case to support legacy "C"/"equivalent" class type
       // Which is the intersection of all C columns
-      addIntersectionEquivalentClassesAxioms(cls, intersectionEquivalentExpressionColumns, row);
+      if (intersectionEquivalentExpressionColumns.size() == 1) {
+        addEquivalentClassesAxioms(cls, intersectionEquivalentExpressionColumns, row);
+      } else {
+        addIntersectionEquivalentClassesAxioms(cls, intersectionEquivalentExpressionColumns, row);
+      }
     }
     if (!disjointExpressionColumns.isEmpty()) {
       addDisjointClassAxioms(cls, disjointExpressionColumns, row);
