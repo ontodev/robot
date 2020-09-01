@@ -28,7 +28,7 @@ If your left and right ontologies have different catalog files (perhaps pointing
       --right-catalog catalog-right.xml \
       --output results/catalog-diff.txt
 
-See [release-diff.txt](/examples/release-diff.txt) for an example. In the output, 'Ontology 1' corresponds to your `--left` input and 'Ontology 2' corresponds to your `--right` input.
+See [release-diff.txt](/examples/release-diff.txt) for an example.
 
 The default "plain" output is in OWL Functional syntax with IRIs. You can include entity labels with `--labels true`. In addition, Markdown and HTML diff formats (based on Manchester syntax) are available. You can select the desired format using the `--format` (or `-f`) option, with possible values `plain`, `pretty` (text with labels and CURIEs), `html`, or `markdown`.
 
