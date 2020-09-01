@@ -1,7 +1,7 @@
-1 axioms in Ontology 1 but not in Ontology 2:
+1 axioms in left ontology but not in right ontology:
 - OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/edit.owl>) VersionIRI(<null>))
 
-15 axioms in Ontology 2 but not in Ontology 1:
+15 axioms in right ontology but not in left ontology:
 + AnnotationAssertion(rdfs:label <https://github.com/ontodev/robot/examples/release.owl#junk> "Junk")
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasAlternativeId>))
 + Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym>))
