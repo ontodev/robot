@@ -1,0 +1,14 @@
+At immune_exposures.csv row 8, column 4: Cell is empty but rule: "is-required true" does not allow this.
+At immune_exposures.csv row 9, column 6: Cell is empty but rule: "is-required true" does not allow this.
+At immune_exposures.csv row 10, column 2: Validation failed for rule: "Dengue virus equivalent-to (NCBITaxon:11060)".
+At immune_exposures.csv row 10, column 3: Validation failed for rule: "NCBITaxon:11060 equivalent-to 'Dengue virus'".
+At immune_exposures.csv row 11, column 4: Validation failed for rule: "Dengue virus 2 subclass-of disease".
+At immune_exposures.csv row 11, column 4: Validation failed for rule: "Dengue virus 2 subclass-of 'has material basis in' some 'Dengue virus'".
+At immune_exposures.csv row 12, column 2: Validation failed for rule: "blood or 'Hepacivirus C' equivalent-to (UBERON:0000178)".
+At immune_exposures.csv row 12, column 3: Validation failed for rule: "UBERON:0000178 equivalent-to (blood or 'Hepacivirus C')".
+At immune_exposures.csv row 12, column 6: Cell is non-empty ("Chronic") but rule: "is-excluded true" does not allow this.
+At immune_exposures.csv row 13, column 4: Validation failed for rule: "wheat allergy equivalent-to (DOID:12206)".
+At immune_exposures.csv row 13, column 4: Validation failed for rule: "dengue hemorrhagic fever equivalent-to (DOID:3660)".
+At immune_exposures.csv row 13, column 4: Validation failed for rule: "wheat allergy subclass-of 'has material basis in' some 'Dengue virus'".
+At immune_exposures.csv row 13, column 5: Validation failed for rule: "DOID:3660 equivalent-to 'dengue hemorrhagic fever'".
+At immune_exposures.csv row 13, column 5: Validation failed for rule: "DOID:12206 equivalent-to 'wheat allergy'".

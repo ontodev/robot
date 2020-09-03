@@ -108,6 +108,7 @@ public class TemplateOperation {
   public static Map<String, String> getDefaultOptions() {
     Map<String, String> options = new HashMap<>();
     options.put("force", "false");
+    options.put("errors", null);
     return options;
   }
 
@@ -149,7 +150,8 @@ public class TemplateOperation {
       throws Exception {
     Template template = new Template(tableName, table, inputOntology, ioHelper);
     boolean force = OptionsHelper.optionIsTrue(options, "force");
-    return template.generateOutputOntology(null, force);
+    String errorsPath = OptionsHelper.getOption(options, "errors", null);
+    return template.generateOutputOntology(null, force, errorsPath);
   }
 
   /**
@@ -177,8 +179,9 @@ public class TemplateOperation {
       // Update the checker with new labels
       checker = template.getChecker();
       boolean force = OptionsHelper.optionIsTrue(options, "force");
+      String errorsPath = OptionsHelper.getOption(options, "errors", null);
       // Update the intermediate ontology as the generated ontology
-      intermediate = template.generateOutputOntology(null, force);
+      intermediate = template.generateOutputOntology(null, force, errorsPath);
       outputOntologies.add(intermediate);
     }
     return MergeOperation.merge(outputOntologies);
@@ -421,8 +424,8 @@ public class TemplateOperation {
             String.format(columnMismatchError, tableName, headers.size(), templates.size()));
       }
 
-      Integer idColumn = -1;
-      Integer labelColumn = -1;
+      int idColumn = -1;
+      int labelColumn = -1;
       for (int column = 0; column < templates.size(); column++) {
         String template = templates.get(column);
         if (template == null) {

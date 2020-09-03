@@ -48,6 +48,7 @@ public class TemplateCommand implements Command {
     o.addOption(
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     o.addOption("f", "force", true, "if true, do not exit on error");
+    o.addOption("e", "errors", true, "when force=true, write errors to this path (TSV or CSV)");
 
     options = o;
   }

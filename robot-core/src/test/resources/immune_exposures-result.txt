@@ -1,0 +1,18 @@
+Validating immune_exposures.csv ...
+At immune_exposures.csv row 19, column 2: Cell is empty but rule: "is-required true" does not allow this.
+At immune_exposures.csv row 19, column 4: Unable to parse rule "subclass-of hasMaterialBasisIn some (null)" at column 4.
+At immune_exposures.csv row 19, column 4: Validation failed for rule: "dengue hemorrhagic fever subclass-of hasMaterialBasisIn some (null)".
+At immune_exposures.csv row 21, column 4: Cell is empty but rule: "is-required true" does not allow this.
+At immune_exposures.csv row 22, column 6: Cell is empty but rule: "is-required true" does not allow this.
+At immune_exposures.csv row 23, column 2: Validation failed for rule: "Dengue virus equivalent-to 'Dengue virus 2'".
+At immune_exposures.csv row 23, column 3: Validation failed for rule: "NCBITaxon_11060 equivalent-to 'Dengue virus'".
+At immune_exposures.csv row 24, column 4: Validation failed for rule: "Dengue virus 2 subclass-of 'disease name'".
+At immune_exposures.csv row 24, column 4: Validation failed for rule: "Dengue virus 2 subclass-of hasMaterialBasisIn some 'Dengue virus'".
+At immune_exposures.csv row 25, column 2: Validation failed for rule: "'Hepatovirus A' or blood equivalent-to 'blood'".
+At immune_exposures.csv row 25, column 3: Validation failed for rule: "UBERON_0000178 equivalent-to ('Hepatovirus A' or blood)".
+At immune_exposures.csv row 25, column 6: Cell is non-empty ("chronic") but rule: "is-excluded true" does not allow this.
+At immune_exposures.csv row 26, column 4: Validation failed for rule: "wheat allergy equivalent-to 'dengue hemorrhagic fever'".
+At immune_exposures.csv row 26, column 4: Validation failed for rule: "dengue hemorrhagic fever equivalent-to 'wheat allergy'".
+At immune_exposures.csv row 26, column 4: Validation failed for rule: "wheat allergy subclass-of hasMaterialBasisIn some 'Dengue virus'".
+At immune_exposures.csv row 26, column 5: Validation failed for rule: "DOID_3660 equivalent-to 'dengue hemorrhagic fever'".
+At immune_exposures.csv row 26, column 5: Validation failed for rule: "DOID_12206 equivalent-to 'wheat allergy'".

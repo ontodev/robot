@@ -1,15 +1,20 @@
 package org.obolibrary.robot;
 
 import com.google.common.base.Optional;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
+import org.obolibrary.robot.export.RendererType;
+import org.obolibrary.robot.providers.QuotedAnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
+import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1432,6 +1437,67 @@ public class OntologyHelper {
       RemoveOntologyAnnotation remove = new RemoveOntologyAnnotation(ontology, annotation);
       manager.applyChange(remove);
     }
+  }
+
+  /**
+   * Render a Manchester string for an OWLObject.
+   *
+   * @param object OWLObject to render
+   * @param provider ShortFormProvider to resolve entities
+   * @return String rendering of OWLObject based on renderer type
+   */
+  public static String renderManchester(OWLObject object, ShortFormProvider provider) {
+    return renderManchester(object, provider, RendererType.OBJECT_RENDERER);
+  }
+
+  /**
+   * Render a Manchester string for an OWLObject. The RendererType will determine what Manchester
+   * OWL Syntax renderer will be created.
+   *
+   * @param object OWLObject to render
+   * @param provider ShortFormProvider to resolve entities
+   * @param rt RendererType to use to render Manchester
+   * @return String rendering of OWLObject based on renderer type
+   */
+  public static String renderManchester(
+      OWLObject object, ShortFormProvider provider, RendererType rt) {
+    ManchesterOWLSyntaxObjectRenderer renderer;
+    StringWriter sw = new StringWriter();
+
+    if (object instanceof OWLAnnotationValue) {
+      // Just return the value of literal annotations, don't render
+      OWLAnnotationValue v = (OWLAnnotationValue) object;
+      if (v.isLiteral()) {
+        OWLLiteral lit = v.asLiteral().orNull();
+        if (lit != null) {
+          return lit.getLiteral();
+        }
+      }
+    }
+
+    if (provider instanceof QuotedAnnotationValueShortFormProvider && object.isAnonymous()) {
+      // Handle quoting
+      QuotedAnnotationValueShortFormProvider qavsfp =
+          (QuotedAnnotationValueShortFormProvider) provider;
+      qavsfp.toggleQuoting();
+      if (rt == RendererType.OBJECT_HTML_RENDERER) {
+        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, qavsfp);
+      } else {
+        // Default renderer
+        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, qavsfp);
+      }
+      object.accept(renderer);
+      qavsfp.toggleQuoting();
+    } else {
+      if (rt == RendererType.OBJECT_HTML_RENDERER) {
+        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, provider);
+      } else {
+        // Default renderer
+        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, provider);
+      }
+      object.accept(renderer);
+    }
+    return sw.toString().replace("\n", "").replaceAll(" +", " ");
   }
 
   /**

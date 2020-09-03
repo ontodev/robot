@@ -8,8 +8,8 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import org.obolibrary.robot.ExportOperation;
 import org.obolibrary.robot.IOHelper;
+import org.obolibrary.robot.OntologyHelper;
 import org.obolibrary.robot.QuotedEntityChecker;
 import org.obolibrary.robot.export.*;
 import org.obolibrary.robot.providers.CURIEShortFormProvider;
@@ -352,14 +352,14 @@ public class Report {
       Cell ruleCell = new Cell(columns.get(1), ruleName);
       for (Violation v : vs.getValue()) {
         // Subject of the violation for the following rows
-        String subject = ExportOperation.renderManchester(displayRenderer, provider, v.entity);
+        String subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
         Cell subjectCell = new Cell(columns.get(2), subject);
         for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
           // Property of the violation for the following rows
           String property = "";
           if (statement.getKey() != null) {
             property =
-                ExportOperation.renderManchester(displayRenderer, provider, statement.getKey());
+                OntologyHelper.renderManchester(statement.getKey(), provider, displayRenderer);
           }
           Cell propertyCell = new Cell(columns.get(3), property);
 
@@ -378,7 +378,7 @@ public class Report {
 
               String value = "";
               if (o != null) {
-                value = ExportOperation.renderManchester(displayRenderer, provider, o);
+                value = OntologyHelper.renderManchester(o, provider, displayRenderer);
               }
 
               Cell valueCell = new Cell(columns.get(4), value);
@@ -440,13 +440,13 @@ public class Report {
       sb.append("\n");
       for (Violation v : vs.getValue()) {
         String subject =
-            ExportOperation.renderManchester(RendererType.OBJECT_RENDERER, provider, v.entity);
+            OntologyHelper.renderManchester(v.entity, provider, RendererType.OBJECT_RENDERER);
         sb.append("    - subject: \"").append(subject).append("\"");
         sb.append("\n");
         for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
           String property =
-              ExportOperation.renderManchester(
-                  RendererType.OBJECT_RENDERER, provider, statement.getKey());
+              OntologyHelper.renderManchester(
+                  statement.getKey(), provider, RendererType.OBJECT_RENDERER);
           sb.append("      property: \"").append(property).append("\"");
           sb.append("\n");
           if (statement.getValue().isEmpty()) {
@@ -458,7 +458,7 @@ public class Report {
             String display = "";
             if (value != null) {
               display =
-                  ExportOperation.renderManchester(RendererType.OBJECT_RENDERER, provider, value);
+                  OntologyHelper.renderManchester(value, provider, RendererType.OBJECT_RENDERER);
             }
             sb.append("        - \"").append(display.replace("\"", "\\\"")).append("\"");
             sb.append("\n");

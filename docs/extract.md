@@ -68,6 +68,8 @@ To specify upper and lower term files, use `--upper-terms` and `--lower-terms`. 
 
 To only include all descendants of a term or set of terms, use `--branch-from-term` or `--branch-from-terms`, respectively. `--lower-term` or `--lower-terms` are not required when using this option.
 
+Note that if the same IRI is used for both a class and an individual, MIREOT will ignore the individual and only extract the class.
+
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
 ### Intermediates
