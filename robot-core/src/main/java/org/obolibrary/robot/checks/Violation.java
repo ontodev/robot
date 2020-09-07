@@ -1,8 +1,7 @@
 package org.obolibrary.robot.checks;
 
 import java.util.*;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +10,12 @@ public class Violation {
   private final Logger logger = LoggerFactory.getLogger(Violation.class);
 
   public OWLEntity entity;
-  public Map<OWLEntity, List<OWLObject>> statements;
+  public String subject;
+
+  // Statements about OWLEntity subject
+  public Map<OWLEntity, List<OWLObject>> entityStatements = new HashMap<>();
+  // Statements about String subject
+  public Map<String, List<String>> statements = new HashMap<>();
 
   /**
    * Create a new Violation object about an OWL entity.
@@ -20,7 +24,6 @@ public class Violation {
    */
   public Violation(OWLEntity subject) {
     this.entity = subject;
-    this.statements = new HashMap<>();
   }
 
   /**
@@ -31,10 +34,10 @@ public class Violation {
    */
   public void addStatement(OWLEntity property, OWLObject value) {
     List<OWLObject> values;
-    if (statements.get(property) != null) {
+    if (entityStatements.get(property) != null) {
       // This property already has one value in the map
       // Add this value to the existing list
-      values = new ArrayList<>(statements.get(property));
+      values = new ArrayList<>(entityStatements.get(property));
       values.add(value);
     } else {
       // This property is not yet in the map
@@ -45,25 +48,30 @@ public class Violation {
         values = Collections.emptyList();
       }
     }
-    statements.put(property, values);
+    entityStatements.put(property, values);
   }
 
-  @Deprecated public String subject;
-
   /** @param subject String subject */
-  @Deprecated
   public Violation(String subject) {
-    logger.error(
-        "new Violation(subject) is no longer supported - please use new Violation(OWLEntity) instead.");
+    this.subject = subject;
   }
 
   /**
    * @param property String property
    * @param value String value
    */
-  @Deprecated
   public void addStatement(String property, String value) {
-    logger.error(
-        "addStatement(String, String) is no longer supported - please use addStatement(OWLEntity, OWLObject) instead.");
+    List<String> values;
+    if (statements.get(property) != null) {
+      values = new ArrayList<String>(statements.get(property));
+      values.add(value);
+    } else {
+      if (value != null) {
+        values = Collections.singletonList(value);
+      } else {
+        values = Collections.emptyList();
+      }
+    }
+    statements.put(property, values);
   }
 }

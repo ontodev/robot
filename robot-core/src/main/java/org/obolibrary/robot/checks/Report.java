@@ -354,7 +354,7 @@ public class Report {
         // Subject of the violation for the following rows
         String subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
         Cell subjectCell = new Cell(columns.get(2), subject);
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
           // Property of the violation for the following rows
           String property = "";
           if (statement.getKey() != null) {
@@ -381,6 +381,38 @@ public class Report {
                 value = OntologyHelper.renderManchester(o, provider, displayRenderer);
               }
 
+              Cell valueCell = new Cell(columns.get(4), value);
+              row.add(levelCell);
+              row.add(ruleCell);
+              row.add(subjectCell);
+              row.add(propertyCell);
+              row.add(valueCell);
+              table.addRow(row);
+            }
+          }
+        }
+        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
+          String property = statement.getKey();
+          if (property == null) {
+            property = "";
+          }
+          Cell propertyCell = new Cell(columns.get(3), property);
+
+          if (statement.getValue().isEmpty()) {
+            Row row = new Row(level);
+            Cell valueCell = new Cell(columns.get(4), "");
+            row.add(levelCell);
+            row.add(ruleCell);
+            row.add(subjectCell);
+            row.add(propertyCell);
+            row.add(valueCell);
+            table.addRow(row);
+          } else {
+            for (String value : statement.getValue()) {
+              if (value == null) {
+                continue;
+              }
+              Row row = new Row(level);
               Cell valueCell = new Cell(columns.get(4), value);
               row.add(levelCell);
               row.add(ruleCell);
@@ -443,7 +475,7 @@ public class Report {
             OntologyHelper.renderManchester(v.entity, provider, RendererType.OBJECT_RENDERER);
         sb.append("    - subject: \"").append(subject).append("\"");
         sb.append("\n");
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
           String property =
               OntologyHelper.renderManchester(
                   statement.getKey(), provider, RendererType.OBJECT_RENDERER);
@@ -461,6 +493,26 @@ public class Report {
                   OntologyHelper.renderManchester(value, provider, RendererType.OBJECT_RENDERER);
             }
             sb.append("        - \"").append(display.replace("\"", "\\\"")).append("\"");
+            sb.append("\n");
+          }
+        }
+        for (Entry<String, List<String>> statement : v.statements.entrySet()) {
+          String property = statement.getKey();
+          if (property == null) {
+            property = "";
+          }
+          sb.append("      property: \"").append(property).append("\"");
+          sb.append("\n");
+          if (statement.getValue().isEmpty()) {
+            continue;
+          }
+          sb.append("      values:");
+          sb.append("\n");
+          for (String value : statement.getValue()) {
+            if (value == null) {
+              value = "";
+            }
+            sb.append("        - \"").append(value.replace("\"", "\\\"")).append("\"");
             sb.append("\n");
           }
         }
@@ -496,7 +548,7 @@ public class Report {
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       for (Violation v : vs.getValue()) {
         iris.add(v.entity.getIRI().toString());
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.statements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
           iris.add(statement.getKey().getIRI().toString());
           for (OWLObject value : statement.getValue()) {
             if (value instanceof OWLEntity) {
