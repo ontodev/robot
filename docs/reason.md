@@ -40,9 +40,10 @@ Finally, `reason` includes two more options to help clean the reasoned output:
 * `--remove-redundant-subclass-axioms`: if set to false, redundant axioms (those that have been asserted and were also inferred) are included in the output (default `true`).
 
 If no `--reasoner` is provided, ROBOT will default to ELK. The following other reasoner options are supported:
-  
+
   * `hermit` - [HermiT](http://www.hermit-reasoner.com/)
   * `jfact` - [JFact](http://jfact.sourceforge.net/)
+  * `whelk` - [Whelk](https://github.com/balhoff/whelk)
   * `emr` - [Expression Materializing Reasoner](http://static.javadoc.io/org.geneontology/expression-materializing-reasoner/0.1.3/org/geneontology/reasoner/ExpressionMaterializingReasoner.html)
   * `structural` - [Structural Reasoner](http://owlcs.github.io/owlapi/apidocs_4/org/semanticweb/owlapi/reasoner/structural/StructuralReasoner.html)
 

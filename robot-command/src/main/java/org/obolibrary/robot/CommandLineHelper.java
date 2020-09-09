@@ -22,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
+import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -828,6 +829,8 @@ public class CommandLineHelper {
       return new ExpressionMaterializingReasonerFactory(innerReasonerFactory);
     } else if (reasonerName.equals("elk")) {
       return new org.semanticweb.elk.owlapi.ElkReasonerFactory();
+    } else if (reasonerName.equals("whelk")) {
+      return new WhelkOWLReasonerFactory();
     } else {
       throw new IllegalArgumentException(String.format(invalidReasonerError, reasonerName));
     }
