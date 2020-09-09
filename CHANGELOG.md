@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add Whelk OWL reasoner in [#730]
 - Add [`validate`] command [#691]
 - Add `--errors <path>` option to [`template`] in [#713]
 
