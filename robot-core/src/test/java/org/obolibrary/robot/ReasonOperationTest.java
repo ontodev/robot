@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
+import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.junit.Test;
 import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -39,6 +40,19 @@ public class ReasonOperationTest extends CoreTest {
   public void testELK() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
     OWLReasonerFactory reasonerFactory = new ElkReasonerFactory();
+    ReasonOperation.reason(reasoned, reasonerFactory);
+    assertIdentical("/simple_elk.owl", reasoned);
+  }
+
+  /**
+   * Test reasoning with Whelk.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testWhelk() throws Exception {
+    OWLOntology reasoned = loadOntology("/simple.owl");
+    OWLReasonerFactory reasonerFactory = new WhelkOWLReasonerFactory();
     ReasonOperation.reason(reasoned, reasonerFactory);
     assertIdentical("/simple_elk.owl", reasoned);
   }

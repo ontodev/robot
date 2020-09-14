@@ -12,6 +12,10 @@
   <name>robot-core</name>
   <description>Core library for ROBOT: Library for working with OWL ontologies, especially Open Biological and Biomedical Ontologes (OBO).</description>
 
+  <properties>
+    <scala.version>2.12</scala.version>
+  </properties>
+
   <build>
     <plugins>
       <!-- Enforce Google Java Style -->
@@ -165,8 +169,13 @@
     </dependency>
     <dependency>
       <groupId>org.geneontology</groupId>
-      <artifactId>owl-diff_2.12</artifactId>
+      <artifactId>owl-diff_${scala.version}</artifactId>
       <version>1.2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geneontology</groupId>
+      <artifactId>whelk-owlapi_${scala.version}</artifactId>
+      <version>1.0.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
