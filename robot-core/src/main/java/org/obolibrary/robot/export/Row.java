@@ -252,12 +252,15 @@ public class Row {
         value = "";
       }
 
+      String tdClass;
       // Set default HTML class
       if (htmlClass == null) {
-        htmlClass = "bg-light";
+        tdClass = "";
+      } else {
+        tdClass = " class=\"" + htmlClass + "\"";
       }
       // Write cell as HTML
-      sb.append("\t\t<td class=\"").append(htmlClass).append("\"");
+      sb.append("\t\t<td").append(tdClass);
       if (comment != null) {
         // If cell has a comment, write into the td element
         sb.append(" data-toggle=\"tooltip\" data-placement=\"right\" title=\"")
