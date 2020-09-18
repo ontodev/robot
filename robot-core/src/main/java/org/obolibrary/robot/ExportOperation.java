@@ -10,7 +10,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.obolibrary.robot.export.*;
 import org.obolibrary.robot.providers.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.*;
@@ -78,6 +77,7 @@ public class ExportOperation {
     options.put("split", "|");
     options.put("entity-format", "NAME");
     options.put("entity-select", "ANY");
+    options.put("standalone", "true");
     return options;
   }
 
@@ -342,7 +342,7 @@ public class ExportOperation {
         break;
       case "html":
         try (PrintWriter out = new PrintWriter(exportFile)) {
-          out.print(table.toHTML(split));
+          out.print(table.toHTML(split, OptionsHelper.optionIsTrue(options, "standalone")));
         }
         break;
       case "json":
@@ -383,11 +383,11 @@ public class ExportOperation {
     for (OWLClassExpression expr : classes) {
       if (expr.isAnonymous() && includeAnonymous) {
         // Get a Manchester string using labels
-        String manString = renderManchester(rt, provider, expr);
+        String manString = OntologyHelper.renderManchester(expr, provider, rt);
         strings.add(manString);
       } else if (!expr.isAnonymous() && includeNamed) {
         OWLClass sc = expr.asOWLClass();
-        strings.add(renderManchester(rt, provider, sc));
+        strings.add(OntologyHelper.renderManchester(sc, provider, rt));
       }
     }
     return strings;
@@ -581,11 +581,11 @@ public class ExportOperation {
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
             for (OWLEntity e : entities) {
-              values.add(renderManchester(rt, provider, e));
+              values.add(OntologyHelper.renderManchester(e, provider, rt));
             }
           }
         } else {
-          values.add(renderManchester(rt, provider, a.getValue()));
+          values.add(OntologyHelper.renderManchester(a.getValue(), provider, rt));
         }
       }
     }
@@ -676,7 +676,7 @@ public class ExportOperation {
       return propVals
           .stream()
           .filter(OWLIndividual::isNamed)
-          .map(pv -> renderManchester(rt, provider, pv.asOWLNamedIndividual()))
+          .map(pv -> OntologyHelper.renderManchester(pv.asOWLNamedIndividual(), provider, rt))
           .collect(Collectors.toList());
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
@@ -978,8 +978,8 @@ public class ExportOperation {
           continue;
         case "ID":
         case "CURIE":
-          String display = renderManchester(displayRendererType, provider, entity);
-          String sort = renderManchester(sortRendererType, provider, entity);
+          String display = OntologyHelper.renderManchester(entity, provider, displayRendererType);
+          String sort = OntologyHelper.renderManchester(entity, provider, sortRendererType);
           row.add(new Cell(col, display, sort));
           continue;
         case "LABEL":
@@ -1364,74 +1364,24 @@ public class ExportOperation {
     // Maybe process object property expressions
     for (OWLObjectPropertyExpression expr : opes) {
       if (expr.isAnonymous() && includeAnonymous) {
-        String manString = renderManchester(rt, provider, expr);
+        String manString = OntologyHelper.renderManchester(expr, provider, rt);
         strings.add(manString);
       } else if (!expr.isAnonymous() && includeNamed) {
         OWLObjectProperty op = expr.asOWLObjectProperty();
-        strings.add(renderManchester(rt, provider, op));
+        strings.add(OntologyHelper.renderManchester(op, provider, rt));
       }
     }
     // Maybe process data property expressions
     for (OWLDataPropertyExpression expr : dpes) {
       if (expr.isAnonymous() && includeAnonymous) {
-        String manString = renderManchester(rt, provider, expr);
+        String manString = OntologyHelper.renderManchester(expr, provider, rt);
         strings.add(manString);
       } else if (!expr.isAnonymous() && includeNamed) {
         OWLDataProperty dp = expr.asOWLDataProperty();
-        strings.add(renderManchester(rt, provider, dp));
+        strings.add(OntologyHelper.renderManchester(dp, provider, rt));
       }
     }
     return strings;
-  }
-
-  /**
-   * Render a Manchester string for an OWLObject. The RendererType will determine what Manchester
-   * OWL Syntax renderer will be created.
-   *
-   * @param rt RendererType to use to render Manchester
-   * @param provider ShortFormProvideer to resolve entities
-   * @param object OWLObject to render
-   * @return String rendering of OWLObject based on renderer type
-   */
-  protected static String renderManchester(
-      RendererType rt, ShortFormProvider provider, OWLObject object) {
-    ManchesterOWLSyntaxObjectRenderer renderer;
-    StringWriter sw = new StringWriter();
-
-    if (object instanceof OWLAnnotationValue) {
-      // Just return the value of literal annotations, don't render
-      OWLAnnotationValue v = (OWLAnnotationValue) object;
-      if (v.isLiteral()) {
-        OWLLiteral lit = v.asLiteral().orNull();
-        if (lit != null) {
-          return lit.getLiteral();
-        }
-      }
-    }
-
-    if (provider instanceof QuotedAnnotationValueShortFormProvider && object.isAnonymous()) {
-      // Handle quoting
-      QuotedAnnotationValueShortFormProvider qavsfp =
-          (QuotedAnnotationValueShortFormProvider) provider;
-      qavsfp.toggleQuoting();
-      if (rt == RendererType.OBJECT_HTML_RENDERER) {
-        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, qavsfp);
-      } else {
-        // Default renderer
-        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, qavsfp);
-      }
-      object.accept(renderer);
-      qavsfp.toggleQuoting();
-    } else {
-      if (rt == RendererType.OBJECT_HTML_RENDERER) {
-        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, provider);
-      } else {
-        // Default renderer
-        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, provider);
-      }
-      object.accept(renderer);
-    }
-    return sw.toString().replace("\n", "").replaceAll(" +", " ");
   }
 
   /**
@@ -1447,7 +1397,7 @@ public class ExportOperation {
    */
   private static String renderRestrictionString(
       RendererType rt, ShortFormProvider provider, OWLObject filler, Integer n) {
-    String render = renderManchester(rt, provider, filler);
+    String render = OntologyHelper.renderManchester(filler, provider, rt);
     if (filler instanceof OWLEntity && n != null) {
       // Not anonymous, has cardinality
       return String.format("%d %s", n, render);

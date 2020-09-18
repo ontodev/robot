@@ -49,6 +49,7 @@ public class Column {
    * @param displayName Column display name
    * @param iri IRI of column property
    * @param shortFormProvider ShortFormProvider to use when rendering values
+   * @param entitySelect
    */
   public Column(
       String name,
@@ -89,6 +90,7 @@ public class Column {
    * @param displayName Column display name
    * @param dataProperty column OWLDataProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
+   * @param entitySelect
    */
   public Column(
       String name,
@@ -110,6 +112,7 @@ public class Column {
    * @param displayName Column display name
    * @param objectProperty column OWLObjectProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
+   * @param entitySelect
    */
   public Column(
       String name,
@@ -122,6 +125,14 @@ public class Column {
     this.objectProperty = objectProperty;
     this.shortFormProvider = shortFormProvider;
     setEntitySelect(entitySelect);
+  }
+
+  public Column(String name, @Nonnull ShortFormProvider shortFormProvider) {
+    this.name = name;
+    this.shortFormProvider = shortFormProvider;
+    displayName = name;
+    includeNamed = true;
+    includeAnonymous = true;
   }
 
   /**

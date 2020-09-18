@@ -754,8 +754,8 @@ public class TableValidator {
       } else {
         // No IRI, the expression is anonymous
         // Render based on display/sort renderers and provider
-        display.add(ExportOperation.renderManchester(displayRenderer, provider, expr));
-        sort.add(ExportOperation.renderManchester(sortRenderer, provider, expr));
+        display.add(OntologyHelper.renderManchester(expr, provider, displayRenderer));
+        sort.add(OntologyHelper.renderManchester(expr, provider, sortRenderer));
       }
     }
     return new Cell(column, display, sort);

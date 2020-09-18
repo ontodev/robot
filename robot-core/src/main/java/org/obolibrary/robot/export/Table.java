@@ -1,9 +1,13 @@
 package org.obolibrary.robot.export;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import java.io.IOException;
 import java.util.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -246,6 +250,17 @@ public class Table {
    *
    * @param split character to split multiple cell values on
    * @param standalone if true, include header
+   * @return HTML string
+   */
+  public String toHTML(String split, boolean standalone) {
+    return toHTML(split, standalone, false);
+  }
+
+  /**
+   * Render the Table as an HTML string.
+   *
+   * @param split character to split multiple cell values on
+   * @param standalone if true, include header
    * @param includeJS if true and standalone, include JS script for tooltips
    * @return HTML string
    */
@@ -300,6 +315,7 @@ public class Table {
     for (Row row : rows) {
       sb.append(row.toHTML(columns, split));
     }
+
     sb.append("</table>\n");
 
     if (standalone) {
@@ -329,5 +345,15 @@ public class Table {
 
     Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     return gson.toJson(table);
+  }
+
+  /**
+   * Render the Table as a YAML string.
+   *
+   * @return YAML string
+   */
+  public String toYAML() throws IOException {
+    JsonNode jsonNodeTree = new ObjectMapper().readTree(toJSON());
+    return new YAMLMapper().writeValueAsString(jsonNodeTree);
   }
 }
