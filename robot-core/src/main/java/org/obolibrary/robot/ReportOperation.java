@@ -565,7 +565,6 @@ public class ReportOperation {
 
         case "tsv":
         default:
-          System.out.print("tsv!");
           rows = reportTable.toList("");
           if (outputPath != null) {
             if (print > 0) {
