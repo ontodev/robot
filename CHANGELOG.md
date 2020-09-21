@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add [`validate`] command [#691]
 - Add `--errors <path>` option to [`template`] in [#713]
 - Add new formats to [`report`]: HTML, JSON, and XLSX [#699]
+- Add `--fail-on-violation <bool>` option to [`verify`] in [#738]
 
 ### Fixed
 - Handle empty [`template`] property charactersitics in [#719]
@@ -205,6 +206,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#738]: https://github.com/ontodev/robot/pull/738
 [#728]: https://github.com/ontodev/robot/pull/728
 [#727]: https://github.com/ontodev/robot/pull/727
 [#726]: https://github.com/ontodev/robot/pull/726

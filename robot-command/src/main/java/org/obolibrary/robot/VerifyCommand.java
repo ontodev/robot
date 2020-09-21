@@ -36,13 +36,13 @@ public class VerifyCommand implements Command {
   /** Initialze the command. */
   public VerifyCommand() {
     Options o = CommandLineHelper.getCommonOptions();
+    o.addOption("F", "fail-on-violation", true, "logging level to fail on");
     o.addOption("i", "input", true, "Input Ontology");
+    o.addOption("O", "output-dir", true, "Directory to place reports in");
 
     Option queries = new Option("q", "queries", true, "verify one or more SPARQL queries");
     queries.setArgs(Option.UNLIMITED_VALUES);
     o.addOption(queries);
-
-    o.addOption("O", "output-dir", true, "Directory to place reports in");
 
     options = o;
   }
@@ -133,8 +133,9 @@ public class VerifyCommand implements Command {
       }
     }
 
-    if (!passing) {
-      throw new Exception(verificationFailed);
+    boolean failOnViolation = CommandLineHelper.getBooleanValue(line, "fail-on-violation", true);
+    if (!passing && failOnViolation) {
+      System.exit(1);
     }
 
     return state;
