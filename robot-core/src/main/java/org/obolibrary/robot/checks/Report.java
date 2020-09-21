@@ -357,7 +357,8 @@ public class Report {
       for (Violation v : vs.getValue()) {
         // Subject of the violation for the following rows
         String subject;
-        if (!v.entity.isAnonymous()
+        if (ontologyIRI != null
+            && !v.entity.isAnonymous()
             && v.entity.getIRI().toString().equals(ontologyIRI.toString())) {
           // If the IRI is the ontology IRI, keep this as the full string
           subject = ontologyIRI.toString();
