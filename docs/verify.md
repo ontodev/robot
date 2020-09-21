@@ -27,7 +27,7 @@ And the CSV file `results/equivalent.csv` should have:
 
 ### Fail on Violation
 
-By default, this command will fail with a non-zero exit code when any violations are found. If you wish the command to succeed (e.g., for use for warnings in workflows), you can include `--fail-on-violation false`. Not that it will still log `FAIL Rule [rule name]` on the command line.
+By default, this command will fail with a non-zero exit code when any violations are found. If you wish the command to succeed (e.g., for use for warnings in workflows), you can include `--fail-on-violation false`. Note that it will still log `FAIL Rule [rule name]` on the command line.
 
 	robot verify --input asserted-equiv.owl \
 	  --queries equivalent.sparql \
