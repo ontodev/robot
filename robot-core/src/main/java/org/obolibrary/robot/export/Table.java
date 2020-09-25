@@ -52,11 +52,10 @@ public class Table {
     // Set renderer types based on format
     if (format == null || basicFormats.contains(format.toLowerCase())) {
       displayRenderer = RendererType.OBJECT_RENDERER;
-    } else if  (format.toLowerCase().startsWith("html")) {
+    } else if (format.toLowerCase().startsWith("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
       sortRenderer = RendererType.OBJECT_RENDERER;
     } else {
-      // TODO - unknown format
       displayRenderer = RendererType.OBJECT_RENDERER;
     }
   }
