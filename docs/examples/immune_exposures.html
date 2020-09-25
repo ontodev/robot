@@ -1,0 +1,130 @@
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+<table class="table table-bordered table-striped">
+<thead class="bg-dark text-white header-row">
+<tr>
+	<th>exposure process reported</th>
+	<th>exposure material reported</th>
+	<th>exposure material id</th>
+	<th>disease reported</th>
+	<th>disease ontology id</th>
+	<th>disease stage reported</th>
+</tr>
+</thead>
+<thead class="bg-secondary text-white">
+<tr>
+	<th>is-required; subclass-of 'exposure process';</th>
+	<th>subclass-of|equivalent-to 'material entity'; equivalent-to %3; is-required (when %1 subclass-of ('administering substance in vivo' or 'exposure to substance without evidence for disease' or 'occurrence of infectious disease' or 'occurrence of allergic disease')); is-excluded (when %1 equivalent-to 'occurrence of disease'); is-excluded (when %1 subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer' or 'no exposure' or unknown))</th>
+	<th>equivalent-to %2</th>
+	<th>subclass-of disease; subclass-of 'has material basis in' some %2 (when %1 not-subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer')); equivalent-to %5; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 equivalent-to 'administering substance in vivo'); is-excluded (when %1 subclass-of (vaccination or 'transplant or transfusion' or 'exposure to substance without evidence for disease' or 'no exposure' or unknown))</th>
+	<th>equivalent-to %4</th>
+	<th>subclass-of 'disease stage'; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 not-subclass-of 'occurrence of disease')</th>
+</tr>
+</thead>
+	<tr>
+		<td><a href="ONTIE:0003310">unknown</a></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003314">administering substance in vivo</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_11103">Hepacivirus C</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_11103">NCBITaxon:11103</a></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003305">exposure to substance without evidence for disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003322">occurrence of disease</a></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is empty but rule: &quot;is-required true&quot; does not allow this."></td>
+		<td></td>
+		<td><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is empty but rule: &quot;is-required true&quot; does not allow this."></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;Dengue virus equivalent-to (NCBITaxon:11060)&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;NCBITaxon:11060 equivalent-to 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">NCBITaxon:11060</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;Dengue virus 2 subclass-of disease&quot;.; Validation failed for rule: &quot;Dengue virus 2 subclass-of 'has material basis in' some 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">Dengue virus 2</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_11060">NCBITaxon:11060</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003305">'exposure to substance without evidence for disease'</a> or <a href="ONTIE:0003314">'administering substance in vivo'</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;blood or 'Hepacivirus C' equivalent-to (UBERON:0000178)&quot;."><a href="http://purl.obolibrary.org/obo/NCBITaxon_11103">'Hepacivirus C'</a> or <a href="http://purl.obolibrary.org/obo/UBERON_0000178">blood</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;UBERON:0000178 equivalent-to (blood or 'Hepacivirus C')&quot;."><a href="http://purl.obolibrary.org/obo/UBERON_0000178">UBERON:0000178</a></td>
+		<td></td>
+		<td></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Cell is non-empty (&quot;Chronic&quot;) but rule: &quot;is-excluded true&quot; does not allow this."><a href="http://purl.obolibrary.org/obo/OGMS_000094">Chronic</a></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;wheat allergy equivalent-to (DOID:12206)&quot;.; Validation failed for rule: &quot;dengue hemorrhagic fever equivalent-to (DOID:3660)&quot;.; Validation failed for rule: &quot;wheat allergy subclass-of 'has material basis in' some 'Dengue virus'&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_3660">wheat allergy</a></td>
+		<td class="bg-danger" data-toggle="tooltip" data-placement="right" title="Validation failed for rule: &quot;DOID:3660 equivalent-to 'dengue hemorrhagic fever'&quot;.; Validation failed for rule: &quot;DOID:12206 equivalent-to 'wheat allergy'&quot;."><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a>|<a href="http://purl.obolibrary.org/obo/DOID_3660">DOID:3660</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+	<tr>
+		<td><a href="ONTIE:0003317">occurrence of infectious disease</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">Dengue virus</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/NCBITaxon_12637">NCBITaxon:12637</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a>|<a href="http://purl.obolibrary.org/obo/DOID_12206">dengue hemorrhagic fever</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a>|<a href="http://purl.obolibrary.org/obo/DOID_12206">DOID:12206</a></td>
+		<td><a href="http://purl.obolibrary.org/obo/OGMS_0000094">Acute/Recent onset</a></td>
+	</tr>
+</table>
+</body>
+<script>
+	$(function () {
+		$('[data-toggle="tooltip"]').tooltip()
+	})</script>

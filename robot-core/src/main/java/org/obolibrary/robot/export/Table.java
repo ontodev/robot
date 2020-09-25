@@ -1,8 +1,13 @@
 package org.obolibrary.robot.export;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import java.io.IOException;
 import java.util.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -31,6 +36,8 @@ public class Table {
   private RendererType displayRenderer;
   private RendererType sortRenderer = null;
 
+  private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+
   /**
    * Init a new Table.
    *
@@ -43,10 +50,13 @@ public class Table {
     sortColumns = new ArrayList<>();
 
     // Set renderer types based on format
-    if (format.toLowerCase().startsWith("html")) {
+    if (format == null || basicFormats.contains(format.toLowerCase())) {
+      displayRenderer = RendererType.OBJECT_RENDERER;
+    } else if  (format.toLowerCase().startsWith("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
       sortRenderer = RendererType.OBJECT_RENDERER;
     } else {
+      // TODO - unknown format
       displayRenderer = RendererType.OBJECT_RENDERER;
     }
   }
@@ -83,11 +93,29 @@ public class Table {
     Sheet sheet = wb.getSheetAt(0);
     org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
     int colIdx = 0;
+    Map<Integer, String> rules = new HashMap<>();
     for (Column c : columns) {
       String name = c.getDisplayName();
       Cell xlsxCell = headerRow.createCell(colIdx);
       xlsxCell.setCellValue(name);
+
+      String displayRule = c.getDisplayRule();
+      if (displayRule != null) {
+        rules.put(colIdx, displayRule);
+      }
       colIdx++;
+    }
+
+    // Maybe add rules
+    if (!rules.isEmpty()) {
+      org.apache.poi.ss.usermodel.Row rulesRow = sheet.createRow(sheet.getLastRowNum() + 1);
+      for (int idx = 0; idx <= colIdx; idx++) {
+        if (rules.containsKey(idx)) {
+          String rule = rules.get(idx);
+          Cell xlsxCell = rulesRow.createCell(idx);
+          xlsxCell.setCellValue(rule);
+        }
+      }
     }
 
     // Add rows
@@ -215,26 +243,93 @@ public class Table {
    * @return HTML string
    */
   public String toHTML(String split) {
+    return toHTML(split, true, false);
+  }
+
+  /**
+   * Render the Table as an HTML string.
+   *
+   * @param split character to split multiple cell values on
+   * @param standalone if true, include header
+   * @return HTML string
+   */
+  public String toHTML(String split, boolean standalone) {
+    return toHTML(split, standalone, false);
+  }
+
+  /**
+   * Render the Table as an HTML string.
+   *
+   * @param split character to split multiple cell values on
+   * @param standalone if true, include header
+   * @param includeJS if true and standalone, include JS script for tooltips
+   * @return HTML string
+   */
+  public String toHTML(String split, boolean standalone, boolean includeJS) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<head>\n")
-        .append(
-            "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
-        .append("</head>\n")
-        .append("<body>\n")
-        .append("<table class=\"table table-striped\">\n")
+    if (standalone) {
+      // Add opening tags, style, and maybe js scripts
+      sb.append("<head>\n")
+          .append("\t<link rel=\"stylesheet\" href=\"")
+          .append("https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n");
+      if (includeJS) {
+        sb.append("\t<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
+            .append(
+                "\t<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
+            .append(
+                "\t<script src=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js\"></script>\n");
+      }
+      sb.append("</head>\n").append("<body>\n");
+    }
+    // Table start
+    sb.append("<table class=\"table table-bordered table-striped\">\n")
+        .append("<thead class=\"bg-dark text-white header-row\">\n")
         .append("<tr>\n");
 
+    // Add column headers
+    Map<Integer, String> rules = new HashMap<>();
+    int colIdx = 0;
     for (Column c : columns) {
       sb.append("\t<th>").append(c.getDisplayName()).append("</th>\n");
+      String displayRule = c.getDisplayRule();
+      if (displayRule != null) {
+        rules.put(colIdx, displayRule);
+      }
+      colIdx++;
+    }
+    sb.append("</tr>\n").append("</thead>\n");
+
+    // Maybe add rules
+    if (!rules.isEmpty()) {
+      sb.append("<thead class=\"bg-secondary text-white\">\n").append("<tr>\n");
+      for (int idx = 0; idx < colIdx; idx++) {
+        if (rules.containsKey(idx)) {
+          sb.append("\t<th>").append(rules.get(idx)).append("</th>\n");
+        } else {
+          sb.append("\t<th></th>\n");
+        }
+      }
+      sb.append("</tr>\n").append("</thead>\n");
     }
 
-    sb.append("</tr>\n");
-
+    // Add all table rows
     for (Row row : rows) {
       sb.append(row.toHTML(columns, split));
     }
-    sb.append("</table>");
-    sb.append("</body>");
+
+    sb.append("</table>\n");
+
+    if (standalone) {
+      // Add closing tag and script to activate tooltips
+      sb.append("</body>\n");
+      if (includeJS) {
+        sb.append("<script>\n")
+            .append("\t$(function () {\n")
+            .append("\t\t$('[data-toggle=\"tooltip\"]').tooltip()\n")
+            .append("\t})")
+            .append("</script>\n");
+      }
+    }
     return sb.toString();
   }
 
@@ -265,5 +360,15 @@ public class Table {
 
     Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     return gson.toJson(table);
+  }
+
+  /**
+   * Render the Table as a YAML string.
+   *
+   * @return YAML string
+   */
+  public String toYAML() throws IOException {
+    JsonNode jsonNodeTree = new ObjectMapper().readTree(toJSON());
+    return new YAMLMapper().writeValueAsString(jsonNodeTree);
   }
 }

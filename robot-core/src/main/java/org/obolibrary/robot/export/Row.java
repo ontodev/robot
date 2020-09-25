@@ -13,6 +13,9 @@ public class Row {
   // The subject of this row
   private IRI subject;
 
+  // The violation level of this row for Report
+  private String violationLevel;
+
   // List of cells in this row
   private Map<String, Cell> cells = new HashMap<>();
 
@@ -20,8 +23,26 @@ public class Row {
   private static final List<String> singles = Arrays.asList("CURIE", "ID", "IRI");
 
   /** Init a new Row. */
+  public Row() {
+    // empty constructor
+  }
+
+  /**
+   * Init a new Row with a subject.
+   *
+   * @param subject IRI of subject of row
+   */
   public Row(IRI subject) {
     this.subject = subject;
+  }
+
+  /**
+   * Init a new Row for a Report with a violation level.
+   *
+   * @param violationLevel String violation level - error, warn, or info
+   */
+  public Row(String violationLevel) {
+    this.violationLevel = violationLevel;
   }
 
   /**
@@ -74,13 +95,31 @@ public class Row {
 
         // Maybe set styles
         IndexedColors cellColor = cell.getCellColor();
-        if (cellColor != null) {
-          style.setFillBackgroundColor(cellColor.getIndex());
+        if (violationLevel != null) {
+          switch (violationLevel.toLowerCase()) {
+            case "error":
+              cellColor = IndexedColors.ROSE;
+              break;
+            case "warn":
+              cellColor = IndexedColors.LEMON_CHIFFON;
+              break;
+            case "info":
+              cellColor = IndexedColors.LIGHT_CORNFLOWER_BLUE;
+          }
         }
+
+        if (cellColor != null) {
+          style.setFillForegroundColor(cellColor.getIndex());
+        }
+
         FillPatternType cellPattern = cell.getCellPattern();
+        if (cellColor != null && cellPattern == null) {
+          cellPattern = FillPatternType.SOLID_FOREGROUND;
+        }
         if (cellPattern != null) {
           style.setFillPattern(cellPattern);
         }
+
         IndexedColors fontColor = cell.getFontColor();
         if (fontColor != null) {
           font.setColor(fontColor.getIndex());
@@ -170,12 +209,35 @@ public class Row {
    * @return HTML string rendering of row
    */
   public String toHTML(List<Column> columns, String split) {
+    String trClass = null;
+    if (violationLevel != null) {
+      switch (violationLevel.toLowerCase()) {
+        case "error":
+          trClass = "table-danger";
+          break;
+        case "warn":
+          trClass = "table-warning";
+          break;
+        case "info":
+          trClass = "table-info";
+          break;
+      }
+    }
     StringBuilder sb = new StringBuilder();
-    sb.append("\t<tr>\n");
+    if (trClass != null) {
+      sb.append("\t<tr class=\"").append(trClass).append("\">\n");
+    } else {
+      sb.append("\t<tr>\n");
+    }
+
+    // Iterate through columns and get the cell for each
     for (Column c : columns) {
       String columnName = c.getDisplayName();
       Cell cell = cells.getOrDefault(columnName, null);
       String value;
+      String htmlClass = null;
+      String comment = null;
+
       if (cell != null) {
         List<String> values = cell.getDisplayValues();
         if (values.size() > 1) {
@@ -184,11 +246,31 @@ public class Row {
               values.stream().map(x -> x.replace(split, "\\" + split)).collect(Collectors.toList());
         }
         value = String.join(split, values);
+        htmlClass = cell.getHTMLClass();
+        comment = cell.getComment();
       } else {
         value = "";
       }
-      sb.append("\t\t<td>").append(value).append("</td>\n");
+
+      String tdClass;
+      // Set default HTML class
+      if (htmlClass == null) {
+        tdClass = "";
+      } else {
+        tdClass = " class=\"" + htmlClass + "\"";
+      }
+      // Write cell as HTML
+      sb.append("\t\t<td").append(tdClass);
+      if (comment != null) {
+        // If cell has a comment, write into the td element
+        sb.append(" data-toggle=\"tooltip\" data-placement=\"right\" title=\"")
+            .append(comment.replace("\"", "&quot;"))
+            .append("\"");
+      }
+      sb.append(">").append(value).append("</td>\n");
     }
+
+    // Close table row
     sb.append("\t</tr>\n");
     return sb.toString();
   }

@@ -10,7 +10,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.obolibrary.robot.export.*;
 import org.obolibrary.robot.providers.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.*;
@@ -47,8 +46,9 @@ public class ExportOperation {
 
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
-  private static final EmptyShortFormProvider emptyProvider = new EmptyShortFormProvider();
-  private static final EmptyIRIShortFormProvider emptyIRIProvider = new EmptyIRIShortFormProvider();
+  protected static final EmptyShortFormProvider emptyProvider = new EmptyShortFormProvider();
+  protected static final EmptyIRIShortFormProvider emptyIRIProvider =
+      new EmptyIRIShortFormProvider();
 
   // All synonym property IRIs
   private static final List<String> synonymProperties =
@@ -77,6 +77,7 @@ public class ExportOperation {
     options.put("split", "|");
     options.put("entity-format", "NAME");
     options.put("entity-select", "ANY");
+    options.put("standalone", "true");
     return options;
   }
 
@@ -216,20 +217,47 @@ public class ExportOperation {
         currentEntitySelect = "NAMED";
       }
 
-      // Maybe get a property
-      OWLAnnotationProperty ap = checker.getOWLAnnotationProperty(colName, false);
+      OWLAnnotationProperty ap = null;
 
-      // Handle some defaults
-      IRI colIRI = ioHelper.createIRI(colName);
-      if (colIRI != null
-          && colIRI.toString().equals(dataFactory.getRDFSLabel().getIRI().toString())) {
+      // Handle rdfs:label defaults
+      if (iri != null && iri.equals(dataFactory.getRDFSLabel().getIRI())) {
         currentEntityFormat = "LABEL";
         currentEntitySelect = "NAMED";
         ap = dataFactory.getRDFSLabel();
       }
 
-      OWLDataProperty dp = checker.getOWLDataProperty(colName);
-      OWLObjectProperty op = checker.getOWLObjectProperty(colName);
+      // checker only resolves labels, so try with IRI
+      if (ap == null && iri != null && ontology.containsAnnotationPropertyInSignature(iri)) {
+        ap = dataFactory.getOWLAnnotationProperty(iri);
+      } else {
+        // Try by label
+        ap = checker.getOWLAnnotationProperty(colName);
+      }
+
+      // Check for object/data properties if not an annotation property
+      OWLDataProperty dp = null;
+      OWLObjectProperty op = null;
+      if (ap == null) {
+        // annotation property not found
+        if (iri != null && ontology.containsDataPropertyInSignature(iri)) {
+          // Use IRI to create data property
+          dp = dataFactory.getOWLDataProperty(iri);
+        } else {
+          // Try by label
+          dp = checker.getOWLDataProperty(colName);
+        }
+
+        if (dp == null) {
+          // data property not found
+          if (iri != null && ontology.containsObjectPropertyInSignature(iri)) {
+            // Use IRI to create object property
+            op = dataFactory.getOWLObjectProperty(iri);
+          } else {
+            // Try by label
+            op = checker.getOWLObjectProperty(colName);
+          }
+        }
+      }
 
       // Maybe get a short form provider
       ShortFormProvider provider;
@@ -319,7 +347,7 @@ public class ExportOperation {
         break;
       case "html":
         try (PrintWriter out = new PrintWriter(exportFile)) {
-          out.print(table.toHTML(split));
+          out.print(table.toHTML(split, OptionsHelper.optionIsTrue(options, "standalone")));
         }
         break;
       case "json":
@@ -346,8 +374,8 @@ public class ExportOperation {
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
    * @param classes Set of class expressions to convert to string
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return String of class expressions or null
    */
   private static List<String> classExpressionsToString(
@@ -360,11 +388,11 @@ public class ExportOperation {
     for (OWLClassExpression expr : classes) {
       if (expr.isAnonymous() && includeAnonymous) {
         // Get a Manchester string using labels
-        String manString = renderManchester(rt, provider, expr);
+        String manString = OntologyHelper.renderManchester(expr, provider, rt);
         strings.add(manString);
       } else if (!expr.isAnonymous() && includeNamed) {
         OWLClass sc = expr.asOWLClass();
-        strings.add(renderManchester(rt, provider, sc));
+        strings.add(OntologyHelper.renderManchester(sc, provider, rt));
       }
     }
     return strings;
@@ -378,8 +406,8 @@ public class ExportOperation {
    * @param displayRendererType RendererType for display value
    * @param sortRendererType RendererType for sort value
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return Cell for this Column containing class expressions
    */
   private static Cell getClassCell(
@@ -506,8 +534,8 @@ public class ExportOperation {
    * @param displayRendererType RendererType for display value
    * @param sortRendererType RendererType for sort value
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return Cell for this Column containing property expressions
    */
   private static Cell getPropertyCell(
@@ -552,17 +580,17 @@ public class ExportOperation {
     List<String> values = new ArrayList<>();
     for (OWLAnnotationAssertionAxiom a :
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
-      if (a.getProperty().getIRI() == ap.getIRI()) {
+      if (a.getProperty().getIRI().equals(ap.getIRI())) {
         if (a.getValue().isIRI()) {
           IRI iri = a.getValue().asIRI().orNull();
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
             for (OWLEntity e : entities) {
-              values.add(renderManchester(rt, provider, e));
+              values.add(OntologyHelper.renderManchester(e, provider, rt));
             }
           }
         } else {
-          values.add(renderManchester(rt, provider, a.getValue()));
+          values.add(OntologyHelper.renderManchester(a.getValue(), provider, rt));
         }
       }
     }
@@ -579,8 +607,8 @@ public class ExportOperation {
    * @param provider ShortFormProvider to resolve entities
    * @param entity OWLEntity to get relations of
    * @param dp OWLDataProperty to get the value(s) of
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return String of values or null
    */
   private static List<String> getPropertyValues(
@@ -635,8 +663,8 @@ public class ExportOperation {
    * @param provider ShortFormProvider to resolve entities
    * @param entity OWLEntity to get annotations on
    * @param op OWLObjectProperty to get the value(s) of
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return String of values or null
    */
   private static List<String> getPropertyValues(
@@ -653,7 +681,7 @@ public class ExportOperation {
       return propVals
           .stream()
           .filter(OWLIndividual::isNamed)
-          .map(pv -> renderManchester(rt, provider, pv.asOWLNamedIndividual()))
+          .map(pv -> OntologyHelper.renderManchester(pv.asOWLNamedIndividual(), provider, rt))
           .collect(Collectors.toList());
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
@@ -695,8 +723,8 @@ public class ExportOperation {
    * @param dp OWLDataProperty to look for
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return set of fillers that are 'values' of the data property
    */
   private static Set<String> getRestrictionFillers(
@@ -720,7 +748,7 @@ public class ExportOperation {
           pe = avf.getProperty();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI() == dp.getIRI()) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -733,7 +761,7 @@ public class ExportOperation {
           pe = svf.getProperty();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI() == dp.getIRI()) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -747,7 +775,7 @@ public class ExportOperation {
           n = ec.getCardinality();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI() == dp.getIRI()) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -761,7 +789,7 @@ public class ExportOperation {
           n = minc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI() == dp.getIRI()) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -775,7 +803,7 @@ public class ExportOperation {
           n = maxc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLDataProperty prop = pe.asOWLDataProperty();
-            if (prop.getIRI() == dp.getIRI()) {
+            if (prop.getIRI().equals(dp.getIRI())) {
               if ((!f.isAnonymous() && includeNamed) || (f.isAnonymous() && includeAnonymous)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -797,8 +825,8 @@ public class ExportOperation {
    * @param op OWLObjectProperty to look for
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return set of fillers that are 'values' of the object property
    */
   private static Set<String> getRestrictionFillers(
@@ -823,7 +851,7 @@ public class ExportOperation {
           f = avf.getFiller();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI() == op.getIRI()) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -837,7 +865,7 @@ public class ExportOperation {
           f = svf.getFiller();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI() == op.getIRI()) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, null));
               }
@@ -852,7 +880,7 @@ public class ExportOperation {
           n = ec.getCardinality();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI() == op.getIRI()) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -867,7 +895,7 @@ public class ExportOperation {
           n = minc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI() == op.getIRI()) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -882,7 +910,7 @@ public class ExportOperation {
           n = maxc.getCardinality();
           if (!pe.isAnonymous()) {
             OWLObjectProperty prop = pe.asOWLObjectProperty();
-            if (prop.getIRI() == op.getIRI()) {
+            if (prop.getIRI().equals(op.getIRI())) {
               if ((f.isAnonymous() && includeAnonymous) || (!f.isAnonymous() && includeNamed)) {
                 fillers.add(renderRestrictionString(rt, provider, f, n));
               }
@@ -931,9 +959,9 @@ public class ExportOperation {
       boolean includeAnonymous = col.getIncludeAnonymous();
 
       String colName = col.getName();
-      OWLProperty maybeAnnotation = col.getProperty();
-      if (maybeAnnotation instanceof OWLAnnotationProperty) {
-        OWLAnnotationProperty maybeLabel = (OWLAnnotationProperty) maybeAnnotation;
+      OWLProperty colProperty = col.getProperty();
+      if (colProperty instanceof OWLAnnotationProperty) {
+        OWLAnnotationProperty maybeLabel = (OWLAnnotationProperty) colProperty;
         if (maybeLabel.isLabel()) {
           // Handle like we do default LABEL columns
           colName = "LABEL";
@@ -956,8 +984,8 @@ public class ExportOperation {
           continue;
         case "ID":
         case "CURIE":
-          String display = renderManchester(displayRendererType, provider, entity);
-          String sort = renderManchester(sortRendererType, provider, entity);
+          String display = OntologyHelper.renderManchester(entity, provider, displayRendererType);
+          String sort = OntologyHelper.renderManchester(entity, provider, sortRendererType);
           row.add(new Cell(col, display, sort));
           continue;
         case "LABEL":
@@ -987,7 +1015,6 @@ public class ExportOperation {
       }
 
       // If a property exists, use this property to get values
-      OWLProperty colProperty = col.getProperty();
       if (colProperty != null) {
         if (colProperty instanceof OWLAnnotationProperty) {
           OWLAnnotationProperty ap = (OWLAnnotationProperty) colProperty;
@@ -1311,8 +1338,8 @@ public class ExportOperation {
    * @param rt RendererType to use to render Manchester
    * @param provider ShortFormProvider to resolve entities
    * @param props Set of property expressions to convert to string
-   * @param includeNamed
-   * @param includeAnonymous
+   * @param includeNamed if true, include named classes in output
+   * @param includeAnonymous if true, include anonymous classes in output
    * @return String of property expressions or null
    */
   private static List<String> propertyExpressionsToString(
@@ -1343,74 +1370,24 @@ public class ExportOperation {
     // Maybe process object property expressions
     for (OWLObjectPropertyExpression expr : opes) {
       if (expr.isAnonymous() && includeAnonymous) {
-        String manString = renderManchester(rt, provider, expr);
+        String manString = OntologyHelper.renderManchester(expr, provider, rt);
         strings.add(manString);
       } else if (!expr.isAnonymous() && includeNamed) {
         OWLObjectProperty op = expr.asOWLObjectProperty();
-        strings.add(renderManchester(rt, provider, op));
+        strings.add(OntologyHelper.renderManchester(op, provider, rt));
       }
     }
     // Maybe process data property expressions
     for (OWLDataPropertyExpression expr : dpes) {
       if (expr.isAnonymous() && includeAnonymous) {
-        String manString = renderManchester(rt, provider, expr);
+        String manString = OntologyHelper.renderManchester(expr, provider, rt);
         strings.add(manString);
       } else if (!expr.isAnonymous() && includeNamed) {
         OWLDataProperty dp = expr.asOWLDataProperty();
-        strings.add(renderManchester(rt, provider, dp));
+        strings.add(OntologyHelper.renderManchester(dp, provider, rt));
       }
     }
     return strings;
-  }
-
-  /**
-   * Render a Manchester string for an OWLObject. The RendererType will determine what Manchester
-   * OWL Syntax renderer will be created.
-   *
-   * @param rt RendererType to use to render Manchester
-   * @param provider ShortFormProvideer to resolve entities
-   * @param object OWLObject to render
-   * @return String rendering of OWLObject based on renderer type
-   */
-  private static String renderManchester(
-      RendererType rt, ShortFormProvider provider, OWLObject object) {
-    ManchesterOWLSyntaxObjectRenderer renderer;
-    StringWriter sw = new StringWriter();
-
-    if (object instanceof OWLAnnotationValue) {
-      // Just return the value of literal annotations, don't render
-      OWLAnnotationValue v = (OWLAnnotationValue) object;
-      if (v.isLiteral()) {
-        OWLLiteral lit = v.asLiteral().orNull();
-        if (lit != null) {
-          return lit.getLiteral();
-        }
-      }
-    }
-
-    if (provider instanceof QuotedAnnotationValueShortFormProvider && object.isAnonymous()) {
-      // Handle quoting
-      QuotedAnnotationValueShortFormProvider qavsfp =
-          (QuotedAnnotationValueShortFormProvider) provider;
-      qavsfp.toggleQuoting();
-      if (rt == RendererType.OBJECT_HTML_RENDERER) {
-        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, qavsfp);
-      } else {
-        // Default renderer
-        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, qavsfp);
-      }
-      object.accept(renderer);
-      qavsfp.toggleQuoting();
-    } else {
-      if (rt == RendererType.OBJECT_HTML_RENDERER) {
-        renderer = new ManchesterOWLSyntaxObjectHTMLRenderer(sw, provider);
-      } else {
-        // Default renderer
-        renderer = new ManchesterOWLSyntaxObjectRenderer(sw, provider);
-      }
-      object.accept(renderer);
-    }
-    return sw.toString().replace("\n", "").replaceAll(" +", " ");
   }
 
   /**
@@ -1426,7 +1403,7 @@ public class ExportOperation {
    */
   private static String renderRestrictionString(
       RendererType rt, ShortFormProvider provider, OWLObject filler, Integer n) {
-    String render = renderManchester(rt, provider, filler);
+    String render = OntologyHelper.renderManchester(filler, provider, rt);
     if (filler instanceof OWLEntity && n != null) {
       // Not anonymous, has cardinality
       return String.format("%d %s", n, render);

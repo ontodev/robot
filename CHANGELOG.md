@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add Whelk OWL reasoner in [#730]
+- Add [`validate`] command [#691]
+- Add `--errors <path>` option to [`template`] in [#713]
+- Add new formats to [`report`]: HTML, JSON, and XLSX [#699]
+- Add `--fail-on-violation <bool>` option to [`verify`] in [#738]
+
+### Fixed
+- Handle empty [`template`] property charactersitics in [#719]
+- Fix referencing properties by CURIE in [`export`] in [#722]
+- Fix [`validate`] `--write-all true` in [#726]
+- Fix reported row number in [`validate`] error tables in [#727]
+- Fix equivalent class rendering for [`template`] in [#728]
+- Fix ontology IRI rendering for [`report`] in [#739]
+
+## [1.7.0] - 2020-07-31
+
+### Added
 - Add [`export`] command [#481]
 - Add JSON format to [`export`] in [#645]
 - Add Excel format to [`export`] in [#646]
@@ -23,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced time spent loading datasets for [`query`] in [#666]
 - Fix writing JSON format to use `OutputStream` with ['convert'] in [#671]
 - Fix IRI resolution for `template` in [#689]
-
+- Fix MIREOT [`extract`] on overlapping class/individual entity for [#709] in [#710]
+- Fix issue with `--add-prefixes` option in [#715]
 
 ## [1.6.0] - 2020-03-04
 
@@ -155,7 +173,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/ontodev/robot/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/ontodev/robot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ontodev/robot/compare/v1.4.3...v1.5.0
 [1.4.3]: https://github.com/ontodev/robot/compare/v1.4.2...v1.4.3
@@ -186,7 +205,21 @@ First official release of ROBOT!
 [`repair`]: http://robot.obolibrary.org/repair
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
+[`validate`]: http://robot.obolibrary.org/validate
 
+[#739]: https://github.com/ontodev/robot/pull/739
+[#738]: https://github.com/ontodev/robot/pull/738
+[#728]: https://github.com/ontodev/robot/pull/728
+[#727]: https://github.com/ontodev/robot/pull/727
+[#726]: https://github.com/ontodev/robot/pull/726
+[#722]: https://github.com/ontodev/robot/pull/722
+[#719]: https://github.com/ontodev/robot/pull/716
+[#715]: https://github.com/ontodev/robot/pull/715
+[#713]: https://github.com/ontodev/robot/pull/713
+[#710]: https://github.com/ontodev/robot/pull/710
+[#709]: https://github.com/ontodev/robot/issues/709
+[#699]: https://github.com/ontodev/robot/pull/699
+[#691]: https://github.com/ontodev/robot/pull/691
 [#689]: https://github.com/ontodev/robot/pull/689
 [#685]: https://github.com/ontodev/robot/pull/685
 [#671]: https://github.com/ontodev/robot/pull/671

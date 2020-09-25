@@ -1,5 +1,7 @@
 package org.obolibrary.robot.export;
 
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.semanticweb.owlapi.model.*;
@@ -22,6 +24,8 @@ public class Column {
   private OWLAnnotationProperty annotationProperty = null;
   private OWLDataProperty dataProperty = null;
   private OWLObjectProperty objectProperty = null;
+  private Map<String, List<String>> rules = null;
+  private String displayRule = null;
 
   // Target object (e.g., annotation) for cell values
   // private OWLObject targetObject;
@@ -45,6 +49,7 @@ public class Column {
    * @param displayName Column display name
    * @param iri IRI of column property
    * @param shortFormProvider ShortFormProvider to use when rendering values
+   * @param entitySelect
    */
   public Column(
       String name,
@@ -85,6 +90,7 @@ public class Column {
    * @param displayName Column display name
    * @param dataProperty column OWLDataProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
+   * @param entitySelect
    */
   public Column(
       String name,
@@ -106,6 +112,7 @@ public class Column {
    * @param displayName Column display name
    * @param objectProperty column OWLObjectProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
+   * @param entitySelect
    */
   public Column(
       String name,
@@ -120,6 +127,33 @@ public class Column {
     setEntitySelect(entitySelect);
   }
 
+  public Column(String name, @Nonnull ShortFormProvider shortFormProvider) {
+    this.name = name;
+    this.shortFormProvider = shortFormProvider;
+    displayName = name;
+    includeNamed = true;
+    includeAnonymous = true;
+  }
+
+  /**
+   * Init a new column using one or more rules for validate.
+   *
+   * @param name Column name
+   * @param rules Column rules
+   * @param displayRule String raw display rule for output
+   */
+  public Column(
+      String name,
+      Map<String, List<String>> rules,
+      String displayRule,
+      @Nonnull ShortFormProvider shortFormProvider) {
+    this.name = name;
+    this.displayName = name;
+    this.rules = rules;
+    this.displayRule = displayRule;
+    this.shortFormProvider = shortFormProvider;
+  }
+
   /**
    * Get the display name of a column.
    *
@@ -127,6 +161,15 @@ public class Column {
    */
   public String getDisplayName() {
     return displayName;
+  }
+
+  /**
+   * Get the display rule of a column for validation.
+   *
+   * @return String display rule
+   */
+  public String getDisplayRule() {
+    return displayRule;
   }
 
   /**
@@ -155,14 +198,12 @@ public class Column {
     return null;
   }
 
-  /** @return */
-  @Nonnull
+  /** @return true if including anonymous entities in this column */
   public boolean getIncludeAnonymous() {
     return includeAnonymous;
   }
 
-  /** @return */
-  @Nonnull
+  /** @return true if including named entities in this column */
   public boolean getIncludeNamed() {
     return includeNamed;
   }
@@ -175,6 +216,16 @@ public class Column {
   @Nullable
   public IRI getIRI() {
     return iri;
+  }
+
+  /**
+   * Return the rules used in column for validate, or null.
+   *
+   * @return map of rules or null
+   */
+  @Nullable
+  public Map<String, List<String>> getRules() {
+    return rules;
   }
 
   /**
@@ -210,7 +261,12 @@ public class Column {
     this.reverseSort = reverseSort;
   }
 
-  /** @param entitySelect */
+  /**
+   * Set the entity selection values (includeNamed and includeAnonymous) based on the entity select
+   * string: NAMED, ANON/ANONYMOUS, or ANY.
+   *
+   * @param entitySelect entity select string
+   */
   private void setEntitySelect(String entitySelect) {
     switch (entitySelect.toLowerCase()) {
       case "named":

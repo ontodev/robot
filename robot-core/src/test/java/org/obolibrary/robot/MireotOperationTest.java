@@ -24,7 +24,25 @@ public class MireotOperationTest extends CoreTest {
    */
   @Test
   public void testMireot() throws Exception {
-    testMireot("/mireot.owl");
+    testMireot(
+        "/filtered.owl",
+        "/mireot.owl",
+        "http://purl.obolibrary.org/obo/uberon.owl",
+        "http://purl.obolibrary.org/obo/UBERON_0001235");
+  }
+
+  /**
+   * Test MIROET on a subset with an entity that is both a class and individual.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testMireotOnOverlap() throws Exception {
+    testMireot(
+        "/pH.ttl",
+        "/pH-extract.ttl",
+        "http://purl.obolibrary.org/obo/uo.owl",
+        "http://purl.obolibrary.org/obo/UO_0000196");
   }
 
   /**
@@ -33,13 +51,11 @@ public class MireotOperationTest extends CoreTest {
    * @param expectedPath the path to a known-good file for comparison
    * @throws Exception on any problem
    */
-  public void testMireot(String expectedPath) throws Exception {
-    OWLOntology inputOntology = loadOntology("/filtered.owl");
-
-    IRI outputIRI = IRI.create("http://purl.obolibrary.org/obo/uberon.owl");
-
-    Set<IRI> upperIRIs =
-        Collections.singleton(IRI.create("http://purl.obolibrary.org/obo/UBERON_0001235"));
+  public void testMireot(String inputPath, String expectedPath, String outputIRIString, String term)
+      throws Exception {
+    OWLOntology inputOntology = loadOntology(inputPath);
+    IRI outputIRI = IRI.create(outputIRIString);
+    Set<IRI> upperIRIs = Collections.singleton(IRI.create(term));
     // Set<IRI> branchIRIs = upperIRIs;
 
     List<OWLOntology> outputOntologies = new ArrayList<>();

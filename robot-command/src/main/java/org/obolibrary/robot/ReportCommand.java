@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -15,6 +16,11 @@ import org.slf4j.LoggerFactory;
 public class ReportCommand implements Command {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReportCommand.class);
+
+  private static final String NS = "report#";
+
+  private static final String missingOutputError =
+      NS + "MISSING OUTPUT ERROR '%s' format requires an --output";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -34,6 +40,12 @@ public class ReportCommand implements Command {
     o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
     o.addOption("d", "tdb-directory", true, "directory to put TDB mappings (default: .tdb)");
     o.addOption("L", "limit", true, "specify a number of results to limit queries to");
+    o.addOption(
+        null,
+        "standalone",
+        true,
+        "If true, and the output format is HTML, generate the HTML report as a standalone file (this option is ignored if the output format is not HTML)");
+
     options = o;
   }
 
@@ -113,6 +125,13 @@ public class ReportCommand implements Command {
 
     // output is optional - no output means the file will not be written anywhere
     String outputPath = CommandLineHelper.getOptionalValue(line, "output");
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+    if (format != null) {
+      if (Lists.newArrayList("html", "json", "yaml").contains(format.toLowerCase())
+          && outputPath == null) {
+        throw new IllegalArgumentException(String.format(missingOutputError, format));
+      }
+    }
 
     boolean success;
 

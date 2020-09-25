@@ -1,0 +1,14 @@
+exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported
+is-required; subclass-of 'exposure process';,subclass-of|equivalent-to 'material entity'; equivalent-to %3; is-required (when %1 subclass-of ('administering substance in vivo' or 'exposure to substance without evidence for disease' or 'occurrence of infectious disease' or 'occurrence of allergic disease')); is-excluded (when %1 equivalent-to 'occurrence of disease'); is-excluded (when %1 subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer' or 'no exposure' or unknown)),equivalent-to %2,subclass-of disease; subclass-of 'has material basis in' some %2 (when %1 not-subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer')); equivalent-to %5; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 equivalent-to 'administering substance in vivo'); is-excluded (when %1 subclass-of (vaccination or 'transplant or transfusion' or 'exposure to substance without evidence for disease' or 'no exposure' or unknown)),equivalent-to %4,subclass-of 'disease stage'; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 not-subclass-of 'occurrence of disease')
+unknown,,,,,
+administering substance in vivo,Hepacivirus C,NCBITaxon:11103,,,
+exposure to substance without evidence for disease,Dengue virus,NCBITaxon:12637,,,
+occurrence of disease,,,,,
+occurrence of infectious disease,Dengue virus,NCBITaxon:12637,dengue hemorrhagic fever,DOID:12206,Acute/Recent onset
+occurrence of infectious disease,Dengue virus,NCBITaxon:12637,,,Acute/Recent onset
+occurrence of infectious disease,Dengue virus,NCBITaxon:12637,dengue hemorrhagic fever,DOID:12206,
+occurrence of infectious disease,Dengue virus,NCBITaxon:11060,dengue hemorrhagic fever,DOID:12206,Acute/Recent onset
+occurrence of infectious disease,Dengue virus,NCBITaxon:12637,Dengue virus 2,NCBITaxon:11060,Acute/Recent onset
+('administering substance in vivo' or 'exposure to substance without evidence for disease'),blood or 'Hepacivirus C',UBERON:0000178,,,Chronic
+occurrence of infectious disease,Dengue virus,NCBITaxon:12637,dengue hemorrhagic fever|wheat allergy,DOID:12206|DOID:3660,Acute/Recent onset
+occurrence of infectious disease,Dengue virus,NCBITaxon:12637,dengue hemorrhagic fever|dengue hemorrhagic fever,DOID:12206|DOID:12206,Acute/Recent onset

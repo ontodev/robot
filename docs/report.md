@@ -21,7 +21,7 @@ The `report` command runs a series of quality control SPARQL queries over the in
 robot report --input edit.owl --output report.tsv
 ```
 
-By default, the output is a TSV file. You can also get a YAML output by including `--format YAML`. A summary of the report is also printed to the console:
+A summary of the report is also printed to the console:
 ```
 Violations: 710
 -----------------
@@ -30,7 +30,21 @@ WARN:       572
 INFO:       29
 ```
 
-If you do not provide an `--output`, all violations will be printed to the terminal in either the specified format or TSV (if no format is specified). You can also choose to print the details of the first `n` number of violations using `--print <n>`:
+## Formats
+
+The following formats are supported by `report`:
+- TSV
+- CSV
+- HTML
+- YAML
+- JSON
+- XLSX
+
+The format will be determined by the extension of the `--output` (e.g., if the output is `report.csv`, the format will be CSV). If you'd like to override this, you can include the `--format` option. For example, to force YAML format, include `--format YAML`.
+
+HTML format will either be a "standalone" HTML page, or, if you plan to include this table in an existing HTML page, just the HTML table by including `--standalone false`. All HTML content is based on [Bootstrap](https://getbootstrap.com/).
+
+If you do not provide an `--output` and your format is CSV or TSV, all violations will be printed to the console in that format. An `--output` **must** be provided for HTML, JSON, and YAML formats. You can also choose to print the details of the first `n` number of violations using `--print <n>`. If the format is CSV, it will be printed as comma-separated values, otherwise it will be printed as tab-separated values.
 <!-- DO NOT TEST -->
 ```
 robot report --input edit.owl \
@@ -54,7 +68,11 @@ robot report --input edit.owl \
   --output report.tsv
 ```
 
-If the report fails, the command will exit with a status of `1`, but a report will still be generated and written to the output file. To always pass (even with errors), change the level to `--fail-on none`.
+If the report fails, the command will exit with a status of `1`, but a report will still be generated and written to the output file. To always pass (even with errors), you can set the fail-on level to "none":
+
+    robot report --input edit.owl \
+      --fail-on none \
+      --output results/report.tsv
 
 ## Queries
 
@@ -62,7 +80,7 @@ If the report fails, the command will exit with a status of `1`, but a report wi
 
 Each query retrieves a triple in the form of `?entity ?property ?value`. The `?entity` is the violating entity, the `?property` is the property that is being violated, and `?value` is what is causing the violation (which could be empty).
 
-For example, the query to retrieve references to deprecatd classes:
+For example, the query to retrieve references to deprecated classes:
 ```
 SELECT DISTINCT ?entity ?property ?value WHERE
   {?value owl:deprecated true .

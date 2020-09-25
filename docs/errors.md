@@ -56,7 +56,7 @@ When matching an IRI by pattern, the pattern should contain one or more wildcard
 
 ### Invalid Prefix Error
 
-Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/prefixes) for more details on adding prefixes.
+Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/global#prefixes) for more details on adding prefixes.
 
 ### Invalid Reasoner Error
 

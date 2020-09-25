@@ -1,13 +1,6 @@
 package org.obolibrary.robot;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -20,15 +13,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.obolibrary.robot.checks.Report;
 import org.obolibrary.robot.checks.Violation;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.obolibrary.robot.export.Table;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +90,7 @@ public class ReportOperation {
     options.put("tdb", "false");
     options.put("tdb-directory", ".tdb");
     options.put("keep-tdb-mappings", "false");
+    options.put("standalone", "true");
     return options;
   }
 
@@ -285,7 +280,8 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations = getViolations(dataset, queryName, queryString, options);
+      List<Violation> violations =
+          getViolations(ioHelper, dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
@@ -368,6 +364,23 @@ public class ReportOperation {
    * @throws Exception on any reporting error
    */
   public static Report getTDBReport(Dataset dataset, Map<String, String> options) throws Exception {
+    IOHelper ioHelper = new IOHelper();
+    return getTDBReport(ioHelper, dataset, options);
+  }
+
+  /**
+   * Given a dataset and a map of options, create a Report object and run (on TDB dataset) the
+   * report queries specified in a profile (from options, or default). Return the completed Report
+   * object. The labels option is not supported with TDB.
+   *
+   * @param ioHelper IOHelper to resolve IRIs
+   * @param dataset TDB Dataset to perform Report operation on
+   * @param options Map of report options
+   * @return Report object with violation details
+   * @throws Exception on any reporting error
+   */
+  public static Report getTDBReport(IOHelper ioHelper, Dataset dataset, Map<String, String> options)
+      throws Exception {
     // Get options specified in map or default options
     if (options == null) {
       options = getDefaultOptions();
@@ -418,7 +431,8 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations = getViolations(dataset, queryName, queryString, options);
+      List<Violation> violations =
+          getViolations(ioHelper, dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
@@ -468,43 +482,106 @@ public class ReportOperation {
     String format = OptionsHelper.getOption(options, "format");
     if (format == null && outputPath != null) {
       format = outputPath.substring(outputPath.lastIndexOf(".") + 1);
-      if (!format.equalsIgnoreCase("csv") && !format.equalsIgnoreCase("yaml")) {
-        // Anything other than .yaml or .csv is written as TSV
-        format = "tsv";
-      }
     } else if (format == null) {
       // Null format means no output file, will be printed as TSV
       format = "tsv";
     }
 
-    String result;
+    // Process different output formats while writing print lines if requested
+    // First check if format is JSON or YAML
+    // We don't use the Table for these formats because we want to group by violation level and rule
+    // name
     if (format.equalsIgnoreCase("yaml")) {
-      result = report.toYAML();
-    } else if (format.equalsIgnoreCase("csv")) {
-      result = report.toCSV();
-    } else {
-      result = report.toTSV();
-    }
-
-    if (outputPath != null) {
-      // If output is provided, write to that file
+      if (print > 0) {
+        // We use the Table to get a list of rows to print as TSV
+        Table t = report.toTable("tsv");
+        printNViolations(t.toList(""), print, "\t");
+      }
+      String yaml = report.toYAML();
       try (FileWriter fw = new FileWriter(outputPath);
           BufferedWriter bw = new BufferedWriter(fw)) {
         logger.debug("Writing report to: " + outputPath);
-        bw.write(result);
+        bw.write(yaml);
       }
-      // Maybe print the first N lines
+
+    } else if (format.equalsIgnoreCase("json")) {
       if (print > 0) {
-        String[] lines = getLinesToPrint(report, result, format);
-        printNViolations(lines, print);
+        // We use the Table to get a list of rows to print as TSV
+        Table t = report.toTable("tsv");
+        printNViolations(t.toList(""), print, "\t");
       }
+      String json = report.toJSON();
+      try (FileWriter fw = new FileWriter(outputPath);
+          BufferedWriter bw = new BufferedWriter(fw)) {
+        logger.debug("Writing report to: " + outputPath);
+        bw.write(json);
+      }
+
     } else {
-      // Output goes to terminal
-      if (print > 0) {
-        String[] lines = getLinesToPrint(report, result, format);
-        printNViolations(lines, print);
-      } else {
-        System.out.println(result);
+      // All other formats are converted to export Table to get the output
+      Table reportTable = report.toTable(format);
+      List<String[]> rows;
+      switch (format.toLowerCase()) {
+        case "html":
+          if (print > 0) {
+            printNViolations(reportTable.toList(""), print, "\t");
+          }
+          String html = reportTable.toHTML("", OptionsHelper.optionIsTrue(options, "standalone"));
+          try (FileWriter fw = new FileWriter(outputPath);
+              BufferedWriter bw = new BufferedWriter(fw)) {
+            logger.debug("Writing report to: " + outputPath);
+            bw.write(html);
+          }
+          break;
+
+        case "csv":
+          rows = reportTable.toList("");
+          if (outputPath != null) {
+            if (print > 0) {
+              printNViolations(rows, print, ",");
+            }
+            try (FileWriter fw = new FileWriter(outputPath);
+                BufferedWriter bw = new BufferedWriter(fw)) {
+              logger.debug("Writing report to: " + outputPath);
+              IOHelper.writeTable(rows, bw, ',');
+            }
+          } else {
+            if (print == 0) {
+              print = rows.size();
+            }
+            printNViolations(rows, print, ",");
+          }
+          break;
+
+        case "xlsx":
+          if (print > 0) {
+            printNViolations(reportTable.toList(""), print, "\t");
+          }
+          try (Workbook wb = reportTable.asWorkbook("");
+              FileOutputStream fos = new FileOutputStream(outputPath)) {
+            wb.write(fos);
+          }
+          break;
+
+        case "tsv":
+        default:
+          System.out.print("tsv!");
+          rows = reportTable.toList("");
+          if (outputPath != null) {
+            if (print > 0) {
+              printNViolations(rows, print, "\t");
+            }
+            try (FileWriter fw = new FileWriter(outputPath);
+                BufferedWriter bw = new BufferedWriter(fw)) {
+              logger.debug("Writing report to: " + outputPath);
+              IOHelper.writeTable(rows, bw, '\t');
+            }
+          } else {
+            if (print == 0) {
+              print = rows.size();
+            }
+            printNViolations(rows, print, "\t");
+          }
       }
     }
 
@@ -526,26 +603,6 @@ public class ReportOperation {
     } else {
       throw new IllegalArgumentException(String.format(failOnError, failOn));
     }
-  }
-
-  /**
-   * Given a Report, a result, and a format, return the array of lines in TSV format to be printed
-   * to terminal. The written output of the report will still be in the specified format.
-   *
-   * @param report Report object
-   * @param result string result of the report
-   * @param format format of the string result
-   * @return array of TSV format lines
-   */
-  private static String[] getLinesToPrint(Report report, String result, @NotNull String format) {
-    String[] lines;
-    if (format.equalsIgnoreCase("yaml") || format.equalsIgnoreCase("csv")) {
-      // Print YAML as TSV for this (output will still be YAML)
-      lines = report.toTSV().split("\n");
-    } else {
-      lines = result.split("\n");
-    }
-    return lines;
   }
 
   /**
@@ -750,7 +807,11 @@ public class ReportOperation {
    * @throws IOException on issue parsing query
    */
   private static List<Violation> getViolations(
-      Dataset dataset, String queryName, String query, Map<String, String> options)
+      IOHelper ioHelper,
+      Dataset dataset,
+      String queryName,
+      String query,
+      Map<String, String> options)
       throws Exception {
     boolean tdb = OptionsHelper.optionIsTrue(options, "tdb");
     String limitString = OptionsHelper.getOption(options, "limit", null);
@@ -768,7 +829,7 @@ public class ReportOperation {
       dataset.begin(ReadWrite.READ);
       try {
         ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolationsFromResults(queryName, violationSet, limit);
+        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
         // And warn that report may be incomplete
@@ -784,7 +845,7 @@ public class ReportOperation {
     } else {
       try {
         ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolationsFromResults(queryName, violationSet, limit);
+        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
         // And warn that report may be incomplete
@@ -797,6 +858,8 @@ public class ReportOperation {
     }
   }
 
+  private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+
   /**
    * Given a query name, a result set, and a limit for results, return a list of Violation objects
    * for those results.
@@ -808,7 +871,7 @@ public class ReportOperation {
    * @throws Exception on malformed query
    */
   private static List<Violation> getViolationsFromResults(
-      String queryName, ResultSet violationSet, Integer limit) throws Exception {
+      IOHelper ioHelper, String queryName, ResultSet violationSet, Integer limit) throws Exception {
     List<Violation> violations = new ArrayList<>();
 
     // Counter for stopping at limit
@@ -843,13 +906,23 @@ public class ReportOperation {
         continue;
       }
 
-      Violation violation = new Violation(entity);
+      Violation violation = new Violation(dataFactory.getOWLClass(ioHelper.createIRI(entity)));
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
       String value = getQueryResultOrNull(qs, "value");
       // add details to Violation
       if (property != null) {
-        violation.addStatement(property, value);
+        OWLEntity e = dataFactory.getOWLClass(ioHelper.createIRI(property));
+        if (value != null) {
+          IRI valIRI = ioHelper.createIRI(value);
+          if (valIRI != null) {
+            violation.addStatement(e, valIRI);
+          } else {
+            violation.addStatement(e, dataFactory.getOWLLiteral(value));
+          }
+        } else {
+          violation.addStatement(e, null);
+        }
       }
       violations.add(violation);
 
@@ -865,15 +938,16 @@ public class ReportOperation {
    *
    * @param lines array of lines to print
    * @param n number of lines to print
+   * @param separator column separator
    */
-  private static void printNViolations(String[] lines, int n) {
-    if (lines.length <= n) {
-      n = lines.length - 1;
+  private static void printNViolations(List<String[]> lines, int n, String separator) {
+    if (lines.size() <= n) {
+      n = lines.size() - 1;
     }
     System.out.println(String.format("\nFirst %d violations:", n));
     for (int i = 0; i < n; i++) {
       // i + 1 to skip headers
-      System.out.println(lines[i + 1]);
+      System.out.println(String.join(separator, lines.get(i + 1)));
     }
   }
 }

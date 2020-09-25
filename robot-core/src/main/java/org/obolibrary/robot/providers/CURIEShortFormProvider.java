@@ -62,7 +62,7 @@ public class CURIEShortFormProvider implements ShortFormProvider {
       }
     }
     // Could not match, just return full IRI
-    logger.error("Unable to find namespace for: " + iri);
+    logger.warn("Unable to find namespace for: " + iri);
     return iriString;
   }
 

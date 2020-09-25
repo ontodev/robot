@@ -27,7 +27,7 @@ public class TemplateTest extends CoreTest {
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
 
     Template t = new Template(path, rows, simpleParts);
-    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false);
+    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false, null);
     assertIdentical("/template.owl", template);
   }
 
@@ -43,7 +43,7 @@ public class TemplateTest extends CoreTest {
     OWLOntology simpleParts = loadOntology("/simple_parts.owl");
 
     Template t = new Template(path, rows, simpleParts);
-    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false);
+    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false, null);
     assertIdentical("/template.owl", template);
   }
 

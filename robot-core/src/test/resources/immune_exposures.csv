@@ -1,0 +1,27 @@
+exposure process reported,exposure material reported,exposure material id,disease reported,disease ontology id,disease stage reported,comment
+is-required; subclass-of 'exposure process';,subclass-of|equivalent-to 'exposure material'; equivalent-to %3; is-required (when %1 subclass-of (administration or 'exposure without disease' or 'infectious disease' or 'allergic disease')); is-excluded (when %1 equivalent-to disease); is-excluded (when %1 subclass-of ('autoimmune disease' or cancer or 'no exposure' or unknown)),equivalent-to %2,subclass-of 'disease name'; subclass-of hasMaterialBasisIn some %2 (when %1 subclass-of not ('autoimmune disease' or cancer)); equivalent-to %5; is-required (when %1 subclass-of disease); is-excluded (when %1 equivalent-to administration); is-excluded (when %1 subclass-of (vaccination or transplant/transfusion or 'exposure without disease' or 'no exposure' or unknown)),equivalent-to %4,subclass-of 'disease stage'; is-required (when %1 subclass-of disease); is-excluded (when %1 subclass-of not disease),
+vaccination,Varicella-zoster virus vaccine,VO_0000669,,,,PASS: vacciniation has only material
+infectious challenge,Hepacivirus C,NCBITaxon_11103,,,,PASS: infectious challenge requires only material
+transplant/transfusion,blood,UBERON_0000178,,,,PASS: transplant requires only material
+infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever,DOID_12206,acute/recent onset,"PASS: infectious disease requires material, disease, stage"
+allergic disease,Triticum aestivum ,NCBITaxon_4565,wheat allergy,DOID_3660,post,"PASS: allergic disease requires material, disease, stage"
+autoimmune disease,,,acquired immunodeficiency syndrome,DOID_635,chronic,"PASS: autoimmune disease requires disease, state; excludes material"
+cancer,,,colon cancer,DOID_219,chronic,"PASS: cancer requires disease, state; excludes material"
+asymptomatic infection/colonization,Dengue virus,NCBITaxon_12637,,,,PASS: asymptomatic requires only material
+exposure with immune reactivity,Dengue virus 2,NCBITaxon_11060,,,,PASS: exposure with immune reactivity requires only material
+exposure with documentation,Dengue virus,NCBITaxon_12637,,,,PASS: exposure with documentation requires only material
+exposure to endemic/ubiquitous agent,Dengue virus,NCBITaxon_12637,,,,PASS: exposure to endemic requires only material
+no exposure,,,,,,PASS: none requires no fields
+unknown,,,,,,PASS: unknown requires no fields
+administration,Hepacivirus C,NCBITaxon_11103,,,,PASS
+exposure without disease,Dengue virus,NCBITaxon_12637,,,,PASS
+disease,,,,,,PASS
+infectious disease,,,dengue hemorrhagic fever,DOID_12206,acute/recent onset,FAIL: material required
+disease or 'infectious challenge',,,'wheat allergy' or 'dengue hemorrhagic fever',DOID_12206 or DOID_3660,'acute/recent onset' or chronic,PASS
+infectious disease,Dengue virus,NCBITaxon_12637,,,acute/recent onset,FAIL: disease required
+infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever,DOID_12206,,FAIL: stage required
+infectious disease,Dengue virus,NCBITaxon_11060,dengue hemorrhagic fever,DOID_12206,acute/recent onset,FAIL: exposure material must match exposure material ID
+infectious disease,Dengue virus,NCBITaxon_12637,Dengue virus 2,NCBITaxon_11060,acute/recent onset,FAIL: disease value must be a disease
+administration or 'exposure without disease','Hepatovirus A' or blood,UBERON_0000178,,,chronic,"FAIL: exposure material must match exposure material ID, disease must be excluded when exposure process is not a subclass of disease"
+infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever|wheat allergy,DOID_12206|DOID_3660,acute/recent onset,FAIL: not all combinations of the entries in the multi-cells for columns D and E satisfy the given rules
+infectious disease,Dengue virus,NCBITaxon_12637,dengue hemorrhagic fever|dengue hemorrhagic fever,DOID_12206|DOID_12206,acute/recent onset,PASS
