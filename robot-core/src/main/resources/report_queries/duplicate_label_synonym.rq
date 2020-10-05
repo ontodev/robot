@@ -20,7 +20,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER NOT EXISTS { ?entity2 owl:deprecated true }
   ?entity rdfs:label ?value .
-  ?entity ?property ?value .
+  ?entity ?property ?value2 .
+  FILTER (str(?value) = str(?value2))
   FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity

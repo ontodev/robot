@@ -15,7 +15,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
     oboInOwl:hasExactSynonym
   }
   ?entity ?property ?value.
-  ?entity2 ?property ?value .
+  ?entity2 ?property ?value2 .
+  FILTER (str(?value) = str(?value2))
   FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER NOT EXISTS { ?entity2 owl:deprecated true }
   FILTER (?entity != ?entity2)

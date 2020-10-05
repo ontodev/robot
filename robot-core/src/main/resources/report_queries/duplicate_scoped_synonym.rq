@@ -24,7 +24,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
     oboInOwl:hasNarrowSynonym
   }
   ?entity ?property ?value .
-  ?entity ?property2 ?value .
+  ?entity ?property2 ?value2 .
+  FILTER (str(?value) = str(?value2))
   FILTER (?property != ?property2)
   FILTER (!isBlank(?entity))
 }
