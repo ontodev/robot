@@ -289,7 +289,7 @@ public class TableValidator {
                     // An error was returned, add to errors
                     errors.add(
                         new String[] {
-                          currentTable,
+                          FilenameUtils.getBaseName(currentTable),
                           IOHelper.cellToA1(rowNum, colNum + 1),
                           FilenameUtils.getBaseName(currentTable)
                               + "!"

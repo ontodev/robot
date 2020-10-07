@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+import org.apache.commons.io.FilenameUtils;
 import org.obolibrary.robot.exceptions.ColumnException;
 import org.obolibrary.robot.exceptions.RowParseException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -389,7 +390,12 @@ public class Template {
         // Only add to errors table if we have a row & col num
         if (e.rowNum != -1 && e.colNum != -1) {
           errors.add(
-              new String[] {this.name, IOHelper.cellToA1(e.rowNum, e.colNum), e.ruleID, message});
+              new String[] {
+                FilenameUtils.getBaseName(this.name),
+                IOHelper.cellToA1(e.rowNum, e.colNum),
+                e.ruleID,
+                message
+              });
         }
       }
     }
