@@ -129,7 +129,6 @@ public class TableValidator {
   private boolean silent;
 
   private List<String[]> errors = new ArrayList<>();
-  private int errCount = 0;
 
   private Cell currentCell = null;
 
@@ -168,8 +167,7 @@ public class TableValidator {
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
             Collections.emptyMap());
 
-    errors.add(
-        new String[] {"ID", "table", "cell", "level", "rule ID", "rule name", "value", "fix"});
+    errors.add(new String[] {"table", "cell", "rule ID", "message"});
   }
 
   /** Turn logging on or off. */
@@ -289,19 +287,14 @@ public class TableValidator {
                   String errorMsg = validateRule(d, interpolatedRule, row, ruleEntry.getKey());
                   if (errorMsg != null) {
                     // An error was returned, add to errors
-                    errCount++;
                     errors.add(
                         new String[] {
-                          String.valueOf(errCount),
                           currentTable,
                           IOHelper.cellToA1(rowNum, colNum + 1),
-                          "error",
                           FilenameUtils.getBaseName(currentTable)
                               + "!"
                               + IOHelper.cellToA1(ruleRowIdx, colNum + 1),
                           errorMsg,
-                          d,
-                          ""
                         });
                   }
                 }

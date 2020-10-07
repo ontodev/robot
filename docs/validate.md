@@ -82,14 +82,10 @@ The results that are written to the output directory contain all lines from the 
 If this path ends with `.csv`, the output will be comma-separated. Otherwise, the output will be tab-separated.
 
 This output will contain the following columns:
-* **ID**: an ID for the error - this starts at 1 and increases with each error
 * **table**: the name of the table this cell is in
 * **cell**: the A1 notation for the location of the cell
-* **level**: the violation level (at this time, this value will always be `error`)
 * **rule ID**: a combination of `<table name>!<location>` for the cell that the rule is written in
-* **rule name**: the written text of the rule
-* **value**: the value of the cell that failed
-* **fix**: how to fix this error (at this time, this cell will always be empty)
+* **message**: text description of the violation
 
 ## Input file organisation
 
