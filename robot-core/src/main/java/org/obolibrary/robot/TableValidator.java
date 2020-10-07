@@ -167,7 +167,7 @@ public class TableValidator {
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
             Collections.emptyMap());
 
-    errors.add(new String[] {"table", "cell", "rule ID", "rule", "message"});
+    errors.add(new String[] {"table", "cell", "rule ID", "message"});
   }
 
   /** Turn logging on or off. */
@@ -294,7 +294,6 @@ public class TableValidator {
                           FilenameUtils.getBaseName(currentTable)
                               + "!"
                               + IOHelper.cellToA1(ruleRowIdx, colNum + 1),
-                          ruleEntry.getKey(),
                           errorMsg,
                         });
                   }

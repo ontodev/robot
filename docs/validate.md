@@ -85,7 +85,6 @@ This output will contain the following columns:
 * **table**: the name of the table this cell is in
 * **cell**: the A1 notation for the location of the cell
 * **rule ID**: a combination of `<table name>!<location>` for the cell that the rule is written in
-* **rule**: the written text of the rule (the value of the cell referenced above)
 * **message**: text description of the violation
 
 ## Input file organisation
