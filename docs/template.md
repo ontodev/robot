@@ -35,7 +35,7 @@ The `template` command accepts an optional input ontology, either using the `--i
 A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms.
 
 You can also choose to write errors to a separate table using `--errors <path>`. If the path ends with `csv`, the output will be comma-separated. Otherwise, the output will be tab-separated. Note that `--errors` will only write to the path when `--force true` is provided as well. The errors table contains the following fields:
-* **table**: table name (the basename of the `--template`)
+* **table**: table name (the `--template`)
 * **cell**: A1 notation of cell location (e.g., C3)
 * **rule ID**: the CURIE of the rule (`ROBOT-template:[rule-name]`, which expands to `http://robot.obolibrary.org/template#[rule-name]`)
 * **message**: text description of the violated rule
