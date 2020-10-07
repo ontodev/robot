@@ -371,9 +371,7 @@ public class Template {
     boolean hasException = false;
 
     List<String[]> errors = new ArrayList<>();
-    errors.add(
-        new String[] {"ID", "table", "cell", "level", "rule ID", "rule name", "value", "fix"});
-    int errCount = 0;
+    errors.add(new String[] {"table", "cell", "rule ID", "message"});
     for (List<String> row : tableRows) {
       try {
         processRow(row);
@@ -385,22 +383,13 @@ public class Template {
 
         // otherwise print exceptions as they show up
         hasException = true;
-        errCount++;
-        logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
+        String message = e.getMessage().substring(e.getMessage().indexOf("#") + 1);
+        logger.error(message);
 
         // Only add to errors table if we have a row & col num
         if (e.rowNum != -1 && e.colNum != -1) {
           errors.add(
-              new String[] {
-                String.valueOf(errCount),
-                this.name,
-                IOHelper.cellToA1(e.rowNum, e.colNum),
-                "error",
-                e.ruleID,
-                e.ruleName,
-                e.cellValue,
-                ""
-              });
+              new String[] {this.name, IOHelper.cellToA1(e.rowNum, e.colNum), e.ruleID, message});
         }
       }
     }
