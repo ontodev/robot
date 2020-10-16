@@ -49,7 +49,7 @@ public class Column {
    * @param displayName Column display name
    * @param iri IRI of column property
    * @param shortFormProvider ShortFormProvider to use when rendering values
-   * @param entitySelect
+   * @param entitySelect String keyword to set includeNamed and includeAnonymous
    */
   public Column(
       String name,
@@ -90,7 +90,7 @@ public class Column {
    * @param displayName Column display name
    * @param dataProperty column OWLDataProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
-   * @param entitySelect
+   * @param entitySelect String keyword to set includeNamed and includeAnonymous
    */
   public Column(
       String name,
@@ -112,7 +112,7 @@ public class Column {
    * @param displayName Column display name
    * @param objectProperty column OWLObjectProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
-   * @param entitySelect
+   * @param entitySelect String keyword to set includeNamed and includeAnonymous
    */
   public Column(
       String name,
@@ -141,6 +141,7 @@ public class Column {
    * @param name Column name
    * @param rules Column rules
    * @param displayRule String raw display rule for output
+   * @param shortFormProvider ShortFormProvider for rendering
    */
   public Column(
       String name,

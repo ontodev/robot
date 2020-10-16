@@ -40,7 +40,12 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(IOHelper.class);
 
-  /** Initialize the renderer with the given Writer and ShortFormProvider */
+  /**
+   * Initialize the renderer with the given Writer and ShortFormProvider
+   *
+   * @param writer Writer to use
+   * @param sfProvider ShortFormProvider to use
+   */
   public ManchesterOWLSyntaxObjectHTMLRenderer(Writer writer, ShortFormProvider sfProvider) {
     super(writer, sfProvider);
   }
@@ -107,6 +112,9 @@ public class ManchesterOWLSyntaxObjectHTMLRenderer extends ManchesterOWLSyntaxOb
   /**
    * Given an OWLClassExpression, determine the particular type of OWLClassExpression that it is,
    * and then call the appropriate visit() function for it.
+   *
+   * @param ce OWLClassExpression to visit
+   * @throws ClassNotFoundException when a Class does not exist
    */
   public void visit(OWLClassExpression ce) throws ClassNotFoundException {
     if (ce instanceof OWLClass) {
