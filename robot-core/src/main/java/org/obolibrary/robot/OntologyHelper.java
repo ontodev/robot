@@ -171,6 +171,7 @@ public class OntologyHelper {
    * @param threshold minimum number of child classes
    * @param precious set of IRIs to keep
    * @param repeat if true, repeat collapsing until no intermediate classes remain
+   * @throws OWLOntologyCreationException on problem creating copy to span gaps
    */
   public static void collapseOntology(
       OWLOntology ontology, int threshold, Set<IRI> precious, boolean repeat)

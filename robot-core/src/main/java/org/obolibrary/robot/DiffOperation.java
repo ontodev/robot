@@ -153,15 +153,30 @@ public class DiffOperation {
     return false;
   }
 
+  /**
+   * OWLOntologySetProvider for two (left and right) ontologies.
+   */
   private static class DualOntologySetProvider implements OWLOntologySetProvider {
 
+    private static final long serialVersionUID = -8942374248162307075L;
     private final Set<OWLOntology> ontologies = new HashSet<>();
 
+    /**
+     * Init a new DualOntologySetProvider for a left and right ontology.
+     *
+     * @param left OWLOntologySetProvider for left ontology
+     * @param right OWLOntologySetProvider for right ontology
+     */
     public DualOntologySetProvider(OWLOntologySetProvider left, OWLOntologySetProvider right) {
       ontologies.addAll(left.getOntologies());
       ontologies.addAll(right.getOntologies());
     }
 
+    /**
+     * Get the ontologies in the provider.
+     *
+     * @return Set of OWLOntologies
+     */
     @Nonnull
     @Override
     public Set<OWLOntology> getOntologies() {

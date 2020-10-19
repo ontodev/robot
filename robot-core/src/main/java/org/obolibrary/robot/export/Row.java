@@ -174,6 +174,7 @@ public class Row {
    * Render the Row as an array. The cells will only include their display values.
    *
    * @param columns list of Columns
+   * @param split character to split cell values on
    * @return String[] representation of row
    */
   public String[] toArray(List<Column> columns, String split) {
