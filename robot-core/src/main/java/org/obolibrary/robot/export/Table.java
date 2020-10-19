@@ -351,6 +351,7 @@ public class Table {
    * Render the Table as a YAML string.
    *
    * @return YAML string
+   * @throws IOException on issue writing to JSON tree
    */
   public String toYAML() throws IOException {
     JsonNode jsonNodeTree = new ObjectMapper().readTree(toJSON());

@@ -90,6 +90,7 @@ public class ExportOperation {
    * @param ioHelper IOHelper to handle labels
    * @param columnNames List of column names, in order
    * @param options Map of Export options
+   * @return Table object
    * @throws Exception if file does not exist to write to or a column is not a valid property
    */
   public static Table createExportTable(

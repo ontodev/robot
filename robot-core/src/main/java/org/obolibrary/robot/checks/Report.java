@@ -298,7 +298,7 @@ public class Report {
    * Return the report in JSON format. This converts the YAML format of the report to JSON.
    *
    * @return JSON String
-   * @throws IOException on issue converting YAML -> JSON
+   * @throws IOException on issue converting YAML to JSON
    */
   public String toJSON() throws IOException {
     Object obj = new ObjectMapper(new YAMLFactory()).readValue(toYAML(), Object.class);
