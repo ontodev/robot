@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#! nix-shell -i bash -p git travis jq semver-tool gnupg
+#! nix-shell -i bash -p git gitAndTools.gh travis jq semver-tool gnupg
 #
 # This script helps to automate ROBOT releases.
 # When a manual step is required, it will wait for the user.
@@ -71,26 +71,38 @@ echo "This script will walk you through making a ROBOT release ${VERSION}"
 confirm "Ready?"
 
 step "Update git"
-git checkout master
-git pull
+git fetch
+git status | head -n2
+confirm "Correct branch and up to date?"
 
 step "Check Travis"
 travis status --skip-version-check --exit-code --fail-pending
 
 step "Check Jenkins"
-curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" | jq --exit-status '.result | test("SUCCESS")'
+curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
+| jq --exit-status '.result | test("SUCCESS")'
 
 step "Set the the version number for this release"
 mvn versions:set -DnewVersion="${VERSION}"
-
-step "Manually update CHANGELOG.md"
-confirm "Updated?"
 
 step "Check the JavaDocs"
 mvn clean site
 
 step "Check the test suite"
 mvn clean verify
+
+step "Updating CHANGELOG.md"
+< CHANGELOG.md \
+  sed "/^## \[Unreleased\]/a## [${VERSION}] - $(date '+%Y-%m-%d')" \
+| sed "/^## \[Unreleased\]/G " \
+| sed "s/^\[Unreleased\]: /[${VERSION}]: /" \
+| sed "s/..HEAD$/..v${VERSION}/" \
+| sed "/\[${VERSION}]: /i[Unreleased]: https://github.com/ontodev/robot/compare/v${VERSION}...HEAD" \
+> CHANGELOG.new.md
+mv CHANGELOG.new.md CHANGELOG.md
+
+step "Manually check CHANGELOG.md"
+confirm "CHANGELOG.md good?"
 
 echo "Everything looks good!"
 
@@ -114,12 +126,13 @@ git push
 step "Release to Maven Central"
 mvn clean deploy -P release
 
-step "Manually create GitHub release"
-echo "Open https://raw.githubusercontent.com/ontodev/robot/master/CHANGELOG.md"
-echo "Open https://github.com/ontodev/robot/releases/new?tag=v${VERSION}&title=v${VERSION}"
-echo "Add release notes based on CHANGELOG"
-echo "Upload robot.jar"
-confirm "Done?"
+step "Create draft GitHub release"
+< CHANGELOG.md \
+  sed -n "/^## \[${VERSION}\]/,/^## /p" CHANGELOG.md \
+| sed '1d;2d;$d' \
+| sed "s/[][]//g" \
+> RELEASE.md
+gh release create "v${VERSION}" robot.jar --draft --title "v${VERSION}" --notes-file RELEASE.md
 
 step "Update JAPICMP target version in robot-core/pom.xml"
 sed -i "s|<version>\(.*\)</version> <!-- japicmp target -->|<version>${VERSION}</version> <!-- japicmp target -->|" robot-core/pom.xml
@@ -161,5 +174,6 @@ confirm "Sent?"
 
 trap '' INT TERM EXIT
 echo "ROBOT ${VERSION} released!"
+echo "Draft GitHub release created:"
 echo "Maven Central and javadoc.io should show the new release within 24 hours"
 
