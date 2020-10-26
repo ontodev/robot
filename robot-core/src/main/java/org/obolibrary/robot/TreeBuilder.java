@@ -1426,7 +1426,6 @@ public class TreeBuilder {
 
       // Render the value in Manchester Syntax
       String render = r.render(v);
-
       Matcher m = Pattern.compile("^\\{(.+)}$").matcher(render);
       if (m.matches()) {
         // This is a list e.g., one of
@@ -1436,6 +1435,18 @@ public class TreeBuilder {
           listValues.add(addLinks(itm));
         }
         renderedValues.add(String.format("{%s}", String.join(", ", listValues)));
+      } else if (render.contains(" or ")) {
+        List<String> listValues = new ArrayList<>();
+        for (String itm : render.split(" or ")) {
+          listValues.add(addLinks(itm));
+        }
+        renderedValues.add(String.join(" or ", listValues));
+      } else if (render.contains(" and ")) {
+        List<String> listValues = new ArrayList<>();
+        for (String itm : render.split(" and ")) {
+          listValues.add(addLinks(itm));
+        }
+        renderedValues.add(String.join(" and ", listValues));
       } else {
         // Single element in values
         render = addLinks(render);
