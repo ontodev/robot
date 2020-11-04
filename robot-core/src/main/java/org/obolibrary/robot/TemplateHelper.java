@@ -949,6 +949,31 @@ public class TemplateHelper {
    */
   protected static OWLClassExpression tryParse(
       String tableName,
+      ManchesterOWLSyntaxClassExpressionParser parser,
+      String content,
+      int rowNum,
+      int column)
+      throws RowParseException {
+    return tryParse(tableName, null, parser, content, rowNum, column);
+  }
+
+  /**
+   * Given a Quoted Entity Checker to resolve labels, a Manchester class expression parser, and a
+   * content string, try to parse the content string. If the checker is not null, first try to get a
+   * named class. If not found, try to parse using the parser. Throw a detailed exception message if
+   * parsing fails.
+   *
+   * @param tableName name of table
+   * @param checker QuotedEntityChecker to resolve labels
+   * @param parser ManchesterOWLSyntaxClassExpressionParser to parse string
+   * @param content class expression string to parse
+   * @param rowNum the row number for logging
+   * @param column the column number for logging
+   * @return OWLClassExpression representation of the string
+   * @throws RowParseException if string cannot be parsed for any reason
+   */
+  protected static OWLClassExpression tryParse(
+      String tableName,
       QuotedEntityChecker checker,
       ManchesterOWLSyntaxClassExpressionParser parser,
       String content,
