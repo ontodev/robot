@@ -241,6 +241,34 @@ public class TemplateHelper {
       int rowNum,
       int col)
       throws RowParseException {
+    return getClassExpressions(tableName, null, parser, template, value, rowNum, col);
+  }
+
+  /**
+   * Given a Quoted Entity checker, a Manchester Syntax parser, a template string, and a template
+   * value, insert the value into the template string and parse to a set of class expressions. If
+   * the template string contains 'SPLIT=', the value will be split on the provided character.
+   * Otherwise, the set will only have one entry.
+   *
+   * @param tableName name of table
+   * @param checker QuotedEntityChecker to resolve labels
+   * @param parser ManchesterOWLSyntaxClassExpressionParser to parse expression
+   * @param template template string
+   * @param value value to replace '%' in template string
+   * @param rowNum the line number
+   * @param col the column number
+   * @return set of OWLClassExpressions
+   * @throws RowParseException if row is malformed
+   */
+  public static Set<OWLClassExpression> getClassExpressions(
+      String tableName,
+      QuotedEntityChecker checker,
+      ManchesterOWLSyntaxClassExpressionParser parser,
+      String template,
+      String value,
+      int rowNum,
+      int col)
+      throws RowParseException {
     String split = getSplit(template);
     template = getTemplate(template);
 
@@ -251,20 +279,21 @@ public class TemplateHelper {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
           String content = QuotedEntityChecker.wrap(v);
-          expressions.add(tryParse(tableName, parser, content, rowNum, col));
+          expressions.add(tryParse(tableName, checker, parser, content, rowNum, col));
         }
       } else {
         String content = QuotedEntityChecker.wrap(value);
-        expressions.add(tryParse(tableName, parser, content, rowNum, col));
+        expressions.add(tryParse(tableName, checker, parser, content, rowNum, col));
       }
     } else {
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
-          expressions.add(getClassExpression(tableName, template, v, parser, rowNum, col));
+          expressions.add(getClassExpression(tableName, template, v, checker, parser, rowNum, col));
         }
       } else {
-        expressions.add(getClassExpression(tableName, template, value, parser, rowNum, col));
+        expressions.add(
+            getClassExpression(tableName, template, value, checker, parser, rowNum, col));
       }
     }
     return expressions;
@@ -920,6 +949,7 @@ public class TemplateHelper {
    */
   protected static OWLClassExpression tryParse(
       String tableName,
+      QuotedEntityChecker checker,
       ManchesterOWLSyntaxClassExpressionParser parser,
       String content,
       int rowNum,
@@ -929,7 +959,16 @@ public class TemplateHelper {
     content = content.trim();
     logger.info(String.format("Parsing expression: %s", content));
     try {
-      expr = parser.parse(content);
+      expr = null;
+      if (checker != null) {
+        // If we have a checker, try to get the class by label
+        // This allows class labels with single quotes
+        expr = checker.getOWLClass(content);
+      }
+      if (expr == null) {
+        // If not found by label, try to parse
+        expr = parser.parse(content);
+      }
     } catch (OWLParserException e) {
       String cause = getManchesterErrorCause(e);
       throw new RowParseException(
@@ -1020,6 +1059,7 @@ public class TemplateHelper {
       String tableName,
       String template,
       String value,
+      QuotedEntityChecker checker,
       ManchesterOWLSyntaxClassExpressionParser parser,
       int rowNum,
       int col)
@@ -1032,7 +1072,7 @@ public class TemplateHelper {
     } else {
       sub = content;
     }
-    return tryParse(tableName, parser, sub, rowNum, col);
+    return tryParse(tableName, checker, parser, sub, rowNum, col);
   }
 
   /**
