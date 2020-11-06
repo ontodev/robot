@@ -37,7 +37,10 @@ public class MintCommand implements Command {
     o.addOption(
         null, "pad-width", true, "apply leading zeroes to minted identifiers up to this width");
     o.addOption(
-      null, "keep-deprecated", true, "keep temporary terms in the ontology as deprecated entities");
+        null,
+        "keep-deprecated",
+        true,
+        "keep temporary terms in the ontology as deprecated entities");
     options = o;
   }
 
@@ -118,7 +121,8 @@ public class MintCommand implements Command {
     if (!padding.isEmpty()) {
       config.setPadWidth(Integer.parseInt(padding));
     }
-    config.setKeepDeprecated(CommandLineHelper.getBooleanValue(line,"keep-deprecated", config.isKeepDeprecated()));
+    config.setKeepDeprecated(
+        CommandLineHelper.getBooleanValue(line, "keep-deprecated", config.isKeepDeprecated()));
     return config;
   }
 }
