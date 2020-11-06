@@ -26,3 +26,5 @@ this will result in all occurrences of the above IRIs being replaced with these 
 - `--pad-width`: apply leading zeroes to minted identifiers up to this width (default `7`)
 - `--min-id`: start minted identifiers from the max of either this number or the highest identifier found which is less than or equal to `max-id`
 - `--max-id`: fail the operation if no identifier can be minted less than or equal to this number
+- `--keep-deprecated `: whether to keep temporary terms in the ontology as deprecated entities (default `false`).
+  Deprecated temporary entities are linked to the minted replacement term with a [term_replaced_by](http://purl.obolibrary.org/obo/IAO_0100001) annotation.
