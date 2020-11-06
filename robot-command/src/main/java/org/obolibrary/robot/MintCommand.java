@@ -1,18 +1,15 @@
 package org.obolibrary.robot;
 
+import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.io.IOException;
-
 public class MintCommand implements Command {
 
-  /**
-   * Store the command-line options for the command.
-   */
+  /** Store the command-line options for the command. */
   private Options options;
 
   public MintCommand() {
@@ -21,11 +18,26 @@ public class MintCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save processed ontology to a file");
     o.addOption(null, "minted-id-prefix", true, "IRI prefix to prepend to minted identifiers");
-    o.addOption(null, "minted-from-property", true, "property IRI used to link minted identifiers to temporary identifiers");
+    o.addOption(
+        null,
+        "minted-from-property",
+        true,
+        "property IRI used to link minted identifiers to temporary identifiers");
     o.addOption(null, "temp-id-prefix", true, "IRI prefix indicating temporary identifiers");
-    o.addOption(null, "min-id", true, "start minted identifiers from the max of either this number or the highest identifier found which is less than or equal to max-id");
-    o.addOption(null, "max-id", true, "fail if no identifier can be minted less than or equal to this number");
-    o.addOption(null, "pad-width", true, "apply leading zeroes to minted identifiers up to this width");
+    o.addOption(
+        null,
+        "min-id",
+        true,
+        "start minted identifiers from the max of either this number or the highest identifier found which is less than or equal to max-id");
+    o.addOption(
+        null,
+        "max-id",
+        true,
+        "fail if no identifier can be minted less than or equal to this number");
+    o.addOption(
+        null, "pad-width", true, "apply leading zeroes to minted identifiers up to this width");
+    o.addOption(
+      null, "keep-deprecated", true, "keep temporary terms in the ontology as deprecated entities");
     options = o;
   }
 
@@ -41,7 +53,7 @@ public class MintCommand implements Command {
 
   @Override
   public String getUsage() {
-    return "robot mint --input <file> --minted-id-prefix <iri-prefix> --temp-id-prefix <iri-prefix> --minted-from-property <iri> --min-id <integer> --max-id <integer> --pad-width <integer> --output <file>";
+    return "robot mint --input <file> --minted-id-prefix <iri-prefix> --temp-id-prefix <iri-prefix> --minted-from-property <iri> --min-id <integer> --max-id <integer> --pad-width <integer> --keep-deprecated <bool> --output <file>";
   }
 
   @Override
@@ -79,15 +91,20 @@ public class MintCommand implements Command {
     return state;
   }
 
-  private MintOperation.MintConfig parseConfig(CommandLine line) throws IOException, NumberFormatException {
+  private MintOperation.MintConfig parseConfig(CommandLine line)
+      throws IOException, NumberFormatException {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     MintOperation.MintConfig config = new MintOperation.MintConfig();
-    config.setMintedIDPrefix(CommandLineHelper.getDefaultValue(line, "minted-id-prefix", config.getMintedIDPrefix()));
-    config.setTempIDPrefix(CommandLineHelper.getDefaultValue(line, "temp-id-prefix", config.getTempIDPrefix()));
+    config.setMintedIDPrefix(
+        CommandLineHelper.getDefaultValue(line, "minted-id-prefix", config.getMintedIDPrefix()));
+    config.setTempIDPrefix(
+        CommandLineHelper.getDefaultValue(line, "temp-id-prefix", config.getTempIDPrefix()));
     String propertyID = CommandLineHelper.getDefaultValue(line, "minted-from-property", "");
     if (!propertyID.isEmpty()) {
-      IRI propertyIRI = CommandLineHelper.maybeCreateIRI(ioHelper, propertyID, "minted-from-property");
-      config.setMintedFromProperty(OWLManager.getOWLDataFactory().getOWLAnnotationProperty(propertyIRI));
+      IRI propertyIRI =
+          CommandLineHelper.maybeCreateIRI(ioHelper, propertyID, "minted-from-property");
+      config.setMintedFromProperty(
+          OWLManager.getOWLDataFactory().getOWLAnnotationProperty(propertyIRI));
     }
     String minID = CommandLineHelper.getDefaultValue(line, "min-id", "");
     if (!minID.isEmpty()) {
@@ -101,7 +118,7 @@ public class MintCommand implements Command {
     if (!padding.isEmpty()) {
       config.setPadWidth(Integer.parseInt(padding));
     }
+    config.setKeepDeprecated(CommandLineHelper.getBooleanValue(line,"keep-deprecated", config.isKeepDeprecated()));
     return config;
   }
-
 }

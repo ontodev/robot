@@ -11,11 +11,13 @@ public class MintOperation {
 
     private String mintedIDPrefix = "http://purl.obolibrary.org/obo/EXAMPLE_";
     private String tempIDPrefix = "http://purl.obolibrary.org/temp#";
-    private OWLAnnotationProperty mintedFromProperty = OWLManager.getOWLDataFactory().getOWLAnnotationProperty(
-      IRI.create("http://purl.obolibrary.org/obo/OMO_mintedfrom"));
+    private OWLAnnotationProperty mintedFromProperty =
+        OWLManager.getOWLDataFactory()
+            .getOWLAnnotationProperty(IRI.create("http://purl.obolibrary.org/obo/OMO_mintedfrom"));
     private int minIdentifier = 0;
     private int maxIdentifier = Integer.MAX_VALUE;
     private int padWidth = 7;
+    private boolean keepDeprecated = false;
 
     public String getMintedIDPrefix() {
       return mintedIDPrefix;
@@ -64,10 +66,17 @@ public class MintOperation {
     public void setPadWidth(int padWidth) {
       this.padWidth = padWidth;
     }
+
+    public boolean isKeepDeprecated() {
+      return keepDeprecated;
+    }
+
+    public void setKeepDeprecated(boolean keepDeprecated) {
+      this.keepDeprecated = keepDeprecated;
+    }
   }
 
   public static void mintIdentifiers(OWLOntology ontology, MintConfig config) {
-//TODO
+    // TODO
   }
-
 }
