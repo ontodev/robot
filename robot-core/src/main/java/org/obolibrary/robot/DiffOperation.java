@@ -153,9 +153,7 @@ public class DiffOperation {
     return false;
   }
 
-  /**
-   * OWLOntologySetProvider for two (left and right) ontologies.
-   */
+  /** OWLOntologySetProvider for two (left and right) ontologies. */
   private static class DualOntologySetProvider implements OWLOntologySetProvider {
 
     private static final long serialVersionUID = -8942374248162307075L;

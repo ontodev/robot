@@ -843,18 +843,8 @@ public class ReportOperation {
         dataset.end();
       }
     } else {
-      try {
-        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
-      } catch (Exception e) {
-        // If query fails, return null
-        // And warn that report may be incomplete
-        logger.error(
-            String.format(
-                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
-                queryName, e.getMessage()));
-        return null;
-      }
+      ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+      return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
     }
   }
 
@@ -885,15 +875,7 @@ public class ReportOperation {
       // Wrap in try catch in case GC overflows
       // Will return results up to this point with warning that report may be incomplete
       QuerySolution qs;
-      try {
-        qs = violationSet.next();
-      } catch (Exception e) {
-        logger.error(
-            String.format(
-                "Could not retrieve all results for query '%s' - report may be incomplete.\nCause:\n%s",
-                queryName, e.getMessage()));
-        return violations;
-      }
+      qs = violationSet.next();
 
       // entity should never be null (missing entity binding error)
       String entity = getQueryResultOrNull(qs, "entity");
@@ -906,7 +888,15 @@ public class ReportOperation {
         continue;
       }
 
-      Violation violation = new Violation(dataFactory.getOWLClass(ioHelper.createIRI(entity)));
+      Violation violation;
+      try {
+        OWLClass cls = dataFactory.getOWLClass(ioHelper.createIRI(entity));
+        violation = new Violation(cls);
+      } catch (Exception e) {
+        // Blank node, use the string bnode ID
+        violation = new Violation("blank node");
+      }
+
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
       String value = getQueryResultOrNull(qs, "value");
