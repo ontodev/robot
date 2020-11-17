@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix reported row number in [`validate`] error tables in [#727]
 - Fix equivalent class rendering for [`template`] in [#728]
 - Fix ontology IRI rendering for [`report`] in [#739]
+- Fix blank node subjects in [`report`] in [#767]
 
 ## [1.7.0] - 2020-07-31
 
