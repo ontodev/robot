@@ -565,7 +565,6 @@ public class ReportOperation {
 
         case "tsv":
         default:
-          System.out.print("tsv!");
           rows = reportTable.toList("");
           if (outputPath != null) {
             if (print > 0) {
@@ -843,8 +842,18 @@ public class ReportOperation {
         dataset.end();
       }
     } else {
-      ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-      return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
+      try {
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return null;
+      }
     }
   }
 
@@ -875,7 +884,15 @@ public class ReportOperation {
       // Wrap in try catch in case GC overflows
       // Will return results up to this point with warning that report may be incomplete
       QuerySolution qs;
-      qs = violationSet.next();
+      try {
+        qs = violationSet.next();
+      } catch (Exception e) {
+        logger.error(
+            String.format(
+                "Could not retrieve all results for query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return violations;
+      }
 
       // entity should never be null (missing entity binding error)
       String entity = getQueryResultOrNull(qs, "entity");
