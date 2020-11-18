@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Update to whelk 1.0.4
+
+### Fixed
+- Fix blank node subjects in [`report`] in [#767]
+
 ## [1.7.1] - 2020-10-22
 
 ### Added
@@ -210,6 +216,8 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#767]: https://github.com/ontodev/robot/pull/767
+[#758]: https://github.com/ontodev/robot/pull/758
 [#739]: https://github.com/ontodev/robot/pull/739
 [#738]: https://github.com/ontodev/robot/pull/738
 [#728]: https://github.com/ontodev/robot/pull/728

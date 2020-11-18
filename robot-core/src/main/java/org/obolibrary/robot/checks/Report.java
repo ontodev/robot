@@ -352,7 +352,12 @@ public class Report {
       Cell ruleCell = new Cell(columns.get(1), ruleName);
       for (Violation v : vs.getValue()) {
         // Subject of the violation for the following rows
-        String subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
+        String subject;
+        if (v.entity != null) {
+          subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
+        } else {
+          subject = v.subject;
+        }
         Cell subjectCell = new Cell(columns.get(2), subject);
         for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
           // Property of the violation for the following rows
