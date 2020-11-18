@@ -5,7 +5,7 @@
 
   <groupId>org.obolibrary.robot</groupId>
   <artifactId>robot</artifactId>
-  <version>1.7.1</version>
+  <version>1.7.2</version>
   <packaging>pom</packaging>
 
   <name>robot</name>
@@ -204,7 +204,7 @@
       <plugin>
         <groupId>org.obolibrary.robot</groupId>
         <artifactId>robot-maven-plugin</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.2</version>
       </plugin>
     </plugins>
   </build>

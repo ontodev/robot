@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.obolibrary.robot</groupId>
     <artifactId>robot</artifactId>
-    <version>1.7.1</version>
+    <version>1.7.2</version>
   </parent>
   <artifactId>robot-core</artifactId>
   <name>robot-core</name>
