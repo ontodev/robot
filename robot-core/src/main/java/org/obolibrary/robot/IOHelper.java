@@ -1280,7 +1280,7 @@ public class IOHelper {
    *
    * @param table List of arrays to write
    * @param path path to write to
-   * @throws IOException
+   * @throws IOException on file or writing problems
    */
   public static void writeTable(List<String[]> table, String path) throws IOException {
     char separator = '\t';

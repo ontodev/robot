@@ -905,7 +905,15 @@ public class ReportOperation {
         continue;
       }
 
-      Violation violation = new Violation(dataFactory.getOWLClass(ioHelper.createIRI(entity)));
+      Violation violation;
+      try {
+        OWLClass cls = dataFactory.getOWLClass(ioHelper.createIRI(entity));
+        violation = new Violation(cls);
+      } catch (Exception e) {
+        // Blank node, use the string bnode ID
+        violation = new Violation("blank node");
+      }
+
       // try and get a property and value from the query
       String property = getQueryResultOrNull(qs, "property");
       String value = getQueryResultOrNull(qs, "value");

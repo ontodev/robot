@@ -302,7 +302,7 @@ public class Report {
    * Return the report in JSON format. This converts the YAML format of the report to JSON.
    *
    * @return JSON String
-   * @throws IOException on issue converting YAML -> JSON
+   * @throws IOException on issue converting YAML to JSON
    */
   public String toJSON() throws IOException {
     Object obj = new ObjectMapper(new YAMLFactory()).readValue(toYAML(), Object.class);
@@ -358,15 +358,19 @@ public class Report {
         // Subject of the violation for the following rows
         String subject;
         if (ontologyIRI != null
+            && v.entity != null
             && !v.entity.isAnonymous()
             && v.entity.getIRI().toString().equals(ontologyIRI.toString())) {
           // If the IRI is the ontology IRI, keep this as the full string
           subject = ontologyIRI.toString();
         } else {
           // Otherwise, render the subject based on the display renderer
-          subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
+          if (v.entity != null) {
+            subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
+          } else {
+            subject = v.subject;
+          }
         }
-
         Cell subjectCell = new Cell(columns.get(2), subject);
         for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
           // Property of the violation for the following rows

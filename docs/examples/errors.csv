@@ -1,15 +1,15 @@
-ID,table,cell,level,rule ID,rule name,value,fix
-1,immune_exposures.csv,D8,error,immune_exposures!D3,"Cell is empty but rule: ""is-required true"" does not allow this.",,
-2,immune_exposures.csv,F9,error,immune_exposures!F3,"Cell is empty but rule: ""is-required true"" does not allow this.",,
-3,immune_exposures.csv,B10,error,immune_exposures!B3,"Validation failed for rule: ""Dengue virus equivalent-to (NCBITaxon:11060)"".",Dengue virus,
-4,immune_exposures.csv,C10,error,immune_exposures!C3,"Validation failed for rule: ""NCBITaxon:11060 equivalent-to 'Dengue virus'"".",NCBITaxon:11060,
-5,immune_exposures.csv,D11,error,immune_exposures!D3,"Validation failed for rule: ""Dengue virus 2 subclass-of disease"".",Dengue virus 2,
-6,immune_exposures.csv,D11,error,immune_exposures!D3,"Validation failed for rule: ""Dengue virus 2 subclass-of 'has material basis in' some 'Dengue virus'"".",Dengue virus 2,
-7,immune_exposures.csv,B12,error,immune_exposures!B3,"Validation failed for rule: ""blood or 'Hepacivirus C' equivalent-to (UBERON:0000178)"".",blood or 'Hepacivirus C',
-8,immune_exposures.csv,C12,error,immune_exposures!C3,"Validation failed for rule: ""UBERON:0000178 equivalent-to (blood or 'Hepacivirus C')"".",UBERON:0000178,
-9,immune_exposures.csv,F12,error,immune_exposures!F3,"Cell is non-empty (""Chronic"") but rule: ""is-excluded true"" does not allow this.",Chronic,
-10,immune_exposures.csv,D13,error,immune_exposures!D3,"Validation failed for rule: ""wheat allergy equivalent-to (DOID:12206)"".",wheat allergy,
-11,immune_exposures.csv,D13,error,immune_exposures!D3,"Validation failed for rule: ""dengue hemorrhagic fever equivalent-to (DOID:3660)"".",dengue hemorrhagic fever,
-12,immune_exposures.csv,D13,error,immune_exposures!D3,"Validation failed for rule: ""wheat allergy subclass-of 'has material basis in' some 'Dengue virus'"".",wheat allergy,
-13,immune_exposures.csv,E13,error,immune_exposures!E3,"Validation failed for rule: ""DOID:3660 equivalent-to 'dengue hemorrhagic fever'"".",DOID:3660,
-14,immune_exposures.csv,E13,error,immune_exposures!E3,"Validation failed for rule: ""DOID:12206 equivalent-to 'wheat allergy'"".",DOID:12206,
+table,cell,rule ID,message
+immune_exposures.csv,D8,immune_exposures!D3,"Cell is empty but rule: ""is-required true"" does not allow this."
+immune_exposures.csv,F9,immune_exposures!F3,"Cell is empty but rule: ""is-required true"" does not allow this."
+immune_exposures.csv,B10,immune_exposures!B3,"Validation failed for rule: ""Dengue virus equivalent-to (NCBITaxon:11060)""."
+immune_exposures.csv,C10,immune_exposures!C3,"Validation failed for rule: ""NCBITaxon:11060 equivalent-to 'Dengue virus'""."
+immune_exposures.csv,D11,immune_exposures!D3,"Validation failed for rule: ""Dengue virus 2 subclass-of disease""."
+immune_exposures.csv,D11,immune_exposures!D3,"Validation failed for rule: ""Dengue virus 2 subclass-of 'has material basis in' some 'Dengue virus'""."
+immune_exposures.csv,B12,immune_exposures!B3,"Validation failed for rule: ""blood or 'Hepacivirus C' equivalent-to (UBERON:0000178)""."
+immune_exposures.csv,C12,immune_exposures!C3,"Validation failed for rule: ""UBERON:0000178 equivalent-to (blood or 'Hepacivirus C')""."
+immune_exposures.csv,F12,immune_exposures!F3,"Cell is non-empty (""Chronic"") but rule: ""is-excluded true"" does not allow this."
+immune_exposures.csv,D13,immune_exposures!D3,"Validation failed for rule: ""wheat allergy equivalent-to (DOID:12206)""."
+immune_exposures.csv,D13,immune_exposures!D3,"Validation failed for rule: ""dengue hemorrhagic fever equivalent-to (DOID:3660)""."
+immune_exposures.csv,D13,immune_exposures!D3,"Validation failed for rule: ""wheat allergy subclass-of 'has material basis in' some 'Dengue virus'""."
+immune_exposures.csv,E13,immune_exposures!E3,"Validation failed for rule: ""DOID:3660 equivalent-to 'dengue hemorrhagic fever'""."
+immune_exposures.csv,E13,immune_exposures!E3,"Validation failed for rule: ""DOID:12206 equivalent-to 'wheat allergy'""."

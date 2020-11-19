@@ -543,6 +543,7 @@ public class TemplateHelper {
    * @param template the template string
    * @param split the character to split values on
    * @param value the value for the annotation
+   * @param column the column index for the value from the template
    * @return a set of new annotation(s) with property and language tagged literal
    * @throws RowParseException if the annotation property cannot be found
    */
