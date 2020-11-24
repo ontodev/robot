@@ -47,7 +47,7 @@ public class Column {
    *
    * @param name Column name
    */
-  private Column(String name) {
+  public Column(String name) {
     this.name = name;
     this.displayName = name;
   }
@@ -58,7 +58,7 @@ public class Column {
    * @param name Column name
    * @param displayName Column display name
    */
-  private Column(String name, String displayName) {
+  public Column(String name, String displayName) {
     this.name = name;
     this.displayName = displayName;
   }
