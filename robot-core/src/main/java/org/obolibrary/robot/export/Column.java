@@ -283,11 +283,22 @@ public class Column {
     return reverseSort;
   }
 
+  /**
+   * Set the sort order for this column.
+   *
+   * @param sortOrder int sort order (starting at 0)
+   */
   public void setSort(int sortOrder) {
     this.sortOrder = sortOrder;
     this.reverseSort = false;
   }
 
+  /**
+   * Set the sort order for this column and if it should be sorted in reverse.
+   *
+   * @param sortOrder int sort order (starting at 0)
+   * @param reverseSort if true, sort in reverse
+   */
   public void setSort(int sortOrder, boolean reverseSort) {
     this.sortOrder = sortOrder;
     this.reverseSort = reverseSort;
