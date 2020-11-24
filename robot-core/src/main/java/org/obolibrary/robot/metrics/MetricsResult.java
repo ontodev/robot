@@ -4,11 +4,11 @@ import java.util.*;
 
 public class MetricsResult {
 
-  Map<String, String> data = new HashMap<>();
+  Map<String, Object> data = new HashMap<>();
   Map<String, List<Object>> data_listvalues = new HashMap<>();
   Map<String, Map<String, Integer>> data_mapvalues = new HashMap<>();
 
-  void put(String key, String value) {
+  void put(String key, Object value) {
     data.put(key, value);
   }
 
@@ -16,7 +16,7 @@ public class MetricsResult {
     this.data.putAll(data);
   }
 
-  public Map<String, String> getData() {
+  public Map<String, Object> getData() {
     return data;
   }
 
@@ -40,7 +40,7 @@ public class MetricsResult {
     return data_mapvalues;
   }
 
-  public String getSimpleMetricValue(String key) {
+  public Object getSimpleMetricValue(String key) {
     return data.get(key);
   }
 

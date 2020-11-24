@@ -6,9 +6,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import org.obolibrary.robot.export.Cell;
 import org.obolibrary.robot.export.Column;
 import org.obolibrary.robot.export.Row;
@@ -58,7 +58,8 @@ public class MetricsOperation {
     }
   }
 
-  public static void executeMetrics(OWLOntology o, String metrics_type, String format, File output) throws IOException {
+  public static void executeMetrics(OWLOntology o, String metrics_type, String format, File output)
+      throws IOException {
     MetricsResult metrics = runMetrics(o, metrics_type);
     boolean wroteData = MetricsOperation.maybeWriteResult(metrics, format, output);
     if (!wroteData) {
@@ -90,7 +91,7 @@ public class MetricsOperation {
       default:
         throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
     }
-  return metrics;
+    return metrics;
   }
 
   /**
@@ -127,20 +128,43 @@ public class MetricsOperation {
     JsonObject metrics = new JsonObject();
     root.add("metrics", metrics);
 
-    for (Map.Entry<String, String> entry : result.getData().entrySet()) {
-      metrics.addProperty(entry.getKey(), entry.getValue());
-    }
+    Map<String, Object> data = result.getData();
+    List<String> keys = new ArrayList<>(data.keySet());
+    Collections.sort(keys);
 
-    for (Map.Entry<String, List<Object>> entry : result.getListData().entrySet()) {
+    for (String key : keys) {
+      Object value = data.get(key);
+      if (value instanceof Double) {
+        metrics.addProperty(key, (Double) value);
+      } else if (value instanceof Float) {
+        metrics.addProperty(key, (Float) value);
+      } else if (value instanceof Long) {
+        metrics.addProperty(key, (Long) value);
+      } else if (value instanceof Integer) {
+        metrics.addProperty(key, (Integer) value);
+      } else if (value instanceof Boolean) {
+        metrics.addProperty(key, (Boolean) value);
+      } else {
+        metrics.addProperty(key, value.toString());
+      }
+    }
+    Map<String, List<Object>> dataList = result.getListData();
+    List<String> keysList = new ArrayList<>(dataList.keySet());
+    Collections.sort(keysList);
+
+    for (String key : keysList) {
       List<String> stringList = new ArrayList<>();
-      entry.getValue().forEach(s->stringList.add(s.toString()));
+      dataList.get(key).forEach(s -> stringList.add(s.toString()));
       JsonElement element = gson.toJsonTree(stringList).getAsJsonArray();
-      metrics.add(entry.getKey(), element);
+      metrics.add(key, element);
     }
 
-    for (Map.Entry<String, Map<String, Integer>> entry : result.getMapData().entrySet()) {
-      JsonElement element = gson.toJsonTree(entry.getValue()).getAsJsonObject();
-      metrics.add(entry.getKey(), element);
+    Map<String, Map<String, Integer>> dataMap = result.getMapData();
+    List<String> keysMap = new ArrayList<>(dataMap.keySet());
+    Collections.sort(keysMap);
+    for (String key : keysMap) {
+      JsonElement element = gson.toJsonTree(dataMap.get(key)).getAsJsonObject();
+      metrics.add(key, element);
     }
     return root;
   }
@@ -179,13 +203,13 @@ public class MetricsOperation {
   private static final Column cl_metric_value = new Column("metric_value");
   private static final Column cl_metric_type = new Column("metric_type");
 
-  private static void addRowToTable(Table table, String metric, String metric_value, String metric_type) {
+  private static void addRowToTable(
+      Table table, String metric, String metric_value, String metric_type) {
     Row row = new Row();
     row.add(new Cell(cl_metric, metric));
     row.add(new Cell(cl_metric_value, metric_value));
-    row.add(new Cell(cl_metric_type,metric_type));
+    row.add(new Cell(cl_metric_type, metric_type));
     table.addRow(row);
-
   }
 
   private static Table resultsToTable(MetricsResult result) {
@@ -195,13 +219,13 @@ public class MetricsOperation {
     table.addColumn(cl_metric_value);
     table.addColumn(cl_metric_type);
 
-    //StringBuilder sb = new StringBuilder();
+    // StringBuilder sb = new StringBuilder();
 
-    for (Map.Entry<String, String> entry : result.getData().entrySet()) {
+    for (Map.Entry<String, Object> entry : result.getData().entrySet()) {
       String key = escapeTSV(entry.getKey());
-      String value = escapeTSV(entry.getValue());
+      String value = escapeTSV(entry.getValue().toString());
       addRowToTable(table, key, value, "single_value");
-      //sb.append(key).append("\t").append(value).append("\t").append("single_value").append("\n");
+      // sb.append(key).append("\t").append(value).append("\t").append("single_value").append("\n");
     }
 
     for (Map.Entry<String, List<Object>> entry : result.getListData().entrySet()) {
@@ -209,11 +233,10 @@ public class MetricsOperation {
       String key = escapeTSV(entry.getKey());
       for (Object v : entry.getValue()) {
         String value = escapeTSV(v.toString());
-        addRowToTable(table,key, value, "list_value");
-        //sb.append(key).append("\t").append(value).append("\t").append("list_value").append("\n");
+        addRowToTable(table, key, value, "list_value");
+        // sb.append(key).append("\t").append(value).append("\t").append("list_value").append("\n");
       }
     }
-
 
     for (Map.Entry<String, Map<String, Integer>> entry : result.getMapData().entrySet()) {
       String key = escapeTSV(entry.getKey());
@@ -221,7 +244,7 @@ public class MetricsOperation {
       for (Map.Entry<String, Integer> entryMap : v.entrySet()) {
         String key_inner = entryMap.getKey();
         String value_inner = escapeTSV(entryMap.getValue() + "");
-        addRowToTable(table,key, key_inner+" "+value_inner, "list_value");
+        addRowToTable(table, key, key_inner + " " + value_inner, "list_value");
       }
     }
     return table;

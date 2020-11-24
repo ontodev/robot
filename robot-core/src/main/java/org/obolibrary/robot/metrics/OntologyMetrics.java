@@ -184,8 +184,8 @@ public class OntologyMetrics {
         String iri = e.getIRI().toString();
         String iri_pre;
         String shortform = e.getIRI().getShortForm();
-        if(iri.equals(OBONS+shortform) && shortform.contains("_")) {
-          iri_pre = OBONS + shortform.split("_")[0]+"_";
+        if (iri.equals(OBONS + shortform) && shortform.contains("_")) {
+          iri_pre = OBONS + shortform.split("_")[0] + "_";
         } else {
           iri_pre = iri.replace(shortform, "");
         }
@@ -605,7 +605,7 @@ public class OntologyMetrics {
     if (ontologyID.isAnonymous()) {
       return "anonymousId";
     } else {
-      return ontologyID.getOntologyIRI().toString();
+      return ontologyID.getOntologyIRI().or(IRI.create("no.iri")).toString();
     }
   }
 
@@ -753,76 +753,66 @@ public class OntologyMetrics {
   public MetricsResult getEssentialMetrics(String prefix) {
     MetricsResult csvData = new MetricsResult();
     csvData.put(prefix + "owlapi_version", MetricsUtils.getResourcePath(getOntology()).getName());
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId() + "");
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID_SCHEME, getOntologyIdScheme() + "");
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID_SCHEME, getOntologyIdScheme());
 
     /*
     Essential entity metrics
     */
+    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE_INCL, getSignatureSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE, getSignatureSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.CLASS_COUNT_INCL, getClassCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.CLASS_COUNT, getClassCount(Imports.EXCLUDED));
     csvData.put(
-        prefix + MetricsLabels.SIGNATURE_SIZE_INCL, getSignatureSize(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE, getSignatureSize(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.CLASS_COUNT_INCL, getClassCount(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.CLASS_COUNT, getClassCount(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.OBJPROPERTY_COUNT_INCL, getObjectPropertyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.OBJPROPERTY_COUNT, getObjectPropertyCount(Imports.EXCLUDED));
     csvData.put(
-        prefix + MetricsLabels.OBJPROPERTY_COUNT_INCL,
-        getObjectPropertyCount(Imports.INCLUDED) + "");
+        prefix + MetricsLabels.INDIVIDUAL_COUNT_INCL, getIndividualsCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.INDIVIDUAL_COUNT, getIndividualsCount(Imports.EXCLUDED));
     csvData.put(
-        prefix + MetricsLabels.OBJPROPERTY_COUNT, getObjectPropertyCount(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.DATAPROPERTY_COUNT_INCL, getDataPropertyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.DATAPROPERTY_COUNT, getDataPropertyCount(Imports.EXCLUDED));
     csvData.put(
-        prefix + MetricsLabels.INDIVIDUAL_COUNT_INCL, getIndividualsCount(Imports.INCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.INDIVIDUAL_COUNT, getIndividualsCount(Imports.EXCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.DATAPROPERTY_COUNT_INCL,
-        getDataPropertyCount(Imports.INCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.DATAPROPERTY_COUNT, getDataPropertyCount(Imports.EXCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.ANNOTATION_PROP_COUNT,
-        getAnnotationPropertyCount(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.ANNOTATION_PROP_COUNT, getAnnotationPropertyCount(Imports.EXCLUDED));
     csvData.put(
         prefix + MetricsLabels.ANNOTATION_PROP_COUNT_INCL,
-        getAnnotationPropertyCount(Imports.INCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.DATATYPE_COUNT_INCL, getDatatypesCount(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT, getDatatypesCount(Imports.EXCLUDED) + "");
+        getAnnotationPropertyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT_INCL, getDatatypesCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT, getDatatypesCount(Imports.EXCLUDED));
 
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_ANNOTATIONS_COUNT, getAnnotationsCount() + "");
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_ANNOTATIONS_COUNT, getAnnotationsCount());
 
     /*
     Essential axiom counts
      */
 
+    csvData.put(prefix + MetricsLabels.LOGICAL_AXIOM_COUNT, getLogicalAxiomCount(Imports.EXCLUDED));
     csvData.put(
-        prefix + MetricsLabels.LOGICAL_AXIOM_COUNT, getLogicalAxiomCount(Imports.EXCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.LOGICAL_AXIOM_COUNT_INCL,
-        getLogicalAxiomCount(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.AXIOM_COUNT, getAxiomCount(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.AXIOM_COUNT_INCL, getAxiomCount(Imports.INCLUDED) + "");
+        prefix + MetricsLabels.LOGICAL_AXIOM_COUNT_INCL, getLogicalAxiomCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.AXIOM_COUNT, getAxiomCount(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.AXIOM_COUNT_INCL, getAxiomCount(Imports.INCLUDED));
 
-    csvData.put(prefix + MetricsLabels.TBOX_SIZE, getTBoxSize(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.TBOX_SIZE_INCL, getTBoxSize(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE, getTBoxRboxSize(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE_INCL, getTBoxRboxSize(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.RULE_CT, getNumberOfRules(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.RULE_CT_INCL, getNumberOfRules(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.RBOX_SIZE, getRBoxSize(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.RBOX_SIZE_INCL, getRBoxSize(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.ABOX_SIZE, getABoxSize(Imports.EXCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.ABOX_SIZE_INCL, getABoxSize(Imports.INCLUDED) + "");
+    csvData.put(prefix + MetricsLabels.TBOX_SIZE, getTBoxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.TBOX_SIZE_INCL, getTBoxSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE, getTBoxRboxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE_INCL, getTBoxRboxSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.RULE_CT, getNumberOfRules(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.RULE_CT_INCL, getNumberOfRules(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.RBOX_SIZE, getRBoxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.RBOX_SIZE_INCL, getRBoxSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.ABOX_SIZE, getABoxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.ABOX_SIZE_INCL, getABoxSize(Imports.INCLUDED));
 
     /*
     Essential expressivity metrics
      */
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2, isOWL2Profile() + "");
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_DL, isOWL2DLProfile() + "");
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_EL, isOWL2ELProfile() + "");
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_QL, isOWL2QLProfile() + "");
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_RL, isOWL2RLProfile() + "");
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_RDFS, isRDFS() + "");
-    csvData.put(prefix + MetricsLabels.VIOLATION_PROFILE_OWL2_DL, getOwlprofileviolations() + "");
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2, isOWL2Profile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_DL, isOWL2DLProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_EL, isOWL2ELProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_QL, isOWL2QLProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_RL, isOWL2RLProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_RDFS, isRDFS());
+    csvData.put(prefix + MetricsLabels.VIOLATION_PROFILE_OWL2_DL, getOwlprofileviolations());
 
     csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS, getValidImports(false));
     csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS_INCL, getValidImports(true));
@@ -840,22 +830,21 @@ public class OntologyMetrics {
      */
     csvData.put(
         prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT_INCL,
-        getDatatypesBuiltinCount(Imports.INCLUDED) + "");
+        getDatatypesBuiltinCount(Imports.INCLUDED));
     csvData.put(
-        prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT,
-        getDatatypesBuiltinCount(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT, getDatatypesBuiltinCount(Imports.EXCLUDED));
     csvData.put(
         prefix + MetricsLabels.DATATYPE_NOTBUILTIN_COUNT_INCL,
-        getDatatypesNotBuiltinCount(Imports.INCLUDED) + "");
+        getDatatypesNotBuiltinCount(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.DATATYPE_NOTBUILTIN_COUNT,
-        getDatatypesNotBuiltinCount(Imports.EXCLUDED) + "");
+        getDatatypesNotBuiltinCount(Imports.EXCLUDED));
 
     /*
     Extended expressivity metrics
      */
-    csvData.put(prefix + MetricsLabels.EXPRESSIVITY, getExpressivity(false) + "");
-    csvData.put(prefix + MetricsLabels.EXPRESSIVITY_INCL, getExpressivity(true) + "");
+    csvData.put(prefix + MetricsLabels.EXPRESSIVITY, getExpressivity(false));
+    csvData.put(prefix + MetricsLabels.EXPRESSIVITY_INCL, getExpressivity(true));
     csvData.putSet(prefix + MetricsLabels.CONSTRUCTS_INCL, getConstructs(true));
     csvData.putSet(prefix + MetricsLabels.CONSTRUCTS, getConstructs(false));
     csvData.putSet(prefix + MetricsLabels.AXIOM_TYPES, getAxiomTypes(Imports.EXCLUDED));
@@ -863,7 +852,7 @@ public class OntologyMetrics {
     csvData.putMap(prefix + MetricsLabels.AXIOMTYPE_COUNT, getAxiomTypeCounts(Imports.EXCLUDED));
     csvData.putMap(
         prefix + MetricsLabels.AXIOMTYPE_COUNT_INCL, getAxiomTypeCounts(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax() + "");
+    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
 
     /*
     Entity usage
@@ -879,102 +868,89 @@ public class OntologyMetrics {
     MetricsResult extendedData = getExtendedMetrics(prefix);
     csvData.importMetrics(extendedData);
 
+    csvData.put(prefix + MetricsLabels.MAX_AXIOMLENGTH, getLongestAxiomLength(Imports.EXCLUDED));
     csvData.put(
-        prefix + MetricsLabels.MAX_AXIOMLENGTH, getLongestAxiomLength(Imports.EXCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.MAX_AXIOMLENGTH_INCL, getLongestAxiomLength(Imports.INCLUDED) + "");
+        prefix + MetricsLabels.MAX_AXIOMLENGTH_INCL, getLongestAxiomLength(Imports.INCLUDED));
 
     csvData.put(
         prefix + MetricsLabels.AVG_ASSERT_N_SUBCLASS_INCL,
-        getAverageAssertedNamedSubclasses(Imports.INCLUDED) + "");
+        getAverageAssertedNamedSubclasses(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.AVG_ASSERT_N_SUBCLASS,
-        getAverageAssertedNamedSubclasses(Imports.EXCLUDED) + "");
+        getAverageAssertedNamedSubclasses(Imports.EXCLUDED));
     csvData.put(
         prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS_INCL,
-        getAverageAssertedNamedSuperclasses(true) + "");
+        getAverageAssertedNamedSuperclasses(true));
     csvData.put(
-        prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS,
-        getAverageAssertedNamedSuperclasses(false) + "");
+        prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS, getAverageAssertedNamedSuperclasses(false));
     csvData.put(
         prefix + MetricsLabels.AVG_INSTANCE_PER_CLASS_INCL,
-        getAverageInstancesPerClass(Imports.INCLUDED) + "");
+        getAverageInstancesPerClass(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.AVG_INSTANCE_PER_CLASS,
-        getAverageInstancesPerClass(Imports.EXCLUDED) + "");
+        getAverageInstancesPerClass(Imports.EXCLUDED));
 
     csvData.put(
         prefix + MetricsLabels.CLASS_SGL_SUBCLASS_COUNT_INCL,
-        getClassesWithSingleSubclassCount(Imports.INCLUDED) + "");
+        getClassesWithSingleSubclassCount(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.CLASS_SGL_SUBCLASS_COUNT,
-        getClassesWithSingleSubclassCount(Imports.EXCLUDED) + "");
+        getClassesWithSingleSubclassCount(Imports.EXCLUDED));
 
     csvData.put(
         prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT_INCL,
-        getAxiomsWithComplexRHS(Imports.INCLUDED) + "");
+        getAxiomsWithComplexRHS(Imports.INCLUDED));
     csvData.put(
-        prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT,
-        getAxiomsWithComplexRHS(Imports.EXCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.AVG_SIZE_COMPLEXRHS_INCL, getAVGSizeOfRHS(Imports.INCLUDED) + "");
-    csvData.put(prefix + MetricsLabels.AVG_SIZE_COMPLEXRHS, getAVGSizeOfRHS(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT, getAxiomsWithComplexRHS(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.AVG_SIZE_COMPLEXRHS_INCL, getAVGSizeOfRHS(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.AVG_SIZE_COMPLEXRHS, getAVGSizeOfRHS(Imports.EXCLUDED));
 
     csvData.put(
         prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS_INCL,
-        isTBoxContainsNominals(Imports.INCLUDED) + "");
+        isTBoxContainsNominals(Imports.INCLUDED));
     csvData.put(
-        prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS,
-        isTBoxContainsNominals(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS, isTBoxContainsNominals(Imports.EXCLUDED));
     csvData.put(
         prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS_INCL,
-        isABoxContainsNominals(Imports.INCLUDED) + "");
+        isABoxContainsNominals(Imports.INCLUDED));
     csvData.put(
-        prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS,
-        isABoxContainsNominals(Imports.EXCLUDED) + "");
+        prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS, isABoxContainsNominals(Imports.EXCLUDED));
 
-    csvData.put(prefix + MetricsLabels.GCI_COUNT_INCL, getGCICount(true) + "");
-    csvData.put(prefix + MetricsLabels.GCI_COUNT, getGCICount(false) + "");
-    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT_INCL, getHiddenGCICount(true) + "");
-    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT, getHiddenGCICount(false) + "");
+    csvData.put(prefix + MetricsLabels.GCI_COUNT_INCL, getGCICount(true));
+    csvData.put(prefix + MetricsLabels.GCI_COUNT, getGCICount(false));
+    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT_INCL, getHiddenGCICount(true));
+    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT, getHiddenGCICount(false));
 
     csvData.put(
         prefix + MetricsLabels.MAX_NUM_NAMED_SUPERCLASS_INCL,
-        getMaximumNumberOfNamedSuperclasses(true) + "");
+        getMaximumNumberOfNamedSuperclasses(true));
     csvData.put(
         prefix + MetricsLabels.MAX_NUM_NAMED_SUPERCLASS,
-        getMaximumNumberOfNamedSuperclasses(false) + "");
+        getMaximumNumberOfNamedSuperclasses(false));
     csvData.put(
-        prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL,
-        getMultipleInheritanceCount(true) + "");
-    csvData.put(
-        prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false) + "");
+        prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL, getMultipleInheritanceCount(true));
+    csvData.put(prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false));
 
-    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true) + "");
-    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false) + "");
+    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
+    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
     csvData.put(
-        prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true) + "");
+        prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
+    csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
+    csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
+    csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedIndividualCount(false));
     csvData.put(
-        prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false) + "");
-    csvData.put(
-        prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true) + "");
-    csvData.put(
-        prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedIndividualCount(false) + "");
-    csvData.put(
-        prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true) + "");
-    csvData.put(
-        prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false) + "");
+        prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
+    csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
 
     csvData.put(
         prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT_INCL,
-        getUndeclaredEntitiesCount(Imports.INCLUDED) + "");
+        getUndeclaredEntitiesCount(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT,
-        getUndeclaredEntitiesCount(Imports.EXCLUDED) + "");
+        getUndeclaredEntitiesCount(Imports.EXCLUDED));
 
-    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT, getTautologyCount(Imports.EXCLUDED) + "");
-    csvData.put(
-        prefix + MetricsLabels.TAUTOLOGYCOUNT_INCL, getTautologyCount(Imports.INCLUDED) + "");
+    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT, getTautologyCount(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT_INCL, getTautologyCount(Imports.INCLUDED));
 
     if (surelyContainsCycle(Imports.INCLUDED)) {
       csvData.put(prefix + MetricsLabels.CYCLE_INCL, "1");
@@ -1004,10 +980,10 @@ public class OntologyMetrics {
 
     csvData.put(
         prefix + MetricsLabels.MOST_FRQUENTLY_USED_CONCEPT_INCL,
-        getMostFrequentlyUsedClassInLogicalAxioms(Imports.INCLUDED) + "");
+        getMostFrequentlyUsedClassInLogicalAxioms(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.MOST_FRQUENTLY_USED_CONCEPT,
-        getMostFrequentlyUsedClassInLogicalAxioms(Imports.EXCLUDED) + "");
+        getMostFrequentlyUsedClassInLogicalAxioms(Imports.EXCLUDED));
 
     return csvData;
   }

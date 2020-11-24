@@ -27,9 +27,9 @@ public class MetricsOperationTest extends CoreTest {
    */
   @Test
   public void testEssentialMetrics() throws IOException, OWLOntologyStorageException {
-    OWLOntology ontology = loadOntology("/"+TESTONTOLOGY);
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "essential");
-    assertEquals("313", result.getSimpleMetricValue(MetricsLabels.AXIOM_COUNT));
+    assertEquals(313, result.getSimpleMetricValue(MetricsLabels.AXIOM_COUNT));
   }
 
   /**
@@ -40,7 +40,7 @@ public class MetricsOperationTest extends CoreTest {
    */
   @Test
   public void testExtendedMetrics() throws IOException, OWLOntologyStorageException {
-    OWLOntology ontology = loadOntology("/"+TESTONTOLOGY);
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "extended");
     assertEquals("SI(D)", result.getSimpleMetricValue(MetricsLabels.EXPRESSIVITY));
   }
@@ -53,9 +53,9 @@ public class MetricsOperationTest extends CoreTest {
    */
   @Test
   public void testAllMetrics() throws IOException, OWLOntologyStorageException {
-    OWLOntology ontology = loadOntology("/"+TESTONTOLOGY);
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
-    assertEquals("0", result.getSimpleMetricValue(MetricsLabels.GCI_COUNT_INCL));
+    assertEquals(0, result.getSimpleMetricValue(MetricsLabels.GCI_COUNT_INCL));
   }
 
   /**
@@ -65,10 +65,10 @@ public class MetricsOperationTest extends CoreTest {
    */
   @Test
   public void writeAllMetricsToTSV() throws IOException {
-    OWLOntology ontology = loadOntology("/"+TESTONTOLOGY);
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
     File testFile = new File("test.tsv");
-    MetricsOperation.maybeWriteResult(result,"tsv",testFile);
+    MetricsOperation.maybeWriteResult(result, "tsv", testFile);
     assertTrue(testFile.exists());
   }
 
@@ -79,10 +79,10 @@ public class MetricsOperationTest extends CoreTest {
    */
   @Test
   public void writeAllMetricsToJSON() throws IOException {
-    OWLOntology ontology = loadOntology("/"+TESTONTOLOGY);
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
     File testFile = new File("test.json");
-    MetricsOperation.maybeWriteResult(result,"json",testFile);
+    MetricsOperation.maybeWriteResult(result, "json", testFile);
     assertTrue(testFile.exists());
   }
 
@@ -93,11 +93,10 @@ public class MetricsOperationTest extends CoreTest {
    */
   @Test
   public void writeAllMetricsToYAML() throws IOException {
-    OWLOntology ontology = loadOntology("/"+TESTONTOLOGY);
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
     File testFile = new File("test.yml");
-    MetricsOperation.maybeWriteResult(result,"yaml",testFile);
+    MetricsOperation.maybeWriteResult(result, "yaml", testFile);
     assertTrue(testFile.exists());
   }
-
 }

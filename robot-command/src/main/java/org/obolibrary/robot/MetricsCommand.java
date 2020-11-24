@@ -3,8 +3,6 @@ package org.obolibrary.robot;
 import java.io.File;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.obolibrary.robot.metrics.MetricsResult;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +38,11 @@ public class MetricsCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("f", "format", true, "the query result format: CSV, TSV," + " TTL, JSONLD, etc.");
     o.addOption("o", "output", true, "save updated metrics to a file");
-    o.addOption("m", "metrics", true, "select which set of metrics you would like to compute (default: simple)");
+    o.addOption(
+        "m",
+        "metrics",
+        true,
+        "select which set of metrics you would like to compute (default: simple)");
     options = o;
   }
 
