@@ -31,7 +31,7 @@ public class Column {
   // private OWLObject targetObject;
 
   // Provider to render short form of entities
-  private ShortFormProvider shortFormProvider;
+  private ShortFormProvider shortFormProvider = null;
 
   // If true, sort on this column
   private int sortOrder = -1;
@@ -41,6 +41,31 @@ public class Column {
 
   private boolean includeNamed = false;
   private boolean includeAnonymous = false;
+
+  /**
+   * Init a new column with a name.
+   *
+   * @param name Column name
+   */
+  private Column(
+    String name
+  ) {
+    this.name = name;
+  }
+
+  /**
+   * Init a new column with a name and a display name.
+   *
+   * @param name Column name
+   * @param displayName Column display name
+   */
+  private Column(
+    String name,
+    String displayName
+  ) {
+    this.name = name;
+    this.displayName = displayName;
+  }
 
   /**
    * Init a new Column using an IRI.
@@ -234,7 +259,6 @@ public class Column {
    *
    * @return ShortFormProvider
    */
-  @Nonnull
   public ShortFormProvider getShortFormProvider() {
     return shortFormProvider;
   }
