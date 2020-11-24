@@ -4,17 +4,14 @@
 
 ### Tables
 
-The ROBOT API provides classes to build tables which can be exported to TSV, CSV, HTML, JSON, or Excel. These tables are made up of the following:
+The ROBOT API provides classes to build tables which can be exported to TSV, CSV, HTML, JSON, or Excel.
 
-First, instantiate a [`Table`](https://github.com/ontodev/robot/blob/master/robot-core/src/main/java/org/obolibrary/robot/export/Table.java) object:
-```java
-Table table = new Table();
-```
-
-If you plan to have HTML output and want to render OWL Objects as links, you should instantiate a new `Table` with that format. If you don't need to render any OWL Objects, you do not need to specify the format.
+First, instantiate a [`Table`](https://github.com/ontodev/robot/blob/master/robot-core/src/main/java/org/obolibrary/robot/export/Table.java) object with your format:
 ```java
 Table table = new Table("html");
 ```
+
+Supported formats are: `tsv`, `csv`, `html`, `xlsx`, `json`, and `yaml`.
 
 ### Columns
 
@@ -88,7 +85,16 @@ table.sortRows();
 
 ## Writing to Output
 
-For most outputs (excluding `JSON` and `YAML`), you must provide a `String split` character. This can be an empty string if you do not have any cells with more than one value. Otherwise, we recommend using something like a space or a pipe character.
+For most outputs (excluding `JSON` and `YAML`), you must provide a `String split` character. This can be an empty string if you do not have any cells with more than one value. Otherwise, we recommend using something like a comma or a pipe character.
+
+In general, you can write your table to your desired output with the `write` method. This uses the provided `format` from when you instantiated the table.
+```java
+String path = "mytable.tsv";
+String split = "";
+boolean success = table.write(path, split);
+```
+
+See below for more specific ways to write your output.
 
 ### TSV and CSV
 
