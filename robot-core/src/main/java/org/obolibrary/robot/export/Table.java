@@ -38,6 +38,9 @@ public class Table {
 
   private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
 
+  /**
+   * Init a new Table.
+   */
   public Table() {
     columns = new ArrayList<>();
     rows = new ArrayList<>();
@@ -46,7 +49,7 @@ public class Table {
   }
 
   /**
-   * Init a new Table.
+   * Init a new Table with a format.
    *
    * @param format format of the table (tsv, csv, html)
    */
