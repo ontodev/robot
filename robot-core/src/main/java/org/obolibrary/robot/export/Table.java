@@ -21,7 +21,7 @@ public class Table {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(Table.class);
 
-  private String format;
+  private String format = null;
 
   // Ordered list of Columns
   private List<Column> columns;
@@ -37,6 +37,13 @@ public class Table {
   private RendererType sortRenderer = null;
 
   private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+
+  public Table() {
+    columns = new ArrayList<>();
+    rows = new ArrayList<>();
+    sortColumns = new ArrayList<>();
+    displayRenderer = RendererType.OBJECT_RENDERER;
+  }
 
   /**
    * Init a new Table.

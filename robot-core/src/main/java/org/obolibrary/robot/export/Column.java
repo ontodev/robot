@@ -47,10 +47,9 @@ public class Column {
    *
    * @param name Column name
    */
-  private Column(
-    String name
-  ) {
+  private Column(String name) {
     this.name = name;
+    this.displayName = name;
   }
 
   /**
@@ -59,10 +58,7 @@ public class Column {
    * @param name Column name
    * @param displayName Column display name
    */
-  private Column(
-    String name,
-    String displayName
-  ) {
+  private Column(String name, String displayName) {
     this.name = name;
     this.displayName = displayName;
   }
@@ -152,6 +148,12 @@ public class Column {
     setEntitySelect(entitySelect);
   }
 
+  /**
+   * Init a new column with a name and a provider.
+   *
+   * @param name Column name
+   * @param shortFormProvider ShortFormProvider to use when rendering values
+   */
   public Column(String name, @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.shortFormProvider = shortFormProvider;
@@ -279,6 +281,11 @@ public class Column {
    */
   public boolean isReverseSort() {
     return reverseSort;
+  }
+
+  public void setSort(int sortOrder) {
+    this.sortOrder = sortOrder;
+    this.reverseSort = false;
   }
 
   public void setSort(int sortOrder, boolean reverseSort) {
