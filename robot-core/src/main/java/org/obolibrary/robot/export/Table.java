@@ -390,6 +390,10 @@ public class Table {
    */
   public boolean write(String path, String split, boolean standalone) throws IOException {
     File f = new File(path);
+    if (format == null) {
+      throw new IOException(
+          String.format("Unable to write table to path '%s' with null format", path));
+    }
     switch (format) {
       case "tsv":
         IOHelper.writeTable(toList(split), f, '\t');
