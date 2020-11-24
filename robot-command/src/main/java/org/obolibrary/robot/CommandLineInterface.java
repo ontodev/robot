@@ -30,6 +30,7 @@ public class CommandLineInterface {
     m.addCommand("filter", new FilterCommand());
     m.addCommand("materialize", new MaterializeCommand());
     m.addCommand("merge", new MergeCommand());
+    m.addCommand("metrics", new MetricsCommand());
     m.addCommand("mirror", new MirrorCommand());
     m.addCommand("python", new PythonCommand());
     m.addCommand("query", new QueryCommand());

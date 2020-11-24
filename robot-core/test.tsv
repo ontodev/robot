@@ -1,0 +1,162 @@
+metric	metric_value	metric_type
+owl2dl_profile_violation		single_value
+gci_hidden_count_incl	2	single_value
+obj_property_count_incl	2	single_value
+annotation_property_count	37	single_value
+annotation_property_count_incl	37	single_value
+tboxrbox_size_incl	23	single_value
+signature_size	54	single_value
+owl2_rl	false	single_value
+ref_indiv_count_incl	1	single_value
+indiv_count	1	single_value
+rule_ct_incl	0	single_value
+max_axiomlength_incl	6	single_value
+max_num_named_supercl_incl	1	single_value
+max_num_named_supercl	1	single_value
+multi_inheritance_count	1	single_value
+gci_count	0	single_value
+most_freq_concept	<http://purl.obolibrary.org/obo/UBERON_0000477>	single_value
+axiom_count	313	single_value
+tbox_nominals	false	single_value
+expressivity	SI(D)	single_value
+ref_objprop_count_incl	2	single_value
+undecl_entity_count_incl	5	single_value
+datatypes_count_incl	3	single_value
+ref_class_count_incl	10	single_value
+ref_objprop_count	2	single_value
+ref_dataprop_count_incl	1	single_value
+owl2	true	single_value
+gci_count_incl	0	single_value
+signature_size_incl	54	single_value
+axiom_count_incl	313	single_value
+avg_instance_per_class_incl	0.1	single_value
+gci_hidden_count	2	single_value
+owl2_ql	false	single_value
+ax_complexrhs_ct	8	single_value
+avg_assert_n_subclass_incl	1.0	single_value
+most_freq_concept_incl	<http://purl.obolibrary.org/obo/UBERON_0000477>	single_value
+avg_size_complexrhs	1.25	single_value
+ontology_anno_ct	0	single_value
+taut_count_incl	0	single_value
+avg_assert_n_superclass_incl	1.1	single_value
+logical_axiom_count	25	single_value
+owl2_el	false	single_value
+ref_dataprop_count	1	single_value
+class_count	10	single_value
+logical_axiom_count_incl	25	single_value
+cycle_incl	1	single_value
+ontology_id	Optional.of(http://purl.obolibrary.org/obo/uberon.owl)	single_value
+avg_size_complexrhs_incl	1.25	single_value
+dt_builtin_ct	3	single_value
+dataproperty_count_incl	1	single_value
+dt_notbuiltin_ct	0	single_value
+avg_assert_n_subclass	1.0	single_value
+rdfs	false	single_value
+abox_nominals_incl	false	single_value
+owlapi_version	owlapi-distribution-4.5.6.jar	single_value
+obj_property_count	2	single_value
+cycle	1	single_value
+max_axiomlength	6	single_value
+rbox_size	3	single_value
+dt_builtin_ct_incl	3	single_value
+tbox_nominals_incl	false	single_value
+dataproperty_count	1	single_value
+abox_size_incl	2	single_value
+ax_complexrhs_ct_incl	8	single_value
+indiv_count_incl	1	single_value
+ref_class_count	10	single_value
+tbox_size	20	single_value
+owl2_dl	true	single_value
+rbox_size_incl	3	single_value
+rule_ct	0	single_value
+tboxrbox_size	23	single_value
+tbox_size_incl	20	single_value
+abox_nominals	false	single_value
+datatypes_count	3	single_value
+class_sgl_subcl_count	1	single_value
+avg_instance_per_class	0.1	single_value
+multi_inheritence_count_incl	1	single_value
+taut_count	0	single_value
+class_sgl_subcl_count_incl	1	single_value
+dt_notbuiltin_ct_incl	0	single_value
+avg_assert_n_superclass	1.1	single_value
+class_count_incl	10	single_value
+syntax	RDF/XML Syntax	single_value
+abox_size	2	single_value
+expressivity_incl	SI(D)	single_value
+undecl_entity_count	5	single_value
+ontology_id_prefix	http	single_value
+datatypes_builtin_incl	XSD_STRING	list_value
+datatypes_builtin_incl	XSD_INTEGER	list_value
+datatypes_builtin_incl	XSD_ANY_URI	list_value
+datatypes_builtin	XSD_STRING	list_value
+datatypes_builtin	XSD_INTEGER	list_value
+datatypes_builtin	XSD_ANY_URI	list_value
+axiom_types_incl	AnnotationAssertion	list_value
+axiom_types_incl	DataPropertyAssertion	list_value
+axiom_types_incl	EquivalentClasses	list_value
+axiom_types_incl	TransitiveObjectProperty	list_value
+axiom_types_incl	DataPropertyDomain	list_value
+axiom_types_incl	DataPropertyRange	list_value
+axiom_types_incl	Declaration	list_value
+axiom_types_incl	SubClassOf	list_value
+axiom_types_incl	ClassAssertion	list_value
+axiom_types_incl	InverseObjectProperties	list_value
+constructs_incl	S	list_value
+constructs_incl	D	list_value
+constructs_incl	I	list_value
+constructs	S	list_value
+constructs	D	list_value
+constructs	I	list_value
+axiom_types	AnnotationAssertion	list_value
+axiom_types	DataPropertyAssertion	list_value
+axiom_types	EquivalentClasses	list_value
+axiom_types	TransitiveObjectProperty	list_value
+axiom_types	DataPropertyDomain	list_value
+axiom_types	DataPropertyRange	list_value
+axiom_types	Declaration	list_value
+axiom_types	SubClassOf	list_value
+axiom_types	ClassAssertion	list_value
+axiom_types	InverseObjectProperties	list_value
+iri_namespaces_incl	http://www.geneontology.org/formats/oboInOwl# 270	list_value
+iri_namespaces_incl	http://purl.obolibrary.org/obo/UBPROP_ 20	list_value
+iri_namespaces_incl	http://purl.obolibrary.org/obo/UBERON_ 58	list_value
+iri_namespaces_incl	http://purl.obolibrary.org/obo/IAO_ 15	list_value
+iri_namespaces_incl	http://www.w3.org/2000/01/rdf-schema# 17	list_value
+iri_namespaces_incl	http://purl.obolibrary.org/obo/BFO_ 13	list_value
+iri_namespaces_incl	http://purl.obolibrary.org/obo/RO_ 2	list_value
+iri_namespaces_incl	http://www.gene.org/formats/oboInOwl# 9	list_value
+iri_namespaces_incl	http://xmlns.com/foaf/0.1/ 1	list_value
+iri_namespaces_incl	http://www.w3.org/2001/XMLSchema# 2	list_value
+datatypes_axiomcount_incl	XSD_INTEGER 2	list_value
+iri_namespaces	http://www.geneontology.org/formats/oboInOwl# 270	list_value
+iri_namespaces	http://purl.obolibrary.org/obo/UBPROP_ 20	list_value
+iri_namespaces	http://purl.obolibrary.org/obo/UBERON_ 58	list_value
+iri_namespaces	http://purl.obolibrary.org/obo/IAO_ 15	list_value
+iri_namespaces	http://www.w3.org/2000/01/rdf-schema# 17	list_value
+iri_namespaces	http://purl.obolibrary.org/obo/BFO_ 13	list_value
+iri_namespaces	http://purl.obolibrary.org/obo/RO_ 2	list_value
+iri_namespaces	http://www.gene.org/formats/oboInOwl# 9	list_value
+iri_namespaces	http://xmlns.com/foaf/0.1/ 1	list_value
+iri_namespaces	http://www.w3.org/2001/XMLSchema# 2	list_value
+axiom_type_count	AnnotationAssertion 239	list_value
+axiom_type_count	DataPropertyAssertion 1	list_value
+axiom_type_count	EquivalentClasses 2	list_value
+axiom_type_count	TransitiveObjectProperty 2	list_value
+axiom_type_count	DataPropertyDomain 1	list_value
+axiom_type_count	DataPropertyRange 1	list_value
+axiom_type_count	Declaration 49	list_value
+axiom_type_count	SubClassOf 16	list_value
+axiom_type_count	ClassAssertion 1	list_value
+axiom_type_count	InverseObjectProperties 1	list_value
+axiom_type_count_incl	AnnotationAssertion 239	list_value
+axiom_type_count_incl	DataPropertyAssertion 1	list_value
+axiom_type_count_incl	EquivalentClasses 2	list_value
+axiom_type_count_incl	TransitiveObjectProperty 2	list_value
+axiom_type_count_incl	DataPropertyDomain 1	list_value
+axiom_type_count_incl	DataPropertyRange 1	list_value
+axiom_type_count_incl	Declaration 49	list_value
+axiom_type_count_incl	SubClassOf 16	list_value
+axiom_type_count_incl	ClassAssertion 1	list_value
+axiom_type_count_incl	InverseObjectProperties 1	list_value
+datatypes_axiomcount	XSD_INTEGER 2	list_value
