@@ -7,12 +7,13 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.obolibrary.robot.IOHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public class Table {
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(Table.class);
 
-  private String format;
+  private String format = null;
 
   // Ordered list of Columns
   private List<Column> columns;
@@ -38,8 +39,16 @@ public class Table {
 
   private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
 
+  /** Init a new Table. */
+  public Table() {
+    columns = new ArrayList<>();
+    rows = new ArrayList<>();
+    sortColumns = new ArrayList<>();
+    displayRenderer = RendererType.OBJECT_RENDERER;
+  }
+
   /**
-   * Init a new Table.
+   * Init a new Table with a format.
    *
    * @param format format of the table (tsv, csv, html)
    */
@@ -356,5 +365,61 @@ public class Table {
   public String toYAML() throws IOException {
     JsonNode jsonNodeTree = new ObjectMapper().readTree(toJSON());
     return new YAMLMapper().writeValueAsString(jsonNodeTree);
+  }
+
+  /**
+   * Given a path and a split character, write the table to a path.
+   *
+   * @param path path to write to
+   * @param split split character for multiple cell values
+   * @return true on success
+   * @throws IOException on any problem opening or writing file
+   */
+  public boolean write(String path, String split) throws IOException {
+    return write(path, split, true);
+  }
+
+  /**
+   * Given a path, a split character, and boolean if standalone, write the table to a path.
+   *
+   * @param path path to write to
+   * @param split split character for multiple cell values
+   * @param standalone if true, include HTML headers for HTML output
+   * @return true on success
+   * @throws IOException on any problem opening or writing file
+   */
+  public boolean write(String path, String split, boolean standalone) throws IOException {
+    File f = new File(path);
+    if (format == null) {
+      throw new IOException(
+          String.format("Unable to write table to path '%s' with null format", path));
+    }
+    switch (format) {
+      case "tsv":
+        IOHelper.writeTable(toList(split), f, '\t');
+        break;
+      case "csv":
+        IOHelper.writeTable(toList(split), f, ',');
+        break;
+      case "html":
+        try (PrintWriter out = new PrintWriter(f)) {
+          out.print(toHTML(split, standalone));
+        }
+        break;
+      case "json":
+        try (PrintWriter out = new PrintWriter(f)) {
+          out.print(toJSON());
+        }
+        break;
+      case "xlsx":
+        try (Workbook wb = asWorkbook(split);
+            FileOutputStream fos = new FileOutputStream(f)) {
+          wb.write(fos);
+        }
+        break;
+      default:
+        return false;
+    }
+    return true;
   }
 }
