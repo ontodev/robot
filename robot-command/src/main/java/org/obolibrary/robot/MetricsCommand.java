@@ -32,7 +32,7 @@ public class MetricsCommand implements Command {
         "m",
         "metrics",
         true,
-        "select which set of metrics you would like to compute (default: essential)");
+        "select which set of metrics you would like to compute: essential (default), extended, all.");
     options = o;
   }
 
