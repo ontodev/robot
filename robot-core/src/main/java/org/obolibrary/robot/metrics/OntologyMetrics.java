@@ -791,9 +791,6 @@ public class OntologyMetrics {
 
   public MetricsResult getEssentialMetrics(String prefix) {
     MetricsResult csvData = new MetricsResult();
-    csvData.put(
-        prefix + MetricsLabels.OWLAPI_VERSION,
-        MetricsUtils.getResourcePath(getOntology()).getName());
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
     /*
     Essential entity metrics
