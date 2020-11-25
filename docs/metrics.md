@@ -43,6 +43,24 @@ Use: `--metrics all`.
 A full breakdown of all metrics can be found in the following. For simplicity, all metrics ending with `_incl` are omitted -
 they simply indicate that the metric was collected over the imports closure (the ontology _including_ its imports).
 
+Some abbreviations useful to understand the following:
+- `abox`: The part of the ontology that is about individuals, see [Wikipedia](https://en.wikipedia.org/wiki/Abox)
+- `rbox`: The part of the ontology that is about object properties
+- `tbox`: The part of the ontology that is about classes, see [Wikipedia](https://en.wikipedia.org/wiki/Tbox)
+- `avg`: average
+- `max`: maximum
+- `rhs`: ride-hand-side. If used in conjunction with axioms, usually the "superclass" part of a SubClassOf axiom.
+- `dt`: datatype
+- `gci`: General concept inclusion. Formally, [all SubClassOf axioms are GCIs](https://en.wikipedia.org/wiki/Description_logic#Terminological_axioms),
+         but here we mean those that have a complex left-hand-side (subclass part).
+- OWL 2 Profiles:
+  - OWL 2 DL: Roughly the subset of OWL that conforms to description logics, plus annotations.
+  - OWL 2 EL: Subset of OWL 2 DL, see [W3C](https://www.w3.org/TR/owl2-profiles/#OWL_2_EL_2).
+  - OWL 2 QL: Subset of OWL 2 DL, see [W3C](https://www.w3.org/TR/owl2-profiles/#OWL_2_QL_2).
+  - OWL 2 RL: Subset of OWL 2 DL, see [W3C](https://www.w3.org/TR/owl2-profiles/#OWL_2_RL_2).
+- Logical `expressivity` and `constructs`. A breakdown of the meaning of the letters can be found [here](https://en.wikipedia.org/wiki/Description_logic#Naming_convention).
+
+
 |metric|metric_value|metric_type| explanation |
 |:---|:---|:---|:---|
 |abox_axiom_count|0|single_value| Number of axioms in the ABox |
@@ -83,7 +101,6 @@ they simply indicate that the metric was collected over the imports closure (the
 |owl2_rl|false|single_value| Does the ontology correspond to the OWL2 RL profile? |
 |owl2|true|single_value| Does the ontology correspond to the OWL2 Full profile?  |
 |owl2dl_profile_violation|UseOfUndeclaredAnnotationProperty 531 |map_value| Counts of OWL2 DL profile violations. |
-|owlapi_version|robot.jar|single_value| Which OWLAPI version of robot was used to compute metrics. |
 |rbox_axiom_count|2|single_value| How many axioms in the RBOX? |
 |rdfs|false|single_value| Does the ontology correspond to the RDFS profile? |
 |rule_count|0|single_value| Number of SWRL rules used. |
