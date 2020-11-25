@@ -1,1 +1,0 @@
-./bin/robot metrics -i docs/examples/edit.owl --metrics all --output metrics.tsv
