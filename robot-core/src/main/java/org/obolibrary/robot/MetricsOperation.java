@@ -231,6 +231,7 @@ public class MetricsOperation {
     for (Map.Entry<String, List<Object>> entry : result.getListData().entrySet()) {
 
       String key = escapeTSV(entry.getKey());
+
       for (Object v : entry.getValue()) {
         String value = escapeTSV(v.toString());
         addRowToTable(table, key, value, "list_value");
@@ -244,7 +245,7 @@ public class MetricsOperation {
       for (Map.Entry<String, Integer> entryMap : v.entrySet()) {
         String key_inner = entryMap.getKey();
         String value_inner = escapeTSV(entryMap.getValue() + "");
-        addRowToTable(table, key, key_inner + " " + value_inner, "list_value");
+        addRowToTable(table, key, key_inner + " " + value_inner, "map_value");
       }
     }
     return table;

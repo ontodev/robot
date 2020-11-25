@@ -1,14 +1,11 @@
 package org.obolibrary.robot.metrics;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.obolibrary.robot.IOHelper;
+import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owlapi.metrics.AbstractOWLMetric;
 import org.semanticweb.owlapi.metrics.AverageAssertedNamedSuperclassCount;
 import org.semanticweb.owlapi.metrics.DLExpressivity;
@@ -59,11 +56,19 @@ public class OntologyMetrics {
   private final List<String> owlprofileviolations = new ArrayList<>();
   private final List<OWLProfileViolation> dlprofileviolation = new ArrayList<>();
   protected OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
+  private CURIEShortFormProvider curieProvider;
+
   String OBONS = "http://purl.obolibrary.org/obo/";
 
   public OntologyMetrics(OWLOntology item) {
     this.item = item;
     this.manager = item.getOWLOntologyManager();
+
+    try {
+      this.curieProvider = new CURIEShortFormProvider(new IOHelper().getPrefixes());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   // ENTITIES
@@ -177,18 +182,47 @@ public class OntologyMetrics {
 
   public Map<String, Integer> getEntityUsageMap(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
+    for (OWLEntity e : getOntology().getSignature(includeImportsClosure)) {
+      String iri_pre = extractIRIPrefixFromEntity(e);
+      countKeyUpInMap(iri_pre, map);
+    }
+    return map;
+  }
+
+  private String getShortForm(OWLEntity e) {
+    Optional<CURIEShortFormProvider> sfpo = getCurieProvider();
+    String shortform = e.getIRI().getShortForm();
+    if (sfpo.isPresent()) {
+      CURIEShortFormProvider sfp = sfpo.get();
+      shortform = sfp.getShortForm(e);
+    }
+    return shortform;
+  }
+
+  private String extractIRIPrefixFromEntity(OWLEntity e) {
+    String shortform = getShortForm(e);
+    if (shortform.contains(":")) {
+      return shortform.split(":")[0];
+    }
+
+    String iri = e.getIRI().toString();
+    String iri_pre;
+
+    if (iri.equals(OBONS + shortform) && shortform.contains("_")) {
+      iri_pre = OBONS + shortform.split("_")[0] + "_";
+    } else {
+      iri_pre = iri.replace(shortform, "");
+    }
+    return iri_pre;
+  }
+
+  public Map<String, Integer> getAxiomUsageMap(Imports includeImportsClosure) {
+    Map<String, Integer> map = new HashMap<>();
     Set<OWLAxiom> axioms = getAxioms(includeImportsClosure);
     for (OWLAxiom axiom : axioms) {
       Set<OWLEntity> entities = axiom.getSignature();
       for (OWLEntity e : entities) {
-        String iri = e.getIRI().toString();
-        String iri_pre;
-        String shortform = e.getIRI().getShortForm();
-        if (iri.equals(OBONS + shortform) && shortform.contains("_")) {
-          iri_pre = OBONS + shortform.split("_")[0] + "_";
-        } else {
-          iri_pre = iri.replace(shortform, "");
-        }
+        String iri_pre = extractIRIPrefixFromEntity(e);
         countKeyUpInMap(iri_pre, map);
       }
     }
@@ -650,20 +684,24 @@ public class OntologyMetrics {
     return this.item;
   }
 
+  private Optional<CURIEShortFormProvider> getCurieProvider() {
+    if (this.curieProvider != null) {
+      return Optional.of(this.curieProvider);
+    }
+    return Optional.empty();
+  }
+
   public OWLOntologyManager getManager() {
     return this.manager;
   }
 
-  public String getOwlprofileviolations() {
-    StringBuilder s = new StringBuilder();
+  public Map<String, Integer> getOwlprofileviolations() {
+    Map<String, Integer> map = new HashMap<>();
     Set<String> uniqueviolations = new HashSet<>(owlprofileviolations);
     for (String vio : uniqueviolations) {
-      s.append(vio)
-          .append(":")
-          .append(Collections.frequency(owlprofileviolations, vio))
-          .append(" ");
+      map.put(vio, Collections.frequency(owlprofileviolations, vio));
     }
-    return s.toString();
+    return map;
   }
 
   private String getMostFrequentlyUsedClassInLogicalAxioms(Imports includeImportsClosure) {
@@ -676,11 +714,12 @@ public class OntologyMetrics {
       String saxrhs = sax.getSuperClass().toString();
       for (OWLClass eachClass : eachAxiom.getClassesInSignature()) {
         int frequency = getNumberOfOccurences(saxrhs, eachClass.toString());
+        String class_sf = getShortForm(eachClass);
         if (classCountMap.containsKey(eachClass.toString())) {
           Integer currentClassCount = classCountMap.get(eachClass.toString());
-          classCountMap.put(eachClass.toString(), currentClassCount + frequency);
+          classCountMap.put(class_sf, currentClassCount + frequency);
         } else {
-          classCountMap.put(eachClass.toString(), frequency);
+          classCountMap.put(class_sf, frequency);
         }
       }
     }
@@ -752,10 +791,10 @@ public class OntologyMetrics {
 
   public MetricsResult getEssentialMetrics(String prefix) {
     MetricsResult csvData = new MetricsResult();
-    csvData.put(prefix + "owlapi_version", MetricsUtils.getResourcePath(getOntology()).getName());
+    csvData.put(
+        prefix + MetricsLabels.OWLAPI_VERSION,
+        MetricsUtils.getResourcePath(getOntology()).getName());
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID_SCHEME, getOntologyIdScheme());
-
     /*
     Essential entity metrics
     */
@@ -812,7 +851,7 @@ public class OntologyMetrics {
     csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_QL, isOWL2QLProfile());
     csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_RL, isOWL2RLProfile());
     csvData.put(prefix + MetricsLabels.BOOL_PROFILE_RDFS, isRDFS());
-    csvData.put(prefix + MetricsLabels.VIOLATION_PROFILE_OWL2_DL, getOwlprofileviolations());
+    csvData.putMap(prefix + MetricsLabels.VIOLATION_PROFILE_OWL2_DL, getOwlprofileviolations());
 
     csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS, getValidImports(false));
     csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS_INCL, getValidImports(true));
@@ -858,8 +897,11 @@ public class OntologyMetrics {
     Entity usage
      */
 
-    csvData.putMap(prefix + MetricsLabels.IRI_NS_USE, getEntityUsageMap(Imports.EXCLUDED));
-    csvData.putMap(prefix + MetricsLabels.IRI_NS_USE_INCL, getEntityUsageMap(Imports.INCLUDED));
+    csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS, getAxiomUsageMap(Imports.EXCLUDED));
+    csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS_INCL, getAxiomUsageMap(Imports.INCLUDED));
+    csvData.putMap(prefix + MetricsLabels.NS_USE_SIGNATURE, getEntityUsageMap(Imports.EXCLUDED));
+    csvData.putMap(
+        prefix + MetricsLabels.NS_USE_SIGNATURE_INCL, getEntityUsageMap(Imports.INCLUDED));
     return csvData;
   }
 
@@ -902,8 +944,6 @@ public class OntologyMetrics {
         getAxiomsWithComplexRHS(Imports.INCLUDED));
     csvData.put(
         prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT, getAxiomsWithComplexRHS(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.AVG_SIZE_COMPLEXRHS_INCL, getAVGSizeOfRHS(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.AVG_SIZE_COMPLEXRHS, getAVGSizeOfRHS(Imports.EXCLUDED));
 
     csvData.put(
         prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS_INCL,
@@ -931,17 +971,17 @@ public class OntologyMetrics {
         prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL, getMultipleInheritanceCount(true));
     csvData.put(prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false));
 
-    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
+/*    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
     csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
     csvData.put(
         prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
     csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
     csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
-    csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedIndividualCount(false));
+    csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false));
     csvData.put(
         prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
     csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
-
+*/
     csvData.put(
         prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT_INCL,
         getUndeclaredEntitiesCount(Imports.INCLUDED));
@@ -951,17 +991,13 @@ public class OntologyMetrics {
 
     csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT, getTautologyCount(Imports.EXCLUDED));
     csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT_INCL, getTautologyCount(Imports.INCLUDED));
-
-    if (surelyContainsCycle(Imports.INCLUDED)) {
-      csvData.put(prefix + MetricsLabels.CYCLE_INCL, "1");
-    } else {
-      csvData.put(prefix + MetricsLabels.CYCLE_INCL, "unkown");
-    }
+    csvData.put(prefix + MetricsLabels.CYCLE, surelyContainsCycle(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.CYCLE_INCL, surelyContainsCycle(Imports.INCLUDED));
 
     if (surelyContainsCycle(Imports.EXCLUDED)) {
-      csvData.put(prefix + MetricsLabels.CYCLE, "1");
+      csvData.put(prefix + MetricsLabels.CYCLE, true);
     } else {
-      csvData.put(prefix + MetricsLabels.CYCLE, "unkown");
+      csvData.put(prefix + MetricsLabels.CYCLE, false);
     }
 
     csvData.putMap(

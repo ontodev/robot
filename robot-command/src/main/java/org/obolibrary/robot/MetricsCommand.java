@@ -18,16 +18,6 @@ public class MetricsCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "metrics#";
 
-  /** Error message when --query does not have two arguments. */
-  private static final String missingOutputError =
-      NS + "MISSING OUTPUT ERROR --%s requires two arguments: query and output";
-
-  /**
-   * Error message when computing the mertics fails. Expects: error message from metric computation.
-   */
-  private static final String metricsComputeError =
-      NS + "METRICS COMPUTE ERROR metrics could not be computed:\n%s";
-
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -36,13 +26,13 @@ public class MetricsCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
-    o.addOption("f", "format", true, "the query result format: CSV, TSV," + " TTL, JSONLD, etc.");
+    o.addOption("f", "format", true, "the metrics result format: tsv," + " json, yaml, html.");
     o.addOption("o", "output", true, "save updated metrics to a file");
     o.addOption(
         "m",
         "metrics",
         true,
-        "select which set of metrics you would like to compute (default: simple)");
+        "select which set of metrics you would like to compute (default: essential)");
     options = o;
   }
 

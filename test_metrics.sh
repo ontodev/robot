@@ -1,1 +1,1 @@
-./bin/robot metrics -I https://raw.githubusercontent.com/monarch-ebi-dev/ontologies/master/mp.owl -o test.tsv
+./bin/robot metrics -i docs/examples/edit.owl --metrics all --output metrics.tsv
