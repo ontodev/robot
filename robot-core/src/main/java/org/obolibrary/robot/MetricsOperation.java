@@ -2,6 +2,8 @@ package org.obolibrary.robot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.*;
 import java.io.*;
@@ -195,7 +197,8 @@ public class MetricsOperation {
 
   private static String asYaml(String jsonString) throws IOException {
     JsonNode jsonNodeTree = new ObjectMapper().readTree(jsonString);
-    return new YAMLMapper().writeValueAsString(jsonNodeTree);
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+    return mapper.writeValueAsString(jsonNodeTree);
   }
 
   private static String escapeTSV(String s) {
