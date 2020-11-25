@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -197,7 +196,8 @@ public class MetricsOperation {
 
   private static String asYaml(String jsonString) throws IOException {
     JsonNode jsonNodeTree = new ObjectMapper().readTree(jsonString);
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+    ObjectMapper mapper =
+        new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
     return mapper.writeValueAsString(jsonNodeTree);
   }
 
@@ -264,13 +264,14 @@ public class MetricsOperation {
     return table;
   }
 
-  private static void writeTable(MetricsResult result, File output, String format) throws IOException {
+  private static void writeTable(MetricsResult result, File output, String format)
+      throws IOException {
     Table table = resultsToTable(result, format);
     table.write(output.getPath(), "");
   }
 
   private static void writeHTML(MetricsResult result, File output) throws IOException {
-    Table table = resultsToTable(result,"tsv");
+    Table table = resultsToTable(result, "tsv");
     writeStringToFile(table.toHTML(""), output);
   }
 }

@@ -116,6 +116,7 @@ Some abbreviations useful to understand the following:
 
 Currently, the following serialisation formats are supported:
 - tsv
+- csv
 - html
 - json
 - yaml
@@ -128,8 +129,8 @@ or
 
     robot metrics --input uberon_fragment.owl -f json --metrics all --output results/metrics_all.json
 
-Note that the file extension of the output file does not matter to `robot metrics` - it can be anything
-and will not be used to infer the intended serialisation format.
+Note that if no `--format` is explicitly provided, robot will try to infer the inteded format from the file extension
+instead. Failing that, it will generate a TSV file.
 
 ## Error Messages
 

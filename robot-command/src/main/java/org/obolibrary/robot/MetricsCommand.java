@@ -1,8 +1,11 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +24,18 @@ public class MetricsCommand implements Command {
   /** Store the command-line options for the command. */
   private Options options;
 
+  private final List<String> legal_formats = Arrays.asList("tsv", "csv", "html", "yaml", "json");
+
   /** Initialze the command. */
   public MetricsCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
-    o.addOption("f", "format", true, "the metrics result format: tsv," + " json, yaml, html.");
+    o.addOption(
+        "f",
+        "format",
+        true,
+        "the metrics result format: " + String.join(" ", legal_formats).trim() + ".");
     o.addOption("o", "output", true, "save updated metrics to a file");
     o.addOption(
         "m",
@@ -61,7 +70,7 @@ public class MetricsCommand implements Command {
    */
   // todo: --output?
   public String getUsage() {
-    return "robot metrics --input <file> <output>";
+    return "robot metrics --input <file> --output <output>";
   }
 
   /**
@@ -104,16 +113,27 @@ public class MetricsCommand implements Command {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
     String metrics_type = CommandLineHelper.getDefaultValue(line, "metrics", "essential");
-    String format = CommandLineHelper.getDefaultValue(line, "format", "tsv");
+    String format = CommandLineHelper.getOptionalValue(line, "format");
+
     String output = CommandLineHelper.getOptionalValue(line, "output");
 
     if (output == null) {
       throw new Exception(String.format(missingFileError, output, "metrics"));
     }
 
+    File output_file = new File(output);
+    if (format == null) {
+      String extension = FilenameUtils.getExtension(output_file.getName()).replace("yml", "yaml");
+      if (legal_formats.contains(extension)) {
+        format = extension;
+      } else {
+        format = "tsv";
+      }
+    }
+
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
 
-    MetricsOperation.executeMetrics(state.getOntology(), metrics_type, format, new File(output));
+    MetricsOperation.executeMetrics(state.getOntology(), metrics_type, format, output_file);
 
     return state;
   }
