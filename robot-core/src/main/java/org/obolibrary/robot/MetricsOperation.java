@@ -105,7 +105,10 @@ public class MetricsOperation {
       throws IOException {
     switch (format) {
       case "tsv":
-        writeTSV(result, output);
+        writeTable(result, output, "tsv");
+        break;
+      case "csv":
+        writeTable(result, output, "csv");
         break;
       case "yaml":
         writeYAML(result, output);
@@ -212,8 +215,8 @@ public class MetricsOperation {
     table.addRow(row);
   }
 
-  private static Table resultsToTable(MetricsResult result) {
-    Table table = new Table("tsv");
+  private static Table resultsToTable(MetricsResult result, String format) {
+    Table table = new Table(format);
 
     cl_metric.setSort(2);
     cl_metric_type.setSort(1);
@@ -258,13 +261,13 @@ public class MetricsOperation {
     return table;
   }
 
-  private static void writeTSV(MetricsResult result, File output) throws IOException {
-    Table table = resultsToTable(result);
-    IOHelper.writeTable(table.toList(""), output, '\t');
+  private static void writeTable(MetricsResult result, File output, String format) throws IOException {
+    Table table = resultsToTable(result, format);
+    table.write(output.getPath(), "");
   }
 
   private static void writeHTML(MetricsResult result, File output) throws IOException {
-    Table table = resultsToTable(result);
+    Table table = resultsToTable(result,"tsv");
     writeStringToFile(table.toHTML(""), output);
   }
 }

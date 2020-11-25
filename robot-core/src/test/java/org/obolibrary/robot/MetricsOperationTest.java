@@ -80,6 +80,21 @@ public class MetricsOperationTest extends CoreTest {
    * @throws IOException on IO error
    */
   @Test
+  public void writeAllMetricsToCSV() throws IOException {
+    OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
+    MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
+    File testFile = new File("test.csv");
+    MetricsOperation.maybeWriteResult(result, "csv", testFile);
+    assertTrue(testFile.exists());
+    FileUtils.deleteRecursively(testFile);
+  }
+
+  /**
+   * Tests all metrics generation.
+   *
+   * @throws IOException on IO error
+   */
+  @Test
   public void writeAllMetricsToJSON() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
