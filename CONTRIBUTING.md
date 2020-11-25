@@ -23,7 +23,7 @@ Before changing anything, make sure the tests pass:
 
 * [Create a new branch](https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging) with your topic name (e.g. `extract-bug-fix`)
 * Make your changes and write any corresponding tests
-* Test your changes (`$ mvn test -Dtest=TestName`)
+* Test your changes (`$ mvn test -Dtest=TestName`; make sure you are in the `robot-core` sub-directory before running tests)
 * Ensure ROBOT builds correctly (`$ mvn clean package`)
 * Commit and push changes to your fork, then create a [pull request](https://help.github.com/articles/about-pull-requests/)
 
