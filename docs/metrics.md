@@ -12,7 +12,7 @@ axiom counts, qualitative information such as OWL 2 profiles
 and more complex metrics aimed at informing ontology developers such as logical expressivity and axiom shape.
 A number of essential metrics can be generated very simply as follows:
 
-    robot metrics --input edit.owl --output results/metrics.tsv
+    robot metrics --input uberon_fragment.owl --output results/metrics.tsv
 
 This will generate a table with metrics such as:
 - Entity metrics (number of classes, object properties etc.)
@@ -31,18 +31,17 @@ There are three general modes for computing metrics:
 _Essential metrics_ include basic ontology entity counts (number of classes, individuals and properties), axiom counts
 and a few qualitiative metrics such as OWL profiles, see the initial example above.
 
-    robot metrics --input edit.owl --metrics essential --output results/metrics.tsv
+    robot metrics --input uberon_fragment.owl --format json --metrics essential --output results/metrics_essential.json
 
 _Extended metrics_ contain all the essential metrics, and additional details on axiom types, logical expressivity and datatypes.
-
-    robot metrics --input edit.owl --metrics extended --output results/metrics.tsv
+Use: `--metrics extended`.
 
 _All metrics_ include all the essential and extended metrics, as well as a range of more complex metrics targeted at
 OWL and reasoning specialists, such as information about GCIs, shape of the class hierarchy and potential cyclicity.
+Use: `--metrics all`.
 
-    robot metrics --input edit.owl --metrics all --output results/metrics.tsv
-
-A full breakdown of all metrics can be found in the following:
+A full breakdown of all metrics can be found in the following. For simplicity, all metrics ending with `_incl` are omitted -
+they simply indicate that the metric was collected over the imports closure (the ontology _including_ its imports).
 
 |metric|metric_value|metric_type| explanation |
 |:---|:---|:---|:---|
@@ -106,11 +105,11 @@ Currently, the following serialisation formats are supported:
 
 To serialise the metrics as json, for example, we run:
 
-    robot metrics --input edit.owl --format json --output results/metrics.json
+    robot metrics --input uberon_fragment.owl --format json --metrics all --output results/metrics_all.json
 
 or
 
-    robot metrics --input edit.owl -f json --output results/metrics.json
+    robot metrics --input uberon_fragment.owl -f json --metrics all --output results/metrics_all.json
 
 Note that the file extension of the output file does not matter to `robot metrics` - it can be anything
 and will not be used to infer the intended serialisation format.

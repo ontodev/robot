@@ -215,9 +215,14 @@ public class MetricsOperation {
   private static Table resultsToTable(MetricsResult result) {
     Table table = new Table("tsv");
 
+    cl_metric.setSort(2);
+    cl_metric_type.setSort(1);
+    cl_metric_value.setSort(0);
+
     table.addColumn(cl_metric);
     table.addColumn(cl_metric_value);
     table.addColumn(cl_metric_type);
+    table.setSortColumns();
 
     // StringBuilder sb = new StringBuilder();
 
@@ -248,6 +253,8 @@ public class MetricsOperation {
         addRowToTable(table, key, key_inner + " " + value_inner, "map_value");
       }
     }
+
+    table.sortRows();
     return table;
   }
 

@@ -7,11 +7,12 @@ import java.io.IOException;
 import org.junit.Test;
 import org.obolibrary.robot.metrics.MetricsLabels;
 import org.obolibrary.robot.metrics.MetricsResult;
+import org.semanticweb.elk.io.FileUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 /**
- * Test metrics operation.
+ * Test metrics operation.trea
  *
  * @author <a href="mailto:nicolas.matentzoglu@gmail.com">Nicolas Matentzoglu</a>
  */
@@ -70,6 +71,7 @@ public class MetricsOperationTest extends CoreTest {
     File testFile = new File("test.tsv");
     MetricsOperation.maybeWriteResult(result, "tsv", testFile);
     assertTrue(testFile.exists());
+    FileUtils.deleteRecursively(testFile);
   }
 
   /**
@@ -84,6 +86,7 @@ public class MetricsOperationTest extends CoreTest {
     File testFile = new File("test.json");
     MetricsOperation.maybeWriteResult(result, "json", testFile);
     assertTrue(testFile.exists());
+    FileUtils.deleteRecursively(testFile);
   }
 
   /**
@@ -98,5 +101,6 @@ public class MetricsOperationTest extends CoreTest {
     File testFile = new File("test.yml");
     MetricsOperation.maybeWriteResult(result, "yaml", testFile);
     assertTrue(testFile.exists());
+    FileUtils.deleteRecursively(testFile);
   }
 }

@@ -971,17 +971,17 @@ public class OntologyMetrics {
         prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL, getMultipleInheritanceCount(true));
     csvData.put(prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false));
 
-/*    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
-    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
-    csvData.put(
-        prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
-    csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
-    csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
-    csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false));
-    csvData.put(
-        prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
-    csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
-*/
+    /*    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
+        csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
+        csvData.put(
+            prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
+        csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
+        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
+        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false));
+        csvData.put(
+            prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
+        csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
+    */
     csvData.put(
         prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT_INCL,
         getUndeclaredEntitiesCount(Imports.INCLUDED));
