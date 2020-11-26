@@ -37,7 +37,51 @@ Finally, since there can be more than one way to derive an inference from an ont
 `explain` includes one more option, `--max`, which allows you to specify the maximum
 number of explanations to output (the default is `1`).
 
-Explain can be very useful for debugging unsatisfiable classes. This can be done with the following command:
+The `robot explain` command can be used in three different modes (`--mode/-M`):
+1. `entailment` (default). In this mode, you can check the explanations for a particular axiom as described above.
+2. `inconsistency`. In this mode, you can generate an explanation for an inconsistent ontology.
+3. `unsatisfiability`. In this mode, you can generate explanations for many unsatisfiable classes at once.
+
+To generate an explanation for an inconsistent ontology, you can use:
+
+    robot explain --input uvula_inconsistent.ofn --reasoner ELK \
+      -M inconsistency --explanation results/uvula_inconsistent_explanation.md \
+        annotate --ontology-iri "https://github.com/ontodev/robot/examples/uvula_inconsistent_explanation.ofn" \
+        --output results/uvula_inconsistent_explanation.ofn
+
+You have three options to generate explanations for many unsatisfiable classes at once:
+- `all`: generate explanations for all unsatisfiable classes in the ontology.
+
+
+    robot explain --input uvula_multiple_unsat.ofn --reasoner ELK \
+      -M unsatisfiability --unsatisfiable all --explanation results/uvula_multiple_unsat_all_explanation.md \
+        annotate --ontology-iri "https://github.com/ontodev/robot/examples/uvula_multiple_unsat_all_explanation.ofn" \
+        --output results/uvula_multiple_unsat_all_explanation.ofn
+
+- `root`: generate explanations for all _root unsatisfiable classes_. In OWL, a root unsatisfiable
+class, roughly, is a class whose unsatisfiability cannot be explained by the unsatisfiability of another class.
+A comprehensive explanation of the concept can be found [here](https://www.sciencedirect.com/science/article/pii/S1570826805000260).
+- `random:n`: Sometimes, you may want to generate explanations for unsatisfiable classes en masse,
+but because of the large number in your source ontology, restrict your investigation to a random subset of `n` random classes.
+`n` must be a positive natural number.
+
+
+    robot explain --input uvula_multiple_unsat.ofn --reasoner ELK \
+      -M unsatisfiability --unsatisfiable random:2 --explanation results/uvula_multiple_unsat_2.md \
+        annotate --ontology-iri "https://github.com/ontodev/robot/examples/uvula_multiple_unsat_2.ofn" \
+        --output results/uvula_multiple_unsat_2.ofn
+
+- (additional fourth option `list`: Sometimes you just want to get a list of all unsatisfiable classes.
+Note: this option does not actually generate explanations)
+
+
+    robot explain --input uvula_multiple_unsat.ofn --reasoner ELK \
+      -M unsatisfiability -u list --explanation results/uvula_multiple_list.txt \
+        annotate --ontology-iri "https://github.com/ontodev/robot/examples/uvula_multiple_list.ofn" \
+        --output results/uvula_multiple_list.ofn
+
+
+`robot explain` can be very useful for debugging unsatisfiable classes. A particular unsatisfiable class can be explained with the following command:
 
     robot explain --input uvula_unsat.ofn --reasoner ELK \
       --axiom "'uvular muscle' EquivalentTo owl:Nothing" \
@@ -47,3 +91,4 @@ Explain can be very useful for debugging unsatisfiable classes. This can be done
 
 
 This is particularly useful when dealing with ontologies that are too large for an ordinary desktop machine with Protege.
+

@@ -1,19 +1,16 @@
 package org.obolibrary.robot;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import org.semanticweb.owl.explanation.api.Explanation;
-import org.semanticweb.owl.explanation.api.ExplanationGenerator;
-import org.semanticweb.owl.explanation.api.ExplanationGeneratorFactory;
-import org.semanticweb.owl.explanation.api.ExplanationManager;
+import javax.annotation.Nonnull;
+import org.semanticweb.owl.explanation.api.*;
+import org.semanticweb.owl.explanation.impl.blackbox.checker.InconsistentOntologyExplanationGeneratorFactory;
+import org.semanticweb.owl.explanation.impl.rootderived.StructuralRootDerivedReasoner;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.ShortFormProvider;
@@ -33,6 +30,8 @@ public class ExplainOperation {
 
   /** Logger */
   private static final Logger logger = LoggerFactory.getLogger(ExplainOperation.class);
+
+  private static final OWLDataFactory df = OWLManager.getOWLDataFactory();
 
   /**
    * Compute explanations for an entailed axiom.
@@ -54,6 +53,80 @@ public class ExplainOperation {
         ExplanationManager.createExplanationGeneratorFactory(reasonerFactory);
     ExplanationGenerator<OWLAxiom> gen = genFac.createExplanationGenerator(ontology);
     return gen.getExplanations(axiom, maxExplanations);
+  }
+
+  /**
+   * Compute explanations for inconsistent ontology
+   *
+   * @param ontology the ontology to be tested
+   * @param reasonerFactory the reasoner factory to be used for determining the explanation
+   * @param max maximum number of explanations to be computed
+   * @return a set of explanations for inconsistent ontology
+   */
+  public static Set<Explanation<OWLAxiom>> explainInconsistent(
+      OWLOntology ontology, OWLReasonerFactory reasonerFactory, int max) {
+    InconsistentOntologyExplanationGeneratorFactory igf =
+        new InconsistentOntologyExplanationGeneratorFactory(reasonerFactory, 10000);
+    ExplanationGenerator<OWLAxiom> generator = igf.createExplanationGenerator(ontology);
+    OWLAxiom entailment = df.getOWLSubClassOfAxiom(df.getOWLThing(), df.getOWLNothing());
+    return generator.getExplanations(entailment, max);
+  }
+
+  /**
+   * Compute explanations for all unsatisfiable classes
+   *
+   * @param ontology the ontology to be tested
+   * @param reasoner the reasoner to be used to determine the unsatisfiable classes
+   * @param reasonerFactory the reasoner factory to be used to compute the explanations
+   * @param max maximum number of explanations to be computed
+   * @return a set of explanations
+   */
+  public static Set<Explanation<OWLAxiom>> explainUnsatisfiableClasses(
+      OWLOntology ontology, OWLReasoner reasoner, OWLReasonerFactory reasonerFactory, int max) {
+    return explainUnsatisfiableClasses(ontology, reasoner, reasonerFactory, max, -1);
+  }
+
+  /**
+   * Compute explanations for all unsatisfiable classes
+   *
+   * @param ontology the ontology to be tested
+   * @param reasoner the reasoner to be used to determine the unsatisfiable classes
+   * @param reasonerFactory the reasoner factory to be used to compute the explanations
+   * @param max maximum number of explanations to be computed
+   * @param maxUnsat cutoff - limit number of tested unsatisfiable classes to maxUnsat classes
+   * @return a set of explanations
+   */
+  public static Set<Explanation<OWLAxiom>> explainUnsatisfiableClasses(
+      OWLOntology ontology,
+      OWLReasoner reasoner,
+      OWLReasonerFactory reasonerFactory,
+      int max,
+      int maxUnsat) {
+    List<OWLClass> unsatisfiable_classes =
+        new ArrayList<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
+    if (maxUnsat > 0 && unsatisfiable_classes.size() > maxUnsat) {
+      unsatisfiable_classes = unsatisfiable_classes.subList(0, maxUnsat);
+    }
+    return getUnsatExplanationsForClasses(ontology, reasonerFactory, max, unsatisfiable_classes);
+  }
+
+  /**
+   * Compute explanations for all root unsatisfiable classes
+   *
+   * @param ontology the ontology to be tested
+   * @param reasoner the reasoner to be used to determine the unsatisfiable classes
+   * @param reasonerFactory the reasoner factory to be used to compute the explanations
+   * @param max maximum number of explanations to be computed
+   * @return a set of explanations
+   */
+  public static Set<Explanation<OWLAxiom>> explainRootUnsatisfiableClasses(
+      OWLOntology ontology, OWLReasoner reasoner, OWLReasonerFactory reasonerFactory, int max) {
+    RootDerivedReasoner rootReasoner =
+        new StructuralRootDerivedReasoner(
+            ontology.getOWLOntologyManager(), reasoner, reasonerFactory);
+    List<OWLClass> unsatisfiable_classes =
+        new ArrayList<>(rootReasoner.getRootUnsatisfiableClasses());
+    return getUnsatExplanationsForClasses(ontology, reasonerFactory, max, unsatisfiable_classes);
   }
 
   /**
@@ -81,12 +154,40 @@ public class ExplainOperation {
     return renderTree(tree, axiomRenderer);
   }
 
+  public static String renderAxiomImpactSummary(
+      Map<OWLAxiom, Integer> axiomMap, OWLOntologyManager manager) {
+    ShortFormProvider labelProvider =
+        new AnnotationValueShortFormProvider(
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap(),
+            manager);
+    ShortFormProvider linkProvider = new MarkdownLinkShortFormProvider(labelProvider);
+    ManchesterOWLSyntaxOWLObjectRendererImpl axiomRenderer =
+        new ManchesterOWLSyntaxOWLObjectRendererImpl();
+    axiomRenderer.setShortFormProvider(linkProvider);
+    Map<Integer, Set<OWLAxiom>> mapInversed = new HashMap<>();
+    for (Map.Entry<OWLAxiom, Integer> e : axiomMap.entrySet()) {
+      if (!mapInversed.containsKey(e.getValue())) {
+        mapInversed.put(e.getValue(), new HashSet<>());
+      }
+      mapInversed.get(e.getValue()).add(e.getKey());
+    }
+    List<Integer> sorted = new ArrayList<>(mapInversed.keySet());
+    sorted.sort(Collections.reverseOrder());
+    StringBuilder sb = new StringBuilder();
+    sb.append("\n\n" + "# Axiom Impact " + "\n");
+    for (Integer i : sorted) {
+      sb.append(renderAxiomWithImpact(mapInversed.get(i), i, axiomRenderer));
+    }
+    return sb.toString();
+  }
+
   /**
    * Render axiom tree in indented Markdown using the provided renderer.
    *
    * @param tree indented collection of axioms
    * @param renderer renderer for displaying axioms and entities
-   * @return
+   * @return markdown string
    */
   private static String renderTree(Tree<OWLAxiom> tree, OWLObjectRenderer renderer) {
     StringBuilder builder = new StringBuilder();
@@ -112,6 +213,30 @@ public class ExplainOperation {
     return builder.toString();
   }
 
+  private static String renderAxiomWithImpact(
+      Set<OWLAxiom> axioms, int impact, OWLObjectRenderer renderer) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("## Axioms used " + impact + " times" + "\n");
+    for (OWLAxiom ax : axioms) {
+      builder.append("- " + renderer.render(ax) + "\n");
+    }
+    builder.append("\n");
+    return builder.toString();
+  }
+
+  private static Set<Explanation<OWLAxiom>> getUnsatExplanationsForClasses(
+      OWLOntology ontology,
+      OWLReasonerFactory reasonerFactory,
+      int max,
+      List<OWLClass> unsatisfiable_classes) {
+    Set<Explanation<OWLAxiom>> explanations = new HashSet<>();
+    for (OWLClass unsat_cl : unsatisfiable_classes) {
+      OWLAxiom axiom = df.getOWLSubClassOfAxiom(unsat_cl, df.getOWLNothing());
+      explanations.addAll(ExplainOperation.explain(axiom, ontology, reasonerFactory, max));
+    }
+    return explanations;
+  }
+
   /**
    * A ShortFormProvider which renders entities as Markdown links, using another provided
    * ShortFormProvider to render entity labels.
@@ -124,8 +249,9 @@ public class ExplainOperation {
       this.labelProvider = labelProvider;
     }
 
+    @Nonnull
     @Override
-    public String getShortForm(OWLEntity entity) {
+    public String getShortForm(@Nonnull OWLEntity entity) {
       String label = labelProvider.getShortForm(entity);
       return "[" + label + "](" + entity.getIRI().toString() + ")";
     }
