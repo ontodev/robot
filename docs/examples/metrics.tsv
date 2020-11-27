@@ -24,7 +24,6 @@ owl2_dl	true	single_value
 owl2_el	false	single_value
 owl2_ql	false	single_value
 owl2_rl	false	single_value
-owlapi_version	robot.jar	single_value
 rbox_axiom_count	56	single_value
 rbox_axiom_count_incl	56	single_value
 rdfs	false	single_value
