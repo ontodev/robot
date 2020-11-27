@@ -54,7 +54,22 @@ public class ExplainOperationTest extends CoreTest {
   }
 
   /**
-   * Test explaining inconsistent ontology.
+   * Test explaining most general unsatisfiable classes.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testExplainMostGeneralUnsatisfiableClasses() throws Exception {
+    OWLOntology ontology = loadOntology(ONT_UNSAT);
+    OWLReasonerFactory factory = new ReasonerFactory();
+    OWLReasoner r = factory.createReasoner(ontology);
+    Set<Explanation<OWLAxiom>> explanations =
+        ExplainOperation.explainMostGeneralUnsatisfiableClasses(ontology, r, factory, 1);
+    assertEquals(explanations.size(), 3);
+  }
+
+  /**
+   * Test explaining root unsatisfiable classes .
    *
    * @throws Exception on any problem
    */

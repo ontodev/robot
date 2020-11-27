@@ -61,6 +61,9 @@ You have three options to generate explanations for many unsatisfiable classes a
 - `root`: generate explanations for all _root unsatisfiable classes_. In OWL, a root unsatisfiable
 class, roughly, is a class whose unsatisfiability cannot be explained by the unsatisfiability of another class.
 A comprehensive explanation of the concept can be found [here](https://www.sciencedirect.com/science/article/pii/S1570826805000260).
+- `most_general`: this is a very naive, experimental variant of the proper `root` method. It determines
+explanations for those unsatisfiable classes that, according to the _asserted class hierarchy_, have no parents that are also
+unsatisfiable. Note that this approach only works if the class hierarchy does not contain cycles.
 - `random:n`: Sometimes, you may want to generate explanations for unsatisfiable classes en masse,
 but because of the large number in your source ontology, restrict your investigation to a random subset of `n` random classes.
 `n` must be a positive natural number.

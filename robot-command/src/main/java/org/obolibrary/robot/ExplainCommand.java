@@ -49,7 +49,7 @@ public class ExplainCommand implements Command {
       NS + "MISSING AXIOM ARGUMENT ERROR: must have a valid --axiom.";
   private static final String illegalUnsatisfiableArgumentError =
       NS
-          + "ILLEGAL UNSATISFIABLE ARGUMENT ERROR: %s. Must have either a valid --unsatisfiable option (all, root, random:n), where n is an integer.";
+          + "ILLEGAL UNSATISFIABLE ARGUMENT ERROR: %s. Must have either a valid --unsatisfiable option (all, root, most_general, random:n), where n is an integer.";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -169,6 +169,11 @@ public class ExplainCommand implements Command {
         case "root":
           explanations.addAll(
               ExplainOperation.explainRootUnsatisfiableClasses(ontology, r, reasonerFactory, max));
+          break;
+        case "most_general":
+          explanations.addAll(
+              ExplainOperation.explainMostGeneralUnsatisfiableClasses(
+                  ontology, r, reasonerFactory, max));
           break;
         case "list":
           handleListMode(line, r);
@@ -293,7 +298,11 @@ public class ExplainCommand implements Command {
     String summary = ExplainOperation.renderAxiomImpactSummary(mapMostUsedAxioms, ontology, man);
     Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8);
     writer.write(result);
-    writer.write(summary);
+    if (!explanations.isEmpty()) {
+      writer.write(summary);
+    } else {
+      writer.write("No explanations found.");
+    }
     writer.close();
   }
 

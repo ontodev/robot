@@ -14,6 +14,7 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
@@ -113,7 +114,8 @@ public class ExplainOperation {
   }
 
   /**
-   * Compute explanations for all root unsatisfiable classes
+   * Compute explanations for all root unsatisfiable classes See
+   * https://github.com/matthewhorridge/owlexplanation/blob/439c5ca67835f5e421adde725e4e8a3bcd760ac8/src/main/java/org/semanticweb/owl/explanation/impl/rootderived/StructuralRootDerivedReasoner.java#L122
    *
    * @param ontology the ontology to be tested
    * @param reasoner the reasoner to be used to determine the unsatisfiable classes
@@ -129,6 +131,41 @@ public class ExplainOperation {
     List<OWLClass> unsatisfiable_classes =
         new ArrayList<>(rootReasoner.getRootUnsatisfiableClasses());
     return getUnsatExplanationsForClasses(ontology, reasonerFactory, max, unsatisfiable_classes);
+  }
+
+  /**
+   * Compute explanations for all most general unsatisfiable classes Note that this is a very naive
+   * implementation which assumes and acyclic class hierarchy.
+   *
+   * @param ontology the ontology to be tested
+   * @param reasoner the reasoner to be used to determine the unsatisfiable classes
+   * @param reasonerFactory the reasoner factory to be used to compute the explanations
+   * @param max maximum number of explanations to be computed
+   * @return a set of explanations
+   */
+  public static Set<Explanation<OWLAxiom>> explainMostGeneralUnsatisfiableClasses(
+      OWLOntology ontology, OWLReasoner reasoner, OWLReasonerFactory reasonerFactory, int max) {
+    List<OWLClass> unsatisfiable_classes =
+        new ArrayList<>(getMostGeneralUnsatisfiableClasses(reasoner, ontology));
+    return getUnsatExplanationsForClasses(ontology, reasonerFactory, max, unsatisfiable_classes);
+  }
+
+  private static Set<OWLClass> getMostGeneralUnsatisfiableClasses(
+      OWLReasoner reasoner, OWLOntology ontology) {
+    Set<OWLClass> mgu = new HashSet<>();
+    OWLReasoner structural = new StructuralReasonerFactory().createReasoner(ontology);
+    Set<OWLClass> unsats =
+        new HashSet<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
+    for (OWLClass c : unsats) {
+      Set<OWLClass> superclasses = structural.getSuperClasses(c, false).getFlattened();
+      superclasses.retainAll(unsats);
+      if (superclasses.isEmpty()) {
+        // If there is no superclass in the ontology according to the structural reasoner which is
+        // also unsatisfiable, we consider C a "most general unsatisfiable class".
+        mgu.add(c);
+      }
+    }
+    return mgu;
   }
 
   /**
@@ -277,7 +314,7 @@ public class ExplainOperation {
               + renderer.render(ax)
               + " ["
               + String.join(",", associatedOntologyIds.get(ax))
-              + "]§\n");
+              + "]\n");
     }
     builder.append("\n");
     return builder.toString();
