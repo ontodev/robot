@@ -107,6 +107,7 @@ public class ExplainOperation {
       int maxUnsat) {
     List<OWLClass> unsatisfiable_classes =
         new ArrayList<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
+    Collections.sort(unsatisfiable_classes);
     if (maxUnsat > 0 && unsatisfiable_classes.size() > maxUnsat) {
       unsatisfiable_classes = unsatisfiable_classes.subList(0, maxUnsat);
     }
