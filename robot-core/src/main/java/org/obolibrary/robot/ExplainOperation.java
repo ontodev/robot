@@ -205,14 +205,14 @@ public class ExplainOperation {
     ManchesterOWLSyntaxOWLObjectRendererImpl axiomRenderer =
         new ManchesterOWLSyntaxOWLObjectRendererImpl();
     axiomRenderer.setShortFormProvider(linkProvider);
-    Map<Integer, Set<OWLAxiom>> mapInversed = new HashMap<>();
+    Map<Integer, List<OWLAxiom>> mapInversed = new HashMap<>();
     Map<OWLAxiom, Set<String>> associatedOntologyIds = new HashMap<>();
     Map<OWLOntologyID, String> ontologyIdAbbreviation = new HashMap<>();
 
     for (Map.Entry<OWLAxiom, Integer> e : axiomMap.entrySet()) {
       associatedOntologyIds.put(e.getKey(), new HashSet<>());
       if (!mapInversed.containsKey(e.getValue())) {
-        mapInversed.put(e.getValue(), new HashSet<>());
+        mapInversed.put(e.getValue(), new ArrayList<>());
       }
       mapInversed.get(e.getValue()).add(e.getKey());
 
@@ -233,7 +233,9 @@ public class ExplainOperation {
     StringBuilder sb = new StringBuilder();
     sb.append("\n\n" + "# Axiom Impact " + "\n");
     for (Integer i : sorted) {
-      sb.append(renderAxiomWithImpact(mapInversed.get(i), i, axiomRenderer, associatedOntologyIds));
+      List<OWLAxiom> l = new ArrayList<>(new HashSet<>(mapInversed.get(i)));
+      Collections.sort(l);
+      sb.append(renderAxiomWithImpact(l, i, axiomRenderer, associatedOntologyIds));
     }
     sb.append("\n\n" + "# Ontologies used: " + "\n");
     for (OWLOntologyID oid : ontologyIdAbbreviation.keySet()) {
@@ -303,7 +305,7 @@ public class ExplainOperation {
   }
 
   private static String renderAxiomWithImpact(
-      Set<OWLAxiom> axioms,
+      List<OWLAxiom> axioms,
       int impact,
       OWLObjectRenderer renderer,
       Map<OWLAxiom, Set<String>> associatedOntologyIds) {

@@ -7,8 +7,8 @@
 # Axiom Impact 
 ## Axioms used 1 times
 - [uvular muscle](http://purl.obolibrary.org/obo/UBERON_0010235) SubClassOf [palatal muscle](http://purl.obolibrary.org/obo/UBERON_0003682) [uberon-base.owl]
-- [inconsistent_entity](http://purl.obolibrary.org/obo/CL_0017514) Type [uvular muscle](http://purl.obolibrary.org/obo/UBERON_0010235) [uberon-base.owl]
 - [palatal muscle](http://purl.obolibrary.org/obo/UBERON_0003682) DisjointWith [uvular muscle](http://purl.obolibrary.org/obo/UBERON_0010235) [uberon-base.owl]
+- [inconsistent_entity](http://purl.obolibrary.org/obo/CL_0017514) Type [uvular muscle](http://purl.obolibrary.org/obo/UBERON_0010235) [uberon-base.owl]
 
 
 
