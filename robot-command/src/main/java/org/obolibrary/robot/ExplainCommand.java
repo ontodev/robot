@@ -260,6 +260,7 @@ public class ExplainCommand implements Command {
       r.getUnsatisfiableClasses()
           .getEntitiesMinusBottom()
           .forEach(e -> unsatisfiable_classes_iris.add(curieProvider.getShortForm(e)));
+      Collections.sort(unsatisfiable_classes_iris);
       FileUtils.writeLines(output, unsatisfiable_classes_iris);
     }
   }
