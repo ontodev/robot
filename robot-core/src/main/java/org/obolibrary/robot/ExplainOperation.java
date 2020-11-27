@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.base.Optional;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -10,6 +11,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
@@ -155,7 +157,7 @@ public class ExplainOperation {
   }
 
   public static String renderAxiomImpactSummary(
-      Map<OWLAxiom, Integer> axiomMap, OWLOntologyManager manager) {
+      Map<OWLAxiom, Integer> axiomMap, OWLOntology ontology, OWLOntologyManager manager) {
     ShortFormProvider labelProvider =
         new AnnotationValueShortFormProvider(
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
@@ -166,20 +168,69 @@ public class ExplainOperation {
         new ManchesterOWLSyntaxOWLObjectRendererImpl();
     axiomRenderer.setShortFormProvider(linkProvider);
     Map<Integer, Set<OWLAxiom>> mapInversed = new HashMap<>();
+    Map<OWLAxiom, Set<String>> associatedOntologyIds = new HashMap<>();
+    Map<OWLOntologyID, String> ontologyIdAbbreviation = new HashMap<>();
+
     for (Map.Entry<OWLAxiom, Integer> e : axiomMap.entrySet()) {
+      associatedOntologyIds.put(e.getKey(), new HashSet<>());
       if (!mapInversed.containsKey(e.getValue())) {
         mapInversed.put(e.getValue(), new HashSet<>());
       }
       mapInversed.get(e.getValue()).add(e.getKey());
+
+      /*
+      Determine source ontologies (if imports are present).
+       */
+      Set<OWLOntologyID> oids = getOntologyIds(e.getKey(), ontology);
+      for (OWLOntologyID oid : oids) {
+        if (!ontologyIdAbbreviation.containsKey(oid)) {
+          String soid = getAbbreviationForOntologyID(oid);
+          ontologyIdAbbreviation.put(oid, soid);
+        }
+        associatedOntologyIds.get(e.getKey()).add(ontologyIdAbbreviation.get(oid));
+      }
     }
     List<Integer> sorted = new ArrayList<>(mapInversed.keySet());
     sorted.sort(Collections.reverseOrder());
     StringBuilder sb = new StringBuilder();
     sb.append("\n\n" + "# Axiom Impact " + "\n");
     for (Integer i : sorted) {
-      sb.append(renderAxiomWithImpact(mapInversed.get(i), i, axiomRenderer));
+      sb.append(renderAxiomWithImpact(mapInversed.get(i), i, axiomRenderer, associatedOntologyIds));
+    }
+    sb.append("\n\n" + "# Ontologies used: " + "\n");
+    for (OWLOntologyID oid : ontologyIdAbbreviation.keySet()) {
+      String soid = ontologyIdAbbreviation.get(oid);
+      String oiri = oid.getOntologyIRI().or(IRI.create("unknown.iri")).toString();
+      sb.append("- ").append(soid).append(" (").append(oiri).append(")\n");
     }
     return sb.toString();
+  }
+
+  private static int ontologyCounter = 1;
+
+  private static String getAbbreviationForOntologyID(OWLOntologyID oid) {
+    String soid = "O" + ontologyCounter;
+    Optional<IRI> oiri = oid.getOntologyIRI();
+    if (oiri.isPresent()) {
+      IRI iri = oiri.get();
+      String shortform = iri.getShortForm();
+      if (!shortform.isEmpty()) {
+        return shortform;
+      } else {
+        ontologyCounter++;
+      }
+    }
+    return soid;
+  }
+
+  private static Set<OWLOntologyID> getOntologyIds(OWLAxiom ax, OWLOntology o) {
+    Set<OWLOntologyID> importsClosure = new HashSet<>();
+    for (OWLOntology closure : o.getImportsClosure()) {
+      if (closure.getAxioms(Imports.EXCLUDED).contains(ax)) {
+        importsClosure.add(closure.getOntologyID());
+      }
+    }
+    return importsClosure;
   }
 
   /**
@@ -214,11 +265,19 @@ public class ExplainOperation {
   }
 
   private static String renderAxiomWithImpact(
-      Set<OWLAxiom> axioms, int impact, OWLObjectRenderer renderer) {
+      Set<OWLAxiom> axioms,
+      int impact,
+      OWLObjectRenderer renderer,
+      Map<OWLAxiom, Set<String>> associatedOntologyIds) {
     StringBuilder builder = new StringBuilder();
     builder.append("## Axioms used " + impact + " times" + "\n");
     for (OWLAxiom ax : axioms) {
-      builder.append("- " + renderer.render(ax) + "\n");
+      builder.append(
+          "- "
+              + renderer.render(ax)
+              + " ["
+              + String.join(",", associatedOntologyIds.get(ax))
+              + "]§\n");
     }
     builder.append("\n");
     return builder.toString();

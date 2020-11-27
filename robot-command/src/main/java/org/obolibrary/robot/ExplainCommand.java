@@ -194,7 +194,7 @@ public class ExplainCommand implements Command {
     if (!listmode) {
       // In listmode, the unsatisfiable classes would have already been written to file.
       if (line.hasOption("explanation")) {
-        writeExplanationsToFile(line, ontology.getOWLOntologyManager(), explanations);
+        writeExplanationsToFile(line, ontology, ontology.getOWLOntologyManager(), explanations);
       }
     }
     return explanations;
@@ -223,7 +223,7 @@ public class ExplainCommand implements Command {
     }
 
     if (line.hasOption("explanation")) {
-      writeExplanationsToFile(line, ontology.getOWLOntologyManager(), explanations);
+      writeExplanationsToFile(line, ontology, ontology.getOWLOntologyManager(), explanations);
     }
     return explanations;
   }
@@ -241,7 +241,7 @@ public class ExplainCommand implements Command {
       logger.info("Ontology consistent, nothing to be done.");
     }
     if (line.hasOption("explanation")) {
-      writeExplanationsToFile(line, ontology.getOWLOntologyManager(), explanations);
+      writeExplanationsToFile(line, ontology, ontology.getOWLOntologyManager(), explanations);
     }
     return explanations;
   }
@@ -277,7 +277,10 @@ public class ExplainCommand implements Command {
   }
 
   private void writeExplanationsToFile(
-      CommandLine line, OWLOntologyManager man, Set<Explanation<OWLAxiom>> explanations)
+      CommandLine line,
+      OWLOntology ontology,
+      OWLOntologyManager man,
+      Set<Explanation<OWLAxiom>> explanations)
       throws IOException {
     File output = new File(line.getOptionValue("explanation"));
     Map<OWLAxiom, Integer> mapMostUsedAxioms = new HashMap<>();
@@ -287,7 +290,7 @@ public class ExplainCommand implements Command {
             .stream()
             .map(e -> ExplainOperation.renderExplanationAsMarkdown(e, man))
             .collect(Collectors.joining("\n\n\n"));
-    String summary = ExplainOperation.renderAxiomImpactSummary(mapMostUsedAxioms, man);
+    String summary = ExplainOperation.renderAxiomImpactSummary(mapMostUsedAxioms, ontology, man);
     Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8);
     writer.write(result);
     writer.write(summary);
