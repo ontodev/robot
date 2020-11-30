@@ -10,7 +10,7 @@
     - [Multi-value cells](#multi-value-cells)
 - [Validation rule syntax](#validation-rule-syntax)
     - [Rule types](#rule-types)
-    - [Wildcards](#wildcards)
+    - [Substitution](#substitution)
     - [When-clauses](#when-clauses)
     - [Compound rule-types](#compound-rule-types)
 - [Error Messages](#error-messages)
@@ -236,9 +236,29 @@ Where:
 
 * `<when-subject-expr>` must describe an individual, a class, or a generalised class expression and can be in the form of an `rdfs:label`, an IRI, an abbreviated IRI, a general DL expression, or a wildcard.
 
-### Wildcards
+### Substitution
 
-Wildcards of the form `%n` can be specified within `<value>`, `<when-value>`, and `<when-subject-expr>` clauses, and are used to indicate the entity described by the data in the _nth_ cell of a given row. E.g.:
+Special variables can be specified within `<value>`, `<when-value>`, and `<when-subject-expr>` clauses to indicate another entity described in the data. These two types of variables can be used interchangably.
+
+#### Column Names
+
+Column names of the form `{column name}` are used to indicate the entity described by the data in that column of a cell of a given row. E.g.:
+
+```
+is-required (when {exposure material reported} equivalent-to ('Dengue virus' or 'Dengue virus 2'))
+```
+
+requires data in the current cell whenever the class indicate in the "exposure material reported" column of the current row is either 'Dengue virus' or 'Dengue virus 2'.
+
+```
+subclass-of hasBasisIn in some {exposure material id} (when {exposure material reported} subclass-of ('Dengue virus' or 'Dengue virus 2'))
+```
+
+requires that, whenever the class indicated in "exposure material reported" of the current row is a subclass of the class consisting of the union of `'Dengue virus'` and `'Dengue virus 2'`, the data in the current cell must be a subclass of the set of classes that bear the relation `hasBasisIn` to the class indicated in column "exposure material id" of the same row.
+
+#### Wildcards
+
+Wildcards of the form `%n` are used to indicate the entity described by the data in the _nth_ cell of a given row. E.g.:
 
 ```
 is-required (when %1 equivalent-to ('Dengue virus' or 'Dengue virus 2'))
