@@ -487,6 +487,11 @@ public class ReportOperation {
       format = "tsv";
     }
 
+    if (print > 0) {
+      Table reportTable = report.toTable("tsv");
+      printNViolations(reportTable.toList(""), print, "\t");
+    }
+
     // Process different output formats while writing print lines if requested
     // First check if format is JSON or YAML
     // We don't use the Table for these formats because we want to group by violation level and rule

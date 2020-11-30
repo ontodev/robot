@@ -167,7 +167,7 @@ public class TableValidator {
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
             Collections.emptyMap());
 
-    errors.add(new String[] {"table", "cell", "rule ID", "message"});
+    errors.add(new String[] {"table", "cell", "rule", "message"});
   }
 
   /** Turn logging on or off. */
@@ -182,12 +182,16 @@ public class TableValidator {
   /**
    * Validate a set of tables.
    *
+   * @param rules map of table name to column to rule
    * @param tables tables to validate (map of table name to table contents)
    * @param options map of validate options
    * @return List of invalid tables (or empty list on success)
    * @throws Exception on any problem
    */
-  public List<String> validate(Map<String, List<List<String>>> tables, Map<String, String> options)
+  public List<String> validate(
+      Map<String, Map<String, String>> rules,
+      Map<String, List<List<String>>> tables,
+      Map<String, String> options)
       throws Exception {
 
     int skippedRow = Integer.parseInt(OptionsHelper.getOption(options, "skip-row", "0"));
@@ -200,49 +204,54 @@ public class TableValidator {
       String tablePath = table.getKey();
       List<List<String>> data = table.getValue();
 
-      currentTable =
-          String.format(
-              "%s.%s", FilenameUtils.getBaseName(tablePath), FilenameUtils.getExtension(tablePath));
+      String tableName = FilenameUtils.getBaseName(FilenameUtils.getName(tablePath));
+      currentTable = tableName + "." + FilenameUtils.getExtension(tablePath);
+
+      // Get the header
+      List<String> headerRow = data.remove(0);
+
+      // Get the rules
+      Map<String, String> tableRules = rules.getOrDefault(tableName, null);
+      if (tableRules == null) {
+        // Skip this table if no rules
+        continue;
+      }
+
       if (outFormat == null) {
         System.out.println(String.format("Validating %s ...", currentTable));
       }
 
-      // Get the header and rules rows
-      List<String> headerRow = data.remove(0);
-      List<String> rulesRow = data.remove(0);
-
-      // Get correct index for the rule row based on if a row was skipped
-      int ruleRowIdx = 2;
-      if (skippedRow < 3) {
-        ruleRowIdx = 3;
-      }
-
-      // Get number to add to rowIdx to get true row number from input table
-      // This will be either 3 or 4 (skipped row in header)
-      // as rowIdx starts at 0 and does not include header and rule rows
-      int addToRow;
-      if (skippedRow > 0 && skippedRow <= 3) {
-        // Skipped row is in header, add 1 to our reporting
-        addToRow = 4;
-      } else {
-        addToRow = 3;
-      }
-
-      // Add header and rules rows to Table object
-      for (int i = 0; i < headerRow.size(); i++) {
-        String rawRule = i < rulesRow.size() ? rulesRow.get(i) : "";
-        // TODO - allow different providers?
-        Column c = new Column(headerRow.get(i), parseRules(rawRule), rawRule, provider);
+      int headerIdx = 0;
+      while (headerIdx < headerRow.size()) {
+        String header = headerRow.get(headerIdx);
+        String rawRule = tableRules.getOrDefault(header, null);
+        if (rawRule == null) {
+          // Skip this column if no rules
+          headerIdx++;
+          continue;
+        }
+        Column c = new Column(header, parseRules(rawRule), rawRule, provider);
         outTable.addColumn(c);
+        headerIdx++;
       }
       List<Column> columns = outTable.getColumns();
+
+      // Get number to add to rowIdx to get true row number from input table
+      // as rowIdx starts at 0 and does not include header and rule rows
+      int addToRow;
+      if (skippedRow > 0 && skippedRow <= 2) {
+        // Skipped row is in header, add 1 to our reporting
+        addToRow = 3;
+      } else {
+        addToRow = 2;
+      }
 
       // Validate data row by row, column by column
       for (rowIdx = 0; rowIdx < data.size(); rowIdx++) {
         rowNum = rowIdx + addToRow;
         if (rowNum == skippedRow) {
           // Skipped row occurs in the data
-          addToRow = 4;
+          addToRow = 3;
         }
 
         List<String> row = data.get(rowIdx);
@@ -258,7 +267,7 @@ public class TableValidator {
 
         for (colNum = 0; colNum < columns.size(); colNum++) {
           Column c = columns.get(colNum);
-          Map<String, List<String>> rules = c.getRules();
+          Map<String, List<String>> cRules = c.getRules();
 
           // Get the contents of the current cell:
           String cellString = colNum < row.size() ? row.get(colNum) : "";
@@ -269,7 +278,7 @@ public class TableValidator {
           // Create the cell object
           currentCell = getCell(c, cellData);
 
-          if (rules == null || rules.isEmpty()) {
+          if (cRules == null || cRules.isEmpty()) {
             // No rules to validate, just add the cell exactly as is
             if (outRow != null) {
               outRow.add(currentCell);
@@ -279,7 +288,7 @@ public class TableValidator {
 
           // For each of the rules applicable to this column, validate each entry in the cell
           // against it:
-          for (Map.Entry<String, List<String>> ruleEntry : rules.entrySet()) {
+          for (Map.Entry<String, List<String>> ruleEntry : cRules.entrySet()) {
             for (String rule : ruleEntry.getValue()) {
               List<String> interpolatedRules = interpolateRule(rule, row);
               for (String interpolatedRule : interpolatedRules) {
@@ -289,11 +298,9 @@ public class TableValidator {
                     // An error was returned, add to errors
                     errors.add(
                         new String[] {
-                          currentTable,
+                          tableName,
                           IOHelper.cellToA1(rowNum, colNum + 1),
-                          FilenameUtils.getBaseName(currentTable)
-                              + "!"
-                              + IOHelper.cellToA1(ruleRowIdx, colNum + 1),
+                          ruleEntry.getKey(),
                           errorMsg,
                         });
                   }
@@ -913,11 +920,13 @@ public class TableValidator {
         // that has been passed as an argument to the function above, and generate an interpolated
         // rule corresponding to every term corresponding to this key in the wildcard map.
         for (String term : wildCardMap.get(i)) {
-          String label = getLabelFromTerm(term);
-          String interpolatedRule =
-              rule.replaceAll(
-                  String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
-          interpolatedRules.add(interpolatedRule);
+          if (term != null) {
+            String label = getLabelFromTerm(term);
+            String interpolatedRule =
+                rule.replaceAll(
+                    String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
+            interpolatedRules.add(interpolatedRule);
+          }
         }
       } else {
         // If we have already interpolated some rules, then every string that has been interpolated
@@ -925,12 +934,15 @@ public class TableValidator {
         // wildcard map, and the list of interpolated rules is then replaced with the new list.
         List<String> tmpList = new ArrayList<>();
         for (String term : wildCardMap.get(i)) {
-          String label = getLabelFromTerm(term);
-          for (String intStr : interpolatedRules) {
-            String interpolatedRule =
-                intStr.replaceAll(
-                    String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
-            tmpList.add(interpolatedRule);
+          if (term != null) {
+            String label = getLabelFromTerm(term);
+            for (String intStr : interpolatedRules) {
+              String interpolatedRule =
+                  intStr.replaceAll(
+                      String.format("%%%d", i),
+                      label == null ? "(" + term + ")" : "'" + label + "'");
+              tmpList.add(interpolatedRule);
+            }
           }
         }
         interpolatedRules = tmpList;
@@ -1140,7 +1152,6 @@ public class TableValidator {
    */
   private String validateRule(String cell, String rule, List<String> row, String ruleType)
       throws Exception {
-
     logger.debug(
         String.format(
             "validate_rule(): Called with parameters: "

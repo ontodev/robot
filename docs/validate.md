@@ -17,9 +17,10 @@
 
 ## Overview
 
-Validates tables (CSV or TSV files) (`--table`) against an input ontology (`--input`) using the sets of rules defined (per table) in the table files, and writes the output to TXT, HTML, or XLSX files in the output directory (`--output-dir`) with the same base filename. If no output format is specified then the output is directed to STDOUT. For example:
+Validates tables (CSV or TSV files) (`--table`) against a reasoned input ontology (`--input`) using the sets of rules defined in a rules table (`--rules`). The reasoner used is specified by the `--reasoner` option, which defaults to ELK. We recommend using the HermiT reasoner, as it supports generalized class expression queries. This command writes the output to TXT, HTML, or XLSX files in the output directory (`--output-dir`) with the same base filename. If no output format is specified then the output is directed to STDOUT. For example:
 
     robot validate --input immune_exposures.owl \
+      --rules immune_exposures_rules.csv \
       --table immune_exposures.csv \
       --reasoner hermit \
       --no-fail true \
@@ -31,6 +32,7 @@ In this case the command will generate a single file called `immune_exposures.tx
 One can also specify multiple table files to validate against a single input ontology. In that case there will be multiple output files corresponding to each table in the output directory. For example:
 
     robot validate --input immune_exposures.owl \
+      --rules immune_exposures_rules.csv \
       --table immune_exposures.csv \
       --table immune_exposures_2.csv \
       --reasoner hermit \
@@ -39,6 +41,27 @@ One can also specify multiple table files to validate against a single input ont
       --output-dir results/
 
 In this case two files: `immune_exposures.html` and `immune_exposures_2.html` will appear in the `results/` directory.
+
+Finally, you can specify a whole directory to validate against a single input ontology. The command will generate the text outputs matching all table names in the `results/` directory. Note that a table will only be validated if it appears in the rules table.
+
+```
+robot validate --input immune_exposures.owl \
+  --rules immune_exposures_rules.csv \
+  --tables tables/ \
+  --reasoner hermit \
+  --format TXT \
+  --output-dir results/
+```
+
+### Rules Table
+
+The rules table contains the validation rules. This table should be either TSV or CSV and must have three required columns:
+
+* `table`: name of table to validate
+* `column`: name of column to validate
+* `validation`: the validation rule (see [Validation rule syntax](#validation-rule-syntax))
+
+You can include as many extra columns as you would like (e.g., comments), but these columns will be ignored.
 
 ### Formats
 
@@ -74,35 +97,25 @@ Note that the tooltips and styling will not work until the table is inserted int
 The results that are written to the output directory contain all lines from the input tables, even if those lines don't have errors. You can choose to also output a table containing just the errors by specifying `--errors <path>`:
 
     robot validate --input immune_exposures.owl \
+      --rules immune_exposures_rules.csv \
       --table immune_exposures.csv \
       --reasoner hermit \
       --no-fail true \
-      --errors errors.csv
+      --errors results/errors.csv
 
 If this path ends with `.csv`, the output will be comma-separated. Otherwise, the output will be tab-separated.
 
 This output will contain the following columns:
 * **table**: the name of the table this cell is in
 * **cell**: the A1 notation for the location of the cell
-* **rule ID**: a combination of `<table name>!<location>` for the cell that the rule is written in
+* **rule**: the rule type (e.g., `is-required`)
 * **message**: text description of the violation
 
 ## Input file organisation
 
 ### Validation rules
 
-Validation rules are read from the second row of the CSV or TSV file (`--table <path-to-input>`).
-
-If the `--skip-row k` option is used, then the 'second row' is the second of the rows remaining in the table _after_ the kth row has been removed. For example, if you include validation rules in a [template](/robot), you might put the rules in the third row (after the template strings, which must be in the second row) and include `--skip-row 2`.
-
-Below is an example table. One or more validation rule can be specified for each column, separated by a semi-colon (`;`), and these rules are applied only to the data in that column. Each rule in a column will be validated independently, and if any one of those rules is violated, the data in the cell will be considered invalid (i.e., the data must pass all rules). For details on using rules as "OR" statements (i.e., the data must pass at least one rule), see [Compound rule-types](#compound-rule-types).
-
-|header A                        |header B                        |header C                     |
-|--------------------------------|--------------------------------|-----------------------------|
-|rule A1; rule A2; rule A3 ...   |rule B1; rule B2; rule B3 ...   |rule C1; rule C2; rule C3 ...|
-|data                            |data                            |data                         |
-|data                            |data                            |data                         |
-|...                             |                                |                             |
+Validation rules are read from the rules table. One or more validation rule can be specified for each column, separated by a semi-colon (`;`), and these rules are applied only to the data in that column. Each rule for a column will be validated independently, and if any one of those rules is violated, the data in the cell will be considered invalid (i.e., the data must pass all rules). For details on using rules as "OR" statements (i.e., the data must pass at least one rule), see [Compound rule-types](#compound-rule-types).
 
 ### Comments
 
@@ -131,11 +144,10 @@ When using labels within class expressions, the label must be enclosed in single
 
 ### Multi-value cells
 
-A data cell can contain more than one logical entity if these are separated using the pipe ('|') character. Such cells are called multi-value cells. When a rule is defined over a multi-value cell, it will be validated for each logical entity in that multi-value cell, and if the rule contains a [wildcard](#wildcards) that refers to a multi-value cell, then all possible interpretations of that rule will be validatd against the current cell (which may itself be a multi-value cell). Consider, for example:
+A data cell can contain more than one logical entity if these are separated using the pipe ('|') character. Such cells are called multi-value cells. When a rule is defined over a multi-value cell, it will be validated for each logical entity in that multi-value cell, and if the rule contains a [wildcard](#wildcards) that refers to a multi-value cell, then all possible interpretations of that rule will be validatd against the current cell (which may itself be a multi-value cell). Consider, for example, the rule `subclass-of %1` defined for column `header 2`:
 
 |header 1                        |header 2                        |
 |--------------------------------|--------------------------------|
-|                                |subclass-of %1                  |
 |data1A \| data1B                |data2A \| data2B                |
 |...                             |                                |
 
@@ -263,29 +275,49 @@ requires that, whenever the contents of the cell in column 4 of the given row ar
 
 ## Error Messages
 
-### Malformed Rule Error
+### Column Out of Range Error
 
-The indicated rule could not be parsed. See: [Validation Rule Syntax](#validation-rule-syntax).
+When a wildcard is used as part of a rule, the column number indicated must not be greater than the number of columns that are in the table data provided. See: [Wildcards](#wildcards).
+
+### Incorrect Format Error
+
+The name of the file specified using the `--table` or `--rules` options must end in either `.csv` or `.tsv`.
 
 ### Invalid Presence Rule Error
 
 A rule of the presence type must be in the form of a truth value. If this is ommitted it defaults to 'true'. For example, the following are valid: `is-required true`, `is-excluded`, `is-excluded false`. See: [Presence Types and Query Types](#presence-types-and-query-types).
 
-### Column Out of Range Error
+### Invalid Skip Row Error
 
-When a wildcard is used as part of a rule, the column number indicated must not be greater than the number of columns that are in the table data provided. See: [Wildcards](#wildcards).
+The value of the `--skip-row` option must be an integer.
 
-### No Main Error
+### Invalid When Type Error
 
-When a when-clause is specified, a main clause must also be specified, with the latter being evaluated only when the when-clause is satisfied. See: [Validation Rule Syntax](#validation-rule-syntax).
+The indicated when rule type is not one of the rule types allowed in a when-clause. See: [Validation Rule Syntax](#validation-rule-syntax).
 
 ### Malformed When Clause Error
 
 The indicated when-clause could not be parsed. See: [When-Clauses](#when-clauses).
 
-### Invalid When Type Error
+### Malformed Rule Error
 
-The indicated when rule type is not one of the rule types allowed in a when-clause. See: [Validation Rule Syntax](#validation-rule-syntax).
+The indicated rule could not be parsed. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Missing Headers Error
+
+The table for `--rules` must contain the following headers: table, column, validation. You may also include any number of other headers, although the contents of these columns will be ignored.
+
+### Multiple Rules Error
+
+Each distinct column within a table may only have one validation rule defined.
+
+### No Main Error
+
+When a when-clause is specified, a main clause must also be specified, with the latter being evaluated only when the when-clause is satisfied. See: [Validation Rule Syntax](#validation-rule-syntax).
+
+### Table Not Provided Error
+
+The name of a `.csv` or `.tsv` file containing the table data to validate must be supplied using the `--table` option of the `validate` command. E.g. `robot validate --input myontology.owl --table mytable.csv`.
 
 ### Unrecognized Query Type Error
 
@@ -294,15 +326,3 @@ The query type indicated is not one of the recognized query types. See: [Presenc
 ### Unrecognized Rule Type Error
 
 The rule type indicated is not one of the recognized rule types. See: [Validation Rule Syntax](#validation-rule-syntax).
-
-### Table Not Provided Error
-
-The name of a `.csv` or `.tsv` file containing the table data to validate must be supplied using the `--table` option of the `validate` command. E.g. `robot validate --input myontology.owl --table mytable.csv`.
-
-### Incorrect Table Format Error
-
-The name of the file specified using the `--table` option must end in either `.csv` or `.tsv`.
-
-### Invalid Skip Row Error
-
-The value of the `--skip-row` option must be an integer.
