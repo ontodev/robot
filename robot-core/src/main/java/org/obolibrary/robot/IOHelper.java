@@ -918,9 +918,9 @@ public class IOHelper {
         return iriString.replace(ns, prefix);
       }
     }
-    // Could not match, just return full IRI
+    // Could not match, return short form with no prefix
     logger.warn("Unable to find namespace for: " + iri);
-    return null;
+    return ":" + iri.getShortForm();
   }
 
   /**
