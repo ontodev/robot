@@ -36,6 +36,7 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
+import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.IllegalElementNameException;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
@@ -819,8 +820,12 @@ public class IOHelper {
     }
 
     // Check that this is a valid QName
-    if (qName && !iri.getRemainder().isPresent()) {
-      return null;
+    if (qName) {
+      String iriQName = getQName(iri);
+      if (!isQName(iriQName)) {
+        logger.error("Not a valid QName: " + iri.toString());
+        return null;
+      }
     }
     return iri;
   }
@@ -895,6 +900,66 @@ public class IOHelper {
     OWLDataFactory df = manager.getOWLDataFactory();
     OWLDatatype datatype = df.getOWLDatatype(type);
     return df.getOWLLiteral(value, datatype);
+  }
+
+  /**
+   * Create a QName from an IRI.
+   *
+   * @param iri IRI to create QName
+   * @return String QName or null if namespace is not found
+   */
+  public String getQName(IRI iri) {
+    String iriString = iri.toString();
+    // Find the first (longest) match from sorted prefix/ns entries
+    for (Map.Entry<String, String> prefix2Ns : getPrefixes().entrySet()) {
+      String prefix = prefix2Ns.getKey() + ":";
+      String ns = prefix2Ns.getValue();
+      if (iriString.startsWith(ns)) {
+        return iriString.replace(ns, prefix);
+      }
+    }
+    // Could not match, just return full IRI
+    logger.warn("Unable to find namespace for: " + iri);
+    return null;
+  }
+
+  /**
+   * Determine if a string is a valid QName. Adapted from:
+   *
+   * @see org.semanticweb.owlapi.io.XMLUtils#isQName(CharSequence)
+   * @param s Character sequence to check
+   * @return true if valid QName
+   */
+  public static boolean isQName(CharSequence s) {
+    if (s == null || 0 >= s.length()) {
+      // string is null or empty
+      return false;
+    }
+    boolean inLocal = false;
+    for (int i = 0; i < s.length(); ) {
+      int codePoint = Character.codePointAt(s, i);
+      if (codePoint == ':') {
+        if (inLocal) {
+          // Second colon - illegal
+          return false;
+        }
+        inLocal = true;
+      } else {
+        if (!inLocal) {
+          // Check for valid NS characters
+          if (!XMLUtils.isXMLNameStartCharacter(codePoint)) {
+            return false;
+          }
+        } else {
+          // Check for valid local characters
+          if (!XMLUtils.isXMLNameChar(codePoint)) {
+            return false;
+          }
+        }
+      }
+      i += Character.charCount(codePoint);
+    }
+    return true;
   }
 
   /**
