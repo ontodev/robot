@@ -821,6 +821,24 @@ public class IOHelper {
   }
 
   /**
+   * Given a term string, use the current prefixes to create an IRI.
+   *
+   * @deprecated replaced by {@link #createIRI(String)}
+   * @param term the term to convert to an IRI
+   * @param qName if true, validate that the IRI expands to a QName
+   * @return the new IRI or null
+   */
+  @Deprecated
+  public IRI createIRI(String term, boolean qName) {
+    IRI iri = createIRI(term);
+    // Check that this is a valid QName
+    if (qName && !iri.getRemainder().isPresent()) {
+      return null;
+    }
+    return iri;
+  }
+
+  /**
    * Given a set of term identifier strings, return a set of IRIs.
    *
    * @param terms the set of term identifier strings
@@ -890,29 +908,6 @@ public class IOHelper {
     OWLDataFactory df = manager.getOWLDataFactory();
     OWLDatatype datatype = df.getOWLDatatype(type);
     return df.getOWLLiteral(value, datatype);
-  }
-
-  /**
-   * Determine if a string is a valid QName. Adapted from:
-   *
-   * @see org.semanticweb.owlapi.io.XMLUtils#isQName(CharSequence)
-   * @param iri IRI to check
-   * @return true if valid QName
-   */
-  public boolean hasValidLocalID(IRI iri) {
-    String s = iri.getShortForm();
-    if (0 >= s.length()) {
-      // local ID is empty
-      return false;
-    }
-    for (int i = 0; i < s.length(); ) {
-      int codePoint = Character.codePointAt(s, i);
-      if (!XMLUtils.isXMLNameChar(codePoint)) {
-        return false;
-      }
-      i += Character.charCount(codePoint);
-    }
-    return true;
   }
 
   /**
@@ -1222,9 +1217,9 @@ public class IOHelper {
    *
    * @see org.semanticweb.owlapi.io.XMLUtils#isQName(CharSequence)
    * @param s Character sequence to check
-   * @return true if valid QName
+   * @return true if valid CURIE
    */
-  private static boolean isValidCURIE(CharSequence s) {
+  public static boolean isValidCURIE(CharSequence s) {
     if (s == null || 0 >= s.length()) {
       // string is null or empty
       return false;
