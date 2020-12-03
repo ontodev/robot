@@ -1582,9 +1582,6 @@ public class IOHelper {
       // use native save functionality
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
-      } catch (IllegalElementNameException e) {
-        IllegalElementNameException e2 = (IllegalElementNameException) e.getCause();
-        throw new IOException(String.format(invalidElementError, e2.getElementName()));
       } catch (OWLOntologyStorageException e) {
         // Determine if its caused by an OBO Format error
         if (format instanceof OBODocumentFormat
