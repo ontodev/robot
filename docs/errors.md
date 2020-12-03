@@ -32,6 +32,12 @@ One of the required files (often `--input`) could not be found. This is often ca
 
 When specifying the `--output` (or `--format` for converting), make sure the file has a valid extension. See [convert](/convert) for a current list of ontology formats.
 
+### Invalid Element Error
+
+This error usually appears when running [`template`](/template) and special characters are used within the local ID part of a CURIE or IRI (e.g., `obo:IAO?0000115` or `http://purl.obolibrary.org/obo/IAO:0000115`). Local IDs may only include alphanumeric characters, underscores, and dashes.
+
+When rendering the output, only properties are validated for illegal characters. OWLAPI will allow local IDs with illegal characters to be used as subjects and objects.
+
 ### Invalid Ontology File Error
 
 ROBOT was expecting an ontology file, and the file exists, but is not in a recognized format. Adding the `-vvv` option will print a stack trace that shows how the underlying OWLAPI library tried to parse the ontology file. This will include details and line numbers that can help isolate the problem.
@@ -57,6 +63,14 @@ When matching an IRI by pattern, the pattern should contain one or more wildcard
 ### Invalid Prefix Error
 
 Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/global#prefixes) for more details on adding prefixes.
+
+### Invalid QName Error
+
+This error usually occurs when running [`template`](/template). When using a CURIE or IRI to point to a property in the ROBOT template string (e.g., `A <property>`), it must be a valid QName. When a QName is expanded, the *local* part of the ID (the part after the last `/` or `#`) must start with an alphabetic character. The following characters must be alphanumeric, underscores, or dashes.
+
+For example, the IRI `http://purl.obolibrary.org/obo/BFO_0000001` is valid because the local part begins with the character `B`. This may be referenced with the CURIE `BFO:0000001`. The IRI `http://purl.obolibrary.org/obo/0000001` is **not** valid because the local part begins with the character `0`. Even though `obo:0000001` looks like a valid CURIE, it expands into an invalid QName.
+
+When rendering the output, only properties are validated for QNames. OWLAPI will allow invalid QNames as subjects and objects.
 
 ### Invalid Reasoner Error
 
@@ -116,6 +130,14 @@ If a prefix is incorrectly formatted, or if the prefix target does not point to 
 ```
 robot -p "robot: http://purl.obolibrary.org/robot/"
 ```
+
+### Undefined Prefix Error
+
+This error usually occurs when running [`template`](/template). If you use a CURIE in one of the ROBOT template strings as a property (e.g., `A ex:0000115`) but do not define the prefix of that CURIE, ROBOT will be unable to save the ontology file.
+
+To resolve this, make sure all CURIEs use prefixes that are defined. ROBOT includes a set of [default prefixes](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld), but you can also define your own prefixes. To include a custom prefix, you see [prefixes](/global#prefixes).
+
+When rendering the output, only properties are validated for QNames. OWLAPI will allow undefined prefixes to be used in subjects and objects, but the IRI will be the unexpanded version of the CURIE (i.e., the IRI will just be `ex:0000115`).
 
 ### Unknown Arg Error
 

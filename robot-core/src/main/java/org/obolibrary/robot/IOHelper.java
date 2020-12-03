@@ -65,6 +65,13 @@ public class IOHelper {
   /** Error message when an invalid extension is provided (file format). Expects the file format. */
   static final String invalidFormatError = NS + "INVALID FORMAT ERROR unknown format: %s";
 
+  /** Error message when writing output fails due to bad element name. */
+  private static final String invalidElementError =
+      NS + "INVALID ELEMENT ERROR \"%s\" contains invalid characters";
+
+  private static final String invalidQNameError =
+      NS + "INVALID QNAME ERROR \"%s\" cannot be converted to a QName";
+
   /** Error message when the specified file cannot be loaded. Expects the file name. */
   private static final String invalidOntologyFileError =
       NS + "INVALID ONTOLOGY FILE ERROR Could not load a valid ontology from file: %s";
@@ -108,6 +115,10 @@ public class IOHelper {
       NS
           + "SYNTAX ERROR unable to load '%s' with Jena - "
           + "check that this file is in RDF/XML or TTL syntax and try again.";
+
+  /** Error message when an invalid prefix is provided. Expects the combined prefix. */
+  static final String undefinedPrefixError =
+      NS + "UNDEFINED PREFIX ERROR \"%s\" has unknown prefix; make sure prefix \"%s\" is defined";
 
   /** Optional base namespaces. */
   private Set<String> baseNamespaces = new HashSet<>();
@@ -776,22 +787,10 @@ public class IOHelper {
    * Given a term string, use the current prefixes to create an IRI.
    *
    * @param term the term to convert to an IRI
-   * @return the new IRI
-   */
-  @SuppressWarnings("unchecked")
-  public IRI createIRI(String term) {
-    return createIRI(term, false);
-  }
-
-  /**
-   * Given a term string, use the current prefixes to create an IRI.
-   *
-   * @param term the term to convert to an IRI
-   * @param qName if true, check that the expanded IRI is a valid QName (if not, return null)
    * @return the new IRI or null
    */
   @SuppressWarnings("unchecked")
-  public IRI createIRI(String term, boolean qName) {
+  public IRI createIRI(String term) {
     if (term == null) {
       return null;
     }
@@ -817,15 +816,6 @@ public class IOHelper {
       logger.warn("Could not create IRI for {}", term);
       logger.warn(e.getMessage());
       return null;
-    }
-
-    // Check that this is a valid QName
-    if (qName) {
-      String iriQName = getQName(iri);
-      if (!isQName(iriQName)) {
-        logger.error("Not a valid QName: " + iri.toString());
-        return null;
-      }
     }
     return iri;
   }
@@ -903,59 +893,22 @@ public class IOHelper {
   }
 
   /**
-   * Create a QName from an IRI.
-   *
-   * @param iri IRI to create QName
-   * @return String QName or null if namespace is not found
-   */
-  public String getQName(IRI iri) {
-    String iriString = iri.toString();
-    // Find the first (longest) match from sorted prefix/ns entries
-    for (Map.Entry<String, String> prefix2Ns : getPrefixes().entrySet()) {
-      String prefix = prefix2Ns.getKey() + ":";
-      String ns = prefix2Ns.getValue();
-      if (iriString.startsWith(ns)) {
-        return iriString.replace(ns, prefix);
-      }
-    }
-    // Could not match, return short form with no prefix
-    logger.warn("Unable to find namespace for: " + iri);
-    return ":" + iri.getShortForm();
-  }
-
-  /**
    * Determine if a string is a valid QName. Adapted from:
    *
    * @see org.semanticweb.owlapi.io.XMLUtils#isQName(CharSequence)
-   * @param s Character sequence to check
+   * @param iri IRI to check
    * @return true if valid QName
    */
-  public static boolean isQName(CharSequence s) {
-    if (s == null || 0 >= s.length()) {
-      // string is null or empty
+  public boolean hasValidLocalID(IRI iri) {
+    String s = iri.getShortForm();
+    if (0 >= s.length()) {
+      // local ID is empty
       return false;
     }
-    boolean inLocal = false;
     for (int i = 0; i < s.length(); ) {
       int codePoint = Character.codePointAt(s, i);
-      if (codePoint == ':') {
-        if (inLocal) {
-          // Second colon - illegal
-          return false;
-        }
-        inLocal = true;
-      } else {
-        if (!inLocal) {
-          // Check for valid NS characters
-          if (!XMLUtils.isXMLNameStartCharacter(codePoint)) {
-            return false;
-          }
-        } else {
-          // Check for valid local characters
-          if (!XMLUtils.isXMLNameChar(codePoint)) {
-            return false;
-          }
-        }
+      if (!XMLUtils.isXMLNameChar(codePoint)) {
+        return false;
       }
       i += Character.charCount(codePoint);
     }
@@ -1261,6 +1214,64 @@ public class IOHelper {
     FileWriter writer = new FileWriter(file);
     writer.write(getContextString());
     writer.close();
+  }
+
+  /**
+   * Determine if a string is a CURIE. Note that a valid CURIE is not always a valid QName. Adapted
+   * from:
+   *
+   * @see org.semanticweb.owlapi.io.XMLUtils#isQName(CharSequence)
+   * @param s Character sequence to check
+   * @return true if valid QName
+   */
+  private static boolean isValidCURIE(CharSequence s) {
+    if (s == null || 0 >= s.length()) {
+      // string is null or empty
+      return false;
+    }
+    boolean inLocal = false;
+    for (int i = 0; i < s.length(); ) {
+      int codePoint = Character.codePointAt(s, i);
+      if (codePoint == ':') {
+        if (inLocal) {
+          // Second colon - illegal
+          return false;
+        }
+        inLocal = true;
+      } else {
+        if (!inLocal) {
+          // Check for valid NS characters
+          if (!XMLUtils.isXMLNameStartCharacter(codePoint)) {
+            return false;
+          }
+        } else {
+          // Check for valid local characters
+          if (!XMLUtils.isXMLNameChar(codePoint)) {
+            return false;
+          }
+        }
+      }
+      i += Character.charCount(codePoint);
+    }
+    return true;
+  }
+
+  /**
+   * Determine if the short form of an IRI contains invalid characters.
+   *
+   * @param iri IRI to check
+   * @return true if no invalid characters found
+   */
+  public static boolean shortFormIsValid(IRI iri) {
+    String s = iri.getShortForm();
+    for (int i = 0; i < s.length(); ) {
+      int codePoint = Character.codePointAt(s, i);
+      if (!XMLUtils.isXMLNameChar(codePoint)) {
+        return false;
+      }
+      i += Character.charCount(codePoint);
+    }
+    return true;
   }
 
   /**
@@ -1577,13 +1588,28 @@ public class IOHelper {
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
       } catch (IllegalElementNameException e) {
-        throw new IOException("ELEMENT NAME EXCEPTION " + e.getCause().getMessage());
+        IllegalElementNameException e2 = (IllegalElementNameException) e.getCause();
+        throw new IOException(String.format(invalidElementError, e2.getElementName()));
       } catch (OWLOntologyStorageException e) {
         // Determine if its caused by an OBO Format error
         if (format instanceof OBODocumentFormat
             && e.getCause() instanceof FrameStructureException) {
           throw new IOException(
               String.format(oboStructureError, e.getCause().getMessage()), e.getCause());
+        }
+        if (e.getCause() instanceof IllegalElementNameException) {
+          IllegalElementNameException e2 = (IllegalElementNameException) e.getCause();
+          String element = e2.getElementName();
+          if (isValidCURIE(element)) {
+            String prefix = element.split(":")[0];
+            throw new IOException(String.format(undefinedPrefixError, e2.getElementName(), prefix));
+          } else {
+            if (shortFormIsValid(IRI.create(element))) {
+              throw new IOException(String.format(invalidElementError, element));
+            } else {
+              throw new IOException(String.format(invalidQNameError, element));
+            }
+          }
         }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }

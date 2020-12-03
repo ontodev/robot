@@ -525,7 +525,7 @@ public class TemplateHelper {
       if (id == null || id.trim().isEmpty()) {
         continue;
       }
-      IRI iri = ioHelper.createIRI(id, true);
+      IRI iri = ioHelper.createIRI(id);
       if (iri == null) {
         continue;
       }

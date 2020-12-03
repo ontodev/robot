@@ -119,41 +119,6 @@ public class IOHelperTest extends CoreTest {
   }
 
   /**
-   * Test getQName & isQName methods.
-   *
-   * @throws IOException on problem creating IOHelper
-   */
-  @Test
-  public void testIsQName() throws IOException {
-    IOHelper ioh = new IOHelper(false);
-    ioh.addPrefix("obo", "http://purl.obolibrary.org/obo/");
-
-    // Test a valid QName (obo:BFO_0000001)
-    IRI iri = IRI.create("http://purl.obolibrary.org/obo/BFO_0000001");
-    String qName = ioh.getQName(iri);
-    assertEquals("obo:BFO_0000001", qName);
-    assertTrue(IOHelper.isQName(qName));
-
-    // Test an invalid QName (obo:BFO/0000001)
-    iri = IRI.create("http://purl.obolibrary.org/obo/BFO/0000001");
-    qName = ioh.getQName(iri);
-    assertEquals("obo:BFO/0000001", qName);
-    assertFalse(IOHelper.isQName(qName));
-
-    // Test QName with undefined namespace (hash separator)
-    iri = IRI.create("http://example.com#BFO_0000001");
-    qName = ioh.getQName(iri);
-    assertEquals(":BFO_0000001", qName);
-    assertTrue(IOHelper.isQName(qName));
-
-    // Test QName with undefined namespace (slash separator)
-    iri = IRI.create("http://example.com/resource/1");
-    qName = ioh.getQName(iri);
-    assertEquals(":1", qName);
-    assertTrue(IOHelper.isQName(qName));
-  }
-
-  /**
    * Test prefix maps.
    *
    * @throws IOException on file problem
