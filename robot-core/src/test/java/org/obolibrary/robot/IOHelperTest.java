@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import com.github.jsonldjava.core.Context;
 import java.io.File;
@@ -116,6 +116,35 @@ public class IOHelperTest extends CoreTest {
     expected.put("foo", "http://example.com#");
     expected.put("bar", "http://example.com#");
     assertEquals("Check JSON prefixes", expected, ioh.getPrefixes());
+  }
+
+  /**
+   * Test getQName & isQName methods.
+   *
+   * @throws IOException on problem creating IOHelper
+   */
+  @Test
+  public void testIsQName() throws IOException {
+    IOHelper ioh = new IOHelper(false);
+    ioh.addPrefix("obo", "http://purl.obolibrary.org/obo/");
+
+    // Test a valid QName (obo:BFO_0000001)
+    IRI iri = IRI.create("http://purl.obolibrary.org/obo/BFO_0000001");
+    String qName = ioh.getQName(iri);
+    assertEquals("obo:BFO_0000001", qName);
+    assertTrue(IOHelper.isQName(qName));
+
+    // Test an invalid QName (obo:BFO/0000001)
+    iri = IRI.create("http://purl.obolibrary.org/obo/BFO/0000001");
+    qName = ioh.getQName(iri);
+    assertEquals("obo:BFO/0000001", qName);
+    assertFalse(IOHelper.isQName(qName));
+
+    // Test QName with undefined namespace
+    iri = IRI.create("http://example.com#BFO_0000001");
+    qName = ioh.getQName(iri);
+    assertEquals(":BFO_0000001", qName);
+    assertTrue(IOHelper.isQName(qName));
   }
 
   /**
