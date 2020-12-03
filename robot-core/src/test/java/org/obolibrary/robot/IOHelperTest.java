@@ -1,6 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import com.github.jsonldjava.core.Context;
 import java.io.File;
