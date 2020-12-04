@@ -9,7 +9,7 @@ You can print or save the current [prefixes](/global#prefixes) using the `export
 
 This prints the [default prefixes](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld) *plus* the user-added prefixes in [JSON-LD format](https://json-ld.org/) The prefixes are contained within a `@context` that can be used to resolve [JSON-LD compact IRIs](https://www.w3.org/TR/json-ld/#compact-iris). For the above, command, the printed output would look something like:
 
-```json
+```
 {
   "@context": {
     "obo": "http://purl.obolibrary.org/obo/",
@@ -18,7 +18,7 @@ This prints the [default prefixes](https://github.com/ontodev/robot/blob/master/
     "foo": "http://foo#",
     "bar": "http://bar#",
     "baz": "http://baz#"
-	}
+  }
 }
 ```
 
