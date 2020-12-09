@@ -136,9 +136,9 @@ robot extract --input foo.owl --term foo:0000001 --term foo:0000002
 
 Sometimes when loading an ontology, not all triples can be parsed. This error is thrown when the `--strict` flag is included in the command. Otherwise, the unparsed triples are logged as errors and excluded from the loaded ontology.
 
-This is often because OWL does not support RDF reification (for more details, see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)); ROBOT is a tool for working with OWL, not RDF. Usually this can be easily resolved by replacing `rdfs:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
+This is often because OWL does not support RDF reification (for more details, see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)); ROBOT is a tool for working with OWL, not RDF. Usually this can be easily resolved by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
 ```
-:blank rdf:type rdfs:Statement .
+:blank rdf:type rdf:Statement .
 ```
 
 ... but this statement is OK:
