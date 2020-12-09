@@ -525,37 +525,42 @@ public class IOHelper {
     OWLDocumentFormat f = manager.getOntologyFormat(loadedOntology);
     if (f == null) {
       // This should never happen
-      throw new IOException();
+      throw new IOException("Unable to get an OWLDocumentFormat from loaded ontology");
     }
     RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData();
     Set<RDFTriple> unparsed = metaData.getUnparsedTriples();
     if (unparsed.size() > 0) {
+      boolean rdfReification = false;
+      List<String> lines = new ArrayList<>();
+      lines.add(String.format(unparsedTriplesError, unparsed.size()));
+      for (RDFTriple t : unparsed) {
+        // Check object to see if it's rdfs:Statement used in RDF reification
+        String objectIRI;
+        try {
+          objectIRI = t.getObject().getIRI().toString();
+        } catch (UnsupportedOperationException e) {
+          // RDF Literals do not have IRIs
+          objectIRI = "";
+        }
+        if (objectIRI.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
+          rdfReification = true;
+        }
+        // Add triple to error lines
+        lines.add("- " + t.toString().trim());
+      }
+      if (rdfReification) {
+        // Add hint for fixing RDF reification
+        lines.add(
+            "Hint: it looks like you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
+      }
+
       if (strict) {
-        // Fail with unparsed triples
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format(unparsedTriplesError, unparsed.size()));
-        boolean rdfReification = false;
-        for (RDFTriple t : unparsed) {
-          sb.append("\n\t").append(t.toString().trim());
-          if (t.getObject().getIRI().toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
-            rdfReification = true;
-          }
-        }
-        if (rdfReification) {
-          sb.append("\nHint: it looks like you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
-        }
-        throw new IOException(sb.toString());
+        // Fail on unparsed triples
+        throw new IOException(String.join("\n", lines));
       } else {
-        // Always log unparsed triples (even when not strict)
-        boolean rdfReification = false;
-        for (RDFTriple t : unparsed) {
-          logger.error("Unparsed triple: " + t.toString().trim());
-          if (t.getObject().getIRI().toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
-            rdfReification = true;
-          }
-        }
-        if (rdfReification) {
-          logger.error("Hint: it looks like you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
+        // Log unparsed triples as errors
+        for (String line : lines) {
+          logger.error(line);
         }
       }
     }
