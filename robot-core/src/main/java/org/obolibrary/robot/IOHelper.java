@@ -542,7 +542,7 @@ public class IOHelper {
           // RDF Literals do not have IRIs
           objectIRI = "";
         }
-        if (objectIRI.equals("http://www.w3.org/2000/01/rdf-schema#Statement")) {
+        if (objectIRI.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
           rdfReification = true;
         }
         // Add triple to error lines
@@ -552,7 +552,7 @@ public class IOHelper {
       if (rdfReification) {
         // Add hint for fixing RDF reification
         sb.append(
-            "\n\nHint: you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
+            "\n\nHint: you may be using RDF reification - try replacing 'rdf:Statement' with 'owl:Axiom'");
       }
       if (undeclaredPredicates.size() > 0) {
         sb.append(
