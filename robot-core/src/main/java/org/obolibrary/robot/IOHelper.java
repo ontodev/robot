@@ -111,7 +111,7 @@ public class IOHelper {
 
   /** Error message when loader contains unparsed triples. */
   private static final String unparsedTriplesError =
-      NS + "UNPARSED TRIPLES ERROR input ontology contains %d triples that could not be parsed:";
+      NS + "UNPARSED TRIPLES ERROR input ontology contains %d triple(s) that could not be parsed:";
 
   /** Optional base namespaces. */
   private Set<String> baseNamespaces = new HashSet<>();
@@ -529,10 +529,10 @@ public class IOHelper {
     }
     RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData();
     Set<RDFTriple> unparsed = metaData.getUnparsedTriples();
+    Set<OWLAxiom> parsed = loadedOntology.getAxioms();
     if (unparsed.size() > 0) {
       boolean rdfReification = false;
-      List<String> lines = new ArrayList<>();
-      lines.add(String.format(unparsedTriplesError, unparsed.size()));
+      StringBuilder sb = new StringBuilder();
       for (RDFTriple t : unparsed) {
         // Check object to see if it's rdfs:Statement used in RDF reification
         String objectIRI;
@@ -542,26 +542,37 @@ public class IOHelper {
           // RDF Literals do not have IRIs
           objectIRI = "";
         }
-        if (objectIRI.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
+        if (objectIRI.equals("http://www.w3.org/2000/01/rdf-schema#Statement")) {
           rdfReification = true;
         }
         // Add triple to error lines
-        lines.add("- " + t.toString().trim());
+        sb.append("\n - ").append(t.toString().trim());
       }
+      Set<IRI> undeclaredPredicates = getUndeclaredPredicates(parsed, unparsed);
       if (rdfReification) {
         // Add hint for fixing RDF reification
-        lines.add(
-            "Hint: it looks like you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
+        sb.append(
+            "\n\nHint: you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
       }
+      if (undeclaredPredicates.size() > 0) {
+        sb.append(
+            "\n\nHint: you have undeclared predicates - try adding 'rdf:type' declarations to the following:");
+        for (IRI p : undeclaredPredicates) {
+          sb.append("\n - ").append(p.toString());
+        }
+      }
+      sb.append("\n");
 
       if (strict) {
         // Fail on unparsed triples
-        throw new IOException(String.join("\n", lines));
+        throw new IOException(String.format(unparsedTriplesError, unparsed.size()) + sb.toString());
       } else {
         // Log unparsed triples as errors
-        for (String line : lines) {
-          logger.error(line);
-        }
+        logger.error(
+            String.format(
+                    "Input ontology contains %d triple(s) that could not be parsed:",
+                    unparsed.size())
+                + sb.toString());
       }
     }
     // No issues, return ontology
@@ -1514,6 +1525,40 @@ public class IOHelper {
       }
     }
     return data;
+  }
+
+  /**
+   * Given a set of parsed OWLAxioms and a set of unparsed RDF triples, get any predicates used in
+   * the unparsed set that are not builtins (OWL, RDF, RDFS) and do not have declarations in the
+   * parsed axioms.
+   *
+   * @param parsedAxioms Set of parsed OWLAxioms from loaded ontology
+   * @param unparsedTriples Set of unparsed RDF triples from loaded ontology
+   * @return set of IRIs of any undeclared predicates
+   */
+  private static Set<IRI> getUndeclaredPredicates(
+      Set<OWLAxiom> parsedAxioms, Set<RDFTriple> unparsedTriples) {
+    Set<IRI> checkPredicates = new HashSet<>();
+    for (RDFTriple t : unparsedTriples) {
+      IRI pIRI = t.getPredicate().getIRI();
+      if (pIRI.toString().startsWith("http://www.w3.org/2002/07/owl#")
+          || pIRI.toString().startsWith("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+          || pIRI.toString().startsWith("http://www.w3.org/2000/01/rdf-schema#")) {
+        // Skip OWL, RDF, RDFS ...
+        continue;
+      }
+      checkPredicates.add(t.getPredicate().getIRI());
+    }
+    // Look for types
+    for (OWLAxiom a : parsedAxioms) {
+      if (!a.getAxiomType().equals(AxiomType.DECLARATION)) {
+        continue;
+      }
+      OWLDeclarationAxiom dec = (OWLDeclarationAxiom) a;
+      IRI eIRI = dec.getEntity().getIRI();
+      checkPredicates.remove(eIRI);
+    }
+    return checkPredicates;
   }
 
   /**
