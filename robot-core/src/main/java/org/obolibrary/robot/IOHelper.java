@@ -36,6 +36,7 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
+import org.semanticweb.owlapi.io.*;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.IllegalElementNameException;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
@@ -108,6 +109,10 @@ public class IOHelper {
           + "SYNTAX ERROR unable to load '%s' with Jena - "
           + "check that this file is in RDF/XML or TTL syntax and try again.";
 
+  /** Error message when loader contains unparsed triples. */
+  private static final String unparsedTriplesError =
+      NS + "UNPARSED TRIPLES ERROR input ontology contains %d triples that could not be parsed:";
+
   /** Optional base namespaces. */
   private Set<String> baseNamespaces = new HashSet<>();
 
@@ -116,6 +121,9 @@ public class IOHelper {
 
   /** Store the current JSON-LD context. */
   private Context context = new Context();
+
+  /** Strict parsing; fail on unparsed triples. */
+  private Boolean strict = false;
 
   /** Store xml entities flag. */
   private Boolean useXMLEntities = false;
@@ -173,6 +181,16 @@ public class IOHelper {
   public IOHelper(File file) throws IOException {
     String jsonString = FileUtils.readFileToString(file);
     setContext(jsonString);
+  }
+
+  /**
+   * Set "strict" value. If true, any loadOntology method will fail on unparsed triples or OWLAPI
+   * "strict" parsing issues.
+   *
+   * @param strict boolean value
+   */
+  public void setStrict(Boolean strict) {
+    this.strict = strict;
   }
 
   /**
@@ -385,8 +403,9 @@ public class IOHelper {
           return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath());
         }
       }
+
       // Otherwise load from file using default method
-      return manager.loadOntologyFromOntologyDocument(ontologyFile);
+      return loadOntology(manager, new FileDocumentSource(ontologyFile));
     } catch (JsonLdError | OWLOntologyCreationException e) {
       throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
@@ -427,7 +446,7 @@ public class IOHelper {
       if (catalogFile != null) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       }
-      ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
+      ontology = loadOntology(manager, new StreamDocumentSource(ontologyStream));
     } catch (OWLOntologyCreationException e) {
       throw new IOException(invalidOntologyStreamError, e);
     }
@@ -474,12 +493,74 @@ public class IOHelper {
         ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
       } else {
         // Otherwise load ontology as normal
-        ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
+        ontology = loadOntology(manager, new IRIDocumentSource(ontologyIRI));
       }
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
     }
     return ontology;
+  }
+
+  /**
+   * Given an ontology manager and a document source, load the ontology from the source using the
+   * manager. Log unparsed triples, or throw exception if strict=true.
+   *
+   * @param manager OWLOntologyManager with IRI mappers to use
+   * @param source OWLOntologyDocumentSource to load from
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on problem with unparsed triples if strict=true
+   * @throws OWLOntologyCreationException on problem loading ontology document
+   */
+  public OWLOntology loadOntology(OWLOntologyManager manager, OWLOntologyDocumentSource source)
+      throws IOException, OWLOntologyCreationException {
+    OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
+    if (strict) {
+      // Set strict OWLAPI parsing
+      config = config.setStrict(true);
+    }
+    // Load the ontology
+    OWLOntology loadedOntology = manager.loadOntologyFromOntologyDocument(source, config);
+
+    // Check for unparsed triples - get the document format and then the loader metadata
+    OWLDocumentFormat f = manager.getOntologyFormat(loadedOntology);
+    if (f == null) {
+      // This should never happen
+      throw new IOException();
+    }
+    RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData();
+    Set<RDFTriple> unparsed = metaData.getUnparsedTriples();
+    if (unparsed.size() > 0) {
+      if (strict) {
+        // Fail with unparsed triples
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format(unparsedTriplesError, unparsed.size()));
+        boolean rdfReification = false;
+        for (RDFTriple t : unparsed) {
+          sb.append("\n\t").append(t.toString().trim());
+          if (t.getObject().getIRI().toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
+            rdfReification = true;
+          }
+        }
+        if (rdfReification) {
+          sb.append("\nHint: it looks like you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
+        }
+        throw new IOException(sb.toString());
+      } else {
+        // Always log unparsed triples (even when not strict)
+        boolean rdfReification = false;
+        for (RDFTriple t : unparsed) {
+          logger.error("Unparsed triple: " + t.toString().trim());
+          if (t.getObject().getIRI().toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
+            rdfReification = true;
+          }
+        }
+        if (rdfReification) {
+          logger.error("Hint: it looks like you may be using RDF reification - try replacing 'rdfs:Statement' with 'owl:Axiom'");
+        }
+      }
+    }
+    // No issues, return ontology
+    return loadedOntology;
   }
 
   /**
