@@ -69,9 +69,6 @@ public class IOHelper {
   private static final String invalidElementError =
       NS + "INVALID ELEMENT ERROR \"%s\" contains invalid characters";
 
-  private static final String invalidQNameError =
-      NS + "INVALID QNAME ERROR \"%s\" cannot be converted to a QName";
-
   /** Error message when the specified file cannot be loaded. Expects the file name. */
   private static final String invalidOntologyFileError =
       NS + "INVALID ONTOLOGY FILE ERROR Could not load a valid ontology from file: %s";
@@ -1252,24 +1249,6 @@ public class IOHelper {
   }
 
   /**
-   * Determine if the short form of an IRI contains invalid characters.
-   *
-   * @param iri IRI to check
-   * @return true if no invalid characters found
-   */
-  public static boolean shortFormIsValid(IRI iri) {
-    String s = iri.getShortForm();
-    for (int i = 0; i < s.length(); ) {
-      int codePoint = Character.codePointAt(s, i);
-      if (!XMLUtils.isXMLNameChar(codePoint)) {
-        return false;
-      }
-      i += Character.charCount(codePoint);
-    }
-    return true;
-  }
-
-  /**
    * Read comma-separated values from a path to a list of lists of strings.
    *
    * @param path file path to the CSV file
@@ -1596,11 +1575,7 @@ public class IOHelper {
             String prefix = element.split(":")[0];
             throw new IOException(String.format(undefinedPrefixError, e2.getElementName(), prefix));
           } else {
-            if (shortFormIsValid(IRI.create(element))) {
-              throw new IOException(String.format(invalidElementError, element));
-            } else {
-              throw new IOException(String.format(invalidQNameError, element));
-            }
+            throw new IOException(String.format(invalidElementError, element));
           }
         }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);

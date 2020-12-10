@@ -34,9 +34,9 @@ When specifying the `--output` (or `--format` for converting), make sure the fil
 
 ### Invalid Element Error
 
-This error usually appears when running [`template`](/template) and special characters are used within the local ID part of a CURIE or IRI (e.g., `obo:IAO?0000115` or `http://purl.obolibrary.org/obo/IAO:0000115`). Local IDs may only include alphanumeric characters, underscores, and dashes.
+This error occurs when ROBOT tries to convert an IRI to an XML element name for writing but encounters an illegal character. Common illegal characters include `/` and `:`. This error usually occurs when creating new ontology terms with [`template`](/template). See [Namespaces in XML](https://www.w3.org/TR/REC-xml-names/) for full details on legal XML element names.
 
-When rendering the output, only properties are validated for illegal characters. OWLAPI will allow local IDs with illegal characters to be used as subjects and objects.
+The solution is usually to add a new [prefix](/global#prefixes) so that the illegal character is no longer part of the element name. For example, the prefix `ex` for `http://example.com/` is valid, and `http://example.com/foo/bar` is a valid IRI, but `ex:foo/bar` is not a valid element name. By defining a new prefix `foo` for `http://example.com/foo/` we can now use `foo:bar` as a valid element name for the same IRI `http://example.com/foo/bar`.
 
 ### Invalid Ontology File Error
 
@@ -63,14 +63,6 @@ When matching an IRI by pattern, the pattern should contain one or more wildcard
 ### Invalid Prefix Error
 
 Prefixes (added with `--prefix`) should be strings in the following format: `"foo: http://foo/bar#"`. See [Prefixes](/global#prefixes) for more details on adding prefixes.
-
-### Invalid QName Error
-
-This error usually occurs when running [`template`](/template). When using a CURIE or IRI to point to a property in the ROBOT template string (e.g., `A <property>`), it must be a valid QName. When a QName is expanded, the *local* part of the ID (the part after the last `/` or `#`) must start with an alphabetic character. The following characters must be alphanumeric, underscores, or dashes.
-
-For example, the IRI `http://purl.obolibrary.org/obo/BFO_0000001` is valid because the local part begins with the character `B`. This may be referenced with the CURIE `BFO:0000001`. The IRI `http://purl.obolibrary.org/obo/0000001` is **not** valid because the local part begins with the character `0`. Even though `obo:0000001` looks like a valid CURIE, it expands into an invalid QName.
-
-When rendering the output, only properties are validated for QNames. OWLAPI will allow invalid QNames as subjects and objects.
 
 ### Invalid Reasoner Error
 
@@ -135,9 +127,9 @@ robot -p "robot: http://purl.obolibrary.org/robot/"
 
 This error usually occurs when running [`template`](/template). If you use a CURIE in one of the ROBOT template strings as a property (e.g., `A ex:0000115`) but do not define the prefix of that CURIE, ROBOT will be unable to save the ontology file.
 
-To resolve this, make sure all CURIEs use prefixes that are defined. ROBOT includes a set of [default prefixes](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld), but you can also define your own prefixes. To include a custom prefix, you see [prefixes](/global#prefixes).
+To resolve this, make sure all CURIEs use prefixes that are defined. ROBOT includes a set of [default prefixes](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld), but you can also define your own prefixes. To include a custom prefix, see [prefixes](/global#prefixes).
 
-When rendering the output, only properties are validated for QNames. OWLAPI will allow undefined prefixes to be used in subjects and objects, but the IRI will be the unexpanded version of the CURIE (i.e., the IRI will just be `ex:0000115`).
+When rendering the output, only properties are validated for [QNames](https://en.wikipedia.org/wiki/QName). OWLAPI will allow undefined prefixes to be used in subjects and objects, but the IRI will be the unexpanded version of the CURIE (i.e., the IRI will just be `ex:0000115`).
 
 ### Unknown Arg Error
 
