@@ -143,6 +143,22 @@
       "SubClassOf": 666,
       "InverseObjectProperties": 7
     },
+    "class_expression_count": {
+      "ObjectMinCardinality": 2,
+      "Class": 1903,
+      "ObjectUnionOf": 3,
+      "ObjectSomeValuesFrom": 486,
+      "ObjectIntersectionOf": 105,
+      "ObjectMaxCardinality": 2
+    },
+    "class_expression_count_incl": {
+      "ObjectMinCardinality": 2,
+      "Class": 1903,
+      "ObjectUnionOf": 3,
+      "ObjectSomeValuesFrom": 486,
+      "ObjectIntersectionOf": 105,
+      "ObjectMaxCardinality": 2
+    },
     "datatypes_axiom_count": {},
     "datatypes_axiom_count_incl": {},
     "namespace_axiom_count": {

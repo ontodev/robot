@@ -27,6 +27,7 @@ There are three general modes for computing metrics:
 1. Essential metrics (`--metrics essential`, default)
 2. Extended metrics (`--metrics extended`)
 3. All metrics (`--metrics all`)
+4. Adding reasoner metrics (`--metrics all-reasoner`, `--metrics essential-reasoner`, `--metrics extended-reasoner`)
 
 _Essential metrics_ include basic ontology entity counts (number of classes, individuals and properties), axiom counts
 and a few qualitiative metrics such as OWL profiles, see the initial example above.
@@ -39,6 +40,9 @@ Use: `--metrics extended`.
 _All metrics_ include all the essential and extended metrics, as well as a range of more complex metrics targeted at
 OWL and reasoning specialists, such as information about GCIs, shape of the class hierarchy and potential cyclicity.
 Use: `--metrics all`.
+
+_Reasoner metrics_ (currently only satisfiability status and number of unsatisfiable classes) can be collected by appending `-reasoner`
+to the `--metrics` parameter, for example: `--metrics essential-reasoner`.
 
 A full breakdown of all metrics can be found in the following. For simplicity, all metrics ending with `_incl` are omitted -
 they simply indicate that the metric was collected over the imports closure (the ontology _including_ its imports).

@@ -46,7 +46,10 @@ import org.semanticweb.owlapi.profiles.OWL2RLProfile;
 import org.semanticweb.owlapi.profiles.OWLProfile;
 import org.semanticweb.owlapi.profiles.OWLProfileReport;
 import org.semanticweb.owlapi.profiles.OWLProfileViolation;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.DLExpressivityChecker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectOneOfImpl;
 
 public class OntologyMetrics {
@@ -57,8 +60,7 @@ public class OntologyMetrics {
   private final List<OWLProfileViolation> dlprofileviolation = new ArrayList<>();
   protected OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
   private CURIEShortFormProvider curieProvider;
-
-  String OBONS = "http://purl.obolibrary.org/obo/";
+  private static final Logger logger = LoggerFactory.getLogger(OntologyMetrics.class);
 
   public OntologyMetrics(OWLOntology item) {
     this.item = item;
@@ -183,7 +185,7 @@ public class OntologyMetrics {
   public Map<String, Integer> getEntityUsageMap(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
     for (OWLEntity e : getOntology().getSignature(includeImportsClosure)) {
-      String iri_pre = extractIRIPrefixFromEntity(e);
+      String iri_pre = extractPrefixForEntityOrOtherIfUnknown(e);
       countKeyUpInMap(iri_pre, map);
     }
     return map;
@@ -199,21 +201,14 @@ public class OntologyMetrics {
     return shortform;
   }
 
-  private String extractIRIPrefixFromEntity(OWLEntity e) {
+  private String extractPrefixForEntityOrOtherIfUnknown(OWLEntity e) {
     String shortform = getShortForm(e);
     if (shortform.contains(":")) {
       return shortform.split(":")[0];
-    }
-
-    String iri = e.getIRI().toString();
-    String iri_pre;
-
-    if (iri.equals(OBONS + shortform) && shortform.contains("_")) {
-      iri_pre = OBONS + shortform.split("_")[0] + "_";
     } else {
-      iri_pre = iri.replace(shortform, "");
+      logger.info("Entity " + e.getIRI() + " does not have a known prefix.");
+      return "prefix_unknown";
     }
-    return iri_pre;
   }
 
   public Map<String, Integer> getAxiomUsageMap(Imports includeImportsClosure) {
@@ -222,7 +217,7 @@ public class OntologyMetrics {
     for (OWLAxiom axiom : axioms) {
       Set<OWLEntity> entities = axiom.getSignature();
       for (OWLEntity e : entities) {
-        String iri_pre = extractIRIPrefixFromEntity(e);
+        String iri_pre = extractPrefixForEntityOrOtherIfUnknown(e);
         countKeyUpInMap(iri_pre, map);
       }
     }
@@ -389,6 +384,25 @@ public class OntologyMetrics {
 
   public int getRBoxSize(Imports useImportsClosure) {
     return getOntology().getRBoxAxioms(useImportsClosure).size();
+  }
+
+  public Map<String, Integer> getOWLClassExpressionCounts(Imports includeImportsClosure) {
+    Map<String, Integer> map = new HashMap<>();
+    Set<OWLAxiom> axioms = getAxioms(includeImportsClosure);
+
+    for (OWLAxiom ax : axioms) {
+      for (OWLClassExpression exp : ax.getNestedClassExpressions()) {
+        String type = exp.getClassExpressionType().getName();
+        if (map.containsKey(type)) {
+          Integer i = map.get(type);
+          map.put(type, (i + 1));
+        } else {
+          map.put(type, 1);
+        }
+      }
+    }
+
+    return map;
   }
 
   public Map<String, Integer> getAxiomTypeCounts(Imports includeImportsClosure) {
@@ -601,10 +615,11 @@ public class OntologyMetrics {
 
   public double getAverageAssertedNamedSubclasses(Imports useImportsClosure) {
     int count = 0;
-    for (OWLClass c : getOntology().getClassesInSignature(useImportsClosure)) {
+    Set<OWLClass> classes = getOntology().getClassesInSignature(useImportsClosure);
+    for (OWLClass c : classes) {
       count += getOntology().getSubClassAxiomsForSuperClass(c).size();
     }
-    return (((double) count) / ((double) getOntology().getClassesInSignature().size()));
+    return (((double) count) / ((double) classes.size()));
   }
 
   public int getClassesWithSingleSubclassCount(Imports useImportsClosure) {
@@ -640,15 +655,6 @@ public class OntologyMetrics {
       return "anonymousId";
     } else {
       return ontologyID.getOntologyIRI().or(IRI.create("no.iri")).toString();
-    }
-  }
-
-  public String getOntologyIdScheme() {
-    OWLOntologyID ontologyID = getOntology().getOntologyID();
-    if (ontologyID.isAnonymous()) {
-      return "none";
-    } else {
-      return ontologyID.getOntologyIRI().or(IRI.create("")).getScheme();
     }
   }
 
@@ -889,6 +895,13 @@ public class OntologyMetrics {
     csvData.putMap(
         prefix + MetricsLabels.AXIOMTYPE_COUNT_INCL, getAxiomTypeCounts(Imports.INCLUDED));
     csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
+    csvData.putMap(
+        prefix + MetricsLabels.CLASSEXPRESSION_COUNT,
+        getOWLClassExpressionCounts(Imports.EXCLUDED));
+    csvData.putMap(
+        prefix + MetricsLabels.CLASSEXPRESSION_COUNT_INCL,
+        getOWLClassExpressionCounts(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
 
     /*
     Entity usage
@@ -899,6 +912,30 @@ public class OntologyMetrics {
     csvData.putMap(prefix + MetricsLabels.NS_USE_SIGNATURE, getEntityUsageMap(Imports.EXCLUDED));
     csvData.putMap(
         prefix + MetricsLabels.NS_USE_SIGNATURE_INCL, getEntityUsageMap(Imports.INCLUDED));
+    return csvData;
+  }
+
+  public MetricsResult getSimpleReasonerMetrics(OWLReasoner reasoner) {
+    return getSimpleReasonerMetrics("", reasoner);
+  }
+
+  public MetricsResult getExtendedReasonerMetrics(OWLReasoner reasoner) {
+    return getExtendedReasonerMetrics("", reasoner);
+  }
+
+  public MetricsResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
+    MetricsResult csvData = new MetricsResult();
+    csvData.put(prefix + MetricsLabels.CONSISTENT, reasoner.isConsistent());
+    csvData.put(
+        prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT,
+        reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom().size());
+    return csvData;
+  }
+
+  public MetricsResult getExtendedReasonerMetrics(String prefix, OWLReasoner reasoner) {
+    MetricsResult csvData = new MetricsResult();
+    MetricsResult extendedData = getSimpleReasonerMetrics(prefix, reasoner);
+    csvData.importMetrics(extendedData);
     return csvData;
   }
 

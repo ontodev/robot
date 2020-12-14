@@ -3,9 +3,11 @@ package org.obolibrary.robot;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,7 @@ public class MetricsCommand implements Command {
   public MetricsCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
+    o.addOption("r", "reasoner", true, "reasoner to use: (ELK, HermiT)");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption(
         "f",
@@ -132,8 +135,18 @@ public class MetricsCommand implements Command {
     }
 
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
+    OWLReasonerFactory reasonerFactory = CommandLineHelper.getReasonerFactory(line);
 
-    MetricsOperation.executeMetrics(state.getOntology(), metrics_type, format, output_file);
+    // Override default reasoner options with command-line options
+    Map<String, String> reasonerOptions = ReduceOperation.getDefaultOptions();
+    for (String option : reasonerOptions.keySet()) {
+      if (line.hasOption(option)) {
+        reasonerOptions.put(option, line.getOptionValue(option));
+      }
+    }
+
+    MetricsOperation.executeMetrics(
+        state.getOntology(), reasonerFactory, metrics_type, format, output_file);
 
     return state;
   }

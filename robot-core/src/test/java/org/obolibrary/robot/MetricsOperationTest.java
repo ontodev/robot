@@ -8,8 +8,10 @@ import org.junit.Test;
 import org.obolibrary.robot.metrics.MetricsLabels;
 import org.obolibrary.robot.metrics.MetricsResult;
 import org.semanticweb.elk.io.FileUtils;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /**
  * Test metrics operation.trea
@@ -67,7 +69,8 @@ public class MetricsOperationTest extends CoreTest {
   @Test
   public void writeAllMetricsToTSV() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
-    MetricsResult result = MetricsOperation.runMetrics(ontology, "all");
+    OWLReasonerFactory rf = new ElkReasonerFactory();
+    MetricsResult result = MetricsOperation.runMetrics(ontology, rf, "all-reasoner");
     File testFile = new File("test.tsv");
     MetricsOperation.maybeWriteResult(result, "tsv", testFile);
     assertTrue(testFile.exists());

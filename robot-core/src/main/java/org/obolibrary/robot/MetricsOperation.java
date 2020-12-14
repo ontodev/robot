@@ -6,10 +6,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.google.gson.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.obolibrary.robot.export.Cell;
 import org.obolibrary.robot.export.Column;
 import org.obolibrary.robot.export.Row;
@@ -17,6 +14,8 @@ import org.obolibrary.robot.export.Table;
 import org.obolibrary.robot.metrics.MetricsResult;
 import org.obolibrary.robot.metrics.OntologyMetrics;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +58,15 @@ public class MetricsOperation {
     }
   }
 
-  public static void executeMetrics(OWLOntology o, String metrics_type, String format, File output)
+  public static void executeMetrics(
+      OWLOntology o, OWLReasonerFactory rf, String metrics_type, String format, File output)
       throws IOException {
-    MetricsResult metrics = runMetrics(o, metrics_type);
+    MetricsResult metrics = new MetricsResult();
+    if (metrics_type.contains("reasoner")) {
+      metrics.importMetrics(runMetrics(o, rf, metrics_type));
+    } else {
+      metrics.importMetrics(runMetrics(o, metrics_type));
+    }
     boolean wroteData = MetricsOperation.maybeWriteResult(metrics, format, output);
     if (!wroteData) {
       logger.info("No metrics written.");
@@ -91,6 +96,43 @@ public class MetricsOperation {
         break;
       default:
         throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
+    }
+    return metrics;
+  }
+
+  /**
+   * Run the metrics command using the reasoner factory. Note: when the reasoner factory is passed,
+   * it is assumed that reasoner metrics should be harvested. For example: both reasoner-all, and
+   * all will collect the same metrics: all metrics, plus the (simple) reasoner metrics.
+   *
+   * @param ontology Ontology to run metrics
+   * @param metrics_type what kind of metrics to harvest
+   * @param rf reasoner factory, in case reasoner metrics should be collected
+   * @return Metrics, if successful
+   */
+  public static MetricsResult runMetrics(
+      OWLOntology ontology, OWLReasonerFactory rf, String metrics_type) {
+    OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology);
+    MetricsResult metrics = new MetricsResult();
+    OWLReasoner r = rf.createReasoner(ontology);
+    metrics.importMetrics(ontologyMetrics.getSimpleReasonerMetrics(r));
+    if (metrics_type.contains("reasoner")) {
+      switch (metrics_type) {
+        case "essential-reasoner":
+          metrics.importMetrics(runMetrics(ontology, "essential"));
+          break;
+        case "extended-reasoner":
+          metrics.importMetrics(runMetrics(ontology, "extended"));
+          break;
+        case "all-reasoner":
+          metrics.importMetrics(runMetrics(ontology, "all"));
+          break;
+        default:
+          throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
+      }
+      return metrics;
+    } else {
+      metrics.importMetrics(runMetrics(ontology, metrics_type));
     }
     return metrics;
   }

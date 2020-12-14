@@ -27,6 +27,8 @@ public class MetricsLabels {
   public static final String AXIOM_COUNT_INCL = "axiom_count_incl";
   public static final String AXIOMTYPE_COUNT = "axiom_type_count";
   public static final String AXIOMTYPE_COUNT_INCL = "axiom_type_count_incl";
+  public static final String CLASSEXPRESSION_COUNT = "class_expression_count";
+  public static final String CLASSEXPRESSION_COUNT_INCL = "class_expression_count_incl";
   public static final String CLASS_COUNT = "class_count";
   public static final String CLASS_COUNT_INCL = "class_count_incl";
   public static final String CLASS_SGL_SUBCLASS_COUNT = "class_sgl_subcl_count";
