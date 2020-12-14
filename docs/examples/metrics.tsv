@@ -18,7 +18,8 @@ logical_axiom_count_incl	828	single_value
 obj_property_count	49	single_value
 obj_property_count_incl	49	single_value
 ontology_anno_count	0	single_value
-ontology_id	http://purl.obolibrary.org/obo/uberon.owl	single_value
+ontology_iri	http://purl.obolibrary.org/obo/uberon.owl	single_value
+ontology_version_iri	no.iri	single_value
 owl2	true	single_value
 owl2_dl	true	single_value
 owl2_el	false	single_value

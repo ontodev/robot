@@ -57,7 +57,8 @@ public class MetricsLabels {
   public static final String MAX_NUM_NAMED_SUPERCLASS_INCL = "named_supercl_count_max_incl";
   public static final String MULTI_INHERITANCE_COUNT = "multiple_inheritance_count";
   public static final String MULTI_INHERITANCE_COUNT_INCL = "multiple_inheritance_count_incl";
-  public static final String ONTOLOGY_ID = "ontology_id";
+  public static final String ONTOLOGY_ID = "ontology_iri";
+  public static final String ONTOLOGY_VERSION_ID = "ontology_version_iri";
   public static final String OBJPROPERTY_COUNT = "obj_property_count";
   public static final String OBJPROPERTY_COUNT_INCL = "obj_property_count_incl";
   public static final String RBOX_SIZE = "rbox_axiom_count";

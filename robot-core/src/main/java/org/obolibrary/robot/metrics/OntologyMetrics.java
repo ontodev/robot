@@ -1,10 +1,8 @@
 package org.obolibrary.robot.metrics;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owlapi.metrics.AbstractOWLMetric;
 import org.semanticweb.owlapi.metrics.AverageAssertedNamedSuperclassCount;
@@ -65,12 +63,12 @@ public class OntologyMetrics {
   public OntologyMetrics(OWLOntology item) {
     this.item = item;
     this.manager = item.getOWLOntologyManager();
+  }
 
-    try {
-      this.curieProvider = new CURIEShortFormProvider(new IOHelper().getPrefixes());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+  public OntologyMetrics(OWLOntology item, CURIEShortFormProvider curieShortFormProvider) {
+    this.item = item;
+    this.manager = item.getOWLOntologyManager();
+    this.curieProvider = curieShortFormProvider;
   }
 
   // ENTITIES
@@ -203,7 +201,7 @@ public class OntologyMetrics {
 
   private String extractPrefixForEntityOrOtherIfUnknown(OWLEntity e) {
     String shortform = getShortForm(e);
-    if (shortform.contains(":")) {
+    if (shortform.contains(":") && !shortform.equals(e.getIRI().toString())) {
       return shortform.split(":")[0];
     } else {
       logger.info("Entity " + e.getIRI() + " does not have a known prefix.");
@@ -658,6 +656,15 @@ public class OntologyMetrics {
     }
   }
 
+  public String getOntologyVersionId() {
+    OWLOntologyID ontologyID = getOntology().getOntologyID();
+    if (ontologyID.isAnonymous()) {
+      return "anonymousId";
+    } else {
+      return ontologyID.getVersionIRI().or(IRI.create("no.iri")).toString();
+    }
+  }
+
   public String getExpressivity(boolean included) {
     DLExpressivity dl = new DLExpressivity(getOntology());
     dl.setImportsClosureUsed(included);
@@ -798,6 +805,7 @@ public class OntologyMetrics {
   public MetricsResult getEssentialMetrics(String prefix) {
     MetricsResult csvData = new MetricsResult();
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_VERSION_ID, getOntologyVersionId());
     /*
     Essential entity metrics
     */
@@ -926,9 +934,13 @@ public class OntologyMetrics {
   public MetricsResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
     MetricsResult csvData = new MetricsResult();
     csvData.put(prefix + MetricsLabels.CONSISTENT, reasoner.isConsistent());
-    csvData.put(
-        prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT,
-        reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom().size());
+    if (reasoner.isConsistent()) {
+      csvData.put(
+          prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT,
+          reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom().size());
+    } else {
+      csvData.put(prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT, -1);
+    }
     return csvData;
   }
 

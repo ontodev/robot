@@ -13,6 +13,7 @@ import org.obolibrary.robot.export.Row;
 import org.obolibrary.robot.export.Table;
 import org.obolibrary.robot.metrics.MetricsResult;
 import org.obolibrary.robot.metrics.OntologyMetrics;
+import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -59,13 +60,19 @@ public class MetricsOperation {
   }
 
   public static void executeMetrics(
-      OWLOntology o, OWLReasonerFactory rf, String metrics_type, String format, File output)
+      OWLOntology o,
+      OWLReasonerFactory rf,
+      String metrics_type,
+      String format,
+      File output,
+      Map<String, String> prefixes)
       throws IOException {
     MetricsResult metrics = new MetricsResult();
+    CURIEShortFormProvider curieShortFormProvider = new CURIEShortFormProvider(prefixes);
     if (metrics_type.contains("reasoner")) {
-      metrics.importMetrics(runMetrics(o, rf, metrics_type));
+      metrics.importMetrics(runMetrics(o, rf, metrics_type, curieShortFormProvider));
     } else {
-      metrics.importMetrics(runMetrics(o, metrics_type));
+      metrics.importMetrics(runMetrics(o, metrics_type, curieShortFormProvider));
     }
     boolean wroteData = MetricsOperation.maybeWriteResult(metrics, format, output);
     if (!wroteData) {
@@ -81,8 +88,9 @@ public class MetricsOperation {
    * @param metrics_type what kind of metrics to harvest
    * @return Metrics, if successful
    */
-  public static MetricsResult runMetrics(OWLOntology ontology, String metrics_type) {
-    OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology);
+  public static MetricsResult runMetrics(
+      OWLOntology ontology, String metrics_type, CURIEShortFormProvider curieShortFormProvider) {
+    OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology, curieShortFormProvider);
     MetricsResult metrics;
     switch (metrics_type) {
       case "essential":
@@ -111,7 +119,10 @@ public class MetricsOperation {
    * @return Metrics, if successful
    */
   public static MetricsResult runMetrics(
-      OWLOntology ontology, OWLReasonerFactory rf, String metrics_type) {
+      OWLOntology ontology,
+      OWLReasonerFactory rf,
+      String metrics_type,
+      CURIEShortFormProvider curieShortFormProvider) {
     OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology);
     MetricsResult metrics = new MetricsResult();
     OWLReasoner r = rf.createReasoner(ontology);
@@ -119,20 +130,20 @@ public class MetricsOperation {
     if (metrics_type.contains("reasoner")) {
       switch (metrics_type) {
         case "essential-reasoner":
-          metrics.importMetrics(runMetrics(ontology, "essential"));
+          metrics.importMetrics(runMetrics(ontology, "essential", curieShortFormProvider));
           break;
         case "extended-reasoner":
-          metrics.importMetrics(runMetrics(ontology, "extended"));
+          metrics.importMetrics(runMetrics(ontology, "extended", curieShortFormProvider));
           break;
         case "all-reasoner":
-          metrics.importMetrics(runMetrics(ontology, "all"));
+          metrics.importMetrics(runMetrics(ontology, "all", curieShortFormProvider));
           break;
         default:
           throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
       }
       return metrics;
     } else {
-      metrics.importMetrics(runMetrics(ontology, metrics_type));
+      metrics.importMetrics(runMetrics(ontology, metrics_type, curieShortFormProvider));
     }
     return metrics;
   }

@@ -146,7 +146,12 @@ public class MetricsCommand implements Command {
     }
 
     MetricsOperation.executeMetrics(
-        state.getOntology(), reasonerFactory, metrics_type, format, output_file);
+        state.getOntology(),
+        reasonerFactory,
+        metrics_type,
+        format,
+        output_file,
+        ioHelper.getPrefixes());
 
     return state;
   }
