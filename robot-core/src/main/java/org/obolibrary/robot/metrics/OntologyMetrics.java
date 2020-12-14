@@ -1,8 +1,10 @@
 package org.obolibrary.robot.metrics;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owlapi.metrics.AbstractOWLMetric;
 import org.semanticweb.owlapi.metrics.AverageAssertedNamedSuperclassCount;
@@ -55,6 +57,8 @@ public class OntologyMetrics {
   private final OWLOntology item;
   private final OWLOntologyManager manager;
   private final List<String> owlprofileviolations = new ArrayList<>();
+  private final Map<String, String> prefixmap = new HashMap<>();
+  private final Map<String, String> prefixmap_used = new HashMap<>();
   private final List<OWLProfileViolation> dlprofileviolation = new ArrayList<>();
   protected OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
   private CURIEShortFormProvider curieProvider;
@@ -63,12 +67,19 @@ public class OntologyMetrics {
   public OntologyMetrics(OWLOntology item) {
     this.item = item;
     this.manager = item.getOWLOntologyManager();
+    try {
+      this.curieProvider = new CURIEShortFormProvider(new IOHelper().getPrefixes());
+    } catch (IOException e) {
+      logger.warn("Curie Provider could not be instantiated, trying without.. ", e);
+    }
+    this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
   }
 
   public OntologyMetrics(OWLOntology item, CURIEShortFormProvider curieShortFormProvider) {
     this.item = item;
     this.manager = item.getOWLOntologyManager();
     this.curieProvider = curieShortFormProvider;
+    this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
   }
 
   // ENTITIES
@@ -189,24 +200,20 @@ public class OntologyMetrics {
     return map;
   }
 
-  private String getShortForm(OWLEntity e) {
+  private String extractPrefixForEntityOrOtherIfUnknown(OWLEntity e) {
     Optional<CURIEShortFormProvider> sfpo = getCurieProvider();
-    String shortform = e.getIRI().getShortForm();
     if (sfpo.isPresent()) {
       CURIEShortFormProvider sfp = sfpo.get();
-      shortform = sfp.getShortForm(e);
+      String shortform = sfp.getShortForm(e);
+      if (shortform.contains(":") && !shortform.equals(e.getIRI().toString())) {
+        String prefix = shortform.split(":")[0];
+        prefixmap_used.put(prefix, prefixmap.get(prefix));
+        return prefix;
+      }
     }
-    return shortform;
-  }
 
-  private String extractPrefixForEntityOrOtherIfUnknown(OWLEntity e) {
-    String shortform = getShortForm(e);
-    if (shortform.contains(":") && !shortform.equals(e.getIRI().toString())) {
-      return shortform.split(":")[0];
-    } else {
-      logger.info("Entity " + e.getIRI() + " does not have a known prefix.");
-      return "prefix_unknown";
-    }
+    logger.info("Entity " + e.getIRI() + " does not have a known prefix.");
+    return "prefix_unknown";
   }
 
   public Map<String, Integer> getAxiomUsageMap(Imports includeImportsClosure) {
@@ -727,7 +734,7 @@ public class OntologyMetrics {
       String saxrhs = sax.getSuperClass().toString();
       for (OWLClass eachClass : eachAxiom.getClassesInSignature()) {
         int frequency = getNumberOfOccurences(saxrhs, eachClass.toString());
-        String class_sf = getShortForm(eachClass);
+        String class_sf = eachClass.getIRI().toString();
         if (classCountMap.containsKey(eachClass.toString())) {
           Integer currentClassCount = classCountMap.get(eachClass.toString());
           classCountMap.put(class_sf, currentClassCount + frequency);
@@ -920,6 +927,7 @@ public class OntologyMetrics {
     csvData.putMap(prefix + MetricsLabels.NS_USE_SIGNATURE, getEntityUsageMap(Imports.EXCLUDED));
     csvData.putMap(
         prefix + MetricsLabels.NS_USE_SIGNATURE_INCL, getEntityUsageMap(Imports.INCLUDED));
+    csvData.putMap(prefix + MetricsLabels.CURIE_MAP, prefixmap_used);
     return csvData;
   }
 

@@ -6,7 +6,7 @@ public class MetricsResult {
 
   Map<String, Object> data = new HashMap<>();
   Map<String, List<Object>> data_listvalues = new HashMap<>();
-  Map<String, Map<String, Integer>> data_mapvalues = new HashMap<>();
+  Map<String, Map<String, Object>> data_mapvalues = new HashMap<>();
 
   void put(String key, Object value) {
     data.put(key, value);
@@ -28,15 +28,19 @@ public class MetricsResult {
     data_listvalues.put(key, new ArrayList<>(set));
   }
 
-  public void putMap(String key, Map<String, Integer> data) {
-    data_mapvalues.put(key, data);
+  public void putMap(String key, Map<String, ? extends Object> data) {
+    Map<String, Object> map = new HashMap<>();
+    for (String k : data.keySet()) {
+      map.put(k, data.get(k));
+    }
+    data_mapvalues.put(key, map);
   }
 
   public Map<String, List<Object>> getListData() {
     return data_listvalues;
   }
 
-  public Map<String, Map<String, Integer>> getMapData() {
+  public Map<String, Map<String, Object>> getMapData() {
     return data_mapvalues;
   }
 

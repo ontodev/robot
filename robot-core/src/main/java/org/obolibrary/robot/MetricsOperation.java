@@ -216,7 +216,7 @@ public class MetricsOperation {
       metrics.add(key, element);
     }
 
-    Map<String, Map<String, Integer>> dataMap = result.getMapData();
+    Map<String, Map<String, Object>> dataMap = result.getMapData();
     List<String> keysMap = new ArrayList<>(dataMap.keySet());
     Collections.sort(keysMap);
     for (String key : keysMap) {
@@ -303,10 +303,10 @@ public class MetricsOperation {
       }
     }
 
-    for (Map.Entry<String, Map<String, Integer>> entry : result.getMapData().entrySet()) {
+    for (Map.Entry<String, Map<String, Object>> entry : result.getMapData().entrySet()) {
       String key = escapeTSV(entry.getKey());
-      Map<String, Integer> v = entry.getValue();
-      for (Map.Entry<String, Integer> entryMap : v.entrySet()) {
+      Map<String, Object> v = entry.getValue();
+      for (Map.Entry<String, Object> entryMap : v.entrySet()) {
         String key_inner = entryMap.getKey();
         String value_inner = escapeTSV(entryMap.getValue() + "");
         addRowToTable(table, key, key_inner + " " + value_inner, "map_value");

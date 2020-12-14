@@ -179,6 +179,7 @@ public class MetricsLabels {
   public static final String MOST_FRQUENTLY_USED_CONCEPT = "most_freq_concept";
   public static final String MOST_FRQUENTLY_USED_CONCEPT_INCL = "most_freq_concept_incl";
   public static final String VALID_IMPORTS_INCL = "valid_imports_incl";
+  public static final String CURIE_MAP = "curie_map";
 
   public static Map<String, String> getLabels() {
     Map<String, String> data = new HashMap<>();
