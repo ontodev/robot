@@ -1,4 +1,4 @@
-# Metrics
+# Measure
 
 ## Contents
 
@@ -12,7 +12,7 @@ axiom counts, qualitative information such as OWL 2 profiles
 and more complex metrics aimed at informing ontology developers such as logical expressivity and axiom shape.
 A number of essential metrics can be generated very simply as follows:
 
-    robot metrics --input uberon_fragment.owl --output results/metrics.tsv
+    robot measure --input uberon_fragment.owl --output results/metrics.tsv
 
 This will generate a table with metrics such as:
 - Entity metrics (number of classes, object properties etc.)
@@ -32,7 +32,7 @@ There are three general modes for computing metrics:
 _Essential metrics_ include basic ontology entity counts (number of classes, individuals and properties), axiom counts
 and a few qualitiative metrics such as OWL profiles, see the initial example above.
 
-    robot metrics --input uberon_fragment.owl --format json --metrics essential --output results/metrics_essential.json
+    robot measure --input uberon_fragment.owl --format json --metrics essential --output results/metrics_essential.json
 
 _Extended metrics_ contain all the essential metrics, and additional details on axiom types, logical expressivity and datatypes.
 Use: `--metrics extended`.
@@ -127,11 +127,11 @@ Currently, the following serialisation formats are supported:
 
 To serialise the metrics as json, for example, we run:
 
-    robot metrics --input uberon_fragment.owl --format json --metrics all --output results/metrics_all.json
+    robot measure --input uberon_fragment.owl --format json --metrics all --output results/metrics_all.json
 
 or
 
-    robot metrics --input uberon_fragment.owl -f json --metrics all --output results/metrics_all.json
+    robot measure --input uberon_fragment.owl -f json --metrics all --output results/metrics_all.json
 
 Note that if no `--format` is explicitly provided, robot will try to infer the inteded format from the file extension
 instead. Failing that, it will generate a TSV file.

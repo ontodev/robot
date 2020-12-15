@@ -2,7 +2,7 @@ package org.obolibrary.robot.metrics;
 
 import java.util.*;
 
-public class MetricsResult {
+public class MeasureResult {
 
   Map<String, Object> data = new HashMap<>();
   Map<String, List<Object>> data_listvalues = new HashMap<>();
@@ -48,7 +48,7 @@ public class MetricsResult {
     return data.get(key);
   }
 
-  public void importMetrics(MetricsResult data) {
+  public void importMetrics(MeasureResult data) {
     this.data.putAll(data.getData());
     this.data_listvalues.putAll(data.getListData());
     this.data_mapvalues.putAll(data.getMapData());

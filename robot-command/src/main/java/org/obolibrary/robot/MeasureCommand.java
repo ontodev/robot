@@ -12,16 +12,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles inputs and outputs for the {@link MetricsOperation}.
+ * Handles inputs and outputs for the {@link MeasureOperation}.
  *
  * @author <a href="mailto:nicolas.matentzoglu@gmail.com">Nicolas Matentzoglu</a>
  */
-public class MetricsCommand implements Command {
+public class MeasureCommand implements Command {
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(MetricsCommand.class);
+  private static final Logger logger = LoggerFactory.getLogger(MeasureCommand.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "metrics#";
+  private static final String NS = "measure#";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -29,7 +29,7 @@ public class MetricsCommand implements Command {
   private final List<String> legal_formats = Arrays.asList("tsv", "csv", "html", "yaml", "json");
 
   /** Initialze the command. */
-  public MetricsCommand() {
+  public MeasureCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("r", "reasoner", true, "reasoner to use: (ELK, HermiT)");
@@ -38,7 +38,7 @@ public class MetricsCommand implements Command {
         "f",
         "format",
         true,
-        "the metrics result format: " + String.join(" ", legal_formats).trim() + ".");
+        "the measure result format: " + String.join(" ", legal_formats).trim() + ".");
     o.addOption("o", "output", true, "save updated metrics to a file");
     o.addOption(
         "m",
@@ -54,7 +54,7 @@ public class MetricsCommand implements Command {
    * @return name
    */
   public String getName() {
-    return "metrics";
+    return "measure";
   }
 
   /**
@@ -73,7 +73,7 @@ public class MetricsCommand implements Command {
    */
   // todo: --output?
   public String getUsage() {
-    return "robot metrics --input <file> --output <output>";
+    return "robot measure --input <file> --output <output>";
   }
 
   /**
@@ -121,7 +121,7 @@ public class MetricsCommand implements Command {
     String output = CommandLineHelper.getOptionalValue(line, "output");
 
     if (output == null) {
-      throw new Exception(String.format(missingFileError, output, "metrics"));
+      throw new Exception(String.format(missingFileError, output, "measure"));
     }
 
     File output_file = new File(output);
@@ -145,7 +145,7 @@ public class MetricsCommand implements Command {
       }
     }
 
-    MetricsOperation.executeMetrics(
+    MeasureOperation.executeMetrics(
         state.getOntology(),
         reasonerFactory,
         metrics_type,

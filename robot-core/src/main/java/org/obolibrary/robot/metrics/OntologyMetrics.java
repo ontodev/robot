@@ -797,20 +797,20 @@ public class OntologyMetrics {
     return dlprofileviolation;
   }
 
-  public MetricsResult getEssentialMetrics() {
+  public MeasureResult getEssentialMetrics() {
     return getEssentialMetrics("");
   }
 
-  public MetricsResult getExtendedMetrics() {
+  public MeasureResult getExtendedMetrics() {
     return getExtendedMetrics("");
   }
 
-  public MetricsResult getAllMetrics() {
+  public MeasureResult getAllMetrics() {
     return getAllMetrics("");
   }
 
-  public MetricsResult getEssentialMetrics(String prefix) {
-    MetricsResult csvData = new MetricsResult();
+  public MeasureResult getEssentialMetrics(String prefix) {
+    MeasureResult csvData = new MeasureResult();
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
     csvData.put(prefix + MetricsLabels.ONTOLOGY_VERSION_ID, getOntologyVersionId());
     /*
@@ -877,9 +877,9 @@ public class OntologyMetrics {
     return csvData;
   }
 
-  public MetricsResult getExtendedMetrics(String prefix) {
-    MetricsResult csvData = new MetricsResult();
-    MetricsResult essentialData = getEssentialMetrics(prefix);
+  public MeasureResult getExtendedMetrics(String prefix) {
+    MeasureResult csvData = new MeasureResult();
+    MeasureResult essentialData = getEssentialMetrics(prefix);
     csvData.importMetrics(essentialData);
 
     /*
@@ -931,16 +931,16 @@ public class OntologyMetrics {
     return csvData;
   }
 
-  public MetricsResult getSimpleReasonerMetrics(OWLReasoner reasoner) {
+  public MeasureResult getSimpleReasonerMetrics(OWLReasoner reasoner) {
     return getSimpleReasonerMetrics("", reasoner);
   }
 
-  public MetricsResult getExtendedReasonerMetrics(OWLReasoner reasoner) {
+  public MeasureResult getExtendedReasonerMetrics(OWLReasoner reasoner) {
     return getExtendedReasonerMetrics("", reasoner);
   }
 
-  public MetricsResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
-    MetricsResult csvData = new MetricsResult();
+  public MeasureResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
+    MeasureResult csvData = new MeasureResult();
     csvData.put(prefix + MetricsLabels.CONSISTENT, reasoner.isConsistent());
     if (reasoner.isConsistent()) {
       csvData.put(
@@ -952,16 +952,16 @@ public class OntologyMetrics {
     return csvData;
   }
 
-  public MetricsResult getExtendedReasonerMetrics(String prefix, OWLReasoner reasoner) {
-    MetricsResult csvData = new MetricsResult();
-    MetricsResult extendedData = getSimpleReasonerMetrics(prefix, reasoner);
+  public MeasureResult getExtendedReasonerMetrics(String prefix, OWLReasoner reasoner) {
+    MeasureResult csvData = new MeasureResult();
+    MeasureResult extendedData = getSimpleReasonerMetrics(prefix, reasoner);
     csvData.importMetrics(extendedData);
     return csvData;
   }
 
-  public MetricsResult getAllMetrics(String prefix) {
-    MetricsResult csvData = new MetricsResult();
-    MetricsResult extendedData = getExtendedMetrics(prefix);
+  public MeasureResult getAllMetrics(String prefix) {
+    MeasureResult csvData = new MeasureResult();
+    MeasureResult extendedData = getExtendedMetrics(prefix);
     csvData.importMetrics(extendedData);
 
     csvData.put(prefix + MetricsLabels.MAX_AXIOMLENGTH, getLongestAxiomLength(Imports.EXCLUDED));

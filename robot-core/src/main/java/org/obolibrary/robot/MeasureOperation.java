@@ -11,7 +11,7 @@ import org.obolibrary.robot.export.Cell;
 import org.obolibrary.robot.export.Column;
 import org.obolibrary.robot.export.Row;
 import org.obolibrary.robot.export.Table;
-import org.obolibrary.robot.metrics.MetricsResult;
+import org.obolibrary.robot.metrics.MeasureResult;
 import org.obolibrary.robot.metrics.OntologyMetrics;
 import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -25,12 +25,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:nicolas.matentzoglu@gmail.com">Nicolas Matentzoglu</a>
  */
-public class MetricsOperation {
+public class MeasureOperation {
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(MetricsOperation.class);
+  private static final Logger logger = LoggerFactory.getLogger(MeasureOperation.class);
 
   /** Namespace for error messages. */
-  private static final String NS = "metrics#";
+  private static final String NS = "measure#";
 
   /** Error message when metric type is illegal. Expects: metric type. */
   private static final String metricsTypeError = NS + "METRICS TYPE ERROR unknown metrics type: %s";
@@ -49,7 +49,7 @@ public class MetricsOperation {
    * @return true if there were results, false otherwise
    * @throws IOException if writing file failed
    */
-  public static boolean maybeWriteResult(MetricsResult result, String format, File output)
+  public static boolean maybeWriteResult(MeasureResult result, String format, File output)
       throws IOException {
     if (!result.isEmpty()) {
       writeResult(result, format, output);
@@ -67,14 +67,14 @@ public class MetricsOperation {
       File output,
       Map<String, String> prefixes)
       throws IOException {
-    MetricsResult metrics = new MetricsResult();
+    MeasureResult metrics = new MeasureResult();
     CURIEShortFormProvider curieShortFormProvider = new CURIEShortFormProvider(prefixes);
     if (metrics_type.contains("reasoner")) {
-      metrics.importMetrics(runMetrics(o, rf, metrics_type, curieShortFormProvider));
+      metrics.importMetrics(runMeasures(o, rf, metrics_type, curieShortFormProvider));
     } else {
-      metrics.importMetrics(runMetrics(o, metrics_type, curieShortFormProvider));
+      metrics.importMetrics(runMeasures(o, metrics_type, curieShortFormProvider));
     }
-    boolean wroteData = MetricsOperation.maybeWriteResult(metrics, format, output);
+    boolean wroteData = MeasureOperation.maybeWriteResult(metrics, format, output);
     if (!wroteData) {
       logger.info("No metrics written.");
     }
@@ -88,10 +88,10 @@ public class MetricsOperation {
    * @param metrics_type what kind of metrics to harvest
    * @return Metrics, if successful
    */
-  public static MetricsResult runMetrics(
+  public static MeasureResult runMeasures(
       OWLOntology ontology, String metrics_type, CURIEShortFormProvider curieShortFormProvider) {
     OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology, curieShortFormProvider);
-    MetricsResult metrics;
+    MeasureResult metrics;
     switch (metrics_type) {
       case "essential":
         metrics = ontologyMetrics.getEssentialMetrics();
@@ -118,32 +118,32 @@ public class MetricsOperation {
    * @param rf reasoner factory, in case reasoner metrics should be collected
    * @return Metrics, if successful
    */
-  public static MetricsResult runMetrics(
+  public static MeasureResult runMeasures(
       OWLOntology ontology,
       OWLReasonerFactory rf,
       String metrics_type,
       CURIEShortFormProvider curieShortFormProvider) {
     OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology);
-    MetricsResult metrics = new MetricsResult();
+    MeasureResult metrics = new MeasureResult();
     OWLReasoner r = rf.createReasoner(ontology);
     metrics.importMetrics(ontologyMetrics.getSimpleReasonerMetrics(r));
     if (metrics_type.contains("reasoner")) {
       switch (metrics_type) {
         case "essential-reasoner":
-          metrics.importMetrics(runMetrics(ontology, "essential", curieShortFormProvider));
+          metrics.importMetrics(runMeasures(ontology, "essential", curieShortFormProvider));
           break;
         case "extended-reasoner":
-          metrics.importMetrics(runMetrics(ontology, "extended", curieShortFormProvider));
+          metrics.importMetrics(runMeasures(ontology, "extended", curieShortFormProvider));
           break;
         case "all-reasoner":
-          metrics.importMetrics(runMetrics(ontology, "all", curieShortFormProvider));
+          metrics.importMetrics(runMeasures(ontology, "all", curieShortFormProvider));
           break;
         default:
           throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
       }
       return metrics;
     } else {
-      metrics.importMetrics(runMetrics(ontology, metrics_type, curieShortFormProvider));
+      metrics.importMetrics(runMeasures(ontology, metrics_type, curieShortFormProvider));
     }
     return metrics;
   }
@@ -155,7 +155,7 @@ public class MetricsOperation {
    * @param format the language to write in (if null, TTL)
    * @param output the output stream to write to
    */
-  public static void writeResult(MetricsResult result, String format, File output)
+  public static void writeResult(MeasureResult result, String format, File output)
       throws IOException {
     switch (format) {
       case "tsv":
@@ -178,7 +178,7 @@ public class MetricsOperation {
     }
   }
 
-  private static JsonElement resultsToJson(MetricsResult result) {
+  private static JsonElement resultsToJson(MeasureResult result) {
     JsonObject root = new JsonObject();
     Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
@@ -226,7 +226,7 @@ public class MetricsOperation {
     return root;
   }
 
-  private static void writeJSON(MetricsResult result, File output) throws IOException {
+  private static void writeJSON(MeasureResult result, File output) throws IOException {
     JsonElement root = resultsToJson(result);
     Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     writeStringToFile(gson.toJson(root), output);
@@ -240,7 +240,7 @@ public class MetricsOperation {
     }
   }
 
-  private static void writeYAML(MetricsResult result, File outputPath) throws IOException {
+  private static void writeYAML(MeasureResult result, File outputPath) throws IOException {
     JsonElement root = resultsToJson(result);
     Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     String output = asYaml(gson.toJson(root));
@@ -271,7 +271,7 @@ public class MetricsOperation {
     table.addRow(row);
   }
 
-  private static Table resultsToTable(MetricsResult result, String format) {
+  private static Table resultsToTable(MeasureResult result, String format) {
     Table table = new Table(format);
 
     cl_metric.setSort(2);
@@ -317,13 +317,13 @@ public class MetricsOperation {
     return table;
   }
 
-  private static void writeTable(MetricsResult result, File output, String format)
+  private static void writeTable(MeasureResult result, File output, String format)
       throws IOException {
     Table table = resultsToTable(result, format);
     table.write(output.getPath(), "");
   }
 
-  private static void writeHTML(MetricsResult result, File output) throws IOException {
+  private static void writeHTML(MeasureResult result, File output) throws IOException {
     Table table = resultsToTable(result, "tsv");
     writeStringToFile(table.toHTML(""), output);
   }
