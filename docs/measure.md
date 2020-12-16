@@ -7,7 +7,7 @@
 3. [Output formats](#output-formats)
 
 ## Overview
-Robot can compute a number of metrics about your ontology, such as entity and
+ROBOT can compute a number of metrics about your ontology, such as entity and
 axiom counts, qualitative information such as OWL 2 profiles
 and more complex metrics aimed at informing ontology developers such as logical expressivity and axiom shape.
 A number of essential metrics can be generated very simply as follows:
@@ -27,7 +27,7 @@ There are three general modes for computing metrics:
 1. Essential metrics (`--metrics essential`, default)
 2. Extended metrics (`--metrics extended`)
 3. All metrics (`--metrics all`)
-4. Adding reasoner metrics (`--metrics all-reasoner`, `--metrics essential-reasoner`, `--metrics extended-reasoner`)
+4. Reasoner metrics (`--metrics all-reasoner`, `--metrics essential-reasoner`, `--metrics extended-reasoner`)
 
 _Essential metrics_ include basic ontology entity counts (number of classes, individuals and properties), axiom counts
 and a few qualitiative metrics such as OWL profiles, see the initial example above.
@@ -44,8 +44,8 @@ Use: `--metrics all`.
 _Reasoner metrics_ (currently only satisfiability status and number of unsatisfiable classes) can be collected by appending `-reasoner`
 to the `--metrics` parameter, for example: `--metrics essential-reasoner`.
 
-A full breakdown of all metrics can be found in the following. For simplicity, all metrics ending with `_incl` are omitted -
-they simply indicate that the metric was collected over the imports closure (the ontology _including_ its imports).
+A full breakdown of all metrics can be found in the table below. In the actual output, you will also see the same metrics ending with `_incl`.
+This indicates that the metric is the ontology _including_ its imports. Otherwise, the metric is just representative of the ontology _without_ imports.
 
 Some abbreviations useful to understand the following:
 - `abox`: The part of the ontology that is about individuals, see [Wikipedia](https://en.wikipedia.org/wiki/Abox)
@@ -129,11 +129,7 @@ To serialise the metrics as json, for example, we run:
 
     robot measure --input uberon_fragment.owl --format json --metrics all --output results/metrics_all.json
 
-or
-
-    robot measure --input uberon_fragment.owl -f json --metrics all --output results/metrics_all.json
-
-Note that if no `--format` is explicitly provided, robot will try to infer the inteded format from the file extension
+Note that if no `--format`/`-f` is explicitly provided, robot will try to infer the inteded format from the file extension
 instead. Failing that, it will generate a TSV file.
 
 ## Error Messages
@@ -144,4 +140,4 @@ Only the following `--format/-f` options are currently supported: `tsv`, `json`,
 
 ### Metrics type error
 
-Only the following `--metrics/-m` options are currently supported: `essential`, `extended`, `all`.
+Only the following `--metrics/-m` options are currently supported: `essential`, `essential-reasoner`, `extended`, `extended-reasoner`, `all`, `all-reasoner`.
