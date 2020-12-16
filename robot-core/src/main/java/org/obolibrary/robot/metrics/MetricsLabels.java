@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class MetricsLabels {
 
   public static final String OWLAPI_VERSION = "owlapi_version";
@@ -181,6 +182,10 @@ public class MetricsLabels {
   public static final String VALID_IMPORTS_INCL = "valid_imports_incl";
   public static final String CURIE_MAP = "curie_map";
 
+  /**
+   *
+   * @return Get all metrics as a map of variable names to label
+   */
   public static Map<String, String> getLabels() {
     Map<String, String> data = new HashMap<>();
     for (Field field : MetricsLabels.class.getDeclaredFields()) {
@@ -190,12 +195,10 @@ public class MetricsLabels {
         String value = field.get(MetricsLabels.class).toString();
         data.put(name, value);
 
-      } catch (IllegalArgumentException e) {
-        e.printStackTrace();
-      } catch (IllegalAccessException e) {
-        // TODO Auto-generated catch block
+      } catch (IllegalArgumentException | IllegalAccessException e) {
         e.printStackTrace();
       }
+
     }
     return data;
   }

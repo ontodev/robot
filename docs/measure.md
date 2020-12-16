@@ -44,6 +44,8 @@ Use: `--metrics all`.
 _Reasoner metrics_ (currently only satisfiability status and number of unsatisfiable classes) can be collected by appending `-reasoner`
 to the `--metrics` parameter, for example: `--metrics essential-reasoner`.
 
+    robot measure --input uberon_fragment.owl --format json --metrics essential-reasoner --output results/metrics_essential_reasoner.json
+
 A full breakdown of all metrics can be found in the table below. In the actual output, you will also see the same metrics ending with `_incl`.
 This indicates that the metric is the ontology _including_ its imports. Otherwise, the metric is just representative of the ontology _without_ imports.
 

@@ -27,16 +27,16 @@ import org.slf4j.LoggerFactory;
  */
 public class MeasureOperation {
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(MeasureOperation.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MeasureOperation.class);
 
   /** Namespace for error messages. */
   private static final String NS = "measure#";
 
   /** Error message when metric type is illegal. Expects: metric type. */
-  private static final String metricsTypeError = NS + "METRICS TYPE ERROR unknown metrics type: %s";
+  private static final String METRICS_TYPE_ERROR = NS + "METRICS TYPE ERROR unknown metrics type: %s";
 
   /** Error message when format type is illegal. Expects: format. */
-  private static final String metricsFormatError =
+  private static final String METRICS_FORMAT_ERROR =
       NS + "METRICS FORMAT ERROR unknown metrics format: %s";
 
   /**
@@ -59,40 +59,52 @@ public class MeasureOperation {
     }
   }
 
-  public static void executeMetrics(
-      OWLOntology o,
+  /**
+   * Running the measure command
+   *
+   * @param ontology input ontology
+   * @param rf reasoner factory to be used for reasoning metrics
+   * @param metricsType The type of metrics that should be generated, like 'essential', 'extended'
+   *     or all
+   * @param format the name of the file format to write the results to
+   * @param output the file to write to
+   * @param prefixes prefix map to be used for computing metrics
+   * @throws IOException if writing file failed
+   */
+  public static void measure(
+      OWLOntology ontology,
       OWLReasonerFactory rf,
-      String metrics_type,
+      String metricsType,
       String format,
       File output,
       Map<String, String> prefixes)
       throws IOException {
     MeasureResult metrics = new MeasureResult();
     CURIEShortFormProvider curieShortFormProvider = new CURIEShortFormProvider(prefixes);
-    if (metrics_type.contains("reasoner")) {
-      metrics.importMetrics(runMeasures(o, rf, metrics_type, curieShortFormProvider));
+    if (metricsType.contains("reasoner")) {
+      metrics.importMetrics(getMetrics(ontology, rf, metricsType, curieShortFormProvider));
     } else {
-      metrics.importMetrics(runMeasures(o, metrics_type, curieShortFormProvider));
+      metrics.importMetrics(getMetrics(ontology, metricsType, curieShortFormProvider));
     }
     boolean wroteData = MeasureOperation.maybeWriteResult(metrics, format, output);
     if (!wroteData) {
-      logger.info("No metrics written.");
+      LOGGER.info("No metrics written.");
     }
   }
 
   /**
-   * Given a dataset, a query string, a format name, and an output stream, run the SPARQL query over
-   * the named graphs and write the output to the stream.
+   * Compute metrics for a given ontology.
    *
    * @param ontology Ontology to run metrics
-   * @param metrics_type what kind of metrics to harvest
+   * @param metricsType what kind of metrics to harvest
+   * @param curieShortFormProvider Shortformprovider to be used for computation of CURIEs
    * @return Metrics, if successful
    */
-  public static MeasureResult runMeasures(
-      OWLOntology ontology, String metrics_type, CURIEShortFormProvider curieShortFormProvider) {
+  public static MeasureResult getMetrics(
+      OWLOntology ontology, String metricsType, CURIEShortFormProvider curieShortFormProvider) {
     OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology, curieShortFormProvider);
     MeasureResult metrics;
-    switch (metrics_type) {
+    switch (metricsType) {
       case "essential":
         metrics = ontologyMetrics.getEssentialMetrics();
         break;
@@ -103,7 +115,7 @@ public class MeasureOperation {
         metrics = ontologyMetrics.getAllMetrics();
         break;
       default:
-        throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
+        throw new IllegalArgumentException(String.format(METRICS_TYPE_ERROR, metricsType));
     }
     return metrics;
   }
@@ -114,43 +126,43 @@ public class MeasureOperation {
    * all will collect the same metrics: all metrics, plus the (simple) reasoner metrics.
    *
    * @param ontology Ontology to run metrics
-   * @param metrics_type what kind of metrics to harvest
+   * @param metricsType what kind of metrics to harvest
    * @param rf reasoner factory, in case reasoner metrics should be collected
    * @return Metrics, if successful
    */
-  public static MeasureResult runMeasures(
+  public static MeasureResult getMetrics(
       OWLOntology ontology,
       OWLReasonerFactory rf,
-      String metrics_type,
+      String metricsType,
       CURIEShortFormProvider curieShortFormProvider) {
     OntologyMetrics ontologyMetrics = new OntologyMetrics(ontology);
     MeasureResult metrics = new MeasureResult();
     OWLReasoner r = rf.createReasoner(ontology);
     metrics.importMetrics(ontologyMetrics.getSimpleReasonerMetrics(r));
-    if (metrics_type.contains("reasoner")) {
-      switch (metrics_type) {
+    if (metricsType.contains("reasoner")) {
+      switch (metricsType) {
         case "essential-reasoner":
-          metrics.importMetrics(runMeasures(ontology, "essential", curieShortFormProvider));
+          metrics.importMetrics(getMetrics(ontology, "essential", curieShortFormProvider));
           break;
         case "extended-reasoner":
-          metrics.importMetrics(runMeasures(ontology, "extended", curieShortFormProvider));
+          metrics.importMetrics(getMetrics(ontology, "extended", curieShortFormProvider));
           break;
         case "all-reasoner":
-          metrics.importMetrics(runMeasures(ontology, "all", curieShortFormProvider));
+          metrics.importMetrics(getMetrics(ontology, "all", curieShortFormProvider));
           break;
         default:
-          throw new IllegalArgumentException(String.format(metricsTypeError, metrics_type));
+          throw new IllegalArgumentException(String.format(METRICS_TYPE_ERROR, metricsType));
       }
       return metrics;
     } else {
-      metrics.importMetrics(runMeasures(ontology, metrics_type, curieShortFormProvider));
+      metrics.importMetrics(getMetrics(ontology, metricsType, curieShortFormProvider));
     }
     return metrics;
   }
 
   /**
-   * Write a model to an output stream.
-   *
+   * @throws IOException
+   *     <p>Write a model to an output stream.
    * @param result results of the metrics operation
    * @param format the language to write in (if null, TTL)
    * @param output the output stream to write to
@@ -174,7 +186,7 @@ public class MeasureOperation {
         writeHTML(result, output);
         break;
       default:
-        throw new IllegalArgumentException(String.format(metricsFormatError, format));
+        throw new IllegalArgumentException(String.format(METRICS_FORMAT_ERROR, format));
     }
   }
 
@@ -235,7 +247,7 @@ public class MeasureOperation {
   private static void writeStringToFile(String output, File outputPath) throws IOException {
     try (FileWriter fw = new FileWriter(outputPath);
         BufferedWriter bw = new BufferedWriter(fw)) {
-      logger.debug("Writing metrics to: " + outputPath);
+      LOGGER.debug("Writing metrics to: " + outputPath);
       bw.write(output);
     }
   }
@@ -258,29 +270,29 @@ public class MeasureOperation {
     return s.replaceAll("\t", " ");
   }
 
-  private static final Column cl_metric = new Column("metric");
-  private static final Column cl_metric_value = new Column("metric_value");
-  private static final Column cl_metric_type = new Column("metric_type");
+  private static final Column COLUMN_METRIC = new Column("metric");
+  private static final Column COLUMN_METRIC_VALUE = new Column("metric_value");
+  private static final Column COLUMN_METRIC_TYPE = new Column("metric_type");
 
   private static void addRowToTable(
-      Table table, String metric, String metric_value, String metric_type) {
+      Table table, String metric, String metricValue, String metricType) {
     Row row = new Row();
-    row.add(new Cell(cl_metric, metric));
-    row.add(new Cell(cl_metric_value, metric_value));
-    row.add(new Cell(cl_metric_type, metric_type));
+    row.add(new Cell(COLUMN_METRIC, metric));
+    row.add(new Cell(COLUMN_METRIC_VALUE, metricValue));
+    row.add(new Cell(COLUMN_METRIC_TYPE, metricType));
     table.addRow(row);
   }
 
   private static Table resultsToTable(MeasureResult result, String format) {
     Table table = new Table(format);
 
-    cl_metric.setSort(2);
-    cl_metric_type.setSort(1);
-    cl_metric_value.setSort(0);
+    COLUMN_METRIC.setSort(2);
+    COLUMN_METRIC_TYPE.setSort(1);
+    COLUMN_METRIC_VALUE.setSort(0);
 
-    table.addColumn(cl_metric);
-    table.addColumn(cl_metric_value);
-    table.addColumn(cl_metric_type);
+    table.addColumn(COLUMN_METRIC);
+    table.addColumn(COLUMN_METRIC_VALUE);
+    table.addColumn(COLUMN_METRIC_TYPE);
     table.setSortColumns();
 
     // StringBuilder sb = new StringBuilder();

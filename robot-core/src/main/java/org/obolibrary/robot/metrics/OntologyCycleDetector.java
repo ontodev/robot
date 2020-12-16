@@ -17,8 +17,14 @@ public class OntologyCycleDetector {
    */
 
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(OntologyCycleDetector.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OntologyCycleDetector.class);
 
+  /**
+   *
+   * @param ontology the ontology to be checked for cycles
+   * @param includeImports whether imports closure should be considered
+   * @return True if there is certainly a cycle, otherwise False.
+   */
   public static boolean containsCycle(OWLOntology ontology, Imports includeImports) {
     final Set<OWLClass> Classes = ontology.getClassesInSignature(includeImports);
     for (OWLClass Class : Classes) {
@@ -29,7 +35,7 @@ public class OntologyCycleDetector {
       while (Queue.peek() != null) {
         OWLClass current = Queue.poll();
         if (current == Class && !Queue.isEmpty()) {
-          logger.warn(
+          LOGGER.warn(
               "Cycle detector encountered a potential problem - results may be unreliable.");
         }
         // no need to check the same entry more than once
@@ -57,7 +63,7 @@ public class OntologyCycleDetector {
     return false;
   }
 
-  public static Set<OWLAxiom> getReferencingAxioms(
+  private static Set<OWLAxiom> getReferencingAxioms(
       OWLOntology ontology, OWLClass current, Imports includeImports) {
     Set<OWLAxiom> refs = new HashSet<>();
     if (includeImports == Imports.INCLUDED) {

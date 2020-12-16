@@ -53,7 +53,10 @@ public class MetricsUtils {
   }
 
   private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology o, Imports includeImportsClosure, boolean skiprules, boolean leavedeclarations) {
+      OWLOntology ontology,
+      Imports includeImportsClosure,
+      boolean skiprules,
+      boolean leavedeclarations) {
     Set<AxiomType<?>> types = new HashSet<>();
     types.addAll(AxiomType.TBoxAxiomTypes);
     types.addAll(AxiomType.RBoxAxiomTypes);
@@ -61,33 +64,44 @@ public class MetricsUtils {
     if (leavedeclarations) {
       types.add(AxiomType.DECLARATION);
     }
-    return getLogicalAxioms(o, includeImportsClosure, skiprules, types);
+    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, types);
   }
 
   private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology o, Imports includeImportsClosure, boolean skiprules) {
-    return getLogicalAxioms(o, includeImportsClosure, skiprules, false);
+      OWLOntology ontology, Imports includeImportsClosure, boolean skiprules) {
+    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false);
   }
 
+  /**
+   *
+   * @param ontology ontology to be checked
+   * @param includeImportsClosure take into account imports
+   * @param skiprules ignore rules (SWRL)
+   * @param types AxiomTypes to consider
+   * @return all logical axioms in the ontology
+   */
   public static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology o, Imports includeImportsClosure, boolean skiprules, Set<AxiomType<?>> types) {
-    return getLogicalAxioms(o, includeImportsClosure, skiprules, false, types);
+      OWLOntology ontology,
+      Imports includeImportsClosure,
+      boolean skiprules,
+      Set<AxiomType<?>> types) {
+    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false, types);
   }
 
   private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology o,
+      OWLOntology ontology,
       Imports includeImportsClosure,
       boolean skiprules,
       boolean stripaxiomanno,
       Set<AxiomType<?>> types) {
     Set<OWLAxiom> axioms = new HashSet<>();
-    for (OWLAxiom ax : o.getLogicalAxioms()) {
+    for (OWLAxiom ax : ontology.getLogicalAxioms()) {
       if (types.contains(ax.getAxiomType())) {
         axioms.add(ax);
       }
     }
     if (includeImportsClosure == Imports.INCLUDED) {
-      for (OWLOntology imp : o.getImports()) {
+      for (OWLOntology imp : ontology.getImports()) {
         for (OWLAxiom ax : imp.getLogicalAxioms()) {
           if (types.contains(ax.getAxiomType())) {
             axioms.add(ax);
@@ -105,10 +119,13 @@ public class MetricsUtils {
   }
 
   private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology o, boolean includeImportsClosure, boolean skiprules, boolean stripaxiomanno) {
-    Set<OWLAxiom> axioms = new HashSet<>(o.getLogicalAxioms());
+      OWLOntology ontology,
+      boolean includeImportsClosure,
+      boolean skiprules,
+      boolean stripaxiomanno) {
+    Set<OWLAxiom> axioms = new HashSet<>(ontology.getLogicalAxioms());
     if (includeImportsClosure) {
-      for (OWLOntology imp : o.getImports()) {
+      for (OWLOntology imp : ontology.getImports()) {
         axioms.addAll(imp.getLogicalAxioms());
       }
     }
@@ -129,10 +146,6 @@ public class MetricsUtils {
         axioms.add(ax);
       }
     }
-  }
-
-  public static File getResourcePath(Object o) {
-    return new File(o.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
   }
 
   private static Map<? extends String, ? extends String> getFileMetrics(File file) {
@@ -178,6 +191,11 @@ public class MetricsUtils {
     }
   }
 
+  /**
+   *
+   * @param including_rbox whether or not RBox
+   * @return all TBox axiom types
+   */
   public static Set<AxiomType<?>> getTBoxAxiomTypes(boolean including_rbox) {
     Set<AxiomType<?>> axty = new HashSet<>();
     if (including_rbox) {
@@ -193,6 +211,11 @@ public class MetricsUtils {
     return axty;
   }
 
+  /**
+   *
+   * @param axioms set of axioms
+   * @return filtered set of axioms (only tbox axioms)
+   */
   public static Set<OWLAxiom> getTBoxAxioms(Set<OWLAxiom> axioms) {
     Set<OWLAxiom> tbox = new HashSet<>();
     Set<AxiomType<?>> types = getTBoxAxiomTypes(true);
@@ -204,6 +227,11 @@ public class MetricsUtils {
     return tbox;
   }
 
+  /**
+   *
+   * @param axioms set of axioms
+   * @return filtered set of axioms (only ABox axioms)
+   */
   public static Set<OWLAxiom> getABoxAxioms(Set<OWLAxiom> axioms) {
     Set<OWLAxiom> abox = new HashSet<>();
     Set<AxiomType<?>> types = getABoxAxiomTypes();

@@ -54,30 +54,30 @@ import uk.ac.manchester.cs.owl.owlapi.OWLObjectOneOfImpl;
 
 public class OntologyMetrics {
 
-  private final OWLOntology item;
+  private final OWLOntology ontology;
   private final OWLOntologyManager manager;
-  private final List<String> owlprofileviolations = new ArrayList<>();
+  private final List<String> owlProfileViolationsList = new ArrayList<>();
   private final Map<String, String> prefixmap = new HashMap<>();
-  private final Map<String, String> prefixmap_used = new HashMap<>();
-  private final List<OWLProfileViolation> dlprofileviolation = new ArrayList<>();
+  private final Map<String, String> prefixmapUsed = new HashMap<>();
+  private final List<OWLProfileViolation> owlProfileViolations = new ArrayList<>();
   protected OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
   private CURIEShortFormProvider curieProvider;
-  private static final Logger logger = LoggerFactory.getLogger(OntologyMetrics.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OntologyMetrics.class);
 
-  public OntologyMetrics(OWLOntology item) {
-    this.item = item;
-    this.manager = item.getOWLOntologyManager();
+  public OntologyMetrics(OWLOntology ontology) {
+    this.ontology = ontology;
+    this.manager = ontology.getOWLOntologyManager();
     try {
       this.curieProvider = new CURIEShortFormProvider(new IOHelper().getPrefixes());
     } catch (IOException e) {
-      logger.warn("Curie Provider could not be instantiated, trying without.. ", e);
+      LOGGER.warn("Curie Provider could not be instantiated, trying without.. ", e);
     }
     this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
   }
 
-  public OntologyMetrics(OWLOntology item, CURIEShortFormProvider curieShortFormProvider) {
-    this.item = item;
-    this.manager = item.getOWLOntologyManager();
+  public OntologyMetrics(OWLOntology ontology, CURIEShortFormProvider curieShortFormProvider) {
+    this.ontology = ontology;
+    this.manager = ontology.getOWLOntologyManager();
     this.curieProvider = curieShortFormProvider;
     this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
   }
@@ -104,11 +104,11 @@ public class OntologyMetrics {
     return length;
   }
 
-  public int getSignatureSize(Imports includeImportsClosure) {
+  private int getSignatureSize(Imports includeImportsClosure) {
     return getOntology().getSignature(includeImportsClosure).size();
   }
 
-  public int getUndeclaredEntitiesCount(Imports includeImportsClosure) {
+  private int getUndeclaredEntitiesCount(Imports includeImportsClosure) {
     int undeclared = 0;
     for (OWLEntity entity : getOntology().getSignature(includeImportsClosure)) {
       if (!getOntology().isDeclared(entity)) {
@@ -146,23 +146,23 @@ public class OntologyMetrics {
     return false;
   }
 
-  public int getClassCount(Imports includeImportsClosure) {
+  private int getClassCount(Imports includeImportsClosure) {
     return getOntology().getClassesInSignature(includeImportsClosure).size();
   }
 
-  public int getObjectPropertyCount(Imports includeImportsClosure) {
+  private int getObjectPropertyCount(Imports includeImportsClosure) {
     return getOntology().getObjectPropertiesInSignature(includeImportsClosure).size();
   }
 
-  public int getDataPropertyCount(Imports included) {
+  private int getDataPropertyCount(Imports included) {
     return getOntology().getDataPropertiesInSignature(included).size();
   }
 
-  public int getDatatypesCount(Imports included) {
+  private int getDatatypesCount(Imports included) {
     return getOntology().getDatatypesInSignature(included).size();
   }
 
-  public Map<String, Integer> getDatatypesWithAxiomOccurrenceCount(Imports includeImportsClosure) {
+  private Map<String, Integer> getDatatypesWithAxiomOccurrenceCount(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
     Set<OWLAxiom> axioms = getAxioms(includeImportsClosure);
     for (OWLAxiom axiom : axioms) {
@@ -191,7 +191,7 @@ public class OntologyMetrics {
     map.put(key, map.get(key) + 1);
   }
 
-  public Map<String, Integer> getEntityUsageMap(Imports includeImportsClosure) {
+  private Map<String, Integer> getEntityUsageMap(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
     for (OWLEntity e : getOntology().getSignature(includeImportsClosure)) {
       String iri_pre = extractPrefixForEntityOrOtherIfUnknown(e);
@@ -207,16 +207,16 @@ public class OntologyMetrics {
       String shortform = sfp.getShortForm(e);
       if (shortform.contains(":") && !shortform.equals(e.getIRI().toString())) {
         String prefix = shortform.split(":")[0];
-        prefixmap_used.put(prefix, prefixmap.get(prefix));
+        prefixmapUsed.put(prefix, prefixmap.get(prefix));
         return prefix;
       }
     }
 
-    logger.info("Entity " + e.getIRI() + " does not have a known prefix.");
+    LOGGER.info("Entity " + e.getIRI() + " does not have a known prefix.");
     return "prefix_unknown";
   }
 
-  public Map<String, Integer> getAxiomUsageMap(Imports includeImportsClosure) {
+  private Map<String, Integer> getAxiomUsageMap(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
     Set<OWLAxiom> axioms = getAxioms(includeImportsClosure);
     for (OWLAxiom axiom : axioms) {
@@ -229,7 +229,7 @@ public class OntologyMetrics {
     return map;
   }
 
-  public Set<String> getBuiltInDatatypes(Imports included) {
+  private Set<String> getBuiltInDatatypes(Imports included) {
     Set<String> set = new HashSet<>();
     Set<OWLDatatype> datatypes = getOntology().getDatatypesInSignature(included);
     for (OWLDatatype datatype : datatypes) {
@@ -240,7 +240,7 @@ public class OntologyMetrics {
     return set;
   }
 
-  public Set<String> getNotBuiltInDatatypes(Imports included) {
+  private Set<String> getNotBuiltInDatatypes(Imports included) {
     Set<String> set = new HashSet<>();
     Set<OWLDatatype> properties = getOntology().getDatatypesInSignature(included);
     for (OWLDatatype datatype : properties) {
@@ -251,21 +251,21 @@ public class OntologyMetrics {
     return set;
   }
 
-  public int getAnnotationPropertyCount(Imports imports) {
+  private int getAnnotationPropertyCount(Imports imports) {
     return getOntology().getAnnotationPropertiesInSignature(imports).size();
   }
 
   // AXIOMS
 
-  public int getAnnotationsCount() {
+  private int getAnnotationsCount() {
     return getOntology().getAnnotations().size();
   }
 
-  public int getIndividualsCount(Imports included) {
+  private int getIndividualsCount(Imports included) {
     return getOntology().getIndividualsInSignature(included).size();
   }
 
-  public int getNumberOfRules(Imports includeImportsClosure) {
+  private int getNumberOfRules(Imports includeImportsClosure) {
     int ct = 0;
     Set<OWLAxiom> logicalaxiom = getLogicalAxioms(includeImportsClosure, false);
     for (OWLAxiom ax : logicalaxiom) {
@@ -278,7 +278,7 @@ public class OntologyMetrics {
     return ct;
   }
 
-  public int getAxiomsWithComplexRHS(Imports included) {
+  private int getAxiomsWithComplexRHS(Imports included) {
     // complex: RHS does not only contain nested conjuctions / atomic
     // classnames
     int ct = 0;
@@ -303,7 +303,7 @@ public class OntologyMetrics {
     return ct;
   }
 
-  public double getAVGSizeOfRHS(Imports included) {
+  private double getAVGSizeOfRHS(Imports included) {
     // complex: RHS does not only contain nested conjuctions / atomic
     // classnames
     double ct = 0;
@@ -358,23 +358,23 @@ public class OntologyMetrics {
     return MetricsUtils.getLogicalAxioms(getOntology(), includeImportsClosure, skiprules, at);
   }
 
-  public Set<OWLAxiom> getAxioms(Imports included) {
+  private Set<OWLAxiom> getAxioms(Imports included) {
     return new HashSet<>(getOntology().getAxioms(included));
   }
 
-  public int getAxiomCount(Imports includeImportsClosure) {
+  private int getAxiomCount(Imports includeImportsClosure) {
     return getAxioms(includeImportsClosure).size();
   }
 
-  public int getLogicalAxiomCount(Imports includeImportsClosure) {
+  private int getLogicalAxiomCount(Imports includeImportsClosure) {
     return getLogicalAxioms(includeImportsClosure, true).size();
   }
 
-  public int getTBoxSize(Imports useImportsClosure) {
+  private int getTBoxSize(Imports useImportsClosure) {
     return getOntology().getTBoxAxioms(useImportsClosure).size();
   }
 
-  public int getTBoxRboxSize(Imports useImportsClosure) {
+  private int getTBoxRboxSize(Imports useImportsClosure) {
     int i = 0;
     Set<AxiomType<?>> axty = MetricsUtils.getTBoxAxiomTypes(true);
     for (AxiomType<?> at : axty) {
@@ -383,15 +383,15 @@ public class OntologyMetrics {
     return i;
   }
 
-  public int getABoxSize(Imports useImportsClosure) {
+  private int getABoxSize(Imports useImportsClosure) {
     return getOntology().getABoxAxioms(useImportsClosure).size();
   }
 
-  public int getRBoxSize(Imports useImportsClosure) {
+  private int getRBoxSize(Imports useImportsClosure) {
     return getOntology().getRBoxAxioms(useImportsClosure).size();
   }
 
-  public Map<String, Integer> getOWLClassExpressionCounts(Imports includeImportsClosure) {
+  private Map<String, Integer> getOWLClassExpressionCounts(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
     Set<OWLAxiom> axioms = getAxioms(includeImportsClosure);
 
@@ -410,7 +410,7 @@ public class OntologyMetrics {
     return map;
   }
 
-  public Map<String, Integer> getAxiomTypeCounts(Imports includeImportsClosure) {
+  private Map<String, Integer> getAxiomTypeCounts(Imports includeImportsClosure) {
     Map<String, Integer> map = new HashMap<>();
     Set<OWLAxiom> axioms = getAxioms(includeImportsClosure);
 
@@ -427,7 +427,7 @@ public class OntologyMetrics {
     return map;
   }
 
-  public int getTautologyCount(Imports includeImports) {
+  private int getTautologyCount(Imports includeImports) {
     int tautologies = 0;
     for (OWLAxiom ax : getLogicalAxioms(includeImports, true)) {
       if (TautologyChecker.isTautology(ax)) {
@@ -437,7 +437,7 @@ public class OntologyMetrics {
     return tautologies;
   }
 
-  public Set<AxiomType<?>> getAxiomTypes(Imports includeImportsClosure) {
+  private Set<AxiomType<?>> getAxiomTypes(Imports includeImportsClosure) {
     Set<AxiomType<?>> axtypes = new HashSet<>();
     for (OWLAxiom ax : getAxioms(includeImportsClosure)) {
       axtypes.add(ax.getAxiomType());
@@ -445,40 +445,40 @@ public class OntologyMetrics {
     return axtypes;
   }
 
-  public boolean isOWL2Profile() {
+  private boolean isOWL2Profile() {
     OWLProfile profile = new OWL2Profile();
     return profile.checkOntology(getOntology()).isInProfile();
   }
 
-  public boolean isOWL2ELProfile() {
+  private boolean isOWL2ELProfile() {
     OWLProfile profile = new OWL2ELProfile();
     return profile.checkOntology(getOntology()).isInProfile();
   }
 
-  public boolean isOWL2DLProfile() {
+  private boolean isOWL2DLProfile() {
     OWLProfile profile = new OWL2DLProfile();
     OWLProfileReport report = profile.checkOntology(getOntology());
     for (OWLProfileViolation vio : report.getViolations()) {
       String s = vio.getClass().getSimpleName();
-      owlprofileviolations.add(s);
-      dlprofileviolation.add(vio);
+      owlProfileViolationsList.add(s);
+      owlProfileViolations.add(vio);
     }
     return report.isInProfile();
   }
 
-  public boolean isOWL2RLProfile() {
+  private boolean isOWL2RLProfile() {
     OWLProfile profile = new OWL2RLProfile();
     return profile.checkOntology(getOntology()).isInProfile();
   }
 
-  public boolean isOWL2QLProfile() {
+  private boolean isOWL2QLProfile() {
     OWLProfile profile = new OWL2QLProfile();
     return profile.checkOntology(getOntology()).isInProfile();
   }
 
   // REFERENCED CLASSES AND PROPERTIES
 
-  public boolean isRDFS() {
+  private boolean isRDFS() {
     // TODO: verify
     boolean isRDFS = true;
 
@@ -526,7 +526,7 @@ public class OntologyMetrics {
     return isRDFS;
   }
 
-  public Set<String> getValidImports(boolean direct) {
+  private Set<String> getValidImports(boolean direct) {
     Set<String> validImports = new HashSet<>();
     Set<OWLOntology> closure = new HashSet<>();
 
@@ -544,7 +544,7 @@ public class OntologyMetrics {
     return validImports;
   }
 
-  public int getReferencedClassCount(boolean useImportsClosure) {
+  private int getReferencedClassCount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new ReferencedClassCount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -552,7 +552,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public int getReferencedDataPropertyCount(boolean useImportsClosure) {
+  private int getReferencedDataPropertyCount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new ReferencedDataPropertyCount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -562,7 +562,7 @@ public class OntologyMetrics {
 
   // RANDOM METRICS
 
-  public int getReferencedIndividualCount(boolean useImportsClosure) {
+  private int getReferencedIndividualCount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new ReferencedIndividualCount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -570,7 +570,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public int getReferencedObjectPropertyCount(boolean useImportsClosure) {
+  private int getReferencedObjectPropertyCount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new ReferencedObjectPropertyCount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -578,7 +578,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public int getMultipleInheritanceCount(boolean useImportsClosure) {
+  private int getMultipleInheritanceCount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new NumberOfClassesWithMultipleInheritance(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -586,7 +586,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public int getMaximumNumberOfNamedSuperclasses(boolean useImportsClosure) {
+  private int getMaximumNumberOfNamedSuperclasses(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new MaximumNumberOfNamedSuperclasses(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -594,7 +594,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public int getGCICount(boolean useImportsClosure) {
+  private int getGCICount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new GCICount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -602,7 +602,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public int getHiddenGCICount(boolean useImportsClosure) {
+  private int getHiddenGCICount(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Integer> metric = new HiddenGCICount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -610,7 +610,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public double getAverageAssertedNamedSuperclasses(boolean useImportsClosure) {
+  private double getAverageAssertedNamedSuperclasses(boolean useImportsClosure) {
     // TODO verify this
     AbstractOWLMetric<Double> metric = new AverageAssertedNamedSuperclassCount(getOntology());
     metric.setImportsClosureUsed(useImportsClosure);
@@ -618,7 +618,7 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
-  public double getAverageAssertedNamedSubclasses(Imports useImportsClosure) {
+  private double getAverageAssertedNamedSubclasses(Imports useImportsClosure) {
     int count = 0;
     Set<OWLClass> classes = getOntology().getClassesInSignature(useImportsClosure);
     for (OWLClass c : classes) {
@@ -627,7 +627,7 @@ public class OntologyMetrics {
     return (((double) count) / ((double) classes.size()));
   }
 
-  public int getClassesWithSingleSubclassCount(Imports useImportsClosure) {
+  private int getClassesWithSingleSubclassCount(Imports useImportsClosure) {
     int count = 0;
     for (OWLClass c : getOntology().getClassesInSignature(useImportsClosure)) {
       if (getOntology().getSubClassAxiomsForSuperClass(c).size() == 1) {
@@ -637,7 +637,7 @@ public class OntologyMetrics {
     return count;
   }
 
-  public double getAverageInstancesPerClass(Imports useImportsClosure) {
+  private double getAverageInstancesPerClass(Imports useImportsClosure) {
     int count = 0;
     for (OWLClass c : getOntology().getClassesInSignature(useImportsClosure)) {
       count += getOntology().getClassAssertionAxioms(c).size();
@@ -646,7 +646,7 @@ public class OntologyMetrics {
         / ((double) getOntology().getClassesInSignature(useImportsClosure).size()));
   }
 
-  public String getSyntax() {
+  private String getSyntax() {
     Object format = getManager().getOntologyFormat(getOntology());
     if (format != null) {
       return format.toString();
@@ -654,7 +654,7 @@ public class OntologyMetrics {
     return "unknown";
   }
 
-  public String getOntologyId() {
+  private String getOntologyId() {
     OWLOntologyID ontologyID = getOntology().getOntologyID();
     if (ontologyID.isAnonymous()) {
       return "anonymousId";
@@ -663,7 +663,7 @@ public class OntologyMetrics {
     }
   }
 
-  public String getOntologyVersionId() {
+  private String getOntologyVersionId() {
     OWLOntologyID ontologyID = getOntology().getOntologyID();
     if (ontologyID.isAnonymous()) {
       return "anonymousId";
@@ -672,7 +672,7 @@ public class OntologyMetrics {
     }
   }
 
-  public String getExpressivity(boolean included) {
+  private String getExpressivity(boolean included) {
     DLExpressivity dl = new DLExpressivity(getOntology());
     dl.setImportsClosureUsed(included);
     dl.setOntology(getOntology());
@@ -681,7 +681,7 @@ public class OntologyMetrics {
 
   // this is highly unpleasant and I wish we had a NoSQL DB or even just a
   // stupid XML file where we could throw it all in individually
-  public Set<String> getConstructs(boolean includeImportsClosure) {
+  private Set<String> getConstructs(boolean includeImportsClosure) {
     Set<OWLOntology> onts = new HashSet<>();
     if (includeImportsClosure) {
       onts.addAll(getOntology().getImportsClosure());
@@ -696,12 +696,15 @@ public class OntologyMetrics {
     return constructs;
   }
 
-  public boolean surelyContainsCycle(Imports includeImports) {
+  private boolean surelyContainsCycle(Imports includeImports) {
     return OntologyCycleDetector.containsCycle(getOntology(), includeImports);
   }
 
+  /**
+   * @return Ontology used for metrics computation
+   */
   public OWLOntology getOntology() {
-    return this.item;
+    return this.ontology;
   }
 
   private Optional<CURIEShortFormProvider> getCurieProvider() {
@@ -711,15 +714,15 @@ public class OntologyMetrics {
     return Optional.empty();
   }
 
-  public OWLOntologyManager getManager() {
+  private OWLOntologyManager getManager() {
     return this.manager;
   }
 
-  public Map<String, Integer> getOwlprofileviolations() {
+  private Map<String, Integer> getOwlprofileviolations() {
     Map<String, Integer> map = new HashMap<>();
-    Set<String> uniqueviolations = new HashSet<>(owlprofileviolations);
+    Set<String> uniqueviolations = new HashSet<>(owlProfileViolationsList);
     for (String vio : uniqueviolations) {
-      map.put(vio, Collections.frequency(owlprofileviolations, vio));
+      map.put(vio, Collections.frequency(owlProfileViolationsList, vio));
     }
     return map;
   }
@@ -775,7 +778,7 @@ public class OntologyMetrics {
     return getBuiltInDatatypes(included).size();
   }
 
-  public String getSignatureWithoutIRIs(Imports incl) {
+  private String getSignatureWithoutIRIs(Imports incl) {
     StringBuilder b = new StringBuilder();
     for (OWLEntity e : getOntology().getSignature(incl)) {
       if (e.isBottomEntity() || e.isTopEntity()) {
@@ -792,23 +795,40 @@ public class OntologyMetrics {
     return b.toString().contains(";") ? b.substring(0, b.toString().lastIndexOf(";")) : "";
   }
 
-  public List<OWLProfileViolation> getOWLDLProfileViolations() {
+  private List<OWLProfileViolation> getOWLDLProfileViolations() {
     isOWL2DLProfile();
-    return dlprofileviolation;
+    return owlProfileViolations;
   }
 
+  /**
+   *
+   * @return the essential metrics
+   */
   public MeasureResult getEssentialMetrics() {
     return getEssentialMetrics("");
   }
 
+  /**
+   *
+   * @return the extended metrics
+   */
   public MeasureResult getExtendedMetrics() {
     return getExtendedMetrics("");
   }
 
+  /**
+   *
+   * @return all metrics
+   */
   public MeasureResult getAllMetrics() {
     return getAllMetrics("");
   }
 
+  /**
+   *
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @return essential metrics
+   */
   public MeasureResult getEssentialMetrics(String prefix) {
     MeasureResult csvData = new MeasureResult();
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
@@ -877,6 +897,11 @@ public class OntologyMetrics {
     return csvData;
   }
 
+  /**
+   *
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @return extended metrics
+   */
   public MeasureResult getExtendedMetrics(String prefix) {
     MeasureResult csvData = new MeasureResult();
     MeasureResult essentialData = getEssentialMetrics(prefix);
@@ -927,18 +952,40 @@ public class OntologyMetrics {
     csvData.putMap(prefix + MetricsLabels.NS_USE_SIGNATURE, getEntityUsageMap(Imports.EXCLUDED));
     csvData.putMap(
         prefix + MetricsLabels.NS_USE_SIGNATURE_INCL, getEntityUsageMap(Imports.INCLUDED));
-    csvData.putMap(prefix + MetricsLabels.CURIE_MAP, prefixmap_used);
+    csvData.putMap(prefix + MetricsLabels.CURIE_MAP, prefixmapUsed);
     return csvData;
   }
 
+  /**
+   *
+   * @param reasoner the reasoner to use to compute the metric; it is expected that
+   *                 this reasoner has the same ontology loaded as the one used
+   *                 by this class.
+   * @return simple reasoner metrics
+   */
   public MeasureResult getSimpleReasonerMetrics(OWLReasoner reasoner) {
     return getSimpleReasonerMetrics("", reasoner);
   }
 
+  /**
+   *
+   * @param reasoner the reasoner to use to compute the metric; it is expected that
+   *                 this reasoner has the same ontology loaded as the one used
+   *                 by this class.
+   * @return extended reasoner metrics
+   */
   public MeasureResult getExtendedReasonerMetrics(OWLReasoner reasoner) {
     return getExtendedReasonerMetrics("", reasoner);
   }
 
+  /**
+   *
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @param reasoner the reasoner to use to compute the metric; it is expected that
+   *                 this reasoner has the same ontology loaded as the one used
+   *                 by this class.
+   * @return simple reasoner metrics
+   */
   public MeasureResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
     MeasureResult csvData = new MeasureResult();
     csvData.put(prefix + MetricsLabels.CONSISTENT, reasoner.isConsistent());
@@ -952,6 +999,14 @@ public class OntologyMetrics {
     return csvData;
   }
 
+  /**
+   *
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @param reasoner the reasoner to use to compute the metric; it is expected that
+   *                 this reasoner has the same ontology loaded as the one used
+   *                 by this class.
+   * @return extended reasoner metrics
+   */
   public MeasureResult getExtendedReasonerMetrics(String prefix, OWLReasoner reasoner) {
     MeasureResult csvData = new MeasureResult();
     MeasureResult extendedData = getSimpleReasonerMetrics(prefix, reasoner);
@@ -959,6 +1014,11 @@ public class OntologyMetrics {
     return csvData;
   }
 
+  /**
+   *
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @return all metrics
+   */
   public MeasureResult getAllMetrics(String prefix) {
     MeasureResult csvData = new MeasureResult();
     MeasureResult extendedData = getExtendedMetrics(prefix);

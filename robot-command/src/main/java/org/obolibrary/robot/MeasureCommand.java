@@ -8,8 +8,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles inputs and outputs for the {@link MeasureOperation}.
@@ -17,16 +15,11 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:nicolas.matentzoglu@gmail.com">Nicolas Matentzoglu</a>
  */
 public class MeasureCommand implements Command {
-  /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(MeasureCommand.class);
-
-  /** Namespace for error messages. */
-  private static final String NS = "measure#";
 
   /** Store the command-line options for the command. */
   private Options options;
 
-  private final List<String> legal_formats = Arrays.asList("tsv", "csv", "html", "yaml", "json");
+  private final List<String> LEGAL_FORMATS = Arrays.asList("tsv", "csv", "html", "yaml", "json");
 
   /** Initialze the command. */
   public MeasureCommand() {
@@ -38,7 +31,7 @@ public class MeasureCommand implements Command {
         "f",
         "format",
         true,
-        "the measure result format: " + String.join(" ", legal_formats).trim() + ".");
+        "the measure result format: " + String.join(" ", LEGAL_FORMATS).trim() + ".");
     o.addOption("o", "output", true, "save updated metrics to a file");
     o.addOption(
         "m",
@@ -86,7 +79,7 @@ public class MeasureCommand implements Command {
   }
 
   /**
-   * Handle the command-line and file operations for the QueryOperation.
+   * Handle the command-line and file operations for the MeasureOperation.
    *
    * @param args strings to use as arguments
    */
@@ -99,8 +92,8 @@ public class MeasureCommand implements Command {
   }
 
   /**
-   * Given an input state and command line arguments, query the ontolgy. The input ontology is not
-   * changed.
+   * Given an input state and command line arguments, compute metrics
+   * in ontology. The input ontology is not changed.
    *
    * @param state the state from the previous command, or null
    * @param args the command-line arguments
@@ -115,7 +108,7 @@ public class MeasureCommand implements Command {
 
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
 
-    String metrics_type = CommandLineHelper.getDefaultValue(line, "metrics", "essential");
+    String metricsType = CommandLineHelper.getDefaultValue(line, "metrics", "essential");
     String format = CommandLineHelper.getOptionalValue(line, "format");
 
     String output = CommandLineHelper.getOptionalValue(line, "output");
@@ -127,7 +120,7 @@ public class MeasureCommand implements Command {
     File output_file = new File(output);
     if (format == null) {
       String extension = FilenameUtils.getExtension(output_file.getName()).replace("yml", "yaml");
-      if (legal_formats.contains(extension)) {
+      if (LEGAL_FORMATS.contains(extension)) {
         format = extension;
       } else {
         format = "tsv";
@@ -145,10 +138,10 @@ public class MeasureCommand implements Command {
       }
     }
 
-    MeasureOperation.executeMetrics(
+    MeasureOperation.measure(
         state.getOntology(),
         reasonerFactory,
-        metrics_type,
+        metricsType,
         format,
         output_file,
         ioHelper.getPrefixes());

@@ -9,6 +9,11 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 public class TautologyChecker {
 
+  /**
+   *
+   * @param  ax the axiom to be checked
+   * @return true if the axiom is a tautology
+   */
   public static boolean isTautology(OWLAxiom ax) {
     OWLOntologyManager emptyman = OWLManager.createOWLOntologyManager();
     OWLOntology emptyo;
@@ -24,13 +29,19 @@ public class TautologyChecker {
     return false;
   }
 
-  public static Set<OWLAxiom> getTautologies(Set<OWLAxiom> unionSet)
+  /**
+   *
+   * @param axioms the axioms to be checked
+   * @return all those axioms that are tautologies
+   * @throws OWLOntologyCreationException
+   */
+  public static Set<OWLAxiom> getTautologies(Set<OWLAxiom> axioms)
       throws OWLOntologyCreationException {
     Set<OWLAxiom> delSet = new HashSet<>();
     OWLReasoner r =
         new org.semanticweb.HermiT.ReasonerFactory()
             .createReasoner(OWLManager.createOWLOntologyManager().createOntology());
-    for (OWLAxiom ax : unionSet) {
+    for (OWLAxiom ax : axioms) {
       if (r.isEntailed(ax)) {
         delSet.add(ax);
       }
@@ -42,9 +53,15 @@ public class TautologyChecker {
   // tautologies are
   // just defined w.r.t classification. Later versions will require something
   // more complex.
-  public static Set<OWLAxiom> getTautologySyntactic(Set<OWLAxiom> cleanSet) {
+
+  /**
+   *
+   * @param axioms the axioms to be checked
+   * @return all those axioms that are tautologies (syntactic check, incomplete!)
+   */
+  public static Set<OWLAxiom> getTautologySyntactic(Set<OWLAxiom> axioms) {
     Set<OWLAxiom> filter = new HashSet<>();
-    for (OWLAxiom ax : cleanSet) {
+    for (OWLAxiom ax : axioms) {
       if (ax.isOfType(AxiomType.DECLARATION)) {
         filter.add(ax);
       } else {
@@ -56,8 +73,8 @@ public class TautologyChecker {
         }
       }
     }
-    cleanSet.removeAll(filter);
-    return cleanSet;
+    axioms.removeAll(filter);
+    return axioms;
   }
 
   private static Boolean isTautology(OWLSubClassOfAxiom ax) {

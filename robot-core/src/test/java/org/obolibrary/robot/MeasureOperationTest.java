@@ -31,7 +31,7 @@ public class MeasureOperationTest extends CoreTest {
   public void testEssentialMetrics() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, "essential", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     assertEquals(313, result.getSimpleMetricValue(MetricsLabels.AXIOM_COUNT));
   }
@@ -45,7 +45,7 @@ public class MeasureOperationTest extends CoreTest {
   public void testExtendedMetrics() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, "extended", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     assertEquals("SI(D)", result.getSimpleMetricValue(MetricsLabels.EXPRESSIVITY));
   }
@@ -59,7 +59,7 @@ public class MeasureOperationTest extends CoreTest {
   public void testAllMetrics() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, "all", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     assertEquals(0, result.getSimpleMetricValue(MetricsLabels.GCI_COUNT_INCL));
   }
@@ -74,7 +74,7 @@ public class MeasureOperationTest extends CoreTest {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     OWLReasonerFactory rf = new ElkReasonerFactory();
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, rf, "all-reasoner", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     File testFile = new File("test.tsv");
     MeasureOperation.maybeWriteResult(result, "tsv", testFile);
@@ -91,7 +91,7 @@ public class MeasureOperationTest extends CoreTest {
   public void writeAllMetricsToCSV() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, "all", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     File testFile = new File("test.csv");
     MeasureOperation.maybeWriteResult(result, "csv", testFile);
@@ -108,7 +108,7 @@ public class MeasureOperationTest extends CoreTest {
   public void writeAllMetricsToJSON() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, "all", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     File testFile = new File("test.json");
     MeasureOperation.maybeWriteResult(result, "json", testFile);
@@ -125,7 +125,7 @@ public class MeasureOperationTest extends CoreTest {
   public void writeAllMetricsToYAML() throws IOException {
     OWLOntology ontology = loadOntology("/" + TESTONTOLOGY);
     MeasureResult result =
-        MeasureOperation.runMeasures(
+        MeasureOperation.getMetrics(
             ontology, "all", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
     File testFile = new File("test.yml");
     MeasureOperation.maybeWriteResult(result, "yaml", testFile);
