@@ -20,7 +20,6 @@ public class OntologyCycleDetector {
   private static final Logger LOGGER = LoggerFactory.getLogger(OntologyCycleDetector.class);
 
   /**
-   *
    * @param ontology the ontology to be checked for cycles
    * @param includeImports whether imports closure should be considered
    * @return True if there is certainly a cycle, otherwise False.

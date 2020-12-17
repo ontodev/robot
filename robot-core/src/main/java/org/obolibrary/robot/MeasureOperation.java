@@ -33,7 +33,8 @@ public class MeasureOperation {
   private static final String NS = "measure#";
 
   /** Error message when metric type is illegal. Expects: metric type. */
-  private static final String METRICS_TYPE_ERROR = NS + "METRICS TYPE ERROR unknown metrics type: %s";
+  private static final String METRICS_TYPE_ERROR =
+      NS + "METRICS TYPE ERROR unknown metrics type: %s";
 
   /** Error message when format type is illegal. Expects: format. */
   private static final String METRICS_FORMAT_ERROR =
@@ -161,11 +162,12 @@ public class MeasureOperation {
   }
 
   /**
-   * @throws IOException
-   *     <p>Write a model to an output stream.
+   * Write a model to an output stream.
+   *
    * @param result results of the metrics operation
    * @param format the language to write in (if null, TTL)
    * @param output the output stream to write to
+   * @throws IOException on problem writing to output
    */
   public static void writeResult(MeasureResult result, String format, File output)
       throws IOException {

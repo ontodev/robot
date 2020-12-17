@@ -92,8 +92,8 @@ public class MeasureCommand implements Command {
   }
 
   /**
-   * Given an input state and command line arguments, compute metrics
-   * in ontology. The input ontology is not changed.
+   * Given an input state and command line arguments, compute metrics in ontology. The input
+   * ontology is not changed.
    *
    * @param state the state from the previous command, or null
    * @param args the command-line arguments
@@ -110,12 +110,8 @@ public class MeasureCommand implements Command {
 
     String metricsType = CommandLineHelper.getDefaultValue(line, "metrics", "essential");
     String format = CommandLineHelper.getOptionalValue(line, "format");
-
-    String output = CommandLineHelper.getOptionalValue(line, "output");
-
-    if (output == null) {
-      throw new Exception(String.format(missingFileError, output, "measure"));
-    }
+    String output =
+        CommandLineHelper.getRequiredValue(line, "output", "an output file must be specified");
 
     File output_file = new File(output);
     if (format == null) {

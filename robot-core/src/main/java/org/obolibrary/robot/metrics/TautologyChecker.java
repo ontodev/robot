@@ -7,11 +7,11 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
+@SuppressWarnings("unused")
 public class TautologyChecker {
 
   /**
-   *
-   * @param  ax the axiom to be checked
+   * @param ax the axiom to be checked
    * @return true if the axiom is a tautology
    */
   public static boolean isTautology(OWLAxiom ax) {
@@ -30,10 +30,9 @@ public class TautologyChecker {
   }
 
   /**
-   *
    * @param axioms the axioms to be checked
    * @return all those axioms that are tautologies
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException on problem creating reasoner
    */
   public static Set<OWLAxiom> getTautologies(Set<OWLAxiom> axioms)
       throws OWLOntologyCreationException {
@@ -55,7 +54,6 @@ public class TautologyChecker {
   // more complex.
 
   /**
-   *
    * @param axioms the axioms to be checked
    * @return all those axioms that are tautologies (syntactic check, incomplete!)
    */

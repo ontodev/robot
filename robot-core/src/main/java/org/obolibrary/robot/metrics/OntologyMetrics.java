@@ -33,7 +33,6 @@ import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
@@ -52,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectOneOfImpl;
 
+@SuppressWarnings("unused")
 public class OntologyMetrics {
 
   private final OWLOntology ontology;
@@ -60,7 +60,6 @@ public class OntologyMetrics {
   private final Map<String, String> prefixmap = new HashMap<>();
   private final Map<String, String> prefixmapUsed = new HashMap<>();
   private final List<OWLProfileViolation> owlProfileViolations = new ArrayList<>();
-  protected OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
   private CURIEShortFormProvider curieProvider;
   private static final Logger LOGGER = LoggerFactory.getLogger(OntologyMetrics.class);
 
@@ -69,10 +68,10 @@ public class OntologyMetrics {
     this.manager = ontology.getOWLOntologyManager();
     try {
       this.curieProvider = new CURIEShortFormProvider(new IOHelper().getPrefixes());
+      this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
     } catch (IOException e) {
       LOGGER.warn("Curie Provider could not be instantiated, trying without.. ", e);
     }
-    this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
   }
 
   public OntologyMetrics(OWLOntology ontology, CURIEShortFormProvider curieShortFormProvider) {
@@ -80,6 +79,324 @@ public class OntologyMetrics {
     this.manager = ontology.getOWLOntologyManager();
     this.curieProvider = curieShortFormProvider;
     this.curieProvider.getSortedPrefixMap().forEach(e -> prefixmap.put(e.getKey(), e.getValue()));
+  }
+
+  /** @return the essential metrics */
+  public MeasureResult getEssentialMetrics() {
+    return getEssentialMetrics("");
+  }
+
+  /** @return the extended metrics */
+  public MeasureResult getExtendedMetrics() {
+    return getExtendedMetrics("");
+  }
+
+  /** @return all metrics */
+  public MeasureResult getAllMetrics() {
+    return getAllMetrics("");
+  }
+
+  /**
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @return essential metrics
+   */
+  public MeasureResult getEssentialMetrics(String prefix) {
+    MeasureResult csvData = new MeasureResult();
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_VERSION_ID, getOntologyVersionId());
+    /*
+    Essential entity metrics
+    */
+    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE_INCL, getSignatureSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE, getSignatureSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.CLASS_COUNT_INCL, getClassCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.CLASS_COUNT, getClassCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.OBJPROPERTY_COUNT_INCL, getObjectPropertyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.OBJPROPERTY_COUNT, getObjectPropertyCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.INDIVIDUAL_COUNT_INCL, getIndividualsCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.INDIVIDUAL_COUNT, getIndividualsCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.DATAPROPERTY_COUNT_INCL, getDataPropertyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.DATAPROPERTY_COUNT, getDataPropertyCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.ANNOTATION_PROP_COUNT, getAnnotationPropertyCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.ANNOTATION_PROP_COUNT_INCL,
+        getAnnotationPropertyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT_INCL, getDatatypesCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT, getDatatypesCount(Imports.EXCLUDED));
+
+    csvData.put(prefix + MetricsLabels.ONTOLOGY_ANNOTATIONS_COUNT, getAnnotationsCount());
+
+    /*
+    Essential axiom counts
+     */
+
+    csvData.put(prefix + MetricsLabels.LOGICAL_AXIOM_COUNT, getLogicalAxiomCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.LOGICAL_AXIOM_COUNT_INCL, getLogicalAxiomCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.AXIOM_COUNT, getAxiomCount(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.AXIOM_COUNT_INCL, getAxiomCount(Imports.INCLUDED));
+
+    csvData.put(prefix + MetricsLabels.TBOX_SIZE, getTBoxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.TBOX_SIZE_INCL, getTBoxSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE, getTBoxRboxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE_INCL, getTBoxRboxSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.RULE_CT, getNumberOfRules(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.RULE_CT_INCL, getNumberOfRules(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.RBOX_SIZE, getRBoxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.RBOX_SIZE_INCL, getRBoxSize(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.ABOX_SIZE, getABoxSize(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.ABOX_SIZE_INCL, getABoxSize(Imports.INCLUDED));
+
+    /*
+    Essential expressivity metrics
+     */
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2, isOWL2Profile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_DL, isOWL2DLProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_EL, isOWL2ELProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_QL, isOWL2QLProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_RL, isOWL2RLProfile());
+    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_RDFS, isRDFS());
+    csvData.putMap(prefix + MetricsLabels.VIOLATION_PROFILE_OWL2_DL, getOwlprofileviolations());
+
+    csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS, getValidImports(false));
+    csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS_INCL, getValidImports(true));
+
+    return csvData;
+  }
+
+  /**
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @return extended metrics
+   */
+  public MeasureResult getExtendedMetrics(String prefix) {
+    MeasureResult csvData = new MeasureResult();
+    MeasureResult essentialData = getEssentialMetrics(prefix);
+    csvData.importMetrics(essentialData);
+
+    /*
+    Extended entity metrics
+     */
+    csvData.put(
+        prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT_INCL,
+        getDatatypesBuiltinCount(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT, getDatatypesBuiltinCount(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.DATATYPE_NOTBUILTIN_COUNT_INCL,
+        getDatatypesNotBuiltinCount(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.DATATYPE_NOTBUILTIN_COUNT,
+        getDatatypesNotBuiltinCount(Imports.EXCLUDED));
+
+    /*
+    Extended expressivity metrics
+     */
+    csvData.put(prefix + MetricsLabels.EXPRESSIVITY, getExpressivity(false));
+    csvData.put(prefix + MetricsLabels.EXPRESSIVITY_INCL, getExpressivity(true));
+    csvData.putSet(prefix + MetricsLabels.CONSTRUCTS_INCL, getConstructs(true));
+    csvData.putSet(prefix + MetricsLabels.CONSTRUCTS, getConstructs(false));
+    csvData.putSet(prefix + MetricsLabels.AXIOM_TYPES, getAxiomTypes(Imports.EXCLUDED));
+    csvData.putSet(prefix + MetricsLabels.AXIOM_TYPES_INCL, getAxiomTypes(Imports.INCLUDED));
+    csvData.putMap(prefix + MetricsLabels.AXIOMTYPE_COUNT, getAxiomTypeCounts(Imports.EXCLUDED));
+    csvData.putMap(
+        prefix + MetricsLabels.AXIOMTYPE_COUNT_INCL, getAxiomTypeCounts(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
+    csvData.putMap(
+        prefix + MetricsLabels.CLASSEXPRESSION_COUNT,
+        getOWLClassExpressionCounts(Imports.EXCLUDED));
+    csvData.putMap(
+        prefix + MetricsLabels.CLASSEXPRESSION_COUNT_INCL,
+        getOWLClassExpressionCounts(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
+
+    /*
+    Entity usage
+     */
+
+    csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS, getAxiomUsageMap(Imports.EXCLUDED));
+    csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS_INCL, getAxiomUsageMap(Imports.INCLUDED));
+    csvData.putMap(prefix + MetricsLabels.NS_USE_SIGNATURE, getEntityUsageMap(Imports.EXCLUDED));
+    csvData.putMap(
+        prefix + MetricsLabels.NS_USE_SIGNATURE_INCL, getEntityUsageMap(Imports.INCLUDED));
+    csvData.putMap(prefix + MetricsLabels.CURIE_MAP, prefixmapUsed);
+    return csvData;
+  }
+
+  /**
+   * @param reasoner the reasoner to use to compute the metric; it is expected that this reasoner
+   *     has the same ontology loaded as the one used by this class.
+   * @return simple reasoner metrics
+   */
+  public MeasureResult getSimpleReasonerMetrics(OWLReasoner reasoner) {
+    return getSimpleReasonerMetrics("", reasoner);
+  }
+
+  /**
+   * @param reasoner the reasoner to use to compute the metric; it is expected that this reasoner
+   *     has the same ontology loaded as the one used by this class.
+   * @return extended reasoner metrics
+   */
+  public MeasureResult getExtendedReasonerMetrics(OWLReasoner reasoner) {
+    return getExtendedReasonerMetrics("", reasoner);
+  }
+
+  /**
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @param reasoner the reasoner to use to compute the metric; it is expected that this reasoner
+   *     has the same ontology loaded as the one used by this class.
+   * @return simple reasoner metrics
+   */
+  public MeasureResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
+    MeasureResult csvData = new MeasureResult();
+    csvData.put(prefix + MetricsLabels.CONSISTENT, reasoner.isConsistent());
+    if (reasoner.isConsistent()) {
+      csvData.put(
+          prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT,
+          reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom().size());
+    } else {
+      csvData.put(prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT, -1);
+    }
+    return csvData;
+  }
+
+  /**
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @param reasoner the reasoner to use to compute the metric; it is expected that this reasoner
+   *     has the same ontology loaded as the one used by this class.
+   * @return extended reasoner metrics
+   */
+  public MeasureResult getExtendedReasonerMetrics(String prefix, OWLReasoner reasoner) {
+    MeasureResult csvData = new MeasureResult();
+    MeasureResult extendedData = getSimpleReasonerMetrics(prefix, reasoner);
+    csvData.importMetrics(extendedData);
+    return csvData;
+  }
+
+  /**
+   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
+   * @return all metrics
+   */
+  public MeasureResult getAllMetrics(String prefix) {
+    MeasureResult csvData = new MeasureResult();
+    MeasureResult extendedData = getExtendedMetrics(prefix);
+    csvData.importMetrics(extendedData);
+
+    csvData.put(prefix + MetricsLabels.MAX_AXIOMLENGTH, getLongestAxiomLength(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.MAX_AXIOMLENGTH_INCL, getLongestAxiomLength(Imports.INCLUDED));
+
+    csvData.put(
+        prefix + MetricsLabels.AVG_ASSERT_N_SUBCLASS_INCL,
+        getAverageAssertedNamedSubclasses(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.AVG_ASSERT_N_SUBCLASS,
+        getAverageAssertedNamedSubclasses(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS_INCL,
+        getAverageAssertedNamedSuperclasses(true));
+    csvData.put(
+        prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS, getAverageAssertedNamedSuperclasses(false));
+    csvData.put(
+        prefix + MetricsLabels.AVG_INSTANCE_PER_CLASS_INCL,
+        getAverageInstancesPerClass(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.AVG_INSTANCE_PER_CLASS,
+        getAverageInstancesPerClass(Imports.EXCLUDED));
+
+    csvData.put(
+        prefix + MetricsLabels.CLASS_SGL_SUBCLASS_COUNT_INCL,
+        getClassesWithSingleSubclassCount(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.CLASS_SGL_SUBCLASS_COUNT,
+        getClassesWithSingleSubclassCount(Imports.EXCLUDED));
+
+    csvData.put(
+        prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT_INCL,
+        getAxiomsWithComplexRHS(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT, getAxiomsWithComplexRHS(Imports.EXCLUDED));
+
+    csvData.put(
+        prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS_INCL,
+        isTBoxContainsNominals(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS, isTBoxContainsNominals(Imports.EXCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS_INCL,
+        isABoxContainsNominals(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS, isABoxContainsNominals(Imports.EXCLUDED));
+
+    csvData.put(prefix + MetricsLabels.GCI_COUNT_INCL, getGCICount(true));
+    csvData.put(prefix + MetricsLabels.GCI_COUNT, getGCICount(false));
+    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT_INCL, getHiddenGCICount(true));
+    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT, getHiddenGCICount(false));
+
+    csvData.put(
+        prefix + MetricsLabels.MAX_NUM_NAMED_SUPERCLASS_INCL,
+        getMaximumNumberOfNamedSuperclasses(true));
+    csvData.put(
+        prefix + MetricsLabels.MAX_NUM_NAMED_SUPERCLASS,
+        getMaximumNumberOfNamedSuperclasses(false));
+    csvData.put(
+        prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL, getMultipleInheritanceCount(true));
+    csvData.put(prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false));
+
+    /*    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
+        csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
+        csvData.put(
+            prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
+        csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
+        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
+        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false));
+        csvData.put(
+            prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
+        csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
+    */
+    csvData.put(
+        prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT_INCL,
+        getUndeclaredEntitiesCount(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT,
+        getUndeclaredEntitiesCount(Imports.EXCLUDED));
+
+    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT, getTautologyCount(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT_INCL, getTautologyCount(Imports.INCLUDED));
+    csvData.put(prefix + MetricsLabels.CYCLE, surelyContainsCycle(Imports.EXCLUDED));
+    csvData.put(prefix + MetricsLabels.CYCLE_INCL, surelyContainsCycle(Imports.INCLUDED));
+
+    if (surelyContainsCycle(Imports.EXCLUDED)) {
+      csvData.put(prefix + MetricsLabels.CYCLE, true);
+    } else {
+      csvData.put(prefix + MetricsLabels.CYCLE, false);
+    }
+
+    csvData.putMap(
+        prefix + MetricsLabels.DATATYPE_AXIOMCOUNT,
+        getDatatypesWithAxiomOccurrenceCount(Imports.EXCLUDED));
+    csvData.putMap(
+        prefix + MetricsLabels.DATATYPE_AXIOMCOUNT_INCL,
+        getDatatypesWithAxiomOccurrenceCount(Imports.INCLUDED));
+    csvData.putSet(prefix + MetricsLabels.DATATYPES, getBuiltInDatatypes(Imports.EXCLUDED));
+    csvData.putSet(prefix + MetricsLabels.DATATYPES_INCL, getBuiltInDatatypes(Imports.INCLUDED));
+    csvData.putSet(
+        prefix + MetricsLabels.DATATYPES_NOT_BUILT_IN, getNotBuiltInDatatypes(Imports.EXCLUDED));
+    csvData.putSet(
+        prefix + MetricsLabels.DATATYPES_NOT_BUILT_IN_INCL,
+        getNotBuiltInDatatypes(Imports.INCLUDED));
+
+    csvData.put(
+        prefix + MetricsLabels.MOST_FRQUENTLY_USED_CONCEPT_INCL,
+        getMostFrequentlyUsedClassInLogicalAxioms(Imports.INCLUDED));
+    csvData.put(
+        prefix + MetricsLabels.MOST_FRQUENTLY_USED_CONCEPT,
+        getMostFrequentlyUsedClassInLogicalAxioms(Imports.EXCLUDED));
+
+    return csvData;
   }
 
   // ENTITIES
@@ -700,9 +1017,7 @@ public class OntologyMetrics {
     return OntologyCycleDetector.containsCycle(getOntology(), includeImports);
   }
 
-  /**
-   * @return Ontology used for metrics computation
-   */
+  /** @return Ontology used for metrics computation */
   public OWLOntology getOntology() {
     return this.ontology;
   }
@@ -798,343 +1113,5 @@ public class OntologyMetrics {
   private List<OWLProfileViolation> getOWLDLProfileViolations() {
     isOWL2DLProfile();
     return owlProfileViolations;
-  }
-
-  /**
-   *
-   * @return the essential metrics
-   */
-  public MeasureResult getEssentialMetrics() {
-    return getEssentialMetrics("");
-  }
-
-  /**
-   *
-   * @return the extended metrics
-   */
-  public MeasureResult getExtendedMetrics() {
-    return getExtendedMetrics("");
-  }
-
-  /**
-   *
-   * @return all metrics
-   */
-  public MeasureResult getAllMetrics() {
-    return getAllMetrics("");
-  }
-
-  /**
-   *
-   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
-   * @return essential metrics
-   */
-  public MeasureResult getEssentialMetrics(String prefix) {
-    MeasureResult csvData = new MeasureResult();
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_VERSION_ID, getOntologyVersionId());
-    /*
-    Essential entity metrics
-    */
-    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE_INCL, getSignatureSize(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE, getSignatureSize(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.CLASS_COUNT_INCL, getClassCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.CLASS_COUNT, getClassCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.OBJPROPERTY_COUNT_INCL, getObjectPropertyCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.OBJPROPERTY_COUNT, getObjectPropertyCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.INDIVIDUAL_COUNT_INCL, getIndividualsCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.INDIVIDUAL_COUNT, getIndividualsCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.DATAPROPERTY_COUNT_INCL, getDataPropertyCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.DATAPROPERTY_COUNT, getDataPropertyCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.ANNOTATION_PROP_COUNT, getAnnotationPropertyCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.ANNOTATION_PROP_COUNT_INCL,
-        getAnnotationPropertyCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT_INCL, getDatatypesCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.DATATYPE_COUNT, getDatatypesCount(Imports.EXCLUDED));
-
-    csvData.put(prefix + MetricsLabels.ONTOLOGY_ANNOTATIONS_COUNT, getAnnotationsCount());
-
-    /*
-    Essential axiom counts
-     */
-
-    csvData.put(prefix + MetricsLabels.LOGICAL_AXIOM_COUNT, getLogicalAxiomCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.LOGICAL_AXIOM_COUNT_INCL, getLogicalAxiomCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.AXIOM_COUNT, getAxiomCount(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.AXIOM_COUNT_INCL, getAxiomCount(Imports.INCLUDED));
-
-    csvData.put(prefix + MetricsLabels.TBOX_SIZE, getTBoxSize(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.TBOX_SIZE_INCL, getTBoxSize(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE, getTBoxRboxSize(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.TBOXRBOX_SIZE_INCL, getTBoxRboxSize(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.RULE_CT, getNumberOfRules(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.RULE_CT_INCL, getNumberOfRules(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.RBOX_SIZE, getRBoxSize(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.RBOX_SIZE_INCL, getRBoxSize(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.ABOX_SIZE, getABoxSize(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.ABOX_SIZE_INCL, getABoxSize(Imports.INCLUDED));
-
-    /*
-    Essential expressivity metrics
-     */
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2, isOWL2Profile());
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_DL, isOWL2DLProfile());
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_EL, isOWL2ELProfile());
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_QL, isOWL2QLProfile());
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_RL, isOWL2RLProfile());
-    csvData.put(prefix + MetricsLabels.BOOL_PROFILE_RDFS, isRDFS());
-    csvData.putMap(prefix + MetricsLabels.VIOLATION_PROFILE_OWL2_DL, getOwlprofileviolations());
-
-    csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS, getValidImports(false));
-    csvData.putSet(prefix + MetricsLabels.VALID_IMPORTS_INCL, getValidImports(true));
-
-    return csvData;
-  }
-
-  /**
-   *
-   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
-   * @return extended metrics
-   */
-  public MeasureResult getExtendedMetrics(String prefix) {
-    MeasureResult csvData = new MeasureResult();
-    MeasureResult essentialData = getEssentialMetrics(prefix);
-    csvData.importMetrics(essentialData);
-
-    /*
-    Extended entity metrics
-     */
-    csvData.put(
-        prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT_INCL,
-        getDatatypesBuiltinCount(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT, getDatatypesBuiltinCount(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.DATATYPE_NOTBUILTIN_COUNT_INCL,
-        getDatatypesNotBuiltinCount(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.DATATYPE_NOTBUILTIN_COUNT,
-        getDatatypesNotBuiltinCount(Imports.EXCLUDED));
-
-    /*
-    Extended expressivity metrics
-     */
-    csvData.put(prefix + MetricsLabels.EXPRESSIVITY, getExpressivity(false));
-    csvData.put(prefix + MetricsLabels.EXPRESSIVITY_INCL, getExpressivity(true));
-    csvData.putSet(prefix + MetricsLabels.CONSTRUCTS_INCL, getConstructs(true));
-    csvData.putSet(prefix + MetricsLabels.CONSTRUCTS, getConstructs(false));
-    csvData.putSet(prefix + MetricsLabels.AXIOM_TYPES, getAxiomTypes(Imports.EXCLUDED));
-    csvData.putSet(prefix + MetricsLabels.AXIOM_TYPES_INCL, getAxiomTypes(Imports.INCLUDED));
-    csvData.putMap(prefix + MetricsLabels.AXIOMTYPE_COUNT, getAxiomTypeCounts(Imports.EXCLUDED));
-    csvData.putMap(
-        prefix + MetricsLabels.AXIOMTYPE_COUNT_INCL, getAxiomTypeCounts(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
-    csvData.putMap(
-        prefix + MetricsLabels.CLASSEXPRESSION_COUNT,
-        getOWLClassExpressionCounts(Imports.EXCLUDED));
-    csvData.putMap(
-        prefix + MetricsLabels.CLASSEXPRESSION_COUNT_INCL,
-        getOWLClassExpressionCounts(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
-
-    /*
-    Entity usage
-     */
-
-    csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS, getAxiomUsageMap(Imports.EXCLUDED));
-    csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS_INCL, getAxiomUsageMap(Imports.INCLUDED));
-    csvData.putMap(prefix + MetricsLabels.NS_USE_SIGNATURE, getEntityUsageMap(Imports.EXCLUDED));
-    csvData.putMap(
-        prefix + MetricsLabels.NS_USE_SIGNATURE_INCL, getEntityUsageMap(Imports.INCLUDED));
-    csvData.putMap(prefix + MetricsLabels.CURIE_MAP, prefixmapUsed);
-    return csvData;
-  }
-
-  /**
-   *
-   * @param reasoner the reasoner to use to compute the metric; it is expected that
-   *                 this reasoner has the same ontology loaded as the one used
-   *                 by this class.
-   * @return simple reasoner metrics
-   */
-  public MeasureResult getSimpleReasonerMetrics(OWLReasoner reasoner) {
-    return getSimpleReasonerMetrics("", reasoner);
-  }
-
-  /**
-   *
-   * @param reasoner the reasoner to use to compute the metric; it is expected that
-   *                 this reasoner has the same ontology loaded as the one used
-   *                 by this class.
-   * @return extended reasoner metrics
-   */
-  public MeasureResult getExtendedReasonerMetrics(OWLReasoner reasoner) {
-    return getExtendedReasonerMetrics("", reasoner);
-  }
-
-  /**
-   *
-   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
-   * @param reasoner the reasoner to use to compute the metric; it is expected that
-   *                 this reasoner has the same ontology loaded as the one used
-   *                 by this class.
-   * @return simple reasoner metrics
-   */
-  public MeasureResult getSimpleReasonerMetrics(String prefix, OWLReasoner reasoner) {
-    MeasureResult csvData = new MeasureResult();
-    csvData.put(prefix + MetricsLabels.CONSISTENT, reasoner.isConsistent());
-    if (reasoner.isConsistent()) {
-      csvData.put(
-          prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT,
-          reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom().size());
-    } else {
-      csvData.put(prefix + MetricsLabels.UNSATISFIABLECLASSES_COUNT, -1);
-    }
-    return csvData;
-  }
-
-  /**
-   *
-   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
-   * @param reasoner the reasoner to use to compute the metric; it is expected that
-   *                 this reasoner has the same ontology loaded as the one used
-   *                 by this class.
-   * @return extended reasoner metrics
-   */
-  public MeasureResult getExtendedReasonerMetrics(String prefix, OWLReasoner reasoner) {
-    MeasureResult csvData = new MeasureResult();
-    MeasureResult extendedData = getSimpleReasonerMetrics(prefix, reasoner);
-    csvData.importMetrics(extendedData);
-    return csvData;
-  }
-
-  /**
-   *
-   * @param prefix a prefix to prepend to all the metrics, for example "bfo_"
-   * @return all metrics
-   */
-  public MeasureResult getAllMetrics(String prefix) {
-    MeasureResult csvData = new MeasureResult();
-    MeasureResult extendedData = getExtendedMetrics(prefix);
-    csvData.importMetrics(extendedData);
-
-    csvData.put(prefix + MetricsLabels.MAX_AXIOMLENGTH, getLongestAxiomLength(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.MAX_AXIOMLENGTH_INCL, getLongestAxiomLength(Imports.INCLUDED));
-
-    csvData.put(
-        prefix + MetricsLabels.AVG_ASSERT_N_SUBCLASS_INCL,
-        getAverageAssertedNamedSubclasses(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.AVG_ASSERT_N_SUBCLASS,
-        getAverageAssertedNamedSubclasses(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS_INCL,
-        getAverageAssertedNamedSuperclasses(true));
-    csvData.put(
-        prefix + MetricsLabels.AVG_ASSERT_N_SUPERCLASS, getAverageAssertedNamedSuperclasses(false));
-    csvData.put(
-        prefix + MetricsLabels.AVG_INSTANCE_PER_CLASS_INCL,
-        getAverageInstancesPerClass(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.AVG_INSTANCE_PER_CLASS,
-        getAverageInstancesPerClass(Imports.EXCLUDED));
-
-    csvData.put(
-        prefix + MetricsLabels.CLASS_SGL_SUBCLASS_COUNT_INCL,
-        getClassesWithSingleSubclassCount(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.CLASS_SGL_SUBCLASS_COUNT,
-        getClassesWithSingleSubclassCount(Imports.EXCLUDED));
-
-    csvData.put(
-        prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT_INCL,
-        getAxiomsWithComplexRHS(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.AXIOM_COMPLEXRHS_COUNT, getAxiomsWithComplexRHS(Imports.EXCLUDED));
-
-    csvData.put(
-        prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS_INCL,
-        isTBoxContainsNominals(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.TBOX_CONTAINS_NOMINALS, isTBoxContainsNominals(Imports.EXCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS_INCL,
-        isABoxContainsNominals(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.ABOX_CONTAINS_NOMINALS, isABoxContainsNominals(Imports.EXCLUDED));
-
-    csvData.put(prefix + MetricsLabels.GCI_COUNT_INCL, getGCICount(true));
-    csvData.put(prefix + MetricsLabels.GCI_COUNT, getGCICount(false));
-    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT_INCL, getHiddenGCICount(true));
-    csvData.put(prefix + MetricsLabels.GCI_HIDDEN_COUNT, getHiddenGCICount(false));
-
-    csvData.put(
-        prefix + MetricsLabels.MAX_NUM_NAMED_SUPERCLASS_INCL,
-        getMaximumNumberOfNamedSuperclasses(true));
-    csvData.put(
-        prefix + MetricsLabels.MAX_NUM_NAMED_SUPERCLASS,
-        getMaximumNumberOfNamedSuperclasses(false));
-    csvData.put(
-        prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL, getMultipleInheritanceCount(true));
-    csvData.put(prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false));
-
-    /*    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
-        csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
-        csvData.put(
-            prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
-        csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
-        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
-        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false));
-        csvData.put(
-            prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
-        csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
-    */
-    csvData.put(
-        prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT_INCL,
-        getUndeclaredEntitiesCount(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT,
-        getUndeclaredEntitiesCount(Imports.EXCLUDED));
-
-    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT, getTautologyCount(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.TAUTOLOGYCOUNT_INCL, getTautologyCount(Imports.INCLUDED));
-    csvData.put(prefix + MetricsLabels.CYCLE, surelyContainsCycle(Imports.EXCLUDED));
-    csvData.put(prefix + MetricsLabels.CYCLE_INCL, surelyContainsCycle(Imports.INCLUDED));
-
-    if (surelyContainsCycle(Imports.EXCLUDED)) {
-      csvData.put(prefix + MetricsLabels.CYCLE, true);
-    } else {
-      csvData.put(prefix + MetricsLabels.CYCLE, false);
-    }
-
-    csvData.putMap(
-        prefix + MetricsLabels.DATATYPE_AXIOMCOUNT,
-        getDatatypesWithAxiomOccurrenceCount(Imports.EXCLUDED));
-    csvData.putMap(
-        prefix + MetricsLabels.DATATYPE_AXIOMCOUNT_INCL,
-        getDatatypesWithAxiomOccurrenceCount(Imports.INCLUDED));
-    csvData.putSet(prefix + MetricsLabels.DATATYPES, getBuiltInDatatypes(Imports.EXCLUDED));
-    csvData.putSet(prefix + MetricsLabels.DATATYPES_INCL, getBuiltInDatatypes(Imports.INCLUDED));
-    csvData.putSet(
-        prefix + MetricsLabels.DATATYPES_NOT_BUILT_IN, getNotBuiltInDatatypes(Imports.EXCLUDED));
-    csvData.putSet(
-        prefix + MetricsLabels.DATATYPES_NOT_BUILT_IN_INCL,
-        getNotBuiltInDatatypes(Imports.INCLUDED));
-
-    csvData.put(
-        prefix + MetricsLabels.MOST_FRQUENTLY_USED_CONCEPT_INCL,
-        getMostFrequentlyUsedClassInLogicalAxioms(Imports.INCLUDED));
-    csvData.put(
-        prefix + MetricsLabels.MOST_FRQUENTLY_USED_CONCEPT,
-        getMostFrequentlyUsedClassInLogicalAxioms(Imports.EXCLUDED));
-
-    return csvData;
   }
 }

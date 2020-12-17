@@ -182,10 +182,7 @@ public class MetricsLabels {
   public static final String VALID_IMPORTS_INCL = "valid_imports_incl";
   public static final String CURIE_MAP = "curie_map";
 
-  /**
-   *
-   * @return Get all metrics as a map of variable names to label
-   */
+  /** @return Get all metrics as a map of variable names to label */
   public static Map<String, String> getLabels() {
     Map<String, String> data = new HashMap<>();
     for (Field field : MetricsLabels.class.getDeclaredFields()) {
@@ -198,7 +195,6 @@ public class MetricsLabels {
       } catch (IllegalArgumentException | IllegalAccessException e) {
         e.printStackTrace();
       }
-
     }
     return data;
   }

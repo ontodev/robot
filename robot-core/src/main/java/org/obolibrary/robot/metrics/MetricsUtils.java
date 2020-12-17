@@ -8,7 +8,66 @@ import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 
+@SuppressWarnings("unused")
 public class MetricsUtils {
+
+  /**
+   * @param axioms set of axioms
+   * @return filtered set of axioms (only ABox axioms)
+   */
+  public static Set<OWLAxiom> getABoxAxioms(Set<OWLAxiom> axioms) {
+    Set<OWLAxiom> abox = new HashSet<>();
+    Set<AxiomType<?>> types = getABoxAxiomTypes();
+    for (OWLAxiom ax : axioms) {
+      if (types.contains(ax.getAxiomType())) {
+        abox.add(ax);
+      }
+    }
+    return abox;
+  }
+
+  /**
+   * @param ontology ontology to be checked
+   * @param includeImportsClosure take into account imports
+   * @param skiprules ignore rules (SWRL)
+   * @param types AxiomTypes to consider
+   * @return all logical axioms in the ontology
+   */
+  public static Set<OWLAxiom> getLogicalAxioms(
+      OWLOntology ontology,
+      Imports includeImportsClosure,
+      boolean skiprules,
+      Set<AxiomType<?>> types) {
+    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false, types);
+  }
+
+  /**
+   * @param including_rbox whether or not RBox
+   * @return all TBox axiom types
+   */
+  public static Set<AxiomType<?>> getTBoxAxiomTypes(boolean including_rbox) {
+    Set<AxiomType<?>> axty = new HashSet<>();
+    if (including_rbox) {
+      axty.addAll(AxiomType.RBoxAxiomTypes);
+    }
+    axty.addAll(AxiomType.TBoxAxiomTypes);
+    return axty;
+  }
+
+  /**
+   * @param axioms set of axioms
+   * @return filtered set of axioms (only tbox axioms)
+   */
+  public static Set<OWLAxiom> getTBoxAxioms(Set<OWLAxiom> axioms) {
+    Set<OWLAxiom> tbox = new HashSet<>();
+    Set<AxiomType<?>> types = getTBoxAxiomTypes(true);
+    for (OWLAxiom ax : axioms) {
+      if (types.contains(ax.getAxiomType())) {
+        tbox.add(ax);
+      }
+    }
+    return tbox;
+  }
 
   private static Set<OWLAxiom> stripAnnotations(Set<OWLAxiom> axioms) {
     Set<OWLAxiom> newAxioms = new HashSet<>();
@@ -70,22 +129,6 @@ public class MetricsUtils {
   private static Set<OWLAxiom> getLogicalAxioms(
       OWLOntology ontology, Imports includeImportsClosure, boolean skiprules) {
     return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false);
-  }
-
-  /**
-   *
-   * @param ontology ontology to be checked
-   * @param includeImportsClosure take into account imports
-   * @param skiprules ignore rules (SWRL)
-   * @param types AxiomTypes to consider
-   * @return all logical axioms in the ontology
-   */
-  public static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology ontology,
-      Imports includeImportsClosure,
-      boolean skiprules,
-      Set<AxiomType<?>> types) {
-    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false, types);
   }
 
   private static Set<OWLAxiom> getLogicalAxioms(
@@ -184,62 +227,13 @@ public class MetricsUtils {
 
   private static int getNaturalNumberValue(String metrics_rec) {
     try {
-      int i = Integer.parseInt(metrics_rec);
-      return i;
+      return Integer.parseInt(metrics_rec);
     } catch (Exception e) {
       return -1;
     }
   }
 
-  /**
-   *
-   * @param including_rbox whether or not RBox
-   * @return all TBox axiom types
-   */
-  public static Set<AxiomType<?>> getTBoxAxiomTypes(boolean including_rbox) {
-    Set<AxiomType<?>> axty = new HashSet<>();
-    if (including_rbox) {
-      axty.addAll(AxiomType.RBoxAxiomTypes);
-    }
-    axty.addAll(AxiomType.TBoxAxiomTypes);
-    return axty;
-  }
-
   private static Set<AxiomType<?>> getABoxAxiomTypes() {
-    Set<AxiomType<?>> axty = new HashSet<>();
-    axty.addAll(AxiomType.ABoxAxiomTypes);
-    return axty;
-  }
-
-  /**
-   *
-   * @param axioms set of axioms
-   * @return filtered set of axioms (only tbox axioms)
-   */
-  public static Set<OWLAxiom> getTBoxAxioms(Set<OWLAxiom> axioms) {
-    Set<OWLAxiom> tbox = new HashSet<>();
-    Set<AxiomType<?>> types = getTBoxAxiomTypes(true);
-    for (OWLAxiom ax : axioms) {
-      if (types.contains(ax.getAxiomType())) {
-        tbox.add(ax);
-      }
-    }
-    return tbox;
-  }
-
-  /**
-   *
-   * @param axioms set of axioms
-   * @return filtered set of axioms (only ABox axioms)
-   */
-  public static Set<OWLAxiom> getABoxAxioms(Set<OWLAxiom> axioms) {
-    Set<OWLAxiom> abox = new HashSet<>();
-    Set<AxiomType<?>> types = getABoxAxiomTypes();
-    for (OWLAxiom ax : axioms) {
-      if (types.contains(ax.getAxiomType())) {
-        abox.add(ax);
-      }
-    }
-    return abox;
+    return new HashSet<>(AxiomType.ABoxAxiomTypes);
   }
 }
