@@ -1,29 +1,29 @@
 <head>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
 <table class="table table-bordered table-striped">
 <thead class="bg-dark text-white header-row">
 <tr>
-	<th>exposure process reported</th>
-	<th>exposure material reported</th>
-	<th>exposure material id</th>
-	<th>disease reported</th>
-	<th>disease ontology id</th>
-	<th>disease stage reported</th>
+  <th>exposure process reported</th>
+  <th>exposure material reported</th>
+  <th>exposure material id</th>
+  <th>disease reported</th>
+  <th>disease ontology id</th>
+  <th>disease stage reported</th>
 </tr>
 </thead>
 <thead class="bg-secondary text-white">
 <tr>
-	<th>is-required; subclass-of 'exposure process';</th>
-	<th>subclass-of|equivalent-to 'material entity'; equivalent-to %3; is-required (when %1 subclass-of ('administering substance in vivo' or 'exposure to substance without evidence for disease' or 'occurrence of infectious disease' or 'occurrence of allergic disease')); is-excluded (when %1 equivalent-to 'occurrence of disease'); is-excluded (when %1 subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer' or 'no exposure' or unknown))</th>
-	<th>equivalent-to %2</th>
-	<th>subclass-of disease; subclass-of 'has material basis in' some %2 (when %1 not-subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer')); equivalent-to %5; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 equivalent-to 'administering substance in vivo'); is-excluded (when %1 subclass-of (vaccination or 'transplant or transfusion' or 'exposure to substance without evidence for disease' or 'no exposure' or unknown))</th>
-	<th>equivalent-to %4</th>
-	<th>subclass-of 'disease stage'; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 not-subclass-of 'occurrence of disease')</th>
+  <th>is-required; subclass-of 'exposure process';</th>
+  <th>subclass-of|equivalent-to 'material entity'; equivalent-to %3; is-required (when %1 subclass-of ('administering substance in vivo' or 'exposure to substance without evidence for disease' or 'occurrence of infectious disease' or 'occurrence of allergic disease')); is-excluded (when %1 equivalent-to 'occurrence of disease'); is-excluded (when %1 subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer' or 'no exposure' or unknown))</th>
+  <th>equivalent-to %2</th>
+  <th>subclass-of disease; subclass-of 'has material basis in' some %2 (when %1 not-subclass-of ('occurrence of autoimmune disease' or 'occurrence of cancer')); equivalent-to %5; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 equivalent-to 'administering substance in vivo'); is-excluded (when %1 subclass-of (vaccination or 'transplant or transfusion' or 'exposure to substance without evidence for disease' or 'no exposure' or unknown))</th>
+  <th>equivalent-to %4</th>
+  <th>subclass-of 'disease stage'; is-required (when %1 subclass-of 'occurrence of disease'); is-excluded (when %1 not-subclass-of 'occurrence of disease')</th>
 </tr>
 </thead>
 	<tr>
@@ -125,6 +125,6 @@
 </table>
 </body>
 <script>
-	$(function () {
-		$('[data-toggle="tooltip"]').tooltip()
-	})</script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })</script>
