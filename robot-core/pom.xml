@@ -175,7 +175,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>whelk-owlapi_${scala.version}</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.4</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>

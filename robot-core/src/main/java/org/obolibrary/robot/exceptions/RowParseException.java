@@ -35,6 +35,7 @@ public class RowParseException extends Exception {
    * @param s message
    * @param rowNum row number
    * @param colNum column number
+   * @param cellValue value of cell with exception
    */
   public RowParseException(String s, int rowNum, int colNum, String cellValue) {
     super(s);

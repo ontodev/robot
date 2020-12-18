@@ -1,12 +1,10 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Lists;
-import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.obolibrary.robot.export.*;
 import org.obolibrary.robot.providers.*;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -90,6 +88,7 @@ public class ExportOperation {
    * @param ioHelper IOHelper to handle labels
    * @param columnNames List of column names, in order
    * @param options Map of Export options
+   * @return Table object
    * @throws Exception if file does not exist to write to or a column is not a valid property
    */
   public static Table createExportTable(
@@ -332,37 +331,9 @@ public class ExportOperation {
       throws Exception {
     String format = OptionsHelper.getOption(options, "format", "tsv").toLowerCase();
     String split = OptionsHelper.getOption(options, "split", "|");
-    File exportFile = new File(exportPath);
-    switch (format) {
-      case "tsv":
-        IOHelper.writeTable(table.toList(split), exportFile, '\t');
-        break;
-      case "csv":
-        IOHelper.writeTable(table.toList(split), exportFile, ',');
-        break;
-      case "html-list":
-        try (PrintWriter out = new PrintWriter(exportFile)) {
-          out.print(table.toHTMLList());
-        }
-        break;
-      case "html":
-        try (PrintWriter out = new PrintWriter(exportFile)) {
-          out.print(table.toHTML(split, OptionsHelper.optionIsTrue(options, "standalone")));
-        }
-        break;
-      case "json":
-        try (PrintWriter out = new PrintWriter(exportFile)) {
-          out.print(table.toJSON());
-        }
-        break;
-      case "xlsx":
-        try (Workbook wb = table.asWorkbook(split);
-            FileOutputStream fos = new FileOutputStream(exportFile)) {
-          wb.write(fos);
-        }
-        break;
-      default:
-        throw new Exception(String.format(unknownFormatError, format));
+    boolean standalone = OptionsHelper.optionIsTrue(options, "standalone");
+    if (!table.write(exportPath, split, standalone)) {
+      throw new Exception(String.format(unknownFormatError, format));
     }
   }
 

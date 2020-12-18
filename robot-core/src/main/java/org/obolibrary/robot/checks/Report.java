@@ -69,6 +69,8 @@ public class Report {
   private final List<String> header =
       Lists.newArrayList("Level", "Rule Name", "Subject", "Property", "Value");
 
+  private IRI ontologyIRI = null;
+
   /**
    * Create a new report object without an ontology or predefined IOHelper.
    *
@@ -88,6 +90,7 @@ public class Report {
   public Report(OWLOntology ontology, boolean useLabels) throws IOException {
     if (ontology != null) {
       manager = ontology.getOWLOntologyManager();
+      ontologyIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     } else {
       manager = OWLManager.createOWLOntologyManager();
     }
@@ -140,6 +143,7 @@ public class Report {
   public Report(OWLOntology ontology, IOHelper ioHelper, boolean useLabels) {
     if (ontology != null) {
       manager = ontology.getOWLOntologyManager();
+      ontologyIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     } else {
       manager = OWLManager.createOWLOntologyManager();
     }
@@ -298,7 +302,7 @@ public class Report {
    * Return the report in JSON format. This converts the YAML format of the report to JSON.
    *
    * @return JSON String
-   * @throws IOException on issue converting YAML -> JSON
+   * @throws IOException on issue converting YAML to JSON
    */
   public String toJSON() throws IOException {
     Object obj = new ObjectMapper(new YAMLFactory()).readValue(toYAML(), Object.class);
@@ -352,7 +356,21 @@ public class Report {
       Cell ruleCell = new Cell(columns.get(1), ruleName);
       for (Violation v : vs.getValue()) {
         // Subject of the violation for the following rows
-        String subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
+        String subject;
+        if (ontologyIRI != null
+            && v.entity != null
+            && !v.entity.isAnonymous()
+            && v.entity.getIRI().toString().equals(ontologyIRI.toString())) {
+          // If the IRI is the ontology IRI, keep this as the full string
+          subject = ontologyIRI.toString();
+        } else {
+          // Otherwise, render the subject based on the display renderer
+          if (v.entity != null) {
+            subject = OntologyHelper.renderManchester(v.entity, provider, displayRenderer);
+          } else {
+            subject = v.subject;
+          }
+        }
         Cell subjectCell = new Cell(columns.get(2), subject);
         for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
           // Property of the violation for the following rows

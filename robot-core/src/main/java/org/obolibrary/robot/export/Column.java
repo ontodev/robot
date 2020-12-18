@@ -31,7 +31,7 @@ public class Column {
   // private OWLObject targetObject;
 
   // Provider to render short form of entities
-  private ShortFormProvider shortFormProvider;
+  private ShortFormProvider shortFormProvider = null;
 
   // If true, sort on this column
   private int sortOrder = -1;
@@ -43,13 +43,34 @@ public class Column {
   private boolean includeAnonymous = false;
 
   /**
+   * Init a new column with a name.
+   *
+   * @param name Column name
+   */
+  public Column(String name) {
+    this.name = name;
+    this.displayName = name;
+  }
+
+  /**
+   * Init a new column with a name and a display name.
+   *
+   * @param name Column name
+   * @param displayName Column display name
+   */
+  public Column(String name, String displayName) {
+    this.name = name;
+    this.displayName = displayName;
+  }
+
+  /**
    * Init a new Column using an IRI.
    *
    * @param name Column name
    * @param displayName Column display name
    * @param iri IRI of column property
    * @param shortFormProvider ShortFormProvider to use when rendering values
-   * @param entitySelect
+   * @param entitySelect String keyword to set includeNamed and includeAnonymous
    */
   public Column(
       String name,
@@ -90,7 +111,7 @@ public class Column {
    * @param displayName Column display name
    * @param dataProperty column OWLDataProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
-   * @param entitySelect
+   * @param entitySelect String keyword to set includeNamed and includeAnonymous
    */
   public Column(
       String name,
@@ -112,7 +133,7 @@ public class Column {
    * @param displayName Column display name
    * @param objectProperty column OWLObjectProperty
    * @param shortFormProvider ShortFormProvider to use when rendering values
-   * @param entitySelect
+   * @param entitySelect String keyword to set includeNamed and includeAnonymous
    */
   public Column(
       String name,
@@ -127,6 +148,12 @@ public class Column {
     setEntitySelect(entitySelect);
   }
 
+  /**
+   * Init a new column with a name and a provider.
+   *
+   * @param name Column name
+   * @param shortFormProvider ShortFormProvider to use when rendering values
+   */
   public Column(String name, @Nonnull ShortFormProvider shortFormProvider) {
     this.name = name;
     this.shortFormProvider = shortFormProvider;
@@ -141,6 +168,7 @@ public class Column {
    * @param name Column name
    * @param rules Column rules
    * @param displayRule String raw display rule for output
+   * @param shortFormProvider ShortFormProvider for rendering
    */
   public Column(
       String name,
@@ -233,7 +261,6 @@ public class Column {
    *
    * @return ShortFormProvider
    */
-  @Nonnull
   public ShortFormProvider getShortFormProvider() {
     return shortFormProvider;
   }
@@ -256,6 +283,22 @@ public class Column {
     return reverseSort;
   }
 
+  /**
+   * Set the sort order for this column.
+   *
+   * @param sortOrder int sort order (starting at 0)
+   */
+  public void setSort(int sortOrder) {
+    this.sortOrder = sortOrder;
+    this.reverseSort = false;
+  }
+
+  /**
+   * Set the sort order for this column and if it should be sorted in reverse.
+   *
+   * @param sortOrder int sort order (starting at 0)
+   * @param reverseSort if true, sort in reverse
+   */
   public void setSort(int sortOrder, boolean reverseSort) {
     this.sortOrder = sortOrder;
     this.reverseSort = reverseSort;

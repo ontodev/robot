@@ -371,9 +371,7 @@ public class Template {
     boolean hasException = false;
 
     List<String[]> errors = new ArrayList<>();
-    errors.add(
-        new String[] {"ID", "table", "cell", "level", "rule ID", "rule name", "value", "fix"});
-    int errCount = 0;
+    errors.add(new String[] {"table", "cell", "rule ID", "message"});
     for (List<String> row : tableRows) {
       try {
         processRow(row);
@@ -385,22 +383,13 @@ public class Template {
 
         // otherwise print exceptions as they show up
         hasException = true;
-        errCount++;
-        logger.error(e.getMessage().substring(e.getMessage().indexOf("#") + 1));
+        String message = e.getMessage().substring(e.getMessage().indexOf("#") + 1);
+        logger.error(message);
 
         // Only add to errors table if we have a row & col num
         if (e.rowNum != -1 && e.colNum != -1) {
           errors.add(
-              new String[] {
-                String.valueOf(errCount),
-                this.name,
-                IOHelper.cellToA1(e.rowNum, e.colNum),
-                "error",
-                e.ruleID,
-                e.ruleName,
-                e.cellValue,
-                ""
-              });
+              new String[] {this.name, IOHelper.cellToA1(e.rowNum, e.colNum), e.ruleID, message});
         }
       }
     }
@@ -606,13 +595,13 @@ public class Template {
         type = "class";
       }
 
-      IRI iri = ioHelper.createIRI(id, true);
+      IRI iri = ioHelper.createIRI(id);
       if (iri == null) {
         iri = IRI.create(id);
       }
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type, true);
+      IRI typeIRI = ioHelper.createIRI(type);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -758,7 +747,7 @@ public class Template {
     }
 
     // Try to resolve a CURIE
-    IRI typeIRI = ioHelper.createIRI(type, true);
+    IRI typeIRI = ioHelper.createIRI(type);
 
     // Set to IRI string or to type string
     String typeOrIRI = type;
@@ -1837,7 +1826,7 @@ public class Template {
       type = type.trim();
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type, true);
+      IRI typeIRI = ioHelper.createIRI(type);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -2228,7 +2217,7 @@ public class Template {
       throw new Exception("You must specify either an ID or a label");
     }
     if (id != null) {
-      return ioHelper.createIRI(id, true);
+      return ioHelper.createIRI(id);
     }
     return checker.getIRI(label, true);
   }

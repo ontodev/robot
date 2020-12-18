@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.2] - 2020-11-18
+
+### Changed
+- Update to whelk 1.0.4
+
+### Fixed
+- Fix blank node subjects in [`report`] in [#767]
+- Fixed IRI handling for [`template`] in [#783]
+
+## [1.7.1] - 2020-10-22
+
 ### Added
 - Add Whelk OWL reasoner in [#730]
 - Add [`validate`] command [#691]
@@ -174,7 +185,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.7.2...HEAD
+[1.7.2]: https://github.com/ontodev/robot/compare/v1.7.1...v1.7.2
+[1.7.1]: https://github.com/ontodev/robot/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/ontodev/robot/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/ontodev/robot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ontodev/robot/compare/v1.4.3...v1.5.0
@@ -208,6 +221,9 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#783]: https://github.com/ontodev/robot/pull/783
+[#767]: https://github.com/ontodev/robot/pull/767
+[#758]: https://github.com/ontodev/robot/pull/758
 [#739]: https://github.com/ontodev/robot/pull/739
 [#738]: https://github.com/ontodev/robot/pull/738
 [#728]: https://github.com/ontodev/robot/pull/728
