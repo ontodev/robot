@@ -36,7 +36,11 @@ public class Table {
   private RendererType displayRenderer;
   private RendererType sortRenderer = null;
 
-  private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+  private static final Set<String> BASIC_FORMATS = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+  private static final String BOOTSTRAP_CSS =
+      "https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css";
+  private static final String BOOTSTRAP_JS =
+      "https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js";
 
   /**
    * Init a new Table.
@@ -50,7 +54,7 @@ public class Table {
     sortColumns = new ArrayList<>();
 
     // Set renderer types based on format
-    if (format == null || basicFormats.contains(format.toLowerCase())) {
+    if (format == null || BASIC_FORMATS.contains(format.toLowerCase())) {
       displayRenderer = RendererType.OBJECT_RENDERER;
     } else if (format.toLowerCase().startsWith("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
@@ -270,13 +274,15 @@ public class Table {
       // Add opening tags, style, and maybe js scripts
       sb.append("<head>\n")
           .append("\t<link rel=\"stylesheet\" href=\"")
-          .append("https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n");
+          .append(BOOTSTRAP_CSS)
+          .append("\">\n");
       if (includeJS) {
         sb.append("\t<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
             .append(
                 "\t<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
-            .append(
-                "\t<script src=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js\"></script>\n");
+            .append("\t<script src=\"")
+            .append(BOOTSTRAP_JS)
+            .append("\"></script>\n");
       }
       sb.append("</head>\n").append("<body>\n");
     }
@@ -335,8 +341,9 @@ public class Table {
   public String toHTMLList() {
     StringBuilder sb = new StringBuilder();
     sb.append("<head>\n")
-        .append(
-            "\t<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n")
+        .append("\t<link rel=\"stylesheet\" href=\"")
+        .append(BOOTSTRAP_CSS)
+        .append("\">\n")
         .append("</head>\n")
         .append("<body>\n");
     for (Row row : rows) {
