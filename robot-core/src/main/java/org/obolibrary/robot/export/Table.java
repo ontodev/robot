@@ -273,14 +273,14 @@ public class Table {
     if (standalone) {
       // Add opening tags, style, and maybe js scripts
       sb.append("<head>\n")
-          .append("\t<link rel=\"stylesheet\" href=\"")
+          .append("  <link rel=\"stylesheet\" href=\"")
           .append(BOOTSTRAP_CSS)
           .append("\">\n");
       if (includeJS) {
-        sb.append("\t<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
+        sb.append("  <script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
             .append(
-                "\t<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
-            .append("\t<script src=\"")
+                "  <script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
+            .append("  <script src=\"")
             .append(BOOTSTRAP_JS)
             .append("\"></script>\n");
       }
@@ -295,7 +295,7 @@ public class Table {
     Map<Integer, String> rules = new HashMap<>();
     int colIdx = 0;
     for (Column c : columns) {
-      sb.append("\t<th>").append(c.getDisplayName()).append("</th>\n");
+      sb.append("  <th>").append(c.getDisplayName()).append("</th>\n");
       String displayRule = c.getDisplayRule();
       if (displayRule != null) {
         rules.put(colIdx, displayRule);
@@ -309,9 +309,9 @@ public class Table {
       sb.append("<thead class=\"bg-secondary text-white\">\n").append("<tr>\n");
       for (int idx = 0; idx < colIdx; idx++) {
         if (rules.containsKey(idx)) {
-          sb.append("\t<th>").append(rules.get(idx)).append("</th>\n");
+          sb.append("  <th>").append(rules.get(idx)).append("</th>\n");
         } else {
-          sb.append("\t<th></th>\n");
+          sb.append("  <th></th>\n");
         }
       }
       sb.append("</tr>\n").append("</thead>\n");
@@ -329,9 +329,9 @@ public class Table {
       sb.append("</body>\n");
       if (includeJS) {
         sb.append("<script>\n")
-            .append("\t$(function () {\n")
-            .append("\t\t$('[data-toggle=\"tooltip\"]').tooltip()\n")
-            .append("\t})")
+            .append("  $(function () {\n")
+            .append("    $('[data-toggle=\"tooltip\"]').tooltip()\n")
+            .append("  })")
             .append("</script>\n");
       }
     }
@@ -341,7 +341,7 @@ public class Table {
   public String toHTMLList() {
     StringBuilder sb = new StringBuilder();
     sb.append("<head>\n")
-        .append("\t<link rel=\"stylesheet\" href=\"")
+        .append("  <link rel=\"stylesheet\" href=\"")
         .append(BOOTSTRAP_CSS)
         .append("\">\n")
         .append("</head>\n")
