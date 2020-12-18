@@ -101,8 +101,12 @@ step "Updating CHANGELOG.md"
 > CHANGELOG.new.md
 mv CHANGELOG.new.md CHANGELOG.md
 
-step "Manually check CHANGELOG.md"
-confirm "CHANGELOG.md good?"
+step "Updating obo context (curie map)"
+OBOCONTEXT="http://purl.obolibrary.org/meta/obo_context.jsonld"
+curl --silent ${OBOCONTEXT} > robot-core/src/main/resources/obo_context.jsonld
+
+step "Manually check CHANGELOG.md and obo_context.jsonld"
+confirm "CHANGELOG.md and obo_context.jsonld good?"
 
 echo "Everything looks good!"
 
