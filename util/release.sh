@@ -79,7 +79,7 @@ step "Check Travis"
 travis status --skip-version-check --exit-code --fail-pending
 
 step "Check Jenkins"
-curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
+curl -L --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
 | jq --exit-status '.result | test("SUCCESS")'
 
 step "Set the the version number for this release"
