@@ -52,13 +52,7 @@ Terms in OBO and OWL are identified using [IRIs](https://en.wikipedia.org/wiki/I
 
 For robot we use the JSON-LD format. See [`obo_context.jsonld`](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld) for the JSON-LD context that is used by default. It includes common, general linked-data prefixes, and prefixes for all the OBO library projects.
 
-If you do not want to use the defaults, you can use the `--noprefixes` option. If you want to replace the defaults, use the `--prefixes` option and specify your JSON-LD file. Whatever your choice, you can add more prefixes using the `--prefix` option, as many times as you like. Finally, you can print or save the current prefixes using the `export-prefixes` command. Here are some examples:
-
-    robot --noprefixes --prefix "foo: http://foo#" \
-      export-prefixes --output results/foo.json
-
-    robot --prefixes foo.json -p "bar: http://bar#" -p "baz: http://baz#" \
-      export-prefixes
+If you do not want to use the defaults, you can use the `--noprefixes` option. If you want to replace the defaults, use the `--prefixes` option and specify your JSON-LD file. Whatever your choice, you can add more prefixes using the `--prefix` option, as many times as you like. Finally, you can print or save the current prefixes using the [`export-prefixes`](/export-prefixes) command.
 
 The various prefix options can be used with any command. When chaining commands, you usually want to specify all the prefix options first, so that they are used "globally" by all commands. But you can also use prefix options for single commands. Here's a silly example with a global prefix "foo" and a local prefix "bar". The first export includes both the global and local prefixes, while the second export includes only the global prefix.
 
