@@ -28,17 +28,17 @@ public class MetricsUtils {
   }
 
   /**
-   * @param ontology ontology to be checked
+   * @param ontology              ontology to be checked
    * @param includeImportsClosure take into account imports
-   * @param skiprules ignore rules (SWRL)
-   * @param types AxiomTypes to consider
+   * @param skiprules             ignore rules (SWRL)
+   * @param types                 AxiomTypes to consider
    * @return all logical axioms in the ontology
    */
   public static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology ontology,
-      Imports includeImportsClosure,
-      boolean skiprules,
-      Set<AxiomType<?>> types) {
+    OWLOntology ontology,
+    Imports includeImportsClosure,
+    boolean skiprules,
+    Set<AxiomType<?>> types) {
     return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false, types);
   }
 
@@ -82,11 +82,11 @@ public class MetricsUtils {
   }
 
   private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology ontology,
-      Imports includeImportsClosure,
-      boolean skiprules,
-      boolean stripaxiomanno,
-      Set<AxiomType<?>> types) {
+    OWLOntology ontology,
+    Imports includeImportsClosure,
+    boolean skiprules,
+    @SuppressWarnings("SameParameterValue") boolean stripaxiomanno,
+    Set<AxiomType<?>> types) {
     Set<OWLAxiom> axioms = new HashSet<>();
     for (OWLAxiom ax : ontology.getLogicalAxioms()) {
       if (types.contains(ax.getAxiomType())) {
