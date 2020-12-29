@@ -1,14 +1,15 @@
 package org.obolibrary.robot.metrics;
 
-import java.io.File;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.*;
-import org.apache.commons.io.FileUtils;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.parameters.Imports;
 
-@SuppressWarnings("unused")
+import java.util.HashSet;
+import java.util.Set;
+
+//@SuppressWarnings("unused")
 public class MetricsUtils {
 
   /**
@@ -80,57 +81,6 @@ public class MetricsUtils {
     return newAxioms;
   }
 
-  private static boolean isIntegerParsable(String id) {
-    try {
-      Integer.parseInt(id);
-      return true;
-    } catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  private static boolean isLongParsable(String id) {
-    try {
-      Long.parseLong(id);
-      return true;
-    } catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  private static boolean isDoubleParsable(String id) {
-    try {
-      Double d = Double.parseDouble(id);
-      return !d.isNaN();
-    } catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  private static boolean isNumeric(String id) {
-    return (isIntegerParsable(id) || isLongParsable(id) || isDoubleParsable(id));
-  }
-
-  private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology ontology,
-      Imports includeImportsClosure,
-      boolean skiprules,
-      boolean leavedeclarations) {
-    Set<AxiomType<?>> types = new HashSet<>();
-    types.addAll(AxiomType.TBoxAxiomTypes);
-    types.addAll(AxiomType.RBoxAxiomTypes);
-    types.addAll(AxiomType.ABoxAxiomTypes);
-    if (leavedeclarations) {
-      types.add(AxiomType.DECLARATION);
-    }
-    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, types);
-  }
-
-  private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology ontology, Imports includeImportsClosure, boolean skiprules) {
-    return getLogicalAxioms(ontology, includeImportsClosure, skiprules, false);
-  }
-
   private static Set<OWLAxiom> getLogicalAxioms(
       OWLOntology ontology,
       Imports includeImportsClosure,
@@ -161,26 +111,6 @@ public class MetricsUtils {
     return axioms;
   }
 
-  private static Set<OWLAxiom> getLogicalAxioms(
-      OWLOntology ontology,
-      boolean includeImportsClosure,
-      boolean skiprules,
-      boolean stripaxiomanno) {
-    Set<OWLAxiom> axioms = new HashSet<>(ontology.getLogicalAxioms());
-    if (includeImportsClosure) {
-      for (OWLOntology imp : ontology.getImports()) {
-        axioms.addAll(imp.getLogicalAxioms());
-      }
-    }
-    if (skiprules) {
-      stripRules(axioms);
-    }
-    if (stripaxiomanno) {
-      axioms = stripAnnotations(axioms);
-    }
-    return axioms;
-  }
-
   private static void stripRules(Set<OWLAxiom> axioms) {
     Set<OWLAxiom> tmp = new HashSet<>(axioms);
     axioms.clear();
@@ -188,48 +118,6 @@ public class MetricsUtils {
       if (!ax.getAxiomType().toString().equals("Rule")) {
         axioms.add(ax);
       }
-    }
-  }
-
-  private static Map<? extends String, ? extends String> getFileMetrics(File file) {
-    Map<String, String> data = new HashMap<>();
-    data.put(MetricsLabels.FILEPATH, file.getParent());
-    data.put(MetricsLabels.FILESIZE, FileUtils.sizeOf(file) + "");
-    return data;
-  }
-
-  private static boolean isNaturalNumber(String value) {
-    try {
-      Double d = Double.valueOf(value);
-      long l = d.longValue();
-      return (l >= 0 && (double) l == d);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return false;
-    }
-  }
-
-  private static long getLong(String sl) {
-    Double d = Double.valueOf(sl);
-    long s = d.longValue();
-    if (d != (double) s) {
-      throw new NumberFormatException(sl + " not valid long!");
-    }
-    return s;
-  }
-
-  private static double round(double value, int places) {
-    if (places < 0) throw new IllegalArgumentException();
-    BigDecimal bd = new BigDecimal(value);
-    bd = bd.setScale(places, RoundingMode.HALF_UP);
-    return bd.doubleValue();
-  }
-
-  private static int getNaturalNumberValue(String metrics_rec) {
-    try {
-      return Integer.parseInt(metrics_rec);
-    } catch (Exception e) {
-      return -1;
     }
   }
 
