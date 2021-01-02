@@ -1,9 +1,9 @@
 package org.obolibrary.robot;
 
-import com.google.common.base.Optional;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+
 import org.semanticweb.owl.explanation.api.*;
 import org.semanticweb.owl.explanation.impl.blackbox.checker.InconsistentOntologyExplanationGeneratorFactory;
 import org.semanticweb.owl.explanation.impl.rootderived.StructuralRootDerivedReasoner;
@@ -151,24 +151,6 @@ public class ExplainOperation {
     return getUnsatExplanationsForClasses(ontology, reasonerFactory, max, unsatisfiable_classes);
   }
 
-  private static Set<OWLClass> getMostGeneralUnsatisfiableClasses(
-      OWLReasoner reasoner, OWLOntology ontology) {
-    Set<OWLClass> mgu = new HashSet<>();
-    OWLReasoner structural = new StructuralReasonerFactory().createReasoner(ontology);
-    Set<OWLClass> unsats =
-        new HashSet<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
-    for (OWLClass c : unsats) {
-      Set<OWLClass> superclasses = structural.getSuperClasses(c, false).getFlattened();
-      superclasses.retainAll(unsats);
-      if (superclasses.isEmpty()) {
-        // If there is no superclass in the ontology according to the structural reasoner which is
-        // also unsatisfiable, we consider C a "most general unsatisfiable class".
-        mgu.add(c);
-      }
-    }
-    return mgu;
-  }
-
   /**
    * Render an Explanation object as Markdown text, linking text labels to term IRIs and indenting
    * axioms.
@@ -250,9 +232,8 @@ public class ExplainOperation {
 
   private static String getAbbreviationForOntologyID(OWLOntologyID oid) {
     String soid = "O" + ontologyCounter;
-    Optional<IRI> oiri = oid.getOntologyIRI();
-    if (oiri.isPresent()) {
-      IRI iri = oiri.get();
+    if (oid.getOntologyIRI().isPresent()) {
+      IRI iri = oid.getOntologyIRI().get();
       String shortform = iri.getShortForm();
       if (!shortform.isEmpty()) {
         return shortform;
@@ -310,14 +291,9 @@ public class ExplainOperation {
       OWLObjectRenderer renderer,
       Map<OWLAxiom, Set<String>> associatedOntologyIds) {
     StringBuilder builder = new StringBuilder();
-    builder.append("## Axioms used " + impact + " times" + "\n");
+    builder.append("## Axioms used ").append(impact).append(" times").append("\n");
     for (OWLAxiom ax : axioms) {
-      builder.append(
-          "- "
-              + renderer.render(ax)
-              + " ["
-              + String.join(",", associatedOntologyIds.get(ax))
-              + "]\n");
+      builder.append("- ").append(renderer.render(ax)).append(" [").append(String.join(",", associatedOntologyIds.get(ax))).append("]\n");
     }
     builder.append("\n");
     return builder.toString();
@@ -334,6 +310,24 @@ public class ExplainOperation {
       explanations.addAll(ExplainOperation.explain(axiom, ontology, reasonerFactory, max));
     }
     return explanations;
+  }
+
+  private static Set<OWLClass> getMostGeneralUnsatisfiableClasses(
+    OWLReasoner reasoner, OWLOntology ontology) {
+    Set<OWLClass> mgu = new HashSet<>();
+    OWLReasoner structural = new StructuralReasonerFactory().createReasoner(ontology);
+    Set<OWLClass> unsats =
+      new HashSet<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
+    for (OWLClass c : unsats) {
+      Set<OWLClass> superclasses = structural.getSuperClasses(c, false).getFlattened();
+      superclasses.retainAll(unsats);
+      if (superclasses.isEmpty()) {
+        // If there is no superclass in the ontology according to the structural reasoner which is
+        // also unsatisfiable, we consider C a "most general unsatisfiable class".
+        mgu.add(c);
+      }
+    }
+    return mgu;
   }
 
   /**

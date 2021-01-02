@@ -32,18 +32,15 @@ public class ExplainCommand implements Command {
 
   private static final String NS = "explain#";
 
-  private static final List<String> legal_modes =
+  private static final List<String> LEGAL_MODES =
       Arrays.asList("entailment", "inconsistency", "unsatisfiability");
   OWLDataFactory df = OWLManager.getOWLDataFactory();
 
   private static final String maxTypeError = NS + "MAX TYPE ERROR --max ('%s') must be an integer";
-  private static final String inconsistentOntologyError =
-      NS
-          + "INCONSISTENT ONTOLOGY ERROR cannot generate explanations for inconsistent ontology. Consider using --inconsistent explain. Explanation: \n %s";
   private static final String illegalModeError =
       NS
           + "ILLEGAL EXPLANATION MODE ERROR: %s. Must be one of "
-          + String.join(" ", legal_modes)
+          + String.join(" ", LEGAL_MODES)
           + ".";
   private static final String missingAxiomArgumentError =
       NS + "MISSING AXIOM ARGUMENT ERROR: must have a valid --axiom.";
@@ -71,7 +68,7 @@ public class ExplainCommand implements Command {
         "mode",
         true,
         "there are three modes for the explanation service: "
-            + String.join(" ", legal_modes).trim()
+            + String.join(" ", LEGAL_MODES).trim()
             + ".");
     o.addOption("e", "explanation", true, "save explanation to a Markdown file");
     o.addOption("f", "format", true, "the format: obo, owl, ttl, owx, omn, ofn, json");
