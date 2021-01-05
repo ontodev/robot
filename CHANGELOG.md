@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix blank node subjects in [`report`] in [#767]
+- Fixed IRI handling for [`template`] in [#783]
 
 ## [1.7.1] - 2020-10-22
 
@@ -219,6 +220,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
 [#739]: https://github.com/ontodev/robot/pull/739

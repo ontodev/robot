@@ -595,13 +595,13 @@ public class Template {
         type = "class";
       }
 
-      IRI iri = ioHelper.createIRI(id, true);
+      IRI iri = ioHelper.createIRI(id);
       if (iri == null) {
         iri = IRI.create(id);
       }
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type, true);
+      IRI typeIRI = ioHelper.createIRI(type);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -747,7 +747,7 @@ public class Template {
     }
 
     // Try to resolve a CURIE
-    IRI typeIRI = ioHelper.createIRI(type, true);
+    IRI typeIRI = ioHelper.createIRI(type);
 
     // Set to IRI string or to type string
     String typeOrIRI = type;
@@ -1826,7 +1826,7 @@ public class Template {
       type = type.trim();
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type, true);
+      IRI typeIRI = ioHelper.createIRI(type);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -2217,7 +2217,7 @@ public class Template {
       throw new Exception("You must specify either an ID or a label");
     }
     if (id != null) {
-      return ioHelper.createIRI(id, true);
+      return ioHelper.createIRI(id);
     }
     return checker.getIRI(label, true);
   }
