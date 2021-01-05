@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update to whelk 1.0.4
+- Run [`query`] on existing TDB dataset (instead of ontology input) in [#792]
 
 ### Fixed
 - Fix blank node subjects in [`report`] in [#767]
@@ -220,6 +221,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#792]: https://github.com/ontodev/robot/pull/792
 [#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
