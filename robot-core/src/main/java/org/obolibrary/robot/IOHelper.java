@@ -503,12 +503,10 @@ public class IOHelper {
    * @throws JenaException if TDB directory can't be written to
    */
   public static Dataset loadToTDBDataset(String inputPath, String tdbDir) throws JenaException {
-    Dataset dataset;
-    if (new File(tdbDir).isDirectory()) {
-      dataset = TDBFactory.createDataset(tdbDir);
-      if (!dataset.isEmpty()) {
-        return dataset;
-      }
+    // First try opening existing dataset
+    Dataset dataset = openTDBDataset(tdbDir);
+    if (dataset != null) {
+      return dataset;
     }
     dataset = TDBFactory.createDataset(tdbDir);
     logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
@@ -531,6 +529,23 @@ public class IOHelper {
     long time = (System.nanoTime() - start) / 1000000000;
     logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
     return dataset;
+  }
+
+  /**
+   * Given a path to a TDB directory, load the TDB as a Dataset.
+   *
+   * @param tdbDir path to existing TDB directory
+   * @return Dataset or null
+   */
+  public static Dataset openTDBDataset(String tdbDir) {
+    Dataset dataset;
+    if (new File(tdbDir).isDirectory()) {
+      dataset = TDBFactory.createDataset(tdbDir);
+      if (!dataset.isEmpty()) {
+        return dataset;
+      }
+    }
+    return null;
   }
 
   /**

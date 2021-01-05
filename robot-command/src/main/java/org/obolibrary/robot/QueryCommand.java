@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
@@ -170,7 +171,12 @@ public class QueryCommand implements Command {
 
     List<List<String>> queries = getQueries(line);
 
+    String tdbDir = CommandLineHelper.getOptionalValue(line, "tdb-directory");
     boolean useTDB = CommandLineHelper.getBooleanValue(line, "tdb", false);
+    if (tdbDir != null) {
+      // Override useTDB if directory is included
+      useTDB = true;
+    }
     if (useTDB) {
       // DOES NOT UPDATE STATE
       // This will not work with chained commands as it uses the `--input` option
@@ -188,11 +194,27 @@ public class QueryCommand implements Command {
    * @param line
    * @return
    */
-  private static Dataset createTDBDataset(CommandLine line) {
-    String inputPath =
-        CommandLineHelper.getRequiredValue(line, "input", "an input is required for TDB");
-    String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
-    return IOHelper.loadToTDBDataset(inputPath, tdbDir);
+  private static Dataset createTDBDataset(CommandLine line) throws MissingArgumentException {
+    String inputPath = CommandLineHelper.getOptionalValue(line, "input");
+    String tdbDir = CommandLineHelper.getOptionalValue(line, "tdb-directory");
+    if (inputPath == null && tdbDir == null) {
+      throw new MissingArgumentException(
+          "Either an --input or existing --tdb-directory is required");
+    }
+    if (inputPath != null) {
+      if (tdbDir == null) {
+        tdbDir = ".tdb";
+      }
+      // Load an input to a TDB directory
+      return IOHelper.loadToTDBDataset(inputPath, tdbDir);
+    }
+    // Try loading dataset from existing TDB directory
+    Dataset ds = IOHelper.openTDBDataset(tdbDir);
+    if (ds == null) {
+      throw new MissingArgumentException(
+          "Running query without an input requires an existing TDB directory");
+    }
+    return ds;
   }
 
   /**
@@ -225,7 +247,7 @@ public class QueryCommand implements Command {
    * @throws IOException on problem running queries
    */
   private static void executeOnDisk(CommandLine line, List<List<String>> queries)
-      throws IOException {
+    throws IOException, MissingArgumentException {
     Dataset dataset = createTDBDataset(line);
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
