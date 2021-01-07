@@ -77,7 +77,7 @@ For very large ontologies, it may be beneficial to load the ontology to a mappin
     robot query --input nucleus.ttl --tdb true \
      --query cell_part.sparql results/cell_part.csv
  
-Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`.
+Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`. If a `--tdb-directory` is specified, you do not need to include `--tdb true`. If you've already created a TDB directory, you can query from the TDB dataset without needing to specify an `--input` - just include the `--tdb-directory`.
 
 Once the query operation is complete, ROBOT will remove the TDB directory. If you are performing many query commands on one ontology, you can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory. This will greatly reduce the execution time of subsequent queries.
 
