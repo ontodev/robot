@@ -35,19 +35,24 @@ public class RenameOperation {
    * @param ontology OWLOntology to rename entities in
    * @param ioHelper IOHelper to create IRIs
    * @param mappings map of old IRI to new IRI
-   * @param allowMissingEntities if true, command will fail when an entity is in the rename map, but does not appear in ontology
+   * @param allowMissingEntities if true, command will fail when an entity is in the rename map, but
+   *     does not appear in ontology
    * @throws Exception if the old IRI in a mapping does not exist
    */
   public static void renameFull(
-      OWLOntology ontology, IOHelper ioHelper, Map<String, String> mappings, boolean allowMissingEntities) throws Exception {
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      Map<String, String> mappings,
+      boolean allowMissingEntities)
+      throws Exception {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLEntityRenamer entityRenamer = new OWLEntityRenamer(manager, Sets.newHashSet(ontology));
     for (Map.Entry<String, String> mapping : mappings.entrySet()) {
       IRI oldIRI = ioHelper.createIRI(mapping.getKey());
       IRI newIRI = ioHelper.createIRI(mapping.getValue());
       if (!ontology.containsEntityInSignature(oldIRI)) {
-        if(allowMissingEntities) {
-          logger.info("Entity "+oldIRI+ " is in map, but does not exist in ontology.");
+        if (allowMissingEntities) {
+          logger.info("Entity " + oldIRI + " is in map, but does not exist in ontology.");
         } else {
           throw new Exception(String.format(missingEntityError, oldIRI.toString()));
         }

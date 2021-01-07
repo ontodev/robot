@@ -63,6 +63,12 @@ public class RenameCommand implements Command {
         "allow-duplicates",
         true,
         "allow two or more terms to be renamed to the same full IRI");
+    o.addOption(
+        "M",
+        "allow-missing-entities",
+        true,
+        "if true, command will fail when an entity is in the rename map, but\n"
+            + "   *     does not appear in ontology");
     o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     options = o;
   }
@@ -142,7 +148,8 @@ public class RenameCommand implements Command {
     }
 
     boolean allowDuplicates = CommandLineHelper.getBooleanValue(line, "allow-duplicates", false);
-    boolean allowMissingEntities = CommandLineHelper.getBooleanValue(line, "allow-missing-entities", false);
+    boolean allowMissingEntities =
+        CommandLineHelper.getBooleanValue(line, "allow-missing-entities", false);
 
     char separator;
     // Process full renames
