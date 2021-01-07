@@ -62,6 +62,23 @@ public class RenameOperation {
   }
 
   /**
+   * Given an ontology, an IOHelper, and a map of old IRIs to new IRIs, rename each old IRI with the
+   * new IRI.
+   *
+   * @param ontology OWLOntology to rename entities in
+   * @param ioHelper IOHelper to create IRIs
+   * @param mappings map of old IRI to new IRI
+   * @throws Exception if the old IRI in a mapping does not exist
+   */
+  public static void renameFull(
+    OWLOntology ontology,
+    IOHelper ioHelper,
+    Map<String, String> mappings)
+    throws Exception {
+    renameFull(ontology,ioHelper,mappings,false);
+  }
+
+  /**
    * Given an ontology, an IOHelper, and a map of old IRI bases to new IRI bases, rename each IRI
    * with the 'old base' as a prefix, replacing it with the 'new base'.
    *
