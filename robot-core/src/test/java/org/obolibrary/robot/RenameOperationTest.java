@@ -21,7 +21,7 @@ public class RenameOperationTest extends CoreTest {
         "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1",
         "http://foo.bar/test1");
 
-    RenameOperation.renameFull(ont, new IOHelper(), mappings);
+    RenameOperation.renameFull(ont, new IOHelper(), mappings, false);
 
     assertIdentical("/rename_full.owl", ont);
   }

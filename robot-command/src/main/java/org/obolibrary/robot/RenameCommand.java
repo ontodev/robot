@@ -142,6 +142,7 @@ public class RenameCommand implements Command {
     }
 
     boolean allowDuplicates = CommandLineHelper.getBooleanValue(line, "allow-duplicates", false);
+    boolean allowMissingEntities = CommandLineHelper.getBooleanValue(line, "allow-missing-entities", false);
 
     char separator;
     // Process full renames
@@ -149,7 +150,7 @@ public class RenameCommand implements Command {
       separator = getSeparator(fullFile);
       Map<String, String> mappings =
           parseTableMappings(new File(fullFile), separator, allowDuplicates);
-      RenameOperation.renameFull(ontology, ioHelper, mappings);
+      RenameOperation.renameFull(ontology, ioHelper, mappings, allowMissingEntities);
     }
     // Process prefix renames (no need to fail on duplicates)
     if (prefixFile != null) {
