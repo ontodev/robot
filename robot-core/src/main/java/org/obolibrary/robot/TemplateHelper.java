@@ -932,6 +932,7 @@ public class TemplateHelper {
       expr = parser.parse(content);
     } catch (OWLParserException e) {
       String cause = getManchesterErrorCause(e);
+
       throw new RowParseException(
           String.format(manchesterParseError, content, rowNum, column + 1, tableName, cause),
           rowNum,
@@ -954,10 +955,23 @@ public class TemplateHelper {
     Pattern p = Pattern.compile(pattern);
     Matcher m = p.matcher(e.getMessage());
     if (m.find()) {
-      if (m.group(1).startsWith("'")) {
-        return "encountered unknown " + m.group(1);
+      // Maybe add a hint
+      String keyword = m.group(1);
+      String hint = "";
+      if (Arrays.asList("some", "only", "min", "max", "exactly", "value").contains(keyword)) {
+        hint =
+            String.format("\n\tHint: the term before '%s' must be declared as a property", keyword);
+      } else if (Arrays.asList("and", "or").contains(keyword)) {
+        hint =
+            String.format(
+                "\n\tHint: the terms joined by '%s' must be the same entity type", keyword);
+      }
+
+      // Return error message
+      if (keyword.startsWith("'")) {
+        return "\n\tencountered unknown " + keyword + hint;
       } else {
-        return String.format("encountered unknown '%s'", m.group(1));
+        return String.format("\n\tencountered unknown '%s'", keyword) + hint;
       }
     }
     return cause;
