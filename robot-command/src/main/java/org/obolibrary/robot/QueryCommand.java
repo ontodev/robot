@@ -247,7 +247,7 @@ public class QueryCommand implements Command {
    * @throws IOException on problem running queries
    */
   private static void executeOnDisk(CommandLine line, List<List<String>> queries)
-    throws IOException, MissingArgumentException {
+      throws IOException, MissingArgumentException {
     Dataset dataset = createTDBDataset(line);
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");

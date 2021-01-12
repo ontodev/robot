@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -19,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.obolibrary.robot.exceptions.ColumnException;
 import org.obolibrary.robot.exceptions.RowParseException;
@@ -60,7 +62,7 @@ public class TemplateHelper {
   /** Error message when a given class expression is not able to be parsed. */
   protected static final String manchesterParseError =
       NS
-          + "MANCHESTER PARSE ERROR the expression '%s' at row %d, column %d in table \"%s\" cannot be parsed: %s";
+          + "MANCHESTER PARSE ERROR the expression (%s) at row %d, column %d in table \"%s\" cannot be parsed: %s";
 
   /** Error message when the CLASS_TYPE is not subclass or equivalent. */
   private static final String classTypeError =
@@ -944,35 +946,51 @@ public class TemplateHelper {
 
   /**
    * Given an OWLParserException, determine if we can identify the offending term. Return that as
-   * the cause.
+   * the cause along with some explanation of what is expected.
    *
    * @param e exception to get cause of
    * @return String cause of exception
    */
   private static String getManchesterErrorCause(OWLParserException e) {
     String cause = e.getMessage();
-    String pattern = ".*Encountered ([^ ]*|'.*') at line.*";
-    Pattern p = Pattern.compile(pattern);
+    String pattern = ".*Encountered ([^ ]*|'.*') at .+. Expected one of:\n([\\s\\S]+)";
+    Pattern p = Pattern.compile(pattern, Pattern.MULTILINE);
     Matcher m = p.matcher(e.getMessage());
     if (m.find()) {
-      // Maybe add a hint
       String keyword = m.group(1);
-      String hint = "";
-      if (Arrays.asList("some", "only", "min", "max", "exactly", "value").contains(keyword)) {
-        hint =
-            String.format("\n\tHint: the term before '%s' must be declared as a property", keyword);
-      } else if (Arrays.asList("and", "or").contains(keyword)) {
-        hint =
-            String.format(
-                "\n\tHint: the terms joined by '%s' must be the same entity type", keyword);
+      if (keyword.startsWith("'")) {
+        keyword = keyword.substring(1, keyword.length() - 1);
       }
 
-      // Return error message
-      if (keyword.startsWith("'")) {
-        return "\n\tencountered unknown " + keyword + hint;
-      } else {
-        return String.format("\n\tencountered unknown '%s'", keyword) + hint;
+      // Override expected message for restrictions (we want to reference the term before the
+      // restriction)
+      if (Arrays.asList("some", "only", "min", "max", "exactly", "value").contains(keyword)) {
+        return String.format(
+            "encountered unexpected '%1$s'\n\thint: the term before '%1$s' must be a property",
+            keyword);
       }
+
+      // Otherwise print what was expected by the parser in that place
+      // Some of these have hard to understand "expected" values, so we rewrite them the best we can
+      String expected = m.group(2);
+      List<String> expectedSplit =
+          Lists.newArrayList(expected.split("\n"))
+              .stream()
+              .map(String::trim)
+              .filter(x -> !x.equals(""))
+              .collect(Collectors.toList());
+      if (expectedSplit.contains("{")) {
+        expectedSplit.add(expectedSplit.indexOf("{"), "{ ... }");
+        expectedSplit.remove("{");
+      }
+      if (expectedSplit.contains("(")) {
+        expectedSplit.add(expectedSplit.indexOf("("), "( ... )");
+        expectedSplit.remove("(");
+      }
+      expectedSplit.remove("|EOF|");
+
+      return String.format("encountered '%s', but expected one of:\n\t", keyword)
+          + String.join("\n\t", expectedSplit);
     }
     return cause;
   }
