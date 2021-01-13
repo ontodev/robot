@@ -62,13 +62,12 @@ public class RenameCommand implements Command {
         "d",
         "allow-duplicates",
         true,
-        "allow two or more terms to be renamed to the same full IRI");
+        "allow two or more terms to be renamed to the same full IRI (default: false)");
     o.addOption(
         "M",
         "allow-missing-entities",
         true,
-        "if true, command will fail when an entity is in the rename map, but\n"
-            + "   *     does not appear in ontology");
+        "allow mappings for entites that do not appear in the ontology (default: false)");
     o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     options = o;
   }
