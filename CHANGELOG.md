@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Add --allow-missing-entities option in [`rename`] command
+- Add --allow-missing-entities option in [`rename`] command [#793]
 
 ## [1.7.2] - 2020-11-18
 
@@ -222,6 +222,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#793]: https://github.com/ontodev/robot/pull/793
 [#792]: https://github.com/ontodev/robot/pull/792
 [#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
