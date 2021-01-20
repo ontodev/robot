@@ -152,12 +152,12 @@ Sometimes when loading an ontology, not all triples can be parsed. This error is
 
 This is often because OWL does not support RDF reification (for more details, see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)); ROBOT is a tool for working with OWL, not RDF. Usually this can be easily resolved by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
 ```
-:blank rdf:type rdf:Statement .
+_:blank rdf:type rdf:Statement .
 ```
 
 ... but this statement is OK:
 ```
-:blank rdf:type owl:Axiom .
+_:blank rdf:type owl:Axiom .
 ```
 
 ### Wildcard Error

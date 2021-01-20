@@ -123,12 +123,12 @@ Sometimes, ROBOT is unable to parse all triples in an input file. By default, th
 
 Unparsed triples are often caused by RDF reification, which is different than OWL reification (for more details, please see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)). ROBOT is a tool for working with OWL-format ontologies, not RDF. Usually, instances of RDF reification can easily be fixed by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
 ```
-:blank rdf:type rdf:Statement .
+_:blank rdf:type rdf:Statement .
 ```
 
 ... but this statement is OK:
 ```
-:blank rdf:type owl:Axiom .
+_:blank rdf:type owl:Axiom .
 ```
 
 ---
