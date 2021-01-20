@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- robot explain updates: explanations for inconsistent and unsatisfiable classes [#779]
 
 ## [1.7.2] - 2020-11-18
 
@@ -14,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update to whelk 1.0.4
+- Run [`query`] on existing TDB dataset (instead of ontology input) in [#792]
+- Improved error messages for [`template`] parse errors in [#796]
 
 ### Fixed
 - Fix blank node subjects in [`report`] in [#767]
@@ -223,6 +226,8 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#796]: https://github.com/ontodev/robot/pull/796
+[#792]: https://github.com/ontodev/robot/pull/792
 [#788]: https://github.com/ontodev/robot/pull/788
 [#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
