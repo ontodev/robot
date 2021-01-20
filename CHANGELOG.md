@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.2] - 2020-11-18
 
+### Added
+- Added 'strict' mode for loading ontologies in [#788]
+
 ### Changed
 - Update to whelk 1.0.4
 
@@ -220,6 +223,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#788]: https://github.com/ontodev/robot/pull/788
 [#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
