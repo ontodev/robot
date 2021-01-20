@@ -3,8 +3,10 @@ package org.obolibrary.robot;
 import static org.junit.Assert.assertEquals;
 
 import com.github.jsonldjava.core.Context;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -280,5 +282,45 @@ public class IOHelperTest extends CoreTest {
 
     OWLOntology ontology2 = ioHelper.loadOntology(tempFile.getPath());
     assertIdentical(ontology, ontology2);
+  }
+
+  /**
+   * Test loading RDF reification with strict mode turned on. Loading this string should result in
+   * an IOException.
+   *
+   * @throws IOException on error creating IOHelper
+   */
+  @Test
+  public void testStrict() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.setStrict(true);
+    String input =
+        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n_:Bb65616 rdf:type rdf:Statement .";
+    InputStream inputStream = new ByteArrayInputStream(input.getBytes());
+    boolean pass = false;
+    try {
+      ioHelper.loadOntology(inputStream);
+    } catch (IOException e) {
+      // We expect an IOException
+      pass = true;
+    }
+    assert pass;
+  }
+
+  /**
+   * Test loading RDF reification with strict mode turned off. Loading this string should not result
+   * in an exception.
+   *
+   * @throws IOException on error creating IOHelper
+   */
+  @Test
+  public void testNonStrict() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+    String input =
+        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n_:Bb65616 rdf:type rdf:Statement .";
+    InputStream inputStream = new ByteArrayInputStream(input.getBytes());
+    // No exception should be thrown here
+    ioHelper.loadOntology(inputStream);
+    assert true;
   }
 }
