@@ -3,7 +3,6 @@ package org.obolibrary.robot;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-
 import org.semanticweb.owl.explanation.api.*;
 import org.semanticweb.owl.explanation.impl.blackbox.checker.InconsistentOntologyExplanationGeneratorFactory;
 import org.semanticweb.owl.explanation.impl.rootderived.StructuralRootDerivedReasoner;
@@ -293,7 +292,12 @@ public class ExplainOperation {
     StringBuilder builder = new StringBuilder();
     builder.append("## Axioms used ").append(impact).append(" times").append("\n");
     for (OWLAxiom ax : axioms) {
-      builder.append("- ").append(renderer.render(ax)).append(" [").append(String.join(",", associatedOntologyIds.get(ax))).append("]\n");
+      builder
+          .append("- ")
+          .append(renderer.render(ax))
+          .append(" [")
+          .append(String.join(",", associatedOntologyIds.get(ax)))
+          .append("]\n");
     }
     builder.append("\n");
     return builder.toString();
@@ -313,11 +317,11 @@ public class ExplainOperation {
   }
 
   private static Set<OWLClass> getMostGeneralUnsatisfiableClasses(
-    OWLReasoner reasoner, OWLOntology ontology) {
+      OWLReasoner reasoner, OWLOntology ontology) {
     Set<OWLClass> mgu = new HashSet<>();
     OWLReasoner structural = new StructuralReasonerFactory().createReasoner(ontology);
     Set<OWLClass> unsats =
-      new HashSet<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
+        new HashSet<>(reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom());
     for (OWLClass c : unsats) {
       Set<OWLClass> superclasses = structural.getSuperClasses(c, false).getFlattened();
       superclasses.retainAll(unsats);
