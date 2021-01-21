@@ -21,7 +21,8 @@ public class ExportCommand implements Command {
       NS + "UNKNOWN FORMAT ERROR --format %s must be one of: csv, html, json, tsv, or xlsx";
 
   /** Supported output formats. If the output format is not one of these, it will default to TSV. */
-  private final List<String> supportedFormats = Arrays.asList("csv", "html", "json", "tsv", "xlsx");
+  private final List<String> supportedFormats =
+      Arrays.asList("csv", "html", "html-list", "json", "tsv", "xlsx");
 
   /** Initialize the command. */
   public ExportCommand() {

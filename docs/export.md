@@ -27,6 +27,7 @@ The following formats are currently supported:
 * `tsv` - tab-separated file, default format for unknown extensions
 * `csv` - comma-separated file
 * `html` - HTML table with with [Bootstrap](https://getbootstrap.com/) styling
+* `html-list` - HTML bullet list with [Bootstrap](https://getbootstrap.com/) styling
 * `json` - JSON file with values as arrays (except for ID/CURIE and IRI, which are single strings)
 * `xlsx` - Excel workbook with contents on first sheet
 

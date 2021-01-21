@@ -277,6 +277,42 @@ public class Row {
   }
 
   /**
+   * @param columns
+   * @return
+   */
+  public String toHTMLList(List<Column> columns) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<ul>\n");
+    for (Column c : columns) {
+      String columnName = c.getDisplayName();
+      Cell cell = cells.getOrDefault(columnName, null);
+      if (cell != null) {
+        // Only add to HTML list if not null and values is not empty
+        List<String> values = cell.getDisplayValues();
+        if (values.size() == 0) {
+          continue;
+        }
+        sb.append("\t<li>\n");
+        sb.append("\t\t<b>").append(columnName).append(":</b> ");
+        if (values.size() > 1) {
+          // Multiple values - create an indented list
+          sb.append("\n\t\t<ul>\n");
+          for (String v : values) {
+            sb.append("\t\t\t<li>").append(v).append("</li>\n");
+          }
+          sb.append("\t\t</ul>\n");
+        } else {
+          // Single value - same line as column name
+          sb.append(values.get(0)).append("\n");
+        }
+        sb.append("\t</li>\n");
+      }
+    }
+    sb.append("</ul>\n");
+    return sb.toString();
+  }
+
+  /**
    * Render the Row as a JsonObject
    *
    * @param columns list of Columns

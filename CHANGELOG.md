@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--errors <path>` option to [`template`] in [#713]
 - Add new formats to [`report`]: HTML, JSON, and XLSX [#699]
 - Add `--fail-on-violation <bool>` option to [`verify`] in [#738]
+- Add `html-list` format option to [`export`] in [#703]
 
 ### Fixed
 - Handle empty [`template`] property charactersitics in [#719]
@@ -243,6 +244,7 @@ First official release of ROBOT!
 [#713]: https://github.com/ontodev/robot/pull/713
 [#710]: https://github.com/ontodev/robot/pull/710
 [#709]: https://github.com/ontodev/robot/issues/709
+[#703]: https://github.com/ontodev/robot/pull/703
 [#699]: https://github.com/ontodev/robot/pull/699
 [#691]: https://github.com/ontodev/robot/pull/691
 [#689]: https://github.com/ontodev/robot/pull/689
