@@ -301,30 +301,10 @@ public class Table {
         .append("<tr>\n");
 
     // Add column headers
-    Map<Integer, String> rules = new HashMap<>();
-    int colIdx = 0;
     for (Column c : columns) {
       sb.append("  <th>").append(c.getDisplayName()).append("</th>\n");
-      String displayRule = c.getDisplayRule();
-      if (displayRule != null) {
-        rules.put(colIdx, displayRule);
-      }
-      colIdx++;
     }
     sb.append("</tr>\n").append("</thead>\n");
-
-    // Maybe add rules
-    if (!rules.isEmpty()) {
-      sb.append("<thead class=\"bg-secondary text-white\">\n").append("<tr>\n");
-      for (int idx = 0; idx < colIdx; idx++) {
-        if (rules.containsKey(idx)) {
-          sb.append("  <th>").append(rules.get(idx)).append("</th>\n");
-        } else {
-          sb.append("  <th></th>\n");
-        }
-      }
-      sb.append("</tr>\n").append("</thead>\n");
-    }
 
     // Add all table rows
     for (Row row : rows) {

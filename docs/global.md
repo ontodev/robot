@@ -7,6 +7,7 @@
 3. [XML Catalogs (`--catalog`)](#xml-catalogs)
 4. [Logging (`-v`, `-vv`, `-vvv`)](#logging)
 5. [XML Entities (`--xml-entities`)](#xml-entities)
+6. [Strict Parsing (`--strict`)](#strict-parsing)
 
 ## Java Options
 
@@ -114,6 +115,20 @@ If namespace abbreviations are used, the RDF/XML file will include a header with
 The `obo` abbreviation would be substituted for any instance of `http://purl.obolibrary.org/obo/` in the rest of the RDF/XML file, as demonstrated by the base prefix:
 ```
 xml:base="&obo;obi.owl"
+```
+
+## Strict Parsing
+
+Sometimes, ROBOT is unable to parse all triples in an input file. By default, these triples are excluded from the loaded ontology, but this can cause downstream issues if the triples were expected to be in certain outputs. By including the `--strict` flag, ROBOT will fail on unparsed triples. The `--strict` flag also turns on strict parsing in the [configuration object](http://owlcs.github.io/owlapi/apidocs_5/org/semanticweb/owlapi/model/OWLOntologyLoaderConfiguration.html) for loading the ontology with the OWLAPI `OWLOntologyManager`.
+
+Unparsed triples are often caused by RDF reification, which is different than OWL reification (for more details, please see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)). ROBOT is a tool for working with OWL-format ontologies, not RDF. Usually, instances of RDF reification can easily be fixed by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
+```
+_:blank rdf:type rdf:Statement .
+```
+
+... but this statement is OK:
+```
+_:blank rdf:type owl:Axiom .
 ```
 
 ---
