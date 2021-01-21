@@ -29,8 +29,8 @@ public class ValidateCommand implements Command {
   private static final String tableNotProvidedError =
       NS + "TABLE NOT PROVIDED ERROR a table file must be specified to run this command";
 
-  private static final String incorrectTableFormatError =
-      NS + "INCORRECT TABLE FORMAT ERROR the table file must end in either .csv or .tsv";
+  private static final String incorrectFormatError =
+      NS + "INCORRECT FORMAT ERROR input file '%s' must end in either .csv or .tsv";
 
   private static final String incorrectOutputFormatError =
       NS + "INCORRECT OUTPUT FORMAT ERROR the output format must be one of HTML, XLSX, or TXT";
@@ -51,36 +51,27 @@ public class ValidateCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("t", "table", true, "file containing data (in CSV or TSV format) to validate");
     o.addOption(
-        "k",
-        "skip-row",
-        true,
-        "ignore the given row from the tables to be validated "
-            + "(where the first row in the file is row #1); this option is ignored if the row "
-            + "to skip is greater than the total number of rows in a table");
+        "T", "tables", true, "directory containing tables (in CSV or TSV format) to validate");
+    o.addOption("R", "rules", true, "file containing validation rules");
     o.addOption("i", "input", true, "input file containing the ontology data to validate against");
-    o.addOption(
-        "r",
-        "reasoner",
-        true,
-        "reasoner to use; must be one of: structural, hermit, jfact, "
-            + "emr, elk (if left unspecified, the default reasoner will be used)");
-    o.addOption(
-        "o",
-        "output-dir",
-        true,
-        "directory where output files will be saved (ignored if "
-            + "format option is left unspecified)");
     o.addOption(
         "f",
         "format",
         true,
-        "format for output file (XLSX, HTML, TXT) (if unspecified, "
-            + "plain text output is sent to STDOUT)");
+        "format for output file (XLSX, HTML, TXT) (if unspecified, output is sent to STDOUT)");
     o.addOption(
-        "s",
-        "standalone",
+        "o",
+        "output-dir",
         true,
-        "If false, do not put HTML headers/script in the HTML output (this option is ignored for other formats)");
+        "directory where output files will be saved (ignored if format option is left unspecified)");
+    o.addOption("k", "skip-row", true, "ignore the given row from the tables to be validated");
+    o.addOption(
+        "r",
+        "reasoner",
+        true,
+        "reasoner to use; must be one of: structural, hermit, jfact, emr, elk (default)");
+    o.addOption(
+        "s", "standalone", true, "If false, do not put HTML headers/script in the HTML output");
     o.addOption("n", "no-fail", true, "If true, do not fail even if there are failed validations");
     o.addOption("S", "silent", true, "If false, print all failed validations");
     o.addOption(
@@ -116,7 +107,7 @@ public class ValidateCommand implements Command {
    * @return usage
    */
   public String getUsage() {
-    return "validate --table <file> [--table <file> ...] [--skip-row k] --input <file> "
+    return "validate --rules <file> --table <file> [--table <file> ...] [--skip-row k] --input <file> "
         + "[--reasoner <name>] [--format (HTML|XLSX|TXT)] [--output-dir <directory>] "
         + "[--standalone (true|false)] [--no-fail (true|false)] [--silent (true|false)]";
   }
@@ -205,8 +196,26 @@ public class ValidateCommand implements Command {
       }
     }
 
-    // Get the paths to the tables given in the --table arguments.
+    // Get the rules (table -> column -> rule)
+    String rulesPath =
+        CommandLineHelper.getRequiredValue(line, "rules", "A rules table must be provided");
+    if (!rulesPath.endsWith(".csv") && !rulesPath.endsWith(".tsv")) {
+      throw new IllegalArgumentException(String.format(incorrectFormatError, rulesPath));
+    }
+    Map<String, Map<String, String>> rules = ValidateOperation.getRules(rulesPath);
+
+    // Get the paths to the tables given in the --table or --tables arguments.
     List<String> tablePaths = CommandLineHelper.getOptionalValues(line, "table");
+    String tableDir = CommandLineHelper.getOptionalValue(line, "tables");
+    if (tableDir != null) {
+      File dir = new File(tableDir);
+      if (!dir.isDirectory()) {
+        throw new IllegalArgumentException("The --tables value must be a valid directory");
+      }
+      for (File f : dir.listFiles()) {
+        tablePaths.add(f.getPath());
+      }
+    }
     if (tablePaths.isEmpty()) {
       throw new IllegalArgumentException(tableNotProvidedError);
     }
@@ -221,7 +230,7 @@ public class ValidateCommand implements Command {
       } else if (tablePath.toLowerCase().endsWith(".csv")) {
         tableData = IOHelper.readCSV(tablePath);
       } else {
-        throw new IllegalArgumentException(incorrectTableFormatError);
+        throw new IllegalArgumentException(String.format(incorrectFormatError, tablePath));
       }
 
       // If the `--skip-row` switch has been specified, then possibly delete the specified row from
@@ -250,7 +259,8 @@ public class ValidateCommand implements Command {
 
     // Finally send everything to the validate operation:
     List<String> invalidTables =
-        ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, validateOptions);
+        ValidateOperation.validate(
+            rules, tables, ontology, ioHelper, reasonerFactory, validateOptions);
 
     if (!invalidTables.isEmpty() && !noFail) {
       // Print last error message - a summary of tables with errors

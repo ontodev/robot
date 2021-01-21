@@ -134,6 +134,16 @@ public class TableValidator {
 
   private ShortFormProvider provider;
 
+  /**
+   * Init a new TableValidator.
+   *
+   * @param ontology OWLOntology to use to validate table
+   * @param ioHelper IOHelper to resolve prefixes of CURIEs
+   * @param parser class expression parser to read Manchester class expressions from the table
+   * @param reasoner OWLReasoner to resolve validation queries
+   * @param outFormat output format of validation
+   * @param outDir output directory
+   */
   public TableValidator(
       OWLOntology ontology,
       IOHelper ioHelper,
@@ -167,7 +177,7 @@ public class TableValidator {
             Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
             Collections.emptyMap());
 
-    errors.add(new String[] {"table", "cell", "rule ID", "message"});
+    errors.add(new String[] {"table", "cell", "rule", "message"});
   }
 
   /** Turn logging on or off. */
@@ -175,6 +185,11 @@ public class TableValidator {
     silent = !silent;
   }
 
+  /**
+   * Get a list of errors from validate.
+   *
+   * @return list of errors
+   */
   public List<String[]> getErrors() {
     return errors;
   }
@@ -182,12 +197,16 @@ public class TableValidator {
   /**
    * Validate a set of tables.
    *
+   * @param rules map of table name to column to rule
    * @param tables tables to validate (map of table name to table contents)
    * @param options map of validate options
    * @return List of invalid tables (or empty list on success)
    * @throws Exception on any problem
    */
-  public List<String> validate(Map<String, List<List<String>>> tables, Map<String, String> options)
+  public List<String> validate(
+      Map<String, Map<String, String>> rules,
+      Map<String, List<List<String>>> tables,
+      Map<String, String> options)
       throws Exception {
 
     int skippedRow = Integer.parseInt(OptionsHelper.getOption(options, "skip-row", "0"));
@@ -200,49 +219,54 @@ public class TableValidator {
       String tablePath = table.getKey();
       List<List<String>> data = table.getValue();
 
-      currentTable =
-          String.format(
-              "%s.%s", FilenameUtils.getBaseName(tablePath), FilenameUtils.getExtension(tablePath));
+      String tableName = FilenameUtils.getBaseName(FilenameUtils.getName(tablePath));
+      currentTable = tableName + "." + FilenameUtils.getExtension(tablePath);
+
+      // Get the header
+      List<String> headerRow = data.remove(0);
+
+      // Get the rules
+      Map<String, String> tableRules = rules.getOrDefault(tableName, null);
+      if (tableRules == null) {
+        // Skip this table if no rules
+        continue;
+      }
+
       if (outFormat == null) {
         System.out.println(String.format("Validating %s ...", currentTable));
       }
 
-      // Get the header and rules rows
-      List<String> headerRow = data.remove(0);
-      List<String> rulesRow = data.remove(0);
-
-      // Get correct index for the rule row based on if a row was skipped
-      int ruleRowIdx = 2;
-      if (skippedRow < 3) {
-        ruleRowIdx = 3;
-      }
-
-      // Get number to add to rowIdx to get true row number from input table
-      // This will be either 3 or 4 (skipped row in header)
-      // as rowIdx starts at 0 and does not include header and rule rows
-      int addToRow;
-      if (skippedRow > 0 && skippedRow <= 3) {
-        // Skipped row is in header, add 1 to our reporting
-        addToRow = 4;
-      } else {
-        addToRow = 3;
-      }
-
-      // Add header and rules rows to Table object
-      for (int i = 0; i < headerRow.size(); i++) {
-        String rawRule = i < rulesRow.size() ? rulesRow.get(i) : "";
-        // TODO - allow different providers?
-        Column c = new Column(headerRow.get(i), parseRules(rawRule), rawRule, provider);
+      int headerIdx = 0;
+      while (headerIdx < headerRow.size()) {
+        String header = headerRow.get(headerIdx);
+        String rawRule = tableRules.getOrDefault(header, null);
+        if (rawRule == null) {
+          // Skip this column if no rules
+          headerIdx++;
+          continue;
+        }
+        Column c = new Column(header, parseRules(rawRule), rawRule, provider);
         outTable.addColumn(c);
+        headerIdx++;
       }
       List<Column> columns = outTable.getColumns();
+
+      // Get number to add to rowIdx to get true row number from input table
+      // as rowIdx starts at 0 and does not include header and rule rows
+      int addToRow;
+      if (skippedRow > 0 && skippedRow <= 2) {
+        // Skipped row is in header, add 1 to our reporting
+        addToRow = 3;
+      } else {
+        addToRow = 2;
+      }
 
       // Validate data row by row, column by column
       for (rowIdx = 0; rowIdx < data.size(); rowIdx++) {
         rowNum = rowIdx + addToRow;
         if (rowNum == skippedRow) {
           // Skipped row occurs in the data
-          addToRow = 4;
+          addToRow = 3;
         }
 
         List<String> row = data.get(rowIdx);
@@ -258,7 +282,7 @@ public class TableValidator {
 
         for (colNum = 0; colNum < columns.size(); colNum++) {
           Column c = columns.get(colNum);
-          Map<String, List<String>> rules = c.getRules();
+          Map<String, List<String>> cRules = c.getRules();
 
           // Get the contents of the current cell:
           String cellString = colNum < row.size() ? row.get(colNum) : "";
@@ -269,7 +293,7 @@ public class TableValidator {
           // Create the cell object
           currentCell = getCell(c, cellData);
 
-          if (rules == null || rules.isEmpty()) {
+          if (cRules == null || cRules.isEmpty()) {
             // No rules to validate, just add the cell exactly as is
             if (outRow != null) {
               outRow.add(currentCell);
@@ -279,9 +303,9 @@ public class TableValidator {
 
           // For each of the rules applicable to this column, validate each entry in the cell
           // against it:
-          for (Map.Entry<String, List<String>> ruleEntry : rules.entrySet()) {
+          for (Map.Entry<String, List<String>> ruleEntry : cRules.entrySet()) {
             for (String rule : ruleEntry.getValue()) {
-              List<String> interpolatedRules = interpolateRule(rule, row);
+              List<String> interpolatedRules = interpolateRule(rule, headerRow, row);
               for (String interpolatedRule : interpolatedRules) {
                 for (String d : cellData) {
                   String errorMsg = validateRule(d, interpolatedRule, row, ruleEntry.getKey());
@@ -289,11 +313,9 @@ public class TableValidator {
                     // An error was returned, add to errors
                     errors.add(
                         new String[] {
-                          currentTable,
+                          tableName,
                           IOHelper.cellToA1(rowNum, colNum + 1),
-                          FilenameUtils.getBaseName(currentTable)
-                              + "!"
-                              + IOHelper.cellToA1(ruleRowIdx, colNum + 1),
+                          ruleEntry.getKey(),
                           errorMsg,
                         });
                   }
@@ -346,7 +368,12 @@ public class TableValidator {
     return invalidTables;
   }
 
-  /** Given a map from IRIs to strings, return its inverse. */
+  /**
+   * Given a map from IRIs to strings, return its inverse.
+   *
+   * @param source source map
+   * @return inverse map
+   */
   private static Map<String, IRI> reverseIRILabelMap(Map<IRI, String> source) {
     HashMap<String, IRI> target = new HashMap<>();
     for (Map.Entry<IRI, String> entry : source.entrySet()) {
@@ -371,6 +398,13 @@ public class TableValidator {
    * CSV: Determine whether, for any of the given query types, the given subject is in the result
    * set returned by the reasoner for that query type. Return true if it is in at least one of these
    * result sets, and false if it is not.
+   *
+   * @param subjectClass subject from input ontology
+   * @param ruleCE OWLClassExpression interpretation of the rule
+   * @param row row being validated
+   * @param unsplitQueryType query types
+   * @return true if subject is in at least one result set
+   * @throws Exception on unknown query type
    */
   private boolean executeClassQuery(
       OWLClass subjectClass, OWLClassExpression ruleCE, List<String> row, String unsplitQueryType)
@@ -468,6 +502,13 @@ public class TableValidator {
    * describing a row from the CSV: Determine whether, for any of the given query types, the given
    * subject is in the result set returned by the reasoner for that query type. Return true if it is
    * in at least one of these result sets, and false if it is not.
+   *
+   * @param subjectCE subject class expression from input ontology
+   * @param ruleCE OWLClassExpression interpretation of the rule
+   * @param row row being validated
+   * @param unsplitQueryType query types
+   * @return true if subject is in at least one result set
+   * @throws Exception on unknown query type
    */
   private boolean executeGeneralizedClassQuery(
       OWLClassExpression subjectCE,
@@ -550,6 +591,13 @@ public class TableValidator {
    * strings describing a row from the CSV: Determine whether, for any of the given query types, the
    * given subject is in the result set returned by the reasoner for that query type. Return true if
    * it is in at least one of these result sets, and false if it is not.
+   *
+   * @param subjectIndividual individual from input ontology
+   * @param ruleCE OWLClassExpression interpretation of the rule
+   * @param row row being validated
+   * @param unsplitQueryType query types
+   * @return true if subject is in at least one result set
+   * @throws Exception on unknown query type
    */
   private boolean executeIndividualQuery(
       OWLNamedIndividual subjectIndividual,
@@ -609,6 +657,13 @@ public class TableValidator {
    * and a list of strings describing a row from the CSV: Determine whether, for any of the given
    * query types, the given subject is in the result set returned by the reasoner for that query
    * type. Return true if it is in at least one of these result sets, and false if it is not.
+   *
+   * @param subject subject term from the input ontology
+   * @param rule rule to use to validate
+   * @param row current row to validate
+   * @param unsplitQueryType query types
+   * @return true if subject is in at least one result set
+   * @throws Exception on unknown query type
    */
   private boolean executeQuery(
       String subject, String rule, List<String> row, String unsplitQueryType) throws Exception {
@@ -674,6 +729,9 @@ public class TableValidator {
   /**
    * Given a string describing a term from the ontology, parse it into a class expression expressed
    * in terms of the ontology. If the parsing fails, write a warning statement to the log.
+   *
+   * @param term Text to parse class expression from
+   * @return class expression
    */
   private OWLClassExpression getClassExpression(String term) {
     OWLClassExpression ce;
@@ -757,6 +815,9 @@ public class TableValidator {
   /**
    * Given a string describing one of the classes in the ontology, in either the form of an IRI, an
    * abbreviated IRI, or an rdfs:label, return the rdfs:label for that class.
+   *
+   * @param term text to get label from
+   * @return label or null
    */
   private String getLabelFromTerm(String term) {
     if (term == null) {
@@ -787,6 +848,11 @@ public class TableValidator {
   /**
    * Given a string in the form of a wildcard, and a list of strings representing a row of the CSV,
    * return the rdfs:label contained in the position of the row indicated by the wildcard.
+   *
+   * @param wildcard wildcard in %d format
+   * @param row row to get contents from
+   * @return contents at the wildcard location
+   * @throws Exception on issue retrieving contents at wildcard location
    */
   private String getWildcardContents(String wildcard, List<String> row) throws Exception {
     if (!wildcard.startsWith("%")) {
@@ -814,6 +880,10 @@ public class TableValidator {
   /**
    * Given a string specifying a list of rules of various types, return a map which contains, for
    * each rule type present in the string, the list of rules of that type that have been specified.
+   *
+   * @param ruleString unparsed rule string
+   * @return map of parsed rule
+   * @throws Exception on malformed rule
    */
   private Map<String, List<String>> parseRules(String ruleString) throws Exception {
     HashMap<String, List<String>> ruleMap = new HashMap<>();
@@ -856,6 +926,9 @@ public class TableValidator {
   /**
    * Given a list of strings representing a row from the table, return true if any of the cells in
    * the row has non-whitespace content.
+   *
+   * @param row row to check
+   * @return true if row has contents
    */
   private boolean hasContent(List<String> row) {
     for (String cell : row) {
@@ -867,11 +940,123 @@ public class TableValidator {
   }
 
   /**
+   * Return a list of strings in which all of the column names in the input string have been
+   * replaced by the rdfs:labels corresponding to the content in the column of the row that they
+   * indicate.
+   *
+   * @param columnNameMap map of column name to contents (rdfs:label)
+   * @param interpolatedRules list of already-interpolated rules (potentially empty)
+   * @param rule the rule to interpolate
+   * @return list of interpolated rules (only one if no multi-value cells)
+   */
+  private List<String> interpolateColumnNames(
+      Map<String, String[]> columnNameMap, List<String> interpolatedRules, String rule) {
+    // Interpolate the rules using the column name map. If any of the column names point to a cell
+    // with multiple terms, then we duplicate the rule for each term pointed to. Finally we return
+    // all of
+    // the rules generated.
+    for (String colName : columnNameMap.keySet()) {
+      if (interpolatedRules.isEmpty()) {
+        // If we haven't yet interpolated anything, then base the current interpolation on the rule
+        // that has been passed as an argument to the function above, and generate an interpolated
+        // rule corresponding to every term corresponding to this key in the column name map.
+        for (String term : columnNameMap.get(colName)) {
+          if (term != null && !term.trim().equals("")) {
+            String label = getLabelFromTerm(term);
+            String interpolatedRule =
+                rule.replaceAll(
+                    String.format("\\{%s}", colName),
+                    label == null ? "(" + term + ")" : "'" + label + "'");
+            interpolatedRules.add(interpolatedRule);
+          }
+        }
+      } else {
+        // If we have already interpolated some rules, then every string that has been interpolated
+        // thus far must be interpolated again for every term corresponding to this key in the
+        // column name map, and the list of interpolated rules is then replaced with the new list.
+        List<String> tmpList = new ArrayList<>();
+        for (String term : columnNameMap.get(colName)) {
+          if (term != null && !term.trim().equals("")) {
+            String label = getLabelFromTerm(term);
+            for (String intStr : interpolatedRules) {
+              String interpolatedRule =
+                  intStr.replaceAll(
+                      String.format("\\{%s}", colName),
+                      label == null ? "(" + term + ")" : "'" + label + "'");
+              tmpList.add(interpolatedRule);
+            }
+          }
+        }
+        interpolatedRules = tmpList;
+      }
+    }
+    return interpolatedRules;
+  }
+
+  /**
+   * Return a list of strings in which all of the wildcards in the input string have been replaced
+   * by the rdfs:labels corresponding to the content in the positions of the row that they indicate.
+   *
+   * @param wildCardMap map of column number to contents (rdfs:label)
+   * @param interpolatedRules list of already-interpolated rules (potentially empty)
+   * @param rule the rule to interpolate
+   * @return list of interpolated rules (only one if no multi-value cells)
+   */
+  private List<String> interpolateWildcards(
+      Map<Integer, String[]> wildCardMap, List<String> interpolatedRules, String rule) {
+    // Now interpolate the rule using the wildcard map. If any of the wildcards points to a cell
+    // with multiple terms, then we duplicate the rule for each term pointed to. Finally we return
+    // all of the rules generated.
+    for (int i : wildCardMap.keySet()) {
+      if (interpolatedRules.isEmpty()) {
+        // If we haven't yet interpolated anything, then base the current interpolation on the rule
+        // that has been passed as an argument to the function above, and generate an interpolated
+        // rule corresponding to every term corresponding to this key in the wildcard map.
+        for (String term : wildCardMap.get(i)) {
+          if (term != null) {
+            String label = getLabelFromTerm(term);
+            String interpolatedRule =
+                rule.replaceAll(
+                    String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
+            interpolatedRules.add(interpolatedRule);
+          }
+        }
+      } else {
+        // If we have already interpolated some rules, then every string that has been interpolated
+        // thus far must be interpolated again for every term corresponding to this key in the
+        // wildcard map, and the list of interpolated rules is then replaced with the new list.
+        List<String> tmpList = new ArrayList<>();
+        for (String term : wildCardMap.get(i)) {
+          if (term != null) {
+            String label = getLabelFromTerm(term);
+            for (String intStr : interpolatedRules) {
+              String interpolatedRule =
+                  intStr.replaceAll(
+                      String.format("%%%d", i),
+                      label == null ? "(" + term + ")" : "'" + label + "'");
+              tmpList.add(interpolatedRule);
+            }
+          }
+        }
+        interpolatedRules = tmpList;
+      }
+    }
+    return interpolatedRules;
+  }
+
+  /**
    * Given a string, possibly containing wildcards, and a list of strings representing a row of the
    * CSV, return a string in which all of the wildcards in the input string have been replaced by
    * the rdfs:labels corresponding to the content in the positions of the row that they indicate.
+   *
+   * @param rule the rule to interpolate
+   * @param headers headers of this table
+   * @param row current row as list of strings
+   * @return list of interpolated rules (only one if no multi-value cells)
+   * @throws Exception on issue interpolating
    */
-  private List<String> interpolateRule(String rule, List<String> row) throws Exception {
+  private List<String> interpolateRule(String rule, List<String> headers, List<String> row)
+      throws Exception {
     // This is what will be returned:
     List<String> interpolatedRules = new ArrayList<>();
 
@@ -881,13 +1066,34 @@ public class TableValidator {
       return interpolatedRules;
     }
 
+    // Look for column names within the given rule. These will be of the form {str} where str is the
+    // column name of the cell that is being pointed to. Then create a map from column name to the
+    // cell contents.
+    Matcher m = Pattern.compile("\\{([^}]+)}").matcher(rule);
+    Map<String, String[]> columnNameMap = new HashMap<>();
+    while (m.find()) {
+      String colName = m.group(1);
+      if (!columnNameMap.containsKey(colName)) {
+        if (!headers.contains(colName)) {
+          // TODO - exception
+          throw new Exception("Missing column in " + currentTable + ": " + colName);
+        }
+        int colIdx = headers.indexOf(colName);
+        String cellContents = row.get(colIdx);
+
+        // Either put the full cell contents or the split cell contents into the array
+        String[] terms = cellContents != null ? cellContents.split("\\|") : new String[] {null};
+        columnNameMap.put(colName, terms);
+      }
+    }
+
     // Look for wildcards within the given rule. These will be of the form %d where d is the number
     // of the cell the wildcard is pointing to (e.g. %1 is the first cell). Then create a map from
     // wildcard numbers to the terms that they point to, which we extract from the cell
     // indicated by the wildcard number. In general the terms will be split by pipes within a
     // cell. E.g. if the wildcard is %1 and the first cell contains 'term1|term2|term3' then add an
     // entry to the wildcard map like: 1 -> ['term1', 'term2', 'term3'].
-    Matcher m = Pattern.compile("%(\\d+)").matcher(rule);
+    m = Pattern.compile("%(\\d+)").matcher(rule);
     Map<Integer, String[]> wildCardMap = new HashMap<>();
     while (m.find()) {
       int key = Integer.parseInt(m.group(1));
@@ -898,45 +1104,16 @@ public class TableValidator {
       }
     }
 
-    // If the wildcard map is empty then the rule contained no wildcards. Just return it as it is:
-    if (wildCardMap.isEmpty()) {
+    // If both wildcard map & column name map are empty then the rule contained no wildcards. Just
+    // return it as it is:
+    if (wildCardMap.isEmpty() && columnNameMap.isEmpty()) {
       interpolatedRules.add(rule);
       return interpolatedRules;
     }
 
-    // Now interpolate the rule using the wildcard map. If any of the wildcards points to a cell
-    // with multiple terms, then we duplicate the rule for each term pointed to. Finally we return
-    // all of the rules generated.
-    for (int i : wildCardMap.keySet()) {
-      if (interpolatedRules.isEmpty()) {
-        // If we haven't yet interpolated anything, then base the current interpolation on the rule
-        // that has been passed as an argument to the function above, and generate an interpolated
-        // rule corresponding to every term corresponding to this key in the wildcard map.
-        for (String term : wildCardMap.get(i)) {
-          String label = getLabelFromTerm(term);
-          String interpolatedRule =
-              rule.replaceAll(
-                  String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
-          interpolatedRules.add(interpolatedRule);
-        }
-      } else {
-        // If we have already interpolated some rules, then every string that has been interpolated
-        // thus far must be interpolated again for every term corresponding to this key in the
-        // wildcard map, and the list of interpolated rules is then replaced with the new list.
-        List<String> tmpList = new ArrayList<>();
-        for (String term : wildCardMap.get(i)) {
-          String label = getLabelFromTerm(term);
-          for (String intStr : interpolatedRules) {
-            String interpolatedRule =
-                intStr.replaceAll(
-                    String.format("%%%d", i), label == null ? "(" + term + ")" : "'" + label + "'");
-            tmpList.add(interpolatedRule);
-          }
-        }
-        interpolatedRules = tmpList;
-      }
-    }
-
+    // Interpolate based on column names and/or wildcards
+    interpolatedRules = interpolateColumnNames(columnNameMap, interpolatedRules, rule);
+    interpolatedRules = interpolateWildcards(wildCardMap, interpolatedRules, rule);
     return interpolatedRules;
   }
 
@@ -946,6 +1123,9 @@ public class TableValidator {
    * Writer object (or XLSX workbook, or Jinja context) that belongs to ValidateOperation. If the
    * parameter `showCoords` is true, then include the current row and column number in the output
    * string.
+   *
+   * @param format output format (txt, xlsx, etc.)
+   * @param positionalArgs table, row, column
    */
   private void report(String format, Object... positionalArgs) {
     // Any report of error means validation failed
@@ -987,6 +1167,9 @@ public class TableValidator {
   /**
    * Given a string describing a rule type, return a boolean indicating whether it is one of the
    * rules recognized by ValidateOperation.
+   *
+   * @param ruleType string rule type
+   * @return true if the rule type is valid
    */
   private boolean unknownRuleType(String ruleType) {
     return !rule_type_to_rtenum_map.containsKey(ruleType.split("\\|")[0]);
@@ -998,6 +1181,10 @@ public class TableValidator {
    * `value` for the entry is a list of the rule's when-clauses. Each when-clause is itself stored
    * as an array of three strings, including the subject to which the when-clause is to be applied,
    * the rule type for the when clause, and the actual axiom to be validated against the subject.
+   *
+   * @param rule String rule
+   * @param ruleType String rule type
+   * @return map of main clause of rule to the values
    */
   private AbstractMap.SimpleEntry<String, List<String[]>> separateRule(String rule, String ruleType)
       throws Exception {
@@ -1072,6 +1259,11 @@ public class TableValidator {
    * Given a string describing a rule, a rule of the type PRESENCE, and a string representing a cell
    * from the CSV, determine whether the cell satisfies the given presence rule (e.g. is-required,
    * is-empty).
+   *
+   * @param rule String rule
+   * @param rType RTypeEnum (PRESENCE)
+   * @param cell cell contents
+   * @return validation message on issue, null on success
    */
   private String validatePresenceRule(String rule, RTypeEnum rType, String cell) throws Exception {
 
@@ -1137,10 +1329,15 @@ public class TableValidator {
    * that cell, a string describing the type of that rule, and a list of strings describing the row
    * containing the given cell, validate the cell, indicating any validation errors via the output
    * writer (or XLSX workbook).
+   *
+   * @param cell cell contents of cell being validated
+   * @param rule rule to validate cell
+   * @param row current row being validated
+   * @param ruleType String rule type
+   * @return validation message on issue, null on success
    */
   private String validateRule(String cell, String rule, List<String> row, String ruleType)
       throws Exception {
-
     logger.debug(
         String.format(
             "validate_rule(): Called with parameters: "
@@ -1202,6 +1399,11 @@ public class TableValidator {
    * Given a list of String arrays describing a list of when-clauses, and a list of Strings
    * describing the row to which these when-clauses belong, validate the when-clauses one by one,
    * returning false if any of them fails to be satisfied, and true if they are all satisfied.
+   *
+   * @param whenClauses clauses to validate
+   * @param row row to validate
+   * @param colNum number of current column to validate
+   * @return true if all conditions are satisfied
    */
   private boolean validateWhenClauses(List<String[]> whenClauses, List<String> row, int colNum)
       throws Exception {

@@ -146,6 +146,20 @@ Instead, use this (or a `--term-file`):
 robot extract --input foo.owl --term foo:0000001 --term foo:0000002
 ```
 
+### Unparsed Triples Error
+
+Sometimes when loading an ontology, not all triples can be parsed. This error is thrown when the `--strict` flag is included in the command. Otherwise, the unparsed triples are logged as errors and excluded from the loaded ontology.
+
+This is often because OWL does not support RDF reification (for more details, see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)); ROBOT is a tool for working with OWL, not RDF. Usually this can be easily resolved by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
+```
+_:blank rdf:type rdf:Statement .
+```
+
+... but this statement is OK:
+```
+_:blank rdf:type owl:Axiom .
+```
+
 ### Wildcard Error
 
 Any pattern specified with `--inputs` for [merge](/merge) and [unmerge](/unmerge) must be a wildcard pattern, including either `*` (to match any number of characters) or `?` (to match any single character).
