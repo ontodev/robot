@@ -5,8 +5,9 @@ import static org.junit.Assert.assertEquals;
 import com.google.common.collect.Lists;
 import java.util.*;
 import org.junit.Test;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
+import org.semanticweb.owlapi.model.*;
 
 /**
  * Tests Template class and class methods.
@@ -129,5 +130,30 @@ public class TemplateTest extends CoreTest {
     OntologyHelper.setOntologyIRI(
         template, IRI.create("https://github.com/ontodev/robot/examples/template.owl"), null);
     assertIdentical("/docs-template.owl", template);
+  }
+
+  /**
+   * Test parsing a label that contains single quotes.
+   *
+   * @throws Exception on problem parsing
+   */
+  @Test
+  public void testParseClass() throws Exception {
+    OWLDataFactory df = OWLManager.getOWLDataFactory();
+    String label = "Streptococcus sp. 'group B'";
+    OWLClass expectedClass =
+        df.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/NCBITaxon_1319"));
+
+    // Create the checker
+    QuotedEntityChecker checker = new QuotedEntityChecker();
+    checker.add(expectedClass, label);
+
+    // Create the parser
+    ManchesterOWLSyntaxClassExpressionParser parser =
+        new ManchesterOWLSyntaxClassExpressionParser(df, checker);
+
+    OWLClass actualClass =
+        TemplateHelper.tryParse("test", checker, parser, label, 0, 0).asOWLClass();
+    assert actualClass.getIRI().toString().equals(expectedClass.getIRI().toString());
   }
 }
