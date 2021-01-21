@@ -62,7 +62,12 @@ public class RenameCommand implements Command {
         "d",
         "allow-duplicates",
         true,
-        "allow two or more terms to be renamed to the same full IRI");
+        "allow two or more terms to be renamed to the same full IRI (default: false)");
+    o.addOption(
+        "M",
+        "allow-missing-entities",
+        true,
+        "allow mappings for entites that do not appear in the ontology (default: false)");
     o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     options = o;
   }
@@ -142,6 +147,8 @@ public class RenameCommand implements Command {
     }
 
     boolean allowDuplicates = CommandLineHelper.getBooleanValue(line, "allow-duplicates", false);
+    boolean allowMissingEntities =
+        CommandLineHelper.getBooleanValue(line, "allow-missing-entities", false);
 
     char separator;
     // Process full renames
@@ -149,7 +156,7 @@ public class RenameCommand implements Command {
       separator = getSeparator(fullFile);
       Map<String, String> mappings =
           parseTableMappings(new File(fullFile), separator, allowDuplicates);
-      RenameOperation.renameFull(ontology, ioHelper, mappings);
+      RenameOperation.renameFull(ontology, ioHelper, mappings, allowMissingEntities);
     }
     // Process prefix renames (no need to fail on duplicates)
     if (prefixFile != null) {

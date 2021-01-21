@@ -18,6 +18,15 @@ Renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`) in a 
       --add-prefix "fb: http://foo.bar/"
       --output results/full-rename.owl
 
+This process fails if where there are entities in the mapping file that are not in the ontology. To avoid failure you can
+add the option `--allow-missing-entities true`.
+
+    robot rename --input test.owl \
+      --mappings full-rename.tsv \
+      --add-prefix "fb: http://foo.bar/"
+      --allow-missing-entities true \
+      --output results/full-rename.owl
+
 If two or more old IRIs are mapped to the same new IRI, these two entities will be merged. By default, ROBOT will throw an error if this happens. This behavior can be overridden by including `--allow-duplicates true`.
 
 #### Prefixes
@@ -33,7 +42,7 @@ More information on the `--add-prefix` option can be found in [Global Options](/
 
 ## Mappings Files
 
-The mappings for renaming should be specified with the `--mappings` (for full renames) or `--prefix-mappings` (for renaming prefixes) option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with. 
+The mappings for renaming should be specified with the `--mappings` (for full renames) or `--prefix-mappings` (for renaming prefixes) option. These should be either comma- or tab-separated tables. Each row should have exactly two columns: on the left, the IRI to replace, and on the right, the IRI to replace it with.
 
 For a full rename (you can use prefixes as long as they are defined by the defaults, `--prefix`, or `--add-prefix`):
 

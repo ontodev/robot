@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- robot explain updates: explanations for inconsistent and unsatisfiable classes [#779]
-
-## [1.7.2] - 2020-11-18
 
 ### Added
 - Added 'strict' mode for loading ontologies in [#788]
+- Add --allow-missing-entities option in [`rename`] command [#793]
+
+### Changed
+- Explanations for inconsistent and unsatisfiable classes in [`explain`] [#779]
+
+## [1.7.2] - 2020-11-18
 
 ### Changed
 - Update to whelk 1.0.4
@@ -228,6 +231,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#796]: https://github.com/ontodev/robot/pull/796
+[#793]: https://github.com/ontodev/robot/pull/793
 [#792]: https://github.com/ontodev/robot/pull/792
 [#788]: https://github.com/ontodev/robot/pull/788
 [#783]: https://github.com/ontodev/robot/pull/783
