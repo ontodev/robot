@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.*;
@@ -14,6 +15,16 @@ import org.semanticweb.owlapi.util.SimpleShortFormProvider;
  * @author <a href="mailto:consulting@michaelcuffaro.com">Michael E. Cuffaro</a>
  */
 public class ValidateOperation {
+
+  /** Namespace for error messages. */
+  private static final String NS = "validate#";
+
+  private static final String missingHeadersError =
+      NS
+          + "MISSING HEADERS ERROR --rules table headers must include at least: table, column, validation";
+
+  private static final String multipleRulesError =
+      NS + "MULTIPLE RULES ERROR column '%s' has more than one rule defined in --rules";
 
   /**
    * Return the default Validate options.
@@ -35,6 +46,7 @@ public class ValidateOperation {
   /**
    * Validate tables based on an ontology.
    *
+   * @param rules map of table name to column to rule
    * @param tables tables to validate (map of table name to table contents)
    * @param ontology OWLOntology to use to validate tables
    * @param ioHelper IOHelper to resolve entities
@@ -43,6 +55,7 @@ public class ValidateOperation {
    * @throws Exception on any problem
    */
   public static List<String> validate(
+      Map<String, Map<String, String>> rules,
       Map<String, List<List<String>>> tables,
       OWLOntology ontology,
       IOHelper ioHelper,
@@ -85,7 +98,7 @@ public class ValidateOperation {
     }
 
     // Run validation over all tables
-    List<String> result = validator.validate(tables, options);
+    List<String> result = validator.validate(rules, tables, options);
 
     // Maybe save errors to their own table
     String errorsPath = OptionsHelper.getOption(options, "errors", null);
@@ -97,5 +110,55 @@ public class ValidateOperation {
       }
     }
     return result;
+  }
+
+  /**
+   * Get the set of validation rules from a table.
+   *
+   * @param rulesPath path to rules table
+   * @return map of table name to column to rule
+   * @throws Exception on any IO or formatting issue
+   */
+  public static Map<String, Map<String, String>> getRules(String rulesPath) throws Exception {
+    Map<String, Map<String, String>> rules = new HashMap<>();
+    List<List<String>> rulesData;
+    if (rulesPath.endsWith(".csv")) {
+      rulesData = IOHelper.readCSV(rulesPath);
+    } else {
+      rulesData = IOHelper.readCSV(rulesPath);
+    }
+
+    List<String> rulesHeader = rulesData.remove(0);
+    rulesHeader = rulesHeader.stream().map(String::toLowerCase).collect(Collectors.toList());
+    if (!rulesHeader.containsAll(Arrays.asList("validation", "table", "column"))) {
+      throw new Exception(missingHeadersError);
+    }
+
+    int ruleIdx = rulesHeader.indexOf("validation");
+    int tableIdx = rulesHeader.indexOf("table");
+    int colIdx = rulesHeader.indexOf("column");
+    for (List<String> row : rulesData) {
+      String table = row.get(tableIdx);
+      String column = row.get(colIdx);
+
+      // Maybe get a rule
+      if (row.size() <= ruleIdx) {
+        continue;
+      }
+      String rule = row.get(ruleIdx);
+      if (rule.trim().equals("")) {
+        continue;
+      }
+
+      // Add rule to rules
+      Map<String, String> columnRules = rules.getOrDefault(table, new HashMap<>());
+      if (columnRules.containsKey(column)) {
+        throw new Exception(String.format(multipleRulesError, column));
+      }
+      columnRules.put(column, row.get(ruleIdx));
+      rules.put(table, columnRules);
+    }
+
+    return rules;
   }
 }

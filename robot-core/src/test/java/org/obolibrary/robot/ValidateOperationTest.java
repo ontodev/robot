@@ -31,8 +31,14 @@ public class ValidateOperationTest extends CoreTest {
     List<List<String>> tableData = IOHelper.readCSV(tableStream);
     assert (tableData != null);
 
-    URL res = this.getClass().getResource("/immune_exposures.csv");
+    URL res = this.getClass().getResource("/immune_exposures_rules.csv");
     File file = Paths.get(res.toURI()).toFile();
+    String rulesPath = file.getAbsolutePath();
+
+    Map<String, Map<String, String>> rules = ValidateOperation.getRules(rulesPath);
+
+    res = this.getClass().getResource("/immune_exposures.csv");
+    file = Paths.get(res.toURI()).toFile();
     String tablePath = file.getAbsolutePath();
 
     Map<String, List<List<String>>> tables = new HashMap<>();
@@ -50,7 +56,7 @@ public class ValidateOperationTest extends CoreTest {
 
     // Call validate() with an outputPath of null to send output to STDOUT:
     OWLReasonerFactory reasonerFactory = new ReasonerFactory();
-    ValidateOperation.validate(tables, ontology, ioHelper, reasonerFactory, null);
+    ValidateOperation.validate(rules, tables, ontology, ioHelper, reasonerFactory, null);
 
     // Compare the output with the contents of a file in the resources directory which contains
     // the output we expect to get:
