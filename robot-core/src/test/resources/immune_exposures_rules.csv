@@ -1,7 +1,0 @@
-table,column,validation
-immune_exposures,exposure process reported,is-required; subclass-of 'exposure process';
-immune_exposures,exposure material reported,subclass-of|equivalent-to 'exposure material'; equivalent-to %3; is-required (when %1 subclass-of (administration or 'exposure without disease' or 'infectious disease' or 'allergic disease')); is-excluded (when %1 equivalent-to disease); is-excluded (when %1 subclass-of ('autoimmune disease' or cancer or 'no exposure' or unknown))
-immune_exposures,exposure material id,equivalent-to %2
-immune_exposures,disease reported,subclass-of 'disease name'; subclass-of hasMaterialBasisIn some %2 (when %1 subclass-of not ('autoimmune disease' or cancer)); equivalent-to %5; is-required (when %1 subclass-of disease); is-excluded (when %1 equivalent-to administration); is-excluded (when %1 subclass-of (vaccination or transplant/transfusion or 'exposure without disease' or 'no exposure' or unknown))
-immune_exposures,disease ontology id,equivalent-to %4
-immune_exposures,disease stage reported,subclass-of 'disease stage'; is-required (when %1 subclass-of disease); is-excluded (when %1 subclass-of not disease)
