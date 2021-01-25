@@ -941,7 +941,7 @@ public class ExportOperation {
       ShortFormProvider provider = col.getShortFormProvider();
 
       Cell cell;
-      switch (colName) {
+      switch (colName.toUpperCase()) {
         case "IRI":
           String iriString = entity.getIRI().toString();
           if (format.toLowerCase().startsWith("html")) {
@@ -968,7 +968,7 @@ public class ExportOperation {
           List<String> values = getSynonyms(ontology, entity);
           row.add(new Cell(col, values));
           continue;
-        case "subclasses":
+        case "SUBCLASSES":
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> subclasses =
                 EntitySearcher.getSubClasses(entity.asOWLClass(), ontology);

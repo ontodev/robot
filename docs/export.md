@@ -40,7 +40,7 @@ These can be specified with the `--format` option:
 If this option is not included, `export` will predict the format based on the file extension:
  
     robot export --input nucleus_part_of.owl \
-      --header "ID|LABEL|SubClass Of" \
+      --header "ID|LABEL|SubClasses" \
       --export results/nucleus.json
 
 ### Columns
