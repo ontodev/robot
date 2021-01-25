@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Explanations for inconsistent and unsatisfiable classes in [`explain`] [#779]
 
+### Fixed
+- Allow case-insensitive "SubClasses" in [`export`] header [#802]
+
 ## [1.7.2] - 2020-11-18
 
 ### Changed
@@ -230,6 +233,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#802]: https://github.com/ontodev/robot/pull/802
 [#796]: https://github.com/ontodev/robot/pull/796
 [#793]: https://github.com/ontodev/robot/pull/793
 [#792]: https://github.com/ontodev/robot/pull/792
