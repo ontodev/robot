@@ -78,9 +78,9 @@ confirm "Correct branch and up to date?"
 step "Check Travis"
 travis status --skip-version-check --exit-code --fail-pending
 
-step "Check Jenkins"
-curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
-| jq --exit-status '.result | test("SUCCESS")'
+# step "Check Jenkins"
+# curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
+# | jq --exit-status '.result | test("SUCCESS")'
 
 step "Set the the version number for this release"
 mvn versions:set -DnewVersion="${VERSION}"
