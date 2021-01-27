@@ -353,11 +353,22 @@ public class QuotedEntityChecker implements OWLEntityChecker {
    */
   @Override
   public OWLClass getOWLClass(@Nonnull String name) {
+    return getOWLClass(name, true);
+  }
+
+  /**
+   * Find a class with the given name, or create one. Quotation marks will be removed if necessary.
+   *
+   * @param name the name of the entity to find
+   * @param create if false, do not create a new class
+   * @return a class, or null
+   */
+  public OWLClass getOWLClass(@Nonnull String name, boolean create) {
     IRI iri = getIRI(classes, name);
     if (iri != null) {
       return dataFactory.getOWLClass(iri);
     }
-    if (ioHelper != null) {
+    if (ioHelper != null && create) {
       iri = ioHelper.createIRI(name);
       if (iri != null) {
         return dataFactory.getOWLClass(iri);

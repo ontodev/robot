@@ -990,7 +990,7 @@ public class TemplateHelper {
       if (checker != null) {
         // If we have a checker, try to get the class by label
         // This allows class labels with single quotes
-        expr = checker.getOWLClass(content);
+        expr = checker.getOWLClass(content, false);
       }
       if (expr == null) {
         // If not found by label, try to parse
