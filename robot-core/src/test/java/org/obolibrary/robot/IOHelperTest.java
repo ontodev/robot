@@ -60,6 +60,7 @@ public class IOHelperTest extends CoreTest {
    * Test loading JSON files.
    *
    * @throws IOException on file problem
+   * @throws URISyntaxException on problem converting path to URI
    */
   @Test
   public void testJSON() throws IOException, URISyntaxException {
@@ -70,6 +71,7 @@ public class IOHelperTest extends CoreTest {
    * Test loading YAML files.
    *
    * @throws IOException on file problem
+   * @throws URISyntaxException on problem converting path to URI
    */
   @Test
   public void testYAML() throws IOException, URISyntaxException {

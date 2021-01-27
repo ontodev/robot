@@ -34,7 +34,7 @@ public class MireotOperationTest extends CoreTest {
   /**
    * Test MIROET on a subset with an entity that is both a class and individual.
    *
-   * @throws Exception
+   * @throws Exception on any problem
    */
   @Test
   public void testMireotOnOverlap() throws Exception {
@@ -48,7 +48,10 @@ public class MireotOperationTest extends CoreTest {
   /**
    * Test MIREOT.
    *
+   * @param inputPath the path to the file to test
    * @param expectedPath the path to a known-good file for comparison
+   * @param outputIRIString IRI of output as string
+   * @param term term to extract as IRI
    * @throws Exception on any problem
    */
   public void testMireot(String inputPath, String expectedPath, String outputIRIString, String term)

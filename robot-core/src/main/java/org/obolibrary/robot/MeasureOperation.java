@@ -127,8 +127,9 @@ public class MeasureOperation {
    * all will collect the same metrics: all metrics, plus the (simple) reasoner metrics.
    *
    * @param ontology Ontology to run metrics
-   * @param metricsType what kind of metrics to harvest
    * @param rf reasoner factory, in case reasoner metrics should be collected
+   * @param metricsType what kind of metrics to harvest
+   * @param curieShortFormProvider short form provider
    * @return Metrics, if successful
    */
   public static MeasureResult getMetrics(

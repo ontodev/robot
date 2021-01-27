@@ -277,8 +277,10 @@ public class Row {
   }
 
   /**
-   * @param columns
-   * @return
+   * Convert a row into an item in an HTML list.
+   *
+   * @param columns HTML columns
+   * @return HTML string
    */
   public String toHTMLList(List<Column> columns) {
     StringBuilder sb = new StringBuilder();

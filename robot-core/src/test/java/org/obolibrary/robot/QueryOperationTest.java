@@ -45,6 +45,7 @@ public class QueryOperationTest extends CoreTest {
    *
    * @throws IOException on IO error
    * @throws OWLOntologyStorageException on ontology error
+   * @throws URISyntaxException on problem converting path to URI
    */
   @Test
   public void testQueryWithDefaultGraph()
@@ -66,6 +67,7 @@ public class QueryOperationTest extends CoreTest {
    *
    * @throws IOException on IO error
    * @throws OWLOntologyStorageException on ontology error
+   * @throws URISyntaxException on problem converting path to URI
    */
   @Test
   public void testQueryWithNamedGraph()

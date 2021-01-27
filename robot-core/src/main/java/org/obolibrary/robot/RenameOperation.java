@@ -71,11 +71,8 @@ public class RenameOperation {
    * @throws Exception if the old IRI in a mapping does not exist
    */
   public static void renameFull(
-    OWLOntology ontology,
-    IOHelper ioHelper,
-    Map<String, String> mappings)
-    throws Exception {
-    renameFull(ontology,ioHelper,mappings,false);
+      OWLOntology ontology, IOHelper ioHelper, Map<String, String> mappings) throws Exception {
+    renameFull(ontology, ioHelper, mappings, false);
   }
 
   /**
