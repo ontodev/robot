@@ -66,6 +66,15 @@ public class CURIEShortFormProvider implements ShortFormProvider {
     return iriString;
   }
 
+  /**
+   * Get a copy of the full current curie map.
+   *
+   * @return sortedPrefixMap
+   */
+  public List<Map.Entry<String, String>> getSortedPrefixMap() {
+    return new ArrayList<>(sortedPrefixMap);
+  }
+
   /** Dispose of the ShortFormProvider */
   @Override
   public void dispose() {}

@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add [`measure`] command [#774]
 - Added 'strict' mode for loading ontologies in [#788]
 - Add --allow-missing-entities option in [`rename`] command [#793]
+- Add `html-list` format option to [`export`] in [#703]
 
 ### Changed
 - Explanations for inconsistent and unsatisfiable classes in [`explain`] [#779]
@@ -221,6 +223,7 @@ First official release of ROBOT!
 [`export`]: http://robot.obolibrary.org/export
 [`extract`]: http://robot.obolibrary.org/extract
 [`filter`]: http://robot.obolibrary.org/filter
+[`measure`]: http://robot.obolibrary.org/measure
 [`merge`]: http://robot.obolibrary.org/merge
 [`python`]: http://robot.obolibrary.org/python
 [`query`]: http://robot.obolibrary.org/query
