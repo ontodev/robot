@@ -75,8 +75,8 @@ git fetch
 git status | head -n2
 confirm "Correct branch and up to date?"
 
-step "Check Travis"
-travis status --skip-version-check --exit-code --fail-pending
+# step "Check Travis"
+# travis status --skip-version-check --exit-code --fail-pending
 
 # step "Check Jenkins"
 # curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
