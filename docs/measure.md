@@ -131,14 +131,14 @@ To serialise the metrics as json, for example, we run:
 
     robot measure --input uberon_fragment.owl --format json --metrics all --output results/metrics_all.json
 
-Note that if no `--format`/`-f` is explicitly provided, robot will try to infer the inteded format from the file extension
+Note that if no `--format`/`-f` is explicitly provided, ROBOT will try to infer the inteded format from the file extension
 instead. Failing that, it will generate a TSV file.
 
 ## Error Messages
 
 ### Metrics format error
 
-Only the following `--format/-f` options are currently supported: `tsv`, `json`, `yaml`, `html`.
+Only the following `--format/-f` options are currently supported: `tsv`, `csv`, `json`, `yaml`, `html`.
 
 ### Metrics type error
 
