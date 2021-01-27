@@ -278,7 +278,7 @@ public class Row {
 
   /**
    * Convert a row into an item in an HTML list.
-   * 
+   *
    * @param columns HTML columns
    * @return HTML string
    */
