@@ -6,15 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
 - Add [`measure`] command [#774]
+- Added 'strict' mode for loading ontologies in [#788]
+- Add --allow-missing-entities option in [`rename`] command [#793]
+- Add `html-list` format option to [`export`] in [#703]
+
+### Changed
+- Explanations for inconsistent and unsatisfiable classes in [`explain`] [#779]
+
+### Fixed
+- Allow case-insensitive "SubClasses" in [`export`] header [#802]
 
 ## [1.7.2] - 2020-11-18
 
 ### Changed
 - Update to whelk 1.0.4
+- Run [`query`] on existing TDB dataset (instead of ontology input) in [#792]
+- Improved error messages for [`template`] parse errors in [#796]
 
 ### Fixed
 - Fix blank node subjects in [`report`] in [#767]
+- Fixed IRI handling for [`template`] in [#783]
 
 ## [1.7.1] - 2020-10-22
 
@@ -208,6 +222,7 @@ First official release of ROBOT!
 [`export`]: http://robot.obolibrary.org/export
 [`extract`]: http://robot.obolibrary.org/extract
 [`filter`]: http://robot.obolibrary.org/filter
+[`measure`]: http://robot.obolibrary.org/measure
 [`merge`]: http://robot.obolibrary.org/merge
 [`python`]: http://robot.obolibrary.org/python
 [`query`]: http://robot.obolibrary.org/query
@@ -220,6 +235,12 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#802]: https://github.com/ontodev/robot/pull/802
+[#796]: https://github.com/ontodev/robot/pull/796
+[#793]: https://github.com/ontodev/robot/pull/793
+[#792]: https://github.com/ontodev/robot/pull/792
+[#788]: https://github.com/ontodev/robot/pull/788
+[#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
 [#739]: https://github.com/ontodev/robot/pull/739
@@ -233,6 +254,7 @@ First official release of ROBOT!
 [#713]: https://github.com/ontodev/robot/pull/713
 [#710]: https://github.com/ontodev/robot/pull/710
 [#709]: https://github.com/ontodev/robot/issues/709
+[#703]: https://github.com/ontodev/robot/pull/703
 [#699]: https://github.com/ontodev/robot/pull/699
 [#691]: https://github.com/ontodev/robot/pull/691
 [#689]: https://github.com/ontodev/robot/pull/689
