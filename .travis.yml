@@ -1,5 +1,0 @@
-language: java
-dist: trusty
-jdk:
-  - oraclejdk8
-script: "mvn verify && ls bin/robot.jar"
