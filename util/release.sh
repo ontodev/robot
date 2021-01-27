@@ -116,8 +116,6 @@ cp bin/robot.jar robot.jar
 
 step "Review changes for release"
 git diff
-
-step "Commit and push this release"
 confirm "Commit and push?"
 git commit --all --message "Bump version to ${VERSION}"
 git push
@@ -131,7 +129,6 @@ step "Release to Maven Central"
 mvn clean deploy -P release
 
 step "Create draft GitHub release"
-< CHANGELOG.md \
   sed -n "/^## \[${VERSION}\]/,/^## /p" CHANGELOG.md \
 | sed '1d;2d;$d' \
 | sed "s/[][]//g" \
@@ -146,8 +143,6 @@ mvn versions:set -DnewVersion="${NEXT}"
 
 step "Review changes for SNAPSHOT version"
 git diff
-
-step "Commit and push changes for SNAPSHOT version"
 confirm "Commit and push?"
 git commit --all --message "Bump version to ${NEXT}"
 git push
@@ -177,7 +172,6 @@ fi
 confirm "Sent?"
 
 trap '' INT TERM EXIT
-echo "ROBOT ${VERSION} released!"
-echo "Draft GitHub release created:"
+echo "Draft GitHub release created for ROBOT ${VERSION}"
 echo "Maven Central and javadoc.io should show the new release within 24 hours"
 
