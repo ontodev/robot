@@ -102,6 +102,7 @@ step "Updating CHANGELOG.md"
 mv CHANGELOG.new.md CHANGELOG.md
 
 step "Updating obo context (curie map)"
+( cd robot-maven-plugin && mvn install )
 mvn robot:UpdateContext -N
 
 step "Manually check CHANGELOG.md and obo_context.jsonld"
