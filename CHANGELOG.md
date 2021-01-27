@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix handling of class expressions from [`template`] [#808]
+
 ## [1.8.0] - 2021-01-27
 
 ### Added
@@ -239,6 +242,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#808]: https://github.com/ontodev/robot/pull/808
 [#802]: https://github.com/ontodev/robot/pull/802
 [#796]: https://github.com/ontodev/robot/pull/796
 [#793]: https://github.com/ontodev/robot/pull/793
