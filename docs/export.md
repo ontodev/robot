@@ -27,6 +27,7 @@ The following formats are currently supported:
 * `tsv` - tab-separated file, default format for unknown extensions
 * `csv` - comma-separated file
 * `html` - HTML table with with [Bootstrap](https://getbootstrap.com/) styling
+* `html-list` - HTML bullet list with [Bootstrap](https://getbootstrap.com/) styling
 * `json` - JSON file with values as arrays (except for ID/CURIE and IRI, which are single strings)
 * `xlsx` - Excel workbook with contents on first sheet
 
@@ -39,7 +40,7 @@ These can be specified with the `--format` option:
 If this option is not included, `export` will predict the format based on the file extension:
  
     robot export --input nucleus_part_of.owl \
-      --header "ID|LABEL|SubClass Of" \
+      --header "ID|LABEL|SubClasses" \
       --export results/nucleus.json
 
 ### Columns

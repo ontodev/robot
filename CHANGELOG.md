@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--errors <path>` option to [`template`] in [#713]
 - Add new formats to [`report`]: HTML, JSON, and XLSX [#699]
 - Add `--fail-on-violation <bool>` option to [`verify`] in [#738]
+- Add `html-list` format option to [`export`] in [#703]
 
 ### Fixed
 - Handle empty [`template`] property charactersitics in [#719]

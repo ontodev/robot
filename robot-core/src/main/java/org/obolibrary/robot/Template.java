@@ -595,13 +595,13 @@ public class Template {
         type = "class";
       }
 
-      IRI iri = ioHelper.createIRI(id, true);
+      IRI iri = ioHelper.createIRI(id);
       if (iri == null) {
         iri = IRI.create(id);
       }
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type, true);
+      IRI typeIRI = ioHelper.createIRI(type);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -747,7 +747,7 @@ public class Template {
     }
 
     // Try to resolve a CURIE
-    IRI typeIRI = ioHelper.createIRI(type, true);
+    IRI typeIRI = ioHelper.createIRI(type);
 
     // Set to IRI string or to type string
     String typeOrIRI = type;
@@ -870,34 +870,40 @@ public class Template {
         // Subclass expression
         subclassExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column));
       } else if (template.startsWith("EC")) {
         // Equivalent expression
         equivalentExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column));
       } else if (template.startsWith("DC")) {
         // Disjoint expression
         disjointExpressionColumns.put(
             column,
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column));
       } else if (template.startsWith("C") && !template.startsWith("CLASS_TYPE")) {
         // Use class type to determine what to do with the expression
         switch (classType) {
           case "subclass":
             subclassExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
+                TemplateHelper.getClassExpressions(
+                    name, checker, parser, template, value, rowNum, column));
             break;
           case "equivalent":
             intersectionEquivalentExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
+                TemplateHelper.getClassExpressions(
+                    name, checker, parser, template, value, rowNum, column));
             break;
           case "disjoint":
             disjointExpressionColumns.put(
                 column,
-                TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column));
+                TemplateHelper.getClassExpressions(
+                    name, checker, parser, template, value, rowNum, column));
             break;
           default:
             break;
@@ -1163,12 +1169,14 @@ public class Template {
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column);
         addObjectPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column);
         addObjectPropertyRanges(property, expressions, row, column);
       }
     }
@@ -1439,7 +1447,8 @@ public class Template {
       } else if (template.startsWith("DOMAIN")) {
         // Handle domains
         Set<OWLClassExpression> expressions =
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column);
         addDataPropertyDomains(property, expressions, row, column);
       } else if (template.startsWith("RANGE")) {
         // Handle ranges
@@ -1826,7 +1835,7 @@ public class Template {
       type = type.trim();
 
       // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type, true);
+      IRI typeIRI = ioHelper.createIRI(type);
 
       // Set to IRI string or to type string
       String typeOrIRI = type;
@@ -1845,7 +1854,7 @@ public class Template {
         } else {
           // If the class is null, assume it is a class expression
           OWLClassExpression typeExpr =
-              TemplateHelper.tryParse(name, parser, type, rowNum, typeColumn);
+              TemplateHelper.tryParse(name, checker, parser, type, rowNum, typeColumn);
           axioms.add(dataFactory.getOWLClassAssertionAxiom(typeExpr, individual));
         }
       }
@@ -1896,7 +1905,8 @@ public class Template {
           template = template + " SPLIT=" + split;
         }
         Set<OWLClassExpression> typeExpressions =
-            TemplateHelper.getClassExpressions(name, parser, template, value, rowNum, column);
+            TemplateHelper.getClassExpressions(
+                name, checker, parser, template, value, rowNum, column);
         for (OWLClassExpression ce : typeExpressions) {
           axioms.add(dataFactory.getOWLClassAssertionAxiom(ce, individual));
         }
@@ -2217,7 +2227,7 @@ public class Template {
       throw new Exception("You must specify either an ID or a label");
     }
     if (id != null) {
-      return ioHelper.createIRI(id, true);
+      return ioHelper.createIRI(id);
     }
     return checker.getIRI(label, true);
   }

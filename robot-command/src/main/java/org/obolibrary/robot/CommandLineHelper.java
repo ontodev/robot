@@ -436,6 +436,7 @@ public class CommandLineHelper {
     }
 
     ioHelper.setXMLEntityFlag(line.hasOption("xml-entities"));
+    ioHelper.setStrict(line.hasOption("strict"));
 
     return ioHelper;
   }
@@ -917,6 +918,7 @@ public class CommandLineHelper {
     o.addOption(null, "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     o.addOption(null, "add-prefixes", true, "add JSON-LD prefixes to the output");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");
+    o.addOption(null, "strict", false, "use strict parsing when loading an ontology");
     return o;
   }
 

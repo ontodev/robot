@@ -101,8 +101,11 @@ step "Updating CHANGELOG.md"
 > CHANGELOG.new.md
 mv CHANGELOG.new.md CHANGELOG.md
 
-step "Manually check CHANGELOG.md"
-confirm "CHANGELOG.md good?"
+step "Updating obo context (curie map)"
+mvn robot:UpdateContext -N
+
+step "Manually check CHANGELOG.md and obo_context.jsonld"
+confirm "CHANGELOG.md and obo_context.jsonld good?"
 
 echo "Everything looks good!"
 

@@ -310,6 +310,10 @@ AL rdfs:label@en
 
 The provided value cannot be parsed and may not be in proper Manchester syntax. See [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) for more details. If you are using labels, make sure the labels are defined in the `--input` ontology or using the `LABEL` column. Also ensure that all properties use a label instead of a CURIE or IRI.
 
+When using a restriction (`some`, `only`, `min`, `max`, `exactly`, or `value`) the term that preceeds the restriction must be a property. 
+
+Terms joined using `and` or `or` must be of the same entity type, e.g., you cannot join an object property and a class in an expression.
+
 ### Merge Error
 
 `--merge-before` and `--merge-after` cannot be used simultaneously.

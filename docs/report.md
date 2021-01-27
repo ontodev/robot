@@ -142,6 +142,16 @@ robot report --input edit.owl \
 
 This example will only include the first 10,000 results for each report query, meaning that some violation counts may be incomplete. Typically, you should not need to include a limit, but when working with large ontologies (using TDB), there may be hundreds of thousands of results.
 
+## Working with import closures
+
+By default the report command will operate over the specified ontology, ignoring the import chain. This means if your ontology uses a class, and the class label is asserted in an import, you will receive a missing label error.
+
+To change this behavior, you can merge the imports closure using the [merge](merge) command. This can be done by chaining commands together, for example:
+
+```
+robot merge --collapse-import-closure true -i my-ont.owl report -o my-ont-report.tsv
+```
+
 ---
 
 ## Error Messages

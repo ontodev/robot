@@ -34,10 +34,14 @@ public class Table {
   // e.g., the first item in the list will be sorted first
   private List<Column> sortColumns;
 
-  private RendererType displayRenderer = null;
+  private RendererType displayRenderer;
   private RendererType sortRenderer = null;
 
-  private static final Set<String> basicFormats = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+  private static final Set<String> BASIC_FORMATS = Sets.newHashSet("tsv", "csv", "json", "xlsx");
+  private static final String BOOTSTRAP_CSS =
+      "https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css";
+  private static final String BOOTSTRAP_JS =
+      "https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js";
 
   /** Init a new Table. */
   public Table() {
@@ -59,13 +63,13 @@ public class Table {
     sortColumns = new ArrayList<>();
 
     // Set renderer types based on format
-    if (format == null || basicFormats.contains(format.toLowerCase())) {
+    if (format == null || BASIC_FORMATS.contains(format.toLowerCase())) {
       displayRenderer = RendererType.OBJECT_RENDERER;
-    } else if (format.equalsIgnoreCase("html")) {
+    } else if (format.toLowerCase().startsWith("html")) {
       displayRenderer = RendererType.OBJECT_HTML_RENDERER;
       sortRenderer = RendererType.OBJECT_RENDERER;
     } else {
-      // TODO - unknown format
+      displayRenderer = RendererType.OBJECT_RENDERER;
     }
   }
 
@@ -278,14 +282,16 @@ public class Table {
     if (standalone) {
       // Add opening tags, style, and maybe js scripts
       sb.append("<head>\n")
-          .append("\t<link rel=\"stylesheet\" href=\"")
-          .append("https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">\n");
+          .append("  <link rel=\"stylesheet\" href=\"")
+          .append(BOOTSTRAP_CSS)
+          .append("\">\n");
       if (includeJS) {
-        sb.append("\t<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
+        sb.append("  <script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\"></script>\n")
             .append(
-                "\t<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
-            .append(
-                "\t<script src=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js\"></script>\n");
+                "  <script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n")
+            .append("  <script src=\"")
+            .append(BOOTSTRAP_JS)
+            .append("\"></script>\n");
       }
       sb.append("</head>\n").append("<body>\n");
     }
@@ -295,30 +301,10 @@ public class Table {
         .append("<tr>\n");
 
     // Add column headers
-    Map<Integer, String> rules = new HashMap<>();
-    int colIdx = 0;
     for (Column c : columns) {
-      sb.append("\t<th>").append(c.getDisplayName()).append("</th>\n");
-      String displayRule = c.getDisplayRule();
-      if (displayRule != null) {
-        rules.put(colIdx, displayRule);
-      }
-      colIdx++;
+      sb.append("  <th>").append(c.getDisplayName()).append("</th>\n");
     }
     sb.append("</tr>\n").append("</thead>\n");
-
-    // Maybe add rules
-    if (!rules.isEmpty()) {
-      sb.append("<thead class=\"bg-secondary text-white\">\n").append("<tr>\n");
-      for (int idx = 0; idx < colIdx; idx++) {
-        if (rules.containsKey(idx)) {
-          sb.append("\t<th>").append(rules.get(idx)).append("</th>\n");
-        } else {
-          sb.append("\t<th></th>\n");
-        }
-      }
-      sb.append("</tr>\n").append("</thead>\n");
-    }
 
     // Add all table rows
     for (Row row : rows) {
@@ -332,12 +318,27 @@ public class Table {
       sb.append("</body>\n");
       if (includeJS) {
         sb.append("<script>\n")
-            .append("\t$(function () {\n")
-            .append("\t\t$('[data-toggle=\"tooltip\"]').tooltip()\n")
-            .append("\t})")
+            .append("  $(function () {\n")
+            .append("    $('[data-toggle=\"tooltip\"]').tooltip()\n")
+            .append("  })")
             .append("</script>\n");
       }
     }
+    return sb.toString();
+  }
+
+  public String toHTMLList() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<head>\n")
+        .append("  <link rel=\"stylesheet\" href=\"")
+        .append(BOOTSTRAP_CSS)
+        .append("\">\n")
+        .append("</head>\n")
+        .append("<body>\n");
+    for (Row row : rows) {
+      sb.append(row.toHTMLList(columns));
+    }
+    sb.append("</body>");
     return sb.toString();
   }
 
@@ -406,6 +407,10 @@ public class Table {
           out.print(toHTML(split, standalone));
         }
         break;
+      case "html-list":
+        try (PrintWriter out = new PrintWriter(f)) {
+          out.print(toHTMLList());
+        }
       case "json":
         try (PrintWriter out = new PrintWriter(f)) {
           out.print(toJSON());

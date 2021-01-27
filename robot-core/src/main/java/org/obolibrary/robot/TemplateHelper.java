@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -19,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.obolibrary.robot.exceptions.ColumnException;
 import org.obolibrary.robot.exceptions.RowParseException;
@@ -60,7 +62,7 @@ public class TemplateHelper {
   /** Error message when a given class expression is not able to be parsed. */
   protected static final String manchesterParseError =
       NS
-          + "MANCHESTER PARSE ERROR the expression '%s' at row %d, column %d in table \"%s\" cannot be parsed: %s";
+          + "MANCHESTER PARSE ERROR the expression (%s) at row %d, column %d in table \"%s\" cannot be parsed: %s";
 
   /** Error message when the CLASS_TYPE is not subclass or equivalent. */
   private static final String classTypeError =
@@ -241,6 +243,34 @@ public class TemplateHelper {
       int rowNum,
       int col)
       throws RowParseException {
+    return getClassExpressions(tableName, null, parser, template, value, rowNum, col);
+  }
+
+  /**
+   * Given a Quoted Entity checker, a Manchester Syntax parser, a template string, and a template
+   * value, insert the value into the template string and parse to a set of class expressions. If
+   * the template string contains 'SPLIT=', the value will be split on the provided character.
+   * Otherwise, the set will only have one entry.
+   *
+   * @param tableName name of table
+   * @param checker QuotedEntityChecker to resolve labels
+   * @param parser ManchesterOWLSyntaxClassExpressionParser to parse expression
+   * @param template template string
+   * @param value value to replace '%' in template string
+   * @param rowNum the line number
+   * @param col the column number
+   * @return set of OWLClassExpressions
+   * @throws RowParseException if row is malformed
+   */
+  public static Set<OWLClassExpression> getClassExpressions(
+      String tableName,
+      QuotedEntityChecker checker,
+      ManchesterOWLSyntaxClassExpressionParser parser,
+      String template,
+      String value,
+      int rowNum,
+      int col)
+      throws RowParseException {
     String split = getSplit(template);
     template = getTemplate(template);
 
@@ -251,20 +281,21 @@ public class TemplateHelper {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
           String content = QuotedEntityChecker.wrap(v);
-          expressions.add(tryParse(tableName, parser, content, rowNum, col));
+          expressions.add(tryParse(tableName, checker, parser, content, rowNum, col));
         }
       } else {
         String content = QuotedEntityChecker.wrap(value);
-        expressions.add(tryParse(tableName, parser, content, rowNum, col));
+        expressions.add(tryParse(tableName, checker, parser, content, rowNum, col));
       }
     } else {
       if (split != null) {
         String[] values = value.split(Pattern.quote(split));
         for (String v : values) {
-          expressions.add(getClassExpression(tableName, template, v, parser, rowNum, col));
+          expressions.add(getClassExpression(tableName, template, v, checker, parser, rowNum, col));
         }
       } else {
-        expressions.add(getClassExpression(tableName, template, value, parser, rowNum, col));
+        expressions.add(
+            getClassExpression(tableName, template, value, checker, parser, rowNum, col));
       }
     }
     return expressions;
@@ -525,7 +556,7 @@ public class TemplateHelper {
       if (id == null || id.trim().isEmpty()) {
         continue;
       }
-      IRI iri = ioHelper.createIRI(id, true);
+      IRI iri = ioHelper.createIRI(id);
       if (iri == null) {
         continue;
       }
@@ -925,13 +956,49 @@ public class TemplateHelper {
       int rowNum,
       int column)
       throws RowParseException {
+    return tryParse(tableName, null, parser, content, rowNum, column);
+  }
+
+  /**
+   * Given a Quoted Entity Checker to resolve labels, a Manchester class expression parser, and a
+   * content string, try to parse the content string. If the checker is not null, first try to get a
+   * named class. If not found, try to parse using the parser. Throw a detailed exception message if
+   * parsing fails.
+   *
+   * @param tableName name of table
+   * @param checker QuotedEntityChecker to resolve labels
+   * @param parser ManchesterOWLSyntaxClassExpressionParser to parse string
+   * @param content class expression string to parse
+   * @param rowNum the row number for logging
+   * @param column the column number for logging
+   * @return OWLClassExpression representation of the string
+   * @throws RowParseException if string cannot be parsed for any reason
+   */
+  protected static OWLClassExpression tryParse(
+      String tableName,
+      QuotedEntityChecker checker,
+      ManchesterOWLSyntaxClassExpressionParser parser,
+      String content,
+      int rowNum,
+      int column)
+      throws RowParseException {
     OWLClassExpression expr;
     content = content.trim();
     logger.info(String.format("Parsing expression: %s", content));
     try {
-      expr = parser.parse(content);
+      expr = null;
+      if (checker != null) {
+        // If we have a checker, try to get the class by label
+        // This allows class labels with single quotes
+        expr = checker.getOWLClass(content);
+      }
+      if (expr == null) {
+        // If not found by label, try to parse
+        expr = parser.parse(content);
+      }
     } catch (OWLParserException e) {
       String cause = getManchesterErrorCause(e);
+
       throw new RowParseException(
           String.format(manchesterParseError, content, rowNum, column + 1, tableName, cause),
           rowNum,
@@ -943,22 +1010,51 @@ public class TemplateHelper {
 
   /**
    * Given an OWLParserException, determine if we can identify the offending term. Return that as
-   * the cause.
+   * the cause along with some explanation of what is expected.
    *
    * @param e exception to get cause of
    * @return String cause of exception
    */
   private static String getManchesterErrorCause(OWLParserException e) {
     String cause = e.getMessage();
-    String pattern = ".*Encountered ([^ ]*|'.*') at line.*";
-    Pattern p = Pattern.compile(pattern);
+    String pattern = ".*Encountered ([^ ]*|'.*') at .+. Expected one of:\n([\\s\\S]+)";
+    Pattern p = Pattern.compile(pattern, Pattern.MULTILINE);
     Matcher m = p.matcher(e.getMessage());
     if (m.find()) {
-      if (m.group(1).startsWith("'")) {
-        return "encountered unknown " + m.group(1);
-      } else {
-        return String.format("encountered unknown '%s'", m.group(1));
+      String keyword = m.group(1);
+      if (keyword.startsWith("'")) {
+        keyword = keyword.substring(1, keyword.length() - 1);
       }
+
+      // Override expected message for restrictions (we want to reference the term before the
+      // restriction)
+      if (Arrays.asList("some", "only", "min", "max", "exactly", "value").contains(keyword)) {
+        return String.format(
+            "encountered unexpected '%1$s'\n\thint: the term before '%1$s' must be a property",
+            keyword);
+      }
+
+      // Otherwise print what was expected by the parser in that place
+      // Some of these have hard to understand "expected" values, so we rewrite them the best we can
+      String expected = m.group(2);
+      List<String> expectedSplit =
+          Lists.newArrayList(expected.split("\n"))
+              .stream()
+              .map(String::trim)
+              .filter(x -> !x.equals(""))
+              .collect(Collectors.toList());
+      if (expectedSplit.contains("{")) {
+        expectedSplit.add(expectedSplit.indexOf("{"), "{ ... }");
+        expectedSplit.remove("{");
+      }
+      if (expectedSplit.contains("(")) {
+        expectedSplit.add(expectedSplit.indexOf("("), "( ... )");
+        expectedSplit.remove("(");
+      }
+      expectedSplit.remove("|EOF|");
+
+      return String.format("encountered '%s', but expected one of:\n\t", keyword)
+          + String.join("\n\t", expectedSplit);
     }
     return cause;
   }
@@ -1020,6 +1116,7 @@ public class TemplateHelper {
       String tableName,
       String template,
       String value,
+      QuotedEntityChecker checker,
       ManchesterOWLSyntaxClassExpressionParser parser,
       int rowNum,
       int col)
@@ -1032,7 +1129,7 @@ public class TemplateHelper {
     } else {
       sub = content;
     }
-    return tryParse(tableName, parser, sub, rowNum, col);
+    return tryParse(tableName, checker, parser, sub, rowNum, col);
   }
 
   /**

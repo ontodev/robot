@@ -3,33 +3,31 @@
     "ID": "GO:0005575",
     "LABEL": [
       "cellular_component"
+    ],
+    "SubClasses": [
+      "cell",
+      "cell part",
+      "membrane-enclosed lumen",
+      "organelle",
+      "organelle part"
     ]
   },
   {
     "ID": "GO:0005622",
     "LABEL": [
       "intracellular"
-    ],
-    "SubClass Of": [
-      "cell part"
     ]
   },
   {
     "ID": "GO:0005623",
     "LABEL": [
       "cell"
-    ],
-    "SubClass Of": [
-      "cellular_component"
     ]
   },
   {
     "ID": "GO:0005634",
     "LABEL": [
       "nucleus"
-    ],
-    "SubClass Of": [
-      "intracellular membrane-bounded organelle"
     ]
   },
   {
@@ -37,19 +35,14 @@
     "LABEL": [
       "membrane-enclosed lumen"
     ],
-    "SubClass Of": [
-      "cellular_component"
+    "SubClasses": [
+      "organelle lumen"
     ]
   },
   {
     "ID": "GO:0031981",
     "LABEL": [
       "nuclear lumen"
-    ],
-    "SubClass Of": [
-      "'part of' some nucleus",
-      "intracellular organelle lumen",
-      "nuclear part"
     ]
   },
   {
@@ -57,8 +50,9 @@
     "LABEL": [
       "organelle"
     ],
-    "SubClass Of": [
-      "cellular_component"
+    "SubClasses": [
+      "intracellular organelle",
+      "membrane-bounded organelle"
     ]
   },
   {
@@ -66,8 +60,8 @@
     "LABEL": [
       "membrane-bounded organelle"
     ],
-    "SubClass Of": [
-      "organelle"
+    "SubClasses": [
+      "intracellular membrane-bounded organelle"
     ]
   },
   {
@@ -75,10 +69,8 @@
     "LABEL": [
       "intracellular organelle"
     ],
-    "SubClass Of": [
-      "'part of' some intracellular",
-      "intracellular part",
-      "organelle"
+    "SubClasses": [
+      "intracellular membrane-bounded organelle"
     ]
   },
   {
@@ -86,9 +78,8 @@
     "LABEL": [
       "intracellular membrane-bounded organelle"
     ],
-    "SubClass Of": [
-      "intracellular organelle",
-      "membrane-bounded organelle"
+    "SubClasses": [
+      "nucleus"
     ]
   },
   {
@@ -96,10 +87,8 @@
     "LABEL": [
       "organelle lumen"
     ],
-    "SubClass Of": [
-      "'part of' some organelle",
-      "membrane-enclosed lumen",
-      "organelle part"
+    "SubClasses": [
+      "intracellular organelle lumen"
     ]
   },
   {
@@ -107,9 +96,9 @@
     "LABEL": [
       "organelle part"
     ],
-    "SubClass Of": [
-      "'part of' some organelle",
-      "cellular_component"
+    "SubClasses": [
+      "intracellular organelle part",
+      "organelle lumen"
     ]
   },
   {
@@ -117,9 +106,9 @@
     "LABEL": [
       "intracellular part"
     ],
-    "SubClass Of": [
-      "'part of' some intracellular",
-      "cell part"
+    "SubClasses": [
+      "intracellular organelle",
+      "intracellular organelle part"
     ]
   },
   {
@@ -127,9 +116,8 @@
     "LABEL": [
       "nuclear part"
     ],
-    "SubClass Of": [
-      "'part of' some nucleus",
-      "intracellular organelle part"
+    "SubClasses": [
+      "nuclear lumen"
     ]
   },
   {
@@ -137,12 +125,9 @@
     "LABEL": [
       "intracellular organelle part"
     ],
-    "SubClass Of": [
-      "'part of' some 'intracellular organelle'",
-      "'part of' some intracellular",
-      "'part of' some organelle",
-      "intracellular part",
-      "organelle part"
+    "SubClasses": [
+      "intracellular organelle lumen",
+      "nuclear part"
     ]
   },
   {
@@ -150,9 +135,9 @@
     "LABEL": [
       "cell part"
     ],
-    "SubClass Of": [
-      "'part of' some cell",
-      "cellular_component"
+    "SubClasses": [
+      "intracellular",
+      "intracellular part"
     ]
   },
   {
@@ -160,10 +145,8 @@
     "LABEL": [
       "intracellular organelle lumen"
     ],
-    "SubClass Of": [
-      "'part of' some 'intracellular organelle'",
-      "intracellular organelle part",
-      "organelle lumen"
+    "SubClasses": [
+      "nuclear lumen"
     ]
   }
 ]

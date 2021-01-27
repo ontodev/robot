@@ -32,6 +32,12 @@ One of the required files (often `--input`) could not be found. This is often ca
 
 When specifying the `--output` (or `--format` for converting), make sure the file has a valid extension. See [convert](/convert) for a current list of ontology formats.
 
+### Invalid Element Error
+
+This error occurs when ROBOT tries to convert an IRI to an XML element name for writing but encounters an illegal character. Common illegal characters include `/` and `:`. This error usually occurs when creating new ontology terms with [`template`](/template). See [Namespaces in XML](https://www.w3.org/TR/REC-xml-names/) for full details on legal XML element names.
+
+The solution is usually to add a new [prefix](/global#prefixes) so that the illegal character is no longer part of the element name. For example, the prefix `ex` for `http://example.com/` is valid, and `http://example.com/foo/bar` is a valid IRI, but `ex:foo/bar` is not a valid element name. By defining a new prefix `foo` for `http://example.com/foo/` we can now use `foo:bar` as a valid element name for the same IRI `http://example.com/foo/bar`.
+
 ### Invalid Ontology File Error
 
 ROBOT was expecting an ontology file, and the file exists, but is not in a recognized format. Adding the `-vvv` option will print a stack trace that shows how the underlying OWLAPI library tried to parse the ontology file. This will include details and line numbers that can help isolate the problem.
@@ -117,6 +123,14 @@ If a prefix is incorrectly formatted, or if the prefix target does not point to 
 robot -p "robot: http://purl.obolibrary.org/robot/"
 ```
 
+### Undefined Prefix Error
+
+This error usually occurs when running [`template`](/template). If you use a CURIE in one of the ROBOT template strings as a property (e.g., `A ex:0000115`) but do not define the prefix of that CURIE, ROBOT will be unable to save the ontology file.
+
+To resolve this, make sure all CURIEs use prefixes that are defined. ROBOT includes a set of [default prefixes](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld), but you can also define your own prefixes. To include a custom prefix, see [prefixes](/global#prefixes).
+
+When rendering the output, only properties are validated for [QNames](https://en.wikipedia.org/wiki/QName). OWLAPI will allow undefined prefixes to be used in subjects and objects, but the IRI will be the unexpanded version of the CURIE (i.e., the IRI will just be `ex:0000115`).
+
 ### Unknown Arg Error
 
 This error message may appear for one of two common reasons:
@@ -130,6 +144,20 @@ UNKNOWN ARG ERROR unknown command or option: foo:0000002
 Instead, use this (or a `--term-file`):
 ```
 robot extract --input foo.owl --term foo:0000001 --term foo:0000002
+```
+
+### Unparsed Triples Error
+
+Sometimes when loading an ontology, not all triples can be parsed. This error is thrown when the `--strict` flag is included in the command. Otherwise, the unparsed triples are logged as errors and excluded from the loaded ontology.
+
+This is often because OWL does not support RDF reification (for more details, see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)); ROBOT is a tool for working with OWL, not RDF. Usually this can be easily resolved by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
+```
+_:blank rdf:type rdf:Statement .
+```
+
+... but this statement is OK:
+```
+_:blank rdf:type owl:Axiom .
 ```
 
 ### Wildcard Error

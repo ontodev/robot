@@ -7,6 +7,7 @@
 3. [XML Catalogs (`--catalog`)](#xml-catalogs)
 4. [Logging (`-v`, `-vv`, `-vvv`)](#logging)
 5. [XML Entities (`--xml-entities`)](#xml-entities)
+6. [Strict Parsing (`--strict`)](#strict-parsing)
 
 ## Java Options
 
@@ -52,13 +53,7 @@ Terms in OBO and OWL are identified using [IRIs](https://en.wikipedia.org/wiki/I
 
 For robot we use the JSON-LD format. See [`obo_context.jsonld`](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/obo_context.jsonld) for the JSON-LD context that is used by default. It includes common, general linked-data prefixes, and prefixes for all the OBO library projects.
 
-If you do not want to use the defaults, you can use the `--noprefixes` option. If you want to replace the defaults, use the `--prefixes` option and specify your JSON-LD file. Whatever your choice, you can add more prefixes using the `--prefix` option, as many times as you like. Finally, you can print or save the current prefixes using the `export-prefixes` command. Here are some examples:
-
-    robot --noprefixes --prefix "foo: http://foo#" \
-      export-prefixes --output results/foo.json
-
-    robot --prefixes foo.json -p "bar: http://bar#" -p "baz: http://baz#" \
-      export-prefixes
+If you do not want to use the defaults, you can use the `--noprefixes` option. If you want to replace the defaults, use the `--prefixes` option and specify your JSON-LD file. Whatever your choice, you can add more prefixes using the `--prefix` option, as many times as you like. Finally, you can print or save the current prefixes using the [`export-prefixes`](/export-prefixes) command.
 
 The various prefix options can be used with any command. When chaining commands, you usually want to specify all the prefix options first, so that they are used "globally" by all commands. But you can also use prefix options for single commands. Here's a silly example with a global prefix "foo" and a local prefix "bar". The first export includes both the global and local prefixes, while the second export includes only the global prefix.
 
@@ -120,6 +115,20 @@ If namespace abbreviations are used, the RDF/XML file will include a header with
 The `obo` abbreviation would be substituted for any instance of `http://purl.obolibrary.org/obo/` in the rest of the RDF/XML file, as demonstrated by the base prefix:
 ```
 xml:base="&obo;obi.owl"
+```
+
+## Strict Parsing
+
+Sometimes, ROBOT is unable to parse all triples in an input file. By default, these triples are excluded from the loaded ontology, but this can cause downstream issues if the triples were expected to be in certain outputs. By including the `--strict` flag, ROBOT will fail on unparsed triples. The `--strict` flag also turns on strict parsing in the [configuration object](http://owlcs.github.io/owlapi/apidocs_5/org/semanticweb/owlapi/model/OWLOntologyLoaderConfiguration.html) for loading the ontology with the OWLAPI `OWLOntologyManager`.
+
+Unparsed triples are often caused by RDF reification, which is different than OWL reification (for more details, please see [this post](https://stackoverflow.com/questions/45610092/owl-reification-vs-rdf-reification)). ROBOT is a tool for working with OWL-format ontologies, not RDF. Usually, instances of RDF reification can easily be fixed by replacing `rdf:Statement` with `owl:Axiom`. For example, this statement cannot be parsed by ROBOT:
+```
+_:blank rdf:type rdf:Statement .
+```
+
+... but this statement is OK:
+```
+_:blank rdf:type owl:Axiom .
 ```
 
 ---

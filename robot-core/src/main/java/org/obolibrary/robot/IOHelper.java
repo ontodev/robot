@@ -36,6 +36,8 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
+import org.semanticweb.owlapi.io.*;
+import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.IllegalElementNameException;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
@@ -63,6 +65,10 @@ public class IOHelper {
 
   /** Error message when an invalid extension is provided (file format). Expects the file format. */
   static final String invalidFormatError = NS + "INVALID FORMAT ERROR unknown format: %s";
+
+  /** Error message when writing output fails due to bad element name. */
+  private static final String invalidElementError =
+      NS + "INVALID ELEMENT ERROR \"%s\" contains invalid characters";
 
   /** Error message when the specified file cannot be loaded. Expects the file name. */
   private static final String invalidOntologyFileError =
@@ -108,6 +114,14 @@ public class IOHelper {
           + "SYNTAX ERROR unable to load '%s' with Jena - "
           + "check that this file is in RDF/XML or TTL syntax and try again.";
 
+  /** Error message when an invalid prefix is provided. Expects the combined prefix. */
+  static final String undefinedPrefixError =
+      NS + "UNDEFINED PREFIX ERROR \"%s\" has unknown prefix; make sure prefix \"%s\" is defined";
+
+  /** Error message when loader contains unparsed triples. */
+  private static final String unparsedTriplesError =
+      NS + "UNPARSED TRIPLES ERROR input ontology contains %d triple(s) that could not be parsed:";
+
   /** Optional base namespaces. */
   private Set<String> baseNamespaces = new HashSet<>();
 
@@ -116,6 +130,9 @@ public class IOHelper {
 
   /** Store the current JSON-LD context. */
   private Context context = new Context();
+
+  /** Strict parsing; fail on unparsed triples. */
+  private Boolean strict = false;
 
   /** Store xml entities flag. */
   private Boolean useXMLEntities = false;
@@ -173,6 +190,16 @@ public class IOHelper {
   public IOHelper(File file) throws IOException {
     String jsonString = FileUtils.readFileToString(file);
     setContext(jsonString);
+  }
+
+  /**
+   * Set "strict" value. If true, any loadOntology method will fail on unparsed triples or OWLAPI
+   * "strict" parsing issues.
+   *
+   * @param strict boolean value
+   */
+  public void setStrict(Boolean strict) {
+    this.strict = strict;
   }
 
   /**
@@ -385,8 +412,9 @@ public class IOHelper {
           return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath());
         }
       }
+
       // Otherwise load from file using default method
-      return manager.loadOntologyFromOntologyDocument(ontologyFile);
+      return loadOntology(manager, new FileDocumentSource(ontologyFile));
     } catch (JsonLdError | OWLOntologyCreationException e) {
       throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
@@ -427,7 +455,7 @@ public class IOHelper {
       if (catalogFile != null) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       }
-      ontology = manager.loadOntologyFromOntologyDocument(ontologyStream);
+      ontology = loadOntology(manager, new StreamDocumentSource(ontologyStream));
     } catch (OWLOntologyCreationException e) {
       throw new IOException(invalidOntologyStreamError, e);
     }
@@ -474,12 +502,90 @@ public class IOHelper {
         ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
       } else {
         // Otherwise load ontology as normal
-        ontology = manager.loadOntologyFromOntologyDocument(ontologyIRI);
+        ontology = loadOntology(manager, new IRIDocumentSource(ontologyIRI));
       }
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
     }
     return ontology;
+  }
+
+  /**
+   * Given an ontology manager and a document source, load the ontology from the source using the
+   * manager. Log unparsed triples, or throw exception if strict=true.
+   *
+   * @param manager OWLOntologyManager with IRI mappers to use
+   * @param source OWLOntologyDocumentSource to load from
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on problem with unparsed triples if strict=true
+   * @throws OWLOntologyCreationException on problem loading ontology document
+   */
+  public OWLOntology loadOntology(OWLOntologyManager manager, OWLOntologyDocumentSource source)
+      throws IOException, OWLOntologyCreationException {
+    OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
+    if (strict) {
+      // Set strict OWLAPI parsing
+      config = config.setStrict(true);
+    }
+    // Load the ontology
+    OWLOntology loadedOntology = manager.loadOntologyFromOntologyDocument(source, config);
+
+    // Check for unparsed triples - get the document format and then the loader metadata
+    OWLDocumentFormat f = manager.getOntologyFormat(loadedOntology);
+    if (f == null) {
+      // This should never happen
+      throw new IOException("Unable to get an OWLDocumentFormat from loaded ontology");
+    }
+    RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData();
+    Set<RDFTriple> unparsed = metaData.getUnparsedTriples();
+    Set<OWLAxiom> parsed = loadedOntology.getAxioms();
+    if (unparsed.size() > 0) {
+      boolean rdfReification = false;
+      StringBuilder sb = new StringBuilder();
+      for (RDFTriple t : unparsed) {
+        // Check object to see if it's rdfs:Statement used in RDF reification
+        String objectIRI;
+        try {
+          objectIRI = t.getObject().getIRI().toString();
+        } catch (UnsupportedOperationException e) {
+          // RDF Literals do not have IRIs
+          objectIRI = "";
+        }
+        if (objectIRI.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement")) {
+          rdfReification = true;
+        }
+        // Add triple to error lines
+        sb.append("\n - ").append(t.toString().trim());
+      }
+      Set<IRI> undeclaredPredicates = getUndeclaredPredicates(parsed, unparsed);
+      if (rdfReification) {
+        // Add hint for fixing RDF reification
+        sb.append(
+            "\n\nHint: you may be using RDF reification - try replacing 'rdf:Statement' with 'owl:Axiom'");
+      }
+      if (undeclaredPredicates.size() > 0) {
+        sb.append(
+            "\n\nHint: you have undeclared predicates - try adding 'rdf:type' declarations to the following:");
+        for (IRI p : undeclaredPredicates) {
+          sb.append("\n - ").append(p.toString());
+        }
+      }
+      sb.append("\n");
+
+      if (strict) {
+        // Fail on unparsed triples
+        throw new IOException(String.format(unparsedTriplesError, unparsed.size()) + sb.toString());
+      } else {
+        // Log unparsed triples as errors
+        logger.error(
+            String.format(
+                    "Input ontology contains %d triple(s) that could not be parsed:",
+                    unparsed.size())
+                + sb.toString());
+      }
+    }
+    // No issues, return ontology
+    return loadedOntology;
   }
 
   /**
@@ -494,12 +600,10 @@ public class IOHelper {
    * @throws JenaException if TDB directory can't be written to
    */
   public static Dataset loadToTDBDataset(String inputPath, String tdbDir) throws JenaException {
-    Dataset dataset;
-    if (new File(tdbDir).isDirectory()) {
-      dataset = TDBFactory.createDataset(tdbDir);
-      if (!dataset.isEmpty()) {
-        return dataset;
-      }
+    // First try opening existing dataset
+    Dataset dataset = openTDBDataset(tdbDir);
+    if (dataset != null) {
+      return dataset;
     }
     dataset = TDBFactory.createDataset(tdbDir);
     logger.debug(String.format("Parsing input '%s' to dataset", inputPath));
@@ -522,6 +626,23 @@ public class IOHelper {
     long time = (System.nanoTime() - start) / 1000000000;
     logger.debug(String.format("Parsing complete - took %s seconds", String.valueOf(time)));
     return dataset;
+  }
+
+  /**
+   * Given a path to a TDB directory, load the TDB as a Dataset.
+   *
+   * @param tdbDir path to existing TDB directory
+   * @return Dataset or null
+   */
+  public static Dataset openTDBDataset(String tdbDir) {
+    Dataset dataset;
+    if (new File(tdbDir).isDirectory()) {
+      dataset = TDBFactory.createDataset(tdbDir);
+      if (!dataset.isEmpty()) {
+        return dataset;
+      }
+    }
+    return null;
   }
 
   /**
@@ -775,22 +896,10 @@ public class IOHelper {
    * Given a term string, use the current prefixes to create an IRI.
    *
    * @param term the term to convert to an IRI
-   * @return the new IRI
-   */
-  @SuppressWarnings("unchecked")
-  public IRI createIRI(String term) {
-    return createIRI(term, false);
-  }
-
-  /**
-   * Given a term string, use the current prefixes to create an IRI.
-   *
-   * @param term the term to convert to an IRI
-   * @param qName if true, check that the expanded IRI is a valid QName (if not, return null)
    * @return the new IRI or null
    */
   @SuppressWarnings("unchecked")
-  public IRI createIRI(String term, boolean qName) {
+  public IRI createIRI(String term) {
     if (term == null) {
       return null;
     }
@@ -817,7 +926,20 @@ public class IOHelper {
       logger.warn(e.getMessage());
       return null;
     }
+    return iri;
+  }
 
+  /**
+   * Given a term string, use the current prefixes to create an IRI.
+   *
+   * @deprecated replaced by {@link #createIRI(String)}
+   * @param term the term to convert to an IRI
+   * @param qName if true, validate that the IRI expands to a QName
+   * @return the new IRI or null
+   */
+  @Deprecated
+  public IRI createIRI(String term, boolean qName) {
+    IRI iri = createIRI(term);
     // Check that this is a valid QName
     if (qName && !iri.getRemainder().isPresent()) {
       return null;
@@ -1199,6 +1321,46 @@ public class IOHelper {
   }
 
   /**
+   * Determine if a string is a CURIE. Note that a valid CURIE is not always a valid QName. Adapted
+   * from:
+   *
+   * @see org.semanticweb.owlapi.io.XMLUtils#isQName(CharSequence)
+   * @param s Character sequence to check
+   * @return true if valid CURIE
+   */
+  public static boolean isValidCURIE(CharSequence s) {
+    if (s == null || 0 >= s.length()) {
+      // string is null or empty
+      return false;
+    }
+    boolean inLocal = false;
+    for (int i = 0; i < s.length(); ) {
+      int codePoint = Character.codePointAt(s, i);
+      if (codePoint == ':') {
+        if (inLocal) {
+          // Second colon - illegal
+          return false;
+        }
+        inLocal = true;
+      } else {
+        if (!inLocal) {
+          // Check for valid NS characters
+          if (!XMLUtils.isXMLNameStartCharacter(codePoint)) {
+            return false;
+          }
+        } else {
+          // Check for valid local characters
+          if (!XMLUtils.isXMLNameChar(codePoint)) {
+            return false;
+          }
+        }
+      }
+      i += Character.charCount(codePoint);
+    }
+    return true;
+  }
+
+  /**
    * Read comma-separated values from a path to a list of lists of strings.
    *
    * @param path file path to the CSV file
@@ -1431,6 +1593,40 @@ public class IOHelper {
   }
 
   /**
+   * Given a set of parsed OWLAxioms and a set of unparsed RDF triples, get any predicates used in
+   * the unparsed set that are not builtins (OWL, RDF, RDFS) and do not have declarations in the
+   * parsed axioms.
+   *
+   * @param parsedAxioms Set of parsed OWLAxioms from loaded ontology
+   * @param unparsedTriples Set of unparsed RDF triples from loaded ontology
+   * @return set of IRIs of any undeclared predicates
+   */
+  private static Set<IRI> getUndeclaredPredicates(
+      Set<OWLAxiom> parsedAxioms, Set<RDFTriple> unparsedTriples) {
+    Set<IRI> checkPredicates = new HashSet<>();
+    for (RDFTriple t : unparsedTriples) {
+      IRI pIRI = t.getPredicate().getIRI();
+      if (pIRI.toString().startsWith("http://www.w3.org/2002/07/owl#")
+          || pIRI.toString().startsWith("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+          || pIRI.toString().startsWith("http://www.w3.org/2000/01/rdf-schema#")) {
+        // Skip OWL, RDF, RDFS ...
+        continue;
+      }
+      checkPredicates.add(t.getPredicate().getIRI());
+    }
+    // Look for types
+    for (OWLAxiom a : parsedAxioms) {
+      if (!a.getAxiomType().equals(AxiomType.DECLARATION)) {
+        continue;
+      }
+      OWLDeclarationAxiom dec = (OWLDeclarationAxiom) a;
+      IRI eIRI = dec.getEntity().getIRI();
+      checkPredicates.remove(eIRI);
+    }
+    return checkPredicates;
+  }
+
+  /**
    * Given a gzipped ontology file and a catalog path, load the ontology from a zip input stream.
    *
    * @param gzipFile compressed File to load ontology from
@@ -1511,14 +1707,22 @@ public class IOHelper {
       // use native save functionality
       try {
         ontology.getOWLOntologyManager().saveOntology(ontology, format, ontologyIRI);
-      } catch (IllegalElementNameException e) {
-        throw new IOException("ELEMENT NAME EXCEPTION " + e.getCause().getMessage());
       } catch (OWLOntologyStorageException e) {
         // Determine if its caused by an OBO Format error
         if (format instanceof OBODocumentFormat
             && e.getCause() instanceof FrameStructureException) {
           throw new IOException(
               String.format(oboStructureError, e.getCause().getMessage()), e.getCause());
+        }
+        if (e.getCause() instanceof IllegalElementNameException) {
+          IllegalElementNameException e2 = (IllegalElementNameException) e.getCause();
+          String element = e2.getElementName();
+          if (isValidCURIE(element)) {
+            String prefix = element.split(":")[0];
+            throw new IOException(String.format(undefinedPrefixError, e2.getElementName(), prefix));
+          } else {
+            throw new IOException(String.format(invalidElementError, element));
+          }
         }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
       }
