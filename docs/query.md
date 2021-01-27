@@ -25,6 +25,9 @@ This produces <a href="/examples/cell_part.csv" target="_blank">`cell_part.csv`<
 
 CONSTRUCT produces RDF data, if there are any results, defaulting to Turtle format:
 
+    robot query --format ttl \
+      --input nucleus.owl \
+      --query part_of.sparql results/part_of.ttl
 
 This produces <a href="/examples/part_of.ttl" target="_blank">`part_of.ttl`</a>.
 
