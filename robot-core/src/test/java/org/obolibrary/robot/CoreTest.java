@@ -43,6 +43,7 @@ public class CoreTest {
    * @param path the resource path for the ontology
    * @return the loaded ontology
    * @throws IOException on file problems
+   * @throws URISyntaxException on converting path to URI
    */
   public OWLOntology loadOntologyWithCatalog(String path) throws IOException, URISyntaxException {
     IOHelper ioh = new IOHelper();

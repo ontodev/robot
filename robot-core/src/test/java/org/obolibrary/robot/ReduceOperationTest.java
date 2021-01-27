@@ -167,7 +167,12 @@ public class ReduceOperationTest extends CoreTest {
     assertIdentical("/reduce-domain-test.owl", reasoned);
   }
 
-  /** Test reduce only named classes vs. including expressions */
+  /**
+   * Test reduce only named classes vs. including expressions
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created
+   * @throws IOException on file problem
+   */
   @Test
   public void testReducedNamedOnly() throws OWLOntologyCreationException, IOException {
     OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
