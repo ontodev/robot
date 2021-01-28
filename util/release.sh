@@ -129,7 +129,8 @@ step "Release to Maven Central"
 mvn clean deploy -P release
 
 step "Create draft GitHub release"
-  sed -n "/^## \[${VERSION}\]/,/^## /p" CHANGELOG.md \
+< CHANGELOG.md
+  sed -n "/^## \[${VERSION}\]/,/^## /p" \
 | sed '1d;2d;$d' \
 | sed "s/[][]//g" \
 > RELEASE.md
