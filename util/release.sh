@@ -75,12 +75,22 @@ git fetch
 git status | head -n2
 confirm "Correct branch and up to date?"
 
-# step "Check Travis"
-# travis status --skip-version-check --exit-code --fail-pending
+step "Check GitHub Actions"
+RUNS=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/ontodev/robot/actions/runs | jq '.workflow_runs' )
+for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
+    _jq() {
+        echo ${row} | base64 --decode | jq -r ${1}
+    }
 
-# step "Check Jenkins"
-# curl --silent "https://build.obolibrary.io/job/ontodev/job/robot/job/master/lastBuild/api/json" \
-# | jq --exit-status '.result | test("SUCCESS")'
+    EVENT=$(_jq '.event')
+    if [ "${EVENT}" == "push" ]; then
+        STATUS=$(_jq '.conclusion')
+        if [ "${STATUS}" != "success" ]; then
+            echo "ERROR: Last workflow run concluded with status '${STATUS}'"
+            exit 1
+        fi
+    fi
+done
 
 step "Set the the version number for this release"
 mvn versions:set -DnewVersion="${VERSION}"
