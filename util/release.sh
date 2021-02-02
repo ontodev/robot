@@ -78,18 +78,20 @@ confirm "Correct branch and up to date?"
 step "Check GitHub Actions"
 RUNS=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/ontodev/robot/actions/runs | jq '.workflow_runs' )
 for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
-    _jq() {
-        echo ${row} | base64 --decode | jq -r ${1}
-    }
+  _jq() {
+    echo ${row} | base64 --decode | jq -r ${1}
+  }
 
-    EVENT=$(_jq '.event')
-    if [ "${EVENT}" == "push" ]; then
-        STATUS=$(_jq '.conclusion')
-        if [ "${STATUS}" != "success" ]; then
-            echo "ERROR: Last workflow run concluded with status '${STATUS}'"
-            exit 1
-        fi
+  EVENT=$(_jq '.event')
+  if [ "${EVENT}" == "push" ]; then
+    STATUS=$(_jq '.conclusion')
+    if [ "${STATUS}" != "success" ]; then
+      echo "ERROR: Last workflow run concluded with status '${STATUS}'"
+      exit 1
+    else
+      break
     fi
+  fi
 done
 
 step "Set the the version number for this release"
