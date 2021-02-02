@@ -37,6 +37,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
 1. Download the `robot.jar` file from the [latest release](https://github.com/ontodev/robot/releases/latest).
 2. Save the [ROBOT batch script](https://github.com/ontodev/robot/raw/master/bin/robot.bat).
+    - Make sure this is saved as `.bat` and not `.bat.txt`
     - OR enter `"java %ROBOT_JAVA_ARGS% -jar %~dr0robot.jar %*" | out-file robot.bat -encoding utf8` in the same directory as `robot.jar` to create the batch script.
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) in the same directory.
     - this could be `C:\Windows\`
