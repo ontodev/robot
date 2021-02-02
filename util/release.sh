@@ -76,7 +76,8 @@ git status | head -n2
 confirm "Correct branch and up to date?"
 
 step "Check GitHub Actions"
-curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/ontodev/robot/actions/runs | jq -e '[.workflow_runs[]|select(.event=="push")][0].conclusion|test("success")'
+curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/ontodev/robot/actions/runs \
+| jq -e '[.workflow_runs[]|select(.event=="push")][0].conclusion|test("success")'
 
 step "Set the the version number for this release"
 mvn versions:set -DnewVersion="${VERSION}"
