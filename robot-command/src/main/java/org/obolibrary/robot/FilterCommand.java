@@ -184,11 +184,26 @@ public class FilterCommand implements Command {
             !trim,
             signature));
 
+    boolean internal = false;
+    boolean external = false;
+    for (String ax : axiomSelectors) {
+      if (ax.equalsIgnoreCase("internal")) {
+        internal = true;
+        break;
+      }
+      if (ax.equalsIgnoreCase("external")) {
+        external = true;
+        break;
+      }
+    }
+
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
     if (preserveStructure) {
       manager.addAxioms(
-          outputOntology, RelatedObjectsHelper.spanGaps(inputOntology, relatedObjects));
+          outputOntology,
+          RelatedObjectsHelper.spanGaps(
+              inputOntology, baseNamespaces, relatedObjects, false, internal, external));
     }
 
     // Maybe add annotations on the selected objects

@@ -92,6 +92,5 @@ Create a "base" subset that only includes internal axioms (alternatively, use `r
       --axioms internal \
       --include-term IAO:0000117 \
       --include-term IAO:0000119 \
-      --preserve-structure false \
       --output results/template-base-filter.owl
 
