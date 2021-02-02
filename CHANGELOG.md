@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
+
 ## [1.8.1] - 2021-01-27
 
 ### Fixed
@@ -245,6 +248,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#816]: https://github.com/ontodev/robot/pull/816
 [#808]: https://github.com/ontodev/robot/pull/808
 [#802]: https://github.com/ontodev/robot/pull/802
 [#796]: https://github.com/ontodev/robot/pull/796
