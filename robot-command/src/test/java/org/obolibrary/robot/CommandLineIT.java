@@ -152,7 +152,7 @@ public class CommandLineIT {
                 + "'");
       }
 
-      if (resultFile.getName().endsWith(".owl")) {
+      if (resultFile.getName().endsWith(".owl") || resultFile.getName().endsWith(".ttl")) {
         // Compare OWL files using DiffOperation
         OWLOntology exampleOnt = ioHelper.loadOntology(exampleFile);
         OWLOntology resultOnt = ioHelper.loadOntology(resultFile);
