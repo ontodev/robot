@@ -4,6 +4,7 @@ ERROR	deprecated_class_reference
 ERROR	deprecated_property_reference
 ERROR	duplicate_definition
 WARN	duplicate_exact_synonym
+WARN	duplicate_label_exact_synonym
 WARN	duplicate_label_synonym
 ERROR	duplicate_label
 WARN	duplicate_scoped_synonym
