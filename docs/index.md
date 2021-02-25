@@ -28,7 +28,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) in the same directory.
     - this could be `/usr/local/bin/`
     - OR [update your PATH](https://docs.oracle.com/javase/tutorial/essential/environment/paths.html) to include the new directory. Follow the Solaris/Linux directions for Mac OS, except instead of updating `.bashrc`, you will need to update your `.bash_profile`.
-4. Make sure `robot` is executable by running `sudo chmod u+x robot` from the terminal in the same directory. This will require you to enter you password.
+4. Make sure `robot` is executable by running `sudo chmod +x robot` from the terminal in the same directory. This will require you to enter you password.
 5. Now you should be able to run ROBOT from a command line:
 
         robot help
