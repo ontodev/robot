@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
+- Fix handling of `rdf:type` in [`export`] [#834]
 
 ## [1.8.1] - 2021-01-27
 
@@ -248,6 +249,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#808]: https://github.com/ontodev/robot/pull/834
 [#808]: https://github.com/ontodev/robot/pull/808
 [#802]: https://github.com/ontodev/robot/pull/802
 [#796]: https://github.com/ontodev/robot/pull/796
