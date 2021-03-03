@@ -199,9 +199,9 @@ public class ExportOperation {
       updateLabelMap(labelMap);
 
       // Try to resolve a CURIE or a label
-      IRI iri = ioHelper.createIRI(colName);
+      IRI iri = labelMap.getOrDefault(colName, null);
       if (iri == null) {
-        iri = labelMap.getOrDefault(colName, null);
+        iri = ioHelper.createIRI(colName);
       }
 
       // Handle the default column rendering
@@ -276,6 +276,13 @@ public class ExportOperation {
           break;
         default:
           throw new Exception(String.format(unknownTagError, c, currentEntityFormat));
+      }
+
+      if (iri != null && iri.toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
+        // Override any declarations
+        ap = null;
+        dp = null;
+        op = null;
       }
 
       Column column;
@@ -931,6 +938,7 @@ public class ExportOperation {
 
       String colName = col.getName();
       OWLProperty colProperty = col.getProperty();
+
       if (colProperty instanceof OWLAnnotationProperty) {
         OWLAnnotationProperty maybeLabel = (OWLAnnotationProperty) colProperty;
         if (maybeLabel.isLabel()) {
