@@ -234,7 +234,7 @@ public class QueryCommand implements Command {
       runQueries(line, dataset, queries);
     } finally {
       dataset.close();
-      TDBFactory.release(dataset);
+      // TDBFactory.release(dataset);
     }
   }
 

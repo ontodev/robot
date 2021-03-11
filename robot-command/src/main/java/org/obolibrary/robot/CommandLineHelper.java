@@ -914,7 +914,7 @@ public class CommandLineHelper {
     o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
-    o.addOption("noprefixes", false, "do not use default prefixes");
+    o.addOption(null, "noprefixes", false, "do not use default prefixes");
     o.addOption(null, "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     o.addOption(null, "add-prefixes", true, "add JSON-LD prefixes to the output");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");

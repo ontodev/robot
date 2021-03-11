@@ -14,6 +14,7 @@ import com.opencsv.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
@@ -23,9 +24,9 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
-import org.apache.jena.util.FileManager;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
@@ -177,7 +178,7 @@ public class IOHelper {
    * @throws IOException on issue parsing JSON-LD file as context
    */
   public IOHelper(String path) throws IOException {
-    String jsonString = FileUtils.readFileToString(new File(path));
+    String jsonString = FileUtils.readFileToString(new File(path), Charset.defaultCharset());
     setContext(jsonString);
   }
 
@@ -188,7 +189,7 @@ public class IOHelper {
    * @throws IOException on issue reading file or setting context from file
    */
   public IOHelper(File file) throws IOException {
-    String jsonString = FileUtils.readFileToString(file);
+    String jsonString = FileUtils.readFileToString(file, Charset.defaultCharset());
     setContext(jsonString);
   }
 
@@ -379,10 +380,10 @@ public class IOHelper {
       extension = extension.trim().toLowerCase();
       if (extension.equals("yml") || extension.equals("yaml")) {
         logger.debug("Converting from YAML to JSON");
-        String yamlString = FileUtils.readFileToString(ontologyFile);
+        String yamlString = FileUtils.readFileToString(ontologyFile, Charset.defaultCharset());
         jsonObject = new Yaml().load(yamlString);
       } else if (extension.equals("js") || extension.equals("json") || extension.equals("jsonld")) {
-        String jsonString = FileUtils.readFileToString(ontologyFile);
+        String jsonString = FileUtils.readFileToString(ontologyFile, Charset.defaultCharset());
         jsonObject = JsonUtils.fromString(jsonString);
       }
 
@@ -392,7 +393,7 @@ public class IOHelper {
         jsonObject = new JsonLdApi().expand(getContext(), jsonObject);
         String jsonString = JsonUtils.toString(jsonObject);
         Model model = ModelFactory.createDefaultModel();
-        model.read(IOUtils.toInputStream(jsonString), null, "JSON-LD");
+        model.read(IOUtils.toInputStream(jsonString, Charset.defaultCharset()), null, "JSON-LD");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         // model.write(System.out);
         model.write(output);
@@ -613,7 +614,7 @@ public class IOHelper {
     dataset.begin(ReadWrite.WRITE);
     try {
       m = dataset.getDefaultModel();
-      FileManager.get().readModel(m, inputPath);
+      RDFDataMgr.read(m, inputPath);
       dataset.commit();
     } catch (JenaException e) {
       dataset.abort();
@@ -1077,7 +1078,7 @@ public class IOHelper {
       throw new IOException(String.format(fileDoesNotExistError, baseNamespacePath));
     }
 
-    List<String> lines = FileUtils.readLines(new File(baseNamespacePath));
+    List<String> lines = FileUtils.readLines(new File(baseNamespacePath), Charset.defaultCharset());
     for (String l : lines) {
       baseNamespaces.add(l.trim());
     }
@@ -1100,7 +1101,7 @@ public class IOHelper {
    */
   public Context getDefaultContext() throws IOException {
     InputStream stream = IOHelper.class.getResourceAsStream(defaultContextPath);
-    String jsonString = IOUtils.toString(stream);
+    String jsonString = IOUtils.toString(stream, Charset.defaultCharset());
     return parseContext(jsonString);
   }
 
@@ -1246,7 +1247,8 @@ public class IOHelper {
     if (!prefixFile.exists()) {
       throw new IOException(String.format(fileDoesNotExistError, prefixPath));
     }
-    Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    Context context1 =
+        parseContext(FileUtils.readFileToString(prefixFile, Charset.defaultCharset()));
     addPrefixes(context1);
   }
 

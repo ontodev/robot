@@ -3,8 +3,8 @@ package org.obolibrary.robot;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -50,9 +50,9 @@ public class CommandLineIT {
    * @throws IOException if the README cannot be read
    */
   private List<String> extractCommands(File docFile) throws IOException {
-    String content = FileUtils.readFileToString(docFile);
-    List<String> lines = Arrays.asList(content.replaceAll("\\r", "").split("\\n"));
-    List<String> commands = new ArrayList<String>();
+    String content = FileUtils.readFileToString(docFile, Charset.defaultCharset());
+    String[] lines = content.replaceAll("\\r", "").split("\\n");
+    List<String> commands = new ArrayList<>();
 
     boolean collecting = false;
     String collected = null;
@@ -105,7 +105,7 @@ public class CommandLineIT {
             + "\n\n";
 
     FileOutputStream outputStream = new FileOutputStream(outputPath, true);
-    IOUtils.write(header, outputStream);
+    IOUtils.write(header, outputStream, Charset.defaultCharset());
 
     List<String> arguments = CommandLineHelper.parseArgList(command);
     arguments.remove(0);

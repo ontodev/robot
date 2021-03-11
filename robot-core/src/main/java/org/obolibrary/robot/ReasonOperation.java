@@ -399,9 +399,7 @@ public class ReasonOperation {
         logger.info("Placing inferred axioms with annotations into a new ontology");
         manager.removeAxioms(
             ontology,
-            ontology
-                .getAxioms()
-                .stream()
+            ontology.getAxioms().stream()
                 .filter(nonap -> !(nonap instanceof OWLAnnotationAssertionAxiom))
                 .collect(Collectors.toSet()));
 
@@ -440,9 +438,7 @@ public class ReasonOperation {
     // get all entities that 'belong' to the main ontology
     // see: https://github.com/ontodev/robot/issues/296
     Set<OWLEntity> ontologyEntities =
-        ontology
-            .getAxioms(AxiomType.DECLARATION)
-            .stream()
+        ontology.getAxioms(AxiomType.DECLARATION).stream()
             .map(OWLDeclarationAxiom::getEntity)
             .collect(Collectors.toSet());
 

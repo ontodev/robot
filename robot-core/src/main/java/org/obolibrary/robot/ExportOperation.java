@@ -656,8 +656,7 @@ public class ExportOperation {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
       Collection<OWLIndividual> propVals = EntitySearcher.getObjectPropertyValues(i, op, ontology);
-      return propVals
-          .stream()
+      return propVals.stream()
           .filter(OWLIndividual::isNamed)
           .map(pv -> OntologyHelper.renderManchester(pv.asOWLNamedIndividual(), provider, rt))
           .collect(Collectors.toList());
@@ -1329,16 +1328,14 @@ public class ExportOperation {
       boolean includeAnonymous) {
     // Try to convert to object property expressions
     Collection<OWLObjectPropertyExpression> opes =
-        props
-            .stream()
+        props.stream()
             .map(p -> (OWLPropertyExpression) p)
             .filter(OWLPropertyExpression::isObjectPropertyExpression)
             .map(p -> (OWLObjectPropertyExpression) p)
             .collect(Collectors.toList());
     // Try to convert to data property expressions
     Collection<OWLDataPropertyExpression> dpes =
-        props
-            .stream()
+        props.stream()
             .map(p -> (OWLPropertyExpression) p)
             .filter(OWLPropertyExpression::isDataPropertyExpression)
             .map(p -> (OWLDataPropertyExpression) p)
