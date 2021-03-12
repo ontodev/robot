@@ -1,14 +1,14 @@
 package org.obolibrary.robot;
 
 import java.util.ListIterator;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.*;
 
 /**
  * A custom CommandLineParser that ignores unrecognized options without throwing an exception. See
  * http://stackoverflow.com/a/8613949
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public class ExtendedPosixParser extends PosixParser {
   /** Flag for ignoring unrecognized options. */
   private boolean ignoreUnrecognizedOption;
