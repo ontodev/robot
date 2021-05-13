@@ -108,6 +108,18 @@ robot report --input edit.owl \
 ```
 
 For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the absolute or relative path.
+Note that in order for the queries to be included in the report, they _must_ return exactly three variables: `?entity ?property ?value`.
+
+As an example, consider the query we have already mentioned:
+
+```
+SELECT DISTINCT ?entity ?property ?value WHERE
+  {?value owl:deprecated true .
+   ?entity a owl:Class .
+   ?entity ?property ?value }
+```
+
+For other examples, you can refer to [the full list of default checks](report_queries/).
 
 This example would create a report with references to deprecated classes as ERROR and the user query violations as INFO:
 ```
@@ -170,7 +182,7 @@ All queries must bind `?entity ?property ?value` for correct formatting. If `?en
 
 ### Print Number Error
 
-The argument for the `--print` option must be a number. 
+The argument for the `--print` option must be a number.
 
 ### Report Level Error
 
