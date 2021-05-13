@@ -18,7 +18,7 @@ jobs:
     name: Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
+      - name: Set up JDK
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
