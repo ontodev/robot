@@ -489,7 +489,7 @@ public class ExportOperation {
    * @param column Column for this cell
    * @return Cell for this Column containing entity type as string rendering
    */
-  private static Cell getEntityTypeCell(EntityType type, Column column) {
+  private static Cell getEntityTypeCell(EntityType<?> type, Column column) {
     ShortFormProvider provider = column.getShortFormProvider();
     String cellValue;
     if (provider instanceof CURIEShortFormProvider) {
@@ -560,6 +560,7 @@ public class ExportOperation {
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
       if (a.getProperty().getIRI().equals(ap.getIRI())) {
         if (a.getValue().isIRI()) {
+          // Render the IRI using the provider
           IRI iri = a.getValue().asIRI().orNull();
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
@@ -568,7 +569,11 @@ public class ExportOperation {
             }
           }
         } else {
-          values.add(OntologyHelper.renderManchester(a.getValue(), provider, rt));
+          // Otherwise just get the value of the literal
+          OWLLiteral lit = a.getValue().asLiteral().orNull();
+          if (lit != null) {
+            values.add(lit.getLiteral());
+          }
         }
       }
     }
