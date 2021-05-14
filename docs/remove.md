@@ -157,7 +157,7 @@ Remove a class ('organ'), all its descendants, and any axioms using these classe
       --term UBERON:0000062 \
       --select "self descendants" \
       --signature true \
-      --output results/remove_class.owl
+      --output results/remove_organ.owl
 
 Remove all axioms containing an entity in the BFO namespace from the UBERON module:
 
