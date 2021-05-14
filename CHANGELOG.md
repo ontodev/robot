@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix printing violations in [`report`] [#823]
 - Fix handling of `rdf:type` in [`export`] [#834]
 - Fix missing annotations from [`export`] [#850]
+- Fail on unknown rule names in [`report`] [#858]
 
 ## [1.8.1] - 2021-01-27
 
