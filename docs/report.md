@@ -187,3 +187,7 @@ The argument for the `--print` option must be a number.
 ### Report Level Error
 
 The logging level defined in a profile must be `ERROR`, `WARN`, or `INFO`.
+
+### Unknown Report Query
+
+When not using the `file:` prefix in your `--profile`, make sure you are only using rule names from the list of [default report queries](report_queries/)).
