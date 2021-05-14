@@ -24,3 +24,5 @@ if duplicates:
 	for output, fnames in duplicates.items():
 		print(f"- {output}: " + ", ".join(fnames))
 	sys.exit(1)
+else:
+	print("Docs OK!")
