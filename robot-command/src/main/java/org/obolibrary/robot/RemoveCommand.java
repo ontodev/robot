@@ -172,6 +172,19 @@ public class RemoveCommand implements Command {
         RelatedObjectsHelper.filterAxioms(
             ontology.getAxioms(), relatedObjects, axiomSelectors, baseNamespaces, trim, signature));
 
+    boolean internal = false;
+    boolean external = false;
+    for (String ax : axiomSelectors) {
+      if (ax.equalsIgnoreCase("internal")) {
+        internal = true;
+        break;
+      }
+      if (ax.equalsIgnoreCase("external")) {
+        external = true;
+        break;
+      }
+    }
+
     // Handle gaps
     boolean preserveStructure = CommandLineHelper.getBooleanValue(line, "preserve-structure", true);
     if (preserveStructure) {
@@ -180,7 +193,9 @@ public class RemoveCommand implements Command {
       Set<OWLObject> complementObjects =
           RelatedObjectsHelper.select(ontology, ioHelper, relatedObjects, "complement");
       manager.addAxioms(
-          ontology, RelatedObjectsHelper.spanGaps(copy, complementObjects, anonymous));
+          ontology,
+          RelatedObjectsHelper.spanGaps(
+              copy, baseNamespaces, complementObjects, anonymous, internal, external));
     }
 
     // Save the changed ontology and return the state

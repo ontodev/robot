@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix handling of `rdf:type` in [`export`] [#834]
 - Fix missing annotations from [`export`] [#850]
 - Fail on unknown rule names in [`report`] [#858]
+- Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
 
 ## [1.8.1] - 2021-01-27
 
@@ -254,6 +255,7 @@ First official release of ROBOT!
 [#850]: https://github.com/ontodev/robot/pull/850
 [#834]: https://github.com/ontodev/robot/pull/834
 [#823]: https://github.com/ontodev/robot/pull/823
+[#816]: https://github.com/ontodev/robot/pull/816
 [#808]: https://github.com/ontodev/robot/pull/808
 [#802]: https://github.com/ontodev/robot/pull/802
 [#796]: https://github.com/ontodev/robot/pull/796
