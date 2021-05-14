@@ -29,6 +29,6 @@ See [`report`](../report) for more details.
 | [missing superclass](missing_superclass)  | INFO
 | [misused obsolete label](misused_obsolete_label)  | ERROR
 | [multiple definitions](multiple_definitions)  | ERROR
-| [multiple equivalent classes](multiple_equivalent_classes)  | INFO
+| [multiple equivalent classes](multiple_equivalent_classes)  | WARN
 | [multiple labels](multiple_labels)  | ERROR
 | [multiple logical_definitions](multiple_logical_definitions)  | ERROR
