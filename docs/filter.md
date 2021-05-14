@@ -56,7 +56,7 @@ Copy a class ('organ') and all its descendants, with all annotations:
       --signature true \
       --output results/filter_class.owl
 
-Copy all of OBI except descendants of 'assay' (`remove` is preferred):
+Copy all of OBI except descendants of 'assay' (using `remove` on 'assay' is preferred):
 
     robot filter --input uberon_module.owl \
       --term UBERON:0000062 \
@@ -64,7 +64,7 @@ Copy all of OBI except descendants of 'assay' (`remove` is preferred):
       --select descendants \
       --select complement \
       --signature true \
-      --output results/remove_class.owl
+      --output results/remove_assay.owl
 
 Copy a subset of classes based on an annotation property (maintains hierarchy):
 
