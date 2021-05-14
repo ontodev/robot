@@ -199,9 +199,9 @@ public class ExportOperation {
       updateLabelMap(labelMap);
 
       // Try to resolve a CURIE or a label
-      IRI iri = ioHelper.createIRI(colName);
+      IRI iri = labelMap.getOrDefault(colName, null);
       if (iri == null) {
-        iri = labelMap.getOrDefault(colName, null);
+        iri = ioHelper.createIRI(colName);
       }
 
       // Handle the default column rendering
@@ -276,6 +276,13 @@ public class ExportOperation {
           break;
         default:
           throw new Exception(String.format(unknownTagError, c, currentEntityFormat));
+      }
+
+      if (iri != null && iri.toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
+        // Override any declarations
+        ap = null;
+        dp = null;
+        op = null;
       }
 
       Column column;
@@ -482,7 +489,7 @@ public class ExportOperation {
    * @param column Column for this cell
    * @return Cell for this Column containing entity type as string rendering
    */
-  private static Cell getEntityTypeCell(EntityType type, Column column) {
+  private static Cell getEntityTypeCell(EntityType<?> type, Column column) {
     ShortFormProvider provider = column.getShortFormProvider();
     String cellValue;
     if (provider instanceof CURIEShortFormProvider) {
@@ -553,6 +560,7 @@ public class ExportOperation {
         EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
       if (a.getProperty().getIRI().equals(ap.getIRI())) {
         if (a.getValue().isIRI()) {
+          // Render the IRI using the provider
           IRI iri = a.getValue().asIRI().orNull();
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
@@ -561,7 +569,11 @@ public class ExportOperation {
             }
           }
         } else {
-          values.add(OntologyHelper.renderManchester(a.getValue(), provider, rt));
+          // Otherwise just get the value of the literal
+          OWLLiteral lit = a.getValue().asLiteral().orNull();
+          if (lit != null) {
+            values.add(lit.getLiteral());
+          }
         }
       }
     }
@@ -931,6 +943,7 @@ public class ExportOperation {
 
       String colName = col.getName();
       OWLProperty colProperty = col.getProperty();
+
       if (colProperty instanceof OWLAnnotationProperty) {
         OWLAnnotationProperty maybeLabel = (OWLAnnotationProperty) colProperty;
         if (maybeLabel.isLabel()) {

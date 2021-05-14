@@ -66,6 +66,10 @@ public class ReportOperation {
   private static final String reportLevelError =
       NS + "REPORT LEVEL ERROR '%s' is not a valid reporting level.";
 
+  /** Error message when a report query name or path in report profile cannot be found. */
+  private static final String unknownReportQuery =
+      NS + "UNKNOWN REPORT QUERY one or more rule names ('%s') are not valid default rules";
+
   /** Reporting level INFO. */
   private static final String INFO = "INFO";
 
@@ -487,11 +491,6 @@ public class ReportOperation {
       format = "tsv";
     }
 
-    if (print > 0) {
-      Table reportTable = report.toTable("tsv");
-      printNViolations(reportTable.toList(""), print, "\t");
-    }
-
     // Process different output formats while writing print lines if requested
     // First check if format is JSON or YAML
     // We don't use the Table for these formats because we want to group by violation level and rule
@@ -688,12 +687,21 @@ public class ReportOperation {
         throw new IOException(
             "Cannot access report query files. There are no files in the directory.");
       }
+      Set<String> defaultRuleNames = new HashSet<>();
       for (String qPath : queryFilePaths) {
         String ruleName = qPath.substring(qPath.lastIndexOf("/")).split(".")[0];
+        defaultRuleNames.add(ruleName);
         // Only add it to the queries if the rule set contains that rule
         // If rules == null, include all rules
         if (rules == null || rules.contains(ruleName)) {
           queries.put(ruleName, FileUtils.readFileToString(new File(qPath)));
+        }
+      }
+      // Check that all the provided rule names are valid defaults
+      if (rules != null) {
+        rules.removeAll(defaultRuleNames);
+        if (rules.size() > 0) {
+          throw new IOException(String.format(unknownReportQuery, String.join(", ", rules)));
         }
       }
       return queries;
@@ -720,6 +728,7 @@ public class ReportOperation {
               "Cannot access report query files in JAR. There are no entries in the JAR.");
         }
         // Track rules that have successfully been retrieved
+        Set<String> defaultRuleNames = new HashSet<>();
         while (entries.hasMoreElements()) {
           JarEntry resource = entries.nextElement();
           String resourceName = resource.getName();
@@ -728,6 +737,7 @@ public class ReportOperation {
             String ruleName =
                 resourceName.substring(
                     resourceName.lastIndexOf("/") + 1, resourceName.indexOf(".rq"));
+            defaultRuleNames.add(ruleName);
             // Only add it to the queries if the rule set contains that rule
             // If rules == null, include all rules
             if (rules == null || rules.contains(ruleName)) {
@@ -744,6 +754,13 @@ public class ReportOperation {
               String queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
               queries.put(ruleName, queryString);
             }
+          }
+        }
+        // Check that all the provided rule names are valid defaults
+        if (rules != null) {
+          rules.removeAll(defaultRuleNames);
+          if (rules.size() > 0) {
+            throw new IOException(String.format(unknownReportQuery, String.join(", ", rules)));
           }
         }
       }

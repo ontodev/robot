@@ -36,7 +36,7 @@
       <plugin>
         <groupId>com.github.siom79.japicmp</groupId>
         <artifactId>japicmp-maven-plugin</artifactId>
-        <version>0.12.0</version>
+        <version>0.15.2</version>
         <configuration>
           <oldVersion>
             <dependency>
@@ -170,7 +170,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>owl-diff_${scala.version}</artifactId>
-      <version>1.2.1</version>
+      <version>1.2.2</version>
     </dependency>
     <dependency>
       <groupId>org.geneontology</groupId>
