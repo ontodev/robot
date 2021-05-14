@@ -9,8 +9,8 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
  VALUES ?property { owl:equivalentClass }
- ?entity ?property ?value .
- ?entity ?property ?value2 .
+ ?entity ?property [ owl:intersectionOf ?value ] .
+ ?entity ?property [ owl:intersectionOf ?value2 ] .
  FILTER (?value != ?value2)
  FILTER (!isBlank(?entity))
 }
