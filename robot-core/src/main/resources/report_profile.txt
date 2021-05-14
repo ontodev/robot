@@ -21,5 +21,6 @@ ERROR	missing_ontology_title
 INFO	missing_superclass
 ERROR	misused_obsolete_label
 ERROR	multiple_definitions
-ERROR	multiple_equivalent_classes
+INFO	multiple_equivalent_classes
 ERROR	multiple_labels
+ERROR	multiple_logical_definitions
