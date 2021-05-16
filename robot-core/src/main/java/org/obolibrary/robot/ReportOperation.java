@@ -91,6 +91,7 @@ public class ReportOperation {
     options.put("labels", "false");
     options.put("format", null);
     options.put("profile", null);
+    options.put("base-iri", null);
     options.put("tdb", "false");
     options.put("tdb-directory", ".tdb");
     options.put("keep-tdb-mappings", "false");
@@ -925,6 +926,23 @@ public class ReportOperation {
       // skip RDFS and OWL terms
       if (entity.contains("/rdf-schema#") || entity.contains("/owl#")) {
         continue;
+      }
+
+      if (!ioHelper.getBaseNamespaces().isEmpty()) {
+        boolean base = false;
+        for (String base_prefix : ioHelper.getBaseNamespaces()) {
+          if (entity.startsWith(base_prefix)) {
+            logger.info(
+                String.format(
+                    "Skipping entity '%s' from report because it follows the base-namespace.",
+                    entity));
+            base = true;
+            break;
+          }
+        }
+        if (!base) {
+          continue;
+        }
       }
 
       Violation violation;
