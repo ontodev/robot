@@ -23,3 +23,5 @@ ERROR	misused_obsolete_label
 ERROR	multiple_definitions
 ERROR	multiple_equivalent_classes
 ERROR	multiple_labels
+WARN	missing_subset_declaration
+WARN	missing_synonymtype_declaration
