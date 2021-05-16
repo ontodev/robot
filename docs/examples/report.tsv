@@ -1,7 +1,7 @@
 Level	Rule Name	Subject	Property	Value
-ERROR	missing_ontology_description	https://github.com/ontodev/robot/examples/edit.owl	dc11:description	
 ERROR	missing_ontology_license	https://github.com/ontodev/robot/examples/edit.owl	dc:license	
 ERROR	missing_ontology_title	https://github.com/ontodev/robot/examples/edit.owl	dc11:title	
+ERROR	missing_ontology_title	https://github.com/ontodev/robot/examples/edit.owl	dc:title	
 WARN	annotation_whitespace	obo:UBPROP_0000007	IAO:0000232	Used to connect a class to an adjectival form of its label. For example, a class with label 'intestine' may have a relational adjective 'intestinal'. 
 WARN	duplicate_label_synonym	UBERON:0000949	oboInOwl:hasExactSynonym	endocrine system
 WARN	duplicate_label_synonym	UBERON:0001851	oboInOwl:hasExactSynonym	cortex
