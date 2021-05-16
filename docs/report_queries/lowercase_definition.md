@@ -13,7 +13,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
  VALUES ?property { obo:IAO_0000115
                     obo:IAO_0000600 }
  ?entity ?property ?value .
- FILTER (!regex(?value, "^[A-Z]"))
+ FILTER (!regex(?value, "^[A-Z0-9]"))
 }
 ORDER BY ?entity
 ```
