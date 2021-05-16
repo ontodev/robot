@@ -1,8 +1,8 @@
 # # Illegal annotation of built-in vocabulary
 #
-# **Problem:** Formatting characters are used in a label. This may cause issues when trying to reference the entity by label.
+# **Problem:** Redefining built-in vocabulary should never be done.
 #
-# **Solution:** Remove formatting characters from label.
+# **Solution:** Remove any statements about build-in vocabulary
 
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
