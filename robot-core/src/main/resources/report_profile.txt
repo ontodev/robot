@@ -23,3 +23,4 @@ ERROR	misused_obsolete_label
 ERROR	multiple_definitions
 ERROR	multiple_equivalent_classes
 ERROR	multiple_labels
+WARN	equivalent_class_axiom_no_genus
