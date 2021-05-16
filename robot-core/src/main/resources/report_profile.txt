@@ -23,4 +23,4 @@ ERROR	misused_obsolete_label
 ERROR	multiple_definitions
 ERROR	multiple_equivalent_classes
 ERROR	multiple_labels
-ERROR	invalid_entity_uri
+WARN	invalid_entity_uri
