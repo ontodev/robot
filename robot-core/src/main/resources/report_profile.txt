@@ -20,7 +20,7 @@ ERROR	missing_ontology_license
 ERROR	missing_ontology_title
 INFO	missing_superclass
 ERROR	misused_obsolete_label
+ERROR	misused_replaced_by
 ERROR	multiple_definitions
 ERROR	multiple_equivalent_classes
 ERROR	multiple_labels
-ERROR	misused_replaced_by
