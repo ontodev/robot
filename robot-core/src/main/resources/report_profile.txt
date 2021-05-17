@@ -8,6 +8,7 @@ WARN	duplicate_label_synonym
 ERROR	duplicate_label
 WARN	duplicate_scoped_synonym
 WARN	equivalent_pair
+ERROR	illegal_use_of_built_in_vocabulary
 WARN	invalid_xref
 ERROR	label_formatting
 ERROR	label_whitespace
@@ -23,4 +24,3 @@ ERROR	misused_obsolete_label
 ERROR	multiple_definitions
 ERROR	multiple_equivalent_classes
 ERROR	multiple_labels
-ERROR	illegal_use_of_built_in_vocabulary
