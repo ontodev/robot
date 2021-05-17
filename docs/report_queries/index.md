@@ -16,6 +16,7 @@ See [`report`](../report) for more details.
 | [duplicate label](duplicate_label)  | ERROR
 | [duplicate scoped synonym](duplicate_scoped_synonym)  | WARN
 | [equivalent pair](equivalent_pair)  | WARN
+| [illegal use of built-in vocabulary](illegal_use_of_built_in_vocabulary) | ERROR
 | [invalid xref](invalid_xref)  | WARN
 | [label formatting](label_formatting)  | ERROR
 | [label whitespace](label_whitespace)  | ERROR
