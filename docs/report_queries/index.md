@@ -28,6 +28,7 @@ See [`report`](../report) for more details.
 | [missing ontology title](missing_ontology_title)  | ERROR
 | [missing superclass](missing_superclass)  | INFO
 | [misused obsolete label](misused_obsolete_label)  | ERROR
+| [misused replaced by](misused_replaced_by) | ERROR
 | [multiple definitions](multiple_definitions)  | ERROR
 | [multiple equivalent classes](multiple_equivalent_classes)  | ERROR
 | [multiple labels](multiple_labels)  | ERROR
