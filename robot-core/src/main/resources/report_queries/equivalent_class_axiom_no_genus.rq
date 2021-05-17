@@ -9,11 +9,10 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
  ?entity owl:equivalentClass ?ec .
-  ?ec rdf:type owl:Restriction .
-  ?ec owl:someValuesFrom ?y .
-  ?ec owl:onProperty ?property .
+ ?entity owl:equivalentClass [ rdf:type owl:Restriction ;
+                              owl:someValuesFrom ?y ;
+                              owl:onProperty ?property ] .
   FILTER (!isBlank(?entity))
   FILTER (!isBlank(?y))
-  BIND("" as ?value)
 }
 ORDER BY ?entity
