@@ -30,5 +30,5 @@ See [`report`](../report) for more details.
 | [misused obsolete label](misused_obsolete_label)  | ERROR
 | [multiple definitions](multiple_definitions)  | ERROR
 | [multiple equivalent classes](multiple_equivalent_classes)  | WARN
+| [multiple equivalent class definitions](multiple_equivalent_class_definitions)  | ERROR
 | [multiple labels](multiple_labels)  | ERROR
-| [multiple logical_definitions](multiple_logical_definitions)  | ERROR

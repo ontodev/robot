@@ -22,5 +22,5 @@ INFO	missing_superclass
 ERROR	misused_obsolete_label
 ERROR	multiple_definitions
 WARN	multiple_equivalent_classes
-ERROR	multiple_labels
 ERROR	multiple_equivalent_class_definitions
+ERROR	multiple_labels
