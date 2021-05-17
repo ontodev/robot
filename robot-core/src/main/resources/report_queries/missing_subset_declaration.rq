@@ -8,8 +8,8 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
-   VALUES ?property { oboInOwl:inSubset }
-   ?value ?property ?entity .
-   FILTER NOT EXISTS { ?entity rdfs:subPropertyOf oboInOwl:SubsetProperty }
+    VALUES ?property { rdfs:subPropertyOf }
+    ?x oboInOwl:inSubset ?entity .
+    FILTER NOT EXISTS { ?entity ?property oboInOwl:SubsetProperty }
 }
 ORDER BY ?entity
