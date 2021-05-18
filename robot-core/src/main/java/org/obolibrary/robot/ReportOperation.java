@@ -785,7 +785,7 @@ public class ReportOperation {
     if (path == null) {
       is = ReportOperation.class.getResourceAsStream("/report_profile.txt");
     } else {
-      is = new FileInputStream(new File(path));
+      is = new FileInputStream(path);
     }
     try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
       String line;
@@ -945,12 +945,13 @@ public class ReportOperation {
         if (value != null) {
           IRI valIRI = ioHelper.createIRI(value);
           if (valIRI != null) {
-            violation.addStatement(e, valIRI);
+            OWLEntity v = dataFactory.getOWLClass(valIRI);
+            violation.addStatement(e, v);
           } else {
-            violation.addStatement(e, dataFactory.getOWLLiteral(value));
+            violation.addStatement(e, value);
           }
         } else {
-          violation.addStatement(e, null);
+          violation.addStatement(e, "");
         }
       }
       violations.add(violation);

@@ -926,6 +926,11 @@ public class IOHelper {
       logger.warn(e.getMessage());
       return null;
     }
+
+    if (iri.toString().contains(" ")) {
+      // Invalid IRI
+      return null;
+    }
     return iri;
   }
 

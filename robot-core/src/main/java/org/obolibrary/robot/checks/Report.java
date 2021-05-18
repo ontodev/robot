@@ -57,7 +57,7 @@ public class Report {
   private Integer errorCount = 0;
 
   /** IOHelper to use. */
-  private IOHelper ioHelper;
+  private final IOHelper ioHelper;
 
   /** Manager to use. */
   private OWLOntologyManager manager;
@@ -270,20 +270,7 @@ public class Report {
    * @return export Table object
    */
   public Table toTable(String format) {
-    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
-    QuotedAnnotationValueShortFormProvider nameProvider =
-        new QuotedAnnotationValueShortFormProvider(
-            manager,
-            curieProvider,
-            ioHelper.getPrefixManager(),
-            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-            Collections.emptyMap());
-    ShortFormProvider provider;
-    if (useLabels) {
-      provider = nameProvider;
-    } else {
-      provider = curieProvider;
-    }
+    ShortFormProvider provider = getProvider();
 
     Table table = new Table(format);
     for (String h : header) {
@@ -316,20 +303,7 @@ public class Report {
    * @return YAML string
    */
   public String toYAML() {
-    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
-    QuotedAnnotationValueShortFormProvider nameProvider =
-        new QuotedAnnotationValueShortFormProvider(
-            manager,
-            curieProvider,
-            ioHelper.getPrefixManager(),
-            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-            Collections.emptyMap());
-    ShortFormProvider provider;
-    if (useLabels) {
-      provider = nameProvider;
-    } else {
-      provider = curieProvider;
-    }
+    ShortFormProvider provider = getProvider();
     return yamlHelper(provider, ERROR, error)
         + yamlHelper(provider, WARN, warn)
         + yamlHelper(provider, INFO, info);
@@ -372,7 +346,7 @@ public class Report {
           }
         }
         Cell subjectCell = new Cell(columns.get(2), subject);
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           // Property of the violation for the following rows
           String property = "";
           if (statement.getKey() != null) {
@@ -382,33 +356,43 @@ public class Report {
           Cell propertyCell = new Cell(columns.get(3), property);
 
           if (statement.getValue().isEmpty()) {
-            Row row = new Row(level);
             Cell valueCell = new Cell(columns.get(4), "");
-            row.add(levelCell);
-            row.add(ruleCell);
-            row.add(subjectCell);
-            row.add(propertyCell);
-            row.add(valueCell);
-            table.addRow(row);
+            addRowToTable(table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
           } else {
-            for (OWLObject o : statement.getValue()) {
-              Row row = new Row(level);
-
-              String value = "";
-              if (o != null) {
-                value = OntologyHelper.renderManchester(o, provider, displayRenderer);
-              }
-
+            for (OWLEntity e : statement.getValue()) {
+              String value = OntologyHelper.renderManchester(e, provider, displayRenderer);
               Cell valueCell = new Cell(columns.get(4), value);
-              row.add(levelCell);
-              row.add(ruleCell);
-              row.add(subjectCell);
-              row.add(propertyCell);
-              row.add(valueCell);
-              table.addRow(row);
+              addRowToTable(
+                  table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
             }
           }
         }
+
+        for (Entry<OWLEntity, List<String>> statement : v.literalStatements.entrySet()) {
+          // Property of the violation for the following rows
+          String property = "";
+          if (statement.getKey() != null) {
+            property =
+                OntologyHelper.renderManchester(statement.getKey(), provider, displayRenderer);
+          }
+          Cell propertyCell = new Cell(columns.get(3), property);
+
+          if (statement.getValue().isEmpty()) {
+            Cell valueCell = new Cell(columns.get(4), "");
+            addRowToTable(table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
+          } else {
+            for (String value : statement.getValue()) {
+              if (value == null) {
+                value = "";
+              }
+              Cell valueCell = new Cell(columns.get(4), value);
+              addRowToTable(
+                  table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
+            }
+          }
+        }
+
+        // Support for old statements method
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
           String property = statement.getKey();
           if (property == null) {
@@ -417,32 +401,69 @@ public class Report {
           Cell propertyCell = new Cell(columns.get(3), property);
 
           if (statement.getValue().isEmpty()) {
-            Row row = new Row(level);
             Cell valueCell = new Cell(columns.get(4), "");
-            row.add(levelCell);
-            row.add(ruleCell);
-            row.add(subjectCell);
-            row.add(propertyCell);
-            row.add(valueCell);
-            table.addRow(row);
+            addRowToTable(table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
           } else {
             for (String value : statement.getValue()) {
               if (value == null) {
                 continue;
               }
-              Row row = new Row(level);
               Cell valueCell = new Cell(columns.get(4), value);
-              row.add(levelCell);
-              row.add(ruleCell);
-              row.add(subjectCell);
-              row.add(propertyCell);
-              row.add(valueCell);
-              table.addRow(row);
+              addRowToTable(
+                  table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
             }
           }
         }
       }
     }
+  }
+
+  /**
+   * Add a row to a table.
+   *
+   * @param table Table to add row to
+   * @param level String violation level
+   * @param levelCell Cell for level
+   * @param ruleCell Cell for rule
+   * @param subjectCell Cell for subject
+   * @param propertyCell Cell for property
+   * @param valueCell Cell for value
+   */
+  private void addRowToTable(
+      Table table,
+      String level,
+      Cell levelCell,
+      Cell ruleCell,
+      Cell subjectCell,
+      Cell propertyCell,
+      Cell valueCell) {
+    Row row = new Row(level);
+    row.add(levelCell);
+    row.add(ruleCell);
+    row.add(subjectCell);
+    row.add(propertyCell);
+    row.add(valueCell);
+    table.addRow(row);
+  }
+
+  /**
+   * Get a ShortFormProvider to render entities based on if we are rendering labels or not.
+   *
+   * @return ShortFormProvider that either uses names (labels or CURIEs) or CURIEs
+   */
+  private ShortFormProvider getProvider() {
+    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
+    QuotedAnnotationValueShortFormProvider nameProvider =
+        new QuotedAnnotationValueShortFormProvider(
+            manager,
+            curieProvider,
+            ioHelper.getPrefixManager(),
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
+    if (useLabels) {
+      return nameProvider;
+    }
+    return curieProvider;
   }
 
   /**
@@ -493,7 +514,7 @@ public class Report {
             OntologyHelper.renderManchester(v.entity, provider, RendererType.OBJECT_RENDERER);
         sb.append("    - subject: \"").append(subject).append("\"");
         sb.append("\n");
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           String property =
               OntologyHelper.renderManchester(
                   statement.getKey(), provider, RendererType.OBJECT_RENDERER);
@@ -504,7 +525,7 @@ public class Report {
           }
           sb.append("      values:");
           sb.append("\n");
-          for (OWLObject value : statement.getValue()) {
+          for (OWLEntity value : statement.getValue()) {
             String display = "";
             if (value != null) {
               display =
@@ -566,16 +587,10 @@ public class Report {
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       for (Violation v : vs.getValue()) {
         iris.add(v.entity.getIRI().toString());
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           iris.add(statement.getKey().getIRI().toString());
-          for (OWLObject value : statement.getValue()) {
-            if (value instanceof OWLEntity) {
-              OWLEntity e = (OWLEntity) value;
-              iris.add(e.getIRI().toString());
-            } else if (value instanceof IRI) {
-              IRI iri = (IRI) value;
-              iris.add(iri.toString());
-            }
+          for (OWLEntity value : statement.getValue()) {
+            iris.add(value.getIRI().toString());
           }
         }
       }
