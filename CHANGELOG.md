@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix missing annotations from [`export`] [#850]
 - Fail on unknown rule names in [`report`] [#858]
 - Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
+- Fix value rendering for entities in [`report`] [#874]
 
 ## [1.8.1] - 2021-01-27
 
@@ -252,6 +253,8 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#874]: https://github.com/ontodev/robot/pull/874
+[#858]: https://github.com/ontodev/robot/pull/858
 [#850]: https://github.com/ontodev/robot/pull/850
 [#834]: https://github.com/ontodev/robot/pull/834
 [#823]: https://github.com/ontodev/robot/pull/823

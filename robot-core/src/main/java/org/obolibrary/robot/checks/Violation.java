@@ -113,10 +113,14 @@ public class Violation {
    */
   @Deprecated
   public void addStatement(OWLEntity property, OWLObject object) {
-    // Do nothing
-    logger.error(
-        String.format(
-            "Cannot add OWLObject '%s'; use an OWLEntity or String literal instead.",
-            object.toString()));
+    logger.error("Do not add OWLObjects to Violations; use an OWLEntity or String literal instead");
+    if (object instanceof OWLEntity) {
+      addStatement(property, (OWLEntity) object);
+    } else if (object instanceof OWLLiteral) {
+      OWLLiteral lit = (OWLLiteral) object;
+      addStatement(property, lit.getLiteral());
+    } else {
+      addStatement(property, object.toString());
+    }
   }
 }

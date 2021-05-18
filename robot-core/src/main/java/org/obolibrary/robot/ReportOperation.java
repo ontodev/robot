@@ -944,7 +944,7 @@ public class ReportOperation {
         OWLEntity e = dataFactory.getOWLClass(ioHelper.createIRI(property));
         if (value != null) {
           IRI valIRI = ioHelper.createIRI(value);
-          if (valIRI != null && !valIRI.toString().contains(" ")) {
+          if (valIRI != null) {
             OWLEntity v = dataFactory.getOWLClass(valIRI);
             violation.addStatement(e, v);
           } else {
