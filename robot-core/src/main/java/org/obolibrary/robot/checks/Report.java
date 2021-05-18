@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import org.apache.commons.lang3.tuple.Pair;
 import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.OntologyHelper;
 import org.obolibrary.robot.QuotedEntityChecker;
@@ -36,13 +37,13 @@ public class Report {
   private static final String ERROR = "ERROR";
 
   /** Map of rules and the violations for INFO level. */
-  public Map<String, List<Violation>> info = new HashMap<>();
+  public Map<String, Pair<List<Violation>, Boolean>> info = new HashMap<>();
 
   /** Map of rules and the violations for WARN level. */
-  public Map<String, List<Violation>> warn = new HashMap<>();
+  public Map<String, Pair<List<Violation>, Boolean>> warn = new HashMap<>();
 
   /** Map of rules and the violations for ERROR level. */
-  public Map<String, List<Violation>> error = new HashMap<>();
+  public Map<String, Pair<List<Violation>, Boolean>> error = new HashMap<>();
 
   /** Boolean to use labels for output - defaults to false. */
   private boolean useLabels = false;
@@ -201,13 +202,29 @@ public class Report {
   public void addViolations(String ruleName, String level, List<Violation> violations) {
     logger.debug("violation found: " + ruleName);
     if (INFO.equals(level)) {
-      info.put(ruleName, violations);
+      info.put(ruleName, Pair.of(violations, false));
       infoCount += violations.size();
     } else if (WARN.equals(level)) {
-      warn.put(ruleName, violations);
+      warn.put(ruleName, Pair.of(violations, false));
       warnCount += violations.size();
     } else if (ERROR.equals(level)) {
-      error.put(ruleName, violations);
+      error.put(ruleName, Pair.of(violations, false));
+      errorCount += violations.size();
+    }
+    // Otherwise do nothing
+  }
+
+  public void addViolations(
+      String ruleName, Boolean builtin, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, Pair.of(violations, builtin));
+      infoCount += violations.size();
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, Pair.of(violations, builtin));
+      warnCount += violations.size();
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, Pair.of(violations, builtin));
       errorCount += violations.size();
     }
     // Otherwise do nothing
@@ -251,13 +268,13 @@ public class Report {
    */
   public Integer getViolationCount(String ruleName) throws Exception {
     if (info.containsKey(ruleName)) {
-      List<Violation> v = info.get(ruleName);
+      List<Violation> v = info.get(ruleName).getLeft();
       return v.size();
     } else if (warn.containsKey(ruleName)) {
-      List<Violation> v = warn.get(ruleName);
+      List<Violation> v = warn.get(ruleName).getLeft();
       return v.size();
     } else if (error.containsKey(ruleName)) {
-      List<Violation> v = error.get(ruleName);
+      List<Violation> v = error.get(ruleName).getLeft();
       return v.size();
     }
     throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
@@ -321,14 +338,18 @@ public class Report {
       Table table,
       ShortFormProvider provider,
       String level,
-      Map<String, List<Violation>> violations) {
+      Map<String, Pair<List<Violation>, Boolean>> violations) {
     List<Column> columns = table.getColumns();
     RendererType displayRenderer = table.getDisplayRendererType();
-    for (Entry<String, List<Violation>> vs : violations.entrySet()) {
+    for (Entry<String, Pair<List<Violation>, Boolean>> vs : violations.entrySet()) {
       String ruleName = getRuleName(vs.getKey());
+      Boolean builtin = vs.getValue().getRight();
       Cell levelCell = new Cell(columns.get(0), level);
       Cell ruleCell = new Cell(columns.get(1), ruleName);
-      for (Violation v : vs.getValue()) {
+      if (builtin) {
+        ruleCell.setHref("http://robot.obolibrary.org/report_queries/" + ruleName);
+      }
+      for (Violation v : vs.getValue().getLeft()) {
         // Subject of the violation for the following rows
         String subject;
         if (ontologyIRI != null
@@ -492,7 +513,9 @@ public class Report {
    * @return YAML string representation of the violations
    */
   private String yamlHelper(
-      ShortFormProvider provider, String level, Map<String, List<Violation>> violationSets) {
+      ShortFormProvider provider,
+      String level,
+      Map<String, Pair<List<Violation>, Boolean>> violationSets) {
     // Get a prefix manager for creating CURIEs
     if (violationSets.isEmpty()) {
       return "";
@@ -502,14 +525,14 @@ public class Report {
     sb.append("\n");
     sb.append("  violations:");
     sb.append("\n");
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
+    for (Entry<String, Pair<List<Violation>, Boolean>> vs : violationSets.entrySet()) {
       String ruleName = getRuleName(vs.getKey());
-      if (vs.getValue().isEmpty()) {
+      if (vs.getValue().getLeft().isEmpty()) {
         continue;
       }
       sb.append("  - ").append(ruleName).append(":");
       sb.append("\n");
-      for (Violation v : vs.getValue()) {
+      for (Violation v : vs.getValue().getLeft()) {
         String subject =
             OntologyHelper.renderManchester(v.entity, provider, RendererType.OBJECT_RENDERER);
         sb.append("    - subject: \"").append(subject).append("\"");
@@ -581,11 +604,11 @@ public class Report {
    * @return a set of IRI strings
    */
   @Deprecated
-  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
+  public Set<String> getIRIs(Map<String, Pair<List<Violation>, Boolean>> violationSets) {
     Set<String> iris = new HashSet<>();
 
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      for (Violation v : vs.getValue()) {
+    for (Entry<String, Pair<List<Violation>, Boolean>> vs : violationSets.entrySet()) {
+      for (Violation v : vs.getValue().getLeft()) {
         iris.add(v.entity.getIRI().toString());
         for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           iris.add(statement.getKey().getIRI().toString());

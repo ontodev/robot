@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jena.query.*;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Report issues with an ontology using a series of QC SPARQL queries.
  *
- * @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a>
+ * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class ReportOperation {
@@ -78,6 +79,9 @@ public class ReportOperation {
 
   /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
+
+  /** Shared data factory. */
+  private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
   /**
    * Return a map from option name to default option value, for all the available report options.
@@ -261,7 +265,7 @@ public class ReportOperation {
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
     // The queries is a map of rule name and query string
-    Map<String, String> queries = getQueryStrings(profile.keySet());
+    Map<String, Pair<String, Boolean>> queries = getQueryStrings(profile.keySet());
 
     // Create the report object
     Report report;
@@ -273,24 +277,9 @@ public class ReportOperation {
 
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
     for (String queryName : queries.keySet()) {
-      String fullQueryString = queries.get(queryName);
-      String queryString;
-      // Remove any comments
-      List<String> lines = new ArrayList<>();
-      for (String line : fullQueryString.split("\n")) {
-        if (!line.startsWith("#")) {
-          lines.add(line);
-        }
-      }
-      queryString = String.join("\n", lines);
-      // Use the query to get violations
-      List<Violation> violations =
-          getViolations(ioHelper, dataset, queryName, queryString, options);
-      // If violations is not returned properly, the query did not have the correct format
-      if (violations == null) {
-        throw new Exception(String.format(missingEntityBinding, queryName));
-      }
-      report.addViolations(queryName, profile.get(queryName), violations);
+      List<Violation> violations = getViolations(ioHelper, dataset, options, queries, queryName);
+      Boolean builtin = queries.get(queryName).getRight();
+      report.addViolations(queryName, builtin, profile.get(queryName), violations);
     }
 
     return report;
@@ -396,8 +385,8 @@ public class ReportOperation {
 
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
-    // The queries is a map of rule name and query string
-    Map<String, String> queries = getQueryStrings(profile.keySet());
+    // The queries is a map of rule name and query string + true/false if builtin
+    Map<String, Pair<String, Boolean>> queries = getQueryStrings(profile.keySet());
 
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
     Map<IRI, String> labelMap = null;
@@ -424,24 +413,9 @@ public class ReportOperation {
     Report report = new Report(labelMap);
 
     for (String queryName : queries.keySet()) {
-      String fullQueryString = queries.get(queryName);
-      String queryString;
-      // Remove any comments
-      List<String> lines = new ArrayList<>();
-      for (String line : fullQueryString.split("\n")) {
-        if (!line.startsWith("#")) {
-          lines.add(line);
-        }
-      }
-      queryString = String.join("\n", lines);
-      // Use the query to get violations
-      List<Violation> violations =
-          getViolations(ioHelper, dataset, queryName, queryString, options);
-      // If violations is not returned properly, the query did not have the correct format
-      if (violations == null) {
-        throw new Exception(String.format(missingEntityBinding, queryName));
-      }
-      report.addViolations(queryName, profile.get(queryName), violations);
+      List<Violation> violations = getViolations(ioHelper, dataset, options, queries, queryName);
+      Boolean builtin = queries.get(queryName).getRight();
+      report.addViolations(queryName, builtin, profile.get(queryName), violations);
     }
 
     return report;
@@ -617,11 +591,11 @@ public class ReportOperation {
    * @throws IOException on any issue reading the query file
    * @throws URISyntaxException on issue converting URL to URI
    */
-  private static Map<String, String> getQueryStrings(Set<String> rules)
+  private static Map<String, Pair<String, Boolean>> getQueryStrings(Set<String> rules)
       throws IOException, URISyntaxException {
     Set<String> defaultRules = new HashSet<>();
     Set<String> userRules = new HashSet<>();
-    Map<String, String> queries = new HashMap<>();
+    Map<String, Pair<String, Boolean>> queries = new HashMap<>();
     for (String rule : rules) {
       if (rule.startsWith("file:")) {
         userRules.add(rule);
@@ -643,9 +617,9 @@ public class ReportOperation {
    * @throws URISyntaxException on issue converting file path URL to URI
    * @throws IOException on any issue reading the file
    */
-  private static Map<String, String> getUserQueryStrings(Set<String> rules)
+  private static Map<String, Pair<String, Boolean>> getUserQueryStrings(Set<String> rules)
       throws URISyntaxException, IOException {
-    Map<String, String> queries = new HashMap<>();
+    Map<String, Pair<String, Boolean>> queries = new HashMap<>();
     for (String rule : rules) {
       if (rule.startsWith("file:///")) {
         // Process an absolute path
@@ -653,7 +627,7 @@ public class ReportOperation {
         if (!file.exists()) {
           throw new IOException(String.format(missingQueryError, file.getPath()));
         }
-        queries.put(rule, FileUtils.readFileToString(file));
+        queries.put(rule, Pair.of(FileUtils.readFileToString(file), false));
       } else {
         // Process a relative path
         String path = rule.substring(5);
@@ -661,7 +635,7 @@ public class ReportOperation {
         if (!file.exists()) {
           throw new IOException(String.format(missingQueryError, file.getPath()));
         }
-        queries.put(rule, FileUtils.readFileToString(file));
+        queries.put(rule, Pair.of(FileUtils.readFileToString(file), false));
       }
     }
     return queries;
@@ -676,10 +650,10 @@ public class ReportOperation {
    * @throws URISyntaxException on issue converting path to URI
    * @throws IOException on any issue with accessing files or file contents
    */
-  private static Map<String, String> getDefaultQueryStrings(Set<String> rules)
+  private static Map<String, Pair<String, Boolean>> getDefaultQueryStrings(Set<String> rules)
       throws IOException, URISyntaxException {
     URL dirURL = ReportOperation.class.getClassLoader().getResource(queryDir);
-    Map<String, String> queries = new HashMap<>();
+    Map<String, Pair<String, Boolean>> queries = new HashMap<>();
     // Handle simple file path, probably accessed during testing
     if (dirURL != null && dirURL.getProtocol().equals("file")) {
       String[] queryFilePaths = new File(dirURL.toURI()).list();
@@ -694,7 +668,7 @@ public class ReportOperation {
         // Only add it to the queries if the rule set contains that rule
         // If rules == null, include all rules
         if (rules == null || rules.contains(ruleName)) {
-          queries.put(ruleName, FileUtils.readFileToString(new File(qPath)));
+          queries.put(ruleName, Pair.of(FileUtils.readFileToString(new File(qPath)), true));
         }
       }
       // Check that all the provided rule names are valid defaults
@@ -752,7 +726,7 @@ public class ReportOperation {
               // Remove the headers
               String fullQueryString = sb.toString();
               String queryString = fullQueryString.substring(fullQueryString.indexOf("PREFIX"));
-              queries.put(ruleName, queryString);
+              queries.put(ruleName, Pair.of(queryString, true));
             }
           }
         }
@@ -819,67 +793,33 @@ public class ReportOperation {
     }
   }
 
-  /**
-   * Given an ontology as a Dataset and a query, return the violations found by that query.
-   *
-   * @param dataset the ontology/ontologies as a dataset
-   * @param query the query
-   * @return List of Violations
-   * @throws IOException on issue parsing query
-   */
   private static List<Violation> getViolations(
       IOHelper ioHelper,
       Dataset dataset,
-      String queryName,
-      String query,
-      Map<String, String> options)
+      Map<String, String> options,
+      Map<String, Pair<String, Boolean>> queries,
+      String queryName)
       throws Exception {
-    boolean tdb = OptionsHelper.optionIsTrue(options, "tdb");
-    String limitString = OptionsHelper.getOption(options, "limit", null);
-    Integer limit = null;
-    if (limitString != null) {
-      try {
-        limit = Integer.parseInt(limitString);
-      } catch (NumberFormatException e) {
-        throw new Exception(String.format(limitNumberError, limitString));
+    Pair<String, Boolean> p = queries.get(queryName);
+    String fullQueryString = p.getLeft();
+    String queryString;
+    // Remove any comments
+    List<String> lines = new ArrayList<>();
+    for (String line : fullQueryString.split("\n")) {
+      if (!line.startsWith("#")) {
+        lines.add(line);
       }
     }
-
-    if (tdb) {
-      // If using TDB we must be in a read transaction to query
-      dataset.begin(ReadWrite.READ);
-      try {
-        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
-      } catch (Exception e) {
-        // If query fails, return null
-        // And warn that report may be incomplete
-        logger.error(
-            String.format(
-                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
-                queryName, e.getMessage()));
-        return null;
-      } finally {
-        // Always end the transaction
-        dataset.end();
-      }
-    } else {
-      try {
-        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
-        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
-      } catch (Exception e) {
-        // If query fails, return null
-        // And warn that report may be incomplete
-        logger.error(
-            String.format(
-                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
-                queryName, e.getMessage()));
-        return null;
-      }
+    queryString = String.join("\n", lines);
+    // Use the query to get violations
+    List<Violation> violations =
+        queryForViolations(ioHelper, dataset, queryName, queryString, options);
+    // If violations is not returned properly, the query did not have the correct format
+    if (violations == null) {
+      throw new Exception(String.format(missingEntityBinding, queryName));
     }
+    return violations;
   }
-
-  private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
   /**
    * Given a query name, a result set, and a limit for results, return a list of Violation objects
@@ -978,6 +918,66 @@ public class ReportOperation {
     for (int i = 0; i < n; i++) {
       // i + 1 to skip headers
       System.out.println(String.join(separator, lines.get(i + 1)));
+    }
+  }
+
+  /**
+   * Given an ontology as a Dataset and a query, return the violations found by that query.
+   *
+   * @param dataset the ontology/ontologies as a dataset
+   * @param query the query
+   * @return List of Violations
+   * @throws IOException on issue parsing query
+   */
+  private static List<Violation> queryForViolations(
+      IOHelper ioHelper,
+      Dataset dataset,
+      String queryName,
+      String query,
+      Map<String, String> options)
+      throws Exception {
+    boolean tdb = OptionsHelper.optionIsTrue(options, "tdb");
+    String limitString = OptionsHelper.getOption(options, "limit", null);
+    Integer limit = null;
+    if (limitString != null) {
+      try {
+        limit = Integer.parseInt(limitString);
+      } catch (NumberFormatException e) {
+        throw new Exception(String.format(limitNumberError, limitString));
+      }
+    }
+
+    if (tdb) {
+      // If using TDB we must be in a read transaction to query
+      dataset.begin(ReadWrite.READ);
+      try {
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return null;
+      } finally {
+        // Always end the transaction
+        dataset.end();
+      }
+    } else {
+      try {
+        ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
+      } catch (Exception e) {
+        // If query fails, return null
+        // And warn that report may be incomplete
+        logger.error(
+            String.format(
+                "Could not complete query '%s' - report may be incomplete.\nCause:\n%s",
+                queryName, e.getMessage()));
+        return null;
+      }
     }
   }
 }

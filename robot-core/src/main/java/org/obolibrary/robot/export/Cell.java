@@ -11,12 +11,12 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 public class Cell {
 
   // Column object used to build this cell
-  private Column column;
+  private final Column column;
 
   // List of output values for this cell
-  private List<CellValue> values = new ArrayList<>();
+  private final List<CellValue> values = new ArrayList<>();
 
-  private List<String> displayValues = new ArrayList<>();
+  private final List<String> displayValues = new ArrayList<>();
   private String sortValueString;
 
   // Styles for XLSX output
@@ -26,6 +26,8 @@ public class Cell {
 
   // Styles for HTML output
   private String htmlClass = null;
+  // Option to add a link to a value (separate from rendered entities)
+  private String href = null;
 
   // Comment can appear as an XLSX Comment or an HTML tooltip
   // This is not required and can be returned null
@@ -147,6 +149,15 @@ public class Cell {
   }
 
   /**
+   * Get an href link for the cell or null.
+   *
+   * @return String link or null
+   */
+  public String getHref() {
+    return href;
+  }
+
+  /**
    * Get the font color for this cell in an XLSX workbook.
    *
    * @return IndexedColors value for font
@@ -191,6 +202,14 @@ public class Cell {
     this.comment = comment;
   }
 
+  /**
+   * Add a link to this Cell.
+   *
+   * @param href String href link
+   */
+  public void setHref(String href) {
+    this.href = href;
+  }
   /**
    * Add an HTML class to this Cell.
    *
