@@ -192,28 +192,14 @@ public class Report {
   }
 
   /**
-   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
-   * the violations to the correct map.
+   * Given a rule name, if it's builtin or not, it's reporting level, and a list of the violations
+   * from the ontology, add the violations to the correct map.
    *
    * @param ruleName name of rule
+   * @param builtin Boolean representing if rule is builtin or not
    * @param level reporting level of rule
    * @param violations list of violations from this rule
    */
-  public void addViolations(String ruleName, String level, List<Violation> violations) {
-    logger.debug("violation found: " + ruleName);
-    if (INFO.equals(level)) {
-      info.put(ruleName, Pair.of(violations, false));
-      infoCount += violations.size();
-    } else if (WARN.equals(level)) {
-      warn.put(ruleName, Pair.of(violations, false));
-      warnCount += violations.size();
-    } else if (ERROR.equals(level)) {
-      error.put(ruleName, Pair.of(violations, false));
-      errorCount += violations.size();
-    }
-    // Otherwise do nothing
-  }
-
   public void addViolations(
       String ruleName, Boolean builtin, String level, List<Violation> violations) {
     logger.debug("violation found: " + ruleName);
@@ -581,6 +567,31 @@ public class Report {
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
+   * the violations to the correct map.
+   *
+   * @param ruleName name of rule
+   * @param level reporting level of rule
+   * @param violations list of violations from this rule
+   * @deprecated use {@link #addViolations(String, Boolean, String, List)}
+   */
+  @Deprecated
+  public void addViolations(String ruleName, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, Pair.of(violations, false));
+      infoCount += violations.size();
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, Pair.of(violations, false));
+      warnCount += violations.size();
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, Pair.of(violations, false));
+      errorCount += violations.size();
+    }
+    // Otherwise do nothing
   }
 
   /**
