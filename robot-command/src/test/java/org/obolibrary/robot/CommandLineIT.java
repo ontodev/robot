@@ -3,12 +3,14 @@ package org.obolibrary.robot;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.geneontology.owl.differ.Differ;
 import org.junit.Test;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /** Integration tests check the commands in `examples/README.md`. */
@@ -50,9 +52,9 @@ public class CommandLineIT {
    * @throws IOException if the README cannot be read
    */
   private List<String> extractCommands(File docFile) throws IOException {
-    String content = FileUtils.readFileToString(docFile);
-    List<String> lines = Arrays.asList(content.replaceAll("\\r", "").split("\\n"));
-    List<String> commands = new ArrayList<String>();
+    String content = FileUtils.readFileToString(docFile, Charset.defaultCharset());
+    String[] lines = content.replaceAll("\\r", "").split("\\n");
+    List<String> commands = new ArrayList<>();
 
     boolean collecting = false;
     String collected = null;
@@ -105,7 +107,7 @@ public class CommandLineIT {
             + "\n\n";
 
     FileOutputStream outputStream = new FileOutputStream(outputPath, true);
-    IOUtils.write(header, outputStream);
+    IOUtils.write(header, outputStream, Charset.defaultCharset());
 
     List<String> arguments = CommandLineHelper.parseArgList(command);
     arguments.remove(0);
@@ -132,7 +134,6 @@ public class CommandLineIT {
    * @throws Exception on IO problems or file differences
    */
   private void compareResults() throws Exception {
-    IOHelper ioHelper = new IOHelper();
     File resultsDir = new File(resultsPath);
     for (File resultFile : resultsDir.listFiles()) {
       if (!resultFile.isFile()) {
@@ -153,10 +154,14 @@ public class CommandLineIT {
       }
 
       if (resultFile.getName().endsWith(".owl") || resultFile.getName().endsWith(".ttl")) {
-        // Compare OWL files using DiffOperation
-        OWLOntology exampleOnt = ioHelper.loadOntology(exampleFile);
-        OWLOntology resultOnt = ioHelper.loadOntology(resultFile);
-        if (!DiffOperation.equals(exampleOnt, resultOnt)) {
+        // Compare OWL files using Differ
+        OWLOntology exampleOnt =
+            OWLManager.createOWLOntologyManager().loadOntologyFromOntologyDocument(exampleFile);
+        OWLOntology resultOnt =
+            OWLManager.createOWLOntologyManager().loadOntologyFromOntologyDocument(resultFile);
+
+        Differ.BasicDiff diff = Differ.diff(exampleOnt, resultOnt);
+        if (!diff.isEmpty()) {
           throw new Exception(
               "Integration test ontology '"
                   + resultsPath

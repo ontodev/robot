@@ -6,20 +6,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
@@ -719,7 +714,8 @@ public class CommandLineHelper {
         if (!prefixFile.exists()) {
           throw new IOException(String.format(IOHelper.fileDoesNotExistError, prefixFilePath));
         }
-        Context json = IOHelper.parseContext(FileUtils.readFileToString(prefixFile));
+        Context json =
+            IOHelper.parseContext(FileUtils.readFileToString(prefixFile, Charset.defaultCharset()));
         addPrefixes.putAll(json.getPrefixes(false));
       }
     }
@@ -782,7 +778,7 @@ public class CommandLineHelper {
     }
     if (paths != null) {
       for (String path : getOptionValues(line, paths)) {
-        termStrings.add(FileUtils.readFileToString(new File(path)));
+        termStrings.add(FileUtils.readFileToString(new File(path), Charset.defaultCharset()));
       }
     }
 
@@ -865,7 +861,7 @@ public class CommandLineHelper {
       try {
         uri = resource.toURI();
       } catch (URISyntaxException e) {
-        throw new IOExceptionWithCause(e);
+        throw new IOException(e);
       }
       File f = new File(uri);
       InputStream is = new FileInputStream(f);
@@ -914,7 +910,7 @@ public class CommandLineHelper {
     o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");
-    o.addOption("noprefixes", false, "do not use default prefixes");
+    o.addOption(null, "noprefixes", false, "do not use default prefixes");
     o.addOption(null, "add-prefix", true, "add prefix 'foo: http://bar' to the output");
     o.addOption(null, "add-prefixes", true, "add JSON-LD prefixes to the output");
     o.addOption("x", "xml-entities", false, "use entity substitution with ontology XML output");
@@ -936,7 +932,7 @@ public class CommandLineHelper {
   public static CommandLine maybeGetCommandLine(
       String usage, Options options, String[] args, boolean stopAtNonOption)
       throws ParseException, IOException {
-    CommandLineParser parser = new PosixParser();
+    CommandLineParser parser = new DefaultParser();
     CommandLine line = parser.parse(options, args, stopAtNonOption);
 
     String level;

@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -653,7 +654,7 @@ public class ReportOperation {
         if (!file.exists()) {
           throw new IOException(String.format(missingQueryError, file.getPath()));
         }
-        queries.put(rule, FileUtils.readFileToString(file));
+        queries.put(rule, FileUtils.readFileToString(file, Charset.defaultCharset()));
       } else {
         // Process a relative path
         String path = rule.substring(5);
@@ -661,7 +662,7 @@ public class ReportOperation {
         if (!file.exists()) {
           throw new IOException(String.format(missingQueryError, file.getPath()));
         }
-        queries.put(rule, FileUtils.readFileToString(file));
+        queries.put(rule, FileUtils.readFileToString(file, Charset.defaultCharset()));
       }
     }
     return queries;
@@ -694,7 +695,8 @@ public class ReportOperation {
         // Only add it to the queries if the rule set contains that rule
         // If rules == null, include all rules
         if (rules == null || rules.contains(ruleName)) {
-          queries.put(ruleName, FileUtils.readFileToString(new File(qPath)));
+          queries.put(
+              ruleName, FileUtils.readFileToString(new File(qPath), Charset.defaultCharset()));
         }
       }
       // Check that all the provided rule names are valid defaults

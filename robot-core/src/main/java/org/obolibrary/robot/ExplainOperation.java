@@ -276,8 +276,7 @@ public class ExplainOperation {
     }
     if (!tree.isLeaf()) builder.append("\n");
     String children =
-        tree.getChildren()
-            .stream()
+        tree.getChildren().stream()
             .map(child -> renderTree(child, renderer))
             .collect(Collectors.joining("\n"));
     builder.append(children);

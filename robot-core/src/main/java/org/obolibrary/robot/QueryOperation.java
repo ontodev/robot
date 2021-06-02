@@ -22,7 +22,6 @@ import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -156,14 +155,14 @@ public class QueryOperation {
     private final String modelUniqueBlankNodePrefix = UUID.randomUUID().toString();
 
     @Override
-    public void handleStatement(Statement triple) throws RDFHandlerException {
+    public void handleStatement(Statement triple) {
       Resource subject;
       if (triple.getSubject() instanceof BNode) {
         subject =
             new ResourceImpl(
                 new AnonId(modelUniqueBlankNodePrefix + ((BNode) triple.getSubject()).getID()));
       } else {
-        subject = ResourceFactory.createResource(((URI) triple.getSubject()).stringValue());
+        subject = ResourceFactory.createResource(triple.getSubject().stringValue());
       }
       Property predicate = ResourceFactory.createProperty(triple.getPredicate().stringValue());
       RDFNode object;
@@ -172,7 +171,7 @@ public class QueryOperation {
             new ResourceImpl(
                 new AnonId(modelUniqueBlankNodePrefix + ((BNode) triple.getObject()).getID()));
       } else if (triple.getObject() instanceof URI) {
-        object = ResourceFactory.createResource(((URI) triple.getObject()).stringValue());
+        object = ResourceFactory.createResource(triple.getObject().stringValue());
       } else {
         Literal literal = (Literal) (triple.getObject());
         if (literal.getLanguage() != null) {
@@ -194,16 +193,16 @@ public class QueryOperation {
     }
 
     @Override
-    public void startRDF() throws RDFHandlerException {}
+    public void startRDF() {}
 
     @Override
-    public void endRDF() throws RDFHandlerException {}
+    public void endRDF() {}
 
     @Override
-    public void handleNamespace(String prefix, String uri) throws RDFHandlerException {}
+    public void handleNamespace(String prefix, String uri) {}
 
     @Override
-    public void handleComment(String comment) throws RDFHandlerException {}
+    public void handleComment(String comment) {}
   }
 
   /**
@@ -430,21 +429,19 @@ public class QueryOperation {
    */
   public static String getDefaultFormatName(Query query) throws IllegalArgumentException {
     String formatName;
-    switch (query.getQueryType()) {
-      case Query.QueryTypeAsk:
+    switch (query.queryType()) {
+      case ASK:
         formatName = "txt";
         break;
-      case Query.QueryTypeConstruct:
+      case CONSTRUCT:
+      case DESCRIBE:
         formatName = "ttl";
         break;
-      case Query.QueryTypeDescribe:
-        formatName = "ttl";
-        break;
-      case Query.QueryTypeSelect:
+      case SELECT:
         formatName = "csv";
         break;
       default:
-        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
+        throw new IllegalArgumentException(String.format(queryTypeError, query.queryType()));
     }
     return formatName;
   }
@@ -500,21 +497,21 @@ public class QueryOperation {
     QueryExecution qExec = QueryExecutionFactory.create(queryString, createEmptyDataset());
     Query query = qExec.getQuery();
     String queryType;
-    switch (query.getQueryType()) {
-      case Query.QueryTypeAsk:
+    switch (query.queryType()) {
+      case ASK:
         queryType = "ASK";
         break;
-      case Query.QueryTypeConstruct:
+      case CONSTRUCT:
         queryType = "CONSTRUCT";
         break;
-      case Query.QueryTypeDescribe:
+      case DESCRIBE:
         queryType = "DESCRIBE";
         break;
-      case Query.QueryTypeSelect:
+      case SELECT:
         queryType = "SELECT";
         break;
       default:
-        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
+        throw new IllegalArgumentException(String.format(queryTypeError, query.queryType()));
     }
     return queryType;
   }
@@ -679,18 +676,18 @@ public class QueryOperation {
     if (formatName == null) {
       formatName = getDefaultFormatName(query);
     }
-    switch (query.getQueryType()) {
-      case Query.QueryTypeAsk:
+    switch (query.queryType()) {
+      case ASK:
         writeResult(qExec.execAsk(), output);
         return true;
-      case Query.QueryTypeConstruct:
+      case CONSTRUCT:
         return maybeWriteResult(qExec.execConstruct(), formatName, output);
-      case Query.QueryTypeDescribe:
+      case DESCRIBE:
         return maybeWriteResult(qExec.execDescribe(), formatName, output);
-      case Query.QueryTypeSelect:
+      case SELECT:
         return maybeWriteResult(qExec.execSelect(), formatName, output);
       default:
-        throw new IllegalArgumentException(String.format(queryTypeError, query.getQueryType()));
+        throw new IllegalArgumentException(String.format(queryTypeError, query.queryType()));
     }
   }
 
