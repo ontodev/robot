@@ -268,11 +268,6 @@ public class Report {
       table.addColumn(c);
     }
 
-    // Sort violations by rule name
-    errorViolations.sort(new rqComparator());
-    warnViolations.sort(new rqComparator());
-    infoViolations.sort(new rqComparator());
-
     addToTable(table, provider, ERROR, errorViolations);
     addToTable(table, provider, WARN, warnViolations);
     addToTable(table, provider, INFO, infoViolations);
@@ -299,12 +294,6 @@ public class Report {
    */
   public String toYAML() {
     ShortFormProvider provider = getProvider();
-
-    // Sort violations by rule name
-    errorViolations.sort(new rqComparator());
-    warnViolations.sort(new rqComparator());
-    infoViolations.sort(new rqComparator());
-
     return yamlHelper(provider, ERROR, errorViolations)
         + yamlHelper(provider, WARN, warnViolations)
         + yamlHelper(provider, INFO, infoViolations);
@@ -548,14 +537,6 @@ public class Report {
       }
     }
     return sb.toString();
-  }
-
-  /** */
-  private class rqComparator implements Comparator<ReportQuery> {
-    @Override
-    public int compare(ReportQuery o1, ReportQuery o2) {
-      return o1.getRuleName().compareTo(o2.getRuleName());
-    }
   }
 
   /**
