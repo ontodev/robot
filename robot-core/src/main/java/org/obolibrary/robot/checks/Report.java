@@ -35,17 +35,14 @@ public class Report {
   /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
 
-  /** Map of rules and the violations for INFO level. */
-  public Map<String, List<Violation>> info = new HashMap<>();
+  /** Collection of the info-level report queries. */
+  private final List<ReportQuery> infoViolations = new ArrayList<>();
 
-  /** Map of rules and the violations for WARN level. */
-  public Map<String, List<Violation>> warn = new HashMap<>();
+  /** Collection of the warn-level report queries. */
+  private final List<ReportQuery> warnViolations = new ArrayList<>();
 
-  /** Map of rules and the violations for ERROR level. */
-  public Map<String, List<Violation>> error = new HashMap<>();
-
-  /** Boolean to use labels for output - defaults to false. */
-  private boolean useLabels = false;
+  /** Collection of the error-level report queries. */
+  private final List<ReportQuery> errorViolations = new ArrayList<>();
 
   /** Count of violations for INFO. */
   private Integer infoCount = 0;
@@ -55,6 +52,9 @@ public class Report {
 
   /** Count of violations for ERROR. */
   private Integer errorCount = 0;
+
+  /** Boolean to use labels for output - defaults to false. */
+  private boolean useLabels = false;
 
   /** IOHelper to use. */
   private final IOHelper ioHelper;
@@ -70,6 +70,15 @@ public class Report {
       Lists.newArrayList("Level", "Rule Name", "Subject", "Property", "Value");
 
   private IRI ontologyIRI = null;
+
+  /** Map of rules and the violations for INFO level. */
+  @Deprecated public Map<String, List<Violation>> info = new HashMap<>();
+
+  /** Map of rules and the violations for WARN level. */
+  @Deprecated public Map<String, List<Violation>> warn = new HashMap<>();
+
+  /** Map of rules and the violations for ERROR level. */
+  @Deprecated public Map<String, List<Violation>> error = new HashMap<>();
 
   /**
    * Create a new report object without an ontology or predefined IOHelper.
@@ -191,26 +200,29 @@ public class Report {
   }
 
   /**
-   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
-   * the violations to the correct map.
+   * Add a ReportQuery to this Report.
    *
-   * @param ruleName name of rule
-   * @param level reporting level of rule
-   * @param violations list of violations from this rule
+   * @param rq ReportQuery to add
    */
-  public void addViolations(String ruleName, String level, List<Violation> violations) {
-    logger.debug("violation found: " + ruleName);
-    if (INFO.equals(level)) {
-      info.put(ruleName, violations);
-      infoCount += violations.size();
-    } else if (WARN.equals(level)) {
-      warn.put(ruleName, violations);
-      warnCount += violations.size();
-    } else if (ERROR.equals(level)) {
-      error.put(ruleName, violations);
-      errorCount += violations.size();
+  public void addReportQuery(ReportQuery rq) {
+    String level = rq.getLevel();
+    switch (level) {
+      case ERROR:
+        errorViolations.add(rq);
+        errorCount += rq.getViolations().size();
+        break;
+      case WARN:
+        warnViolations.add(rq);
+        warnCount += rq.getViolations().size();
+        break;
+      case INFO:
+        infoViolations.add(rq);
+        infoCount += rq.getViolations().size();
+        break;
+      default:
+        logger.error(
+            String.format("Unknown violation level for '%s': %s", rq.getRuleName(), level));
     }
-    // Otherwise do nothing
   }
 
   /**
@@ -242,28 +254,6 @@ public class Report {
   }
 
   /**
-   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
-   * exists.
-   *
-   * @param ruleName rule name to get number of violations for
-   * @return number of violations for given rule name
-   * @throws Exception if the rule name is not in this Report object
-   */
-  public Integer getViolationCount(String ruleName) throws Exception {
-    if (info.containsKey(ruleName)) {
-      List<Violation> v = info.get(ruleName);
-      return v.size();
-    } else if (warn.containsKey(ruleName)) {
-      List<Violation> v = warn.get(ruleName);
-      return v.size();
-    } else if (error.containsKey(ruleName)) {
-      List<Violation> v = error.get(ruleName);
-      return v.size();
-    }
-    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
-  }
-
-  /**
    * Convert the report details to a Table object to save.
    *
    * @param format String output format
@@ -278,9 +268,14 @@ public class Report {
       table.addColumn(c);
     }
 
-    addToTable(table, provider, ERROR, error);
-    addToTable(table, provider, WARN, warn);
-    addToTable(table, provider, INFO, info);
+    // Sort violations by rule name
+    errorViolations.sort(new rqComparator());
+    warnViolations.sort(new rqComparator());
+    infoViolations.sort(new rqComparator());
+
+    addToTable(table, provider, ERROR, errorViolations);
+    addToTable(table, provider, WARN, warnViolations);
+    addToTable(table, provider, INFO, infoViolations);
 
     return table;
   }
@@ -304,9 +299,15 @@ public class Report {
    */
   public String toYAML() {
     ShortFormProvider provider = getProvider();
-    return yamlHelper(provider, ERROR, error)
-        + yamlHelper(provider, WARN, warn)
-        + yamlHelper(provider, INFO, info);
+
+    // Sort violations by rule name
+    errorViolations.sort(new rqComparator());
+    warnViolations.sort(new rqComparator());
+    infoViolations.sort(new rqComparator());
+
+    return yamlHelper(provider, ERROR, errorViolations)
+        + yamlHelper(provider, WARN, warnViolations)
+        + yamlHelper(provider, INFO, infoViolations);
   }
 
   /**
@@ -315,20 +316,26 @@ public class Report {
    * @param table Table to add to
    * @param provider ShortFormProvider used to render objects
    * @param level String violation level
-   * @param violations Map of violations (rule -> violations)
+   * @param reportQueries collection of ReportQuery objects at this violation level
    */
   private void addToTable(
-      Table table,
-      ShortFormProvider provider,
-      String level,
-      Map<String, List<Violation>> violations) {
+      Table table, ShortFormProvider provider, String level, List<ReportQuery> reportQueries) {
     List<Column> columns = table.getColumns();
     RendererType displayRenderer = table.getDisplayRendererType();
-    for (Entry<String, List<Violation>> vs : violations.entrySet()) {
-      String ruleName = getRuleName(vs.getKey());
+    for (ReportQuery rq : reportQueries) {
+      // Create a reusable cell for the violation level
       Cell levelCell = new Cell(columns.get(0), level);
+
+      // Create a reusable cell for the name of the rule, maybe adding a link if we have one
+      String ruleName = rq.getRuleName();
       Cell ruleCell = new Cell(columns.get(1), ruleName);
-      for (Violation v : vs.getValue()) {
+      String ruleURL = rq.getRuleURL();
+      if (ruleURL != null) {
+        ruleCell.setHref(ruleURL);
+      }
+
+      // Add a row for each violation
+      for (Violation v : rq.getViolations()) {
         // Subject of the violation for the following rows
         String subject;
         if (ontologyIRI != null
@@ -467,34 +474,17 @@ public class Report {
   }
 
   /**
-   * Given a rule name, return a rule name. If the string starts with "file", the name is the path
-   * and should be stripped to just the name. Otherwise, the input is returned.
-   *
-   * @param ruleName string to (maybe) format
-   * @return rule name
-   */
-  private String getRuleName(String ruleName) {
-    if (ruleName.contains("file:")) {
-      try {
-        return ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
-      } catch (Exception e) {
-        return ruleName;
-      }
-    }
-    return ruleName;
-  }
-
-  /**
    * Given a reporting level and a map of rules and violations, build a YAML output.
    *
+   * @param provider ShortFormProvider used to render objects
    * @param level reporting level
-   * @param violationSets map of rules and violations
+   * @param reportQueries collection of ReportQuery objects at this violation level
    * @return YAML string representation of the violations
    */
   private String yamlHelper(
-      ShortFormProvider provider, String level, Map<String, List<Violation>> violationSets) {
+      ShortFormProvider provider, String level, List<ReportQuery> reportQueries) {
     // Get a prefix manager for creating CURIEs
-    if (violationSets.isEmpty()) {
+    if (reportQueries.isEmpty()) {
       return "";
     }
     StringBuilder sb = new StringBuilder();
@@ -502,14 +492,14 @@ public class Report {
     sb.append("\n");
     sb.append("  violations:");
     sb.append("\n");
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      String ruleName = getRuleName(vs.getKey());
-      if (vs.getValue().isEmpty()) {
+    for (ReportQuery rq : reportQueries) {
+      String ruleName = rq.getRuleName();
+      if (rq.getViolations().isEmpty()) {
         continue;
       }
       sb.append("  - ").append(ruleName).append(":");
       sb.append("\n");
-      for (Violation v : vs.getValue()) {
+      for (Violation v : rq.getViolations()) {
         String subject =
             OntologyHelper.renderManchester(v.entity, provider, RendererType.OBJECT_RENDERER);
         sb.append("    - subject: \"").append(subject).append("\"");
@@ -558,6 +548,62 @@ public class Report {
       }
     }
     return sb.toString();
+  }
+
+  /** */
+  private class rqComparator implements Comparator<ReportQuery> {
+    @Override
+    public int compare(ReportQuery o1, ReportQuery o2) {
+      return o1.getRuleName().compareTo(o2.getRuleName());
+    }
+  }
+
+  /**
+   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
+   * the violations to the correct map.
+   *
+   * @param ruleName name of rule
+   * @param level reporting level of rule
+   * @param violations list of violations from this rule
+   * @deprecated violations should be added to their appropriate ReportQuery object
+   */
+  @Deprecated
+  public void addViolations(String ruleName, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, violations);
+      infoCount += violations.size();
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, violations);
+      warnCount += violations.size();
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, violations);
+      errorCount += violations.size();
+    }
+    // Otherwise do nothing
+  }
+
+  /**
+   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
+   * exists.
+   *
+   * @param ruleName rule name to get number of violations for
+   * @return number of violations for given rule name
+   * @throws Exception if the rule name is not in this Report object
+   */
+  @Deprecated
+  public Integer getViolationCount(String ruleName) throws Exception {
+    if (info.containsKey(ruleName)) {
+      List<Violation> v = info.get(ruleName);
+      return v.size();
+    } else if (warn.containsKey(ruleName)) {
+      List<Violation> v = warn.get(ruleName);
+      return v.size();
+    } else if (error.containsKey(ruleName)) {
+      List<Violation> v = error.get(ruleName);
+      return v.size();
+    }
+    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
   }
 
   /**
