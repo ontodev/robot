@@ -288,8 +288,7 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations =
-          getViolations(ioHelper, dataset, queryName, queryString, options);
+      Set<Violation> violations = getViolations(ioHelper, dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
@@ -440,8 +439,7 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      List<Violation> violations =
-          getViolations(ioHelper, dataset, queryName, queryString, options);
+      Set<Violation> violations = getViolations(ioHelper, dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
@@ -846,7 +844,7 @@ public class ReportOperation {
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(
+  private static Set<Violation> getViolations(
       IOHelper ioHelper,
       Dataset dataset,
       String queryName,
@@ -910,9 +908,9 @@ public class ReportOperation {
    * @return list of Violation objects
    * @throws Exception on malformed query
    */
-  private static List<Violation> getViolationsFromResults(
+  private static Set<Violation> getViolationsFromResults(
       IOHelper ioHelper, String queryName, ResultSet violationSet, Integer limit) throws Exception {
-    List<Violation> violations = new ArrayList<>();
+    Set<Violation> violations = new HashSet<>();
 
     // Counter for stopping at limit
     int c = 0;
