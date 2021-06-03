@@ -5,7 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.geneontology.owl.differ.Differ;
@@ -169,6 +171,41 @@ public class CommandLineIT {
                   + "' is different from example ontology '"
                   + examplePath
                   + "'");
+        }
+      } else if (resultFile.getName().endsWith(".tsv")) {
+        // Read TSVs as sets of lines and compare ignoring ordering differences
+        Set<String> exampleLines =
+            new HashSet<>(FileUtils.readLines(exampleFile, Charset.defaultCharset()));
+        Set<String> resultLines =
+            new HashSet<>(FileUtils.readLines(resultFile, Charset.defaultCharset()));
+        Set<String> exampleCopy = new HashSet<>(exampleLines);
+        // Check for missing lines
+        exampleLines.removeAll(resultLines);
+        // Check for extra lines
+        resultLines.removeAll(exampleCopy);
+        if (!exampleLines.isEmpty() && !resultLines.isEmpty()) {
+          throw new Exception(
+              String.format(
+                      "Integration test file '%s' contains %d lines not in example file:",
+                      resultsPath + resultFile.getName(), resultLines.size())
+                  + String.join("\n\t", resultLines)
+                  + "\n\n"
+                  + String.format(
+                      "Integration test file '%s' is missing %d lines from example file:",
+                      resultsPath + resultFile.getName(), exampleLines.size())
+                  + String.join("\n\t", exampleLines));
+        } else if (!exampleLines.isEmpty()) {
+          throw new Exception(
+              String.format(
+                      "Integration test file '%s' is missing %d lines from example file:",
+                      resultsPath + resultFile.getName(), exampleLines.size())
+                  + String.join("\n\t", exampleLines));
+        } else if (!resultLines.isEmpty()) {
+          throw new Exception(
+              String.format(
+                      "Integration test file '%s' contains %d lines not in example file:",
+                      resultsPath + resultFile.getName(), resultLines.size())
+                  + String.join("\n\t", resultLines));
         }
       } else {
         // Compare all other files
