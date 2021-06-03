@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add links to query documentation for default rules in [`report`] [#879]
+
 ### Fixed
 - Fix printing violations in [`report`] [#823]
 - Fix handling of `rdf:type` in [`export`] [#834]
