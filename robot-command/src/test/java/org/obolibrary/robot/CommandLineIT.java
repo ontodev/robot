@@ -155,6 +155,8 @@ public class CommandLineIT {
                 + "'");
       }
 
+      // Check for file differences
+      boolean hasDiff = false;
       if (resultFile.getName().endsWith(".owl") || resultFile.getName().endsWith(".ttl")) {
         // Compare OWL files using Differ
         OWLOntology exampleOnt =
@@ -164,13 +166,7 @@ public class CommandLineIT {
 
         Differ.BasicDiff diff = Differ.diff(exampleOnt, resultOnt);
         if (!diff.isEmpty()) {
-          throw new Exception(
-              "Integration test ontology '"
-                  + resultsPath
-                  + resultFile.getName()
-                  + "' is different from example ontology '"
-                  + examplePath
-                  + "'");
+          hasDiff = true;
         }
       } else if (resultFile.getName().endsWith(".tsv")) {
         // Read TSVs as sets of lines and compare ignoring ordering differences
@@ -183,41 +179,25 @@ public class CommandLineIT {
         exampleLines.removeAll(resultLines);
         // Check for extra lines
         resultLines.removeAll(exampleCopy);
-        if (!exampleLines.isEmpty() && !resultLines.isEmpty()) {
-          throw new Exception(
-              String.format(
-                      "Integration test file '%s' contains %d lines not in example file:",
-                      resultsPath + resultFile.getName(), resultLines.size())
-                  + String.join("\n\t", resultLines)
-                  + "\n\n"
-                  + String.format(
-                      "Integration test file '%s' is missing %d lines from example file:",
-                      resultsPath + resultFile.getName(), exampleLines.size())
-                  + String.join("\n\t", exampleLines));
-        } else if (!exampleLines.isEmpty()) {
-          throw new Exception(
-              String.format(
-                      "Integration test file '%s' is missing %d lines from example file:",
-                      resultsPath + resultFile.getName(), exampleLines.size())
-                  + String.join("\n\t", exampleLines));
-        } else if (!resultLines.isEmpty()) {
-          throw new Exception(
-              String.format(
-                      "Integration test file '%s' contains %d lines not in example file:",
-                      resultsPath + resultFile.getName(), resultLines.size())
-                  + String.join("\n\t", resultLines));
+        if (!exampleLines.isEmpty() || !resultLines.isEmpty()) {
+          hasDiff = true;
         }
       } else {
         // Compare all other files
         if (!FileUtils.contentEquals(exampleFile, resultFile)) {
-          throw new Exception(
-              "Integration test file '"
-                  + resultsPath
-                  + resultFile.getName()
-                  + "' is different from example file '"
-                  + examplePath
-                  + "'");
+          hasDiff = true;
         }
+      }
+
+      // Throw exception on any diff
+      if (hasDiff) {
+        throw new Exception(
+            "Integration test ontology '"
+                + resultsPath
+                + resultFile.getName()
+                + "' is different from example ontology '"
+                + examplePath
+                + "'");
       }
     }
   }
