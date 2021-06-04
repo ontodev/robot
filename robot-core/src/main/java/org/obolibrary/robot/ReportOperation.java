@@ -5,13 +5,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
@@ -288,7 +282,8 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      Set<Violation> violations = getViolations(ioHelper, dataset, queryName, queryString, options);
+      List<Violation> violations =
+          getViolations(ioHelper, dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
@@ -439,7 +434,8 @@ public class ReportOperation {
       }
       queryString = String.join("\n", lines);
       // Use the query to get violations
-      Set<Violation> violations = getViolations(ioHelper, dataset, queryName, queryString, options);
+      List<Violation> violations =
+          getViolations(ioHelper, dataset, queryName, queryString, options);
       // If violations is not returned properly, the query did not have the correct format
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
@@ -844,7 +840,7 @@ public class ReportOperation {
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
-  private static Set<Violation> getViolations(
+  private static List<Violation> getViolations(
       IOHelper ioHelper,
       Dataset dataset,
       String queryName,
@@ -908,9 +904,9 @@ public class ReportOperation {
    * @return list of Violation objects
    * @throws Exception on malformed query
    */
-  private static Set<Violation> getViolationsFromResults(
+  private static List<Violation> getViolationsFromResults(
       IOHelper ioHelper, String queryName, ResultSet violationSet, Integer limit) throws Exception {
-    Set<Violation> violations = new HashSet<>();
+    List<Violation> violations = new ArrayList<>();
 
     // Counter for stopping at limit
     int c = 0;

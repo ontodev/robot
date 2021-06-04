@@ -1,7 +1,7 @@
 package org.obolibrary.robot.checks;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReportQuery {
 
@@ -10,7 +10,7 @@ public class ReportQuery {
   private final String query;
   private final String level;
 
-  private final Set<Violation> violations = new HashSet<>();
+  private final List<Violation> violations = new ArrayList<>();
 
   /**
    * Create a new ReportQuery object.
@@ -46,7 +46,7 @@ public class ReportQuery {
    *
    * @param vs list of Violations
    */
-  public void addViolations(Set<Violation> vs) {
+  public void addViolations(List<Violation> vs) {
     violations.addAll(vs);
   }
 
@@ -91,7 +91,7 @@ public class ReportQuery {
    *
    * @return List of Violations
    */
-  public Set<Violation> getViolations() {
+  public List<Violation> getViolations() {
     return violations;
   }
 }
