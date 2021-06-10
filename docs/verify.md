@@ -3,7 +3,7 @@
 The `verify` command is used to check an ontology for violations of rules. Each rule is expressed as a SPARQL SELECT query that matches violations of the rule. If the query produces any results, `verify` will exit with an error message that reports the violations. If the ontology conforms to the rule, the query should find no violations, and the `verify` command will succeed.
 
 In the `verify` command, you specify a set of queries using the `--queries` parameter and
-specifying an output directory for the result using the `--output-dir` paramter,
+specify an output directory for the result using the `--output-dir` parameter,
 e.g. `--queries` query-file-1 query-file-2 ... `--output-dir` some-directory
 
 For example:
