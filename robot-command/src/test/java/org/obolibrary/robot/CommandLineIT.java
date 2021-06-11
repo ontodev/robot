@@ -5,7 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.geneontology.owl.differ.Differ;
@@ -153,6 +155,8 @@ public class CommandLineIT {
                 + "'");
       }
 
+      // Check for file differences
+      boolean hasDiff = false;
       if (resultFile.getName().endsWith(".owl") || resultFile.getName().endsWith(".ttl")) {
         // Compare OWL files using Differ
         OWLOntology exampleOnt =
@@ -162,25 +166,38 @@ public class CommandLineIT {
 
         Differ.BasicDiff diff = Differ.diff(exampleOnt, resultOnt);
         if (!diff.isEmpty()) {
-          throw new Exception(
-              "Integration test ontology '"
-                  + resultsPath
-                  + resultFile.getName()
-                  + "' is different from example ontology '"
-                  + examplePath
-                  + "'");
+          hasDiff = true;
+        }
+      } else if (resultFile.getName().endsWith(".tsv")) {
+        // Read TSVs as sets of lines and compare ignoring ordering differences
+        Set<String> exampleLines =
+            new HashSet<>(FileUtils.readLines(exampleFile, Charset.defaultCharset()));
+        Set<String> resultLines =
+            new HashSet<>(FileUtils.readLines(resultFile, Charset.defaultCharset()));
+        Set<String> exampleCopy = new HashSet<>(exampleLines);
+        // Check for missing lines
+        exampleLines.removeAll(resultLines);
+        // Check for extra lines
+        resultLines.removeAll(exampleCopy);
+        if (!exampleLines.isEmpty() || !resultLines.isEmpty()) {
+          hasDiff = true;
         }
       } else {
         // Compare all other files
         if (!FileUtils.contentEquals(exampleFile, resultFile)) {
-          throw new Exception(
-              "Integration test file '"
-                  + resultsPath
-                  + resultFile.getName()
-                  + "' is different from example file '"
-                  + examplePath
-                  + "'");
+          hasDiff = true;
         }
+      }
+
+      // Throw exception on any diff
+      if (hasDiff) {
+        throw new Exception(
+            "Integration test ontology '"
+                + resultsPath
+                + resultFile.getName()
+                + "' is different from example ontology '"
+                + examplePath
+                + "'");
       }
     }
   }

@@ -249,6 +249,12 @@ public class Row {
         value = String.join(split, values);
         htmlClass = cell.getHTMLClass();
         comment = cell.getComment();
+
+        // Maybe wrap cell in href (separate from rendered entities)
+        String href = cell.getHref();
+        if (href != null) {
+          value = String.format("<a href=\"%s\">%s</a>", href, value);
+        }
       } else {
         value = "";
       }
