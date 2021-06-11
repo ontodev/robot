@@ -4,13 +4,8 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
@@ -19,6 +14,7 @@ import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.tdb.transaction.TDBTransactionException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.obolibrary.robot.checks.Report;
+import org.obolibrary.robot.checks.ReportQuery;
 import org.obolibrary.robot.checks.Violation;
 import org.obolibrary.robot.export.Table;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -29,7 +25,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Report issues with an ontology using a series of QC SPARQL queries.
  *
- * @author <a href="mailto:rctauber@gmail.com">Becky Tauber</a>
+ * @author <a href="mailto:rbca.jackson@gmail.com">Rebecca Jackson</a>
  * @author <a href="mailto:james@overton.ca">James A. Overton</a>
  */
 public class ReportOperation {
@@ -261,8 +257,10 @@ public class ReportOperation {
 
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
-    // The queries is a map of rule name and query string
-    Map<String, String> queries = getQueryStrings(profile.keySet());
+    // We get the queries for the rules from the profile
+    Set<ReportQuery> reportQueries = getReportQueries(profile);
+
+    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
 
     // Create the report object
     Report report;
@@ -272,9 +270,9 @@ public class ReportOperation {
       report = new Report(ontology, useLabels);
     }
 
-    Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, false);
-    for (String queryName : queries.keySet()) {
-      String fullQueryString = queries.get(queryName);
+    for (ReportQuery rq : reportQueries) {
+      String queryName = rq.getRuleName();
+      String fullQueryString = rq.getQuery();
       String queryString;
       // Remove any comments
       List<String> lines = new ArrayList<>();
@@ -291,9 +289,9 @@ public class ReportOperation {
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      report.addViolations(queryName, profile.get(queryName), violations);
+      rq.addViolations(violations);
+      report.addReportQuery(rq);
     }
-
     return report;
   }
 
@@ -397,8 +395,8 @@ public class ReportOperation {
 
     // The profile is a map of rule name and reporting level
     Map<String, String> profile = getProfile(profilePath);
-    // The queries is a map of rule name and query string
-    Map<String, String> queries = getQueryStrings(profile.keySet());
+    // We get the queries for the rules from the profile
+    Set<ReportQuery> reportQueries = getReportQueries(profile);
 
     boolean useLabels = OptionsHelper.optionIsTrue(options, "labels");
     Map<IRI, String> labelMap = null;
@@ -424,8 +422,9 @@ public class ReportOperation {
     // Create the report object (maybe using labels)
     Report report = new Report(labelMap);
 
-    for (String queryName : queries.keySet()) {
-      String fullQueryString = queries.get(queryName);
+    for (ReportQuery rq : reportQueries) {
+      String queryName = rq.getRuleName();
+      String fullQueryString = rq.getQuery();
       String queryString;
       // Remove any comments
       List<String> lines = new ArrayList<>();
@@ -442,9 +441,9 @@ public class ReportOperation {
       if (violations == null) {
         throw new Exception(String.format(missingEntityBinding, queryName));
       }
-      report.addViolations(queryName, profile.get(queryName), violations);
+      rq.addViolations(violations);
+      report.addReportQuery(rq);
     }
-
     return report;
   }
 
@@ -461,7 +460,7 @@ public class ReportOperation {
   public static boolean processReport(Report report, String outputPath, Map<String, String> options)
       throws IOException {
     // Print violations to terminal
-    Integer violationCount = report.getTotalViolations();
+    int violationCount = report.getTotalViolations();
     if (violationCount != 0) {
       System.out.println("Violations: " + violationCount);
       System.out.println("-----------------");
@@ -610,29 +609,42 @@ public class ReportOperation {
   }
 
   /**
-   * Given a set of rules (either as the default rule names or URL to a file), return a map of the
-   * rule names and the corresponding query strings.
+   * Create a list of ReportQuery objects based on the profile.
    *
-   * @param rules set of rules to get queries for
-   * @return map of rule name and query string
-   * @throws IOException on any issue reading the query file
-   * @throws URISyntaxException on issue converting URL to URI
+   * @param profile Map of rule name to violation level
+   * @return List of Report Query objects
+   * @throws IOException on problem getting query strings
+   * @throws URISyntaxException on problem getting query strings
    */
-  private static Map<String, String> getQueryStrings(Set<String> rules)
+  private static Set<ReportQuery> getReportQueries(Map<String, String> profile)
       throws IOException, URISyntaxException {
+    Set<ReportQuery> reportQueries = new HashSet<>();
     Set<String> defaultRules = new HashSet<>();
     Set<String> userRules = new HashSet<>();
-    Map<String, String> queries = new HashMap<>();
-    for (String rule : rules) {
+    for (String rule : profile.keySet()) {
       if (rule.startsWith("file:")) {
         userRules.add(rule);
       } else {
         defaultRules.add(rule);
       }
     }
-    queries.putAll(getDefaultQueryStrings(defaultRules));
-    queries.putAll(getUserQueryStrings(userRules));
-    return queries;
+
+    Map<String, String> defaultQueryStrings = getDefaultQueryStrings(defaultRules);
+    for (Map.Entry<String, String> qs : defaultQueryStrings.entrySet()) {
+      String ruleName = qs.getKey();
+      String ruleURL = "http://robot.obolibrary.org/report_queries/" + ruleName;
+      ReportQuery rq = new ReportQuery(ruleName, ruleURL, qs.getValue(), profile.get(ruleName));
+      reportQueries.add(rq);
+    }
+    Map<String, String> userQueryStrings = getUserQueryStrings(userRules);
+    for (Map.Entry<String, String> qs : userQueryStrings.entrySet()) {
+      String rulePath = qs.getKey();
+      String ruleName =
+          rulePath.substring(rulePath.lastIndexOf("/") + 1, rulePath.lastIndexOf("."));
+      ReportQuery rq = new ReportQuery(ruleName, qs.getValue(), profile.get(ruleName));
+      reportQueries.add(rq);
+    }
+    return reportQueries;
   }
 
   /**
@@ -654,7 +666,7 @@ public class ReportOperation {
         if (!file.exists()) {
           throw new IOException(String.format(missingQueryError, file.getPath()));
         }
-        queries.put(rule, FileUtils.readFileToString(file));
+        queries.put(rule, FileUtils.readFileToString(file, Charset.defaultCharset()));
       } else {
         // Process a relative path
         String path = rule.substring(5);
@@ -662,7 +674,7 @@ public class ReportOperation {
         if (!file.exists()) {
           throw new IOException(String.format(missingQueryError, file.getPath()));
         }
-        queries.put(rule, FileUtils.readFileToString(file));
+        queries.put(rule, FileUtils.readFileToString(file, Charset.defaultCharset()));
       }
     }
     return queries;
@@ -695,7 +707,8 @@ public class ReportOperation {
         // Only add it to the queries if the rule set contains that rule
         // If rules == null, include all rules
         if (rules == null || rules.contains(ruleName)) {
-          queries.put(ruleName, FileUtils.readFileToString(new File(qPath)));
+          queries.put(
+              ruleName, FileUtils.readFileToString(new File(qPath), Charset.defaultCharset()));
         }
       }
       // Check that all the provided rule names are valid defaults
@@ -786,7 +799,7 @@ public class ReportOperation {
     if (path == null) {
       is = ReportOperation.class.getResourceAsStream("/report_profile.txt");
     } else {
-      is = new FileInputStream(new File(path));
+      is = new FileInputStream(path);
     }
     try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
       String line;
@@ -963,12 +976,13 @@ public class ReportOperation {
         if (value != null) {
           IRI valIRI = ioHelper.createIRI(value);
           if (valIRI != null) {
-            violation.addStatement(e, valIRI);
+            OWLEntity v = dataFactory.getOWLClass(valIRI);
+            violation.addStatement(e, v);
           } else {
-            violation.addStatement(e, dataFactory.getOWLLiteral(value));
+            violation.addStatement(e, value);
           }
         } else {
-          violation.addStatement(e, null);
+          violation.addStatement(e, "");
         }
       }
       violations.add(violation);
