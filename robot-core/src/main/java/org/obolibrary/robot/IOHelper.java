@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.opencsv.*;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -928,10 +929,14 @@ public class IOHelper {
       return null;
     }
 
-    if (iri.toString().contains(" ")) {
+    try {
+      // Check for malformed URL, e.g., a CURIE was returned or the value passed has spaces
+      new URL(iri.toString());
+    } catch (MalformedURLException e) {
       // Invalid IRI
       return null;
     }
+
     return iri;
   }
 
