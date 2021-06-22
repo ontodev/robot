@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add links to query documentation for default rules in [`report`] [#879]
+- Ability to restrict [`report`] to base ontology [#872]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -257,6 +258,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#874]: https://github.com/ontodev/robot/pull/874
+[#872]: https://github.com/ontodev/robot/pull/872
 [#858]: https://github.com/ontodev/robot/pull/858
 [#850]: https://github.com/ontodev/robot/pull/850
 [#834]: https://github.com/ontodev/robot/pull/834
