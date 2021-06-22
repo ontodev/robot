@@ -17,6 +17,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -929,12 +930,24 @@ public class IOHelper {
       return null;
     }
 
-    try {
-      // Check for malformed URL, e.g., a CURIE was returned or the value passed has spaces
-      new URL(iri.toString());
-    } catch (MalformedURLException e) {
-      // Invalid IRI
-      return null;
+    if (iri.toString().startsWith("urn:")) {
+      // A URN is not a valid URL, so we check it with regex
+      Pattern urnPattern =
+          Pattern.compile(
+              "^urn:[a-z0-9][a-z0-9-]{0,31}:([a-z0-9()+,\\-.:=@;$_!*']|%[0-9a-f]{2})+$",
+              Pattern.CASE_INSENSITIVE);
+      if (!urnPattern.matcher(iri.toString()).matches()) {
+        // Not a valid URN (RFC2141)
+        return null;
+      }
+    } else {
+      try {
+        // Check for malformed URL, e.g., a CURIE was returned or the value passed has spaces
+        new URL(iri.toString());
+      } catch (MalformedURLException e) {
+        // Invalid IRI
+        return null;
+      }
     }
 
     return iri;
