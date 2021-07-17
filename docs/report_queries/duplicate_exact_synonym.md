@@ -20,6 +20,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
  FILTER NOT EXISTS { ?entity owl:deprecated true }
  FILTER NOT EXISTS { ?entity2 owl:deprecated true }
  FILTER (?entity != ?entity2)
+ FILTER (!isBlank(?entity))
+ FILTER (!isBlank(?entity2))
 }
 ORDER BY DESC(UCASE(str(?value)))
 ```

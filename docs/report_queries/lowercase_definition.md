@@ -14,6 +14,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
                     obo:IAO_0000600 }
  ?entity ?property ?value .
  FILTER (!regex(?value, "^[A-Z]"))
+ FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity
 ```

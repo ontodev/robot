@@ -15,6 +15,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
  FILTER NOT EXISTS { ?entity owl:deprecated true }
  FILTER (?entity != oboInOwl:ObsoleteClass)
  FILTER regex(?value, "^obsolete", "i")
+ FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity
 ```

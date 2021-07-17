@@ -18,17 +18,28 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
      owl:disjointWith
    }
    ?entity a owl:Class;
-           owl:deprecated true .
-   ?value ?property ?entity .
+           owl:deprecated true ;
+           ?property ?value .
+   FILTER ( ?value != oboInOwl:ObsoleteClass )
   }
   UNION
   {
+     VALUES ?property {
+       rdfs:subClassOf
+     }
+     ?entity a owl:Class;
+             owl:deprecated true .
+     ?value ?property ?entity .
+  }
+  UNION
+  {
+   VALUES ?property {
+     owl:ObjectProperty
+     owl:DataProperty
+   }
    ?entity a owl:Class ;
            owl:deprecated true ;
            ?property ?value .
-   FILTER EXISTS { ?property a owl:ObjectProperty }
-   FILTER EXISTS { ?property a owl:DatatypeProperty }
-   FILTER ( ?value != oboInOwl:ObsoleteClass )
   }
   UNION
   {

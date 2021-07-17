@@ -16,27 +16,43 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   VALUES ?property {
     owl:equivalentClass
     rdfs:subClassOf
+    owl:disjointWith
   }
-  ?entity owl:deprecated true .
-  ?value ?property ?entity .
-  FILTER NOT EXISTS { ?entity rdfs:subClassOf oboInOwl:ObsoleteClass }
+  ?entity a owl:Class;
+          owl:deprecated true ;
+          ?property ?value .
+  FILTER ( ?value != oboInOwl:ObsoleteClass )
  }
  UNION
  {
-  ?entity owl:deprecated true .
-  ?entity ?property ?value .
-  FILTER (?property != obo:IAO_0000231)
-  FILTER (?property != rdf:type)
-  FILTER NOT EXISTS { ?property a owl:AnnotationProperty }
-  FILTER NOT EXISTS {
-    ?entity rdfs:subClassOf ?value .
-    FILTER (!isBlank(?value))
+    VALUES ?property {
+      rdfs:subClassOf
+    }
+    ?entity a owl:Class;
+            owl:deprecated true .
+    ?value ?property ?entity .
+ }
+ UNION
+ {
+  VALUES ?property {
+    owl:ObjectProperty
+    owl:DataProperty
   }
-  FILTER NOT EXISTS {
-    ?entity rdfs:subPropertyOf ?value .
-    FILTER (!isBlank(?value))
+  ?entity a owl:Class ;
+          owl:deprecated true ;
+          ?property ?value .
+ }
+ UNION
+ {
+  VALUES ?property {
+    owl:someValuesFrom
+    owl:allValuesFrom
   }
-  FILTER NOT EXISTS { ?entity rdfs:subClassOf oboInOwl:ObsoleteClass }
+  ?value a owl:Class ;
+         owl:deprecated true .
+  ?entity ?x ?rest .
+  ?rest a owl:Restriction ;
+        ?property ?value .
  }
 }
 ORDER BY ?entity

@@ -27,6 +27,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
  ?entity ?property ?value .
  ?entity ?property2 ?value .
  FILTER (?property != ?property2)
+ FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity
 ```

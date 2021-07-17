@@ -12,13 +12,15 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
  {
   VALUES ?property {rdfs:label}
   ?entity ?property ?value .
-  FILTER STRENDS(str(?value), " ")
+  FILTER REGEX(str(?value), "[\\s\r\n]+$")
+  FILTER (!isBlank(?entity))
  }
  UNION
  {
   VALUES ?property {rdfs:label}
   ?entity ?property ?value .
-  FILTER STRSTARTS(str(?value), " ")
+  FILTER REGEX(str(?value), "^[\\s\r\n]+")
+  FILTER (!isBlank(?entity))
  }
 }
 ORDER BY ?entity
