@@ -20,6 +20,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
            ?property ?value .
    FILTER ( ?value NOT IN (oboInOwl:ObsoleteClass, owl:Thing) )
   }
+  UNION
   {
    VALUES ?property {
      owl:equivalentClass
@@ -68,11 +69,13 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
      owl:someValuesFrom   
      owl:allValuesFrom
    }
-   ?entity a owl:Class ;
+   ?value a owl:Class ;
           owl:deprecated true .
+   ?e ?x ?rest .
    ?rest a owl:Restriction ;
-         ?property ?entity .
-   FILTER(isBlank(?entity))
+         ?property ?value .
+   FILTER(isBlank(?e))
+   BIND("Use in anonymous expression" as ?entity)
   }
 }
 ORDER BY ?entity
