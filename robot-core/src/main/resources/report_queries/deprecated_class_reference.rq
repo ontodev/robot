@@ -72,7 +72,6 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
           owl:deprecated true .
    ?rest a owl:Restriction ;
          ?property ?entity .
-   BIND("Use in nested expression" as ?entity)
    FILTER(isBlank(?entity))
   }
 }
