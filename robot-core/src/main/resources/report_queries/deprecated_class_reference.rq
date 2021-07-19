@@ -34,6 +34,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   {
      VALUES ?property {
        rdfs:subClassOf
+       owl:equivalentClass
+       owl:disjointWith
      }
      ?entity a owl:Class;
              owl:deprecated true .  

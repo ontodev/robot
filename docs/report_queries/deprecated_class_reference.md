@@ -14,22 +14,32 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT DISTINCT ?entity ?property ?value WHERE {
  {
   VALUES ?property {
-    owl:equivalentClass
     rdfs:subClassOf
+  }
+  ?entity a owl:Class;
+          owl:deprecated true ;
+          ?property ?value .
+  FILTER ( ?value NOT IN (oboInOwl:ObsoleteClass, owl:Thing) )
+ }
+ UNION
+ {
+  VALUES ?property {
+    owl:equivalentClass
     owl:disjointWith
   }
   ?entity a owl:Class;
           owl:deprecated true ;
           ?property ?value .
-  FILTER ( ?value != oboInOwl:ObsoleteClass )
  }
  UNION
  {
     VALUES ?property {
       rdfs:subClassOf
+      owl:equivalentClass
+      owl:disjointWith
     }
     ?entity a owl:Class;
-            owl:deprecated true .
+            owl:deprecated true .  
     ?value ?property ?entity .
  }
  UNION
@@ -53,6 +63,21 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   ?entity ?x ?rest .
   ?rest a owl:Restriction ;
         ?property ?value .
+  FILTER(!isBlank(?entity))
+ }
+ UNION
+ {
+  VALUES ?property {
+    owl:someValuesFrom   
+    owl:allValuesFrom
+  }
+  ?value a owl:Class ;
+         owl:deprecated true .
+  ?e ?x ?rest .
+  ?rest a owl:Restriction ;
+        ?property ?value .
+  FILTER(isBlank(?e))
+  BIND("anonymous expression" as ?entity)
  }
 }
 ORDER BY ?entity
