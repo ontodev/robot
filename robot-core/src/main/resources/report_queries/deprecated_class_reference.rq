@@ -54,29 +54,13 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   UNION
   {
    VALUES ?property {
-     owl:someValuesFrom
-     owl:allValuesFrom
-   }
-   ?value a owl:Class ;
-          owl:deprecated true .
-   ?entity ?x ?rest .
-   ?rest a owl:Restriction ;
-         ?property ?value .
-   FILTER(!isBlank(?entity))
-  }
-  UNION
-  {
-   VALUES ?property {
      owl:someValuesFrom   
      owl:allValuesFrom
    }
    ?value a owl:Class ;
           owl:deprecated true .
-   ?e ?x ?rest .
    ?rest a owl:Restriction ;
          ?property ?value .
-   FILTER(isBlank(?e))
-   BIND("anonymous expression" as ?entity)
   }
 }
 ORDER BY ?entity
