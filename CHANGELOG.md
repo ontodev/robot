@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix value rendering for entities in [`report`] [#874]
 - Fix `deprecated_class_reference` [`report`] query [#888]
 
+### Changed
+- Do not allow malformed IRIs to be returned by `IOHelper` [#882]
+
 ## [1.8.1] - 2021-01-27
 
 ### Fixed
@@ -259,6 +262,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#888]: https://github.com/ontodev/robot/pull/874
+[#882]: https://github.com/ontodev/robot/pull/882
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
 [#858]: https://github.com/ontodev/robot/pull/858
