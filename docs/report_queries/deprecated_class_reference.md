@@ -12,73 +12,58 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
- {
-  VALUES ?property {
-    rdfs:subClassOf
+  {
+   VALUES ?property {
+     rdfs:subClassOf
+   }
+   ?entity a owl:Class;
+           owl:deprecated true ;
+           ?property ?value .
+   FILTER ( ?value NOT IN (oboInOwl:ObsoleteClass, owl:Thing) )
   }
-  ?entity a owl:Class;
-          owl:deprecated true ;
-          ?property ?value .
-  FILTER ( ?value NOT IN (oboInOwl:ObsoleteClass, owl:Thing) )
- }
- UNION
- {
-  VALUES ?property {
-    owl:equivalentClass
-    owl:disjointWith
+  UNION
+  {
+   VALUES ?property {
+     owl:equivalentClass
+     owl:disjointWith
+   }
+   ?entity a owl:Class;
+           owl:deprecated true ;
+           ?property ?value .
   }
-  ?entity a owl:Class;
-          owl:deprecated true ;
-          ?property ?value .
- }
- UNION
- {
-    VALUES ?property {
-      rdfs:subClassOf
-      owl:equivalentClass
-      owl:disjointWith
-    }
-    ?entity a owl:Class;
-            owl:deprecated true .  
-    ?value ?property ?entity .
- }
- UNION
- {
-  VALUES ?property {
-    owl:ObjectProperty
-    owl:DataProperty
+  UNION
+  {
+     VALUES ?property {
+       rdfs:subClassOf
+       owl:equivalentClass
+       owl:disjointWith
+     }
+     ?entity a owl:Class;
+             owl:deprecated true .  
+     ?value ?property ?entity .
   }
-  ?entity a owl:Class ;
-          owl:deprecated true ;
-          ?property ?value .
- }
- UNION
- {
-  VALUES ?property {
-    owl:someValuesFrom
-    owl:allValuesFrom
+  UNION
+  {
+   VALUES ?property {
+     owl:ObjectProperty
+     owl:DataProperty
+   }
+   ?entity a owl:Class ;
+           owl:deprecated true ;
+           ?property ?value .
   }
-  ?value a owl:Class ;
-         owl:deprecated true .
-  ?entity ?x ?rest .
-  ?rest a owl:Restriction ;
-        ?property ?value .
-  FILTER(!isBlank(?entity))
- }
- UNION
- {
-  VALUES ?property {
-    owl:someValuesFrom   
-    owl:allValuesFrom
+  UNION
+  {
+   VALUES ?property {
+     owl:someValuesFrom   
+     owl:allValuesFrom
+   }
+   ?value a owl:Class ;
+          owl:deprecated true .
+   ?rest a owl:Restriction ;
+         ?property ?value .
+   BIND("blank node" as ?entity)
   }
-  ?value a owl:Class ;
-         owl:deprecated true .
-  ?e ?x ?rest .
-  ?rest a owl:Restriction ;
-        ?property ?value .
-  FILTER(isBlank(?e))
-  BIND("anonymous expression" as ?entity)
- }
 }
 ORDER BY ?entity
 ```
