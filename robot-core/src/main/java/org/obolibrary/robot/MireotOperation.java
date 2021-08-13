@@ -757,8 +757,7 @@ public class MireotOperation {
     Set<IRI> classIRIs = classes.stream().map(OWLNamedObject::getIRI).collect(Collectors.toSet());
     Set<OWLNamedIndividual> individuals = inputOntology.getIndividualsInSignature();
     individuals =
-        individuals
-            .stream()
+        individuals.stream()
             .filter(i -> !classIRIs.contains(i.getIRI()))
             .collect(Collectors.toSet());
 

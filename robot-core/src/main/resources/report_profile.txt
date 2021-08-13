@@ -8,6 +8,7 @@ WARN	duplicate_label_synonym
 ERROR	duplicate_label
 WARN	duplicate_scoped_synonym
 WARN	equivalent_pair
+WARN	equivalent_class_axiom_no_genus
 WARN	invalid_xref
 ERROR	label_formatting
 ERROR	label_whitespace
@@ -21,5 +22,6 @@ ERROR	missing_ontology_title
 INFO	missing_superclass
 ERROR	misused_obsolete_label
 ERROR	multiple_definitions
-ERROR	multiple_equivalent_classes
+WARN	multiple_equivalent_classes
+ERROR	multiple_equivalent_class_definitions
 ERROR	multiple_labels

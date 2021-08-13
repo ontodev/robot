@@ -51,7 +51,7 @@ public class TemplateHelperTest extends CoreTest {
     String value = "oboInOwl:inSubset|oboInOwl:id";
     String split = "|";
     Set<OWLAnnotationProperty> properties =
-        TemplateHelper.getAnnotationProperties(checker, value, split);
+        TemplateHelper.getAnnotationProperties(checker, value, split, 0);
 
     OWLAnnotationProperty p1 = checker.getOWLAnnotationProperty("oboInOwl:inSubset");
     OWLAnnotationProperty p2 = checker.getOWLAnnotationProperty("oboInOwl:id");
@@ -231,7 +231,7 @@ public class TemplateHelperTest extends CoreTest {
     QuotedEntityChecker checker = new QuotedEntityChecker();
     checker.setIOHelper(new IOHelper());
 
-    anns = TemplateHelper.getStringAnnotations(checker, "A rdfs:label", null, "bar");
+    anns = TemplateHelper.getStringAnnotations(checker, "A rdfs:label", null, "bar", 0);
     for (OWLAnnotation a : anns) {
       ann = a;
     }
@@ -245,13 +245,14 @@ public class TemplateHelperTest extends CoreTest {
     }
     assertEquals("Annotation(rdfs:label \"1\"^^xsd:integer)", ann.toString());
 
-    anns = TemplateHelper.getLanguageAnnotations(checker, "AL rdfs:label@en", null, "bar");
+    anns = TemplateHelper.getLanguageAnnotations(checker, "AL rdfs:label@en", null, "bar", 0);
     for (OWLAnnotation a : anns) {
       ann = a;
     }
     assertEquals("Annotation(rdfs:label \"bar\"@en)", ann.toString());
 
-    ann = TemplateHelper.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"));
+    ann =
+        TemplateHelper.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"), 0);
     assertEquals("Annotation(rdfs:label <http://bar.com>)", ann.toString());
   }
 }

@@ -92,8 +92,7 @@ public class RenameOperation {
       String oldBase = mapping.getKey();
       String newBase = mapping.getValue();
       Set<IRI> matchIRIs =
-          allIRIs
-              .stream()
+          allIRIs.stream()
               .filter(iri -> iri.toString().startsWith(oldBase))
               .collect(Collectors.toSet());
       if (matchIRIs.isEmpty()) {
