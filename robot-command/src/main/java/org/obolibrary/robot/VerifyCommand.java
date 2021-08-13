@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -123,7 +124,7 @@ public class VerifyCommand implements Command {
     boolean passing = true;
     for (String filePath : queryFilePaths) {
       File queryFile = new File(filePath);
-      String queryString = FileUtils.readFileToString(queryFile);
+      String queryString = FileUtils.readFileToString(queryFile, Charset.defaultCharset());
       String csvPath = FilenameUtils.getBaseName(filePath).concat(".csv");
       boolean result =
           QueryOperation.runVerify(

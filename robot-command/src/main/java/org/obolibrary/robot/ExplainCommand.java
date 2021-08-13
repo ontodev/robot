@@ -268,8 +268,7 @@ public class ExplainCommand implements Command {
     Set<OWLAxiom> explanationsAxioms =
         explanations.stream().flatMap(e -> e.getAxioms().stream()).collect(Collectors.toSet());
     Set<IRI> explanationTerms =
-        explanationsAxioms
-            .stream()
+        explanationsAxioms.stream()
             .flatMap(ax -> ax.getSignature().stream().map(OWLNamedObject::getIRI))
             .collect(Collectors.toSet());
     Set<OWLAnnotationAssertionAxiom> annotations =
@@ -289,8 +288,7 @@ public class ExplainCommand implements Command {
     Map<OWLAxiom, Integer> mapMostUsedAxioms = new HashMap<>();
     explanations.forEach(e -> e.getAxioms().forEach(ax -> countUp(ax, mapMostUsedAxioms)));
     String result =
-        explanations
-            .stream()
+        explanations.stream()
             .map(e -> ExplainOperation.renderExplanationAsMarkdown(e, man))
             .collect(Collectors.joining("\n\n\n"));
     String summary = ExplainOperation.renderAxiomImpactSummary(mapMostUsedAxioms, ontology, man);
