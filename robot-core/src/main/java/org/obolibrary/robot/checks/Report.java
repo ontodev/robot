@@ -35,17 +35,14 @@ public class Report {
   /** Reporting level ERROR. */
   private static final String ERROR = "ERROR";
 
-  /** Map of rules and the violations for INFO level. */
-  public Map<String, List<Violation>> info = new HashMap<>();
+  /** Collection of the info-level report queries. */
+  private final List<ReportQuery> infoViolations = new ArrayList<>();
 
-  /** Map of rules and the violations for WARN level. */
-  public Map<String, List<Violation>> warn = new HashMap<>();
+  /** Collection of the warn-level report queries. */
+  private final List<ReportQuery> warnViolations = new ArrayList<>();
 
-  /** Map of rules and the violations for ERROR level. */
-  public Map<String, List<Violation>> error = new HashMap<>();
-
-  /** Boolean to use labels for output - defaults to false. */
-  private boolean useLabels = false;
+  /** Collection of the error-level report queries. */
+  private final List<ReportQuery> errorViolations = new ArrayList<>();
 
   /** Count of violations for INFO. */
   private Integer infoCount = 0;
@@ -56,8 +53,11 @@ public class Report {
   /** Count of violations for ERROR. */
   private Integer errorCount = 0;
 
+  /** Boolean to use labels for output - defaults to false. */
+  private boolean useLabels = false;
+
   /** IOHelper to use. */
-  private IOHelper ioHelper;
+  private final IOHelper ioHelper;
 
   /** Manager to use. */
   private OWLOntologyManager manager;
@@ -70,6 +70,15 @@ public class Report {
       Lists.newArrayList("Level", "Rule Name", "Subject", "Property", "Value");
 
   private IRI ontologyIRI = null;
+
+  /** Map of rules and the violations for INFO level. */
+  @Deprecated public Map<String, List<Violation>> info = new HashMap<>();
+
+  /** Map of rules and the violations for WARN level. */
+  @Deprecated public Map<String, List<Violation>> warn = new HashMap<>();
+
+  /** Map of rules and the violations for ERROR level. */
+  @Deprecated public Map<String, List<Violation>> error = new HashMap<>();
 
   /**
    * Create a new report object without an ontology or predefined IOHelper.
@@ -191,26 +200,29 @@ public class Report {
   }
 
   /**
-   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
-   * the violations to the correct map.
+   * Add a ReportQuery to this Report.
    *
-   * @param ruleName name of rule
-   * @param level reporting level of rule
-   * @param violations list of violations from this rule
+   * @param rq ReportQuery to add
    */
-  public void addViolations(String ruleName, String level, List<Violation> violations) {
-    logger.debug("violation found: " + ruleName);
-    if (INFO.equals(level)) {
-      info.put(ruleName, violations);
-      infoCount += violations.size();
-    } else if (WARN.equals(level)) {
-      warn.put(ruleName, violations);
-      warnCount += violations.size();
-    } else if (ERROR.equals(level)) {
-      error.put(ruleName, violations);
-      errorCount += violations.size();
+  public void addReportQuery(ReportQuery rq) {
+    String level = rq.getLevel();
+    switch (level) {
+      case ERROR:
+        errorViolations.add(rq);
+        errorCount += rq.getViolations().size();
+        break;
+      case WARN:
+        warnViolations.add(rq);
+        warnCount += rq.getViolations().size();
+        break;
+      case INFO:
+        infoViolations.add(rq);
+        infoCount += rq.getViolations().size();
+        break;
+      default:
+        logger.error(
+            String.format("Unknown violation level for '%s': %s", rq.getRuleName(), level));
     }
-    // Otherwise do nothing
   }
 
   /**
@@ -242,48 +254,13 @@ public class Report {
   }
 
   /**
-   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
-   * exists.
-   *
-   * @param ruleName rule name to get number of violations for
-   * @return number of violations for given rule name
-   * @throws Exception if the rule name is not in this Report object
-   */
-  public Integer getViolationCount(String ruleName) throws Exception {
-    if (info.containsKey(ruleName)) {
-      List<Violation> v = info.get(ruleName);
-      return v.size();
-    } else if (warn.containsKey(ruleName)) {
-      List<Violation> v = warn.get(ruleName);
-      return v.size();
-    } else if (error.containsKey(ruleName)) {
-      List<Violation> v = error.get(ruleName);
-      return v.size();
-    }
-    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
-  }
-
-  /**
    * Convert the report details to a Table object to save.
    *
    * @param format String output format
    * @return export Table object
    */
   public Table toTable(String format) {
-    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
-    QuotedAnnotationValueShortFormProvider nameProvider =
-        new QuotedAnnotationValueShortFormProvider(
-            manager,
-            curieProvider,
-            ioHelper.getPrefixManager(),
-            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-            Collections.emptyMap());
-    ShortFormProvider provider;
-    if (useLabels) {
-      provider = nameProvider;
-    } else {
-      provider = curieProvider;
-    }
+    ShortFormProvider provider = getProvider();
 
     Table table = new Table(format);
     for (String h : header) {
@@ -291,9 +268,9 @@ public class Report {
       table.addColumn(c);
     }
 
-    addToTable(table, provider, ERROR, error);
-    addToTable(table, provider, WARN, warn);
-    addToTable(table, provider, INFO, info);
+    addToTable(table, provider, ERROR, errorViolations);
+    addToTable(table, provider, WARN, warnViolations);
+    addToTable(table, provider, INFO, infoViolations);
 
     return table;
   }
@@ -316,23 +293,10 @@ public class Report {
    * @return YAML string
    */
   public String toYAML() {
-    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
-    QuotedAnnotationValueShortFormProvider nameProvider =
-        new QuotedAnnotationValueShortFormProvider(
-            manager,
-            curieProvider,
-            ioHelper.getPrefixManager(),
-            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-            Collections.emptyMap());
-    ShortFormProvider provider;
-    if (useLabels) {
-      provider = nameProvider;
-    } else {
-      provider = curieProvider;
-    }
-    return yamlHelper(provider, ERROR, error)
-        + yamlHelper(provider, WARN, warn)
-        + yamlHelper(provider, INFO, info);
+    ShortFormProvider provider = getProvider();
+    return yamlHelper(provider, ERROR, errorViolations)
+        + yamlHelper(provider, WARN, warnViolations)
+        + yamlHelper(provider, INFO, infoViolations);
   }
 
   /**
@@ -341,20 +305,26 @@ public class Report {
    * @param table Table to add to
    * @param provider ShortFormProvider used to render objects
    * @param level String violation level
-   * @param violations Map of violations (rule -> violations)
+   * @param reportQueries collection of ReportQuery objects at this violation level
    */
   private void addToTable(
-      Table table,
-      ShortFormProvider provider,
-      String level,
-      Map<String, List<Violation>> violations) {
+      Table table, ShortFormProvider provider, String level, List<ReportQuery> reportQueries) {
     List<Column> columns = table.getColumns();
     RendererType displayRenderer = table.getDisplayRendererType();
-    for (Entry<String, List<Violation>> vs : violations.entrySet()) {
-      String ruleName = getRuleName(vs.getKey());
+    for (ReportQuery rq : reportQueries) {
+      // Create a reusable cell for the violation level
       Cell levelCell = new Cell(columns.get(0), level);
+
+      // Create a reusable cell for the name of the rule, maybe adding a link if we have one
+      String ruleName = rq.getRuleName();
       Cell ruleCell = new Cell(columns.get(1), ruleName);
-      for (Violation v : vs.getValue()) {
+      String ruleURL = rq.getRuleURL();
+      if (ruleURL != null) {
+        ruleCell.setHref(ruleURL);
+      }
+
+      // Add a row for each violation
+      for (Violation v : rq.getViolations()) {
         // Subject of the violation for the following rows
         String subject;
         if (ontologyIRI != null
@@ -372,7 +342,7 @@ public class Report {
           }
         }
         Cell subjectCell = new Cell(columns.get(2), subject);
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           // Property of the violation for the following rows
           String property = "";
           if (statement.getKey() != null) {
@@ -382,33 +352,43 @@ public class Report {
           Cell propertyCell = new Cell(columns.get(3), property);
 
           if (statement.getValue().isEmpty()) {
-            Row row = new Row(level);
             Cell valueCell = new Cell(columns.get(4), "");
-            row.add(levelCell);
-            row.add(ruleCell);
-            row.add(subjectCell);
-            row.add(propertyCell);
-            row.add(valueCell);
-            table.addRow(row);
+            addRowToTable(table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
           } else {
-            for (OWLObject o : statement.getValue()) {
-              Row row = new Row(level);
-
-              String value = "";
-              if (o != null) {
-                value = OntologyHelper.renderManchester(o, provider, displayRenderer);
-              }
-
+            for (OWLEntity e : statement.getValue()) {
+              String value = OntologyHelper.renderManchester(e, provider, displayRenderer);
               Cell valueCell = new Cell(columns.get(4), value);
-              row.add(levelCell);
-              row.add(ruleCell);
-              row.add(subjectCell);
-              row.add(propertyCell);
-              row.add(valueCell);
-              table.addRow(row);
+              addRowToTable(
+                  table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
             }
           }
         }
+
+        for (Entry<OWLEntity, List<String>> statement : v.literalStatements.entrySet()) {
+          // Property of the violation for the following rows
+          String property = "";
+          if (statement.getKey() != null) {
+            property =
+                OntologyHelper.renderManchester(statement.getKey(), provider, displayRenderer);
+          }
+          Cell propertyCell = new Cell(columns.get(3), property);
+
+          if (statement.getValue().isEmpty()) {
+            Cell valueCell = new Cell(columns.get(4), "");
+            addRowToTable(table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
+          } else {
+            for (String value : statement.getValue()) {
+              if (value == null) {
+                value = "";
+              }
+              Cell valueCell = new Cell(columns.get(4), value);
+              addRowToTable(
+                  table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
+            }
+          }
+        }
+
+        // Support for old statements method
         for (Entry<String, List<String>> statement : v.statements.entrySet()) {
           String property = statement.getKey();
           if (property == null) {
@@ -417,27 +397,16 @@ public class Report {
           Cell propertyCell = new Cell(columns.get(3), property);
 
           if (statement.getValue().isEmpty()) {
-            Row row = new Row(level);
             Cell valueCell = new Cell(columns.get(4), "");
-            row.add(levelCell);
-            row.add(ruleCell);
-            row.add(subjectCell);
-            row.add(propertyCell);
-            row.add(valueCell);
-            table.addRow(row);
+            addRowToTable(table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
           } else {
             for (String value : statement.getValue()) {
               if (value == null) {
                 continue;
               }
-              Row row = new Row(level);
               Cell valueCell = new Cell(columns.get(4), value);
-              row.add(levelCell);
-              row.add(ruleCell);
-              row.add(subjectCell);
-              row.add(propertyCell);
-              row.add(valueCell);
-              table.addRow(row);
+              addRowToTable(
+                  table, level, levelCell, ruleCell, subjectCell, propertyCell, valueCell);
             }
           }
         }
@@ -446,34 +415,65 @@ public class Report {
   }
 
   /**
-   * Given a rule name, return a rule name. If the string starts with "file", the name is the path
-   * and should be stripped to just the name. Otherwise, the input is returned.
+   * Add a row to a table.
    *
-   * @param ruleName string to (maybe) format
-   * @return rule name
+   * @param table Table to add row to
+   * @param level String violation level
+   * @param levelCell Cell for level
+   * @param ruleCell Cell for rule
+   * @param subjectCell Cell for subject
+   * @param propertyCell Cell for property
+   * @param valueCell Cell for value
    */
-  private String getRuleName(String ruleName) {
-    if (ruleName.contains("file:")) {
-      try {
-        return ruleName.substring(ruleName.lastIndexOf("/") + 1, ruleName.lastIndexOf("."));
-      } catch (Exception e) {
-        return ruleName;
-      }
+  private void addRowToTable(
+      Table table,
+      String level,
+      Cell levelCell,
+      Cell ruleCell,
+      Cell subjectCell,
+      Cell propertyCell,
+      Cell valueCell) {
+    Row row = new Row(level);
+    row.add(levelCell);
+    row.add(ruleCell);
+    row.add(subjectCell);
+    row.add(propertyCell);
+    row.add(valueCell);
+    table.addRow(row);
+  }
+
+  /**
+   * Get a ShortFormProvider to render entities based on if we are rendering labels or not.
+   *
+   * @return ShortFormProvider that either uses names (labels or CURIEs) or CURIEs
+   */
+  private ShortFormProvider getProvider() {
+    CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
+    QuotedAnnotationValueShortFormProvider nameProvider =
+        new QuotedAnnotationValueShortFormProvider(
+            manager,
+            curieProvider,
+            ioHelper.getPrefixManager(),
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
+            Collections.emptyMap());
+    if (useLabels) {
+      return nameProvider;
     }
-    return ruleName;
+    return curieProvider;
   }
 
   /**
    * Given a reporting level and a map of rules and violations, build a YAML output.
    *
+   * @param provider ShortFormProvider used to render objects
    * @param level reporting level
-   * @param violationSets map of rules and violations
+   * @param reportQueries collection of ReportQuery objects at this violation level
    * @return YAML string representation of the violations
    */
   private String yamlHelper(
-      ShortFormProvider provider, String level, Map<String, List<Violation>> violationSets) {
+      ShortFormProvider provider, String level, List<ReportQuery> reportQueries) {
     // Get a prefix manager for creating CURIEs
-    if (violationSets.isEmpty()) {
+    if (reportQueries.isEmpty()) {
       return "";
     }
     StringBuilder sb = new StringBuilder();
@@ -481,19 +481,19 @@ public class Report {
     sb.append("\n");
     sb.append("  violations:");
     sb.append("\n");
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      String ruleName = getRuleName(vs.getKey());
-      if (vs.getValue().isEmpty()) {
+    for (ReportQuery rq : reportQueries) {
+      String ruleName = rq.getRuleName();
+      if (rq.getViolations().isEmpty()) {
         continue;
       }
       sb.append("  - ").append(ruleName).append(":");
       sb.append("\n");
-      for (Violation v : vs.getValue()) {
+      for (Violation v : rq.getViolations()) {
         String subject =
             OntologyHelper.renderManchester(v.entity, provider, RendererType.OBJECT_RENDERER);
         sb.append("    - subject: \"").append(subject).append("\"");
         sb.append("\n");
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           String property =
               OntologyHelper.renderManchester(
                   statement.getKey(), provider, RendererType.OBJECT_RENDERER);
@@ -504,7 +504,7 @@ public class Report {
           }
           sb.append("      values:");
           sb.append("\n");
-          for (OWLObject value : statement.getValue()) {
+          for (OWLEntity value : statement.getValue()) {
             String display = "";
             if (value != null) {
               display =
@@ -540,6 +540,54 @@ public class Report {
   }
 
   /**
+   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
+   * the violations to the correct map.
+   *
+   * @param ruleName name of rule
+   * @param level reporting level of rule
+   * @param violations list of violations from this rule
+   * @deprecated violations should be added to their appropriate ReportQuery object
+   */
+  @Deprecated
+  public void addViolations(String ruleName, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, violations);
+      infoCount += violations.size();
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, violations);
+      warnCount += violations.size();
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, violations);
+      errorCount += violations.size();
+    }
+    // Otherwise do nothing
+  }
+
+  /**
+   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
+   * exists.
+   *
+   * @param ruleName rule name to get number of violations for
+   * @return number of violations for given rule name
+   * @throws Exception if the rule name is not in this Report object
+   */
+  @Deprecated
+  public Integer getViolationCount(String ruleName) throws Exception {
+    if (info.containsKey(ruleName)) {
+      List<Violation> v = info.get(ruleName);
+      return v.size();
+    } else if (warn.containsKey(ruleName)) {
+      List<Violation> v = warn.get(ruleName);
+      return v.size();
+    } else if (error.containsKey(ruleName)) {
+      List<Violation> v = error.get(ruleName);
+      return v.size();
+    }
+    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
+  }
+
+  /**
    * Return all the IRI strings in the current Violations.
    *
    * @return a set of IRI strings
@@ -566,16 +614,10 @@ public class Report {
     for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
       for (Violation v : vs.getValue()) {
         iris.add(v.entity.getIRI().toString());
-        for (Entry<OWLEntity, List<OWLObject>> statement : v.entityStatements.entrySet()) {
+        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
           iris.add(statement.getKey().getIRI().toString());
-          for (OWLObject value : statement.getValue()) {
-            if (value instanceof OWLEntity) {
-              OWLEntity e = (OWLEntity) value;
-              iris.add(e.getIRI().toString());
-            } else if (value instanceof IRI) {
-              IRI iri = (IRI) value;
-              iris.add(iri.toString());
-            }
+          for (OWLEntity value : statement.getValue()) {
+            iris.add(value.getIRI().toString());
           }
         }
       }

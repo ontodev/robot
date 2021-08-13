@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import com.github.jsonldjava.core.Context;
 import java.io.ByteArrayInputStream;
@@ -54,6 +55,32 @@ public class IOHelperTest extends CoreTest {
     // Get the context back from IOHelper
     String outputContext = ioh.getContextString();
     assertEquals(inputContext, outputContext);
+  }
+
+  /**
+   * Test creating a series of valid and invalid IRIs from strings.
+   *
+   * @throws IOException on problem creating IOHelper
+   */
+  @Test
+  public void testCreateIRI() throws IOException {
+    IOHelper ioh = new IOHelper();
+
+    // Valid IRIs
+    IRI iri = ioh.createIRI("OBI:0000070");
+    assertEquals(IRI.create("http://purl.obolibrary.org/obo/OBI_0000070"), iri);
+    iri = ioh.createIRI("http://purl.obolibrary.org/obo/obi.owl");
+    assertEquals(IRI.create("http://purl.obolibrary.org/obo/obi.owl"), iri);
+    iri = ioh.createIRI("urn:isbn:0451450523");
+    assertEquals(IRI.create("urn:isbn:0451450523"), iri);
+
+    // Invalid IRIs should always return null
+    iri = ioh.createIRI("EXAMPLE:0000070");
+    assertNull(iri);
+    iri = ioh.createIRI("urn:0451450523");
+    assertNull(iri);
+    iri = ioh.createIRI("This is an example definition.");
+    assertNull(iri);
   }
 
   /**
