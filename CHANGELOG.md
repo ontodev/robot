@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix missing annotations from [`export`] [#850]
 - Fail on unknown rule names in [`report`] [#858]
 - Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
+- Fix duplicate_label_synonym [#864]
 - Fix value rendering for entities in [`report`] [#874]
 
 ### Changed
@@ -266,6 +267,7 @@ First official release of ROBOT!
 [#882]: https://github.com/ontodev/robot/pull/882
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
+[#864]: https://github.com/ontodev/robot/pull/864
 [#858]: https://github.com/ontodev/robot/pull/858
 [#856]: https://github.com/ontodev/robot/pull/856
 [#850]: https://github.com/ontodev/robot/pull/850
