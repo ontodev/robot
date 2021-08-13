@@ -1,6 +1,6 @@
-# Multiple Equivalent Class Definitions
+# Multiple Logical Definitions
 
-**Problem:** A class has more than one equivalent class definition. This should be avoided, as equivalent class definitions can interact adversely.
+**Problem:** A class has more than one equivalent class definition. This should be avoided, as logical definitions can interact adversely.
 
 **Solution:** Combine the equivalent class statements.
 

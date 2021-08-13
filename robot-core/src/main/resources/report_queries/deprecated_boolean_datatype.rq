@@ -10,7 +10,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   VALUES ?property {
     owl:deprecated
   }
- ?entity ?property ?value .
- FILTER (datatype(?value) != xsd:boolean)
+  ?entity ?property ?value .
+  FILTER (datatype(?value) != xsd:boolean)
 }
 ORDER BY ?entity
