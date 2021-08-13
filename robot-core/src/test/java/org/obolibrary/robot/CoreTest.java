@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
-import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /** Helper methods for core tests. */
 public class CoreTest {
@@ -23,7 +22,7 @@ public class CoreTest {
   protected static IRI simpleIRI = IRI.create(base + "simple.owl");
 
   /** Shared data factory. */
-  protected static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
+  protected static OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
 
   /**
    * Load an ontology from a resource path.

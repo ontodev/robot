@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -116,6 +117,7 @@ public class RelatedObjectsHelper {
         if (external) {
           logger.error(
               "ignoring 'internal' axiom selector - 'internal' and 'external' together will remove all axioms");
+          continue;
         }
         filteredAxioms.addAll(
             RelatedObjectsHelper.filterInternalAxioms(inputAxioms, baseNamespaces));
@@ -986,6 +988,14 @@ public class RelatedObjectsHelper {
     return relatedObjects;
   }
 
+  /**
+   * Given an ontology and a set of objects, construct a set of subClassOf axioms that span the gaps
+   * between classes to maintain a hierarchy.
+   *
+   * @param ontology input OWLOntology
+   * @param objects set of Objects to build hierarchy
+   * @return set of OWLAxioms to maintain hierarchy
+   */
   public static Set<OWLAxiom> spanGaps(OWLOntology ontology, Set<OWLObject> objects) {
     return spanGaps(ontology, objects, false);
   }
@@ -1001,6 +1011,30 @@ public class RelatedObjectsHelper {
    */
   public static Set<OWLAxiom> spanGaps(
       OWLOntology ontology, Set<OWLObject> objects, boolean excludeAnonymous) {
+    return spanGaps(ontology, Lists.newArrayList(), objects, excludeAnonymous, false, false);
+  }
+
+  /**
+   * Given an ontology and a set of objects, construct a set of subClassOf axioms that span the gaps
+   * between classes to maintain a hierarchy.
+   *
+   * @param ontology input OWLOntology
+   * @param baseNamespaces list of base namespaces as strings
+   * @param objects set of Objects to build hierarchy
+   * @param excludeAnonymous when true, span across anonymous nodes
+   * @param internal when true, only preserve structure between internal nodes defined by base
+   *     namespaces
+   * @param external when true, only preserve structure between external nodes defined by base
+   *     namespaces
+   * @return set of OWLAxioms to maintain hierarchy
+   */
+  public static Set<OWLAxiom> spanGaps(
+      OWLOntology ontology,
+      List<String> baseNamespaces,
+      Set<OWLObject> objects,
+      boolean excludeAnonymous,
+      boolean internal,
+      boolean external) {
     Set<Map<String, OWLAnnotationProperty>> aPropPairs = new HashSet<>();
     Set<Map<String, OWLClassExpression>> classPairs = new HashSet<>();
     Set<Map<String, OWLDataPropertyExpression>> dPropPairs = new HashSet<>();
@@ -1032,13 +1066,22 @@ public class RelatedObjectsHelper {
     }
 
     // Generate axioms based on the sub-super pairs
+    // Maybe filter for internal or external here
     for (Map<String, OWLAnnotationProperty> propPair : aPropPairs) {
       OWLAnnotationProperty subProperty = propPair.get(SUB);
+      if ((internal && !isBase(baseNamespaces, subProperty.getIRI()))
+          || (external && isBase(baseNamespaces, subProperty.getIRI()))) {
+        continue;
+      }
       OWLAnnotationProperty superProperty = propPair.get(SUPER);
       axioms.add(df.getOWLSubAnnotationPropertyOfAxiom(subProperty, superProperty));
     }
     for (Map<String, OWLClassExpression> classPair : classPairs) {
       OWLClass subClass = classPair.get(SUB).asOWLClass();
+      if ((internal && !isBase(baseNamespaces, subClass.getIRI()))
+          || (external && isBase(baseNamespaces, subClass.getIRI()))) {
+        continue;
+      }
       OWLClassExpression superClass = classPair.get(SUPER);
       if (superClass.isAnonymous() && !excludeAnonymous || !superClass.isAnonymous()) {
         // Anonymous axioms may have been removed so we don't want to add them back
@@ -1047,11 +1090,19 @@ public class RelatedObjectsHelper {
     }
     for (Map<String, OWLDataPropertyExpression> propPair : dPropPairs) {
       OWLDataProperty subProperty = propPair.get(SUB).asOWLDataProperty();
+      if ((internal && !isBase(baseNamespaces, subProperty.getIRI()))
+          || (external && isBase(baseNamespaces, subProperty.getIRI()))) {
+        continue;
+      }
       OWLDataPropertyExpression superProperty = propPair.get(SUPER);
       axioms.add(df.getOWLSubDataPropertyOfAxiom(subProperty, superProperty));
     }
     for (Map<String, OWLObjectPropertyExpression> propPair : oPropPairs) {
       OWLObjectProperty subProperty = propPair.get(SUB).asOWLObjectProperty();
+      if ((internal && !isBase(baseNamespaces, subProperty.getIRI()))
+          || (external && isBase(baseNamespaces, subProperty.getIRI()))) {
+        continue;
+      }
       OWLObjectPropertyExpression superProperty = propPair.get(SUPER);
       axioms.add(df.getOWLSubObjectPropertyOfAxiom(subProperty, superProperty));
     }
@@ -1745,11 +1796,26 @@ public class RelatedObjectsHelper {
    * @return true if at least one IRI is in one of the base namespaces
    */
   private static boolean isBase(List<String> baseNamespaces, Set<IRI> subjects) {
+    for (IRI subject : subjects) {
+      if (isBase(baseNamespaces, subject)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Given a list of base namespaces and a subject IRIs, determine if the subject is in the set of
+   * base namespaces.
+   *
+   * @param baseNamespaces list of base namespaces as strings
+   * @param subject IRI to check
+   * @return true if IRI is in one of the base namespaces
+   */
+  private static boolean isBase(List<String> baseNamespaces, IRI subject) {
     for (String base : baseNamespaces) {
-      for (IRI subject : subjects) {
-        if (subject.toString().startsWith(base)) {
-          return true;
-        }
+      if (subject.toString().startsWith(base)) {
+        return true;
       }
     }
     return false;
