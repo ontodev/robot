@@ -12,38 +12,38 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
- {
-  VALUES ?property {
-    owl:equivalentProperty
-    rdfs:subPropertyOf
-    owl:inverseOf
+  {
+   VALUES ?property {
+     owl:equivalentProperty
+     rdfs:subPropertyOf
+     owl:inverseOf
+   }
+   ?entity a owl:ObjectProperty ;
+           owl:deprecated true .
+   ?value ?property ?entity .
   }
-  ?entity a owl:ObjectProperty ;
-          owl:deprecated true .
-  ?value ?property ?entity .
- }
- UNION
- {
-  VALUES ?property {
-    owl:equivalentProperty
-    rdfs:subPropertyOf
+  UNION
+  {
+   VALUES ?property {
+     owl:equivalentProperty
+     rdfs:subPropertyOf
+   }
+   ?entity a owl:DatatypeProperty ;
+           owl:deprecated true .
+   ?value ?property ?entity .
   }
-  ?entity a owl:DatatypeProperty ;
-          owl:deprecated true .
-  ?value ?property ?entity .
- }
- UNION
- {
-  ?property owl:deprecated true .
-  ?entity ?property ?value .
- }
- UNION
- {
-  ?property owl:deprecated true .
-  ?entity ?x ?value .
-  ?value a owl:Restriction ;
-         owl:onProperty ?property .
- }
+  UNION
+  {
+   ?property owl:deprecated true .
+   ?entity ?property ?value .
+  }
+  UNION
+  {
+   ?property owl:deprecated true .
+   ?entity ?x ?value .
+   ?value a owl:Restriction ;
+          owl:onProperty ?property .
+  }
 }
 ORDER BY ?entity
 ```

@@ -8,9 +8,9 @@
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
- VALUES ?property {owl:equivalentClass}
- ?entity ?property ?value .
- FILTER (!isBlank(?value))
+  VALUES ?property {owl:equivalentClass}
+  ?entity ?property ?value .
+  FILTER (!isBlank(?value))
 }
 ORDER BY ?entity
 ```
