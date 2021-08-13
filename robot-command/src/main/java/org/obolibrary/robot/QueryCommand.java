@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.MissingArgumentException;
@@ -234,7 +235,7 @@ public class QueryCommand implements Command {
       runQueries(line, dataset, queries);
     } finally {
       dataset.close();
-      TDBFactory.release(dataset);
+      // TDBFactory.release(dataset);
     }
   }
 
@@ -285,7 +286,7 @@ public class QueryCommand implements Command {
       if (!f.exists()) {
         throw new Exception(String.format(missingFileError, updatePath));
       }
-      updates.put(f.getPath(), FileUtils.readFileToString(f));
+      updates.put(f.getPath(), FileUtils.readFileToString(f, Charset.defaultCharset()));
     }
 
     // Load the ontology as a model, ignoring imports
@@ -390,7 +391,7 @@ public class QueryCommand implements Command {
       String queryPath = q.get(0);
       String outputPath = q.get(1);
 
-      String query = FileUtils.readFileToString(new File(queryPath));
+      String query = FileUtils.readFileToString(new File(queryPath), Charset.defaultCharset());
 
       String formatName = format;
       if (formatName == null) {

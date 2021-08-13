@@ -241,9 +241,7 @@ public class RepairOperation {
       }
       axiomsToPreserve.addAll(ontology.getDeclarationAxioms(obsObj));
       axiomsToPreserve.addAll(
-          ontology
-              .getAnnotationAssertionAxioms(obsObj.getIRI())
-              .stream()
+          ontology.getAnnotationAssertionAxioms(obsObj.getIRI()).stream()
               .filter(ax -> !migrateAnnotations.contains(ax.getProperty()))
               .collect(Collectors.toSet()));
       logger.info("Replacing: " + obsObj + " -> " + replacedBy);

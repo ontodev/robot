@@ -15,7 +15,6 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.Lang;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 /**
@@ -116,11 +115,9 @@ public class QueryOperationTest extends CoreTest {
    *
    * @throws IOException on IO error
    * @throws OWLOntologyStorageException on ontology error
-   * @throws OWLOntologyCreationException on ontology error
    */
   @Test
-  public void testExecUpdate()
-      throws IOException, OWLOntologyCreationException, OWLOntologyStorageException {
+  public void testExecUpdate() throws IOException, OWLOntologyStorageException {
     OWLOntology inputOntology = loadOntology("/simple.owl");
     Model model = QueryOperation.loadOntologyAsModel(inputOntology);
     String updateString =
@@ -130,7 +127,7 @@ public class QueryOperationTest extends CoreTest {
             + "s:test2 rdfs:label \"test 2\" ."
             + " } WHERE {}";
     QueryOperation.execUpdate(model, updateString);
-    OWLOntology outputOntology = QueryOperation.convertModel(model);
+    OWLOntology outputOntology = QueryOperation.convertModel(model, new IOHelper(), null);
     assertIdentical("/simple_update.owl", outputOntology);
   }
 
