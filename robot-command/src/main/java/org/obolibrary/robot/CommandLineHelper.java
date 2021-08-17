@@ -1032,11 +1032,24 @@ public class CommandLineHelper {
     if (!pattern.contains("*") && !pattern.contains("?")) {
       throw new IllegalArgumentException(wildcardError);
     }
-    FileFilter fileFilter = new WildcardFileFilter(pattern);
-    File[] files = new File(".").listFiles(fileFilter);
+    // Get the parent directory path
+    File filePattern = new File(pattern);
+    String dir = filePattern.getParent();
+    if (dir == null) {
+      dir = ".";
+    }
+    // Make sure this directory exists
+    if (!new File(dir).isDirectory()) {
+      // Warn user, but continue (empty input checked later)
+      logger.error("'{}' is not a valid directory for --inputs pattern", dir);
+      return new File[] {};
+    }
+    FileFilter fileFilter = new WildcardFileFilter(filePattern.getName());
+    File[] files = new File(dir).listFiles(fileFilter);
     if (files == null || files.length < 1) {
       // Warn user, but continue (empty input checked later)
       logger.error("No files match pattern: {}", pattern);
+      return new File[] {};
     }
     return files;
   }
