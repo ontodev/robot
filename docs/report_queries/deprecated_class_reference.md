@@ -14,34 +14,55 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT DISTINCT ?entity ?property ?value WHERE {
   {
    VALUES ?property {
-     owl:equivalentClass
      rdfs:subClassOf
-     owl:disjointWith
    }
    ?entity a owl:Class;
-           owl:deprecated true .
-   ?value ?property ?entity .
-  }
-  UNION
-  {
-   ?entity a owl:Class ;
            owl:deprecated true ;
            ?property ?value .
-   FILTER EXISTS { ?property a owl:ObjectProperty }
-   FILTER EXISTS { ?property a owl:DatatypeProperty }
-   FILTER ( ?value != oboInOwl:ObsoleteClass )
+   FILTER ( ?value NOT IN (oboInOwl:ObsoleteClass, owl:Thing) )
   }
   UNION
   {
    VALUES ?property {
-     owl:someValuesFrom
+     owl:equivalentClass
+     owl:disjointWith
+   }
+   ?entity a owl:Class;
+           owl:deprecated true ;
+           ?property ?value .
+  }
+  UNION
+  {
+     VALUES ?property {
+       rdfs:subClassOf
+       owl:equivalentClass
+       owl:disjointWith
+     }
+     ?entity a owl:Class;
+             owl:deprecated true .  
+     ?value ?property ?entity .
+  }
+  UNION
+  {
+   VALUES ?property {
+     owl:ObjectProperty
+     owl:DataProperty
+   }
+   ?entity a owl:Class ;
+           owl:deprecated true ;
+           ?property ?value .
+  }
+  UNION
+  {
+   VALUES ?property {
+     owl:someValuesFrom   
      owl:allValuesFrom
    }
    ?value a owl:Class ;
           owl:deprecated true .
-   ?entity ?x ?rest .
    ?rest a owl:Restriction ;
          ?property ?value .
+   BIND("blank node" as ?entity)
   }
 }
 ORDER BY ?entity
