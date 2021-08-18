@@ -10,9 +10,12 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
-  VALUES ?property { dc:title dcterms:title }
   ?entity a owl:Ontology .
-  OPTIONAL { ?entity ?property ?value }
-  FILTER (!bound(?value))
+  FILTER NOT EXISTS { 
+    {?entity dc:title ?value . }
+      UNION 
+    {?entity dcterms:title ?value . }
+  }
+  BIND(dcterms:title as ?property)
 }
 ```
