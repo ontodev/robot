@@ -15,6 +15,7 @@ See [`report`](../report) for more details.
 | [duplicate label synonym](duplicate_label_synonym)  | WARN
 | [duplicate label](duplicate_label)  | ERROR
 | [duplicate scoped synonym](duplicate_scoped_synonym)  | WARN
+| [equivalent class axiom no genus](equivalent_class_axiom_no_genus) | WARN
 | [equivalent pair](equivalent_pair)  | WARN
 | [invalid xref](invalid_xref)  | WARN
 | [label formatting](label_formatting)  | ERROR
@@ -29,5 +30,6 @@ See [`report`](../report) for more details.
 | [missing superclass](missing_superclass)  | INFO
 | [misused obsolete label](misused_obsolete_label)  | ERROR
 | [multiple definitions](multiple_definitions)  | ERROR
-| [multiple equivalent classes](multiple_equivalent_classes)  | ERROR
+| [multiple equivalent classes](multiple_equivalent_classes)  | WARN
+| [multiple equivalent class definitions](multiple_equivalent_class_definitions)  | ERROR
 | [multiple labels](multiple_labels)  | ERROR

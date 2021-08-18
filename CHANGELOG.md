@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add links to query documentation for default rules in [`report`] [#879]
 - Ability to restrict [`report`] to base ontology [#872]
+- Add check for equivalent class with no genus to [`report`] [#865]
+
+### Changed
+- Split equivalent class check [#856]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -17,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix missing annotations from [`export`] [#850]
 - Fail on unknown rule names in [`report`] [#858]
 - Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
+- Fix duplicate_label_synonym [#864]
 - Fix value rendering for entities in [`report`] [#874]
 - Fix `deprecated_class_reference` [`report`] query [#888]
 
@@ -265,7 +270,10 @@ First official release of ROBOT!
 [#882]: https://github.com/ontodev/robot/pull/882
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
+[#865]: https://github.com/ontodev/robot/pull/865
+[#864]: https://github.com/ontodev/robot/pull/864
 [#858]: https://github.com/ontodev/robot/pull/858
+[#856]: https://github.com/ontodev/robot/pull/856
 [#850]: https://github.com/ontodev/robot/pull/850
 [#834]: https://github.com/ontodev/robot/pull/834
 [#823]: https://github.com/ontodev/robot/pull/823
