@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Split equivalent class check [#856]
+- Allow Dublin Core "terms" namespace (`http://purl.org/dc/terms/`) for `description` and `title` properties on ontology. [#741]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
