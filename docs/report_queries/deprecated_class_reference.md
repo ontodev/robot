@@ -39,7 +39,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
        owl:disjointWith
      }
      ?entity a owl:Class;
-             owl:deprecated true .  
+             owl:deprecated true .
      ?value ?property ?entity .
   }
   UNION
@@ -55,7 +55,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   UNION
   {
    VALUES ?property {
-     owl:someValuesFrom   
+     owl:someValuesFrom
      owl:allValuesFrom
    }
    ?value a owl:Class ;
