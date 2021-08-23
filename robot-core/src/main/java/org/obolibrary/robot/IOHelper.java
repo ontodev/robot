@@ -1704,6 +1704,8 @@ public class IOHelper {
       throws IOException {
     // first handle any non-official output formats.
     // currently this is just OboGraphs JSON format
+    format.setParameter(OBODocumentFormat.VALIDATION, checkOBO);
+
     if (format instanceof OboGraphJsonDocumentFormat) {
       FromOwl fromOwl = new FromOwl();
       GraphDocument gd = fromOwl.generateGraphDocument(ontology);
@@ -1712,22 +1714,6 @@ public class IOHelper {
       mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
       ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
       writer.writeValue(new FileOutputStream(outfile), gd);
-    } else if (format instanceof OBODocumentFormat && !checkOBO) {
-      // only use this method when ignoring OBO checking, otherwise use native save
-      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
-      OBODoc oboOntology = bridge.convert(ontology);
-      File f = new File(ontologyIRI.toURI());
-      boolean newFile = f.createNewFile();
-      try (BufferedWriter bw =
-          new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
-        OBOFormatWriter oboWriter = new OBOFormatWriter();
-        oboWriter.setCheckStructure(checkOBO);
-        oboWriter.write(oboOntology, bw);
-      } catch (IOException e) {
-        if (!newFile) {
-          f.delete();
-        }
-      }
     } else {
       // use native save functionality
       try {
