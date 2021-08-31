@@ -96,6 +96,11 @@ public class IOHelper {
   private static final String jsonldContextParseError =
       NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
 
+  /** Error message when a graph object cannot be created from the ontology using obographs. */
+  private static final String oboGraphError =
+      NS
+          + "OBO GRAPH ERROR Could not convert ontology to OBO Graph (see https://github.com/geneontology/obographs)";
+
   /** Error message when OBO cannot be saved. */
   private static final String oboStructureError =
       NS + "OBO STRUCTURE ERROR Ontology does not conform to OBO structure rules:\n%s";
@@ -1708,7 +1713,12 @@ public class IOHelper {
 
     if (format instanceof OboGraphJsonDocumentFormat) {
       FromOwl fromOwl = new FromOwl();
-      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      GraphDocument gd;
+      try {
+        gd = fromOwl.generateGraphDocument(ontology);
+      } catch (Exception e) {
+        throw new IOException(oboGraphError);
+      }
       File outfile = new File(ontologyIRI.toURI());
       ObjectMapper mapper = new ObjectMapper();
       mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
