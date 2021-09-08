@@ -57,7 +57,7 @@ You can also choose to write errors to a separate table using `--errors <path>`.
     - `annotation property` or `owl:AnnotationProperty`
     - `datatype` or `owl:Datatype`
     - `individual`, `named individual`, `owl:Individual`, `owl:NamedIndividual`, or a defined class ID or label
-- **annotations**: ROBOT can attach annotations to your class. There are four options:
+- **annotations**: ROBOT can attach annotations to your term. There are four options:
     - `A` string annotation: If the template string starts with an `A` and a space then it will be interpreted as a string annotation. The rest of the template string should be the label or compact IRI of an annotation property, e.g. `label` or `rdfs:label`. The cell value will be the literal value of the annotation with type `xsd:string`. Annotation property labels do not need to be wrapped in single quotes.
     - `AT` typed annotation: If the template string starts with an `AT` and a space then it will be interpreted as a typed annotation. The `^^` characters must be used to separate the annotation property from the datatype, e.g. `rdfs:comment^^xsd:integer`. The cell value will be the typed literal value of the annotation.
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.
