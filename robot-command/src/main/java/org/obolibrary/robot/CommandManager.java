@@ -5,11 +5,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +116,7 @@ public class CommandManager implements Command {
    */
   public List<String> getOptionArgs(Options options, List<String> arguments) throws ParseException {
     // parse all options until a non-option is found
-    CommandLineParser parser = new PosixParser();
+    CommandLineParser parser = new DefaultParser();
     CommandLine line = parser.parse(options, asArgs(arguments), true);
 
     int index = arguments.size() - line.getArgList().size();

@@ -13,8 +13,11 @@ public class Violation {
   public String subject;
 
   // Statements about OWLEntity subject
-  public Map<OWLEntity, List<OWLObject>> entityStatements = new HashMap<>();
+  public Map<OWLEntity, List<OWLEntity>> entityStatements = new HashMap<>();
   // Statements about String subject
+  public Map<OWLEntity, List<String>> literalStatements = new HashMap<>();
+
+  // Deprecated statements with string properties
   public Map<String, List<String>> statements = new HashMap<>();
 
   /**
@@ -27,13 +30,22 @@ public class Violation {
   }
 
   /**
-   * Add a statement to the Violation about the subject.
+   * Create a new Violation object about a String. This is used for blank nodes.
+   *
+   * @param subject String subject
+   */
+  public Violation(String subject) {
+    this.subject = subject;
+  }
+
+  /**
+   * Add a statement with an OWLEntity value to the Violation about the subject.
    *
    * @param property OWLEntity property
-   * @param value OWLObject value
+   * @param value OWLEntity value
    */
-  public void addStatement(OWLEntity property, OWLObject value) {
-    List<OWLObject> values;
+  public void addStatement(OWLEntity property, OWLEntity value) {
+    List<OWLEntity> values;
     if (entityStatements.get(property) != null) {
       // This property already has one value in the map
       // Add this value to the existing list
@@ -51,19 +63,38 @@ public class Violation {
     entityStatements.put(property, values);
   }
 
-  /** @param subject String subject */
-  public Violation(String subject) {
-    this.subject = subject;
+  /**
+   * Add a literal statement to the Violation about the subject.
+   *
+   * @param property OWLEntity property
+   * @param value String literal value
+   */
+  public void addStatement(OWLEntity property, String value) {
+    List<String> values;
+    if (literalStatements.get(property) != null) {
+      values = new ArrayList<>(literalStatements.get(property));
+      values.add(value);
+    } else {
+      if (value != null) {
+        values = Collections.singletonList(value);
+      } else {
+        values = Collections.emptyList();
+      }
+    }
+    literalStatements.put(property, values);
   }
 
   /**
    * @param property String property
    * @param value String value
+   * @deprecated String properties are no longer recommended; create an OWLEntity for the property
+   *     instead
    */
+  @Deprecated
   public void addStatement(String property, String value) {
     List<String> values;
     if (statements.get(property) != null) {
-      values = new ArrayList<String>(statements.get(property));
+      values = new ArrayList<>(statements.get(property));
       values.add(value);
     } else {
       if (value != null) {
@@ -73,5 +104,23 @@ public class Violation {
       }
     }
     statements.put(property, values);
+  }
+
+  /**
+   * @param property String property
+   * @param object OWLObject value
+   * @deprecated OWLObjects are no longer supported; use OWLEntity or String literal instead
+   */
+  @Deprecated
+  public void addStatement(OWLEntity property, OWLObject object) {
+    logger.error("Do not add OWLObjects to Violations; use an OWLEntity or String literal instead");
+    if (object instanceof OWLEntity) {
+      addStatement(property, (OWLEntity) object);
+    } else if (object instanceof OWLLiteral) {
+      OWLLiteral lit = (OWLLiteral) object;
+      addStatement(property, lit.getLiteral());
+    } else {
+      addStatement(property, object.toString());
+    }
   }
 }

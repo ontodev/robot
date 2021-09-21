@@ -13,8 +13,11 @@ import com.google.common.collect.Sets;
 import com.opencsv.*;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -23,9 +26,9 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
-import org.apache.jena.util.FileManager;
 import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
 import org.geneontology.obographs.io.OgJsonGenerator;
 import org.geneontology.obographs.model.GraphDocument;
@@ -92,6 +95,11 @@ public class IOHelper {
   /** Error message when a JSON-LD context cannot be read, for any reason. */
   private static final String jsonldContextParseError =
       NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+
+  /** Error message when a graph object cannot be created from the ontology using obographs. */
+  private static final String oboGraphError =
+      NS
+          + "OBO GRAPH ERROR Could not convert ontology to OBO Graph (see https://github.com/geneontology/obographs)";
 
   /** Error message when OBO cannot be saved. */
   private static final String oboStructureError =
@@ -177,7 +185,7 @@ public class IOHelper {
    * @throws IOException on issue parsing JSON-LD file as context
    */
   public IOHelper(String path) throws IOException {
-    String jsonString = FileUtils.readFileToString(new File(path));
+    String jsonString = FileUtils.readFileToString(new File(path), Charset.defaultCharset());
     setContext(jsonString);
   }
 
@@ -188,7 +196,7 @@ public class IOHelper {
    * @throws IOException on issue reading file or setting context from file
    */
   public IOHelper(File file) throws IOException {
-    String jsonString = FileUtils.readFileToString(file);
+    String jsonString = FileUtils.readFileToString(file, Charset.defaultCharset());
     setContext(jsonString);
   }
 
@@ -379,10 +387,10 @@ public class IOHelper {
       extension = extension.trim().toLowerCase();
       if (extension.equals("yml") || extension.equals("yaml")) {
         logger.debug("Converting from YAML to JSON");
-        String yamlString = FileUtils.readFileToString(ontologyFile);
+        String yamlString = FileUtils.readFileToString(ontologyFile, Charset.defaultCharset());
         jsonObject = new Yaml().load(yamlString);
       } else if (extension.equals("js") || extension.equals("json") || extension.equals("jsonld")) {
-        String jsonString = FileUtils.readFileToString(ontologyFile);
+        String jsonString = FileUtils.readFileToString(ontologyFile, Charset.defaultCharset());
         jsonObject = JsonUtils.fromString(jsonString);
       }
 
@@ -392,7 +400,7 @@ public class IOHelper {
         jsonObject = new JsonLdApi().expand(getContext(), jsonObject);
         String jsonString = JsonUtils.toString(jsonObject);
         Model model = ModelFactory.createDefaultModel();
-        model.read(IOUtils.toInputStream(jsonString), null, "JSON-LD");
+        model.read(IOUtils.toInputStream(jsonString, Charset.defaultCharset()), null, "JSON-LD");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         // model.write(System.out);
         model.write(output);
@@ -613,7 +621,7 @@ public class IOHelper {
     dataset.begin(ReadWrite.WRITE);
     try {
       m = dataset.getDefaultModel();
-      FileManager.get().readModel(m, inputPath);
+      RDFDataMgr.read(m, inputPath);
       dataset.commit();
     } catch (JenaException e) {
       dataset.abort();
@@ -926,6 +934,27 @@ public class IOHelper {
       logger.warn(e.getMessage());
       return null;
     }
+
+    if (iri.toString().startsWith("urn:")) {
+      // A URN is not a valid URL, so we check it with regex
+      Pattern urnPattern =
+          Pattern.compile(
+              "^urn:[a-z0-9][a-z0-9-]{0,31}:([a-z0-9()+,\\-.:=@;$_!*']|%[0-9a-f]{2})+$",
+              Pattern.CASE_INSENSITIVE);
+      if (!urnPattern.matcher(iri.toString()).matches()) {
+        // Not a valid URN (RFC2141)
+        return null;
+      }
+    } else {
+      try {
+        // Check for malformed URL, e.g., a CURIE was returned or the value passed has spaces
+        new URL(iri.toString());
+      } catch (MalformedURLException e) {
+        // Invalid IRI
+        return null;
+      }
+    }
+
     return iri;
   }
 
@@ -1077,7 +1106,7 @@ public class IOHelper {
       throw new IOException(String.format(fileDoesNotExistError, baseNamespacePath));
     }
 
-    List<String> lines = FileUtils.readLines(new File(baseNamespacePath));
+    List<String> lines = FileUtils.readLines(new File(baseNamespacePath), Charset.defaultCharset());
     for (String l : lines) {
       baseNamespaces.add(l.trim());
     }
@@ -1100,7 +1129,7 @@ public class IOHelper {
    */
   public Context getDefaultContext() throws IOException {
     InputStream stream = IOHelper.class.getResourceAsStream(defaultContextPath);
-    String jsonString = IOUtils.toString(stream);
+    String jsonString = IOUtils.toString(stream, Charset.defaultCharset());
     return parseContext(jsonString);
   }
 
@@ -1246,7 +1275,8 @@ public class IOHelper {
     if (!prefixFile.exists()) {
       throw new IOException(String.format(fileDoesNotExistError, prefixPath));
     }
-    Context context1 = parseContext(FileUtils.readFileToString(prefixFile));
+    Context context1 =
+        parseContext(FileUtils.readFileToString(prefixFile, Charset.defaultCharset()));
     addPrefixes(context1);
   }
 
@@ -1679,30 +1709,21 @@ public class IOHelper {
       throws IOException {
     // first handle any non-official output formats.
     // currently this is just OboGraphs JSON format
+    format.setParameter(OBODocumentFormat.VALIDATION, checkOBO);
+
     if (format instanceof OboGraphJsonDocumentFormat) {
       FromOwl fromOwl = new FromOwl();
-      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      GraphDocument gd;
+      try {
+        gd = fromOwl.generateGraphDocument(ontology);
+      } catch (Exception e) {
+        throw new IOException(oboGraphError);
+      }
       File outfile = new File(ontologyIRI.toURI());
       ObjectMapper mapper = new ObjectMapper();
       mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
       ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
       writer.writeValue(new FileOutputStream(outfile), gd);
-    } else if (format instanceof OBODocumentFormat && !checkOBO) {
-      // only use this method when ignoring OBO checking, otherwise use native save
-      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
-      OBODoc oboOntology = bridge.convert(ontology);
-      File f = new File(ontologyIRI.toURI());
-      boolean newFile = f.createNewFile();
-      try (BufferedWriter bw =
-          new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
-        OBOFormatWriter oboWriter = new OBOFormatWriter();
-        oboWriter.setCheckStructure(checkOBO);
-        oboWriter.write(oboOntology, bw);
-      } catch (IOException e) {
-        if (!newFile) {
-          f.delete();
-        }
-      }
     } else {
       // use native save functionality
       try {

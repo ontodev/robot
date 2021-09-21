@@ -31,8 +31,7 @@ report_queries:
 # Convert each SPARQL file to a Markdown file.
 report_queries/%.md: ../robot-core/src/main/resources/report_queries/%.rq | report_queries
 	awk '/^PREFIX/ && !x {print "```sparql"; x=1} 1' $< \
-	| sed 's/^#//' \
-	| sed 's/^ //' \
+	| sed 's/^# \? \?//' \
 	> $@
 	echo '```' >> $@
 
@@ -44,7 +43,7 @@ report_queries/index.md: ../robot-core/src/main/resources/report_profile.txt | r
 	echo 'with their default severity levels.' >> $@
 	echo 'See [`report`](../report) for more details.' >> $@
 	echo '' >> $@
-	echo '| Name  | Default Severity  ' >> $@
+	echo '| Name  | Default Severity' >> $@
 	echo '|-------|-------------------' >> $@
 	awk -F'	' '{x=$$2; gsub(/_/," ",$$2); print "| [" $$2 "](" x ")  | " $$1}' $< \
 	>> $@
