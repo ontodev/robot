@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ability to restrict [`report`] to base ontology [#872]
 - Add check for equivalent class with no genus to [`report`] [#865]
 - Add check for illegal use of built-in vocabulary [#867]
+- Add check for misused replaced-by annotation [#869]
 
 ### Changed
 - Split equivalent class check [#856]
@@ -276,6 +277,7 @@ First official release of ROBOT!
 [#879]: https://github.com/ontodev/robot/pull/879
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
+[#869]: https://github.com/ontodev/robot/pull/869
 [#867]: https://github.com/ontodev/robot/pull/867
 [#866]: https://github.com/ontodev/robot/pull/866
 [#865]: https://github.com/ontodev/robot/pull/865
