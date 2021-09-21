@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
 - Fix duplicate_label_synonym [#864]
 - Fix value rendering for entities in [`report`] [#874]
+- Fix `merge --inputs` patterns with parent directories [#899]
 - Fix OBO serialisation issues when using `--check false` [#896]
 - Fix error handling for JSON conversion [#907]
 
@@ -273,6 +274,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#907]: https://github.com/ontodev/robot/pull/907
+[#899]: https://github.com/ontodev/robot/pull/899
 [#896]: https://github.com/ontodev/robot/pull/896
 [#882]: https://github.com/ontodev/robot/pull/882
 [#879]: https://github.com/ontodev/robot/pull/879
