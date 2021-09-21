@@ -1,13 +1,14 @@
 package org.obolibrary.robot;
 
 import java.util.ListIterator;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.*;
 
 /**
- * A custom CommandLineParser that ignores unrecognized options without throwing an exeception. See
+ * A custom CommandLineParser that ignores unrecognized options without throwing an exception. See
  * http://stackoverflow.com/a/8613949
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class ExtendedPosixParser extends PosixParser {
   /** Flag for ignoring unrecognized options. */
   private boolean ignoreUnrecognizedOption;
@@ -17,6 +18,7 @@ public class ExtendedPosixParser extends PosixParser {
    *
    * @param ignoreUnrecognizedOption when true, silently ignore unrecognized options
    */
+  @Deprecated
   public ExtendedPosixParser(final boolean ignoreUnrecognizedOption) {
     this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
   }
@@ -29,8 +31,10 @@ public class ExtendedPosixParser extends PosixParser {
    * @param iter the iterator for the super class to deal with
    * @throws ParseException on any problems
    */
+  @Deprecated
   @Override
-  protected void processOption(final String arg, final ListIterator iter) throws ParseException {
+  protected void processOption(final String arg, final ListIterator<String> iter)
+      throws ParseException {
     boolean hasOption = getOptions().hasOption(arg);
 
     if (hasOption || !ignoreUnrecognizedOption) {

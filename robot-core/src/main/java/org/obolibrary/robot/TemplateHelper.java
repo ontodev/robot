@@ -1038,8 +1038,7 @@ public class TemplateHelper {
       // Some of these have hard to understand "expected" values, so we rewrite them the best we can
       String expected = m.group(2);
       List<String> expectedSplit =
-          Lists.newArrayList(expected.split("\n"))
-              .stream()
+          Lists.newArrayList(expected.split("\n")).stream()
               .map(String::trim)
               .filter(x -> !x.equals(""))
               .collect(Collectors.toList());
