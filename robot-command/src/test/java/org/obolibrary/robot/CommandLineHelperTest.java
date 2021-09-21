@@ -1,17 +1,14 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 /** Tests for CommandLineHelper. */
 public class CommandLineHelperTest {
-  /** The exception to expect, if any. */
-  @Rule public ExpectedException exception = ExpectedException.none();
 
   /**
    * Test command line splitting.
@@ -45,8 +42,11 @@ public class CommandLineHelperTest {
     args.add("nested \"quotes\" with \\\" escapes and\nnewlines");
     assertEquals("Nested quotations", CommandLineHelper.parseArgList(arg), args);
 
-    arg = "unbalanced 'quotes";
-    exception.expect(Exception.class);
-    CommandLineHelper.parseArgList(arg);
+    // Expect an Exception here
+    assertThrows(
+        Exception.class,
+        () -> {
+          CommandLineHelper.parseArgList("unbalanced 'quotes");
+        });
   }
 }

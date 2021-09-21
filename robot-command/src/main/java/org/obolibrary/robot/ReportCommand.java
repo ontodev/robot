@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Lists;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -32,6 +33,7 @@ public class ReportCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save report to a file");
     o.addOption("p", "profile", true, "reporting rules and levels to use");
+    o.addOption(null, "base-iri", true, "specify a base namespace");
     o.addOption("f", "format", true, "save report in a given format (TSV or YAML)");
     o.addOption("F", "fail-on", true, "logging level to fail on");
     o.addOption("l", "labels", true, "if true, use labels for output");
@@ -132,6 +134,9 @@ public class ReportCommand implements Command {
         throw new IllegalArgumentException(String.format(missingOutputError, format));
       }
     }
+
+    List<String> baseNamespaces = CommandLineHelper.getBaseNamespaces(line, ioHelper);
+    baseNamespaces.forEach(ioHelper::addBaseNamespace);
 
     boolean success;
 

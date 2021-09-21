@@ -8,7 +8,7 @@
 4. [Queries](#queries)
 5. [Profiles (`--profile`)](#profiles)
 6. [Executing on Disk (`--tdb`)](#executing-on-disk)
-7. [Limiting Results (`--limit`)](#limiting-results)
+7. [Limiting Results (`--limit`, `--base-iri`)](#limiting-results)
 
 ## Overview
 
@@ -153,6 +153,22 @@ robot report --input edit.owl \
 ```
 
 This example will only include the first 10,000 results for each report query, meaning that some violation counts may be incomplete. Typically, you should not need to include a limit, but when working with large ontologies (using TDB), there may be hundreds of thousands of results.
+
+The results can also be restricted to entities following one or more URI prefixes.
+
+```
+robot report --input edit.owl \
+  --base-iri "http://purl.obolibrary.org/obo/UBERON_" \
+  --base-iri "https://github.com/ontodev/robot/examples/edit" \
+  --base-iri "http://purl.obolibrary.org/obo/UBPROP_" \
+  --output my-base-report.tsv
+```
+
+Note that if you want annotations on your ontology itself be checked, be sure to
+include a suitable URI prefix. For example, in the snippet above, we have
+included `https://github.com/ontodev/robot/examples/edit`, which ensures that
+ontology annotations on `https://github.com/ontodev/robot/examples/edit.owl` are
+included in the test results.
 
 ## Working with import closures
 
