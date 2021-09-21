@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Split equivalent class check [#856]
+- Allow Dublin Core "terms" namespace (`http://purl.org/dc/terms/`) for `description` and `title` properties on ontology. [#741]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -23,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
 - Fix duplicate_label_synonym [#864]
 - Fix value rendering for entities in [`report`] [#874]
+- Fix OBO serialisation issues when using `--check false` [#896]
+- Fix error handling for JSON conversion [#907]
 
 ### Changed
 - Do not allow malformed IRIs to be returned by `IOHelper` [#882]
@@ -265,7 +268,10 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#907]: https://github.com/ontodev/robot/pull/907
+[#896]: https://github.com/ontodev/robot/pull/896
 [#882]: https://github.com/ontodev/robot/pull/882
+[#879]: https://github.com/ontodev/robot/pull/879
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
 [#865]: https://github.com/ontodev/robot/pull/865
