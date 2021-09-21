@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Split equivalent class check [#856]
 - Allow Dublin Core "terms" namespace (`http://purl.org/dc/terms/`) for `description` and `title` properties on ontology. [#741]
+- Allow numbers in lowercase_definition check [#866]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -274,6 +275,7 @@ First official release of ROBOT!
 [#879]: https://github.com/ontodev/robot/pull/879
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
+[#866]: https://github.com/ontodev/robot/pull/866
 [#865]: https://github.com/ontodev/robot/pull/865
 [#864]: https://github.com/ontodev/robot/pull/864
 [#858]: https://github.com/ontodev/robot/pull/858
