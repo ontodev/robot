@@ -6,12 +6,16 @@
 
 ```sparql
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
-  VALUES ?property { dc:description }
   ?entity a owl:Ontology .
-  OPTIONAL { ?entity ?property ?value }
-  FILTER (!bound(?value))
+  FILTER NOT EXISTS { 
+    {?entity dc:description ?value . }
+      UNION 
+    {?entity dcterms:description ?value . }
+  }
+  BIND(dcterms:description as ?property)
 }
 ```
