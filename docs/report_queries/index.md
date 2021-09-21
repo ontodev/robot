@@ -28,7 +28,9 @@ See [`report`](../report) for more details.
 | [missing ontology description](missing_ontology_description)  | ERROR
 | [missing ontology license](missing_ontology_license)  | ERROR
 | [missing ontology title](missing_ontology_title)  | ERROR
+| [missing subset declaration](missing_subset_declaration)  | WARN
 | [missing superclass](missing_superclass)  | INFO
+| [missing synonym type declaration](missing_synonymtype_declaration)  | WARN
 | [misused obsolete label](misused_obsolete_label)  | ERROR
 | [misused replaced by](misused_replaced_by)  | ERROR
 | [multiple definitions](multiple_definitions)  | ERROR

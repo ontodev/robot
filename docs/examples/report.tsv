@@ -3,6 +3,14 @@ ERROR	missing_ontology_license	https://github.com/ontodev/robot/examples/edit.ow
 ERROR	missing_ontology_description	https://github.com/ontodev/robot/examples/edit.owl	dc:description	
 ERROR	missing_ontology_title	https://github.com/ontodev/robot/examples/edit.owl	dc:title	
 WARN	annotation_whitespace	obo:UBPROP_0000007	IAO:0000232	Used to connect a class to an adjectival form of its label. For example, a class with label 'intestine' may have a relational adjective 'intestinal'. 
+WARN	missing_subset_declaration	obo:uberon/core#disjointness_axiom_removed	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#efo_slim	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#grouping_class	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#non_informative	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#organ_slim	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#uberon_slim	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#upper_level	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#vertebrate_core	rdfs:subPropertyOf	
 WARN	duplicate_scoped_synonym	UBERON:0002368	oboInOwl:hasExactSynonym	ductless gland
 WARN	duplicate_scoped_synonym	UBERON:0002368	oboInOwl:hasRelatedSynonym	ductless gland
 WARN	duplicate_scoped_synonym	UBERON:0002369	oboInOwl:hasExactSynonym	glandula suprarenalis
