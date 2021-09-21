@@ -96,6 +96,17 @@ Some commands ([extract](/extract) and [filter](/filter)) require terms as input
 
 For all commands other than [merge](/merge) and [unmerge](/unmerge), only one `--input` may be specified.
 
+### OBO Graph Error
+
+This error occurs when ROBOT is unable to convert the ontology into an [OBO Graphs](https://github.com/geneontology/obographs) object while saving an ontology in JSON format. This may be due to problematic annotations, so you can create a subset using [filter](/filter) or [remove](/remove) containing only the necessary annotations and save that as JSON, for example (keeping only labels and definitions):
+```
+robot remove --input ont.owl \
+  --select annotation-properties \
+  --exclude-term rdfs:label \
+  --exclude-term IAO:0000115 \
+  --output ont.json
+```
+
 ### OBO Structure Error
 
 When running the [convert](/convert) command, if `--check` is true (default behavior), the [document structure rules](http://owlcollab.github.io/oboformat/doc/obo-syntax.html#4) are strictly enforced. If you are saving an ontology in OBO format from another command, `--check` is always `true`. 
