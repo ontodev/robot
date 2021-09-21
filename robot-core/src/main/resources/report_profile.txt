@@ -9,6 +9,7 @@ ERROR	duplicate_label
 WARN	duplicate_scoped_synonym
 WARN	equivalent_pair
 WARN	equivalent_class_axiom_no_genus
+ERROR	illegal_use_of_built_in_vocabulary
 WARN	invalid_xref
 ERROR	label_formatting
 ERROR	label_whitespace

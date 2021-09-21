@@ -17,6 +17,7 @@ See [`report`](../report) for more details.
 | [duplicate scoped synonym](duplicate_scoped_synonym)  | WARN
 | [equivalent class axiom no genus](equivalent_class_axiom_no_genus) | WARN
 | [equivalent pair](equivalent_pair)  | WARN
+| [illegal use of built-in vocabulary](illegal_use_of_built_in_vocabulary) | ERROR
 | [invalid xref](invalid_xref)  | WARN
 | [label formatting](label_formatting)  | ERROR
 | [label whitespace](label_whitespace)  | ERROR
