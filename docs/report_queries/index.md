@@ -4,7 +4,7 @@ The table below lists all the queries run by the `report` command,
 with their default severity levels.
 See [`report`](../report) for more details.
 
-| Name  | Default Severity  
+| Name  | Default Severity
 |-------|-------------------
 | [annotation whitespace](annotation_whitespace)  | WARN
 | [deprecated boolean datatype](deprecated_boolean_datatype)  | ERROR
