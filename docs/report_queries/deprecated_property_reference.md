@@ -20,7 +20,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
    }
    ?entity a owl:ObjectProperty ;
            owl:deprecated true .
-   ?value ?property ?entity .
+   ?value1 ?property ?entity .
   }
   UNION
   {
@@ -30,20 +30,21 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
    }
    ?entity a owl:DatatypeProperty ;
            owl:deprecated true .
-   ?value ?property ?entity .
+   ?value1 ?property ?entity .
   }
   UNION
   {
    ?property owl:deprecated true .
-   ?entity ?property ?value .
+   ?entity ?property ?value1 .
   }
   UNION
   {
    ?property owl:deprecated true .
-   ?entity ?x ?value .
-   ?value a owl:Restriction ;
+   ?entity ?x ?value1 .
+   ?value1 a owl:Restriction ;
           owl:onProperty ?property .
   }
+  BIND (if(isIRI(?value1), ?value1, "blank node" ) as ?value)
 }
 ORDER BY ?entity
 ```

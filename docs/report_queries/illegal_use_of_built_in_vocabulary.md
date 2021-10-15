@@ -12,7 +12,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   VALUES ?entity {
       rdf:type
     }
-  ?entity ?property ?value
+  ?entity ?property ?value1
+  BIND (if(isIRI(?value1), ?value1, "blank node" ) as ?value)
 }
 ORDER BY ?entity
 ```

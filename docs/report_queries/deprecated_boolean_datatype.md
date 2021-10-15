@@ -13,6 +13,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   }
   ?entity ?property ?value .
   FILTER (datatype(?value) != xsd:boolean)
+  FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity
 ```
