@@ -60,8 +60,16 @@ docker pull obolibrary/robot
 To use the docker image, you can run:
 
 ```
-docker run -v $PWD/:/work -w /work --rm -ti obolibrary/robot "robot --version"
+docker run -v $PWD/:/work -w /work --rm -ti obolibrary/robot robot --version
 ```
+
+Or, on Windows:
+
+```
+docker run -v D:/ontology:/work --rm -ti obolibrary/robot robot --version
+```
+
+Where `D:/ontology` is the directory that contains the ontology or ontologies you want to work on (there is no equivalent for $PWD on Windows when running a command on the command line directly).
 
 ## 2. Using the Library
 
