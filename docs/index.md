@@ -49,15 +49,15 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
 ### Docker
 
-ROBOT is part of the [Ontology Development Kit](https://github.com/INCATools/ontology-development-kit) docker image, and as a [stand-alone docker image](https://hub.docker.com/r/obolibrary/robot/tags).
+ROBOT is part of the [Ontology Development Kit](https://github.com/INCATools/ontology-development-kit) Docker image, and as a [stand-alone Docker image](https://hub.docker.com/r/obolibrary/robot/tags).
 
-To use the docker image, you can install it like this:
+To use the Docker image, you can install it like this:
 
 ```
 docker pull obolibrary/robot
 ```
 
-To use the docker image, you can run:
+To use the Docker image, you can run:
 
 ```
 docker run -v $PWD/:/work -w /work --rm -ti obolibrary/robot robot --version
