@@ -1,6 +1,6 @@
 # Invalid Entity URI
 
-**Problem:** OBO entities are formatted http://purl.obolibrary.org/obo/IDSPACE_0000000. This format is assumed by many OBO tools. Often, accidentally typos cause entity to be ignored during processing.
+**Problem:** An entity's URI is not formatted correctly. OBO entities are formatted http://purl.obolibrary.org/obo/IDSPACE_0000000. This format is assumed by many OBO tools. Often, accidental typos cause an entity to be malformed, which can cause problems for tools that deal with OBO ontologies.
 
 **Solution:** Fix the entity OBO URI.
 
