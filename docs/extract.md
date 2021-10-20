@@ -11,7 +11,7 @@
 
 ## Overview
 
-The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
+The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
 
     robot extract --method STAR \
         --input filtered.owl \
