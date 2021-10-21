@@ -12,6 +12,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
  VALUES ?property { <http://purl.obolibrary.org/obo/IAO_0100001> }
  ?entity ?property ?value .
  FILTER NOT EXISTS { ?entity owl:deprecated true }
+ FILTER (!isBlank(?entity))
 }
 ORDER BY ?entity
 ```

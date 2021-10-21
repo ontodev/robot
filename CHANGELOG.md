@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Split equivalent class check [#856]
 - Allow Dublin Core "terms" namespace (`http://purl.org/dc/terms/`) for `description` and `title` properties on ontology. [#741]
 - Allow numbers in lowercase_definition check [#866]
+- Blank nodes in [`report`] are now referred to as `blank node` rather than a random identifier [#873]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
