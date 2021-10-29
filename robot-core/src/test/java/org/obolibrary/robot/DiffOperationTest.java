@@ -17,9 +17,14 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Tests for DiffOperation. */
 public class DiffOperationTest extends CoreTest {
+  /** Logger. */
+  private static final Logger logger = LoggerFactory.getLogger(DiffOperationTest.class);
+
   /**
    * Compare one ontology to itself.
    *
@@ -52,7 +57,7 @@ public class DiffOperationTest extends CoreTest {
 
     StringWriter writer = new StringWriter();
     boolean actual = DiffOperation.compare(simple, simple1, writer);
-    System.out.println(writer.toString());
+    logger.debug(writer.toString());
     assertFalse(actual);
     String expected =
         IOUtils.toString(
@@ -74,7 +79,7 @@ public class DiffOperationTest extends CoreTest {
     Map<String, String> options = new HashMap<>();
     options.put("labels", "true");
     boolean actual = DiffOperation.compare(simple, elk, new IOHelper(), writer, options);
-    System.out.println(writer.toString());
+    logger.debug(writer.toString());
     assertFalse(actual);
     String expected =
         IOUtils.toString(
