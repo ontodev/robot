@@ -11,15 +11,17 @@ import java.net.URISyntaxException;
 import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Helper methods for core tests. */
 public class CoreTest {
+  /** Logger. */
+  private static final Logger logger = LoggerFactory.getLogger(CoreTest.class);
+
   /** Base IRI string for resources files. */
   protected static String base =
       "https://github.com/" + "ontodev/robot/" + "robot-core/" + "src/test/resources/";
-
-  /** IRI of simple ontology. */
-  protected static IRI simpleIRI = IRI.create(base + "simple.owl");
 
   /** Shared data factory. */
   protected static OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
@@ -91,7 +93,7 @@ public class CoreTest {
   public void assertIdentical(OWLOntology left, OWLOntology right) throws IOException {
     StringWriter writer = new StringWriter();
     boolean actual = DiffOperation.compare(left, right, writer);
-    System.out.println(writer.toString());
+    logger.debug(writer.toString());
     assertTrue(actual);
     assertEquals("Ontologies are identical\n", writer.toString());
   }
