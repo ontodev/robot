@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `merge --inputs` patterns with parent directories [#899]
 - Fix `deprecated_class_reference` [`report`] query [#902]
 - Fix error handling for JSON conversion [#907]
+- Fix handling of property chains when removing/filtering base axioms in [#914]
 
 ### Changed
 - Do not allow malformed IRIs to be returned by `IOHelper` [#882]
@@ -275,6 +276,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#914]: https://github.com/ontodev/robot/pull/914
 [#907]: https://github.com/ontodev/robot/pull/907
 [#902]: https://github.com/ontodev/robot/pull/902
 [#899]: https://github.com/ontodev/robot/pull/899

@@ -1235,7 +1235,7 @@ public class RelatedObjectsHelper {
     Set<OWLAxiom> axioms = new HashSet<>();
 
     // Use the IRIs to compare named objects
-    Set<IRI> iris = getIRIs(objects);
+    Set<IRI> iris = getIRIsFromObjects(objects);
 
     for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
@@ -1317,7 +1317,7 @@ public class RelatedObjectsHelper {
     Set<OWLAxiom> axioms = new HashSet<>();
 
     // All the IRIs of named objects in the set of OWL Objects
-    Set<IRI> iris = getIRIs(objects);
+    Set<IRI> iris = getIRIsFromObjects(objects);
 
     for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
@@ -1372,40 +1372,50 @@ public class RelatedObjectsHelper {
       OWLEntity subject = decAxiom.getEntity();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLSubClassOfAxiom) {
       OWLSubClassOfAxiom scAxiom = (OWLSubClassOfAxiom) axiom;
       OWLClassExpression subject = scAxiom.getSubClass();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.asOWLClass().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLEquivalentClassesAxiom) {
       OWLEquivalentClassesAxiom eqAxiom = (OWLEquivalentClassesAxiom) axiom;
       for (OWLClassExpression expr : eqAxiom.getNamedClasses()) {
         if (!expr.isAnonymous()) {
           iris.add(expr.asOWLClass().getIRI());
+        } else {
+          iris.addAll(getIRIsFromEntities(expr.getSignature()));
         }
       }
-      return iris;
     } else if (axiom instanceof OWLDisjointClassesAxiom) {
       OWLDisjointClassesAxiom djAxiom = (OWLDisjointClassesAxiom) axiom;
       for (OWLClassExpression expr : djAxiom.getClassExpressions()) {
         if (!expr.isAnonymous()) {
           iris.add(expr.asOWLClass().getIRI());
+        } else {
+          iris.addAll(getIRIsFromEntities(expr.getSignature()));
         }
       }
-      return iris;
     } else if (axiom instanceof OWLSubDataPropertyOfAxiom) {
       OWLSubDataPropertyOfAxiom spAxiom = (OWLSubDataPropertyOfAxiom) axiom;
       OWLDataPropertyExpression subject = spAxiom.getSubProperty();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLSubObjectPropertyOfAxiom) {
       OWLSubObjectPropertyOfAxiom spAxiom = (OWLSubObjectPropertyOfAxiom) axiom;
       OWLObjectPropertyExpression subject = spAxiom.getSubProperty();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLEquivalentDataPropertiesAxiom) {
       OWLEquivalentDataPropertiesAxiom eqAxiom = (OWLEquivalentDataPropertiesAxiom) axiom;
@@ -1413,61 +1423,98 @@ public class RelatedObjectsHelper {
         OWLDataPropertyExpression subject = spAxiom.getSubProperty();
         if (!subject.isAnonymous()) {
           iris.add(subject.asOWLDataProperty().getIRI());
+        } else {
+          iris.addAll(getIRIsFromEntities(subject.getSignature()));
         }
       }
-      return iris;
     } else if (axiom instanceof OWLEquivalentObjectPropertiesAxiom) {
       OWLEquivalentObjectPropertiesAxiom eqAxiom = (OWLEquivalentObjectPropertiesAxiom) axiom;
       for (OWLSubObjectPropertyOfAxiom spAxiom : eqAxiom.asSubObjectPropertyOfAxioms()) {
         OWLObjectPropertyExpression subject = spAxiom.getSubProperty();
         if (!subject.isAnonymous()) {
           iris.add(subject.asOWLObjectProperty().getIRI());
+        } else {
+          iris.addAll(getIRIsFromEntities(subject.getSignature()));
         }
       }
-      return iris;
     } else if (axiom instanceof OWLDisjointDataPropertiesAxiom) {
       OWLDisjointDataPropertiesAxiom djAxiom = (OWLDisjointDataPropertiesAxiom) axiom;
       for (OWLDataPropertyExpression expr : djAxiom.getProperties()) {
         if (!expr.isAnonymous()) {
           iris.add(expr.asOWLDataProperty().getIRI());
+        } else {
+          iris.addAll(getIRIsFromEntities(expr.getSignature()));
         }
       }
-      return iris;
     } else if (axiom instanceof OWLDisjointObjectPropertiesAxiom) {
       OWLDisjointObjectPropertiesAxiom djAxiom = (OWLDisjointObjectPropertiesAxiom) axiom;
       for (OWLObjectPropertyExpression expr : djAxiom.getProperties()) {
         if (!expr.isAnonymous()) {
           iris.add(expr.asOWLObjectProperty().getIRI());
+        } else {
+          iris.addAll(getIRIsFromEntities(expr.getSignature()));
         }
       }
-      return iris;
     } else if (axiom instanceof OWLAnnotationAssertionAxiom) {
       OWLAnnotationAssertionAxiom annAxiom = (OWLAnnotationAssertionAxiom) axiom;
       OWLAnnotationSubject subject = annAxiom.getSubject();
       if (subject.isIRI()) {
         return Sets.newHashSet((IRI) subject);
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLClassAssertionAxiom) {
       OWLClassAssertionAxiom classAxiom = (OWLClassAssertionAxiom) axiom;
       OWLIndividual subject = classAxiom.getIndividual();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLDataPropertyAssertionAxiom) {
       OWLDataPropertyAssertionAxiom dpAxiom = (OWLDataPropertyAssertionAxiom) axiom;
       OWLIndividual subject = dpAxiom.getSubject();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
       OWLObjectPropertyAssertionAxiom dpAxiom = (OWLObjectPropertyAssertionAxiom) axiom;
       OWLIndividual subject = dpAxiom.getSubject();
       if (!subject.isAnonymous()) {
         return Sets.newHashSet(subject.asOWLNamedIndividual().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLSubPropertyChainOfAxiom) {
+      OWLSubPropertyChainOfAxiom spcAxiom = (OWLSubPropertyChainOfAxiom) axiom;
+      for (OWLObjectPropertyExpression expr : spcAxiom.getPropertyChain()) {
+        iris.addAll(getIRIsFromEntities(expr.getSignature()));
+      }
+    } else {
+      logger.warn("Axiom type not supported: " + axiom.getClass().toString());
+    }
+    return iris;
+  }
+
+  /**
+   * Given a set of OWLEntities, return the set of IRIs used in those entities, while handling
+   * anonymous entities.
+   *
+   * @param entities Set of entities to get IRIs from
+   * @return IRIs of named entities used in the entities
+   */
+  private static Set<IRI> getIRIsFromEntities(Set<OWLEntity> entities) {
+    Set<IRI> iris = new HashSet<>();
+    for (OWLEntity e : entities) {
+      if (e.isAnonymous()) {
+        iris.addAll(getIRIsFromEntities(e.getSignature()));
+      } else {
+        iris.add(e.getIRI());
       }
     }
-    // May have been anonymous, no IRI to return
-    return new HashSet<>();
+    return iris;
   }
 
   /**
@@ -1476,7 +1523,7 @@ public class RelatedObjectsHelper {
    * @param objects OWLObjects to get IRIs of
    * @return IRIs of the given objects
    */
-  private static Set<IRI> getIRIs(Set<OWLObject> objects) {
+  private static Set<IRI> getIRIsFromObjects(Set<OWLObject> objects) {
     Set<IRI> iris = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLNamedObject) {
@@ -1501,7 +1548,7 @@ public class RelatedObjectsHelper {
       Set<OWLObject> objects,
       Set<Class<? extends OWLAxiom>> axiomTypes) {
     Set<OWLAxiom> axioms = new HashSet<>();
-    Set<IRI> iris = getIRIs(objects);
+    Set<IRI> iris = getIRIsFromObjects(objects);
 
     for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
@@ -1574,7 +1621,7 @@ public class RelatedObjectsHelper {
     Set<OWLAxiom> axioms = new HashSet<>();
 
     // All the IRIs of named objects in the set of OWL Objects
-    Set<IRI> iris = getIRIs(objects);
+    Set<IRI> iris = getIRIsFromObjects(objects);
 
     for (OWLAxiom axiom : inputAxioms) {
       if (OntologyHelper.extendsAxiomTypes(axiom, axiomTypes)) {
