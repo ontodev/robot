@@ -1881,6 +1881,10 @@ public class Template {
 
       // Handle annotations
       if (template.startsWith("A") || template.startsWith("LABEL")) {
+        if (split != null) {
+          // Add the split back on for getAnnotations
+          template = template + " SPLIT=" + split;
+        }
         // Add the annotations to the individual
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {
