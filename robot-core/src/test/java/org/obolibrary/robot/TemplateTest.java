@@ -157,7 +157,7 @@ public class TemplateTest extends CoreTest {
         TemplateHelper.tryParse("test", checker, parser, label, 0, 0).asOWLClass();
     assert actualClass.getIRI().toString().equals(expectedClass.getIRI().toString());
   }
-  
+
   /**
    * Test named individual with split property.
    *
@@ -165,11 +165,11 @@ public class TemplateTest extends CoreTest {
    */
   @Test
   public void testNamedIndividualSplit() throws Exception {
-	Map<String, String> options = TemplateOperation.getDefaultOptions();
-	IOHelper ioHelper = new IOHelper();
-	ioHelper.addPrefix("ex", "http://example.com/");
-	
-	Map<String, List<List<String>>> tables = new LinkedHashMap<>();
+    Map<String, String> options = TemplateOperation.getDefaultOptions();
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.addPrefix("ex", "http://example.com/");
+
+    Map<String, List<List<String>>> tables = new LinkedHashMap<>();
     String path = "/template-individual-split.csv";
     tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
 
@@ -177,8 +177,13 @@ public class TemplateTest extends CoreTest {
 
     assertEquals("Count individuals", 1, ontology.getIndividualsInSignature().size());
     OWLNamedIndividual namedIndividual = ontology.getIndividualsInSignature().iterator().next();
-    assertEquals("Count annotation properties", 1, ontology.getAnnotationPropertiesInSignature().size());
-    OWLAnnotationProperty annotationProperty = ontology.getAnnotationPropertiesInSignature().iterator().next();
-    assertEquals("Count data properties of individual", 2, EntitySearcher.getAnnotationObjects(namedIndividual, ontology, annotationProperty).size());
+    assertEquals(
+        "Count annotation properties", 1, ontology.getAnnotationPropertiesInSignature().size());
+    OWLAnnotationProperty annotationProperty =
+        ontology.getAnnotationPropertiesInSignature().iterator().next();
+    assertEquals(
+        "Count annotation properties of individual",
+        2,
+        EntitySearcher.getAnnotationObjects(namedIndividual, ontology, annotationProperty).size());
   }
 }
