@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.search.EntitySearcher;
 
 /**
  * Tests Template class and class methods.
@@ -155,5 +156,34 @@ public class TemplateTest extends CoreTest {
     OWLClass actualClass =
         TemplateHelper.tryParse("test", checker, parser, label, 0, 0).asOWLClass();
     assert actualClass.getIRI().toString().equals(expectedClass.getIRI().toString());
+  }
+
+  /**
+   * Test named individual with split property.
+   *
+   * @throws Exception if entities cannot be found
+   */
+  @Test
+  public void testNamedIndividualSplit() throws Exception {
+    Map<String, String> options = TemplateOperation.getDefaultOptions();
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.addPrefix("ex", "http://example.com/");
+
+    Map<String, List<List<String>>> tables = new LinkedHashMap<>();
+    String path = "/template-individual-split.csv";
+    tables.put(path, TemplateHelper.readCSV(this.getClass().getResourceAsStream(path)));
+
+    OWLOntology ontology = TemplateOperation.template(null, ioHelper, tables, options);
+
+    assertEquals("Count individuals", 1, ontology.getIndividualsInSignature().size());
+    OWLNamedIndividual namedIndividual = ontology.getIndividualsInSignature().iterator().next();
+    assertEquals(
+        "Count annotation properties", 1, ontology.getAnnotationPropertiesInSignature().size());
+    OWLAnnotationProperty annotationProperty =
+        ontology.getAnnotationPropertiesInSignature().iterator().next();
+    assertEquals(
+        "Count annotation properties of individual",
+        2,
+        EntitySearcher.getAnnotationObjects(namedIndividual, ontology, annotationProperty).size());
   }
 }
