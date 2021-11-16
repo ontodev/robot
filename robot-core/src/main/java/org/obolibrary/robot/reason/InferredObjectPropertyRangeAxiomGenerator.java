@@ -20,7 +20,7 @@ public class InferredObjectPropertyRangeAxiomGenerator
       @Nonnull OWLDataFactory dataFactory,
       @Nonnull Set<OWLObjectPropertyRangeAxiom> result,
       @Nonnull Set<OWLObjectPropertyExpression> nonSimpleProperties) {
-    for (OWLClass range : reasoner.getObjectPropertyRanges(entity, false).getFlattened()) {
+    for (OWLClass range : reasoner.getObjectPropertyRanges(entity, true).getFlattened()) {
       result.add(dataFactory.getOWLObjectPropertyRangeAxiom(entity, range));
     }
   }
