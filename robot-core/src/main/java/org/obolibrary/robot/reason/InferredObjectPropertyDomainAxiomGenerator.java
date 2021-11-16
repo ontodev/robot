@@ -21,7 +21,7 @@ public class InferredObjectPropertyDomainAxiomGenerator
       @Nonnull Set<OWLObjectPropertyDomainAxiom> result,
       @Nonnull Set<OWLObjectPropertyExpression> nonSimpleProperties) {
     for (OWLClass domain : reasoner.getObjectPropertyDomains(entity, true).getFlattened()) {
-      if (!domain.equals(dataFactory.getOWLThing())) {
+      if (!domain.isOWLThing()) {
         result.add(dataFactory.getOWLObjectPropertyDomainAxiom(entity, domain));
       }
     }
