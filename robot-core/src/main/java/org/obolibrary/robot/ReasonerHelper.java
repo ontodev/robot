@@ -6,9 +6,7 @@ import java.util.stream.Collectors;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
 import org.obolibrary.robot.exceptions.IncoherentTBoxException;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
-import org.obolibrary.robot.reason.InferredClassAssertionAxiomGeneratorDirectOnly;
-import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndirect;
-import org.obolibrary.robot.reason.InferredSubObjectPropertyAxiomGeneratorIncludingIndirect;
+import org.obolibrary.robot.reason.*;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -321,6 +319,10 @@ public class ReasonerHelper {
         return new InferredInverseObjectPropertiesAxiomGenerator();
       case "objectpropertycharacteristic":
         return new InferredObjectPropertyCharacteristicAxiomGenerator();
+      case "objectpropertyrange":
+        return new InferredObjectPropertyRangeAxiomGenerator();
+      case "objectpropertydomain":
+        return new InferredObjectPropertyDomainAxiomGenerator();
       case "subobjectproperty":
         if (direct) {
           return new InferredSubObjectPropertyAxiomGenerator();
