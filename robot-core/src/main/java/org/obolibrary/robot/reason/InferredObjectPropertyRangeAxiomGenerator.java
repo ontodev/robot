@@ -21,12 +21,14 @@ public class InferredObjectPropertyRangeAxiomGenerator
       @Nonnull Set<OWLObjectPropertyRangeAxiom> result,
       @Nonnull Set<OWLObjectPropertyExpression> nonSimpleProperties) {
     for (OWLClass range : reasoner.getObjectPropertyRanges(entity, true).getFlattened()) {
-      result.add(dataFactory.getOWLObjectPropertyRangeAxiom(entity, range));
+      if (!range.equals(dataFactory.getOWLThing())) {
+        result.add(dataFactory.getOWLObjectPropertyRangeAxiom(entity, range));
+      }
     }
   }
 
   @Override
   public String getLabel() {
-    return "Inferred Object Property Range Axioms";
+    return "Inferred object property range axioms";
   }
 }

@@ -20,13 +20,15 @@ public class InferredObjectPropertyDomainAxiomGenerator
       @Nonnull OWLDataFactory dataFactory,
       @Nonnull Set<OWLObjectPropertyDomainAxiom> result,
       @Nonnull Set<OWLObjectPropertyExpression> nonSimpleProperties) {
-    for (OWLClass domain : reasoner.getObjectPropertyRanges(entity, true).getFlattened()) {
-      result.add(dataFactory.getOWLObjectPropertyDomainAxiom(entity, domain));
+    for (OWLClass domain : reasoner.getObjectPropertyDomains(entity, true).getFlattened()) {
+      if (!domain.equals(dataFactory.getOWLThing())) {
+        result.add(dataFactory.getOWLObjectPropertyDomainAxiom(entity, domain));
+      }
     }
   }
 
   @Override
   public String getLabel() {
-    return "Inferred Object Property Domain axioms";
+    return "Inferred object property domain axioms";
   }
 }
