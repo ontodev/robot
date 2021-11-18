@@ -204,7 +204,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>obographs</artifactId>
-      <version>0.2.1</version>
+      <version>0.3.0</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
