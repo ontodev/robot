@@ -116,6 +116,15 @@ robot reason --input unreasoned.owl
   --output reasoned.owl
 ```
 
+Note that for some of the axiom generators you may need the Hermit reasoner
+to get meaningful results:
+
+```
+robot reason --input ro-base.owl --reasoner hermit
+  --axiom-generators "ObjectPropertyRange ObjectPropertyDomain"
+  --output ro-base-reasoned.owl
+```
+
 If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
 
 The axioms that are generated for subclasses, class assertions, and sub-object properties can be either direct or indirect. By default, the operation will only generate direct axioms (`--include-indirect false`). It is recommended to pipe to `reduce` after to remove any redundant axioms. For example, to generate all direct and indirect superclass expressions:
