@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow numbers in lowercase_definition check [#866]
 - Blank nodes in [`report`] are now referred to as `blank node` rather than a random identifier [#873]
 - Change behaviour of [`template`] `--errors` option without `--force` [#929]
+- Fail hard on bad [`reason`] `--equivalent-classes-allowed` argument [#938]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -278,6 +279,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#938]: https://github.com/ontodev/robot/pull/938
 [#929]: https://github.com/ontodev/robot/pull/929
 [#924]: https://github.com/ontodev/robot/issues/924
 [#914]: https://github.com/ontodev/robot/pull/914
