@@ -130,15 +130,18 @@ robot reason --input unreasoned.owl
 
 ## Error Messages
 
-### Create Ontology Error
-
-You must select between `--create-new-ontology-with-annotations` (`-m`) and `--create-new-ontology` (`-n`). Both cannot be passed in as `true` to one reason command, as they have opposite results.
-
 ### Axiom Generator Error
 
 The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](#axiom-generators).
+
+### Create Ontology Error
+
+You must select between `--create-new-ontology-with-annotations` (`-m`) and `--create-new-ontology` (`-n`). Both cannot be passed in as `true` to one reason command, as they have opposite results.
 
 ### Equivalent Class Axiom Error
 
 ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](#equivalent-class-axioms).
 
+### Equivalent Classes Option Error
+
+The argument for `--equivalent-classes-allowed` must be one of: `true`, `false`, `all`, `none`, or `asserted-only`. See [Equivalent Class Axioms](#equivalent-class-axioms) for more details.
