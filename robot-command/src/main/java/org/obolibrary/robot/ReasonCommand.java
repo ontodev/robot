@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import java.util.Arrays;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -25,6 +26,11 @@ public class ReasonCommand implements Command {
       NS
           + "CREATE ONTOLOGY ERROR 'create-new-ontology' and 'create-new-ontology-with-annotations'"
           + " cannot both be set to true.";
+
+  private static final String equivalentClassesOptionError =
+      NS
+          + "EQUIVALENT CLASSES OPTION ERROR 'equivalent-classes-allowed' value %s must be one of: "
+          + "true, false, all, none, asserted-only";
 
   /** Store the command-line options for the command. */
   private Options options;
@@ -158,6 +164,8 @@ public class ReasonCommand implements Command {
       return null;
     }
 
+    // Validate equivalent-classes-allowed options with sets of options
+
     if (state == null) {
       state = new CommandState();
     }
@@ -177,6 +185,10 @@ public class ReasonCommand implements Command {
     if (reasonerOptions.get("create-new-ontology-with-annotations").equalsIgnoreCase("true")
         && reasonerOptions.get("create-new-ontology").equalsIgnoreCase("true")) {
       throw new IllegalArgumentException(createOntologyError);
+    }
+    String eqClassOpt = reasonerOptions.get("equivalent-classes-allowed");
+    if (!Arrays.asList("true", "false", "all", "none", "asserted-only").contains(eqClassOpt)) {
+      throw new IllegalArgumentException(String.format(equivalentClassesOptionError, eqClassOpt));
     }
     ReasonOperation.reason(ontology, reasonerFactory, reasonerOptions);
 
