@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add check for illegal use of built-in vocabulary [#867]
 - Add check for misused replaced-by annotation [#869]
 - Add checks for undeclared synonymtype and subsettype [#870]
+- Inferred axiom generators for domains and ranges [#931]
 
 ### Changed
 - Split equivalent class check [#856]

@@ -107,7 +107,9 @@ By default, the `reason` operation will only assert inferred subclass axioms. Th
     * `InverseObjectProperties`
     * `ObjectPropertyCharacteristic`
     * `SubObjectProperty`
-  
+    * `ObjectPropertyRange`
+    * `ObjectPropertyDomain`
+
 One or more of these axiom generators can be passed into the option (separated by spaces). For example, to generate both subclass and disjoint class axioms:
 
 ```
@@ -115,6 +117,15 @@ robot reason --input unreasoned.owl
   --axiom-generators "SubClass DisjointClasses"
   --output reasoned.owl
 ```
+
+Note that for some of the axiom generators you may need the Hermit reasoner
+to get meaningful results:
+
+
+    robot reason --input ro-base.owl --reasoner hermit
+      --axiom-generators "ObjectPropertyRange ObjectPropertyDomain"
+      --output ro-base-reasoned.owl
+
 
 If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
 
