@@ -53,7 +53,7 @@ ROBOT will always perform a logical validation check prior to automatic classifi
 
 You can perform detailed debugging using an environment like Protege - load the ontology, switch on the reasoner and use the explain feature. For example, if you have unsatisfiable classes, find one of them (they should show up red) and click on the `?` where it says `EquivalentTo Nothing`.
 
-If you are working on a large complex ontology with multiple imports and you encounter unsatisfiable classes during the release, you can make a minimal ontology for debugging purposes using the `-D` (`--dump-unsatisfiable`) option folled by an output file path. This will find all unsatisfiable classes and use the [extract](extract) operation to create a debug module.
+If you are working on a large complex ontology with multiple imports and you encounter unsatisfiable classes during the release, you can make a minimal ontology for debugging purposes using the `-D` (`--dump-unsatisfiable`) option followed by an output file path. This will find all unsatisfiable classes and use the [extract](extract) operation to create a debug module.
 
 ```
 robot reason --reasoner ELK \
