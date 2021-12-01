@@ -51,7 +51,7 @@ Various `--header` types are supported:
 
 * **Special Headers**:
 	* `IRI`: creates an "IRI" column based on the full unique identifier
-	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE) - please note that all IRIs must have [defined prefixes](global/prefixes), or the full IRI will be returned.
+	* `ID`: creates an "ID" column based on the short form of the unique identifier (CURIE) - please note that all IRIs must have [defined prefixes](global#prefixes), or the full IRI will be returned.
 	* `LABEL`: creates a "Label" column based on `rdfs:label` (`rdfs:label` can also be used in place of this column)
 	* `SYNONYMS`: creates a "SYNONYMS" column based on all synonyms (oboInOwl exact, broad, narrow, related, or IAO alternative term)
 	* `SubClass Of`: creates a "SubClass Of" column based on `rdfs:subClassOf`
