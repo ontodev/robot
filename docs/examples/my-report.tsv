@@ -1,0 +1,3 @@
+Level	Rule Name	Subject	Property	Value
+WARN	annotation_whitespace	obo:UBPROP_0000007	IAO:0000232	Used to connect a class to an adjectival form of its label. For example, a class with label 'intestine' may have a relational adjective 'intestinal'. 
+INFO	file:missing-contributor	https://github.com/ontodev/robot/examples/edit.owl	dc11:contributor	
