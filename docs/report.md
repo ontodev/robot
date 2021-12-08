@@ -104,7 +104,7 @@ INFO	deprecated_class
 
     robot report --input edit.owl \
       --profile my-profile.txt \
-      --output my-report.tsv
+      --output results/my-report.tsv
 
 
 For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the absolute or relative path.
