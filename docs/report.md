@@ -100,12 +100,12 @@ INFO	deprecated_class
 ```
 
 `report` allows the user to define their own profile to configure different logging levels and include their own QC queries with the `--profile` option:
-<!-- DO NOT TEST -->
-```
-robot report --input edit.owl \
-  --profile my-profile.txt \
-  --output my-report.tsv
-```
+
+
+    robot report --input edit.owl \
+      --profile my-profile.txt \
+      --output my-report.tsv
+
 
 For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the absolute or relative path.
 Note that in order for the queries to be included in the report, they _must_ return exactly three variables: `?entity ?property ?value`.
