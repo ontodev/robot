@@ -178,7 +178,7 @@ public class RenameCommand implements Command {
    * @return character separator, either tab or comma
    * @throws IOException if file is not TSV/TXT or CSV
    */
-  private static char getSeparator(String fileName) throws IOException {
+  public static char getSeparator(String fileName) throws IOException {
     if (fileName.endsWith(".tsv") || fileName.endsWith(".txt")) {
       return '\t';
     } else if (fileName.endsWith(".csv")) {
@@ -199,7 +199,7 @@ public class RenameCommand implements Command {
    * @return map of old values -> new values
    * @throws Exception on any issue
    */
-  private static Map<String, String> parseTableMappings(
+  public static Map<String, String> parseTableMappings(
       File mappingsFile, char separator, boolean allowDuplicates) throws Exception {
     Map<String, String> mappings = new HashMap<>();
 
