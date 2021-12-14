@@ -71,6 +71,24 @@ public class Report {
 
   private IRI ontologyIRI = null;
 
+  /**
+   * Map of rule name to number of violations for INFO level. Replaces info map to support violation
+   * count by rule name.
+   */
+  public Map<String, Integer> infoCountByRule = new HashMap<>();
+
+  /**
+   * Map of rule name to number of violations for WARN level. Replaces warn map to support violation
+   * count by rule name.
+   */
+  public Map<String, Integer> warnCountByRule = new HashMap<>();
+
+  /**
+   * Map of rule name to number of violations for ERROR level. Replaces error map to support
+   * violation count by rule name.
+   */
+  public Map<String, Integer> errorCountByRule = new HashMap<>();
+
   /** Map of rules and the violations for INFO level. */
   @Deprecated public Map<String, List<Violation>> info = new HashMap<>();
 
@@ -210,14 +228,17 @@ public class Report {
       case ERROR:
         errorViolations.add(rq);
         errorCount += rq.getViolations().size();
+        errorCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       case WARN:
         warnViolations.add(rq);
         warnCount += rq.getViolations().size();
+        warnCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       case INFO:
         infoViolations.add(rq);
         infoCount += rq.getViolations().size();
+        infoCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       default:
         logger.error(
@@ -572,17 +593,13 @@ public class Report {
    * @return number of violations for given rule name
    * @throws Exception if the rule name is not in this Report object
    */
-  @Deprecated
   public Integer getViolationCount(String ruleName) throws Exception {
-    if (info.containsKey(ruleName)) {
-      List<Violation> v = info.get(ruleName);
-      return v.size();
-    } else if (warn.containsKey(ruleName)) {
-      List<Violation> v = warn.get(ruleName);
-      return v.size();
-    } else if (error.containsKey(ruleName)) {
-      List<Violation> v = error.get(ruleName);
-      return v.size();
+    if (infoCountByRule.containsKey(ruleName)) {
+      return infoCountByRule.get(ruleName);
+    } else if (warnCountByRule.containsKey(ruleName)) {
+      return warnCountByRule.get(ruleName);
+    } else if (errorCountByRule.containsKey(ruleName)) {
+      return errorCountByRule.get(ruleName);
     }
     throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
   }
