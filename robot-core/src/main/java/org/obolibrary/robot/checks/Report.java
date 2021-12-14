@@ -575,12 +575,15 @@ public class Report {
     if (INFO.equals(level)) {
       info.put(ruleName, violations);
       infoCount += violations.size();
+      infoCountByRule.put(ruleName, violations.size());
     } else if (WARN.equals(level)) {
       warn.put(ruleName, violations);
       warnCount += violations.size();
+      warnCountByRule.put(ruleName, violations.size());
     } else if (ERROR.equals(level)) {
       error.put(ruleName, violations);
       errorCount += violations.size();
+      errorCountByRule.put(ruleName, violations.size());
     }
     // Otherwise do nothing
   }
@@ -609,33 +612,35 @@ public class Report {
    *
    * @return a set of IRI strings
    */
-  @Deprecated
   public Set<String> getIRIs() {
-    Set<String> iris = new HashSet<>();
-    iris.addAll(getIRIs(error));
-    iris.addAll(getIRIs(warn));
-    iris.addAll(getIRIs(info));
-    return iris;
+    List<Violation> allViolations = new ArrayList<>();
+    for (ReportQuery rq : errorViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    for (ReportQuery rq : warnViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    for (ReportQuery rq : infoViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    return getIRIs(allViolations);
   }
 
   /**
    * Return all the IRI strings in the given list of Violations.
    *
-   * @param violationSets map of rule name and violations
+   * @param violations list of Violations
    * @return a set of IRI strings
    */
-  @Deprecated
-  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
+  public Set<String> getIRIs(List<Violation> violations) {
     Set<String> iris = new HashSet<>();
 
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      for (Violation v : vs.getValue()) {
-        iris.add(v.entity.getIRI().toString());
-        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
-          iris.add(statement.getKey().getIRI().toString());
-          for (OWLEntity value : statement.getValue()) {
-            iris.add(value.getIRI().toString());
-          }
+    for (Violation v : violations) {
+      iris.add(v.entity.getIRI().toString());
+      for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
+        iris.add(statement.getKey().getIRI().toString());
+        for (OWLEntity value : statement.getValue()) {
+          iris.add(value.getIRI().toString());
         }
       }
     }
