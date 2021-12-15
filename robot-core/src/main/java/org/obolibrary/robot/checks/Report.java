@@ -71,6 +71,24 @@ public class Report {
 
   private IRI ontologyIRI = null;
 
+  /**
+   * Map of rule name to number of violations for INFO level. Replaces info map to support violation
+   * count by rule name.
+   */
+  public Map<String, Integer> infoCountByRule = new HashMap<>();
+
+  /**
+   * Map of rule name to number of violations for WARN level. Replaces warn map to support violation
+   * count by rule name.
+   */
+  public Map<String, Integer> warnCountByRule = new HashMap<>();
+
+  /**
+   * Map of rule name to number of violations for ERROR level. Replaces error map to support
+   * violation count by rule name.
+   */
+  public Map<String, Integer> errorCountByRule = new HashMap<>();
+
   /** Map of rules and the violations for INFO level. */
   @Deprecated public Map<String, List<Violation>> info = new HashMap<>();
 
@@ -210,14 +228,17 @@ public class Report {
       case ERROR:
         errorViolations.add(rq);
         errorCount += rq.getViolations().size();
+        errorCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       case WARN:
         warnViolations.add(rq);
         warnCount += rq.getViolations().size();
+        warnCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       case INFO:
         infoViolations.add(rq);
         infoCount += rq.getViolations().size();
+        infoCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       default:
         logger.error(
@@ -554,12 +575,15 @@ public class Report {
     if (INFO.equals(level)) {
       info.put(ruleName, violations);
       infoCount += violations.size();
+      infoCountByRule.put(ruleName, violations.size());
     } else if (WARN.equals(level)) {
       warn.put(ruleName, violations);
       warnCount += violations.size();
+      warnCountByRule.put(ruleName, violations.size());
     } else if (ERROR.equals(level)) {
       error.put(ruleName, violations);
       errorCount += violations.size();
+      errorCountByRule.put(ruleName, violations.size());
     }
     // Otherwise do nothing
   }
@@ -572,17 +596,13 @@ public class Report {
    * @return number of violations for given rule name
    * @throws Exception if the rule name is not in this Report object
    */
-  @Deprecated
   public Integer getViolationCount(String ruleName) throws Exception {
-    if (info.containsKey(ruleName)) {
-      List<Violation> v = info.get(ruleName);
-      return v.size();
-    } else if (warn.containsKey(ruleName)) {
-      List<Violation> v = warn.get(ruleName);
-      return v.size();
-    } else if (error.containsKey(ruleName)) {
-      List<Violation> v = error.get(ruleName);
-      return v.size();
+    if (infoCountByRule.containsKey(ruleName)) {
+      return infoCountByRule.get(ruleName);
+    } else if (warnCountByRule.containsKey(ruleName)) {
+      return warnCountByRule.get(ruleName);
+    } else if (errorCountByRule.containsKey(ruleName)) {
+      return errorCountByRule.get(ruleName);
     }
     throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
   }
@@ -592,33 +612,35 @@ public class Report {
    *
    * @return a set of IRI strings
    */
-  @Deprecated
   public Set<String> getIRIs() {
-    Set<String> iris = new HashSet<>();
-    iris.addAll(getIRIs(error));
-    iris.addAll(getIRIs(warn));
-    iris.addAll(getIRIs(info));
-    return iris;
+    List<Violation> allViolations = new ArrayList<>();
+    for (ReportQuery rq : errorViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    for (ReportQuery rq : warnViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    for (ReportQuery rq : infoViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    return getIRIs(allViolations);
   }
 
   /**
    * Return all the IRI strings in the given list of Violations.
    *
-   * @param violationSets map of rule name and violations
+   * @param violations list of Violations
    * @return a set of IRI strings
    */
-  @Deprecated
-  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
+  public Set<String> getIRIs(List<Violation> violations) {
     Set<String> iris = new HashSet<>();
 
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      for (Violation v : vs.getValue()) {
-        iris.add(v.entity.getIRI().toString());
-        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
-          iris.add(statement.getKey().getIRI().toString());
-          for (OWLEntity value : statement.getValue()) {
-            iris.add(value.getIRI().toString());
-          }
+    for (Violation v : violations) {
+      iris.add(v.entity.getIRI().toString());
+      for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
+        iris.add(statement.getKey().getIRI().toString());
+        for (OWLEntity value : statement.getValue()) {
+          iris.add(value.getIRI().toString());
         }
       }
     }
