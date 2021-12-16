@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.3] - 2021-12-16
+
 ### Changed
 - Replace `log4j` with `logback` [#948] [#953]
 
@@ -250,7 +252,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.2...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.3...HEAD
+[1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/ontodev/robot/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ontodev/robot/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/ontodev/robot/compare/v1.7.2...v1.8.0
