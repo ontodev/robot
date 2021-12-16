@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Replace `log4j` with `logback` [#948] [#953]
+
 ### Fixed
 - Fix custom [`report`] queries [#944]
 - Fix methods in `Report` object for ROBOT as a library [#951]
@@ -287,7 +290,9 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#953]: https://github.com/ontodev/robot/pull/953
 [#951]: https://github.com/ontodev/robot/pull/951
+[#948]: https://github.com/ontodev/robot/pull/948
 [#944]: https://github.com/ontodev/robot/pull/944
 [#938]: https://github.com/ontodev/robot/pull/938
 [#929]: https://github.com/ontodev/robot/pull/929
