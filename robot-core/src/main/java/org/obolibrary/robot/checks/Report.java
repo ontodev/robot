@@ -98,6 +98,20 @@ public class Report {
   /** Map of rules and the violations for ERROR level. */
   @Deprecated public Map<String, List<Violation>> error = new HashMap<>();
 
+  /** Comparator for sorting a list of Report Queries alphabetically by their rule name. */
+  static class ReportQueryComparator implements Comparator<ReportQuery> {
+    /**
+     * Compare two Report Query objects by their rule name.
+     *
+     * @param rq1 Report Query 1
+     * @param rq2 Report Query 2
+     * @return int for sorting
+     */
+    public int compare(ReportQuery rq1, ReportQuery rq2) {
+      return rq1.getRuleName().compareTo(rq2.getRuleName());
+    }
+  }
+
   /**
    * Create a new report object without an ontology or predefined IOHelper.
    *
@@ -289,6 +303,11 @@ public class Report {
       table.addColumn(c);
     }
 
+    // Sort results
+    errorViolations.sort(new ReportQueryComparator());
+    warnViolations.sort(new ReportQueryComparator());
+    infoViolations.sort(new ReportQueryComparator());
+
     addToTable(table, provider, ERROR, errorViolations);
     addToTable(table, provider, WARN, warnViolations);
     addToTable(table, provider, INFO, infoViolations);
@@ -314,6 +333,12 @@ public class Report {
    * @return YAML string
    */
   public String toYAML() {
+    // Sort results
+    errorViolations.sort(new ReportQueryComparator());
+    warnViolations.sort(new ReportQueryComparator());
+    infoViolations.sort(new ReportQueryComparator());
+
+    // Create YAML
     ShortFormProvider provider = getProvider();
     return yamlHelper(provider, ERROR, errorViolations)
         + yamlHelper(provider, WARN, warnViolations)
@@ -561,34 +586,6 @@ public class Report {
   }
 
   /**
-   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
-   * the violations to the correct map.
-   *
-   * @param ruleName name of rule
-   * @param level reporting level of rule
-   * @param violations list of violations from this rule
-   * @deprecated violations should be added to their appropriate ReportQuery object
-   */
-  @Deprecated
-  public void addViolations(String ruleName, String level, List<Violation> violations) {
-    logger.debug("violation found: " + ruleName);
-    if (INFO.equals(level)) {
-      info.put(ruleName, violations);
-      infoCount += violations.size();
-      infoCountByRule.put(ruleName, violations.size());
-    } else if (WARN.equals(level)) {
-      warn.put(ruleName, violations);
-      warnCount += violations.size();
-      warnCountByRule.put(ruleName, violations.size());
-    } else if (ERROR.equals(level)) {
-      error.put(ruleName, violations);
-      errorCount += violations.size();
-      errorCountByRule.put(ruleName, violations.size());
-    }
-    // Otherwise do nothing
-  }
-
-  /**
    * Given a rule name, return the violation count for that rule. Throw exception if rule does not
    * exists.
    *
@@ -646,6 +643,34 @@ public class Report {
     }
 
     return iris;
+  }
+
+  /**
+   * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
+   * the violations to the correct map.
+   *
+   * @param ruleName name of rule
+   * @param level reporting level of rule
+   * @param violations list of violations from this rule
+   * @deprecated violations should be added to their appropriate ReportQuery object
+   */
+  @Deprecated
+  public void addViolations(String ruleName, String level, List<Violation> violations) {
+    logger.debug("violation found: " + ruleName);
+    if (INFO.equals(level)) {
+      info.put(ruleName, violations);
+      infoCount += violations.size();
+      infoCountByRule.put(ruleName, violations.size());
+    } else if (WARN.equals(level)) {
+      warn.put(ruleName, violations);
+      warnCount += violations.size();
+      warnCountByRule.put(ruleName, violations.size());
+    } else if (ERROR.equals(level)) {
+      error.put(ruleName, violations);
+      errorCount += violations.size();
+      errorCountByRule.put(ruleName, violations.size());
+    }
+    // Otherwise do nothing
   }
 
   /**
