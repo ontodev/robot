@@ -1,26 +1,107 @@
 Level	Rule Name	Subject	Property	Value
-ERROR	missing_ontology_license	https://github.com/ontodev/robot/examples/edit.owl	dc:license	
-ERROR	missing_ontology_description	https://github.com/ontodev/robot/examples/edit.owl	dc:description	
-ERROR	missing_ontology_title	https://github.com/ontodev/robot/examples/edit.owl	dc:title	
-WARN	annotation_whitespace	obo:UBPROP_0000007	IAO:0000232	Used to connect a class to an adjectival form of its label. For example, a class with label 'intestine' may have a relational adjective 'intestinal'. 
+ERROR	missing_ontology_description	http://purl.obolibrary.org/obo/uberon.owl	dc:description	
+ERROR	missing_ontology_license	http://purl.obolibrary.org/obo/uberon.owl	dc:license	
+ERROR	missing_ontology_title	http://purl.obolibrary.org/obo/uberon.owl	dc:title	
+WARN	missing_definition	BFO:0000050	IAO:0000115	
+WARN	missing_definition	BFO:0000051	IAO:0000115	
+WARN	missing_definition	BFO:0000063	IAO:0000115	
+WARN	missing_definition	RO:0001015	IAO:0000115	
+WARN	missing_definition	RO:0001025	IAO:0000115	
+WARN	missing_definition	RO:0002007	IAO:0000115	
+WARN	missing_definition	RO:0002202	IAO:0000115	
+WARN	missing_definition	RO:0002203	IAO:0000115	
+WARN	missing_definition	RO:0002224	IAO:0000115	
+WARN	missing_definition	RO:0002230	IAO:0000115	
+WARN	missing_definition	RO:0002254	IAO:0000115	
+WARN	missing_definition	RO:0002350	IAO:0000115	
+WARN	missing_definition	RO:0002351	IAO:0000115	
+WARN	missing_definition	RO:0002371	IAO:0000115	
+WARN	missing_definition	RO:0002433	IAO:0000115	
+WARN	missing_definition	RO:0002494	IAO:0000115	
+WARN	missing_definition	RO:0002495	IAO:0000115	
+WARN	missing_definition	RO:0002496	IAO:0000115	
+WARN	missing_definition	RO:0002497	IAO:0000115	
+WARN	missing_definition	RO:0002572	IAO:0000115	
+WARN	missing_definition	RO:0003000	IAO:0000115	
+WARN	missing_definition	RO:0003001	IAO:0000115	
+WARN	missing_definition	UBERON:0000153	IAO:0000115	
+WARN	missing_definition	UBERON:0000154	IAO:0000115	
+WARN	missing_definition	UBERON:0004457	IAO:0000115	
+WARN	missing_definition	UBERON:0004458	IAO:0000115	
+WARN	missing_definition	UBERON:0005423	IAO:0000115	
+WARN	missing_definition	UBERON:0006598	IAO:0000115	
+WARN	missing_definition	UBERON:0007026	IAO:0000115	
+WARN	missing_definition	UBERON:0009569	IAO:0000115	
+WARN	missing_definition	UBERON:0009618	IAO:0000115	
+WARN	missing_definition	UBERON:0010316	IAO:0000115	
+WARN	missing_definition	UBERON:0013522	IAO:0000115	
+WARN	missing_definition	UBERON:0034905	IAO:0000115	
+WARN	missing_definition	obo:uberon/core#channel_for	IAO:0000115	
+WARN	missing_definition	obo:uberon/core#existence_starts_and_ends_during	IAO:0000115	
+WARN	missing_definition	obo:uberon/core#subdivision_of	IAO:0000115	
+WARN	annotation_whitespace	UBERON:0000066	IAO:0000115	The stage of development at which the animal is fully formed, including immaturity and maturity. Includes both sexually immature stage, and adult stage. 
+WARN	annotation_whitespace	UBERON:0000328	IAO:0000232	We model the digestive tract as consisting of two parts: the wall and the lumen. 
+WARN	annotation_whitespace	UBERON:0001004	oboInOwl:hasRelatedSynonym	apparatus respiratorius 
+WARN	annotation_whitespace	UBERON:0001555	obo:UBPROP_0000012	FMA also has a term 'gastrointestinal tract', but this includes the liver. 
+WARN	missing_synonymtype_declaration	obo:uberon/core#ABBREVIATION	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#HOMOLOGY	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#HUMAN_PREFERRED	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#INCONSISTENT	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#LATIN	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#PENDING_REVIEW	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#PLURAL	rdfs:subPropertyOf	
+WARN	missing_synonymtype_declaration	obo:uberon/core#SENSU	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#cumbo	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#developmental_classification	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#disjointness_axiom_removed	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#early_development	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#efo_slim	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#emapa_ehdaa2	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#functional_classification	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#grouping_class	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#inconsistent_with_fma	rdfs:subPropertyOf	
+WARN	missing_subset_declaration	obo:uberon/core#major_organ	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#non_informative	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#organ_slim	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#uberon_slim	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#upper_level	rdfs:subPropertyOf	
 WARN	missing_subset_declaration	obo:uberon/core#vertebrate_core	rdfs:subPropertyOf	
+WARN	duplicate_scoped_synonym	UBERON:0000106	oboInOwl:hasExactSynonym	fertilized egg stage
+WARN	duplicate_scoped_synonym	UBERON:0000106	oboInOwl:hasRelatedSynonym	fertilized egg stage
 WARN	duplicate_scoped_synonym	UBERON:0002368	oboInOwl:hasExactSynonym	ductless gland
 WARN	duplicate_scoped_synonym	UBERON:0002368	oboInOwl:hasRelatedSynonym	ductless gland
 WARN	duplicate_scoped_synonym	UBERON:0002369	oboInOwl:hasExactSynonym	glandula suprarenalis
 WARN	duplicate_scoped_synonym	UBERON:0002369	oboInOwl:hasRelatedSynonym	glandula suprarenalis
+WARN	duplicate_scoped_synonym	UBERON:0003697	oboInOwl:hasExactSynonym	paries abdominalis
+WARN	duplicate_scoped_synonym	UBERON:0003697	oboInOwl:hasRelatedSynonym	paries abdominalis
+WARN	duplicate_scoped_synonym	UBERON:0008229	oboInOwl:hasExactSynonym	head or neck muscle
+WARN	duplicate_scoped_synonym	UBERON:0008229	oboInOwl:hasRelatedSynonym	head or neck muscle
+WARN	duplicate_label_synonym	UBERON:0000463	oboInOwl:hasExactSynonym	organism substance
+WARN	duplicate_label_synonym	UBERON:0000485	oboInOwl:hasExactSynonym	simple columnar epithelium
 WARN	duplicate_label_synonym	UBERON:0000949	oboInOwl:hasExactSynonym	endocrine system
+WARN	duplicate_label_synonym	UBERON:0001004	oboInOwl:hasExactSynonym	respiratory system
+WARN	duplicate_label_synonym	UBERON:0001015	oboInOwl:hasExactSynonym	musculature
 WARN	duplicate_label_synonym	UBERON:0001851	oboInOwl:hasExactSynonym	cortex
-WARN	missing_definition	BFO:0000050	IAO:0000115	
-WARN	missing_definition	IAO:0000115	IAO:0000115	
-WARN	missing_definition	IAO:0000116	IAO:0000115	
-WARN	missing_definition	IAO:0000232	IAO:0000115	
-WARN	missing_definition	UBERON:0009569	IAO:0000115	
-WARN	missing_definition	obo:UBPROP_0000007	IAO:0000115	
-INFO	missing_superclass	UBERON:0001062	rdfs:subClassOf	
+WARN	duplicate_label_synonym	UBERON:0002091	oboInOwl:hasExactSynonym	appendicular skeleton
+WARN	duplicate_label_synonym	UBERON:0006904	oboInOwl:hasExactSynonym	head mesenchyme from mesoderm
+WARN	duplicate_label_synonym	UBERON:0006909	oboInOwl:hasExactSynonym	lumen of digestive tract
+WARN	duplicate_label_synonym	UBERON:0017672	oboInOwl:hasExactSynonym	abdominal viscera
+INFO	missing_superclass	UBERON:0000465	rdfs:subClassOf	
+INFO	missing_superclass	UBERON:0004458	rdfs:subClassOf	
+INFO	lowercase_definition	BSPO:0000096	IAO:0000115	x anterior_to y iff x is further along the antero-posterior axis than y, towards the head. An antero-posterior axis is an axis that bisects an organism from head end to opposite end of body or tail: bearer
+INFO	lowercase_definition	BSPO:0000098	IAO:0000115	x dorsal_to y iff x is further along the dorso-ventral axis than y, towards the back. A dorso-ventral axis is an axis that bisects an organism from back (e.g. spinal column) to front (e.g. belly).
+INFO	lowercase_definition	BSPO:0000102	IAO:0000115	x ventral_to y iff x is further along the dorso-ventral axis than y, towards the front. A dorso-ventral axis is an axis that bisects an organism from back (e.g. spinal column) to front (e.g. belly).
+INFO	lowercase_definition	RO:0002219	IAO:0000115	x surrounded_by y iff: x is adjacent to y and for every region r adjacent to x, r overlaps y
+INFO	lowercase_definition	RO:0002220	IAO:0000115	x adjacent_to y iff: x and y share a boundary
+INFO	lowercase_definition	RO:0002221	IAO:0000115	inverse of surrounded_by
+INFO	lowercase_definition	RO:0002256	IAO:0000115	t1 developmentally_induced_by t2 if there is a process of organ induction (GO:0001759) with t1 and t2 as interacting participants. t2 causes t1 to change its fate from a precursor tissue type T to T', where T' develops_from T.
+INFO	lowercase_definition	RO:0002387	IAO:0000115	x has the potential to develop into y iff x develops into y or if x is capable of developing into y
+INFO	lowercase_definition	RO:0002473	IAO:0000115	x composed_primarily_of y iff: more than half of the mass of x is made from parts of y
+INFO	lowercase_definition	UBERON:0000092	IAO:0000115	stage succeeding embryo, including mature structure
+INFO	lowercase_definition	UBERON:0001009	IAO:0000115	organ system that passes nutrients (such as amino acids and electrolytes), gases, hormones, blood cells, etc. to and from cells in the body to help fight diseases and help stabilize body temperature and pH to maintain homeostasis[WP].
+INFO	lowercase_definition	UBERON:0001235	IAO:0000115	the thick outer layer of the adrenal gland that produces and secretes steroid hormones such as corticosterone, estrone and aldosterone
+INFO	lowercase_definition	UBERON:0002530	IAO:0000115	an organ that functions as a secretory or excretory organ
+INFO	lowercase_definition	UBERON:0003887	IAO:0000115	the part of the coelom in the embryo between the somatopleuric and splanchnopleuric mesoderm; the principal body cavities of the trunk (thoracic, abdominal, and pelvic) arise from this embryonic part of the coelom
+INFO	lowercase_definition	UBERON:0010133	IAO:0000115	any of the organized aggregations of cells that function as secretory or excretory organs and that release hormones in response to neural stimuli
+INFO	lowercase_definition	UBERON:0034878	IAO:0000115	the area of axial mesoderm that develops into the prechordal plate
+INFO	lowercase_definition	obo:uberon/core#conduit_for	IAO:0000115	x is a conduit for y iff y passes through the lumen of x.
