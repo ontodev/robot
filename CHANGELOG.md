@@ -6,12 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Sort [`report`] violations by rule name within level [#955]
 
 ## [1.8.3] - 2021-12-16
 
 ### Changed
 - Replace `log4j` with `logback` [#948] [#953]
-- Sort [`report`] violations by rule name within level [#955]
 
 ### Fixed
 - Fix custom [`report`] queries [#944]
