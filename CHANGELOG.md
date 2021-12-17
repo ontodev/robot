@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Sort [`report`] violations by rule name within level [#955]
 
 ## [1.8.3] - 2021-12-16
 
@@ -293,6 +294,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
 [#951]: https://github.com/ontodev/robot/pull/951
 [#948]: https://github.com/ontodev/robot/pull/948
