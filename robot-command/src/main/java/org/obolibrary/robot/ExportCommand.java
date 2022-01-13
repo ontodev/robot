@@ -3,12 +3,10 @@ package org.obolibrary.robot;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FilenameUtils;
 import org.obolibrary.robot.export.Table;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 public class ExportCommand implements Command {
@@ -34,8 +32,6 @@ public class ExportCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology to merge from an IRI");
     o.addOption("e", "export", true, "target file for export");
     o.addOption("c", "header", true, "ordered list of column names for header");
-    o.addOption("t", "term", true, "term to export");
-    o.addOption("T", "term-file", true, "file containing list of terms to export");
     o.addOption("s", "sort", true, "column to sort on (default: first column)");
     o.addOption("n", "include", true, "groups of terms to include");
     o.addOption("f", "format", true, "output file format");
@@ -142,11 +138,6 @@ public class ExportCommand implements Command {
       }
     }
 
-    Set<IRI> iris = null;
-    if (line.hasOption("term") || line.hasOption("term-file")) {
-      iris = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
-    }
-
     String headerString =
         CommandLineHelper.getRequiredValue(line, "header", "--header is a required option");
     String exportPath =
@@ -171,7 +162,7 @@ public class ExportCommand implements Command {
     // Get the split columns
     List<String> columns = Arrays.asList(headerString.split("\\|"));
 
-    Table t = ExportOperation.createExportTable(ontology, iris, ioHelper, columns, exportOptions);
+    Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, exportOptions);
     ExportOperation.saveTable(t, exportPath, exportOptions);
     return state;
   }
