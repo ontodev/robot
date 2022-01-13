@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Add `--rename` option to [`rename`] [#960]
+- Add `--mapping` option to [`rename`] [#960]
 
 ### Changed
 - Sort [`report`] violations by rule name within level [#955]

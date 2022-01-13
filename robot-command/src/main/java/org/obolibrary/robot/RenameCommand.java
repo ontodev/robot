@@ -73,7 +73,7 @@ public class RenameCommand implements Command {
         "allow mappings for entites that do not appear in the ontology (default: false)");
     o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
 
-    Option opt = new Option("R", "rename", true, "term to rename and new IRI");
+    Option opt = new Option(null, "mapping", true, "term to rename and new IRI");
     opt.setArgs(2);
     o.addOption(opt);
 
@@ -148,14 +148,14 @@ public class RenameCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    List<String> renameStrings = CommandLineHelper.getOptionalValues(line, "rename");
-    List<List<String>> renames = null;
-    if (!renameStrings.isEmpty()) {
-      renames = Lists.partition(renameStrings, 2);
+    List<String> mappingStrings = CommandLineHelper.getOptionalValues(line, "mapping");
+    List<List<String>> singleMappings = null;
+    if (!mappingStrings.isEmpty()) {
+      singleMappings = Lists.partition(mappingStrings, 2);
     }
     String fullFile = CommandLineHelper.getOptionalValue(line, "mappings");
     String prefixFile = CommandLineHelper.getOptionalValue(line, "prefix-mappings");
-    if (fullFile == null && prefixFile == null && renames == null) {
+    if (fullFile == null && prefixFile == null && singleMappings == null) {
       throw new IOException(missingMappingsError);
     }
 
@@ -166,15 +166,15 @@ public class RenameCommand implements Command {
     char separator;
     Map<String, String> mappings = new HashMap<>();
     // Process full renames
-    if (fullFile != null || renames != null) {
+    if (fullFile != null || singleMappings != null) {
       // mappings from file
       if (fullFile != null) {
         separator = getSeparator(fullFile);
         mappings = parseTableMappings(new File(fullFile), separator, allowDuplicates);
       }
       // mappings from individual args
-      if (renames != null) {
-        for (List<String> rn : renames) {
+      if (singleMappings != null) {
+        for (List<String> rn : singleMappings) {
           mappings.put(rn.get(0), rn.get(1));
         }
       }

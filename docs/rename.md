@@ -15,7 +15,7 @@ Renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`):
 
     robot rename --input test.owl \
       --add-prefix "fb: http://foo.bar/" \
-      --rename obo:BFO_0000051 fb:BFO_1234567 \
+      --mapping obo:BFO_0000051 fb:BFO_1234567 \
       --output results/rename.owl
 
 If you have multiple terms you'd like to rename, you can do so by providing a mappings file (see [Mappings Files]($mappings-files)):
