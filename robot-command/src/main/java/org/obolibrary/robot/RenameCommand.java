@@ -1,12 +1,15 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
@@ -69,6 +72,11 @@ public class RenameCommand implements Command {
         true,
         "allow mappings for entites that do not appear in the ontology (default: false)");
     o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
+
+    Option opt = new Option("R", "rename", true, "term to rename and new IRI");
+    opt.setArgs(2);
+    o.addOption(opt);
+
     options = o;
   }
 
@@ -140,9 +148,14 @@ public class RenameCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
+    List<String> renameStrings = CommandLineHelper.getOptionalValues(line, "rename");
+    List<List<String>> renames = null;
+    if (!renameStrings.isEmpty()) {
+      renames = Lists.partition(renameStrings, 2);
+    }
     String fullFile = CommandLineHelper.getOptionalValue(line, "mappings");
     String prefixFile = CommandLineHelper.getOptionalValue(line, "prefix-mappings");
-    if (fullFile == null && prefixFile == null) {
+    if (fullFile == null && prefixFile == null && renames == null) {
       throw new IOException(missingMappingsError);
     }
 
@@ -151,17 +164,26 @@ public class RenameCommand implements Command {
         CommandLineHelper.getBooleanValue(line, "allow-missing-entities", false);
 
     char separator;
+    Map<String, String> mappings = new HashMap<>();
     // Process full renames
-    if (fullFile != null) {
-      separator = getSeparator(fullFile);
-      Map<String, String> mappings =
-          parseTableMappings(new File(fullFile), separator, allowDuplicates);
+    if (fullFile != null || renames != null) {
+      // mappings from file
+      if (fullFile != null) {
+        separator = getSeparator(fullFile);
+        mappings = parseTableMappings(new File(fullFile), separator, allowDuplicates);
+      }
+      // mappings from individual args
+      if (renames != null) {
+        for (List<String> rn : renames) {
+          mappings.put(rn.get(0), rn.get(1));
+        }
+      }
       RenameOperation.renameFull(ontology, ioHelper, mappings, allowMissingEntities);
     }
     // Process prefix renames (no need to fail on duplicates)
     if (prefixFile != null) {
       separator = getSeparator(prefixFile);
-      Map<String, String> mappings = parseTableMappings(new File(prefixFile), separator, true);
+      mappings = parseTableMappings(new File(prefixFile), separator, true);
       RenameOperation.renamePrefixes(ontology, ioHelper, mappings);
     }
 

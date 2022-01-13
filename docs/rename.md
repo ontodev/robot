@@ -11,21 +11,28 @@ The `rename` command allows you to rename entity IRIs in an ontology in two ways
 
 #### Full
 
-Renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`) in a file specified by `--mappings`:
+Renames full IRIs (e.g. `obo:BFO_0000050` to `http://foo.bar/BFO_1234567`):
 
     robot rename --input test.owl \
+      --add-prefix "fb: http://foo.bar/" \
+      --rename obo:BFO_0000051 fb:BFO_1234567 \
+      --output results/rename.owl
+
+If you have multiple terms you'd like to rename, you can do so by providing a mappings file (see [Mappings Files]($mappings-files)):
+
+    robot rename --input test.owl \
+      --add-prefix "fb: http://foo.bar/" \
       --mappings full-rename.tsv \
-      --add-prefix "fb: http://foo.bar/"
       --output results/full-rename.owl
 
 This process fails if where there are entities in the mapping file that are not in the ontology. To avoid failure you can
 add the option `--allow-missing-entities true`.
 
     robot rename --input test.owl \
-      --mappings full-rename.tsv \
-      --add-prefix "fb: http://foo.bar/"
+      --mappings missing-rename.tsv \
+      --add-prefix "fb: http://foo.bar/" \
       --allow-missing-entities true \
-      --output results/full-rename.owl
+      --output results/missing-rename.owl
 
 If two or more old IRIs are mapped to the same new IRI, these two entities will be merged. By default, ROBOT will throw an error if this happens. This behavior can be overridden by including `--allow-duplicates true`.
 
@@ -35,7 +42,7 @@ Renames the base IRIs of all matching entites (e.g. change the prefix `http://pu
 
     robot rename --input test.owl \
       --prefix-mappings partial-rename.tsv \
-      --add-prefix "fb: http://foo.bar/"
+      --add-prefix "fb: http://foo.bar/" \
       --output results/partial-rename.owl
 
 More information on the `--add-prefix` option can be found in [Global Options](/global#prefixes).

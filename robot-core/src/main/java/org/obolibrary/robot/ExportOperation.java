@@ -97,6 +97,29 @@ public class ExportOperation {
       List<String> columnNames,
       Map<String, String> options)
       throws Exception {
+    return createExportTable(ontology, null, ioHelper, columnNames, options);
+  }
+
+  /**
+   * Given an ontology, a set of IRIs, an ioHelper, a list of columns, an output export file, and a
+   * map of options, export details about the entities provided by IRI to the export file. Use the
+   * columns to determine which details are included in the output.
+   *
+   * @param ontology OWLOntology to export to table
+   * @param iris set of IRIs to export
+   * @param ioHelper IOHelper to handle labels
+   * @param columnNames List of column names, in order
+   * @param options Map of Export options
+   * @return Table object
+   * @throws Exception if file does not exist to write to or a column is not a valid property
+   */
+  public static Table createExportTable(
+      OWLOntology ontology,
+      Set<IRI> iris,
+      IOHelper ioHelper,
+      List<String> columnNames,
+      Map<String, String> options)
+      throws Exception {
     // Get column or columns to sort on
     // If not provided, use the first column
     String sortColumn = OptionsHelper.getOption(options, "sort", columnNames.get(0));
@@ -314,7 +337,7 @@ public class ExportOperation {
     table.setSortColumns();
 
     // Get the entities to include in the spreadsheet
-    Set<OWLEntity> entities = getEntities(ontology, options);
+    Set<OWLEntity> entities = getEntities(ontology, iris, options);
 
     // Get the cell values based on columns
     for (OWLEntity entity : entities) {
@@ -418,7 +441,8 @@ public class ExportOperation {
    * @param options map of export options
    * @return set of OWLEntities in the ontology
    */
-  private static Set<OWLEntity> getEntities(OWLOntology ontology, Map<String, String> options) {
+  private static Set<OWLEntity> getEntities(
+      OWLOntology ontology, Set<IRI> iris, Map<String, String> options) {
     // Determine what types of entities to include
     boolean includeClasses = false;
     boolean includeProperties = false;
@@ -454,7 +478,12 @@ public class ExportOperation {
       throw new IllegalArgumentException(includeNothingError);
     }
 
-    Set<OWLEntity> entities = OntologyHelper.getEntities(ontology);
+    Set<OWLEntity> entities;
+    if (iris == null || iris.isEmpty()) {
+      entities = OntologyHelper.getEntities(ontology);
+    } else {
+      entities = OntologyHelper.getEntities(ontology, iris);
+    }
     // Remove defaults
     entities.remove(dataFactory.getOWLThing());
     entities.remove(dataFactory.getOWLNothing());
