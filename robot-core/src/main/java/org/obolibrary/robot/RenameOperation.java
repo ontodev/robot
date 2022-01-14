@@ -52,6 +52,18 @@ public class RenameOperation {
     renameFull(ontology, ioHelper, mappings, new HashMap<>(), allowMissingEntities);
   }
 
+  /**
+   * Given an ontology, an IOHelper, and a map of old IRIs to new IRIs, rename each old IRI with the
+   * new IRI.
+   *
+   * @param ontology OWLOntology to rename entities in
+   * @param ioHelper IOHelper to create IRIs
+   * @param mappings map of old IRI to new IRI
+   * @param labels map of new IRI to new label
+   * @param allowMissingEntities if true, command will fail when an entity is in the rename map, but
+   *     does not appear in ontology
+   * @throws Exception if the old IRI in a mapping does not exist
+   */
   public static void renameFull(
       OWLOntology ontology,
       IOHelper ioHelper,
