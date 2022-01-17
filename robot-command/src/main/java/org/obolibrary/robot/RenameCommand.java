@@ -26,9 +26,13 @@ public class RenameCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "rename#";
 
+  /** Error message for incorrect number of headers. */
+  private static final String columnHeaderCountError =
+      NS + "COLUMN COUNT ERROR file '%s' must have 2 or 3 header values";
+
   /** Error message when a row does not have exactly two columns. */
   private static final String columnCountError =
-      NS + "COLUMN COUNT ERROR line %d in file '%s' must contain exactly two values.";
+      NS + "COLUMN COUNT ERROR line %d in file '%s' must contain exactly %d values.";
 
   /** Error message when an old IRI value is duplicated in a mappings file. */
   private static final String duplicateMappingError =
@@ -250,14 +254,18 @@ public class RenameCommand implements Command {
             .withCSVParser(new CSVParserBuilder().withSeparator(separator).build())
             .build()) {
       int lineNum = 1;
-      // Remove the headers
-      reader.readNext();
+      // Check the headers for two or three columns
+      String[] headers = reader.readNext();
+      int headerLen = headers.length;
+      if (headerLen < 2 || headerLen > 3) {
+        throw new IOException(String.format(columnHeaderCountError, mappingsFile.getPath()));
+      }
       for (String[] nextLine : reader) {
         lineNum++;
         if (nextLine.length < 2 || nextLine.length > 3) {
-          throw new IOException(String.format(columnCountError, lineNum, mappingsFile.getPath()));
+          throw new IOException(
+              String.format(columnCountError, lineNum, mappingsFile.getPath(), headerLen));
         }
-
         String oldIRI = nextLine[0];
         String newIRI = nextLine[1];
         String newLabel = null;

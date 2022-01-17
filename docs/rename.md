@@ -58,7 +58,7 @@ Old IRI,New IRI
 obo:BFO_0000051,fb:BFO_1234567
 ```
 
-If you also want to update the `rdfs:label` of the term you replaced, you can add a third column with the new label value:
+If you also want to update the `rdfs:label` of the term you replaced, you can add a third column with the new label value (note that this removes *all* old label annotations):
 
 ```
 Old IRI,New IRI

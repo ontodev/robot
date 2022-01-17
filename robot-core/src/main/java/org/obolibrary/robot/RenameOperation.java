@@ -86,7 +86,7 @@ public class RenameOperation {
       // Update the IRI first
       manager.applyChanges(entityRenamer.changeIRI(oldIRI, newIRI));
       if (labels.containsKey(newIRI)) {
-        // Remove old label annotation
+        // Remove old label annotation(s)
         for (OWLAnnotationAssertionAxiom ax :
             EntitySearcher.getAnnotationAssertionAxioms(
                 OntologyHelper.getEntity(ontology, newIRI), ontology)) {
@@ -95,7 +95,6 @@ public class RenameOperation {
               .toString()
               .equals(dataFactory.getRDFSLabel().getIRI().toString())) {
             manager.removeAxiom(ontology, ax);
-            break;
           }
         }
         // Add the new label
