@@ -79,10 +79,13 @@ public class ExpandOperation {
 
   /**
    * Expand macro relations using SPARQL CONSTRUCT
+   *
    * @param ontology the ontology to expand from
    * @param config configuration for expansion operation
-   * @param includeTerms IRIs of annotation properties whose expansion to perform. If empty, all found expansion are included.
-   * @param excludeTerms IRIs of annotation properties whose expansion to exlude; subtracted from inclusion list.
+   * @param includeTerms IRIs of annotation properties whose expansion to perform. If empty, all
+   *     found expansion are included.
+   * @param excludeTerms IRIs of annotation properties whose expansion to exlude; subtracted from
+   *     inclusion list.
    * @throws OWLOntologyStorageException
    * @throws IOException
    */
