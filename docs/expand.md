@@ -52,6 +52,8 @@ Here is an example:
         --input unexpanded.ttl \
         --output results/expanded.ttl
 
+## Specifying expansions
+
 By default, all SPARQL CONSTRUCT queries found as values for the [defined by construct](http://purl.obolibrary.org/obo/OMO_defined_by_construct) property
 will be executed against the input ontology, and the results merged in.
 
@@ -64,3 +66,13 @@ Alternatively, specific macro terms can be included or excluded from the expansi
         --output results/expanded-terms.ttl
 
 You can also use `--expand-term-file` and `--no-expand-term-file` to import lists of properties from files.
+
+## Annotating expansion results
+
+Axioms generated via the `expand` command can be annotated with a [prov:wasDerivedFrom](http://www.w3.org/ns/prov#wasDerivedFrom)
+relation linking them to the property specifying the expansion:
+
+    robot expand \
+        --input unexpanded.ttl \
+        --annotate-expansion-axioms true \
+        --output results/expanded-annotated.ttl
