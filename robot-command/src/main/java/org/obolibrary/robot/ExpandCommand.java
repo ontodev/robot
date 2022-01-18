@@ -1,7 +1,9 @@
 package org.obolibrary.robot;
 
+import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
@@ -18,7 +20,7 @@ public class ExpandCommand implements Command {
   public ExpandCommand() {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption(
-        "n",
+        "c",
         "create-new-ontology",
         true,
         "if true, output ontology will only contain the expansions");
@@ -27,6 +29,10 @@ public class ExpandCommand implements Command {
         "annotate-expansion-axioms",
         true,
         "if true, annotate expansion axioms with 'prov:wasDerivedFrom <expansion property>'");
+    o.addOption("t", "expand-term", true, "property to expand");
+    o.addOption("T", "expand-term-file", true, "load properties to expand from a file");
+    o.addOption("n", "no-expand-term", true, "properties to not expand");
+    o.addOption("N", "no-expand-term-file", true, "load properties to not expand from a file");
     o.addOption("i", "input", true, "expand ontology from a file");
     o.addOption("I", "input-iri", true, "expand ontology from an IRI");
     o.addOption("o", "output", true, "save expanded ontology to a file");
@@ -111,7 +117,11 @@ public class ExpandCommand implements Command {
       config.setAnnotateExpansionAxioms(
           Boolean.parseBoolean(line.getOptionValue("annotate-expansion-axioms")));
     }
-    ExpandOperation.expand(ontology, config);
+    Set<IRI> includeTerms =
+        CommandLineHelper.getTerms(ioHelper, line, "expand-term", "expand-term-file");
+    Set<IRI> excludeTerms =
+        CommandLineHelper.getTerms(ioHelper, line, "no-expand-term", "no-expand-term-file");
+    ExpandOperation.expand(ontology, config, includeTerms, excludeTerms);
     CommandLineHelper.maybeSaveOutput(line, ontology);
     return state;
   }

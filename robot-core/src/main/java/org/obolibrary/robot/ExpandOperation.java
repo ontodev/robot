@@ -7,6 +7,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -36,6 +39,8 @@ public class ExpandOperation {
 
     private boolean createNew = false;
     private boolean annotateExpansions = false;
+    private final Set<IRI> expandProperties = new HashSet<>();
+    private final Set<IRI> excludeProperties = new HashSet<>();
 
     public boolean createNewOntology() {
       return createNew;
@@ -52,15 +57,36 @@ public class ExpandOperation {
     public void setAnnotateExpansionAxioms(boolean shouldAnnotate) {
       this.annotateExpansions = shouldAnnotate;
     }
+
+    public Set<IRI> getExpandProperties() {
+      return Collections.unmodifiableSet(expandProperties);
+    }
+
+    public void setExpandProperties(Set<IRI> properties) {
+      expandProperties.clear();
+      expandProperties.addAll(properties);
+    }
+
+    public Set<IRI> getExcludeProperties() {
+      return Collections.unmodifiableSet(excludeProperties);
+    }
+
+    public void setExcludeProperties(Set<IRI> properties) {
+      excludeProperties.clear();
+      excludeProperties.addAll(properties);
+    }
   }
 
-  public static void expand(OWLOntology ontology, ExpandConfig config)
+  public static void expand(
+      OWLOntology ontology, ExpandConfig config, Set<IRI> includeTerms, Set<IRI> excludeTerms)
       throws OWLOntologyStorageException, IOException {
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, true);
     Set<OWLAxiom> expansions =
         ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION, Imports.INCLUDED).stream()
             .filter(ax -> ax.getProperty().equals(definedByConstruct))
             .filter(ax -> ax.getSubject().isIRI())
+            .filter(ax -> includeTerms.isEmpty() || includeTerms.contains(ax.getSubject()))
+            .filter(ax -> !excludeTerms.contains(ax.getSubject()))
             .filter(ax -> ax.getValue().isLiteral())
             .map(
                 ax ->
@@ -80,6 +106,7 @@ public class ExpandOperation {
   private static Set<OWLAxiom> executeConstruct(
       Dataset dataset, String query, IRI definitionTerm, boolean annotateAxioms) {
     Model expansionTriples = QueryOperation.execConstruct(dataset, query);
+    expansionTriples.add(ResourceFactory.createResource(), RDF.type, OWL.Ontology);
     try {
       Set<OWLAxiom> axioms =
           QueryOperation.convertModel(expansionTriples, new IOHelper(), null).getAxioms();
