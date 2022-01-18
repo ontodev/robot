@@ -2,6 +2,10 @@
 
 ## Contents
 
+1. [Overview](#overview)
+2. [Specifying expansions](#specifying-expansions)
+3. [Annotating expansion results](#annotating-expansion-results)
+
 ## Overview
 
 Some logical patterns in OWL are cumbersome to maintain by hand; shortuct annotation properties ("macros") can be used as an
