@@ -89,7 +89,7 @@ public class ExpandCommand implements Command {
   }
 
   /**
-   * Given an input state and command line arguments, run a reasoner, and add axioms to the input
+   * Given an input state and command line arguments, expand macro relations, and add axioms to the input
    * ontology, returning a state with the updated ontology.
    *
    * @param state the state from the previous command, or null
