@@ -42,7 +42,7 @@ public class ExpandOperation {
     private final Set<IRI> expandProperties = new HashSet<>();
     private final Set<IRI> excludeProperties = new HashSet<>();
 
-    public boolean createNewOntology() {
+    public boolean getCreateNewOntology() {
       return createNew;
     }
 
@@ -50,7 +50,7 @@ public class ExpandOperation {
       this.createNew = shouldCreateNew;
     }
 
-    public boolean annotateExpansionAxioms() {
+    public boolean getAnnotateExpansionAxioms() {
       return annotateExpansions;
     }
 
@@ -106,7 +106,7 @@ public class ExpandOperation {
                         dataset,
                         ax.getValue().asLiteral().orNull().getLiteral(),
                         (IRI) (ax.getSubject()),
-                        config.annotateExpansionAxioms()))
+                        config.getAnnotateExpansionAxioms()))
             .reduce(ExpandOperation::combine)
             .orElse(Collections.emptySet());
     if (config.createNew) {
