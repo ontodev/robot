@@ -5,6 +5,7 @@
 1. [Overview](#overview)
 2. [Specifying expansions](#specifying-expansions)
 3. [Annotating expansion results](#annotating-expansion-results)
+4. [Expansions do not interact](#expansions-do-not-interact)
 
 ## Overview
 
@@ -81,3 +82,15 @@ relation linking them to the property specifying the expansion:
         --input unexpanded.ttl \
         --annotate-expansion-axioms true \
         --output results/expanded-annotated.ttl
+
+## Expansions do not interact
+
+Expansion queries are applied to the input ontology, not to the output of any other expansions. So, expansions do not
+interact with one another. If you wish to implement interactions between expansions the command could be changed, e.g.:
+
+```
+robot expand -i myont.owl --expand-term A expand --expand-term B -o my-expanded.owl
+```
+
+It is possible that other expansion approaches that support interaction could be added to this command in the future,
+such as an RDF rule engine.
