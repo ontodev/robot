@@ -86,7 +86,8 @@ relation linking them to the property specifying the expansion:
 ## Expansions do not interact
 
 Expansion queries are applied to the input ontology, not to the output of any other expansions. So, expansions do not
-interact with one another. If you wish to implement interactions between expansions the command could be changed, e.g.:
+interact with one another, and their order of application does not matter. If you wish to implement interactions
+between expansions the command could be chained, e.g.:
 
 ```
 robot expand -i myont.owl --expand-term A expand --expand-term B -o my-expanded.owl
