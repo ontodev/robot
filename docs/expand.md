@@ -61,15 +61,16 @@ Here is an example:
 By default, all SPARQL CONSTRUCT queries found as values for the [defined by construct](http://purl.obolibrary.org/obo/OMO_defined_by_construct) property
 will be executed against the input ontology, and the results merged in.
 
-Alternatively, specific macro terms can be included or excluded from the expansion process:
+Alternatively, specific macro terms can be included or excluded from the expansion process with
+`--expand-term` and `--no-expand-term`:
 
     robot expand \
         --input unexpanded.ttl \
         --expand-term 'http://example.org/never_part_of' \
-        --no-expand-term 'http://example.org/part_disjoint_with' \
         --output results/expanded-terms.ttl
 
-You can also use `--expand-term-file` and `--no-expand-term-file` to import lists of properties from files.
+You can also use `--expand-term-file` and `--no-expand-term-file` to import lists of properties from files. Term in the
+"no-expand" list (both via arguments and files) will be subtracted from the "expand" list.
 
 ## Annotating expansion results
 
