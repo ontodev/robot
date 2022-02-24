@@ -89,6 +89,29 @@
     </Class>
     <Axiom>
         <annotatedSource rdf:resource="http://purl.obolibrary.org/obo/GO_1235"/>
+        <annotatedProperty rdf:resource="http://www.w3.org/2002/07/owl#equivalentClass"/>
+        <annotatedTarget>
+            <Class>
+                <intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test1"/>
+                    <Restriction>
+                        <onProperty rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#part_of"/>
+                        <someValuesFrom>
+                            <Class>
+                                <intersectionOf rdf:parseType="Collection">
+                                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/GO_1234"/>
+                                    <rdf:Description rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#test2"/>
+                                </intersectionOf>
+                            </Class>
+                        </someValuesFrom>
+                    </Restriction>
+                </intersectionOf>
+            </Class>
+        </annotatedTarget>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test2 and test 3 comment</rdfs:comment>
+    </Axiom>
+    <Axiom>
+        <annotatedSource rdf:resource="http://purl.obolibrary.org/obo/GO_1235"/>
         <annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#label"/>
         <annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test 4</annotatedTarget>
         <rdfs:comment xml:lang="en">test 4 comment</rdfs:comment>
