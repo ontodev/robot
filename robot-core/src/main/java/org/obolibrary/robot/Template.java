@@ -977,15 +977,20 @@ public class Template {
       throws Exception {
     Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
     Set<OWLClassExpression> expressions = new HashSet<>();
-    expressions.add(cls);
     for (int column : expressionColumns.keySet()) {
       // Maybe get an annotation on the expression (all annotations will be on the one intersection)
       axiomAnnotations.addAll(maybeGetAxiomAnnotations(row, column));
       // Add all expressions to the set of expressions
       expressions.addAll(expressionColumns.get(column));
     }
-    // Create the axiom as an intersection of the provided expressions
-    axioms.add(dataFactory.getOWLEquivalentClassesAxiom(expressions, axiomAnnotations));
+    if (expressions.size() == 1) {
+      // Add a single equivalent class axiom between class & expression
+      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, expressions.iterator().next()));
+    } else if (expressions.size() > 1) {
+      // Create the axiom as an intersection of the provided expressions (including the class)
+      expressions.add(cls);
+      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(expressions, axiomAnnotations));
+    }
   }
 
   /**
@@ -1009,9 +1014,17 @@ public class Template {
       // Add all expressions to the set of expressions
       expressions.addAll(expressionColumns.get(column));
     }
-    // Create the axiom as an intersection of the provided expressions
-    OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(expressions);
-    axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, axiomAnnotations));
+
+    if (expressions.size() == 1) {
+      // Create a single equivalent class axiom (no intersection)
+      axioms.add(
+          dataFactory.getOWLEquivalentClassesAxiom(
+              cls, expressions.iterator().next(), axiomAnnotations));
+    } else if (expressions.size() > 1) {
+      // Create the axiom as an intersection of the provided expressions
+      OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(expressions);
+      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, axiomAnnotations));
+    }
   }
 
   /**
