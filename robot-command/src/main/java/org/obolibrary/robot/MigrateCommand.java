@@ -140,8 +140,6 @@ public class MigrateCommand implements Command {
             line, "source", "a source for the migration must be supplied.");
     OWLOntology sourceOntology = ioHelper.loadOntology(sourceFile);
 
-    String output =
-        CommandLineHelper.getRequiredValue(line, "output", "an output file must be specified");
     String source_id =
         CommandLineHelper.getDefaultValue(line, "source-id", new File(sourceFile).getName());
     boolean updateExclusionReasons =
@@ -162,7 +160,6 @@ public class MigrateCommand implements Command {
       OntologyHelper.getEntities(sourceOntology, entityIRIs);
     }
 
-    File output_file = new File(output);
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
 
     OWLOntology ontology = state.getOntology();
@@ -182,18 +179,18 @@ public class MigrateCommand implements Command {
       }
     }
 
-    List<List<String>> templateTable = new ArrayList<>();
-    OWLOntology templateExclusionOntology = null;
+    OWLOntology excludeAxioms;
     if (excludedAxiomsTemplateFile != null) {
       OWLOntology emptyOntology = OWLManager.createOWLOntologyManager().createOntology();
-      templateTable.addAll(TemplateHelper.readTable(excludedAxiomsTemplateFile));
+      List<List<String>> templateTable =
+          new ArrayList<>(TemplateHelper.readTable(excludedAxiomsTemplateFile));
       Map<String, List<List<String>>> tables = new LinkedHashMap<>();
       tables.put(excludedAxiomsTemplateFile, templateTable);
-      templateExclusionOntology =
+      excludeAxioms =
           TemplateOperation.template(
               emptyOntology, ioHelper, tables, TemplateOperation.getDefaultOptions());
     } else {
-      templateExclusionOntology = OWLManager.createOWLOntologyManager().createOntology();
+      excludeAxioms = OWLManager.createOWLOntologyManager().createOntology();
     }
 
     OWLOntology migrated =
@@ -205,7 +202,7 @@ public class MigrateCommand implements Command {
             mappings,
             axiomSelectors,
             excludeObjects,
-            templateExclusionOntology,
+            excludeAxioms,
             reasonerFactory,
             updateExclusionReasons,
             tagAxiomsWithSource,

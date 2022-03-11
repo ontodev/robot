@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -37,11 +38,6 @@ public class MigrateOperation {
   private static final String excludedAxiomIRI = "http://w3id.org/robot/excludedAxiom";
   private static final OWLAnnotationProperty excludedAxiomAP =
       df.getOWLAnnotationProperty(IRI.create(excludedAxiomIRI));
-  private static final String sourceIRI = "http://purl.org/dc/elements/1.1/source";
-  private static final OWLAnnotationProperty sourceAP =
-      df.getOWLAnnotationProperty(IRI.create(sourceIRI));
-  private static final OWLAnnotationProperty sourceTermAP =
-      df.getOWLAnnotationProperty(IRI.create(sourceIRI));
 
   /**
    * @param targetOntology
@@ -86,14 +82,14 @@ public class MigrateOperation {
     }
     if (axiomSelectors.isEmpty()) {
       axiomSelectors.add("logical");
-      //axiomSelectors.add("annotation");
+      axiomSelectors.add("annotation");
     }
     try {
       /*
        * Only select all the axioms that are related to terms in the migration set
        * and filter out anything not related to one of the axiom types provided.
        */
-      filterAxiomsToMigrate(axiomSelectors, mergedSourceOntology, migrateTerms, excludeTerms);
+      filterAxiomsToMigrate(mergedSourceOntology, axiomSelectors, migrateTerms, excludeTerms);
       System.out.println("filterAxiomsToMigrate. Size: " + mergedSourceOntology.getAxiomCount());
       /*
        * Removing all the axioms from the source that should be ignored according to the
@@ -103,6 +99,16 @@ public class MigrateOperation {
       System.out.println(
           "filterAxiomsThatShouldBeIgnored. Size: " + mergedSourceOntology.getAxiomCount());
 
+      // If dc source mapping provided, use that for mapping the data
+      String sourceIRI = "http://purl.org/dc/elements/1.1/source";
+      for (Map.Entry<String, String> e : mappings.entrySet()) {
+        if (e.getKey().equals(sourceIRI)) {
+          sourceIRI = e.getValue();
+          break;
+        }
+      }
+      OWLAnnotationProperty sourceAP = df.getOWLAnnotationProperty(IRI.create(sourceIRI));
+      OWLAnnotationProperty sourceTermAP = df.getOWLAnnotationProperty(IRI.create(sourceIRI));
       OWLAnnotation sourceOfAnnotation = df.getOWLAnnotation(sourceAP, df.getOWLLiteral(source_id));
 
       if (updateExclusionReasons) {
@@ -127,15 +133,42 @@ public class MigrateOperation {
        Rename all the entities in the source ontology to the entities they should be migrated to.
       */
       RenameOperation.renameFull(mergedSourceOntology, ioHelper, mappings, true);
+      CURIEShortFormProvider curieProvider = new CURIEShortFormProvider(ioHelper.getPrefixes());
+      Map<IRI, String> iriMappings = new HashMap<>();
+      for (Map.Entry<String, String> entry : mappings.entrySet()) {
+        IRI sourceEntityIRI = IRI.create(entry.getKey());
+        IRI targetEntityIRI = IRI.create(entry.getValue());
+        iriMappings.put(targetEntityIRI, curieProvider.getShortForm(sourceEntityIRI));
+      }
+      for (OWLEntity e : mergedSourceOntology.getSignature()) {
+        IRI eiri = e.getIRI();
+        if (!iriMappings.containsKey(eiri)) {
+          iriMappings.put(eiri, curieProvider.getShortForm(eiri));
+        }
+      }
 
-      /* Map<OWLEntity, OWLEntity> mappingsTargetSource = new HashMap<>();
-      for (Map.Entry<String, String> entrySet : mappings.entrySet()) {
-        IRI iri_source = IRI.create(entrySet.getKey());
-        IRI iri_target = IRI.create(entrySet.getValue());
-        OWLEntity e_source = OntologyHelper.getEntity(mergedSourceOntology, iri_source);
-        OWLEntity e_target = OntologyHelper.getEntity(mergedSourceOntology, iri_target);
-        mappingsTargetSource.put(e_target, e_source);
-      } */
+      /*
+      Remove all "evidence" from source ontology
+       */
+      List<OWLAxiomChange> changes = new ArrayList<>();
+      if(tagAxiomsWithSource) {
+        for (OWLAxiom ax : targetOntology.getAxioms(Imports.EXCLUDED)) {
+          OWLAxiom withoutAnnotation = ax.getAxiomWithoutAnnotations();
+          Set<OWLAnnotation> axiomAnnotations = new HashSet<>(ax.getAnnotations());
+          Set<OWLAnnotation> newAnnotations = new HashSet<>(ax.getAnnotations());
+
+            // Since the axiom in the target ontology (for loop) exists in the
+            // set of axioms to be imported, we remove it, i.e. not trying to import it again.
+          changes.add(
+              new RemoveAxiom(
+                targetOntology,
+                withoutAnnotation.getAnnotatedAxiom(axiomAnnotations)));
+          changes.add(
+            new AddAxiom(
+              targetOntology,
+              withoutAnnotation.getAnnotatedAxiom(newAnnotations)));
+        }
+      }
 
       /*
              * Remove all the axioms from the set to be imported that are already present in the
@@ -144,6 +177,7 @@ public class MigrateOperation {
 
              *
              */
+/*
       List<RemoveAxiom> removals = new ArrayList<>();
       List<OWLAxiomChange> addAnnotatedAxioms =
           new ArrayList<>(); // Adding axiom annotations where axiom supported by source
@@ -154,23 +188,29 @@ public class MigrateOperation {
         OWLAxiom withoutAnnotation = ax.getAxiomWithoutAnnotations();
         Set<OWLAnnotation> axiomAnnotations = new HashSet<>(ax.getAnnotations());
         if (mapAxiomWithAnnosToAxiomWithoutAnnos.containsKey(withoutAnnotation)) {
+
+          // Since the axiom in the target ontology (for loop) exists in the
+          // set of axioms to be imported, we remove it, i.e. not trying to import it again.
           removals.add(
               new RemoveAxiom(
                   mergedSourceOntology,
                   mapAxiomWithAnnosToAxiomWithoutAnnos.get(withoutAnnotation)));
+
+          //The following line add a evidence support to the
           if (tagAxiomsWithSource) {
             axiomAnnotations.add(sourceOfAnnotation);
             addAnnotatedAxioms.add(new RemoveAxiom(targetOntology, ax));
             addAnnotatedAxioms.add(
                 new AddAxiom(targetOntology, ax.getAnnotatedAxiom(axiomAnnotations)));
           }
+
         }
       }
       mergedSourceOntology.getOWLOntologyManager().applyChanges(removals);
       targetOntology.getOWLOntologyManager().applyChanges(addAnnotatedAxioms);
       removals.clear();
       System.out.println("removedPresent. Size: " + mergedSourceOntology.getAxiomCount());
-
+*/
       /*
        * Tagging remaining axioms
        */
@@ -182,16 +222,21 @@ public class MigrateOperation {
 
         // Go through the axioms in the source to be migrated
         for (OWLAxiom ax : mergedSourceOntology.getAxioms(Imports.INCLUDED)) {
-          Set<OWLAnnotation> axiomAnnotationsAxiom = new HashSet<>(axiomAnnotationsSource);
+          Optional<String> subject = getSubject(ax, iriMappings);
+          // System.out.println("AXIOM: " + ax);
+          // System.out.println("SUBJECT: " + subject);
+          Set<OWLAnnotation> axiomAnnotationsAxiom = new HashSet<>();
           // TODO: consider migrating the existing axiom annotations
-          if (false) {
-            axiomAnnotationsAxiom.addAll(ax.getAnnotations());
+          // if (false) {
+          //  axiomAnnotationsAxiom.addAll(ax.getAnnotations());
+          // }
+          // System.out.println(ax);
+          if (subject.isPresent()) {
+            axiomAnnotationsAxiom.add(
+                df.getOWLAnnotation(sourceTermAP, df.getOWLLiteral(subject.get())));
+          } else {
+            axiomAnnotationsAxiom.addAll(axiomAnnotationsSource);
           }
-          Optional<OWLEntity> subject = getSubject(ax);
-          subject.ifPresent(
-              owlEntity ->
-                  axiomAnnotationsAxiom.add(
-                      df.getOWLAnnotation(sourceTermAP, owlEntity.getIRI().asLiteral().get())));
           changes.add(new RemoveAxiom(mergedSourceOntology, ax));
           changes.add(
               new AddAxiom(mergedSourceOntology, ax.getAnnotatedAxiom(axiomAnnotationsAxiom)));
@@ -237,8 +282,6 @@ public class MigrateOperation {
         return mergedSourceOntology;
       }
 
-    } catch (OWLOntologyCreationException e) {
-      e.printStackTrace();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -262,8 +305,8 @@ public class MigrateOperation {
   }
 
   private static void filterAxiomsToMigrate(
-      List<String> axiomSelectors,
-      OWLOntology mergedSourceOntology,
+    OWLOntology mergedSourceOntology,
+    List<String> axiomSelectors,
       Set<OWLEntity> migrateTerms,
       Set<OWLEntity> excludeTerms)
       throws OWLOntologyCreationException {
@@ -383,23 +426,24 @@ public class MigrateOperation {
     }
   }
 
-  private static Optional<OWLEntity> getSubject(OWLAxiom ax) {
+  private static Optional<String> getSubject(OWLAxiom ax, Map<IRI, String> stringMappings) {
     // TODO
+    IRI iri = null;
     if (ax instanceof OWLSubClassOfAxiom) {
       OWLSubClassOfAxiom sax = (OWLSubClassOfAxiom) ax;
       if (!sax.getSuperClass().isAnonymous()) {
-        return Optional.of(sax.getSuperClass().asOWLClass());
+        iri = sax.getSuperClass().asOWLClass().getIRI();
+      }
+    } else if (ax instanceof OWLAnnotationAssertionAxiom) {
+      OWLAnnotationAssertionAxiom aax = (OWLAnnotationAssertionAxiom) ax;
+
+      if (aax.getSubject().isIRI()) {
+        iri = (IRI) aax.getSubject();
       }
     }
-    if (ax instanceof OWLAnnotationAssertionAxiom) {
-      OWLAnnotationAssertionAxiom aax = (OWLAnnotationAssertionAxiom) ax;
-      if (aax.getSubject().isIRI()) {
-        // If the subject is an IRI, add that too (it probably is)
-        for (OWLEntity e : ax.getSignature()) {
-          if (e.getIRI().equals(aax.getSubject())) {
-            return Optional.of(e);
-          }
-        }
+    if (iri != null) {
+      if (stringMappings.containsKey(iri)) {
+        return Optional.of(stringMappings.get(iri));
       }
     }
     return Optional.empty();

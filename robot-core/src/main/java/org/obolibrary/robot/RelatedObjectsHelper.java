@@ -145,6 +145,14 @@ public class RelatedObjectsHelper {
     return filteredAxioms;
   }
 
+  private static Collection<? extends OWLAxiom> removeAxiomAnnotations(Set<OWLAxiom> inputAxioms) {
+    Set<OWLAxiom> axioms = new HashSet<>();
+    for (OWLAxiom ax : inputAxioms) {
+      axioms.add(ax.getAxiomWithoutAnnotations());
+    }
+    return axioms;
+  }
+
   /**
    * Given a set of OWLAxioms, a set of OWLObjects, a set of OWLAxiom Classes, a partial boolean,
    * and a named-only boolean, return a set of OWLAxioms based on OWLAxiom type. The axiom is added
