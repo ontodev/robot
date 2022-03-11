@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.github.jsonldjava.core.Context;
 import java.io.*;
 import java.net.URI;
@@ -21,14 +23,13 @@ import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /** Convenience methods for working with command line options. */
 public class CommandLineHelper {
   /** Logger. */
-  private static final Logger logger = LoggerFactory.getLogger(CommandLineHelper.class);
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CommandLineHelper.class);
 
   /** Namespace for general input error messages. */
   private static final String NS = "errors#";
@@ -935,18 +936,18 @@ public class CommandLineHelper {
     CommandLineParser parser = new DefaultParser();
     CommandLine line = parser.parse(options, args, stopAtNonOption);
 
-    String level;
+    Level level;
     if (line.hasOption("very-very-verbose")) {
-      level = "DEBUG";
+      level = Level.DEBUG;
     } else if (line.hasOption("very-verbose")) {
-      level = "INFO";
+      level = Level.INFO;
     } else if (line.hasOption("verbose")) {
-      level = "WARN";
+      level = Level.WARN;
     } else {
-      level = "ERROR";
+      level = Level.ERROR;
     }
-    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
-    root.setLevel(org.apache.log4j.Level.toLevel(level));
+    Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    root.setLevel(level);
 
     if (hasFlagOrCommand(line, "help")) {
       printHelp(usage, options);

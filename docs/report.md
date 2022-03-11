@@ -70,7 +70,7 @@ robot report --input edit.owl \
 
 If the report fails, the command will exit with a status of `1`, but a report will still be generated and written to the output file. To always pass (even with errors), you can set the fail-on level to "none":
 
-    robot report --input edit.owl \
+    robot report --input uberon_fragment.owl \
       --fail-on none \
       --output results/report.tsv
 

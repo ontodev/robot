@@ -36,13 +36,13 @@
       <plugin>
         <groupId>com.github.siom79.japicmp</groupId>
         <artifactId>japicmp-maven-plugin</artifactId>
-        <version>0.15.2</version>
+        <version>0.15.4</version>
         <configuration>
           <oldVersion>
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.8.2</version> <!-- japicmp target -->
+              <version>1.8.3</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
