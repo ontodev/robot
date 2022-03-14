@@ -43,13 +43,13 @@ This command can also remove all ontology annotations from your file with `--rem
 
 It’s also possible to annotate the ontology axioms with the ontology IRI or version IRI.
 
-  * `--annotate-derived-from true`: annotates all OWLAxioms with the source's version IRI if it exists, else with the ontology IRI, using `prov:wasDerivedFrom`. If the axiom already has an annotation using this property (`prov:wasDerivedFrom`), the existing annotation will be kept and no new annotation will be added.
+  * `--annotate-derived-from true`: annotates all axioms with the source's version IRI if it exists, else with the ontology IRI, using `prov:wasDerivedFrom`. If the axiom already has an annotation using this property (`prov:wasDerivedFrom`), the existing annotation will be kept and no new annotation will be added.
 
     robot annotate --input example2.owl \
       --annotate-derived-from true
-      --output results/example2_derived_by.owl
+      --output results/example2_derived_from.owl
       
-  * `--annotate-defined-by true`: annotates all OWLEntities (class, data, annotation, object property and named individual declaration axioms) with the source's IRI using `rdfs:isDefinedBy`. If the term already has an annotation using this property (`rdfs:isDefinedBy`), the existing annotation will be kept and no new annotation will be added.
+  * `--annotate-defined-by true`: annotates all entities (class, data, annotation, object property and named individual declaration axioms) with the source's IRI using `rdfs:isDefinedBy`. If the term already has an annotation using this property (`rdfs:isDefinedBy`), the existing annotation will be kept and no new annotation will be added.
 
     robot annotate --input example2.owl \
       --annotate-defined-by true
