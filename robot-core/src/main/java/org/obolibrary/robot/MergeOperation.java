@@ -1,8 +1,23 @@
 package org.obolibrary.robot;
 
-import java.util.*;
-import org.semanticweb.owlapi.model.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.vocab.PROVVocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,8 +71,33 @@ public class MergeOperation {
    */
   public static OWLOntology merge(
       List<OWLOntology> ontologies, boolean includeAnnotations, boolean collapseImportsClosure) {
+    return merge(ontologies, includeAnnotations, collapseImportsClosure, false, false);
+  }
+
+  /**
+   * Given one or more ontologies, add all their axioms first ontology, and return the first
+   * ontology. Option to include ontology annotations and collapse import closure.
+   *
+   * <p>We use a list instead of a set because OWLAPI judges identity simply by the ontology IRI,
+   * even if two ontologies have different axioms.
+   *
+   * @param ontologies the list of ontologies to merge
+   * @param includeAnnotations if true, ontology annotations should be merged; annotations on
+   *     imports are not merged
+   * @param collapseImportsClosure if true, imports closure from all ontologies included
+   * @param definedBy if true, annotate all entities in the ontology with the ontology IRI
+   * @param derivedFrom if true, annotate all axioms in the ontology with the ontology version IRI
+   * @return the first ontology
+   */
+  public static OWLOntology merge(
+      List<OWLOntology> ontologies,
+      boolean includeAnnotations,
+      boolean collapseImportsClosure,
+      boolean definedBy,
+      boolean derivedFrom) {
     OWLOntology ontology = ontologies.get(0);
-    mergeInto(ontologies, ontology, includeAnnotations, collapseImportsClosure);
+    mergeInto(
+        ontologies, ontology, includeAnnotations, collapseImportsClosure, definedBy, derivedFrom);
     return ontology;
   }
 
@@ -177,8 +217,32 @@ public class MergeOperation {
       OWLOntology targetOntology,
       boolean includeAnnotations,
       boolean collapseImportsClosure) {
+    mergeInto(ontologies, targetOntology, includeAnnotations, collapseImportsClosure, false, false);
+  }
+
+  /**
+   * Given a list of ontologies and a target ontology, add all the axioms from the listed ontologies
+   * and their import closure into the target ontology. The target ontology is not itself merged, so
+   * any of its imports remain distinct, unless collapsing imports closure.
+   *
+   * @param ontologies the list of ontologies to merge
+   * @param targetOntology the ontology to merge axioms into
+   * @param includeAnnotations true if ontology annotations should be merged; annotations on imports
+   *     are not merged
+   * @param collapseImportsClosure true if imports closure from all ontologies included
+   * @param definedBy if true, annotate all entities in the ontology with the ontology IRI
+   * @param derivedFrom if true, annotate all axioms in the ontology with the ontology version IRI
+   */
+  public static void mergeInto(
+      List<OWLOntology> ontologies,
+      OWLOntology targetOntology,
+      boolean includeAnnotations,
+      boolean collapseImportsClosure,
+      boolean definedBy,
+      boolean derivedFrom) {
     for (OWLOntology ontology : ontologies) {
       if (collapseImportsClosure) {
+        annotateProvenanceOfImports(ontology, targetOntology, definedBy, derivedFrom);
         // Merge the ontologies with imports included
         targetOntology
             .getOWLOntologyManager()
@@ -191,6 +255,12 @@ public class MergeOperation {
         } catch (Exception e) {
           // Continue without removing imports
           continue;
+        }
+        if (definedBy) {
+          annotateWithOntologyIRI(ontology, targetOntology, Imports.EXCLUDED);
+        }
+        if (derivedFrom) {
+          annotateWithVersionIRI(ontology, targetOntology, Imports.EXCLUDED);
         }
         targetOntology
             .getOWLOntologyManager()
@@ -212,6 +282,78 @@ public class MergeOperation {
     if (collapseImportsClosure) {
       // Remove import statements, as they've been merged in
       removeImports(targetOntology);
+    }
+  }
+
+  /**
+   * Annotates provenance of all axioms through considering imports.
+   *
+   * @param ontology the ontology to merge
+   * @param targetOntology the ontology to merge axioms into
+   * @param definedBy if true, annotate all entities in the ontology with the ontology IRI
+   * @param derivedFrom if true, annotate all axioms in the ontology with the ontology version IRI
+   */
+  private static void annotateProvenanceOfImports(
+      OWLOntology ontology, OWLOntology targetOntology, boolean definedBy, boolean derivedFrom) {
+    if (definedBy) {
+      for (OWLOntology importedOnt : ontology.getImports()) {
+        annotateWithOntologyIRI(importedOnt, ontology, Imports.EXCLUDED);
+      }
+      annotateWithOntologyIRI(ontology, targetOntology, Imports.EXCLUDED);
+    }
+    if (derivedFrom) {
+      for (OWLOntology importedOnt : ontology.getImports()) {
+        annotateWithVersionIRI(importedOnt, ontology, Imports.EXCLUDED);
+      }
+      annotateWithVersionIRI(ontology, targetOntology, Imports.EXCLUDED);
+    }
+  }
+
+  /**
+   * Annotates all axioms in the ontology with the ontology version IRI if defined,annotates with
+   * the ontology IRI otherwise.
+   *
+   * @param sourceOntology the ontology to annotate its all axioms.
+   * @param targetOntology the ontology to add annotation
+   * @param includeImportsClosure if INCLUDED, the imports closure is included.
+   */
+  private static void annotateWithVersionIRI(
+      OWLOntology sourceOntology, OWLOntology targetOntology, Imports includeImportsClosure) {
+    IRI provenanceIRI =
+        sourceOntology
+            .getOntologyID()
+            .getVersionIRI()
+            .or(sourceOntology.getOntologyID().getOntologyIRI().orNull());
+    if (provenanceIRI != null) {
+      OWLAnnotationProperty annotationProp =
+          targetOntology
+              .getOWLOntologyManager()
+              .getOWLDataFactory()
+              .getOWLAnnotationProperty(PROVVocabulary.WAS_DERIVED_FROM.getIRI());
+      for (OWLAxiom axiom : sourceOntology.getAxioms(includeImportsClosure)) {
+        OntologyHelper.addAxiomAnnotation(
+            targetOntology, axiom, annotationProp, provenanceIRI, false);
+      }
+    }
+  }
+
+  /**
+   * Annotate all entities in the ontology with the ontology IRI.
+   *
+   * @param sourceOntology the ontology to annotate its entities
+   * @param targetOntology the ontology to add annotation
+   * @param includeImportsClosure if INCLUDED, the imports closure is included.
+   */
+  private static void annotateWithOntologyIRI(
+      OWLOntology sourceOntology, OWLOntology targetOntology, Imports includeImportsClosure) {
+    IRI ontIRI = sourceOntology.getOntologyID().getOntologyIRI().orNull();
+    if (ontIRI != null) {
+      OWLAnnotationProperty rdfsIsDefinedBy =
+          targetOntology.getOWLOntologyManager().getOWLDataFactory().getRDFSIsDefinedBy();
+      for (OWLEntity owlEntity : sourceOntology.getSignature(includeImportsClosure)) {
+        OntologyHelper.addEntityAnnotation(
+            targetOntology, owlEntity, rdfsIsDefinedBy, ontIRI, false);
+      }
     }
   }
 

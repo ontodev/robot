@@ -2,14 +2,63 @@ package org.obolibrary.robot;
 
 import com.google.common.base.Optional;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.export.RendererType;
 import org.obolibrary.robot.providers.QuotedAnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.AddOntologyAnnotation;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAnnotationSubject;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
+import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLHasKeyAxiom;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLNamedObject;
+import org.semanticweb.owlapi.model.OWLNaryClassAxiom;
+import org.semanticweb.owlapi.model.OWLNaryIndividualAxiom;
+import org.semanticweb.owlapi.model.OWLNaryPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLUnaryPropertyAxiom;
+import org.semanticweb.owlapi.model.RemoveImport;
+import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
+import org.semanticweb.owlapi.model.SetOntologyID;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.search.EntitySearcher;
@@ -49,6 +98,71 @@ public class OntologyHelper {
   /** Error message when an import ontology does not have an IRI. */
   private static final String nullIRIError =
       NS + "NULL IRI ERROR import ontology does not have an IRI";
+
+  /**
+   * Given an ontology, an entity, annotates the entity with the given annotation in the ontology.
+   *
+   * @param ontology the ontology to modify
+   * @param owlEntity the entity to annotate
+   * @param property annotation property
+   * @param value the IRI or literal value to add
+   * @param overload when false: if the entity already has an annotation with the given property,
+   *     doesn't add the annotation. When true, adds the annotation anyway.
+   */
+  public static void addEntityAnnotation(
+      OWLOntology ontology,
+      OWLEntity owlEntity,
+      OWLAnnotationProperty property,
+      OWLAnnotationValue value,
+      boolean overload) {
+    OWLAnnotationAssertionAxiom existingAnnotation =
+        EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology).stream()
+            .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
+            .findFirst()
+            .orElse(null);
+    if (overload || existingAnnotation == null) {
+      OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      OWLDataFactory factory = manager.getOWLDataFactory();
+      OWLAnnotation annotation = factory.getOWLAnnotation(property, value);
+      OWLAxiom ax = factory.getOWLAnnotationAssertionAxiom(owlEntity.getIRI(), annotation);
+      manager.applyChange(new AddAxiom(ontology, ax));
+    }
+  }
+
+  /**
+   * Given an ontology, an axiom, and a set of annotations, annotate the axiom with the annotations
+   * in the ontology.
+   *
+   * <p>Note that as axioms are immutable, the axiom is removed and replaced with a new one.
+   *
+   * @param ontology the ontology to modify
+   * @param axiom the axiom to annotate
+   * @param property annotation property to add
+   * @param value the IRI or literal value to add
+   * @param overload when false: if the axiom already has an annotation with the given propertyIRI,
+   *     doesn't add the annotation. When true, adds the annotation anyway.
+   */
+  public static void addAxiomAnnotation(
+      OWLOntology ontology,
+      OWLAxiom axiom,
+      OWLAnnotationProperty property,
+      OWLAnnotationValue value,
+      boolean overload) {
+    OWLAnnotation existingAnnotation =
+        axiom.getAnnotations().stream()
+            .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
+            .findFirst()
+            .orElse(null);
+    if (overload || existingAnnotation == null) {
+      OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      OWLDataFactory factory = manager.getOWLDataFactory();
+      OWLAnnotation annotation = factory.getOWLAnnotation(property, value);
+
+      OWLAxiom newAxiom = axiom.getAnnotatedAxiom(new HashSet<>(Arrays.asList(annotation)));
+      manager.removeAxiom(ontology, axiom);
+      manager.addAxiom(ontology, newAxiom);
+    }
+  }
 
   /**
    * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
