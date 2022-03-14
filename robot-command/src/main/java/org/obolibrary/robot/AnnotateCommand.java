@@ -309,7 +309,7 @@ public class AnnotateCommand implements Command {
       }
     }
 
-    // Annotate all axioms with ontology IRI
+    // Annotate all entities with ontology IRI
     boolean definedBy = CommandLineHelper.getBooleanValue(line, "annotate-defined-by", false);
     if (definedBy) {
       hasAnnotation = true;
