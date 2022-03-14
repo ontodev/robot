@@ -295,6 +295,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#893]: https://github.com/ontodev/robot/issues/893
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
 [#951]: https://github.com/ontodev/robot/pull/951
