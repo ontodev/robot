@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Sort [`report`] violations by rule name within level [#955]
+- [`extract`] and [`merge`] should optionally inject provenance [#893] 
 
 ## [1.8.3] - 2021-12-16
 
