@@ -249,9 +249,14 @@ public class QueryOperation {
    */
   public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
       throws IOException {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    RDFDataMgr.write(os, model, Lang.TTL);
-    return ioHelper.loadOntology(new ByteArrayInputStream(os.toByteArray()), catalogPath);
+    final File tempFile = File.createTempFile("robot", ".owl");
+    try (final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(tempFile))) {
+      RDFDataMgr.write(os, model, Lang.TTL);
+    }
+    final OWLOntology ontology =
+      ioHelper.loadOntology(new BufferedInputStream(new FileInputStream(tempFile)), catalogPath);
+    tempFile.delete();
+    return ontology;
   }
 
   /**
