@@ -249,14 +249,28 @@ public class QueryOperation {
    */
   public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
       throws IOException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    RDFDataMgr.write(os, model, Lang.TTL);
+    return ioHelper.loadOntology(new ByteArrayInputStream(os.toByteArray()), catalogPath);
+  }
+
+  /**
+   * Given a Model, an IOHelper, and a path to an XML catalog, convert the model to an OWLOntology
+   * object.
+   *
+   * @param model Model to convert to OWLOntology
+   * @param ioHelper IOHelper to load ontology
+   * @param catalogPath String path to XML catalog
+   * @return OWLOntology object version of model
+   * @throws IOException on issue loading ontology
+   */
+  public static OWLOntology convertModelThroughTemporaryFile(Model model, IOHelper ioHelper, String catalogPath) throws IOException {
     final File tempFile = File.createTempFile("robot", ".owl");
+    tempFile.deleteOnExit();
     try (final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(tempFile))) {
       RDFDataMgr.write(os, model, Lang.TTL);
     }
-    final OWLOntology ontology =
-      ioHelper.loadOntology(new BufferedInputStream(new FileInputStream(tempFile)), catalogPath);
-    tempFile.delete();
-    return ontology;
+    return ioHelper.loadOntology(new BufferedInputStream(new FileInputStream(tempFile)), catalogPath);
   }
 
   /**
