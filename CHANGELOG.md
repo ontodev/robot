@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
 - Sort [`report`] violations by rule name within level [#955]
 - [`extract`] and [`merge`] should optionally inject provenance [#893] 
+
+### Fixed
+- Fix subClassOf cycles in related object selection [#979]
 
 ## [1.8.3] - 2021-12-16
 
