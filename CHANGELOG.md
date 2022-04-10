@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Optimize memory usage for update queries using `--temporary-file` switch [#978]
 - Sort [`report`] violations by rule name within level [#955]
 
 ### Fixed
