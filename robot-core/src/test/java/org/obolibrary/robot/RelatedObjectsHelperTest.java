@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Test;
@@ -149,6 +151,29 @@ public class RelatedObjectsHelperTest extends CoreTest {
     assertEquals(2, annotations.size());
     assertTrue(annotations.contains(annotation1));
     assertTrue(annotations.contains(annotation2));
+  }
+
+  /**
+   * Test selecting ancestors and descendants with a subClassOf cycle.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testSelectCycle() throws Exception {
+    IOHelper ioHelper = new IOHelper();
+    OWLOntology patoRole = loadOntology("/pato_role.owl");
+
+    // Use BFO role as our starting object - then get all ancestors and descendants
+    Set<OWLObject> objects =
+        new HashSet<>(
+            Collections.singletonList(
+                df.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/BFO_0000023"))));
+    Set<OWLObject> relatedObjects =
+        RelatedObjectsHelper.select(
+            patoRole, ioHelper, objects, Arrays.asList("ancestors", "descendants"));
+
+    // Check that the select returned all classes in this ontology (all descendants of role)
+    assert relatedObjects.size() == patoRole.getClassesInSignature().size();
   }
 
   /** @throws Exception */
