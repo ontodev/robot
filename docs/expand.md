@@ -59,7 +59,7 @@ Here is an example:
 
 ## Specifying expansions
 
-By default, all SPARQL CONSTRUCT queries found as values for the [defined by construct](http://purl.obolibrary.org/obo/OMO_defined_by_construct) property
+By default, all SPARQL CONSTRUCT queries found as values for the [defined by construct](http://purl.obolibrary.org/obo/OMO_0002000) property
 will be executed against the input ontology, and the results merged in.
 
 Alternatively, specific macro terms can be included or excluded from the expansion process with

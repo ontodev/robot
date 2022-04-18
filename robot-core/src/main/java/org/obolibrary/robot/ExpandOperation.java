@@ -28,8 +28,7 @@ public class ExpandOperation {
 
   private static final OWLAnnotationProperty definedByConstruct =
       OWLManager.getOWLDataFactory()
-          .getOWLAnnotationProperty(
-              IRI.create("http://purl.obolibrary.org/obo/OMO_0002000"));
+          .getOWLAnnotationProperty(IRI.create("http://purl.obolibrary.org/obo/OMO_0002000"));
   private static final OWLAnnotationProperty derivedFrom =
       OWLManager.getOWLDataFactory()
           .getOWLAnnotationProperty(PROVVocabulary.WAS_DERIVED_FROM.getIRI());
