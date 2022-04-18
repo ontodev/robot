@@ -14,7 +14,7 @@
 
 ###  http://example.org/never_part_of
 :never_part_of rdf:type owl:AnnotationProperty ;
-               <http://purl.obolibrary.org/obo/OMO_defined_by_construct> """PREFIX owl: <http://www.w3.org/2002/07/owl#>
+               <http://purl.obolibrary.org/obo/OMO_0002000> """PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX : <http://example.org/>
 CONSTRUCT {
       ?a a owl:Class .
@@ -32,7 +32,7 @@ CONSTRUCT {
 
 ###  http://example.org/part_disjoint_with
 :part_disjoint_with rdf:type owl:AnnotationProperty ;
-                    <http://purl.obolibrary.org/obo/OMO_defined_by_construct> """PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                    <http://purl.obolibrary.org/obo/OMO_0002000> """PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX : <http://example.org/>
 CONSTRUCT {
       ?a a owl:Class .
@@ -53,8 +53,8 @@ CONSTRUCT {
     }""" .
 
 
-###  http://purl.obolibrary.org/obo/OMO_defined_by_construct
-<http://purl.obolibrary.org/obo/OMO_defined_by_construct> rdf:type owl:AnnotationProperty ;
+###  http://purl.obolibrary.org/obo/OMO_0002000
+<http://purl.obolibrary.org/obo/OMO_0002000> rdf:type owl:AnnotationProperty ;
                                                           rdfs:label "defined by construct" .
 
 
