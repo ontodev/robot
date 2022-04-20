@@ -9,7 +9,7 @@
 
 ## Overview
 
-Some logical patterns in OWL are cumbersome to maintain by hand; shortuct annotation properties ("macros") can be used as an
+Some logical patterns in OWL are cumbersome to maintain by hand; shortcut annotation properties ("macros") can be used as an
 editor's representation which are automatically expanded to more complex axioms.
 
 For example, an ontology may include the notion of "part disjointness", i.e., nothing with a 'part of' relationship
@@ -26,7 +26,7 @@ Alternatively, one could define an annotation property `'part disjoint with'`:
 A 'part disjoint with' B
 ```
 
-This property definition can be annotated with another property, [defined by construct](http://purl.obolibrary.org/obo/OMO_defined_by_construct),
+This property definition can be annotated with another property, [defined by construct](http://purl.obolibrary.org/obo/OMO_0002000),
 pointing to a SPARQL CONSTRUCT query, which is used to generate the more complex OWL axioms when running `robot expand`:
 
 ```
