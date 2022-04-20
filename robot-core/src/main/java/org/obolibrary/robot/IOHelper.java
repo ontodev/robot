@@ -1745,7 +1745,16 @@ public class IOHelper {
             throw new IOException(String.format(invalidElementError, element));
           }
         }
-        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+        throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
+      } catch (NullPointerException e) {
+        if (format instanceof OBODocumentFormat) {
+          // Critical OBO structure error
+          throw new IOException(
+              "OBO STRUCTURE ERROR ontology cannot be saved in OBO format. Please use '--check true' to see cause.");
+        } else {
+          // Unknown null pointer exception
+          throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
+        }
       }
     }
   }

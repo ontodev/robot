@@ -2032,6 +2032,10 @@ public class RelatedObjectsHelper {
     for (OWLClassExpression classExpression : EntitySearcher.getSuperClasses(cls, ontology)) {
       if (!classExpression.isAnonymous()) {
         OWLClass superClass = classExpression.asOWLClass();
+        if (ancestors.contains(superClass)) {
+          // Subclass of/equivalent class can cause a loop - see #976
+          continue;
+        }
         ancestors.add(superClass);
         if (!superClass.isTopEntity()) {
           selectClassAncestors(ontology, superClass, ancestors);
@@ -2055,6 +2059,10 @@ public class RelatedObjectsHelper {
     for (OWLClassExpression classExpression : EntitySearcher.getSubClasses(cls, ontology)) {
       if (!classExpression.isAnonymous()) {
         OWLClass subClass = classExpression.asOWLClass();
+        if (descendants.contains(subClass)) {
+          // Subclass of/equivalent class can cause a loop - see #976
+          continue;
+        }
         descendants.add(subClass);
         if (!EntitySearcher.getSubClasses(subClass, ontology).isEmpty()) {
           selectClassDescendants(ontology, subClass, descendants);

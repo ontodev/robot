@@ -71,6 +71,24 @@ public class Report {
 
   private IRI ontologyIRI = null;
 
+  /**
+   * Map of rule name to number of violations for INFO level. Replaces info map to support violation
+   * count by rule name.
+   */
+  public Map<String, Integer> infoCountByRule = new HashMap<>();
+
+  /**
+   * Map of rule name to number of violations for WARN level. Replaces warn map to support violation
+   * count by rule name.
+   */
+  public Map<String, Integer> warnCountByRule = new HashMap<>();
+
+  /**
+   * Map of rule name to number of violations for ERROR level. Replaces error map to support
+   * violation count by rule name.
+   */
+  public Map<String, Integer> errorCountByRule = new HashMap<>();
+
   /** Map of rules and the violations for INFO level. */
   @Deprecated public Map<String, List<Violation>> info = new HashMap<>();
 
@@ -79,6 +97,20 @@ public class Report {
 
   /** Map of rules and the violations for ERROR level. */
   @Deprecated public Map<String, List<Violation>> error = new HashMap<>();
+
+  /** Comparator for sorting a list of Report Queries alphabetically by their rule name. */
+  static class ReportQueryComparator implements Comparator<ReportQuery> {
+    /**
+     * Compare two Report Query objects by their rule name.
+     *
+     * @param rq1 Report Query 1
+     * @param rq2 Report Query 2
+     * @return int for sorting
+     */
+    public int compare(ReportQuery rq1, ReportQuery rq2) {
+      return rq1.getRuleName().compareTo(rq2.getRuleName());
+    }
+  }
 
   /**
    * Create a new report object without an ontology or predefined IOHelper.
@@ -210,14 +242,17 @@ public class Report {
       case ERROR:
         errorViolations.add(rq);
         errorCount += rq.getViolations().size();
+        errorCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       case WARN:
         warnViolations.add(rq);
         warnCount += rq.getViolations().size();
+        warnCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       case INFO:
         infoViolations.add(rq);
         infoCount += rq.getViolations().size();
+        infoCountByRule.put(rq.getRuleName(), rq.getViolations().size());
         break;
       default:
         logger.error(
@@ -268,6 +303,11 @@ public class Report {
       table.addColumn(c);
     }
 
+    // Sort results
+    errorViolations.sort(new ReportQueryComparator());
+    warnViolations.sort(new ReportQueryComparator());
+    infoViolations.sort(new ReportQueryComparator());
+
     addToTable(table, provider, ERROR, errorViolations);
     addToTable(table, provider, WARN, warnViolations);
     addToTable(table, provider, INFO, infoViolations);
@@ -293,6 +333,12 @@ public class Report {
    * @return YAML string
    */
   public String toYAML() {
+    // Sort results
+    errorViolations.sort(new ReportQueryComparator());
+    warnViolations.sort(new ReportQueryComparator());
+    infoViolations.sort(new ReportQueryComparator());
+
+    // Create YAML
     ShortFormProvider provider = getProvider();
     return yamlHelper(provider, ERROR, errorViolations)
         + yamlHelper(provider, WARN, warnViolations)
@@ -540,6 +586,66 @@ public class Report {
   }
 
   /**
+   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
+   * exists.
+   *
+   * @param ruleName rule name to get number of violations for
+   * @return number of violations for given rule name
+   * @throws Exception if the rule name is not in this Report object
+   */
+  public Integer getViolationCount(String ruleName) throws Exception {
+    if (infoCountByRule.containsKey(ruleName)) {
+      return infoCountByRule.get(ruleName);
+    } else if (warnCountByRule.containsKey(ruleName)) {
+      return warnCountByRule.get(ruleName);
+    } else if (errorCountByRule.containsKey(ruleName)) {
+      return errorCountByRule.get(ruleName);
+    }
+    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
+  }
+
+  /**
+   * Return all the IRI strings in the current Violations.
+   *
+   * @return a set of IRI strings
+   */
+  public Set<String> getIRIs() {
+    List<Violation> allViolations = new ArrayList<>();
+    for (ReportQuery rq : errorViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    for (ReportQuery rq : warnViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    for (ReportQuery rq : infoViolations) {
+      allViolations.addAll(rq.getViolations());
+    }
+    return getIRIs(allViolations);
+  }
+
+  /**
+   * Return all the IRI strings in the given list of Violations.
+   *
+   * @param violations list of Violations
+   * @return a set of IRI strings
+   */
+  public Set<String> getIRIs(List<Violation> violations) {
+    Set<String> iris = new HashSet<>();
+
+    for (Violation v : violations) {
+      iris.add(v.entity.getIRI().toString());
+      for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
+        iris.add(statement.getKey().getIRI().toString());
+        for (OWLEntity value : statement.getValue()) {
+          iris.add(value.getIRI().toString());
+        }
+      }
+    }
+
+    return iris;
+  }
+
+  /**
    * Given a rule name, it's reporting level, and a list of the violations from the ontology, add
    * the violations to the correct map.
    *
@@ -554,76 +660,17 @@ public class Report {
     if (INFO.equals(level)) {
       info.put(ruleName, violations);
       infoCount += violations.size();
+      infoCountByRule.put(ruleName, violations.size());
     } else if (WARN.equals(level)) {
       warn.put(ruleName, violations);
       warnCount += violations.size();
+      warnCountByRule.put(ruleName, violations.size());
     } else if (ERROR.equals(level)) {
       error.put(ruleName, violations);
       errorCount += violations.size();
+      errorCountByRule.put(ruleName, violations.size());
     }
     // Otherwise do nothing
-  }
-
-  /**
-   * Given a rule name, return the violation count for that rule. Throw exception if rule does not
-   * exists.
-   *
-   * @param ruleName rule name to get number of violations for
-   * @return number of violations for given rule name
-   * @throws Exception if the rule name is not in this Report object
-   */
-  @Deprecated
-  public Integer getViolationCount(String ruleName) throws Exception {
-    if (info.containsKey(ruleName)) {
-      List<Violation> v = info.get(ruleName);
-      return v.size();
-    } else if (warn.containsKey(ruleName)) {
-      List<Violation> v = warn.get(ruleName);
-      return v.size();
-    } else if (error.containsKey(ruleName)) {
-      List<Violation> v = error.get(ruleName);
-      return v.size();
-    }
-    throw new Exception(String.format("'%s' is not a rule in this Report", ruleName));
-  }
-
-  /**
-   * Return all the IRI strings in the current Violations.
-   *
-   * @return a set of IRI strings
-   */
-  @Deprecated
-  public Set<String> getIRIs() {
-    Set<String> iris = new HashSet<>();
-    iris.addAll(getIRIs(error));
-    iris.addAll(getIRIs(warn));
-    iris.addAll(getIRIs(info));
-    return iris;
-  }
-
-  /**
-   * Return all the IRI strings in the given list of Violations.
-   *
-   * @param violationSets map of rule name and violations
-   * @return a set of IRI strings
-   */
-  @Deprecated
-  public Set<String> getIRIs(Map<String, List<Violation>> violationSets) {
-    Set<String> iris = new HashSet<>();
-
-    for (Entry<String, List<Violation>> vs : violationSets.entrySet()) {
-      for (Violation v : vs.getValue()) {
-        iris.add(v.entity.getIRI().toString());
-        for (Entry<OWLEntity, List<OWLEntity>> statement : v.entityStatements.entrySet()) {
-          iris.add(statement.getKey().getIRI().toString());
-          for (OWLEntity value : statement.getValue()) {
-            iris.add(value.getIRI().toString());
-          }
-        }
-      }
-    }
-
-    return iris;
   }
 
   /**

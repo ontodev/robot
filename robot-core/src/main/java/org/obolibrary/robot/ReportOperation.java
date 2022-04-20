@@ -641,7 +641,7 @@ public class ReportOperation {
       String rulePath = qs.getKey();
       String ruleName =
           rulePath.substring(rulePath.lastIndexOf("/") + 1, rulePath.lastIndexOf("."));
-      ReportQuery rq = new ReportQuery(ruleName, qs.getValue(), profile.get(ruleName));
+      ReportQuery rq = new ReportQuery(ruleName, qs.getValue(), profile.get(rulePath));
       reportQueries.add(rq);
     }
     return reportQueries;

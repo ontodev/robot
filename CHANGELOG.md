@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Sort [`report`] violations by rule name within level [#955]
+
+### Fixed
+- Fix subClassOf cycles in related object selection [#979]
+
+## [1.8.3] - 2021-12-16
+
+### Changed
+- Replace `log4j` with `logback` [#948] [#953]
+
+### Fixed
+- Fix custom [`report`] queries [#944]
+- Fix methods in `Report` object for ROBOT as a library [#951]
+
+## [1.8.2] - 2021-12-02
+
 ### Added
 - Add links to query documentation for default rules in [`report`] [#879]
 - Ability to restrict [`report`] to base ontology [#872]
@@ -14,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add check for illegal use of built-in vocabulary [#867]
 - Add check for misused replaced-by annotation [#869]
 - Add checks for undeclared synonymtype and subsettype [#870]
+- Inferred axiom generators for domains and ranges [#931]
 
 ### Changed
 - Split equivalent class check [#856]
@@ -21,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow numbers in lowercase_definition check [#866]
 - Blank nodes in [`report`] are now referred to as `blank node` rather than a random identifier [#873]
 - Change behaviour of [`template`] `--errors` option without `--force` [#929]
+- Fail hard on bad [`reason`] `--equivalent-classes-allowed` argument [#938]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -239,7 +258,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.3...HEAD
+[1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
+[1.8.2]: https://github.com/ontodev/robot/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ontodev/robot/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/ontodev/robot/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/ontodev/robot/compare/v1.7.1...v1.7.2
@@ -278,6 +299,13 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#979]: https://github.com/ontodev/robot/pull/979
+[#955]: https://github.com/ontodev/robot/pull/955
+[#953]: https://github.com/ontodev/robot/pull/953
+[#951]: https://github.com/ontodev/robot/pull/951
+[#948]: https://github.com/ontodev/robot/pull/948
+[#944]: https://github.com/ontodev/robot/pull/944
+[#938]: https://github.com/ontodev/robot/pull/938
 [#929]: https://github.com/ontodev/robot/pull/929
 [#924]: https://github.com/ontodev/robot/issues/924
 [#914]: https://github.com/ontodev/robot/pull/914
@@ -310,6 +338,7 @@ First official release of ROBOT!
 [#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
+[#741]: https://github.com/ontodev/robot/issues/741
 [#739]: https://github.com/ontodev/robot/pull/739
 [#738]: https://github.com/ontodev/robot/pull/738
 [#728]: https://github.com/ontodev/robot/pull/728

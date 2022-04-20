@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#! nix-shell -i bash -p git gitAndTools.gh travis jq semver-tool gnupg
+#! nix-shell -i bash -p jdk11_headless maven git gitAndTools.gh travis jq semver-tool gnupg
 #
 # This script helps to automate ROBOT releases.
 # When a manual step is required, it will wait for the user.
@@ -126,7 +126,7 @@ step "Release to Maven Central"
 mvn clean deploy -P release
 
 step "Create draft GitHub release"
-< CHANGELOG.md
+< CHANGELOG.md \
   sed -n "/^## \[${VERSION}\]/,/^## /p" \
 | sed '1d;2d;$d' \
 | sed "s/[][]//g" \
