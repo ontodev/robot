@@ -1747,7 +1747,7 @@ public class IOHelper {
         }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
       } catch (NullPointerException e) {
-        if (format instanceof OBODocumentFormat) {
+        if (format instanceof OBODocumentFormat && !checkOBO) {
           // Critical OBO structure error
           throw new IOException(
               "OBO STRUCTURE ERROR ontology cannot be saved in OBO format. Please use '--check true' to see cause.");
