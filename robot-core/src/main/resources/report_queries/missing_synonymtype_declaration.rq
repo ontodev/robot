@@ -9,7 +9,7 @@ PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
     VALUES ?property { rdfs:subPropertyOf }
-    ?x oboInOwl:hasSynonymType ?entity .
+    ?value oboInOwl:hasSynonymType ?entity .
     FILTER NOT EXISTS { ?entity ?property oboInOwl:SynonymTypeProperty }
 }
 ORDER BY ?entity
