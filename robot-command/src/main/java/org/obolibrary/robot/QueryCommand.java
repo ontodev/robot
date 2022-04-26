@@ -55,7 +55,7 @@ public class QueryCommand implements Command {
     o.addOption("O", "output-dir", true, "Directory for output");
     o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
     o.addOption("u", "update", true, "run a SPARQL UPDATE");
-    o.addOption("y","temporary-file", true, "(together with --update only) true reduces the heap memory used by storing intermediate results into a temporary file, but makes the execution slower.");
+    o.addOption("y","temporary-file", true, "if true, stores intermediate --update results in a temporary file to reduce heap memory usage.");
     o.addOption("t", "tdb", true, "if true, load RDF/XML or TTL onto disk");
     o.addOption("C", "create-tdb", true, "if true, create a TDB directory without querying");
     o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
