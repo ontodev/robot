@@ -249,7 +249,7 @@ public class QueryOperation {
    */
   public static OWLOntology convertModel(Model model, IOHelper ioHelper, String catalogPath)
       throws IOException {
-    return convertModel(model, ioHelper, catalogPath,false);
+    return convertModel(model, ioHelper, catalogPath, false);
   }
 
   /**

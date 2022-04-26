@@ -328,9 +328,7 @@ public class QueryCommand implements Command {
         catalogPath = null;
       }
     }
-    return useTemporaryFile
-        ? QueryOperation.convertModelThroughTemporaryFile(model, ioHelper, catalogPath)
-        : QueryOperation.convertModel(model, ioHelper, catalogPath);
+    return QueryOperation.convertModel(model, ioHelper, catalogPath, useTemporaryFile);
   }
 
   /**
