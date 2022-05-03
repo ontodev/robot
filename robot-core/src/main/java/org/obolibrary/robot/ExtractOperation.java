@@ -1,9 +1,14 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.renci.relationgraph.RelationGraph.Config;
+import org.renci.relationgraph.RelationGraphUtil;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -212,6 +217,164 @@ public class ExtractOperation {
     } else {
       throw new IllegalArgumentException(String.format(unknownIntermediatesError, intermediates));
     }
+  }
+
+  /**
+   * Extracts a materialized sub-ontology from the given ontology that only contains the given terms and
+   * the relations between them. The input ontology is not changed.
+   *
+   * @param inputOntology the ontology to extract from
+   * @param terms a set of IRIs for terms to extract
+   * @param outputIRI the OntologyIRI of the new ontology
+   * @param options map of extract options
+   * @param sourceMap map of term IRI to source IRI, or null (only used with annotate-with-source)
+   * @return a new ontology (with a new manager)
+   * @throws OWLOntologyCreationException on any OWLAPI problem
+   */
+  public static OWLOntology extractSubset(
+      OWLOntology inputOntology,
+      Set<IRI> terms,
+      IRI outputIRI,
+      Map<String, String> options,
+      Map<IRI, IRI> sourceMap)
+      throws OWLOntologyCreationException {
+    OWLOntology filteredOnt = filter(inputOntology, terms, outputIRI);
+    Set<OWLClassAxiom> materializedAxioms = materialize(inputOntology);
+    applyMaterializedAxioms(filteredOnt, materializedAxioms, terms);
+    copyOWLObjectAnnotations(inputOntology, filteredOnt);
+    ReduceOperation.reduce(filteredOnt, new org.semanticweb.elk.owlapi.ElkReasonerFactory());
+
+    return filteredOnt;
+  }
+
+  /**
+   * Materializes the given ontology using the relation-graph.
+   *
+   * @param inputOntology ontology to materialize.
+   * @return materialized axioms.
+   * @throws OWLOntologyCreationException
+   */
+  private static Set<OWLClassAxiom> materialize(OWLOntology inputOntology)
+      throws OWLOntologyCreationException {
+    Config config = new Config(null, false, true, true, true, true, false);
+    return RelationGraphUtil.computeRelationGraph(inputOntology, new HashSet<IRI>(), config);
+  }
+
+  /**
+   * Adds materialized axioms to the given ontology if both subject and object of the axiom exists
+   * in the terms.
+   *
+   * @param ontology ontology to add axioms.
+   * @param materializedAxioms list of materialized axioms.
+   * @param terms list of term IRIs to filter axioms.
+   */
+  private static void applyMaterializedAxioms(
+      OWLOntology ontology, Set<OWLClassAxiom> materializedAxioms, Set<IRI> terms) {
+    OWLOntologyManager ontManager = ontology.getOWLOntologyManager();
+    for (OWLClassAxiom axiom : materializedAxioms) {
+      List<IRI> axiomTerms =
+          axiom.getClassesInSignature().stream()
+              .map(owlClass -> owlClass.getIRI())
+              .collect(Collectors.toList());
+
+      if (terms.containsAll(axiomTerms)) {
+        ontManager.addAxiom(ontology, axiom);
+      }
+    }
+  }
+
+  /**
+   * Filters the terms from the given ontology and returns a new filtered ontology. Copies ontology
+   * annotations, import declarations and the term annotations from the input ontology to the new
+   * ontology.
+   *
+   * @param inputOntology ontology to filter
+   * @param terms list of term IRIs to filter.
+   * @param outputIRI IRI of the output ontology.
+   * @return a filtered new ontology object
+   * @throws OWLOntologyCreationException
+   */
+  private static OWLOntology filter(OWLOntology inputOntology, Set<IRI> terms, IRI outputIRI)
+      throws OWLOntologyCreationException {
+    Set<OWLObject> relatedObjects = new HashSet<>();
+    relatedObjects.addAll(OntologyHelper.getEntities(inputOntology, terms));
+
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    OWLOntology outputOntology = manager.createOntology(outputIRI);
+
+    List<String> axiomSelectors = new ArrayList<>();
+    axiomSelectors.add("all");
+
+    OWLOntologyManager mng = OWLManager.createOWLOntologyManager();
+    mng.addAxioms(
+        outputOntology,
+        RelatedObjectsHelper.filterAxioms(
+            inputOntology.getAxioms(),
+            relatedObjects,
+            axiomSelectors,
+            new ArrayList<>(),
+            false,
+            false));
+
+    // Add annotations on the related objects
+    manager.addAxioms(
+        outputOntology, RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
+
+    // Copies the ontology annotations
+    for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
+      OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
+    }
+
+    // Copy the import declarations to the output ontology
+    for (OWLImportsDeclaration imp : inputOntology.getImportsDeclarations()) {
+      manager.applyChange(new AddImport(outputOntology, imp));
+    }
+
+    return outputOntology;
+  }
+
+  /**
+   * Copies annotations of the ObjectProperties, DataProperties, AnnotationProperties and
+   * NamedIndividuals from source ontology to the target ontology.
+   *
+   * @param sourceOntology ontology that contains the annotations.
+   * @param targetOntology ontology to add annotations.
+   */
+  private static void copyOWLObjectAnnotations(
+      OWLOntology sourceOntology, OWLOntology targetOntology) {
+    OWLOntologyManager targetOntManager = targetOntology.getOWLOntologyManager();
+
+    targetOntManager.addAxioms(
+        targetOntology,
+        RelatedObjectsHelper.getAnnotationAxioms(
+            sourceOntology,
+            targetOntology.getObjectPropertiesInSignature().stream()
+                .map(prop -> (OWLObject) prop)
+                .collect(Collectors.toSet())));
+
+    targetOntManager.addAxioms(
+        targetOntology,
+        RelatedObjectsHelper.getAnnotationAxioms(
+            sourceOntology,
+            targetOntology.getAnnotationPropertiesInSignature().stream()
+                .map(prop -> (OWLObject) prop)
+                .collect(Collectors.toSet())));
+
+    targetOntManager.addAxioms(
+        targetOntology,
+        RelatedObjectsHelper.getAnnotationAxioms(
+            sourceOntology,
+            targetOntology.getDataPropertiesInSignature().stream()
+                .map(prop -> (OWLObject) prop)
+                .collect(Collectors.toSet())));
+
+    targetOntManager.addAxioms(
+        targetOntology,
+        RelatedObjectsHelper.getAnnotationAxioms(
+            sourceOntology,
+            targetOntology.getIndividualsInSignature().stream()
+                .map(indv -> (OWLObject) indv)
+                .collect(Collectors.toSet())));
   }
 
   /**

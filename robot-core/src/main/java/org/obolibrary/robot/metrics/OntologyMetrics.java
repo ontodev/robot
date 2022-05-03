@@ -46,6 +46,7 @@ import org.semanticweb.owlapi.profiles.OWLProfile;
 import org.semanticweb.owlapi.profiles.OWLProfileReport;
 import org.semanticweb.owlapi.profiles.OWLProfileViolation;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.Construct;
 import org.semanticweb.owlapi.util.DLExpressivityChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1007,7 +1008,7 @@ public class OntologyMetrics {
     }
     DLExpressivityChecker checker = new DLExpressivityChecker(onts);
     Set<String> constructs = new HashSet<>();
-    for (DLExpressivityChecker.Construct c : checker.getConstructs()) {
+    for (Construct c : checker.getConstructs()) {
       constructs.add(c.name());
     }
     return constructs;

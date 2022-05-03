@@ -76,7 +76,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.6</version>
+      <version>4.5.9</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -87,7 +87,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.6</version>
+      <version>4.5.9</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -98,7 +98,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.6</version>
+      <version>4.5.9</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -293,5 +293,16 @@
       <artifactId>py4j</artifactId>
       <version>0.10.9.2</version>
     </dependency>
+	<dependency>
+	  <groupId>org.geneontology</groupId>
+	  <artifactId>relation-graph_${scala.version}</artifactId>
+	  <version>2.2.1</version>
+	  <exclusions>
+        <exclusion>
+          <groupId>org.apache.jena</groupId>
+          <artifactId>apache-jena-libs</artifactId>
+        </exclusion>
+      </exclusions>
+	</dependency>
   </dependencies>
 </project>

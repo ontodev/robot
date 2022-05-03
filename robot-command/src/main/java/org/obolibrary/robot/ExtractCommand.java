@@ -188,6 +188,8 @@ public class ExtractCommand implements Command {
 
     if (method.equals("mireot")) {
       outputOntology = mireotExtract(ioHelper, inputOntology, line, extractOptions);
+    } else if (method.equals("subset")) {
+      outputOntology = subsetExtract(ioHelper, inputOntology, line, extractOptions);
     } else if (moduleType != null) {
       outputOntology = slmeExtract(ioHelper, inputOntology, moduleType, line, extractOptions);
     } else {
@@ -346,6 +348,44 @@ public class ExtractCommand implements Command {
 
     return ExtractOperation.extract(
         inputOntology, terms, outputIRI, moduleType, extractOptions, sourceMap);
+  }
+
+  /**
+   * Perform a Subset extraction after validating command line options.
+   *
+   * @param inputOntology OWLOntology to extract from
+   * @param line CommandLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws IOException on issue parsing terms
+   * @throws OWLOntologyCreationException on OWLAPI issue
+   */
+  private static OWLOntology subsetExtract(
+      IOHelper ioHelper,
+      OWLOntology inputOntology,
+      CommandLine line,
+      Map<String, String> extractOptions)
+      throws Exception {
+    Imports imports = getImportsOption(extractOptions);
+    // Make sure the terms exist in the input ontology
+    Set<IRI> terms =
+        OntologyHelper.filterExistingTerms(
+            inputOntology,
+            CommandLineHelper.getTerms(ioHelper, line),
+            OptionsHelper.optionIsTrue(extractOptions, "force"),
+            imports);
+
+    // Determine what to do with sources
+    Map<IRI, IRI> sourceMap =
+        getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
+    // Get the output IRI
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+    if (outputIRI == null) {
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    }
+
+    return ExtractOperation.extractSubset(
+        inputOntology, terms, outputIRI, extractOptions, sourceMap);
   }
 
   /**

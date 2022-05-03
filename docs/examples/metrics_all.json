@@ -30,8 +30,8 @@
     "dt_builtin_count_incl": 2,
     "dt_notbuiltin_count": 0,
     "dt_notbuiltin_count_incl": 0,
-    "expressivity": "SRIQ",
-    "expressivity_incl": "SRIQ",
+    "expressivity": "UCINTERIQ",
+    "expressivity_incl": "UCINTERIQ",
     "gci_count": 0,
     "gci_count_incl": 0,
     "gci_hidden_count": 105,
@@ -99,16 +99,20 @@
       "InverseObjectProperties"
     ],
     "constructs": [
+      "ROLE_INVERSE",
       "Q",
-      "R",
-      "S",
-      "I"
+      "CONCEPT_UNION",
+      "CONCEPT_INTERSECTION",
+      "FULL_EXISTENTIAL",
+      "ROLE_COMPLEX"
     ],
     "constructs_incl": [
+      "ROLE_INVERSE",
       "Q",
-      "R",
-      "S",
-      "I"
+      "CONCEPT_UNION",
+      "CONCEPT_INTERSECTION",
+      "FULL_EXISTENTIAL",
+      "ROLE_COMPLEX"
     ],
     "datatypes_builtin": [
       "XSD_STRING",

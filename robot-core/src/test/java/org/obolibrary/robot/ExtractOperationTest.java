@@ -5,10 +5,18 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.junit.Test;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
 /**
@@ -149,6 +157,31 @@ public class ExtractOperationTest extends CoreTest {
     Map<String, String> options = ExtractOperation.getDefaultOptions();
     options.put("intermediates", "none");
     testExtract(ModuleType.STAR, "/none.owl", options);
+  }
+
+  /**
+   * Tests subset extraction operation using a pre-generated OWL file to compare against.
+   *
+   * @throws IOException on IO error
+   * @throws OWLOntologyCreationException on ontology error
+   */
+  @Test
+  public void testExtractSubset() throws IOException, OWLOntologyCreationException {
+    OWLOntology simple = loadOntology("/subset.obo");
+
+    Map<String, String> options = ExtractOperation.getDefaultOptions();
+    IRI outputIRI = IRI.create("http://purl.obolibrary.org/obo/subset_result.owl");
+
+    Set<IRI> terms = new HashSet<IRI>();
+    terms.add(IRI.create("http://purl.obolibrary.org/obo/X_1"));
+    terms.add(IRI.create("http://purl.obolibrary.org/obo/X_5"));
+
+    OWLOntology module = ExtractOperation.extractSubset(simple, terms, outputIRI, options, null);
+
+    OWLOntology expected = loadOntology("/subset_result.owl");
+    removeDeclarations(expected);
+    removeDeclarations(module);
+    assertIdentical(expected, module);
   }
 
   /**
