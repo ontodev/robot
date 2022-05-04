@@ -1,6 +1,6 @@
-FROM maven:3-jdk-8-alpine
+FROM maven:3-openjdk-11-slim
 
-RUN adduser -D robot
+RUN useradd -m robot
 RUN mkdir -p /usr/src/app
 RUN chown robot /usr/src/app
 
