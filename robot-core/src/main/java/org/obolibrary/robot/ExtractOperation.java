@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.renci.relationgraph.RelationGraph.Config;
 import org.renci.relationgraph.RelationGraphUtil;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -34,7 +33,6 @@ import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 import uk.ac.manchester.cs.owlapi.modularity.SyntacticLocalityModuleExtractor;
@@ -260,7 +258,7 @@ public class ExtractOperation {
       throws OWLOntologyCreationException {
     OWLOntology filteredOnt = filter(inputOntology, terms, outputIRI);
     applyMaterializedAxioms(filteredOnt, materialize(inputOntology), terms);
-    copyOWLObjectAnnotations(inputOntology, filteredOnt);
+    copyPropertyAnnotations(inputOntology, filteredOnt);
     ReduceOperation.reduce(filteredOnt, new org.semanticweb.elk.owlapi.ElkReasonerFactory());
 
     return filteredOnt;
@@ -357,7 +355,7 @@ public class ExtractOperation {
    * @param sourceOntology ontology that contains the annotations.
    * @param targetOntology ontology to add annotations.
    */
-  private static void copyOWLObjectAnnotations(
+  private static void copyPropertyAnnotations(
       OWLOntology sourceOntology, OWLOntology targetOntology) {
     OWLOntologyManager targetOntManager = targetOntology.getOWLOntologyManager();
 
@@ -383,14 +381,6 @@ public class ExtractOperation {
             sourceOntology,
             targetOntology.getDataPropertiesInSignature().stream()
                 .map(prop -> (OWLObject) prop)
-                .collect(Collectors.toSet())));
-
-    targetOntManager.addAxioms(
-        targetOntology,
-        RelatedObjectsHelper.getAnnotationAxioms(
-            sourceOntology,
-            targetOntology.getIndividualsInSignature().stream()
-                .map(indv -> (OWLObject) indv)
                 .collect(Collectors.toSet())));
   }
 
