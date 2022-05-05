@@ -7,14 +7,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.renci.relationgraph.RelationGraph.Config;
 import org.renci.relationgraph.RelationGraphUtil;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 import uk.ac.manchester.cs.owlapi.modularity.SyntacticLocalityModuleExtractor;
@@ -220,8 +240,8 @@ public class ExtractOperation {
   }
 
   /**
-   * Extracts a materialized sub-ontology from the given ontology that only contains the given terms and
-   * the relations between them. The input ontology is not changed.
+   * Extracts a materialized sub-ontology from the given ontology that only contains the given terms
+   * and the relations between them. The input ontology is not changed.
    *
    * @param inputOntology the ontology to extract from
    * @param terms a set of IRIs for terms to extract
@@ -239,8 +259,7 @@ public class ExtractOperation {
       Map<IRI, IRI> sourceMap)
       throws OWLOntologyCreationException {
     OWLOntology filteredOnt = filter(inputOntology, terms, outputIRI);
-    Set<OWLClassAxiom> materializedAxioms = materialize(inputOntology);
-    applyMaterializedAxioms(filteredOnt, materializedAxioms, terms);
+    applyMaterializedAxioms(filteredOnt, materialize(inputOntology), terms);
     copyOWLObjectAnnotations(inputOntology, filteredOnt);
     ReduceOperation.reduce(filteredOnt, new org.semanticweb.elk.owlapi.ElkReasonerFactory());
 
@@ -299,6 +318,9 @@ public class ExtractOperation {
     Set<OWLObject> relatedObjects = new HashSet<>();
     relatedObjects.addAll(OntologyHelper.getEntities(inputOntology, terms));
 
+    if (outputIRI == null) {
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    }
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology outputOntology = manager.createOntology(outputIRI);
 
@@ -319,11 +341,6 @@ public class ExtractOperation {
     // Add annotations on the related objects
     manager.addAxioms(
         outputOntology, RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
-
-    // Copies the ontology annotations
-    for (OWLAnnotation annotation : inputOntology.getAnnotations()) {
-      OntologyHelper.addOntologyAnnotation(outputOntology, annotation);
-    }
 
     // Copy the import declarations to the output ontology
     for (OWLImportsDeclaration imp : inputOntology.getImportsDeclarations()) {
