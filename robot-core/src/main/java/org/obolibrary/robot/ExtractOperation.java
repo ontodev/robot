@@ -256,8 +256,8 @@ public class ExtractOperation {
       Map<String, String> options,
       Map<IRI, IRI> sourceMap)
       throws OWLOntologyCreationException {
-    OWLOntology filteredOnt = filter(inputOntology, terms, outputIRI);
-    applyMaterializedAxioms(filteredOnt, materialize(inputOntology), terms);
+    OWLOntology materializedOnt = materialize(inputOntology, outputIRI);
+    OWLOntology filteredOnt = filter(materializedOnt, terms, outputIRI);
     copyPropertyAnnotations(inputOntology, filteredOnt);
     ReduceOperation.reduce(filteredOnt, new org.semanticweb.elk.owlapi.ElkReasonerFactory());
 
@@ -265,39 +265,29 @@ public class ExtractOperation {
   }
 
   /**
-   * Materializes the given ontology using the relation-graph.
+   * Materializes the given ontology using the relation-graph.Creates a new ontology that contains
+   * the input ontology axioms and the materialized axioms. The input ontology is not changed.
    *
-   * @param inputOntology ontology to materialize.
-   * @return materialized axioms.
+   * @param ontology ontology to materialize.
+   * @param outputIRI IRI of the output ontology.
+   * @return materialized ontology.
    * @throws OWLOntologyCreationException
    */
-  private static Set<OWLClassAxiom> materialize(OWLOntology inputOntology)
+  private static OWLOntology materialize(OWLOntology ontology, IRI outputIRI)
       throws OWLOntologyCreationException {
     Config config = new Config(null, false, true, true, true, true, false);
-    return RelationGraphUtil.computeRelationGraph(inputOntology, new HashSet<IRI>(), config);
-  }
+    Set<OWLClassAxiom> materializedAxioms =
+        RelationGraphUtil.computeRelationGraph(ontology, new HashSet<IRI>(), config);
 
-  /**
-   * Adds materialized axioms to the given ontology if both subject and object of the axiom exists
-   * in the terms.
-   *
-   * @param ontology ontology to add axioms.
-   * @param materializedAxioms list of materialized axioms.
-   * @param terms list of term IRIs to filter axioms.
-   */
-  private static void applyMaterializedAxioms(
-      OWLOntology ontology, Set<OWLClassAxiom> materializedAxioms, Set<IRI> terms) {
-    OWLOntologyManager ontManager = ontology.getOWLOntologyManager();
-    for (OWLClassAxiom axiom : materializedAxioms) {
-      List<IRI> axiomTerms =
-          axiom.getClassesInSignature().stream()
-              .map(owlClass -> owlClass.getIRI())
-              .collect(Collectors.toList());
-
-      if (terms.containsAll(axiomTerms)) {
-        ontManager.addAxiom(ontology, axiom);
-      }
+    if (outputIRI == null) {
+      outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
     }
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    OWLOntology materializedOntology = manager.createOntology(outputIRI);
+    manager.addAxioms(materializedOntology, ontology.getAxioms());
+    manager.addAxioms(materializedOntology, materializedAxioms);
+
+    return materializedOntology;
   }
 
   /**
@@ -334,7 +324,7 @@ public class ExtractOperation {
             axiomSelectors,
             new ArrayList<>(),
             false,
-            false));
+            true));
 
     // Add annotations on the related objects
     manager.addAxioms(

@@ -173,6 +173,7 @@ public class ExtractOperationTest extends CoreTest {
     Set<IRI> terms = new HashSet<IRI>();
     terms.add(IRI.create("http://purl.obolibrary.org/obo/ONT_1"));
     terms.add(IRI.create("http://purl.obolibrary.org/obo/ONT_5"));
+    terms.add(IRI.create("http://purl.obolibrary.org/obo/BFO_0000050"));
 
     OWLOntology module = ExtractOperation.extractSubset(simple, terms, outputIRI, options, null);
 
