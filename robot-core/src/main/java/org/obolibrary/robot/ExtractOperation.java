@@ -256,7 +256,11 @@ public class ExtractOperation {
       Map<String, String> options,
       Map<IRI, IRI> sourceMap)
       throws OWLOntologyCreationException {
-    OWLOntology materializedOnt = materialize(inputOntology, outputIRI);
+    Set<IRI> relations =
+        terms.stream()
+            .filter(t -> inputOntology.containsObjectPropertyInSignature(t))
+            .collect(Collectors.toSet());
+    OWLOntology materializedOnt = materialize(inputOntology, relations, outputIRI);
     OWLOntology filteredOnt = filter(materializedOnt, terms, outputIRI);
     copyPropertyAnnotations(inputOntology, filteredOnt);
     ReduceOperation.reduce(filteredOnt, new org.semanticweb.elk.owlapi.ElkReasonerFactory());
@@ -269,15 +273,16 @@ public class ExtractOperation {
    * the input ontology axioms and the materialized axioms. The input ontology is not changed.
    *
    * @param ontology ontology to materialize.
+   * @param relations a set of IRIs for the relations to materialize
    * @param outputIRI IRI of the output ontology.
    * @return materialized ontology.
    * @throws OWLOntologyCreationException
    */
-  private static OWLOntology materialize(OWLOntology ontology, IRI outputIRI)
+  private static OWLOntology materialize(OWLOntology ontology, Set<IRI> relations, IRI outputIRI)
       throws OWLOntologyCreationException {
     Config config = new Config(null, false, true, true, true, true, false);
     Set<OWLClassAxiom> materializedAxioms =
-        RelationGraphUtil.computeRelationGraph(ontology, new HashSet<IRI>(), config);
+        RelationGraphUtil.computeRelationGraph(ontology, relations, config);
 
     if (outputIRI == null) {
       outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
