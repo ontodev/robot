@@ -385,7 +385,7 @@ public class ExtractCommand implements Command {
     }
 
     return ExtractOperation.extractSubset(
-        inputOntology, terms, outputIRI, extractOptions, sourceMap);
+        inputOntology, terms, outputIRI, extractOptions, sourceMap, imports);
   }
 
   /**

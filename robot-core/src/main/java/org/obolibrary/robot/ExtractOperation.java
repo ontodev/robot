@@ -246,6 +246,7 @@ public class ExtractOperation {
    * @param outputIRI the OntologyIRI of the new ontology
    * @param options map of extract options
    * @param sourceMap map of term IRI to source IRI, or null (only used with annotate-with-source)
+   * @param imports handle imports option (default: include)
    * @return a new ontology (with a new manager)
    * @throws OWLOntologyCreationException on any OWLAPI problem
    */
@@ -254,11 +255,12 @@ public class ExtractOperation {
       Set<IRI> terms,
       IRI outputIRI,
       Map<String, String> options,
-      Map<IRI, IRI> sourceMap)
+      Map<IRI, IRI> sourceMap,
+      Imports imports)
       throws OWLOntologyCreationException {
     Set<IRI> relations =
         terms.stream()
-            .filter(t -> inputOntology.containsObjectPropertyInSignature(t))
+            .filter(t -> inputOntology.containsObjectPropertyInSignature(t, imports))
             .collect(Collectors.toSet());
     OWLOntology materializedOnt = materialize(inputOntology, relations, outputIRI);
     OWLOntology filteredOnt = filter(materializedOnt, terms, outputIRI);

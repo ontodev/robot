@@ -15,6 +15,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 
 /**
@@ -175,7 +176,8 @@ public class ExtractOperationTest extends CoreTest {
     terms.add(IRI.create("http://purl.obolibrary.org/obo/ONT_5"));
     terms.add(IRI.create("http://purl.obolibrary.org/obo/BFO_0000050"));
 
-    OWLOntology module = ExtractOperation.extractSubset(simple, terms, outputIRI, options, null);
+    OWLOntology module =
+        ExtractOperation.extractSubset(simple, terms, outputIRI, options, null, Imports.INCLUDED);
 
     OWLOntology expected = loadOntology("/subset_result.owl");
     removeDeclarations(expected);
