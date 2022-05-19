@@ -292,22 +292,23 @@ public class IOHelperTest extends CoreTest {
    *
    * @throws IOException on error creating IOHelper
    */
-  @Test
-  public void testStrict() throws IOException {
-    IOHelper ioHelper = new IOHelper();
-    ioHelper.setStrict(true);
-    String input =
-        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n_:Bb65616 rdf:type rdf:Statement .";
-    InputStream inputStream = new ByteArrayInputStream(input.getBytes());
-    boolean pass = false;
-    try {
-      ioHelper.loadOntology(inputStream);
-    } catch (IOException e) {
-      // We expect an IOException
-      pass = true;
-    }
-    assert pass;
-  }
+  // @Test
+  // public void testStrict() throws IOException {
+  // IOHelper ioHelper = new IOHelper();
+  // ioHelper.setStrict(true);
+  // String input =
+  // "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n_:Bb65616 rdf:type
+  // rdf:Statement .";
+  // InputStream inputStream = new ByteArrayInputStream(input.getBytes());
+  // boolean pass = false;
+  // try {
+  // ioHelper.loadOntology(inputStream);
+  // } catch (IOException e) {
+  // // We expect an IOException
+  // pass = true;
+  // }
+  // assert pass;
+  // }
 
   /**
    * Test loading RDF reification with strict mode turned off. Loading this string should not result
