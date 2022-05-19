@@ -53,7 +53,7 @@ ROBOT will always perform a logical validation check prior to automatic classifi
 
 You can perform detailed debugging using an environment like Protege - load the ontology, switch on the reasoner and use the explain feature. For example, if you have unsatisfiable classes, find one of them (they should show up red) and click on the `?` where it says `EquivalentTo Nothing`.
 
-If you are working on a large complex ontology with multiple imports and you encounter unsatisfiable classes during the release, you can make a minimal ontology for debugging purposes using the `-D` (`--dump-unsatisfiable`) option folled by an output file path. This will find all unsatisfiable classes and use the [extract](extract) operation to create a debug module.
+If you are working on a large complex ontology with multiple imports and you encounter unsatisfiable classes during the release, you can make a minimal ontology for debugging purposes using the `-D` (`--dump-unsatisfiable`) option followed by an output file path. This will find all unsatisfiable classes and use the [extract](extract) operation to create a debug module.
 
 ```
 robot reason --reasoner ELK \
@@ -107,7 +107,9 @@ By default, the `reason` operation will only assert inferred subclass axioms. Th
     * `InverseObjectProperties`
     * `ObjectPropertyCharacteristic`
     * `SubObjectProperty`
-  
+    * `ObjectPropertyRange`
+    * `ObjectPropertyDomain`
+
 One or more of these axiom generators can be passed into the option (separated by spaces). For example, to generate both subclass and disjoint class axioms:
 
 ```
@@ -115,6 +117,15 @@ robot reason --input unreasoned.owl
   --axiom-generators "SubClass DisjointClasses"
   --output reasoned.owl
 ```
+
+Note that for some of the axiom generators you may need the Hermit reasoner
+to get meaningful results:
+
+
+    robot reason --input ro-base.owl --reasoner hermit
+      --axiom-generators "ObjectPropertyRange ObjectPropertyDomain"
+      --output ro-base-reasoned.owl
+
 
 If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
 
@@ -130,15 +141,18 @@ robot reason --input unreasoned.owl
 
 ## Error Messages
 
-### Create Ontology Error
-
-You must select between `--create-new-ontology-with-annotations` (`-m`) and `--create-new-ontology` (`-n`). Both cannot be passed in as `true` to one reason command, as they have opposite results.
-
 ### Axiom Generator Error
 
 The input for the `--axiom-generators` option must be one or more space-separated valid axiom generators, [listed above](#axiom-generators).
+
+### Create Ontology Error
+
+You must select between `--create-new-ontology-with-annotations` (`-m`) and `--create-new-ontology` (`-n`). Both cannot be passed in as `true` to one reason command, as they have opposite results.
 
 ### Equivalent Class Axiom Error
 
 ROBOT has been configured to not allow one-to-one equivalent classes (`--equivalent-classes-allowed none` or `--equivalent-classes-allowed asserted-only`) and one or more equivalency has been detected. Either remove the axiom(s) causing the equivalence axiom(s), or run `reason` with `--equivalent-classes-allowed none`. [More details here](#equivalent-class-axioms).
 
+### Equivalent Classes Option Error
+
+The argument for `--equivalent-classes-allowed` must be one of: `true`, `false`, `all`, `none`, or `asserted-only`. See [Equivalent Class Axioms](#equivalent-class-axioms) for more details.

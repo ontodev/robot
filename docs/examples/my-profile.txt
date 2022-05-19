@@ -1,0 +1,5 @@
+WARN	annotation_whitespace
+ERROR	invalid_xref
+ERROR	label_formatting
+INFO	file:missing-contributor.sparql
+ERROR	multiple_labels

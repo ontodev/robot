@@ -196,15 +196,24 @@
       <version>4.13.1</version>
     </dependency>
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.7</version>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.30</version>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <version>1.7.32</version>
     </dependency>
     <dependency>
       <groupId>org.semanticweb.elk</groupId>
       <artifactId>elk-owlapi</artifactId>
       <version>0.4.3</version>
       <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
           <artifactId>owlapi-apibinding</artifactId>

@@ -13,9 +13,11 @@ import com.google.common.collect.Sets;
 import com.opencsv.*;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -27,10 +29,10 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
-import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
-import org.geneontology.obographs.io.OgJsonGenerator;
-import org.geneontology.obographs.model.GraphDocument;
+import org.geneontology.obographs.core.io.OgJsonGenerator;
+import org.geneontology.obographs.core.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
+import org.geneontology.obographs.owlapi.OboGraphJsonDocumentFormat;
 import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
 import org.obolibrary.oboformat.model.FrameStructureException;
 import org.obolibrary.oboformat.model.OBODoc;
@@ -93,6 +95,11 @@ public class IOHelper {
   /** Error message when a JSON-LD context cannot be read, for any reason. */
   private static final String jsonldContextParseError =
       NS + "JSON-LD CONTEXT PARSE ERROR Could not parse the JSON-LD context.";
+
+  /** Error message when a graph object cannot be created from the ontology using obographs. */
+  private static final String oboGraphError =
+      NS
+          + "OBO GRAPH ERROR Could not convert ontology to OBO Graph (see https://github.com/geneontology/obographs)";
 
   /** Error message when OBO cannot be saved. */
   private static final String oboStructureError =
@@ -928,10 +935,26 @@ public class IOHelper {
       return null;
     }
 
-    if (iri.toString().contains(" ")) {
-      // Invalid IRI
-      return null;
+    if (iri.toString().startsWith("urn:")) {
+      // A URN is not a valid URL, so we check it with regex
+      Pattern urnPattern =
+          Pattern.compile(
+              "^urn:[a-z0-9][a-z0-9-]{0,31}:([a-z0-9()+,\\-.:=@;$_!*']|%[0-9a-f]{2})+$",
+              Pattern.CASE_INSENSITIVE);
+      if (!urnPattern.matcher(iri.toString()).matches()) {
+        // Not a valid URN (RFC2141)
+        return null;
+      }
+    } else {
+      try {
+        // Check for malformed URL, e.g., a CURIE was returned or the value passed has spaces
+        new URL(iri.toString());
+      } catch (MalformedURLException e) {
+        // Invalid IRI
+        return null;
+      }
     }
+
     return iri;
   }
 
@@ -1686,30 +1709,21 @@ public class IOHelper {
       throws IOException {
     // first handle any non-official output formats.
     // currently this is just OboGraphs JSON format
+    format.setParameter(OBODocumentFormat.VALIDATION, checkOBO);
+
     if (format instanceof OboGraphJsonDocumentFormat) {
       FromOwl fromOwl = new FromOwl();
-      GraphDocument gd = fromOwl.generateGraphDocument(ontology);
+      GraphDocument gd;
+      try {
+        gd = fromOwl.generateGraphDocument(ontology);
+      } catch (Exception e) {
+        throw new IOException(oboGraphError);
+      }
       File outfile = new File(ontologyIRI.toURI());
       ObjectMapper mapper = new ObjectMapper();
       mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
       ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
       writer.writeValue(new FileOutputStream(outfile), gd);
-    } else if (format instanceof OBODocumentFormat && !checkOBO) {
-      // only use this method when ignoring OBO checking, otherwise use native save
-      OWLAPIOwl2Obo bridge = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
-      OBODoc oboOntology = bridge.convert(ontology);
-      File f = new File(ontologyIRI.toURI());
-      boolean newFile = f.createNewFile();
-      try (BufferedWriter bw =
-          new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
-        OBOFormatWriter oboWriter = new OBOFormatWriter();
-        oboWriter.setCheckStructure(checkOBO);
-        oboWriter.write(oboOntology, bw);
-      } catch (IOException e) {
-        if (!newFile) {
-          f.delete();
-        }
-      }
     } else {
       // use native save functionality
       try {
@@ -1731,7 +1745,16 @@ public class IOHelper {
             throw new IOException(String.format(invalidElementError, element));
           }
         }
-        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+        throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
+      } catch (NullPointerException e) {
+        if (format instanceof OBODocumentFormat && !checkOBO) {
+          // Critical OBO structure error
+          throw new IOException(
+              "OBO STRUCTURE ERROR ontology cannot be saved in OBO format. Please use '--check true' to see cause.");
+        } else {
+          // Unknown null pointer exception
+          throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
+        }
       }
     }
   }

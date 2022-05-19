@@ -47,6 +47,30 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 
         robot help
 
+### Docker
+
+ROBOT is part of the [Ontology Development Kit](https://github.com/INCATools/ontology-development-kit) Docker image, and as a [stand-alone Docker image](https://hub.docker.com/r/obolibrary/robot/tags).
+
+To use the Docker image, you can install it like this:
+
+```
+docker pull obolibrary/robot
+```
+
+To use the Docker image, you can run:
+
+```
+docker run -v $PWD/:/work -w /work --rm -ti obolibrary/robot robot --version
+```
+
+Or, on Windows:
+
+```
+docker run -v D:/ontology:/work --rm -ti obolibrary/robot robot --version
+```
+
+Where `D:/ontology` is the directory that contains the ontology or ontologies you want to work on (there is no equivalent for $PWD on Windows when running a command on the command line directly).
+
 ## 2. Using the Library
 
 ROBOT is written in Java, and can be used from any language that runs on the Java Virtual Machine. It's available on [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.obolibrary.robot%22%20a%3A%22robot%22) and [javadoc.io](http://www.javadoc.io/doc/org.obolibrary.robot/robot/). The code is divided into two parts:

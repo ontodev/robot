@@ -367,6 +367,7 @@ public class Template {
    */
   public OWLOntology generateOutputOntology(String outputIRI, boolean force, String errorsPath)
       throws Exception {
+    boolean exitOnException = !force && errorsPath == null;
     // Set to true on first exception
     boolean hasException = false;
 
@@ -376,8 +377,8 @@ public class Template {
       try {
         processRow(row);
       } catch (RowParseException e) {
-        // If force = false, fail on the first exception
-        if (!force) {
+        // Unless specified, fail on the first exception
+        if (exitOnException) {
           throw e;
         }
 
@@ -399,6 +400,10 @@ public class Template {
       if (errorsPath != null) {
         // Write errors to file
         IOHelper.writeTable(errors, errorsPath);
+        // Check if we want to force the output, otherwise exit now (as error)
+        if (!force) {
+          System.exit(1);
+        }
       }
     }
 
@@ -1881,6 +1886,10 @@ public class Template {
 
       // Handle annotations
       if (template.startsWith("A") || template.startsWith("LABEL")) {
+        if (split != null) {
+          // Add the split back on for getAnnotations
+          template = template + " SPLIT=" + split;
+        }
         // Add the annotations to the individual
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {

@@ -73,7 +73,6 @@ public class QuotedEntityCheckerTest extends CoreTest {
     checker.setIOHelper(ioHelper);
     Assert.assertEquals(cls, checker.getOWLClass("GO:XXXX"));
 
-    System.out.println("PARSER");
     ManchesterOWLSyntaxClassExpressionParser parser =
         new ManchesterOWLSyntaxClassExpressionParser(
             dataFactory, checker

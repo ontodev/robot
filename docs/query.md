@@ -83,6 +83,8 @@ Once the query operation is complete, ROBOT will remove the TDB directory. If yo
 
 The ontology is never loaded as an `OWLOntology` object, since doing so loads the whole ontology into memory. Therefore, TDB cannot be used while chaining commands or with the `--update` option.
 
+Finally, please be aware that ROBOT uses standard TDB (TDB1), which is not compatible with [TDB2](https://jena.apache.org/documentation/tdb2/). This means that you cannot use a dataset created by ROBOT with a program that expects TDB2, and you cannot use an existing TDB2 dataset with ROBOT.
+
 ### Creating a TDB Directory
 
 You can also choose to just create a TDB directory without running a query using the `--create-tdb` option. This is useful for workflows were a TDB directory may need to be initiated in one step and queried mulitple times in another.

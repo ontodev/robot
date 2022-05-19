@@ -7,9 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Sort [`report`] violations by rule name within level [#955]
+
+### Fixed
+- Fix subClassOf cycles in related object selection [#979]
+
+## [1.8.3] - 2021-12-16
+
+### Changed
+- Replace `log4j` with `logback` [#948] [#953]
+
+### Fixed
+- Fix custom [`report`] queries [#944]
+- Fix methods in `Report` object for ROBOT as a library [#951]
+
+## [1.8.2] - 2021-12-02
+
 ### Added
 - Add links to query documentation for default rules in [`report`] [#879]
 - Ability to restrict [`report`] to base ontology [#872]
+- Add check for equivalent class with no genus to [`report`] [#865]
+- Add check for illegal use of built-in vocabulary [#867]
+- Add check for misused replaced-by annotation [#869]
+- Add checks for undeclared synonymtype and subsettype [#870]
+- Inferred axiom generators for domains and ranges [#931]
+
+### Changed
+- Split equivalent class check [#856]
+- Allow Dublin Core "terms" namespace (`http://purl.org/dc/terms/`) for `description` and `title` properties on ontology. [#741]
+- Allow numbers in lowercase_definition check [#866]
+- Blank nodes in [`report`] are now referred to as `blank node` rather than a random identifier [#873]
+- Change behaviour of [`template`] `--errors` option without `--force` [#929]
+- Fail hard on bad [`reason`] `--equivalent-classes-allowed` argument [#938]
 
 ### Fixed
 - Fix printing violations in [`report`] [#823]
@@ -17,7 +47,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix missing annotations from [`export`] [#850]
 - Fail on unknown rule names in [`report`] [#858]
 - Fix behaviour of `--preserve-structure` when using internal or external axiom selectors for [`remove`] or [`filter`] [#816]
+- Fix duplicate_label_synonym [#864]
 - Fix value rendering for entities in [`report`] [#874]
+- Fix OBO serialisation issues when using `--check false` [#896]
+- Fix `merge --inputs` patterns with parent directories [#899]
+- Fix `deprecated_class_reference` [`report`] query [#902]
+- Fix error handling for JSON conversion [#907]
+- Fix handling of property chains when removing/filtering base axioms in [#914]
+- Fix SPLIT unpacking in named individuals in [`template`] [#924]
+
+### Changed
+- Do not allow malformed IRIs to be returned by `IOHelper` [#882]
 
 ## [1.8.1] - 2021-01-27
 
@@ -218,7 +258,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.3...HEAD
+[1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
+[1.8.2]: https://github.com/ontodev/robot/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ontodev/robot/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/ontodev/robot/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/ontodev/robot/compare/v1.7.1...v1.7.2
@@ -257,9 +299,32 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#979]: https://github.com/ontodev/robot/pull/979
+[#955]: https://github.com/ontodev/robot/pull/955
+[#953]: https://github.com/ontodev/robot/pull/953
+[#951]: https://github.com/ontodev/robot/pull/951
+[#948]: https://github.com/ontodev/robot/pull/948
+[#944]: https://github.com/ontodev/robot/pull/944
+[#938]: https://github.com/ontodev/robot/pull/938
+[#929]: https://github.com/ontodev/robot/pull/929
+[#924]: https://github.com/ontodev/robot/issues/924
+[#914]: https://github.com/ontodev/robot/pull/914
+[#907]: https://github.com/ontodev/robot/pull/907
+[#902]: https://github.com/ontodev/robot/pull/902
+[#899]: https://github.com/ontodev/robot/pull/899
+[#896]: https://github.com/ontodev/robot/pull/896
+[#882]: https://github.com/ontodev/robot/pull/882
+[#879]: https://github.com/ontodev/robot/pull/879
 [#874]: https://github.com/ontodev/robot/pull/874
 [#872]: https://github.com/ontodev/robot/pull/872
+[#870]: https://github.com/ontodev/robot/pull/870
+[#869]: https://github.com/ontodev/robot/pull/869
+[#867]: https://github.com/ontodev/robot/pull/867
+[#866]: https://github.com/ontodev/robot/pull/866
+[#865]: https://github.com/ontodev/robot/pull/865
+[#864]: https://github.com/ontodev/robot/pull/864
 [#858]: https://github.com/ontodev/robot/pull/858
+[#856]: https://github.com/ontodev/robot/pull/856
 [#850]: https://github.com/ontodev/robot/pull/850
 [#834]: https://github.com/ontodev/robot/pull/834
 [#823]: https://github.com/ontodev/robot/pull/823
@@ -273,6 +338,7 @@ First official release of ROBOT!
 [#783]: https://github.com/ontodev/robot/pull/783
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
+[#741]: https://github.com/ontodev/robot/issues/741
 [#739]: https://github.com/ontodev/robot/pull/739
 [#738]: https://github.com/ontodev/robot/pull/738
 [#728]: https://github.com/ontodev/robot/pull/728

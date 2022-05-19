@@ -11,14 +11,16 @@
 
 ## Overview
 
-The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we take the filtered ontology from the previous step and extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
+The reuse of ontology terms creates links between data, making the ontology and the data more valuable. But often you want to reuse just a subset of terms from a target ontology, not the whole thing. Here we extract a "STAR" module for the term 'adrenal cortex' and its supporting terms:
 
     robot extract --method STAR \
         --input filtered.owl \
         --term-file uberon_module.txt \
         --output results/uberon_module.owl
 
-See <a href="/examples/uberon_module.txt" target="_blank">`uberon_module.txt`</a> for an example of a term file. Terms should be listed line by line, and comments can be included with `#`. Individual terms can be specified with `--term` followed by the CURIE.
+See <a href="/examples/uberon_module.txt" target="_blank">`uberon_module.txt`</a> for an example of a term file. Terms should be listed line by line in either CURIE form or full IRI, and comments can be included with one or more whitespace characters after the term followed by `#` and then the comment.
+
+Alternatively, individual terms can be specified with `--term` followed by the CURIE (or full URI).
 
 The `--method` options fall into two groups: Syntactic Locality Module Extractor (SLME) and Minimum Information to Reference an External Ontology Term (MIREOT).
 

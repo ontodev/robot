@@ -32,13 +32,15 @@ Each template file must be set up in the following format:
 
 The `template` command accepts an optional input ontology, either using the `--input` option or from the previous command in a chain. If an input ontology is given, its `rdfs:label`s will be used when parsing the template. The `--template` or `-t` option specifies the CSV or TSV template file. Multiple templates are allowed, and the order of templates is significant. You can also specify the normal `--prefix` options, the `--output-iri` and `--version-iri`, and the usual `--output` options. See [Merging](#merging) for the three different merge options, and details on how they control the output of the command.
 
-A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms.
+A template may have multiple errors in different rows and columns. By default, `template` will fail on the first error encountered. If you wish to proceed with errors, use `--force true`. This will log all row parse errors to STDERR and attempt to create an ontology anyway. Be aware that the output ontology may be missing axioms and ROBOT will complete with a `0` exit code (success).
 
-You can also choose to write errors to a separate table using `--errors <path>`. If the path ends with `csv`, the output will be comma-separated. Otherwise, the output will be tab-separated. Note that `--errors` will only write to the path when `--force true` is provided as well. The errors table contains the following fields:
+You can also choose to write errors to a separate table using `--errors <path>`. If the path ends with `csv`, the output will be comma-separated. Otherwise, the output will be tab-separated. The errors table contains the following fields:
 * **table**: table name (the `--template`)
 * **cell**: A1 notation of cell location (e.g., C3)
 * **rule ID**: the CURIE of the rule (`ROBOT-template:[rule-name]`, which expands to `http://robot.obolibrary.org/template#[rule-name]`)
 * **message**: text description of the violated rule
+
+If `--force true` is not included with `--errors <path>`, ROBOT will exit with a non-zero exit code (failure) and the output file will not be created.
 
 ## Template Strings
 
@@ -57,7 +59,7 @@ You can also choose to write errors to a separate table using `--errors <path>`.
     - `annotation property` or `owl:AnnotationProperty`
     - `datatype` or `owl:Datatype`
     - `individual`, `named individual`, `owl:Individual`, `owl:NamedIndividual`, or a defined class ID or label
-- **annotations**: ROBOT can attach annotations to your class. There are four options:
+- **annotations**: ROBOT can attach annotations to your term. There are four options:
     - `A` string annotation: If the template string starts with an `A` and a space then it will be interpreted as a string annotation. The rest of the template string should be the label or compact IRI of an annotation property, e.g. `label` or `rdfs:label`. The cell value will be the literal value of the annotation with type `xsd:string`. Annotation property labels do not need to be wrapped in single quotes.
     - `AT` typed annotation: If the template string starts with an `AT` and a space then it will be interpreted as a typed annotation. The `^^` characters must be used to separate the annotation property from the datatype, e.g. `rdfs:comment^^xsd:integer`. The cell value will be the typed literal value of the annotation.
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.

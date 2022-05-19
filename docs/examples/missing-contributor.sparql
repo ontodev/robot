@@ -1,0 +1,11 @@
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?entity ?property ?value WHERE {
+  ?entity a owl:Ontology .
+  FILTER NOT EXISTS {
+    ?entity dc:contributor ?value .
+  }
+  BIND(dc:contributor as ?property)
+}
