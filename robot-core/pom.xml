@@ -36,13 +36,13 @@
 <!--       <plugin> -->
 <!--         <groupId>com.github.siom79.japicmp</groupId> -->
 <!--         <artifactId>japicmp-maven-plugin</artifactId> -->
-<!--         <version>0.15.2</version> -->
+<!--         <version>0.15.4</version> -->
 <!--         <configuration> -->
 <!--           <oldVersion> -->
 <!--             <dependency> -->
 <!--               <groupId>${project.groupId}</groupId> -->
 <!--               <artifactId>${project.artifactId}</artifactId> -->
-<!--               <version>1.8.1</version> japicmp target -->
+<!--               <version>1.8.3</version> japicmp target -->
 <!--               <type>jar</type> -->
 <!--             </dependency> -->
 <!--           </oldVersion> -->
@@ -69,114 +69,6 @@
 <!--           </execution> -->
 <!--         </executions> -->
 <!--       </plugin> -->
-      <plugin>
-        <groupId>com.github.siom79.japicmp</groupId>
-        <artifactId>japicmp-maven-plugin</artifactId>
-        <version>0.15.4</version>
-        <configuration>
-          <oldVersion>
-            <dependency>
-              <groupId>${project.groupId}</groupId>
-              <artifactId>${project.artifactId}</artifactId>
-              <version>1.8.3</version> <!-- japicmp target -->
-              <type>jar</type>
-            </dependency>
-          </oldVersion>
-          <newVersion>
-            <file>
-              <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
-            </file>
-          </newVersion>
-          <parameter>
-            <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
-            <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
-            <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-            <!-- include on breaking changes
-            <excludes></excludes>
-            -->
-          </parameter>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>cmp</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.github.siom79.japicmp</groupId>
-        <artifactId>japicmp-maven-plugin</artifactId>
-        <version>0.15.4</version>
-        <configuration>
-          <oldVersion>
-            <dependency>
-              <groupId>${project.groupId}</groupId>
-              <artifactId>${project.artifactId}</artifactId>
-              <version>1.8.3</version> <!-- japicmp target -->
-              <type>jar</type>
-            </dependency>
-          </oldVersion>
-          <newVersion>
-            <file>
-              <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
-            </file>
-          </newVersion>
-          <parameter>
-            <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
-            <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
-            <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-            <!-- include on breaking changes
-            <excludes></excludes>
-            -->
-          </parameter>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>cmp</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.github.siom79.japicmp</groupId>
-        <artifactId>japicmp-maven-plugin</artifactId>
-        <version>0.15.4</version>
-        <configuration>
-          <oldVersion>
-            <dependency>
-              <groupId>${project.groupId}</groupId>
-              <artifactId>${project.artifactId}</artifactId>
-              <version>1.8.3</version> <!-- japicmp target -->
-              <type>jar</type>
-            </dependency>
-          </oldVersion>
-          <newVersion>
-            <file>
-              <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
-            </file>
-          </newVersion>
-          <parameter>
-            <!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
-            <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
-            <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-            <!-- include on breaking changes
-            <excludes></excludes>
-            -->
-          </parameter>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>cmp</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 

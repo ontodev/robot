@@ -1,6 +1,8 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +12,12 @@ import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.junit.Test;
 import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import uk.ac.manchester.cs.jfact.JFactFactory;
@@ -284,7 +291,7 @@ public class ReasonOperationTest extends CoreTest {
     assertTrue(
         checkContains(
             ontology,
-            "EquivalentClasses(<http://purl.obolibrary.org/obo/CLS_01> <http://purl.obolibrary.org/obo/CLS_02> )"));
+            "EquivalentClasses(<http://purl.obolibrary.org/obo/CLS_01> <http://purl.obolibrary.org/obo/CLS_02>)"));
 
     // disjoint classes
     assertTrue(
@@ -317,7 +324,7 @@ public class ReasonOperationTest extends CoreTest {
     assertTrue(
         checkContains(
             ontology,
-            "EquivalentObjectProperties(<http://purl.obolibrary.org/obo/OP_01> <http://purl.obolibrary.org/obo/OP_04> )"));
+            "EquivalentObjectProperties(<http://purl.obolibrary.org/obo/OP_01> <http://purl.obolibrary.org/obo/OP_04>)"));
     // inverse properties
     assertTrue(
         checkContains(
@@ -348,7 +355,7 @@ public class ReasonOperationTest extends CoreTest {
     assertTrue(
         checkContains(
             ontology,
-            "EquivalentDataProperties(<http://purl.obolibrary.org/obo/DP_01> <http://purl.obolibrary.org/obo/DP_04> )"));
+            "EquivalentDataProperties(<http://purl.obolibrary.org/obo/DP_01> <http://purl.obolibrary.org/obo/DP_04>)"));
   }
 
   /**

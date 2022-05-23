@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class MeasureOperationTest extends CoreTest {
     MeasureResult result =
         MeasureOperation.getMetrics(
             ontology, "extended", new CURIEShortFormProvider(new IOHelper().getPrefixes()));
-    assertEquals("SI(D)", result.getSimpleMetricValue(MetricsLabels.EXPRESSIVITY));
+    assertEquals("RRESTRUCINTE+I(D)", result.getSimpleMetricValue(MetricsLabels.EXPRESSIVITY));
   }
 
   /**

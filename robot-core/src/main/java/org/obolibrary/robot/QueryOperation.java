@@ -1,14 +1,36 @@
 package org.obolibrary.robot;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSetRewindable;
+import org.apache.jena.rdf.model.AnonId;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -17,14 +39,18 @@ import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.update.UpdateAction;
-import org.openrdf.model.BNode;
-import org.openrdf.model.Literal;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.rio.RDFHandler;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.URI;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,8 +200,9 @@ public class QueryOperation {
         object = ResourceFactory.createResource(triple.getObject().stringValue());
       } else {
         Literal literal = (Literal) (triple.getObject());
-        if (literal.getLanguage() != null) {
-          object = ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage());
+        if (literal.getLanguage().isPresent()) {
+          object =
+              ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage().get());
         } else if (literal.getDatatype() != null) {
           object =
               ResourceFactory.createTypedLiteral(

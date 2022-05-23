@@ -1,7 +1,14 @@
 package org.obolibrary.robot.metrics;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.obolibrary.robot.IOHelper;
@@ -46,6 +53,7 @@ import org.semanticweb.owlapi.profiles.OWLProfile;
 import org.semanticweb.owlapi.profiles.OWLProfileReport;
 import org.semanticweb.owlapi.profiles.OWLProfileViolation;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.Construct;
 import org.semanticweb.owlapi.util.DLExpressivityChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,8 +113,8 @@ public class OntologyMetrics {
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ID, getOntologyId());
     csvData.put(prefix + MetricsLabels.ONTOLOGY_VERSION_ID, getOntologyVersionId());
     /*
-    Essential entity metrics
-    */
+     * Essential entity metrics
+     */
     csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE_INCL, getSignatureSize(Imports.INCLUDED));
     csvData.put(prefix + MetricsLabels.SIGNATURE_SIZE, getSignatureSize(Imports.EXCLUDED));
     csvData.put(prefix + MetricsLabels.CLASS_COUNT_INCL, getClassCount(Imports.INCLUDED));
@@ -131,7 +139,7 @@ public class OntologyMetrics {
     csvData.put(prefix + MetricsLabels.ONTOLOGY_ANNOTATIONS_COUNT, getAnnotationsCount());
 
     /*
-    Essential axiom counts
+     * Essential axiom counts
      */
 
     csvData.put(prefix + MetricsLabels.LOGICAL_AXIOM_COUNT, getLogicalAxiomCount(Imports.EXCLUDED));
@@ -152,7 +160,7 @@ public class OntologyMetrics {
     csvData.put(prefix + MetricsLabels.ABOX_SIZE_INCL, getABoxSize(Imports.INCLUDED));
 
     /*
-    Essential expressivity metrics
+     * Essential expressivity metrics
      */
     csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2, isOWL2Profile());
     csvData.put(prefix + MetricsLabels.BOOL_PROFILE_OWL2_DL, isOWL2DLProfile());
@@ -178,7 +186,7 @@ public class OntologyMetrics {
     csvData.importMetrics(essentialData);
 
     /*
-    Extended entity metrics
+     * Extended entity metrics
      */
     csvData.put(
         prefix + MetricsLabels.DATATYPE_BUILTIN_COUNT_INCL,
@@ -193,7 +201,7 @@ public class OntologyMetrics {
         getDatatypesNotBuiltinCount(Imports.EXCLUDED));
 
     /*
-    Extended expressivity metrics
+     * Extended expressivity metrics
      */
     csvData.put(prefix + MetricsLabels.EXPRESSIVITY, getExpressivity(false));
     csvData.put(prefix + MetricsLabels.EXPRESSIVITY_INCL, getExpressivity(true));
@@ -214,7 +222,7 @@ public class OntologyMetrics {
     csvData.put(prefix + MetricsLabels.SYNTAX, getSyntax());
 
     /*
-    Entity usage
+     * Entity usage
      */
 
     csvData.putMap(prefix + MetricsLabels.NS_USE_AXIOMS, getAxiomUsageMap(Imports.EXCLUDED));
@@ -346,17 +354,18 @@ public class OntologyMetrics {
         prefix + MetricsLabels.MULTI_INHERITANCE_COUNT_INCL, getMultipleInheritanceCount(true));
     csvData.put(prefix + MetricsLabels.MULTI_INHERITANCE_COUNT, getMultipleInheritanceCount(false));
 
-    /*    csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
-        csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
-        csvData.put(
-            prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL, getReferencedDataPropertyCount(true));
-        csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT, getReferencedDataPropertyCount(false));
-        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true));
-        csvData.put(prefix + MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false));
-        csvData.put(
-            prefix + MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
-        csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT, getReferencedObjectPropertyCount(false));
-    */
+    /*
+     * csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT_INCL, getReferencedClassCount(true));
+     * csvData.put(prefix + MetricsLabels.REF_CLASS_COUNT, getReferencedClassCount(false));
+     * csvData.put( prefix + MetricsLabels.REF_DATAPROP_COUNT_INCL,
+     * getReferencedDataPropertyCount(true)); csvData.put(prefix + MetricsLabels.REF_DATAPROP_COUNT,
+     * getReferencedDataPropertyCount(false)); csvData.put(prefix +
+     * MetricsLabels.REF_INDIV_COUNT_INCL, getReferencedIndividualCount(true)); csvData.put(prefix +
+     * MetricsLabels.REF_INDIV_COUNT, getReferencedIndividualCount(false)); csvData.put( prefix +
+     * MetricsLabels.REF_OBJPROP_COUNT_INCL, getReferencedObjectPropertyCount(true));
+     * csvData.put(prefix + MetricsLabels.REF_OBJPROP_COUNT,
+     * getReferencedObjectPropertyCount(false));
+     */
     csvData.put(
         prefix + MetricsLabels.UNDECLARED_ENTITY_COUNT_INCL,
         getUndeclaredEntitiesCount(Imports.INCLUDED));
@@ -815,7 +824,7 @@ public class OntologyMetrics {
             // System.out.println("SupPropertyAx: " + ax);
             break;
           }
-        } else //noinspection StatementWithEmptyBody
+        } else // noinspection StatementWithEmptyBody
         if (ax.isOfType(AxiomType.OBJECT_PROPERTY_DOMAIN)
             || ax.isOfType(AxiomType.OBJECT_PROPERTY_RANGE)
             || ax.isOfType(AxiomType.DATA_PROPERTY_ASSERTION)
@@ -1007,7 +1016,7 @@ public class OntologyMetrics {
     }
     DLExpressivityChecker checker = new DLExpressivityChecker(onts);
     Set<String> constructs = new HashSet<>();
-    for (DLExpressivityChecker.Construct c : checker.getConstructs()) {
+    for (Construct c : checker.getConstructs()) {
       constructs.add(c.name());
     }
     return constructs;
