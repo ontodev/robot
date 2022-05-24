@@ -32,7 +32,7 @@
         </executions>
       </plugin>
 
-<!--       Ensure backward compatibility -->
+     <!-- Ensure backward compatibility -->
       <plugin>
         <groupId>com.github.siom79.japicmp</groupId>
         <artifactId>japicmp-maven-plugin</artifactId>
@@ -42,7 +42,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.8.3</version> japicmp target
+              <version>1.8.3</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -52,14 +52,14 @@
             </file>
           </newVersion>
           <parameter>
-<!--             see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
+			<!-- see documentation: http://siom79.github.io/japicmp/MavenPlugin.html -->
             <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
             <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-<!--             include on breaking changes -->
+			<!-- include on breaking changes -->
             <excludes></excludes>
             <ignoreMissingClassesByRegularExpressions>
-<!--             	To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on olwapi 4.5.22 upgrade:  -->
-<!-- 				This ignore can be removed in consecutive releases -->
+			<!-- To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on olwapi 4.5.22 upgrade:  -->
+			<!-- This ignore can be removed in consecutive releases -->
 				<ignoreMissingClassesByRegularExpression>org.openrdf.rio.*</ignoreMissingClassesByRegularExpression>
 			</ignoreMissingClassesByRegularExpressions>
           </parameter>
