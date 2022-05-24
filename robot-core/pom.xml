@@ -58,10 +58,10 @@
 			<!-- include on breaking changes -->
             <excludes></excludes>
             <ignoreMissingClassesByRegularExpressions>
-			<!-- To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on olwapi 4.5.22 upgrade:  -->
-			<!-- This ignore can be removed in consecutive releases -->
-				<ignoreMissingClassesByRegularExpression>org.openrdf.rio.*</ignoreMissingClassesByRegularExpression>
-			</ignoreMissingClassesByRegularExpressions>
+	            <!-- To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on olwapi 4.5.22 upgrade:  -->
+	            <!-- This ignore can be removed in consecutive releases -->
+	            <ignoreMissingClassesByRegularExpression>org.openrdf.rio.*</ignoreMissingClassesByRegularExpression>
+            </ignoreMissingClassesByRegularExpressions>
           </parameter>
         </configuration>
         <executions>
