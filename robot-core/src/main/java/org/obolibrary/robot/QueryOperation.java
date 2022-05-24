@@ -175,7 +175,8 @@ public class QueryOperation {
       } else {
         Literal literal = (Literal) (triple.getObject());
         if (literal.getLanguage().isPresent()) {
-          object = ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage().get());
+          object =
+              ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage().get());
         } else if (literal.getDatatype() != null) {
           object =
               ResourceFactory.createTypedLiteral(
