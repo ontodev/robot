@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Sort [`report`] violations by rule name within level [#955]
-- Upgrade to OWLAPI 4.5.22 [#891]
+- Upgrade to OWLAPI 4.5.22 [#1004]
 
 ### Fixed
 - Fix subClassOf cycles in related object selection [#979]
@@ -300,7 +300,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
-[#891]: https://github.com/ontodev/robot/pull/891
+[#1004]: https://github.com/ontodev/robot/pull/1004
 [#979]: https://github.com/ontodev/robot/pull/979
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
