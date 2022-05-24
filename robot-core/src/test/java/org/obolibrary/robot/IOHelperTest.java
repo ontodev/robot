@@ -2,8 +2,6 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
-import com.github.jsonldjava.core.Context;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +18,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import com.github.jsonldjava.core.Context;
 
 /** Tests for IOHelper. */
 public class IOHelperTest extends CoreTest {
@@ -115,9 +114,7 @@ public class IOHelperTest extends CoreTest {
     IOHelper ioh = new IOHelper();
     Context context = ioh.getContext();
 
-    assertEquals(
-        "Check GO prefix",
-        "http://purl.obolibrary.org/obo/GO_",
+    assertEquals("Check GO prefix", "http://purl.obolibrary.org/obo/GO_",
         context.getPrefixes(false).get("GO"));
   }
 
@@ -128,16 +125,9 @@ public class IOHelperTest extends CoreTest {
    */
   @Test
   public void testContextHandling() throws IOException {
-    String json =
-        "{\n"
-            + "  \"@context\" : {\n"
-            + "    \"foo\" : \"http://example.com#\",\n"
-            + "    \"bar\" : {\n"
-            + "      \"@id\": \"http://example.com#\",\n"
-            + "      \"@type\": \"@id\"\n"
-            + "    }\n"
-            + "  }\n"
-            + "}";
+    String json = "{\n" + "  \"@context\" : {\n" + "    \"foo\" : \"http://example.com#\",\n"
+        + "    \"bar\" : {\n" + "      \"@id\": \"http://example.com#\",\n"
+        + "      \"@type\": \"@id\"\n" + "    }\n" + "  }\n" + "}";
 
     IOHelper ioh = new IOHelper();
     Context context = IOHelper.parseContext(json);
@@ -183,9 +173,7 @@ public class IOHelperTest extends CoreTest {
     IOHelper ioh = new IOHelper();
     DefaultPrefixManager pm = ioh.getPrefixManager();
 
-    assertEquals(
-        "Check GO CURIE",
-        "http://purl.obolibrary.org/obo/GO_12345",
+    assertEquals("Check GO CURIE", "http://purl.obolibrary.org/obo/GO_12345",
         pm.getIRI("GO:12345").toString());
   }
 
@@ -200,14 +188,8 @@ public class IOHelperTest extends CoreTest {
     ioh.addPrefix("foo", "http://example.com#");
     ioh.addPrefix("definition", "http://example.com#definition");
 
-    String input =
-        "http://purl.obolibrary.org/obo/GO_1\n"
-            + "obo:GO_2\n"
-            + "    \n" // blank line
-            + "# line comment\n"
-            + "GO:3 # trailing comment\n"
-            + "foo:4\n"
-            + "definition\n";
+    String input = "http://purl.obolibrary.org/obo/GO_1\n" + "obo:GO_2\n" + "    \n" // blank line
+        + "# line comment\n" + "GO:3 # trailing comment\n" + "foo:4\n" + "definition\n";
 
     Set<String> terms = new HashSet<>();
     terms.add("http://purl.obolibrary.org/obo/GO_1");
@@ -319,23 +301,24 @@ public class IOHelperTest extends CoreTest {
    *
    * @throws IOException on error creating IOHelper
    */
-  // @Test
-  // public void testStrict() throws IOException {
-  // IOHelper ioHelper = new IOHelper();
-  // ioHelper.setStrict(true);
-  // String input =
-  // "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n_:Bb65616 rdf:type
-  // rdf:Statement .";
-  // InputStream inputStream = new ByteArrayInputStream(input.getBytes());
-  // boolean pass = false;
-  // try {
-  // ioHelper.loadOntology(inputStream);
-  // } catch (IOException e) {
-  // // We expect an IOException
-  // pass = true;
-  // }
-  // assert pass;
-  // }
+  @Test
+  public void testStrict() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.setStrict(true);
+    String input = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .".concat("\n\n")
+        .concat("@prefix foo: <http://example.com#> .").concat("\n\n")
+        .concat("_:Bb65616 rdf:type rdf:Statement ;").concat("\n\n").concat("rdf:object foo:Bar ;")
+        .concat("\n\n").concat("rdf:subject foo:Foo .");
+    InputStream inputStream = new ByteArrayInputStream(input.getBytes());
+    boolean pass = false;
+    try {
+      ioHelper.loadOntology(inputStream);
+    } catch (IOException e) {
+      // We expect an IOException
+      pass = true;
+    }
+    assert pass;
+  }
 
   /**
    * Test loading RDF reification with strict mode turned off. Loading this string should not result
