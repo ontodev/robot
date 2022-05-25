@@ -202,9 +202,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.geneontology</groupId>
-      <artifactId>obographs</artifactId>
-      <version>0.2.1</version>
+      <groupId>org.geneontology.obographs</groupId>
+      <artifactId>obographs-owlapi</artifactId>
+      <version>0.3.0</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
