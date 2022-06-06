@@ -29,10 +29,10 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
-import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
-import org.geneontology.obographs.io.OgJsonGenerator;
-import org.geneontology.obographs.model.GraphDocument;
+import org.geneontology.obographs.core.io.OgJsonGenerator;
+import org.geneontology.obographs.core.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
+import org.geneontology.obographs.owlapi.OboGraphJsonDocumentFormat;
 import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
 import org.obolibrary.oboformat.model.FrameStructureException;
 import org.obolibrary.oboformat.model.OBODoc;
@@ -1745,7 +1745,16 @@ public class IOHelper {
             throw new IOException(String.format(invalidElementError, element));
           }
         }
-        throw new IOException(String.format(ontologyStorageError, ontologyIRI.toString()), e);
+        throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
+      } catch (NullPointerException e) {
+        if (format instanceof OBODocumentFormat && !checkOBO) {
+          // Critical OBO structure error
+          throw new IOException(
+              "OBO STRUCTURE ERROR ontology cannot be saved in OBO format. Please use '--check true' to see cause.");
+        } else {
+          // Unknown null pointer exception
+          throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
+        }
       }
     }
   }

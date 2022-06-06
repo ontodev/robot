@@ -53,9 +53,9 @@ The mappings for renaming should be specified with the `--mappings` (for full re
 
 For a full rename (you can use prefixes as long as they are defined by the defaults, `--prefix`, or `--add-prefix`):
 
-```
-Old IRI,New IRI
-obo:BFO_0000051,fb:BFO_1234567
+```tsv
+Old IRI New IRI
+obo:BFO_0000051 fb:BFO_1234567
 ```
 
 If you also want to update the `rdfs:label` of the term you replaced, you can add a third column with the new label value (note that this removes *all* old label annotations):
@@ -67,9 +67,9 @@ obo:BFO_0000051,fb:BFO_1234567,foo bar
 
 For a prefix rename:
 
-```
-Old Base,New Base
-http://purl.obolibrary.org/obo/,http://foo.bar/
+```tsv
+Old Base  New Base
+http://purl.obolibrary.org/obo/ http://foo.bar/
 ```
 
 The `rename` command expects the first line to contain headers.
