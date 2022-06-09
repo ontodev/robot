@@ -71,12 +71,13 @@ The `--update` option only updates the ontology itself, not any of the imports.
 **Warning:** The output of SPARQL updates will not include `xsd:string` datatypes, because `xsd:string` is considered implicit in RDF version 1.1. This behaviour differs from other ROBOT commands, where `xsd:string` datatypes from the input are maintained in the output.
 
 ### Storing intermediate results on Disk
+
 For very large ontologies, saving heap memory might be beneficial. You can use `--temporary-file true` to ensure that intermediate results will be stored to a temporary file. Note that this makes the execution slower.
 
     robot query --input nucleus.owl \
       --update update.ru \
       --temporary-file true \
-      --output results/nucleus_update.owl
+      --output results/nucleus_update_2.owl
 
 ## Executing on Disk
 
