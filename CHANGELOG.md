@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Sort [`report`] violations by rule name within level [#955]
+- Allow any case builtin `TYPE` in `template` [#971]
 
 ### Fixed
 - Fix subClassOf cycles in related object selection [#979]
@@ -303,6 +304,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#979]: https://github.com/ontodev/robot/pull/979
+[#971]: https://github.com/ontodev/robot/pull/971
 [#960]: https://github.com/ontodev/robot/pull/960
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
