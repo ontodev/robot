@@ -29,6 +29,10 @@ public class RenameOperation {
   private static final String missingEntityError =
       NS + "MISSING ENTITY ERROR entity to rename ('%s') does not exist.";
 
+  /** Error message when the new IRI is null. */
+  private static final String newIRIError =
+      NS + "NEW IRI ERROR failed to generate an IRI for '%s'.";
+
   /** Shared DataFactory. */
   private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
 
@@ -82,6 +86,9 @@ public class RenameOperation {
         } else {
           throw new Exception(String.format(missingEntityError, oldIRI));
         }
+      }
+      if (newIRI == null) {
+        throw new Exception(String.format(newIRIError, mapping.getValue()));
       }
       // Update the IRI first
       manager.applyChanges(entityRenamer.changeIRI(oldIRI, newIRI));
