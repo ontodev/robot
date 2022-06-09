@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add `--mapping` option and support for label updates to [`rename`] [#960]
+
 ### Changed
+- Optimize memory usage for update queries using `--temporary-file` switch [#978]
 - Sort [`report`] violations by rule name within level [#955]
-- [`extract`] and [`merge`] should optionally inject provenance [#977] 
+- Allow any case builtin `TYPE` in `template` [#971]
+- [`extract`] and [`merge`] should optionally inject provenance [#977]
 
 ### Fixed
 - Fix subClassOf cycles in related object selection [#979]
+
+### Fixed
+- Fix equivalent axioms in [`template`] [#973]
 
 ## [1.8.3] - 2021-12-16
 
@@ -300,8 +308,12 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
-[#977]: https://github.com/ontodev/robot/pull/977
 [#979]: https://github.com/ontodev/robot/pull/979
+[#978]: https://github.com/ontodev/robot/pull/978
+[#977]: https://github.com/ontodev/robot/pull/977
+[#973]: https://github.com/ontodev/robot/pull/973
+[#971]: https://github.com/ontodev/robot/pull/971
+[#960]: https://github.com/ontodev/robot/pull/960
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
 [#951]: https://github.com/ontodev/robot/pull/951
