@@ -38,7 +38,7 @@ If two or more old IRIs are mapped to the same new IRI, these two entities will 
 
 #### Prefixes
 
-Renames the base IRIs of all matching entites (e.g. change the prefix `http://purl.obolibrary.org/obo/` to `http://foo.bar/`), based on mappings in a file specified by `--prefix-mappings`:
+Renames the base IRIs of all matching entities (e.g. change the prefix `http://purl.obolibrary.org/obo/` to `http://foo.bar/`), based on mappings in a file specified by `--prefix-mappings`:
 
     robot rename --input test.owl \
       --prefix-mappings partial-rename.tsv \
@@ -60,9 +60,9 @@ obo:BFO_0000051 fb:BFO_1234567
 
 If you also want to update the `rdfs:label` of the term you replaced, you can add a third column with the new label value (note that this removes *all* old label annotations):
 
-```
-Old IRI,New IRI
-obo:BFO_0000051,fb:BFO_1234567,foo bar
+```tsv
+Old IRI	New IRI	New Label
+obo:BFO_0000051	fb:BFO_1234567	foo bar
 ```
 
 For a prefix rename:
@@ -105,3 +105,7 @@ This error occurs when the file provided for the `--mappings` or `--prefix-mappi
 ### Missing Mappings Error
 
 This error occurs when a `--mappings` or `--prefix-mappings` file is not provided.
+
+### New IRI Error
+
+ROBOT could not generate the requested new IRI. This is often caused by a missing prefix declaration.
