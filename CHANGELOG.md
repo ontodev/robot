@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--mapping` option and support for label updates to [`rename`] [#960]
 
 ### Changed
+- Optimize memory usage for update queries using `--temporary-file` switch [#978]
 - Sort [`report`] violations by rule name within level [#955]
 - Allow any case builtin `TYPE` in `template` [#971]
 
@@ -307,6 +308,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#979]: https://github.com/ontodev/robot/pull/979
+[#978]: https://github.com/ontodev/robot/pull/978
 [#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
 [#960]: https://github.com/ontodev/robot/pull/960
