@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fix subClassOf cycles in related object selection [#979]
 
+### Fixed
+- Fix equivalent axioms in [`template`] [#973]
+
 ## [1.8.3] - 2021-12-16
 
 ### Changed
@@ -306,6 +309,7 @@ First official release of ROBOT!
 
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
+[#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
 [#960]: https://github.com/ontodev/robot/pull/960
 [#955]: https://github.com/ontodev/robot/pull/955
