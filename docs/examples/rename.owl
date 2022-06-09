@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<rdf:RDF xmlns="http://purl.obolibrary.org/obo/ro/core.owl#"
-     xml:base="http://purl.obolibrary.org/obo/ro/core.owl"
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/bfo.owl#"
+     xml:base="http://purl.obolibrary.org/obo/bfo.owl"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
      xmlns:fb="http://foo.bar/"
      xmlns:obo="http://purl.obolibrary.org/obo/"
@@ -44,19 +44,6 @@
     
 
 
-    <!-- http://foo.bar/BFO_7654321 -->
-
-    <owl:ObjectProperty rdf:about="http://foo.bar/BFO_7654321">
-        <owl:inverseOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000055"/>
-        <rdfs:range rdf:resource="http://purl.obolibrary.org/obo/BFO_0000015"/>
-        <obo:IAO_0000111 xml:lang="en">realized in</obo:IAO_0000111>
-        <obo:IAO_0000118 xml:lang="en">is realized by</obo:IAO_0000118>
-        <obo:IAO_0000118 xml:lang="en">realized_in</obo:IAO_0000118>
-        <rdfs:label xml:lang="en">realized in</rdfs:label>
-    </owl:ObjectProperty>
-    
-
-
     <!-- http://purl.obolibrary.org/obo/BFO_0000050 -->
 
     <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/BFO_0000050">
@@ -67,6 +54,19 @@
         <obo:RO_0001900 rdf:resource="http://purl.obolibrary.org/obo/RO_0001901"/>
         <rdfs:label xml:lang="en">part of</rdfs:label>
         <rdfs:seeAlso>http://www.obofoundry.org/ro/#OBO_REL:part_of</rdfs:seeAlso>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/BFO_0000054 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/BFO_0000054">
+        <owl:inverseOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000055"/>
+        <rdfs:range rdf:resource="http://purl.obolibrary.org/obo/BFO_0000015"/>
+        <obo:IAO_0000111 xml:lang="en">realized in</obo:IAO_0000111>
+        <obo:IAO_0000118 xml:lang="en">is realized by</obo:IAO_0000118>
+        <obo:IAO_0000118 xml:lang="en">realized_in</obo:IAO_0000118>
+        <rdfs:label xml:lang="en">realized in</rdfs:label>
     </owl:ObjectProperty>
     
 

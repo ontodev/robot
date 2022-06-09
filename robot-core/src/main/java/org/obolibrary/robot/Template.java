@@ -614,37 +614,39 @@ public class Template {
         typeOrIRI = typeIRI.toString();
       }
 
+      // Check against builtin types (ignore case), otherwise treat as individual
       OWLEntity entity;
-      switch (typeOrIRI) {
+      String lowerCaseType = typeOrIRI.toLowerCase();
+      switch (lowerCaseType) {
         case "":
-        case "http://www.w3.org/2002/07/owl#Class":
+        case "http://www.w3.org/2002/07/owl#class":
         case "class":
           entity = dataFactory.getOWLEntity(EntityType.CLASS, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#ObjectProperty":
+        case "http://www.w3.org/2002/07/owl#objectproperty":
         case "object property":
           entity = dataFactory.getOWLEntity(EntityType.OBJECT_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#DataProperty":
+        case "http://www.w3.org/2002/07/owl#dataproperty":
         case "data property":
           entity = dataFactory.getOWLEntity(EntityType.DATA_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#AnnotationProperty":
+        case "http://www.w3.org/2002/07/owl#annotationproperty":
         case "annotation property":
           entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#Datatype":
+        case "http://www.w3.org/2002/07/owl#datatype":
         case "datatype":
           entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#Individual":
+        case "http://www.w3.org/2002/07/owl#individual":
         case "individual":
-        case "http://www.w3.org/2002/07/owl#NamedIndividual":
+        case "http://www.w3.org/2002/07/owl#namedindividual":
         case "named individual":
         default:
           // Assume type is an individual (checked later)
@@ -760,35 +762,37 @@ public class Template {
       typeOrIRI = typeIRI.toString();
     }
 
-    switch (typeOrIRI) {
-      case "http://www.w3.org/2002/07/owl#Class":
+    // Check against builtin types (ignore case), otherwise treat as individual
+    String lowerCaseType = typeOrIRI.toLowerCase();
+    switch (lowerCaseType) {
+      case "http://www.w3.org/2002/07/owl#class":
       case "class":
         addClassAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#ObjectProperty":
+      case "http://www.w3.org/2002/07/owl#objectproperty":
       case "object property":
         addObjectPropertyAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#DataProperty":
+      case "http://www.w3.org/2002/07/owl#dataproperty":
       case "data property":
         addDataPropertyAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#AnnotationProperty":
+      case "http://www.w3.org/2002/07/owl#annotationproperty":
       case "annotation property":
         addAnnotationPropertyAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#Datatype":
+      case "http://www.w3.org/2002/07/owl#datatype":
       case "datatype":
         addDatatypeAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#Individual":
+      case "http://www.w3.org/2002/07/owl#individual":
       case "individual":
-      case "http://www.w3.org/2002/07/owl#NamedIndividual":
+      case "http://www.w3.org/2002/07/owl#namedindividual":
       case "named individual":
       default:
         addIndividualAxioms(iri, row);
