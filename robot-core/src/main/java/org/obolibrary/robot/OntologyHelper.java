@@ -102,7 +102,7 @@ public class OntologyHelper {
       OWLAnnotationProperty property,
       OWLAnnotationValue value,
       boolean overload) {
-    OWLAnnotationAssertionAxiom existingAnnotation = null;
+    OWLAnnotation existingAnnotation = null;
     if (!overload) {
       existingAnnotation =
         axiom.getAnnotations().stream()
