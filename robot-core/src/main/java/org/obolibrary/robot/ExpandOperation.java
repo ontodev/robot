@@ -10,10 +10,10 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.openrdf.model.vocabulary.DCTERMS;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
-import org.semanticweb.owlapi.vocab.PROVVocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +29,9 @@ public class ExpandOperation {
   private static final OWLAnnotationProperty definedByConstruct =
       OWLManager.getOWLDataFactory()
           .getOWLAnnotationProperty(IRI.create("http://purl.obolibrary.org/obo/OMO_0002000"));
-  private static final OWLAnnotationProperty derivedFrom =
+  private static final OWLAnnotationProperty dctSource =
       OWLManager.getOWLDataFactory()
-          .getOWLAnnotationProperty(PROVVocabulary.WAS_DERIVED_FROM.getIRI());
+          .getOWLAnnotationProperty(IRI.create(DCTERMS.SOURCE.stringValue()));
 
   public static class ExpandConfig {
 
@@ -122,12 +122,12 @@ public class ExpandOperation {
           QueryOperation.convertModel(expansionTriples, new IOHelper(), null).getAxioms();
       final Set<OWLAxiom> annotatedAxioms;
       if (annotateAxioms) {
-        Set<OWLAnnotation> derivationAnnotation =
+        Set<OWLAnnotation> sourceAnnotation =
             Collections.singleton(
-                OWLManager.getOWLDataFactory().getOWLAnnotation(derivedFrom, definitionTerm));
+                OWLManager.getOWLDataFactory().getOWLAnnotation(dctSource, definitionTerm));
         annotatedAxioms =
             axioms.stream()
-                .map(ax -> ax.getAnnotatedAxiom(derivationAnnotation))
+                .map(ax -> ax.getAnnotatedAxiom(sourceAnnotation))
                 .collect(Collectors.toSet());
       } else {
         annotatedAxioms = axioms;

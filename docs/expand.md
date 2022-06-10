@@ -68,7 +68,7 @@ You can also use `--expand-term-file` and `--no-expand-term-file` to import list
 
 ## Annotating expansion results
 
-Axioms generated via the `expand` command can be annotated with a [prov:wasDerivedFrom](http://www.w3.org/ns/prov#wasDerivedFrom) relation linking them to the property specifying the expansion:
+Axioms generated via the `expand` command can be annotated with a [dct:source](http://purl.org/dc/terms/source) relation linking them to the property specifying the expansion:
 
     robot expand \
         --input unexpanded.ttl \

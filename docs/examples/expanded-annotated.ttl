@@ -58,8 +58,8 @@ CONSTRUCT {
                                                           rdfs:label "defined by construct" .
 
 
-###  http://www.w3.org/ns/prov#wasDerivedFrom
-<http://www.w3.org/ns/prov#wasDerivedFrom> rdf:type owl:AnnotationProperty .
+###  http://purl.org/dc/terms/source
+<http://purl.org/dc/terms/source> rdf:type owl:AnnotationProperty .
 
 
 #################################################################
@@ -82,14 +82,14 @@ CONSTRUCT {
    owl:annotatedSource :A ;
    owl:annotatedProperty rdf:type ;
    owl:annotatedTarget owl:Class ;
-   <http://www.w3.org/ns/prov#wasDerivedFrom> :never_part_of
+   <http://purl.org/dc/terms/source> :never_part_of
  ] .
 
 [ rdf:type owl:Axiom ;
    owl:annotatedSource :A ;
    owl:annotatedProperty rdf:type ;
    owl:annotatedTarget owl:Class ;
-   <http://www.w3.org/ns/prov#wasDerivedFrom> :part_disjoint_with
+   <http://purl.org/dc/terms/source> :part_disjoint_with
  ] .
 
 
@@ -105,14 +105,14 @@ CONSTRUCT {
    owl:annotatedSource :B ;
    owl:annotatedProperty rdf:type ;
    owl:annotatedTarget owl:Class ;
-   <http://www.w3.org/ns/prov#wasDerivedFrom> :never_part_of
+   <http://purl.org/dc/terms/source> :never_part_of
  ] .
 
 [ rdf:type owl:Axiom ;
    owl:annotatedSource :B ;
    owl:annotatedProperty rdf:type ;
    owl:annotatedTarget owl:Class ;
-   <http://www.w3.org/ns/prov#wasDerivedFrom> :part_disjoint_with
+   <http://purl.org/dc/terms/source> :part_disjoint_with
  ] .
 
 [ rdf:type owl:Axiom ;
@@ -122,7 +122,7 @@ CONSTRUCT {
                          owl:onProperty :part_of ;
                          owl:someValuesFrom :A
                        ] ;
-   <http://www.w3.org/ns/prov#wasDerivedFrom> :never_part_of
+   <http://purl.org/dc/terms/source> :never_part_of
  ] .
 
 
@@ -144,7 +144,7 @@ CONSTRUCT {
                         owl:onProperty :part_of ;
                         owl:someValuesFrom :B
                       ] ;
-  <http://www.w3.org/ns/prov#wasDerivedFrom> :part_disjoint_with
+  <http://purl.org/dc/terms/source> :part_disjoint_with
 ] .
 
 

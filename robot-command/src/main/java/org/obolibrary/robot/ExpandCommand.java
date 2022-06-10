@@ -28,7 +28,7 @@ public class ExpandCommand implements Command {
         "a",
         "annotate-expansion-axioms",
         true,
-        "if true, annotate expansion axioms with 'prov:wasDerivedFrom <expansion property>'");
+        "if true, annotate expansion axioms with 'dct:source <expansion property>'");
     o.addOption("t", "expand-term", true, "property to expand");
     o.addOption("T", "expand-term-file", true, "load properties to expand from a file");
     o.addOption("n", "no-expand-term", true, "properties to not expand");
