@@ -1,13 +1,18 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Lists;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +26,13 @@ public class RenameCommand implements Command {
   /** Namespace for error messages. */
   private static final String NS = "rename#";
 
+  /** Error message for incorrect number of headers. */
+  private static final String columnHeaderCountError =
+      NS + "COLUMN COUNT ERROR file '%s' must have 2 or 3 header values";
+
   /** Error message when a row does not have exactly two columns. */
   private static final String columnCountError =
-      NS + "COLUMN COUNT ERROR line %d in file '%s' must contain exactly two values.";
+      NS + "COLUMN COUNT ERROR line %d in file '%s' must contain exactly %d values.";
 
   /** Error message when an old IRI value is duplicated in a mappings file. */
   private static final String duplicateMappingError =
@@ -69,6 +78,11 @@ public class RenameCommand implements Command {
         true,
         "allow mappings for entites that do not appear in the ontology (default: false)");
     o.addOption("A", "add-prefix", true, "add prefix 'foo: http://bar' to the output");
+
+    Option opt = new Option(null, "mapping", true, "term to rename and new IRI");
+    opt.setArgs(2);
+    o.addOption(opt);
+
     options = o;
   }
 
@@ -140,9 +154,14 @@ public class RenameCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
+    List<String> mappingStrings = CommandLineHelper.getOptionalValues(line, "mapping");
+    List<List<String>> singleMappings = null;
+    if (!mappingStrings.isEmpty()) {
+      singleMappings = Lists.partition(mappingStrings, 2);
+    }
     String fullFile = CommandLineHelper.getOptionalValue(line, "mappings");
     String prefixFile = CommandLineHelper.getOptionalValue(line, "prefix-mappings");
-    if (fullFile == null && prefixFile == null) {
+    if (fullFile == null && prefixFile == null && singleMappings == null) {
       throw new IOException(missingMappingsError);
     }
 
@@ -151,17 +170,39 @@ public class RenameCommand implements Command {
         CommandLineHelper.getBooleanValue(line, "allow-missing-entities", false);
 
     char separator;
+    Map<String, String> mappings = new HashMap<>();
+    Map<IRI, String> labels = new HashMap<>();
     // Process full renames
-    if (fullFile != null) {
-      separator = getSeparator(fullFile);
-      Map<String, String> mappings =
-          parseTableMappings(new File(fullFile), separator, allowDuplicates);
-      RenameOperation.renameFull(ontology, ioHelper, mappings, allowMissingEntities);
+    if (fullFile != null || singleMappings != null) {
+      // mappings from file
+      if (fullFile != null) {
+        separator = getSeparator(fullFile);
+        Map<String, List<String>> mappingsAndLabels =
+            parseTableMappings(new File(fullFile), separator, allowDuplicates);
+        for (Map.Entry<String, List<String>> map : mappingsAndLabels.entrySet()) {
+          String newIRI = map.getValue().get(0);
+          String newLabel = map.getValue().get(1);
+          mappings.put(map.getKey(), newIRI);
+          if (newLabel != null) {
+            labels.put(ioHelper.createIRI(newIRI), newLabel);
+          }
+        }
+      }
+      // mappings from individual args
+      if (singleMappings != null) {
+        for (List<String> rn : singleMappings) {
+          mappings.put(rn.get(0), rn.get(1));
+        }
+      }
+      RenameOperation.renameFull(ontology, ioHelper, mappings, labels, allowMissingEntities);
     }
     // Process prefix renames (no need to fail on duplicates)
     if (prefixFile != null) {
       separator = getSeparator(prefixFile);
-      Map<String, String> mappings = parseTableMappings(new File(prefixFile), separator, true);
+      for (Map.Entry<String, List<String>> map :
+          parseTableMappings(new File(prefixFile), separator, true).entrySet()) {
+        mappings.put(map.getKey(), map.getValue().get(0));
+      }
       RenameOperation.renamePrefixes(ontology, ioHelper, mappings);
     }
 
@@ -199,9 +240,10 @@ public class RenameCommand implements Command {
    * @return map of old values -> new values
    * @throws Exception on any issue
    */
-  private static Map<String, String> parseTableMappings(
+  private static Map<String, List<String>> parseTableMappings(
       File mappingsFile, char separator, boolean allowDuplicates) throws Exception {
-    Map<String, String> mappings = new HashMap<>();
+    Map<String, List<String>> mappings = new HashMap<>();
+    List<String> newIRIs = new ArrayList<>();
 
     if (!mappingsFile.exists()) {
       throw new IOException(String.format(missingFileError, mappingsFile.getPath()));
@@ -212,16 +254,27 @@ public class RenameCommand implements Command {
             .withCSVParser(new CSVParserBuilder().withSeparator(separator).build())
             .build()) {
       int lineNum = 1;
-      // Remove the headers
-      reader.readNext();
+      // Check the headers for two or three columns
+      String[] headers = reader.readNext();
+      int headerLen = headers.length;
+      if (headerLen < 2 || headerLen > 3) {
+        throw new IOException(String.format(columnHeaderCountError, mappingsFile.getPath()));
+      }
       for (String[] nextLine : reader) {
         lineNum++;
-        if (nextLine.length != 2) {
-          throw new IOException(String.format(columnCountError, lineNum, mappingsFile.getPath()));
+        if (nextLine.length < 2 || nextLine.length > 3) {
+          throw new IOException(
+              String.format(columnCountError, lineNum, mappingsFile.getPath(), headerLen));
         }
-
         String oldIRI = nextLine[0];
         String newIRI = nextLine[1];
+        String newLabel = null;
+        if (nextLine.length == 3) {
+          newLabel = nextLine[2];
+          if (newLabel.trim().equals("")) {
+            newLabel = null;
+          }
+        }
 
         // The OLD IRI has two distinct new IRIs
         if (mappings.containsKey(oldIRI)) {
@@ -230,7 +283,7 @@ public class RenameCommand implements Command {
         }
         // The new IRI is being used for one or more OLD IRI
         // This results in a merge
-        if (mappings.containsValue(newIRI)) {
+        if (newIRIs.contains(newIRI)) {
           if (!allowDuplicates) {
             throw new Exception(
                 String.format(duplicateRenameError, lineNum, mappingsFile.getPath(), newIRI));
@@ -238,7 +291,8 @@ public class RenameCommand implements Command {
           logger.warn(String.format("IRI '%s' will be used for two or more entities", newIRI));
         }
 
-        mappings.put(oldIRI, newIRI);
+        newIRIs.add(newIRI);
+        mappings.put(oldIRI, Lists.newArrayList(newIRI, newLabel));
       }
     }
 
