@@ -66,11 +66,14 @@ public class OntologyHelper {
       OWLAnnotationProperty property,
       OWLAnnotationValue value,
       boolean overload) {
-    OWLAnnotationAssertionAxiom existingAnnotation =
+    OWLAnnotationAssertionAxiom existingAnnotation = null;
+    if (!overload) {
+      existingAnnotation =
         EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology).stream()
             .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
             .findFirst()
             .orElse(null);
+    }
     if (overload || existingAnnotation == null) {
       OWLOntologyManager manager = ontology.getOWLOntologyManager();
       OWLDataFactory factory = manager.getOWLDataFactory();
@@ -99,11 +102,14 @@ public class OntologyHelper {
       OWLAnnotationProperty property,
       OWLAnnotationValue value,
       boolean overload) {
-    OWLAnnotation existingAnnotation =
+    OWLAnnotationAssertionAxiom existingAnnotation = null;
+    if (!overload) {
+      existingAnnotation =
         axiom.getAnnotations().stream()
             .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
             .findFirst()
             .orElse(null);
+    }
     if (overload || existingAnnotation == null) {
       OWLOntologyManager manager = ontology.getOWLOntologyManager();
       OWLDataFactory factory = manager.getOWLDataFactory();
