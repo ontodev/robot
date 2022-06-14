@@ -931,7 +931,9 @@ public class IOHelper {
       }
     } catch (Exception e) {
       logger.warn("Could not create IRI for {}", term);
-      logger.warn(e.getMessage());
+      if (e.getMessage() != null) {
+        logger.warn(e.getMessage());
+      }
       return null;
     }
 

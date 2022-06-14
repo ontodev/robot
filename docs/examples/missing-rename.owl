@@ -39,7 +39,7 @@
         <obo:IAO_0000116 xml:lang="en">Ambiguous between continuant-parthood and occurrent-parthood</obo:IAO_0000116>
         <obo:IAO_0000118 xml:lang="en">has_part</obo:IAO_0000118>
         <obo:RO_0001900 rdf:resource="http://purl.obolibrary.org/obo/RO_0001901"/>
-        <rdfs:label xml:lang="en">has part</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">foo bar</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -52,7 +52,7 @@
         <obo:IAO_0000111 xml:lang="en">realized in</obo:IAO_0000111>
         <obo:IAO_0000118 xml:lang="en">is realized by</obo:IAO_0000118>
         <obo:IAO_0000118 xml:lang="en">realized_in</obo:IAO_0000118>
-        <rdfs:label xml:lang="en">realized in</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">foo baz</rdfs:label>
     </owl:ObjectProperty>
     
 
