@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.4] - 2022-06-10
+
+### Added
+- Add `--mapping` option and support for label updates to [`rename`] [#960]
+
 ### Changed
 - Optimize memory usage for update queries using `--temporary-file` switch [#978]
+- Allow any case builtin `TYPE` in `template` [#971]
 - Sort [`report`] violations by rule name within level [#955]
 
 ### Fixed
 - Fix subClassOf cycles in related object selection [#979]
+- Fix equivalent axioms in [`template`] [#973]
 
 ## [1.8.3] - 2021-12-16
 
@@ -259,7 +266,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.3...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.4...HEAD
+[1.8.4]: https://github.com/ontodev/robot/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/ontodev/robot/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ontodev/robot/compare/v1.8.0...v1.8.1
@@ -301,6 +309,10 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#979]: https://github.com/ontodev/robot/pull/979
+[#978]: https://github.com/ontodev/robot/pull/978
+[#973]: https://github.com/ontodev/robot/pull/973
+[#971]: https://github.com/ontodev/robot/pull/971
+[#960]: https://github.com/ontodev/robot/pull/960
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
 [#951]: https://github.com/ontodev/robot/pull/951
