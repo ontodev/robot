@@ -218,11 +218,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.geneontology.obographs</groupId>
-      <artifactId>obographs-core</artifactId>
-      <version>0.3.0</version>
-    </dependency>
-    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
       <version>2.12.2</version>
