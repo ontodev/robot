@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix OBOGraphs by updating `guava` [#1009]
+
 ## [1.8.4] - 2022-06-10
 
 ### Added
@@ -308,6 +311,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#973]: https://github.com/ontodev/robot/pull/973
