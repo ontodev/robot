@@ -84,12 +84,11 @@ public class ExpandOperation {
    *     found expansion are included.
    * @param excludeTerms IRIs of annotation properties whose expansion to exlude; subtracted from
    *     inclusion list.
-   * @throws OWLOntologyStorageException
-   * @throws IOException
+   * @throws OWLOntologyStorageException on exception converting OWLOntology to Jena Dataset
    */
   public static void expand(
       OWLOntology ontology, ExpandConfig config, Set<IRI> includeTerms, Set<IRI> excludeTerms)
-      throws OWLOntologyStorageException, IOException {
+      throws OWLOntologyStorageException {
     Dataset dataset = QueryOperation.loadOntologyAsDataset(ontology, true);
     Set<OWLAxiom> expansions =
         ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION, Imports.INCLUDED).stream()
