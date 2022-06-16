@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add new command: [`expand`] [#964]
+
 ### Fixed
 - Fix OBOGraphs by updating `guava` [#1009]
 
@@ -316,6 +319,7 @@ First official release of ROBOT!
 [#978]: https://github.com/ontodev/robot/pull/978
 [#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
+[#964]: https://github.com/ontodev/robot/pull/964
 [#960]: https://github.com/ontodev/robot/pull/960
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953
