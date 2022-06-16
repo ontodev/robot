@@ -4,11 +4,6 @@ Ontologies are shared in different formats. The default format used by ROBOT is 
 
     robot convert --input annotated.owl --output results/annotated.obo
 
-As in all other ROBOT commands, ontologies can be converted straight from their web location. In this example we convert PATO (using its PURL) to OBOGraphs JSON:
-
-    robot convert -I http://purl.obolibrary.org/obo/ro/releases/2022-05-23/ro.owl -f json -o results/ro-url.json
-
-
 The file format is determined by the extension of the output file (e.g. `.obo`), but it can also be declared with the `--format` option. Valid file formats are:
   - json - [OBO Graphs JSON](https://github.com/geneontology/obographs/)
   - obo - [OBO Format](http://purl.obolibrary.org/obo/oboformat)
@@ -17,6 +12,10 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
   - owl - [RDF/XML](https://www.w3.org/TR/rdf-syntax-grammar/)
   - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
   - ttl - [Turtle](https://www.w3.org/TR/turtle/)
+
+In the following example we convert an input ontology to OBOGraphs JSON, explicitly specifying the target format with `--format`:
+
+    robot convert -i ro-base.owl --format json -o results/ro-base.json
 
 ### Handling Compressed Files
 
