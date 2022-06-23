@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.obolibrary.robot</groupId>
     <artifactId>robot</artifactId>
-    <version>1.9.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
   <artifactId>robot-core</artifactId>
   <name>robot-core</name>
@@ -42,7 +42,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.8.4</version> <!-- japicmp target -->
+              <version>1.9.0</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -73,6 +73,11 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>31.1-jre</version>
+    </dependency>
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
@@ -174,11 +179,6 @@
           <artifactId>httpclient-osgi</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.hubspot.jinjava</groupId>
-      <artifactId>jinjava</artifactId>
-      <version>2.5.6</version>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>

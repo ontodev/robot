@@ -23,6 +23,7 @@ public class CommandLineInterface {
     m.addCommand("collapse", new CollapseCommand());
     m.addCommand("convert", new ConvertCommand());
     m.addCommand("diff", new DiffCommand());
+    m.addCommand("expand", new ExpandCommand());
     m.addCommand("explain", new ExplainCommand());
     m.addCommand("export", new ExportCommand());
     m.addCommand("export-prefixes", new ExportPrefixesCommand());

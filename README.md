@@ -4,7 +4,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/org.obolibrary.robot/robot.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22org.obolibrary.robot%22%20AND%20a:%22robot%22)
 [![Javadocs](https://www.javadoc.io/badge/org.obolibrary.robot/robot-core.svg)](https://www.javadoc.io/doc/org.obolibrary.robot/robot-core)
 
-ROBOT is a tool for working with [Open Biomedical Ontologies](http://obofoundry.org).
+ROBOT is a command-line tool and library for automating ontology development tasks, with a focus on [Open Biological and Biomedical Ontologies (OBO)](http://obofoundry.org).
 
 ### Cite ROBOT
 

@@ -13,6 +13,10 @@ The file format is determined by the extension of the output file (e.g. `.obo`),
   - owx - [OWL/XML](https://www.w3.org/TR/owl2-xml-serialization/)
   - ttl - [Turtle](https://www.w3.org/TR/turtle/)
 
+In the following example we convert an input ontology to OBOGraphs JSON, explicitly specifying the target format with `--format`:
+
+    robot convert -i ro-base.owl --format json -o results/ro-base.json
+
 ### Handling Compressed Files
 
 All ROBOT commands support [gzip](https://www.gzip.org/) format files ending with the extension `.gz`. Any of the above formats can be compressed as long as the output ends with `.gz` (format must be specified for a compressed output):
