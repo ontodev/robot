@@ -5,13 +5,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.*;
 import org.apache.jena.tdb.TDBFactory;
@@ -699,21 +695,20 @@ public class ReportOperation {
     Map<String, String> queries = new HashMap<>();
     // Handle simple file path, probably accessed during testing
     if (dirURL != null && dirURL.getProtocol().equals("file")) {
-      final Set<Path> queryFilePaths =
-          Files.list(Paths.get(dirURL.toURI())).collect(Collectors.toSet());
-      if (queryFilePaths.size() == 0) {
+      String[] queryFilePaths = new File(dirURL.toURI()).list();
+      if (queryFilePaths == null || queryFilePaths.length == 0) {
         throw new IOException(
             "Cannot access report query files. There are no files in the directory.");
       }
       Set<String> defaultRuleNames = new HashSet<>();
-      for (final Path qPath : queryFilePaths) {
-        final String ruleName = qPath.getFileName().toString().split("[.]")[0];
+      for (String qPath : queryFilePaths) {
+        String ruleName = qPath.substring(qPath.lastIndexOf("/")).split(".")[0];
         defaultRuleNames.add(ruleName);
         // Only add it to the queries if the rule set contains that rule
         // If rules == null, include all rules
         if (rules == null || rules.contains(ruleName)) {
           queries.put(
-              ruleName, FileUtils.readFileToString(qPath.toFile(), Charset.defaultCharset()));
+              ruleName, FileUtils.readFileToString(new File(qPath), Charset.defaultCharset()));
         }
       }
       // Check that all the provided rule names are valid defaults
