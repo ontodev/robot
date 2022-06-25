@@ -1,10 +1,10 @@
-# # Missing Label
-#
-# **Problem:** An entity does not have a label or the label is empty. This may cause confusion or misuse. Excludes deprecated entities.
-#
-# **OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
-#
-# **Solution:** Add a label, or make it non-empty.
+# Missing Label
+
+**Problem:** An entity does not have a label or the label is empty. This may cause confusion or misuse. Excludes deprecated entities.
+
+**OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
+
+**Solution:** Add a label, or make it non-empty.
 
 ```sparql
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
