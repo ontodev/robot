@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -325,14 +326,25 @@ public class MergeOperation {
             .getVersionIRI()
             .or(sourceOntology.getOntologyID().getOntologyIRI().orNull());
     if (provenanceIRI != null) {
+      OWLOntologyManager manager = targetOntology.getOWLOntologyManager();
       OWLAnnotationProperty annotationProp =
-          targetOntology
-              .getOWLOntologyManager()
+          manager
               .getOWLDataFactory()
               .getOWLAnnotationProperty(PROVVocabulary.WAS_DERIVED_FROM.getIRI());
-      for (OWLAxiom axiom : sourceOntology.getAxioms(includeImportsClosure)) {
-        OntologyHelper.addAxiomAnnotation(
-            targetOntology, axiom, annotationProp, provenanceIRI, false);
+      OWLDeclarationAxiom provenancePropDeclaration =
+          manager.getOWLDataFactory().getOWLDeclarationAxiom(annotationProp);
+
+      Set<OWLAxiom> sourceAxioms = sourceOntology.getAxioms(includeImportsClosure);
+      for (OWLAxiom axiom : sourceAxioms) {
+        if (!axiom.equals(provenancePropDeclaration)) {
+          OntologyHelper.addAxiomAnnotation(
+              targetOntology, axiom, annotationProp, provenanceIRI, false);
+        }
+      }
+
+      manager.addAxiom(targetOntology, provenancePropDeclaration);
+      if (sourceOntology != targetOntology) {
+        sourceOntology.getOWLOntologyManager().removeAxioms(sourceOntology, sourceAxioms);
       }
     }
   }

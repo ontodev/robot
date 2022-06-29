@@ -1,6 +1,9 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -34,5 +37,66 @@ public class MergeOperationTest extends CoreTest {
     ontologies.add(simpleParts);
     OWLOntology merged = MergeOperation.merge(ontologies);
     assertIdentical("/simple_parts.owl", merged);
+  }
+
+  /**
+   * Test merging a single ontology without imports and annotating with derived from provenance.
+   * Expect old axioms are cleaned and a new provenance property is declared.
+   *
+   * @throws IOException on file problem
+   */
+  @Test
+  public void testMergeDerivedFrom() throws IOException {
+    OWLOntology simple = loadOntology("/simple.owl");
+    List<OWLOntology> ontologies = new ArrayList<>();
+    ontologies.add(simple);
+
+    assertEquals(5, simple.getAxiomCount());
+    OWLOntology merged = MergeOperation.merge(ontologies, false, false, false, true);
+
+    assertEquals(6, merged.getAxiomCount());
+    // old axioms should be cleaned
+    OWLOntology expected = loadOntology("/simple_derived_from.owl");
+    assertEquals(6, expected.getAxiomCount());
+    assertIdentical(expected, merged);
+  }
+
+  /**
+   * Test merging a single ontology with imports and annotating with derived from provenance. Expect
+   * imported axioms are merged without redundancy.
+   *
+   * @throws IOException on file problem
+   * @throws URISyntaxException
+   */
+  @Test
+  public void testMergeImportDerivedFrom() throws IOException, URISyntaxException {
+    OWLOntology simple = loadOntologyWithCatalog("/import_test.owl");
+    List<OWLOntology> ontologies = new ArrayList<>();
+    ontologies.add(simple);
+
+    assertEquals(0, simple.getAxiomCount());
+
+    OWLOntology merged = MergeOperation.merge(ontologies, false, true, false, true);
+    assertEquals(6, merged.getAxiomCount());
+  }
+
+  /**
+   * Test merging a single ontology without imports and annotating with defined by provenance.
+   *
+   * @throws IOException on file problem
+   */
+  @Test
+  public void testMergeTwoDefinedBy() throws IOException {
+    OWLOntology simple = loadOntology("/simple.owl");
+    List<OWLOntology> ontologies = new ArrayList<>();
+    ontologies.add(simple);
+
+    assertEquals(5, simple.getAxiomCount());
+    OWLOntology merged = MergeOperation.merge(ontologies, false, false, true, false);
+
+    assertEquals(9, merged.getAxiomCount());
+    OWLOntology expected = loadOntology("/simple_defined_by.owl");
+    assertEquals(9, expected.getAxiomCount());
+    assertIdentical(expected, merged);
   }
 }

@@ -69,10 +69,10 @@ public class OntologyHelper {
     OWLAnnotationAssertionAxiom existingAnnotation = null;
     if (!overload) {
       existingAnnotation =
-        EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology).stream()
-            .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
-            .findFirst()
-            .orElse(null);
+          EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology).stream()
+              .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
+              .findFirst()
+              .orElse(null);
     }
     if (overload || existingAnnotation == null) {
       OWLOntologyManager manager = ontology.getOWLOntologyManager();
@@ -105,10 +105,10 @@ public class OntologyHelper {
     OWLAnnotation existingAnnotation = null;
     if (!overload) {
       existingAnnotation =
-        axiom.getAnnotations().stream()
-            .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
-            .findFirst()
-            .orElse(null);
+          axiom.getAnnotations().stream()
+              .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
+              .findFirst()
+              .orElse(null);
     }
     if (overload || existingAnnotation == null) {
       OWLOntologyManager manager = ontology.getOWLOntologyManager();
@@ -116,8 +116,8 @@ public class OntologyHelper {
       OWLAnnotation annotation = factory.getOWLAnnotation(property, value);
 
       OWLAxiom newAxiom = axiom.getAnnotatedAxiom(new HashSet<>(Arrays.asList(annotation)));
-      manager.removeAxiom(ontology, axiom);
       manager.addAxiom(ontology, newAxiom);
+      manager.removeAxiom(ontology, axiom);
     }
   }
 
