@@ -7,19 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2022-06-16
+
+### Added
+- Add new command: [`expand`] [#964]
+
+### Fixed
+- Fix OBOGraphs by updating `guava` [#1009]
+
+## [1.8.4] - 2022-06-10
+
 ### Added
 - Add `--mapping` option and support for label updates to [`rename`] [#960]
 
 ### Changed
 - Optimize memory usage for update queries using `--temporary-file` switch [#978]
-- Sort [`report`] violations by rule name within level [#955]
 - Allow any case builtin `TYPE` in `template` [#971]
 - [`extract`] and [`merge`] should optionally inject provenance [#977]
+- Sort [`report`] violations by rule name within level [#955]
 
 ### Fixed
 - Fix subClassOf cycles in related object selection [#979]
-
-### Fixed
 - Fix equivalent axioms in [`template`] [#973]
 
 ## [1.8.3] - 2021-12-16
@@ -267,7 +275,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.8.3...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/ontodev/robot/compare/v1.8.4...v1.9.0
+[1.8.4]: https://github.com/ontodev/robot/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/ontodev/robot/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ontodev/robot/compare/v1.8.0...v1.8.1
@@ -308,11 +318,13 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#977]: https://github.com/ontodev/robot/pull/977
 [#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
+[#964]: https://github.com/ontodev/robot/pull/964
 [#960]: https://github.com/ontodev/robot/pull/960
 [#955]: https://github.com/ontodev/robot/pull/955
 [#953]: https://github.com/ontodev/robot/pull/953

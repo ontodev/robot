@@ -79,6 +79,10 @@ step "Check GitHub Actions"
 curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/ontodev/robot/actions/runs \
 | jq -e '[.workflow_runs[]|select(.event=="push")][0].conclusion|test("success")'
 
+step "Update OBO context (curie map)"
+( cd robot-maven-plugin && mvn install )
+mvn robot:UpdateContext -N
+
 step "Set the the version number for this release"
 mvn versions:set -DnewVersion="${VERSION}"
 
@@ -97,10 +101,6 @@ step "Updating CHANGELOG.md"
 | sed "/\[${VERSION}]: /i[Unreleased]: https://github.com/ontodev/robot/compare/v${VERSION}...HEAD" \
 > CHANGELOG.new.md
 mv CHANGELOG.new.md CHANGELOG.md
-
-step "Updating obo context (curie map)"
-( cd robot-maven-plugin && mvn install )
-mvn robot:UpdateContext -N
 
 step "Manually check CHANGELOG.md and obo_context.jsonld"
 confirm "CHANGELOG.md and obo_context.jsonld good?"
