@@ -1,12 +1,14 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /** Tests for MergeOperation. */
@@ -78,6 +80,11 @@ public class MergeOperationTest extends CoreTest {
 
     OWLOntology merged = MergeOperation.merge(ontologies, false, true, false, true);
     assertEquals(6, merged.getAxiomCount());
+    
+    OWLOntology expected = loadOntology("/simple_derived_from.owl");
+    for (OWLAxiom axiom : expected.getAxioms()) {
+    	assertTrue(merged.containsAxiom(axiom));
+    }
   }
 
   /**
