@@ -86,7 +86,7 @@ public class MergeOperationTest extends CoreTest {
    * @throws IOException on file problem
    */
   @Test
-  public void testMergeTwoDefinedBy() throws IOException {
+  public void testMergeDefinedBy() throws IOException {
     OWLOntology simple = loadOntology("/simple.owl");
     List<OWLOntology> ontologies = new ArrayList<>();
     ontologies.add(simple);
