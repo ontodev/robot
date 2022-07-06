@@ -237,4 +237,4 @@ Create a "base" subset that axiom annotations related with the two properties ar
       --axioms external \
       --drop_axiom_annotation IAO:0000117 \
       --drop_axiom_annotation IAO:0000119 \
-      --output results/template-drop-axiom.owl
+      --output results/template-drop-axiom-remove.owl
