@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add new command: [`expand`] [#964]
+- Add `--drop_axiom_annotation` option to drop axiom annotations in [`remove`] and [`filter`] [#1023]
 
 ### Fixed
 - Fix OBOGraphs by updating `guava` [#1009]
@@ -317,6 +318,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1023]: https://github.com/ontodev/robot/pull/1023
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
