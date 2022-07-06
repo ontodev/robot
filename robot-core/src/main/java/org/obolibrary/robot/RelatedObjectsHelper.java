@@ -2344,4 +2344,26 @@ public class RelatedObjectsHelper {
       }
     }
   }
+
+  /**
+   * Removes all of the axiom annotations for the given annotation property.
+   *
+   * @param ontology OWLOntology to get axioms
+   * @param property Annotation property to remove related axiom annotations.
+   */
+  public static void removeAxiomAnnotations(OWLOntology ontology, OWLAnnotationProperty property) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    for (OWLAxiom axiom : ontology.getAxioms()) {
+      Set<OWLAnnotation> annotationsToRemove = axiom.getAnnotations(property);
+      if (!annotationsToRemove.isEmpty()) {
+        Set<OWLAnnotation> axiomAnnotations = axiom.getAnnotations();
+        axiomAnnotations.removeAll(annotationsToRemove);
+        OWLAxiom cleanedAxiom =
+            axiom.getAxiomWithoutAnnotations().getAnnotatedAxiom(axiomAnnotations);
+
+        manager.removeAxiom(ontology, axiom);
+        manager.addAxiom(ontology, cleanedAxiom);
+      }
+    }
+  }
 }

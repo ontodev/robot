@@ -43,6 +43,8 @@ public class FilterCommand implements Command {
     o.addOption("r", "trim", true, "if true, keep axioms containing only selected objects");
     o.addOption(
         "S", "signature", true, "if true, keep axioms with any selected entity in their signature");
+    o.addOption(
+        "d", "drop_axiom_annotation", true, "annotation property to drop axiom annotations");
     options = o;
   }
 
@@ -163,6 +165,8 @@ public class FilterCommand implements Command {
     Set<OWLObject> relatedObjects =
         RemoveCommand.getObjects(line, ioHelper, inputOntology, selectGroups);
     if (relatedObjects.isEmpty()) {
+      // drop specified axiom annotations
+      dropAxiomAnnotations(line, ioHelper, outputOntology);
       // nothing to filter - save and exit
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
@@ -212,10 +216,38 @@ public class FilterCommand implements Command {
           outputOntology, RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
     }
 
+    // drop specified axiom annotations
+    dropAxiomAnnotations(line, ioHelper, outputOntology);
+
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
     state.setOntology(outputOntology);
     return state;
+  }
+
+  /**
+   * Given a command line and an IOHelper, drops axiom annotations from the given ontology which
+   * uses annotation properties specified by the drop_axiom_annotation argument.
+   *
+   * @param line CommandLine to get options from
+   * @param ioHelper IOHelper to get IRIs
+   * @param ontology OWLOntology to drop axiom annotations from
+   */
+  private void dropAxiomAnnotations(CommandLine line, IOHelper ioHelper, OWLOntology ontology) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    List<String> annotationsToDrop =
+        CommandLineHelper.getOptionalValues(line, "drop_axiom_annotation");
+    if (!annotationsToDrop.isEmpty()) {
+      for (String annotationPropStr : annotationsToDrop) {
+        OWLAnnotationProperty property =
+            manager
+                .getOWLDataFactory()
+                .getOWLAnnotationProperty(
+                    CommandLineHelper.maybeCreateIRI(
+                        ioHelper, annotationPropStr, "drop_axiom_annotation"));
+        RelatedObjectsHelper.removeAxiomAnnotations(ontology, property);
+      }
+    }
   }
 
   /**
