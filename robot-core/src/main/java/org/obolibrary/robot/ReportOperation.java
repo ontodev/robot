@@ -846,7 +846,7 @@ public class ReportOperation {
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
-  private static List<Violation> getViolations(
+  public static List<Violation> getViolations(
       IOHelper ioHelper,
       Dataset dataset,
       String queryName,
