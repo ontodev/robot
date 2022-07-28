@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- input IRI now takes catalog file into account [#1030]
+
 ## [1.9.0] - 2022-06-16
 
 ### Added
