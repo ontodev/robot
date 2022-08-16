@@ -18,7 +18,7 @@ R.C. Jackson, J.P. Balhoff, E. Douglass, N.L. Harris, C.J. Mungall, and J.A. Ove
 
 ## 1. Getting Started
 
-The command-line tool is packaged a Java JAR file and can be run via the `robot` shell script. Before getting started, make sure you have [Java 8 or later](https://www.java.com/en/download/) installed. Check by entering `java -version` on the command line.
+The command-line tool is packaged a Java JAR file and can be run via the `robot` shell script. Before getting started, make sure you have [Java 11 or later](https://www.java.com/en/download/) installed. Check by entering `java -version` on the command line.
 
 ### Mac & Linux
 
