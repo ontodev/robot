@@ -113,8 +113,8 @@ By default, the `reason` operation will only assert inferred subclass axioms. Th
 One or more of these axiom generators can be passed into the option (separated by spaces). For example, to generate both subclass and disjoint class axioms:
 
 ```
-robot reason --input unreasoned.owl
-  --axiom-generators "SubClass DisjointClasses"
+robot reason --input unreasoned.owl \
+  --axiom-generators "SubClass DisjointClasses" \
   --output reasoned.owl
 ```
 
@@ -122,18 +122,18 @@ Note that for some of the axiom generators you may need the Hermit reasoner
 to get meaningful results:
 
 
-    robot reason --input ro-base.owl --reasoner hermit
-      --axiom-generators "ObjectPropertyRange ObjectPropertyDomain"
-      --output results/ro-base-reasoned.owl
+    robot reason --input ro-base.owl --reasoner hermit \
+      --axiom-generators "ObjectPropertyRange ObjectPropertyDomain" \
+      --output ro-base-reasoned.owl
 
 
 If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
 
 The axioms that are generated for subclasses, class assertions, and sub-object properties can be either direct or indirect. By default, the operation will only generate direct axioms (`--include-indirect false`). It is recommended to pipe to `reduce` after to remove any redundant axioms. For example, to generate all direct and indirect superclass expressions:
 ```
-robot reason --input unreasoned.owl
-  --reasoner emr
-  --include-indirect true
+robot reason --input unreasoned.owl \
+  --reasoner emr \
+  --include-indirect true \
   reduce --output reasoned.owl
 ```
 
