@@ -39,11 +39,21 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.*;
+import org.semanticweb.owlapi.functional.parser.OWLFunctionalSyntaxOWLParserFactory;
 import org.semanticweb.owlapi.io.*;
 import org.semanticweb.owlapi.io.XMLUtils;
+import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxOntologyParserFactory;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.oboformat.OBOFormatOWLAPIParserFactory;
+import org.semanticweb.owlapi.owlxml.parser.OWLXMLParserFactory;
+import org.semanticweb.owlapi.rdf.rdfxml.parser.RDFXMLParserFactory;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.IllegalElementNameException;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
+import org.semanticweb.owlapi.rdf.turtle.parser.TurtleOntologyParserFactory;
+import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
+import org.semanticweb.owlapi.rio.RioJsonParserFactory;
+import org.semanticweb.owlapi.rio.RioRDFXMLParserFactory;
+import org.semanticweb.owlapi.rio.RioTurtleParserFactory;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -271,6 +281,34 @@ public class IOHelper {
       }
     }
     return success;
+  }
+
+  /**
+   * Get a set of parsers for a given ontology format.
+   *
+   * @param format ontology file format as string
+   * @return set of OWLParserFactories
+   * @throws IllegalArgumentException on bad format
+   */
+  public static Set<OWLParserFactory> getParsersByFormat(String format) {
+    switch (format) {
+      case "omn":
+        return Sets.newHashSet(new ManchesterOWLSyntaxOntologyParserFactory());
+      case "obo":
+        return Sets.newHashSet(new OBOFormatOWLAPIParserFactory());
+      case "ofn":
+        return Sets.newHashSet(new OWLFunctionalSyntaxOWLParserFactory());
+      case "owx":
+        return Sets.newHashSet(new OWLXMLParserFactory());
+      case "owl":
+        return Sets.newHashSet(new RDFXMLParserFactory(), new RioRDFXMLParserFactory());
+      case "ttl":
+        return Sets.newHashSet(new RioTurtleParserFactory(), new TurtleOntologyParserFactory());
+      case "json":
+        return Sets.newHashSet(new RioJsonParserFactory(), new RioJsonLDParserFactory());
+      default:
+        return null;
+    }
   }
 
   /**

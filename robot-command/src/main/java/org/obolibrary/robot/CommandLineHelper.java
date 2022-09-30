@@ -3,7 +3,6 @@ package org.obolibrary.robot;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.github.jsonldjava.core.Context;
-import com.google.common.collect.Sets;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,19 +22,9 @@ import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.functional.parser.OWLFunctionalSyntaxOWLParserFactory;
 import org.semanticweb.owlapi.io.OWLParserFactory;
-import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxOntologyParserFactory;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.oboformat.OBOFormatOWLAPIParserFactory;
-import org.semanticweb.owlapi.owlxml.parser.OWLXMLParserFactory;
-import org.semanticweb.owlapi.rdf.rdfxml.parser.RDFXMLParserFactory;
-import org.semanticweb.owlapi.rdf.turtle.parser.TurtleOntologyParserFactory;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
-import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
-import org.semanticweb.owlapi.rio.RioJsonParserFactory;
-import org.semanticweb.owlapi.rio.RioRDFXMLParserFactory;
-import org.semanticweb.owlapi.rio.RioTurtleParserFactory;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
 
@@ -81,6 +70,7 @@ public class CommandLineHelper {
   private static final String multipleInputsError =
       NS + "MULTIPLE INPUTS ERROR only one --input is allowed";
 
+  /** Error message when --input-format is invalid. */
   private static final String unknownInputFormatError =
       NS
           + "UNKNOWN INPUT FORMAT ERROR --input-format must be one of: owl, ofn, owx, omn, obo, ttl, or json";
@@ -498,7 +488,10 @@ public class CommandLineHelper {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     String inputFormat = getOptionalValue(line, "input-format");
     if (inputFormat != null) {
-      Set<OWLParserFactory> parsers = getParsersByFormat(inputFormat);
+      Set<OWLParserFactory> parsers = IOHelper.getParsersByFormat(inputFormat);
+      if (parsers == null) {
+        throw new IllegalArgumentException(unknownInputFormatError);
+      }
       manager.setOntologyParsers(parsers);
     }
 
@@ -1084,35 +1077,6 @@ public class CommandLineHelper {
       return new File[] {};
     }
     return files;
-  }
-
-  /**
-   * Get a set of parsers for a given ontology format.
-   *
-   * @param format ontology file format as string
-   * @return set of OWLParserFactories
-   * @throws IllegalArgumentException on bad format
-   */
-  private static Set<OWLParserFactory> getParsersByFormat(String format)
-      throws IllegalArgumentException {
-    switch (format) {
-      case "omn":
-        return Sets.newHashSet(new ManchesterOWLSyntaxOntologyParserFactory());
-      case "obo":
-        return Sets.newHashSet(new OBOFormatOWLAPIParserFactory());
-      case "ofn":
-        return Sets.newHashSet(new OWLFunctionalSyntaxOWLParserFactory());
-      case "owx":
-        return Sets.newHashSet(new OWLXMLParserFactory());
-      case "owl":
-        return Sets.newHashSet(new RDFXMLParserFactory(), new RioRDFXMLParserFactory());
-      case "ttl":
-        return Sets.newHashSet(new RioTurtleParserFactory(), new TurtleOntologyParserFactory());
-      case "json":
-        return Sets.newHashSet(new RioJsonParserFactory(), new RioJsonLDParserFactory());
-      default:
-        throw new IllegalArgumentException(unknownInputFormatError);
-    }
   }
 
   /**

@@ -15,10 +15,12 @@ import java.util.Map;
 import java.util.Set;
 import org.geneontology.obographs.owlapi.OboGraphJsonDocumentFormat;
 import org.junit.Test;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /** Tests for IOHelper. */
@@ -147,6 +149,40 @@ public class IOHelperTest extends CoreTest {
     expected.put("foo", "http://example.com#");
     expected.put("bar", "http://example.com#");
     assertEquals("Check JSON prefixes", expected, ioh.getPrefixes());
+  }
+
+  /**
+   * Test loading an ontology in RDF/XML format with a manager.
+   *
+   * @throws IOException on any problem
+   */
+  @Test
+  public void testLoadOWLOntologyWithManager() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    manager.setOntologyParsers(IOHelper.getParsersByFormat("owl"));
+
+    InputStream inputOntology = this.getClass().getResourceAsStream("/simple.owl");
+    OWLOntology o = ioHelper.loadOntology(manager, inputOntology, null);
+    // Loading will throw error on parse issue, but just make sure loaded ontology has contents
+    assert !o.getSignature().isEmpty();
+  }
+
+  /**
+   * Test loading an ontology in TTL format with a manager.
+   *
+   * @throws IOException on any problem
+   */
+  @Test
+  public void testLoadTTLOntologyWithManager() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    manager.setOntologyParsers(IOHelper.getParsersByFormat("ttl"));
+
+    InputStream inputOntology = this.getClass().getResourceAsStream("/simple.ttl");
+    OWLOntology o = ioHelper.loadOntology(manager, inputOntology, null);
+    // Loading will throw error on parse issue, but just make sure loaded ontology has contents
+    assert !o.getSignature().isEmpty();
   }
 
   /**
