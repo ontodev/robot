@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Checking for empty strings in addition to missing ones in `missing_label.rq` [#1017]
 
+### Fixed
+- Fix missing labels in [`diff`] output. [#1026]
+
 ## [1.9.0] - 2022-06-16
 
 ### Added
