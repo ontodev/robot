@@ -25,6 +25,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 1. Download the `robot.jar` file from the [latest release](https://github.com/ontodev/robot/releases/latest).
 2. Save the [ROBOT shell script](https://github.com/ontodev/robot/raw/master/bin/robot).
     - OR enter `curl https://raw.githubusercontent.com/ontodev/robot/master/bin/robot > robot` in the same directory as `robot.jar` to download it from the terminal.
+    - Then, make sure the script is executable: `sudo chmod u+x [path-to-robot-script]` (replace `[path-to-robot-script]` with your location)
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) in the same directory.
     - this could be `/usr/local/bin/`
     - OR [update your PATH](https://docs.oracle.com/javase/tutorial/essential/environment/paths.html) to include the new directory. Follow the Solaris/Linux directions for Mac OS, except instead of updating `.bashrc`, you will need to update your `.bash_profile`.
