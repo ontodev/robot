@@ -21,6 +21,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.OWLParserFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.LoggerFactory;
@@ -66,7 +68,12 @@ public class CommandLineHelper {
 
   /** Error message when more than one --input is specified, excluding merge and unmerge. */
   private static final String multipleInputsError =
-      NS + "MULITPLE INPUTS ERROR only one --input is allowed";
+      NS + "MULTIPLE INPUTS ERROR only one --input is allowed";
+
+  /** Error message when --input-format is invalid. */
+  private static final String unknownInputFormatError =
+      NS
+          + "UNKNOWN INPUT FORMAT ERROR --input-format must be one of: owl, ofn, owx, omn, obo, ttl, or json";
 
   /** Error message when the --inputs pattern does not include * or ?, or is not quoted */
   private static final String wildcardError =
@@ -462,7 +469,7 @@ public class CommandLineHelper {
    * @param line the command line to use
    * @param catalogPath the catalog to use to load imports
    * @return the input ontology
-   * @throws IllegalArgumentException if requires options are missing
+   * @throws IllegalArgumentException if required options are missing
    * @throws IOException if the ontology cannot be loaded
    */
   public static OWLOntology getInputOntology(
@@ -476,17 +483,29 @@ public class CommandLineHelper {
       throw new IllegalArgumentException(multipleInputsError);
     }
 
+    // Create a manager to load ontology and maybe set parsers
+    // Otherwise, all parsers will be tried
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    String inputFormat = getOptionalValue(line, "input-format");
+    if (inputFormat != null) {
+      Set<OWLParserFactory> parsers = IOHelper.getParsersByFormat(inputFormat);
+      if (parsers == null) {
+        throw new IllegalArgumentException(unknownInputFormatError);
+      }
+      manager.setOntologyParsers(parsers);
+    }
+
     if (!inputOntologyPaths.isEmpty()) {
       if (catalogPath != null) {
-        return ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
+        return ioHelper.loadOntology(manager, inputOntologyPaths.get(0), catalogPath);
       } else {
-        return ioHelper.loadOntology(inputOntologyPaths.get(0));
+        return ioHelper.loadOntology(manager, inputOntologyPaths.get(0));
       }
     } else if (!inputOntologyIRIs.isEmpty()) {
       if (catalogPath != null) {
-        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
+        return ioHelper.loadOntology(manager, IRI.create(inputOntologyIRIs.get(0)), catalogPath);
       } else {
-        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
+        return ioHelper.loadOntology(manager, IRI.create(inputOntologyIRIs.get(0)));
       }
     } else {
       // Both input options are empty
@@ -908,6 +927,11 @@ public class CommandLineHelper {
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
     o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
+    o.addOption(
+        null,
+        "input-format",
+        true,
+        "format of the input ontology: obo, owl, ttl, owx, omn, ofn, json");
     o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");

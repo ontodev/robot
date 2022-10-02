@@ -8,6 +8,7 @@
 4. [Logging (`-v`, `-vv`, `-vvv`)](#logging)
 5. [XML Entities (`--xml-entities`)](#xml-entities)
 6. [Strict Parsing (`--strict`)](#strict-parsing)
+7. [Input Format (`--input-format`)](#input-format)
 
 ## Java Options
 
@@ -130,6 +131,22 @@ _:blank rdf:type rdf:Statement .
 ```
 _:blank rdf:type owl:Axiom .
 ```
+
+## Input Format
+
+When loading an ontology, OWLAPI will attempt to load with a variety of ontology format parsers. When all parsers fail, many error logs are printed (when using verbose mode). Finding the cause of the error based on parser can be difficult due to number of messages. For debugging purposes, you can specify the `--input-format` of the ontology as one of:
+
+| Format | Specification                                                                     |
+| ------ | --------------------------------------------------------------------------------- |
+| owl    | [RDF/XML](https://www.w3.org/TR/rdf-syntax-grammar/)                              |
+| obo    | [OBO Flat File](https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html) |
+| owx    | [OWL/XML](https://www.w3.org/TR/owl-xmlsyntax/)                                   |
+| ofn    | [OWL Functional](https://www.w3.org/TR/owl2-syntax/)                              |
+| omn    | [OWL Manchester](https://www.w3.org/TR/owl2-manchester-syntax/)                   |
+| ttl    | [Turtle](https://www.w3.org/TR/turtle/)                                           |
+| json   | [OBO Graphs JSON](https://github.com/geneontology/obographs/)                     |
+
+Be aware that the suffix of the ontology file does not always correspond to the format; OBO ontologies will often use the suffix `.owl` for both RDF/XML and functional syntax. Check the contents of the file using the format specifications for reference to be sure.
 
 ---
 

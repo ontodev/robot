@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Checking for empty strings in addition to missing ones in `missing_label.rq` [#1017]
+- Add new global option: `--input-format` [#1056]
 
 ### Fixed
 - Fix missing labels in [`diff`] output. [#1026]
@@ -323,6 +324,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1056]: https://github.com/ontodev/robot/issues/1056
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
