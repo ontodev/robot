@@ -1,5 +1,6 @@
 package org.obolibrary.robot;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
@@ -157,7 +158,7 @@ public class DiffOperation {
   private static class DualOntologySetProvider implements OWLOntologySetProvider {
 
     private static final long serialVersionUID = -8942374248162307075L;
-    private final Set<OWLOntology> ontologies = new HashSet<>();
+    private final Set<OWLOntology> ontologies = Sets.newIdentityHashSet();
 
     /**
      * Init a new DualOntologySetProvider for a left and right ontology.

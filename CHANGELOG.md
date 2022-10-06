@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed report serialization in JSON [#1016]
+- Fix missing labels in [`diff`] output. [#1026]
 
 ## [1.9.0] - 2022-06-16
 
