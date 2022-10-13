@@ -55,6 +55,11 @@ public class QueryCommand implements Command {
     o.addOption("O", "output-dir", true, "Directory for output");
     o.addOption("g", "use-graphs", true, "if true, load imports as named graphs");
     o.addOption("u", "update", true, "run a SPARQL UPDATE");
+    o.addOption(
+        "y",
+        "temporary-file",
+        true,
+        "if true, stores intermediate --update results in a temporary file to reduce heap memory usage.");
     o.addOption("t", "tdb", true, "if true, load RDF/XML or TTL onto disk");
     o.addOption("C", "create-tdb", true, "if true, create a TDB directory without querying");
     o.addOption("k", "keep-tdb-mappings", true, "if true, do not remove the TDB directory");
@@ -155,7 +160,10 @@ public class QueryCommand implements Command {
       state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
       OWLOntology inputOntology = state.getOntology();
 
-      OWLOntology outputOntology = executeUpdate(state, inputOntology, ioHelper, updatePaths);
+      final boolean useTemporaryFile =
+          CommandLineHelper.getBooleanValue(line, "temporary-file", false);
+      OWLOntology outputOntology =
+          executeUpdate(state, inputOntology, ioHelper, updatePaths, useTemporaryFile);
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
       return state;
@@ -274,11 +282,17 @@ public class QueryCommand implements Command {
    * @param inputOntology the ontology to update
    * @param ioHelper IOHelper to handle loading OWLOntology objects
    * @param updatePaths paths to update queries
+   * @param useTemporaryFile whether to use a temporary file for saving some heap and store
+   *     intermediate results into a file
    * @return updated OWLOntology
    * @throws Exception on file or ontology loading issues
    */
   private static OWLOntology executeUpdate(
-      CommandState state, OWLOntology inputOntology, IOHelper ioHelper, List<String> updatePaths)
+      CommandState state,
+      OWLOntology inputOntology,
+      IOHelper ioHelper,
+      List<String> updatePaths,
+      boolean useTemporaryFile)
       throws Exception {
     Map<String, String> updates = new LinkedHashMap<>();
     for (String updatePath : updatePaths) {
@@ -324,7 +338,7 @@ public class QueryCommand implements Command {
         catalogPath = null;
       }
     }
-    return QueryOperation.convertModel(model, ioHelper, catalogPath);
+    return QueryOperation.convertModel(model, ioHelper, catalogPath, useTemporaryFile);
   }
 
   /**

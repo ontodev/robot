@@ -1,0 +1,27 @@
+<rdf:RDF
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace">
+    <owl:Ontology rdf:about="http://test.org/test"/>
+
+    <owl:Class rdf:about="http://test.org/test#A"/>
+
+    <owl:Class rdf:about="http://test.org/test#B">
+      <obo:IAO_0000115>Sample definition</obo:IAO_0000115>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://test.org/test#C">
+      <rdfs:label></rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://test.org/test#D">
+      <rdfs:label xml:lang="en"></rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://test.org/test#E">
+      <rdfs:label>E</rdfs:label>
+    </owl:Class>
+
+</rdf:RDF>

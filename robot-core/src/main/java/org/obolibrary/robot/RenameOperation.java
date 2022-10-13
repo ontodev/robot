@@ -1,15 +1,16 @@
 package org.obolibrary.robot;
 
 import com.google.common.collect.Sets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.OWLEntityRenamer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
  * Rename entity IRIs in an ontology.
@@ -28,6 +29,13 @@ public class RenameOperation {
   private static final String missingEntityError =
       NS + "MISSING ENTITY ERROR entity to rename ('%s') does not exist.";
 
+  /** Error message when the new IRI is null. */
+  private static final String newIRIError =
+      NS + "NEW IRI ERROR failed to generate an IRI for '%s'.";
+
+  /** Shared DataFactory. */
+  private static OWLDataFactory dataFactory = new OWLDataFactoryImpl();
+
   /**
    * Given an ontology, an IOHelper, and a map of old IRIs to new IRIs, rename each old IRI with the
    * new IRI.
@@ -45,6 +53,28 @@ public class RenameOperation {
       Map<String, String> mappings,
       boolean allowMissingEntities)
       throws Exception {
+    renameFull(ontology, ioHelper, mappings, new HashMap<>(), allowMissingEntities);
+  }
+
+  /**
+   * Given an ontology, an IOHelper, and a map of old IRIs to new IRIs, rename each old IRI with the
+   * new IRI.
+   *
+   * @param ontology OWLOntology to rename entities in
+   * @param ioHelper IOHelper to create IRIs
+   * @param mappings map of old IRI to new IRI
+   * @param labels map of new IRI to new label
+   * @param allowMissingEntities if true, command will fail when an entity is in the rename map, but
+   *     does not appear in ontology
+   * @throws Exception if the old IRI in a mapping does not exist
+   */
+  public static void renameFull(
+      OWLOntology ontology,
+      IOHelper ioHelper,
+      Map<String, String> mappings,
+      Map<IRI, String> labels,
+      boolean allowMissingEntities)
+      throws Exception {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLEntityRenamer entityRenamer = new OWLEntityRenamer(manager, Sets.newHashSet(ontology));
     for (Map.Entry<String, String> mapping : mappings.entrySet()) {
@@ -54,10 +84,32 @@ public class RenameOperation {
         if (allowMissingEntities) {
           logger.info("Entity " + oldIRI + " is in map, but does not exist in ontology.");
         } else {
-          throw new Exception(String.format(missingEntityError, oldIRI.toString()));
+          throw new Exception(String.format(missingEntityError, oldIRI));
         }
       }
+      if (newIRI == null) {
+        throw new Exception(String.format(newIRIError, mapping.getValue()));
+      }
+      // Update the IRI first
       manager.applyChanges(entityRenamer.changeIRI(oldIRI, newIRI));
+      if (labels.containsKey(newIRI)) {
+        // Remove old label annotation(s)
+        for (OWLAnnotationAssertionAxiom ax :
+            EntitySearcher.getAnnotationAssertionAxioms(
+                OntologyHelper.getEntity(ontology, newIRI), ontology)) {
+          if (ax.getProperty()
+              .getIRI()
+              .toString()
+              .equals(dataFactory.getRDFSLabel().getIRI().toString())) {
+            manager.removeAxiom(ontology, ax);
+          }
+        }
+        // Add the new label
+        OWLAnnotation newLabel =
+            dataFactory.getOWLAnnotation(
+                dataFactory.getRDFSLabel(), dataFactory.getOWLLiteral(labels.get(newIRI)));
+        manager.addAxiom(ontology, dataFactory.getOWLAnnotationAssertionAxiom(newIRI, newLabel));
+      }
     }
   }
 

@@ -1,0 +1,4 @@
+Old IRI	New IRI	New Label
+obo:BFO_0000051	fb:BFO_1234567	foo bar
+obo:BFO_0000054	fb:BFO_7654321	foo baz
+obo:BFO_0000017	fb:BFO_0000000	
