@@ -51,6 +51,77 @@ public class OntologyHelper {
       NS + "NULL IRI ERROR import ontology does not have an IRI";
 
   /**
+   * Given an ontology, an entity, annotates the entity with the given annotation in the ontology.
+   *
+   * @param ontology the ontology to modify
+   * @param owlEntity the entity to annotate
+   * @param property annotation property
+   * @param value the IRI or literal value to add
+   * @param overload when false: if the entity already has an annotation with the given property,
+   *     doesn't add the annotation. When true, adds the annotation anyway.
+   */
+  public static void addEntityAnnotation(
+      OWLOntology ontology,
+      OWLEntity owlEntity,
+      OWLAnnotationProperty property,
+      OWLAnnotationValue value,
+      boolean overload) {
+    OWLAnnotationAssertionAxiom existingAnnotation = null;
+    if (!overload) {
+      existingAnnotation =
+          EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology).stream()
+              .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
+              .findFirst()
+              .orElse(null);
+    }
+    if (overload || existingAnnotation == null) {
+      OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      OWLDataFactory factory = manager.getOWLDataFactory();
+      OWLAnnotation annotation = factory.getOWLAnnotation(property, value);
+      OWLAxiom ax = factory.getOWLAnnotationAssertionAxiom(owlEntity.getIRI(), annotation);
+      manager.applyChange(new AddAxiom(ontology, ax));
+    }
+  }
+
+  /**
+   * Given an ontology, an axiom, and a set of annotations, annotate the axiom with the annotations
+   * in the ontology.
+   *
+   * <p>Note that as axioms are immutable, the axiom is removed and replaced with a new one.
+   *
+   * @param ontology the ontology to modify
+   * @param axiom the axiom to annotate
+   * @param property annotation property to add
+   * @param value the IRI or literal value to add
+   * @param overload when false: if the axiom already has an annotation with the given propertyIRI,
+   *     doesn't add the annotation. When true, adds the annotation anyway.
+   */
+  public static void addAxiomAnnotation(
+      OWLOntology ontology,
+      OWLAxiom axiom,
+      OWLAnnotationProperty property,
+      OWLAnnotationValue value,
+      boolean overload) {
+    OWLAnnotation existingAnnotation = null;
+    if (!overload) {
+      existingAnnotation =
+          axiom.getAnnotations().stream()
+              .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
+              .findFirst()
+              .orElse(null);
+    }
+    if (overload || existingAnnotation == null) {
+      OWLOntologyManager manager = ontology.getOWLOntologyManager();
+      OWLDataFactory factory = manager.getOWLDataFactory();
+      OWLAnnotation annotation = factory.getOWLAnnotation(property, value);
+
+      OWLAxiom newAxiom = axiom.getAnnotatedAxiom(new HashSet<>(Arrays.asList(annotation)));
+      manager.addAxiom(ontology, newAxiom);
+      manager.removeAxiom(ontology, axiom);
+    }
+  }
+
+  /**
    * Given an ontology, an axiom, a property IRI, and a value string, add an annotation to this
    * ontology with that property and value.
    *
