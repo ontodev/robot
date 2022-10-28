@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.*;
+
 import com.google.common.collect.Lists;
 import java.io.*;
 import java.net.URISyntaxException;
@@ -15,8 +17,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-
-import static org.junit.Assert.*;
 
 /**
  * Test query operation.
@@ -194,9 +194,14 @@ public class QueryOperationTest extends CoreTest {
   }
 
   @Test
-  public void test1030CatalogIsUsedForInputIri() throws IOException, OWLOntologyStorageException, OWLOntologyCreationException {
+  public void test1030CatalogIsUsedForInputIri()
+      throws IOException, OWLOntologyStorageException, OWLOntologyCreationException {
     try {
-      final OWLOntology inputOntology = loadOntologyWithCatalog(IRI.create("http://test.org/test-imported.owl"), new File(getClass().getResource("/1030-input-iri-catalog/catalog-v001.xml").getFile()));
+      final OWLOntology inputOntology =
+          loadOntologyWithCatalog(
+              IRI.create("http://test.org/test-imported.owl"),
+              new File(
+                  getClass().getResource("/1030-input-iri-catalog/catalog-v001.xml").getFile()));
       final Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology);
       final String query = "SELECT ?s { ?s ?p ?o }";
       QueryOperation.execQuery(dataset, query);

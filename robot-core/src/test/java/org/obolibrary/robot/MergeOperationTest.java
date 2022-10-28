@@ -80,10 +80,10 @@ public class MergeOperationTest extends CoreTest {
 
     OWLOntology merged = MergeOperation.merge(ontologies, false, true, false, true);
     assertEquals(6, merged.getAxiomCount());
-    
+
     OWLOntology expected = loadOntology("/simple_derived_from.owl");
     for (OWLAxiom axiom : expected.getAxioms()) {
-    	assertTrue(merged.containsAxiom(axiom));
+      assertTrue(merged.containsAxiom(axiom));
     }
   }
 
