@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [`extract`] and [`merge`] should optionally inject provenance [#977]
 - Checking for empty strings in addition to missing ones in `missing_label.rq` [#1017]
 - Add "domain" and "range" support to export [#1061]
 
@@ -30,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Optimize memory usage for update queries using `--temporary-file` switch [#978]
 - Allow any case builtin `TYPE` in `template` [#971]
-- [`extract`] and [`merge`] should optionally inject provenance [#977]
 - Sort [`report`] violations by rule name within level [#955]
 
 ### Fixed
@@ -310,6 +310,7 @@ First official release of ROBOT!
 [`diff`]: http://robot.obolibrary.org/diff
 [`explain`]: http://robot.obolibrary.org/explain
 [`export`]: http://robot.obolibrary.org/export
+[`expand`]: http://robot.obolibrary.org/expand
 [`extract`]: http://robot.obolibrary.org/extract
 [`filter`]: http://robot.obolibrary.org/filter
 [`measure`]: http://robot.obolibrary.org/measure
@@ -326,6 +327,8 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#1061]: https://github.com/ontodev/robot/issues/1061
+[#1026]: https://github.com/ontodev/robot/issues/1026
+[#1017]: https://github.com/ontodev/robot/issues/1017
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
