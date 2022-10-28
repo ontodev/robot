@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.1] - 2022-10-28
+
 ### Added
 - [`extract`] and [`merge`] should optionally inject provenance [#977]
 - Checking for empty strings in addition to missing ones in `missing_label.rq` [#1017]
@@ -284,7 +286,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.1...HEAD
+[1.9.1]: https://github.com/ontodev/robot/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/ontodev/robot/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/ontodev/robot/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
