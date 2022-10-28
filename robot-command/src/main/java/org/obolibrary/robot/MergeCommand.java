@@ -30,6 +30,16 @@ public class MergeCommand implements Command {
     o.addOption(
         "c", "collapse-import-closure", true, "if true, the imports closure will be merged");
     o.addOption("a", "include-annotations", true, "if true, ontology annotations will be merged");
+    o.addOption(
+        "f",
+        "annotate-derived-from",
+        true,
+        "if true, annotate all axioms in the ontology with the ontology version IRI");
+    o.addOption(
+        "d",
+        "annotate-defined-by",
+        true,
+        "if true, annotate all entities in the ontology with the ontology IRI");
     options = o;
   }
 
@@ -117,8 +127,11 @@ public class MergeCommand implements Command {
         CommandLineHelper.getBooleanValue(line, "collapse-import-closure", true);
     boolean includeAnnotations =
         CommandLineHelper.getBooleanValue(line, "include-annotations", false);
+    boolean derivedFrom = CommandLineHelper.getBooleanValue(line, "annotate-derived-from", false);
+    boolean definedBy = CommandLineHelper.getBooleanValue(line, "annotate-defined-by", false);
     OWLOntology outputOntology =
-        MergeOperation.merge(inputOntologies, includeAnnotations, collapseImportClosure);
+        MergeOperation.merge(
+            inputOntologies, includeAnnotations, collapseImportClosure, definedBy, derivedFrom);
 
     CommandLineHelper.maybeSaveOutput(line, outputOntology);
 

@@ -1,0 +1,11 @@
+<rdf:RDF
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace">
+    <owl:Ontology rdf:about="http://test.org/test"/>
+
+    <owl:ObjectProperty rdf:about="http://test.org/test#A">
+        <obo:IAO_0000115>skos:Concept interferes with &quot;quoted text&quot;</obo:IAO_0000115>
+    </owl:ObjectProperty>
+</rdf:RDF>
