@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Optimize memory usage for update queries using `--temporary-file` switch [#978]
 - Allow any case builtin `TYPE` in `template` [#971]
+- [`extract`] and [`merge`] should optionally inject provenance [#977]
 - Sort [`report`] violations by rule name within level [#955]
 
 ### Fixed
@@ -328,6 +329,7 @@ First official release of ROBOT!
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
+[#977]: https://github.com/ontodev/robot/pull/977
 [#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
 [#964]: https://github.com/ontodev/robot/pull/964

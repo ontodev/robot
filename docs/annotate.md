@@ -2,7 +2,7 @@
 
 It's important to add metadata to an ontology before releasing it, and to update the ontology version IRI.
 
-General annotations can be added one-by-one with `--anotation`, and the IRIs can be set with `--version-iri` and `--ontology-iri`. You can specify as many annotation flags as you'd like in one command:
+General annotations can be added one-by-one with `--annotation`, and the IRIs can be set with `--version-iri` and `--ontology-iri`. You can specify as many annotation flags as you'd like in one command:
 
     robot annotate --input edit.owl \
       --ontology-iri "https://github.com/ontodev/robot/examples/annotated.owl" \
@@ -37,6 +37,23 @@ This command can also remove all ontology annotations from your file with `--rem
       --remove-annotations \
       --annotation-file annotations.ttl \
       --output results/annotated_2.owl
+
+
+## Annotating the Source
+
+It’s also possible to annotate the ontology axioms with the ontology IRI or version IRI.
+
+  * `--annotate-derived-from true`: annotates all axioms with the source's version IRI if it exists, else with the ontology IRI, using `prov:wasDerivedFrom`. If the axiom already has an annotation using this property (`prov:wasDerivedFrom`), the existing annotation will be kept and no new annotation will be added.
+
+    robot annotate --input example2.owl \
+      --annotate-derived-from true \
+      --output results/example2_derived_from.owl
+
+  * `--annotate-defined-by true`: annotates all entities (class, data, annotation, object property and named individual declaration axioms) with the source's IRI using `rdfs:isDefinedBy`. If the term already has an annotation using this property (`rdfs:isDefinedBy`), the existing annotation will be kept and no new annotation will be added.
+
+    robot annotate --input example2.owl \
+      --annotate-defined-by true \
+      --output results/example2_defined_by.owl
 
 ---
 

@@ -1,0 +1,283 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="https://github.com/ontodev/robot/examples/edit.owl#"
+     xml:base="https://github.com/ontodev/robot/examples/edit.owl"
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:prov="http://www.w3.org/ns/prov#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/edit.owl">
+        <owl:versionIRI rdf:resource="https://github.com/ontodev/robot/examples/2022-03-11/edit.owl"/>
+        <rdfs:comment>Comment from annotations.ttl file.</rdfs:comment>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000115 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000115">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">definition</rdfs:label>
+    </owl:AnnotationProperty>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/IAO_0000115"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"/>
+        <owl:annotatedTarget rdf:resource="http://www.w3.org/2002/07/owl#AnnotationProperty"/>
+        <prov:wasDerivedFrom rdf:resource="https://github.com/ontodev/robot/some_other_ont.owl"/>
+    </owl:Axiom>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000116 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000116">
+        <oboInOwl:hasOBONamespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uberon</oboInOwl:hasOBONamespace>
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/some_other_ont.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">editor note</rdfs:label>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000232 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000232">
+        <oboInOwl:hasOBONamespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uberon</oboInOwl:hasOBONamespace>
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">curator notes</rdfs:label>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://www.geneontology.org/formats/oboInOwl#hasAlternativeId -->
+
+    <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#hasAlternativeId">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://www.geneontology.org/formats/oboInOwl#hasOBONamespace -->
+
+    <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#hasOBONamespace">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://www.w3.org/2000/01/rdf-schema#comment -->
+
+    <rdf:Description rdf:about="http://www.w3.org/2000/01/rdf-schema#comment">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </rdf:Description>
+    
+
+
+    <!-- http://www.w3.org/2000/01/rdf-schema#isDefinedBy -->
+
+    <rdf:Description rdf:about="http://www.w3.org/2000/01/rdf-schema#isDefinedBy">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </rdf:Description>
+    
+
+
+    <!-- http://www.w3.org/2000/01/rdf-schema#label -->
+
+    <rdf:Description rdf:about="http://www.w3.org/2000/01/rdf-schema#label">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </rdf:Description>
+    
+
+
+    <!-- http://www.w3.org/ns/prov#wasDerivedFrom -->
+
+    <owl:AnnotationProperty rdf:about="http://www.w3.org/ns/prov#wasDerivedFrom">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Datatypes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.w3.org/2001/XMLSchema#string -->
+
+    <rdf:Description rdf:about="http://www.w3.org/2001/XMLSchema#string">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </rdf:Description>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/BFO_0000050 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/BFO_0000050">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">part_of</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000061 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000061">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/UBERON_0000465"/>
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/some_other_ont.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">anatomical structure</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000062 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000062">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/UBERON_0010000"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/BFO_0000050"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/UBERON_0000467"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organ</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000465 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000465">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000467 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000467">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0010000 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0010000">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0013702_indv1 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv1">
+        <rdfs:isDefinedBy rdf:resource="http://purl.obolibrary.org/obo/pcl/some_other_ont.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 1</rdfs:label>
+    </owl:NamedIndividual>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/UBERON_0013702_indv1"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"/>
+        <owl:annotatedTarget rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+        <prov:wasDerivedFrom rdf:resource="https://github.com/ontodev/robot/examples/2022-03-11/some_other_ontology.owl"/>
+    </owl:Axiom>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0013702_indv2 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv2">
+        <rdfs:isDefinedBy rdf:resource="http://purl.obolibrary.org/obo/pcl/some_other_ont.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 2</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0013702_indv3 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv3">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 3</rdfs:label>
+    </owl:NamedIndividual>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/UBERON_0013702_indv3"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"/>
+        <owl:annotatedTarget rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+        <prov:wasDerivedFrom rdf:resource="https://github.com/ontodev/robot/examples/2022-03-11/some_other_ontology.owl"/>
+    </owl:Axiom>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0013702_indv4 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv4">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 4</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/UBERON_0013702_indv5 -->
+
+    <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv5">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 5</rdfs:label>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.6) https://github.com/owlcs/owlapi -->
