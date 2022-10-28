@@ -1,0 +1,54 @@
+[
+  {
+    "level": "ERROR",
+    "violations": [
+      {
+        "missing_label": [
+          {
+            "subject": "http://test.org/test#A"
+          }
+        ]
+      },
+      {
+        "missing_ontology_description": [
+          {
+            "subject": "http://test.org/test"
+          }
+        ]
+      },
+      {
+        "missing_ontology_license": [
+          {
+            "subject": "http://test.org/test"
+          }
+        ]
+      },
+      {
+        "missing_ontology_title": [
+          {
+            "subject": "http://test.org/test"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "level": "WARN"
+  },
+  {
+    "level": "INFO",
+    "violations": [
+      {
+        "lowercase_definition": [
+          {
+            "subject": "http://test.org/test#A",
+            "property": "IAO:0000115",
+            "values": [
+              "skos:Concept interferes with \"quoted text\""
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

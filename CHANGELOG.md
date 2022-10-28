@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add "domain" and "range" support to export [#1061]
 
 ### Fixed
+- Fixed report serialization in JSON [#1016]
 - Fix missing labels in [`diff`] output. [#1026]
 
 ## [1.9.0] - 2022-06-16
@@ -329,6 +330,7 @@ First official release of ROBOT!
 [#1061]: https://github.com/ontodev/robot/issues/1061
 [#1026]: https://github.com/ontodev/robot/issues/1026
 [#1017]: https://github.com/ontodev/robot/issues/1017
+[#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
