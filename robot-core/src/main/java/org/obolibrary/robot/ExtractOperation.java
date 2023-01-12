@@ -282,7 +282,7 @@ public class ExtractOperation {
    */
   private static OWLOntology materialize(OWLOntology ontology, Set<IRI> relations, IRI outputIRI)
       throws OWLOntologyCreationException {
-    Config config = new Config(null, false, true, true, true, true, false);
+    Config config = new Config(null, true, false, true, true, true, false);
     Set<OWLClassAxiom> materializedAxioms =
         RelationGraphUtil.computeRelationGraph(ontology, relations, config);
 
