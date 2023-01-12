@@ -614,37 +614,39 @@ public class Template {
         typeOrIRI = typeIRI.toString();
       }
 
+      // Check against builtin types (ignore case), otherwise treat as individual
       OWLEntity entity;
-      switch (typeOrIRI) {
+      String lowerCaseType = typeOrIRI.toLowerCase();
+      switch (lowerCaseType) {
         case "":
-        case "http://www.w3.org/2002/07/owl#Class":
+        case "http://www.w3.org/2002/07/owl#class":
         case "class":
           entity = dataFactory.getOWLEntity(EntityType.CLASS, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#ObjectProperty":
+        case "http://www.w3.org/2002/07/owl#objectproperty":
         case "object property":
           entity = dataFactory.getOWLEntity(EntityType.OBJECT_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#DataProperty":
+        case "http://www.w3.org/2002/07/owl#dataproperty":
         case "data property":
           entity = dataFactory.getOWLEntity(EntityType.DATA_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#AnnotationProperty":
+        case "http://www.w3.org/2002/07/owl#annotationproperty":
         case "annotation property":
           entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#Datatype":
+        case "http://www.w3.org/2002/07/owl#datatype":
         case "datatype":
           entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
           break;
 
-        case "http://www.w3.org/2002/07/owl#Individual":
+        case "http://www.w3.org/2002/07/owl#individual":
         case "individual":
-        case "http://www.w3.org/2002/07/owl#NamedIndividual":
+        case "http://www.w3.org/2002/07/owl#namedindividual":
         case "named individual":
         default:
           // Assume type is an individual (checked later)
@@ -760,35 +762,37 @@ public class Template {
       typeOrIRI = typeIRI.toString();
     }
 
-    switch (typeOrIRI) {
-      case "http://www.w3.org/2002/07/owl#Class":
+    // Check against builtin types (ignore case), otherwise treat as individual
+    String lowerCaseType = typeOrIRI.toLowerCase();
+    switch (lowerCaseType) {
+      case "http://www.w3.org/2002/07/owl#class":
       case "class":
         addClassAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#ObjectProperty":
+      case "http://www.w3.org/2002/07/owl#objectproperty":
       case "object property":
         addObjectPropertyAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#DataProperty":
+      case "http://www.w3.org/2002/07/owl#dataproperty":
       case "data property":
         addDataPropertyAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#AnnotationProperty":
+      case "http://www.w3.org/2002/07/owl#annotationproperty":
       case "annotation property":
         addAnnotationPropertyAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#Datatype":
+      case "http://www.w3.org/2002/07/owl#datatype":
       case "datatype":
         addDatatypeAxioms(iri, row);
         break;
 
-      case "http://www.w3.org/2002/07/owl#Individual":
+      case "http://www.w3.org/2002/07/owl#individual":
       case "individual":
-      case "http://www.w3.org/2002/07/owl#NamedIndividual":
+      case "http://www.w3.org/2002/07/owl#namedindividual":
       case "named individual":
       default:
         addIndividualAxioms(iri, row);
@@ -850,7 +854,6 @@ public class Template {
     // Instead of adding them in as we iterate through
     Map<Integer, Set<OWLClassExpression>> subclassExpressionColumns = new HashMap<>();
     Map<Integer, Set<OWLClassExpression>> equivalentExpressionColumns = new HashMap<>();
-    Map<Integer, Set<OWLClassExpression>> intersectionEquivalentExpressionColumns = new HashMap<>();
     Map<Integer, Set<OWLClassExpression>> disjointExpressionColumns = new HashMap<>();
     for (int column = 0; column < templates.size(); column++) {
       String template = templates.get(column);
@@ -899,7 +902,7 @@ public class Template {
                     name, checker, parser, template, value, rowNum, column));
             break;
           case "equivalent":
-            intersectionEquivalentExpressionColumns.put(
+            equivalentExpressionColumns.put(
                 column,
                 TemplateHelper.getClassExpressions(
                     name, checker, parser, template, value, rowNum, column));
@@ -922,15 +925,6 @@ public class Template {
     }
     if (!equivalentExpressionColumns.isEmpty()) {
       addEquivalentClassesAxioms(cls, equivalentExpressionColumns, row);
-    }
-    if (!intersectionEquivalentExpressionColumns.isEmpty()) {
-      // Special case to support legacy "C"/"equivalent" class type
-      // Which is the intersection of all C columns
-      if (intersectionEquivalentExpressionColumns.size() == 1) {
-        addEquivalentClassesAxioms(cls, intersectionEquivalentExpressionColumns, row);
-      } else {
-        addIntersectionEquivalentClassesAxioms(cls, intersectionEquivalentExpressionColumns, row);
-      }
     }
     if (!disjointExpressionColumns.isEmpty()) {
       addDisjointClassAxioms(cls, disjointExpressionColumns, row);
@@ -963,9 +957,9 @@ public class Template {
   }
 
   /**
-   * Given an OWLClass, a map of column number to class expressions, and the row containing the
-   * class details, generate equivalent class axioms for the class where the equivalents are the
-   * class expressions. Maybe annotate the axioms.
+   * Given an OWLClass, a map of column number to class expressions, and the row for this class,
+   * generate an equivalentClasses axiom for the class where the equivalent is the intersection of
+   * the provided class expressions. Maybe annotate the axioms.
    *
    * @param cls OWLClass to create equivalentClasses axiom for
    * @param expressionColumns map of column number to equivalent class expression
@@ -977,41 +971,23 @@ public class Template {
       throws Exception {
     Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
     Set<OWLClassExpression> expressions = new HashSet<>();
-    expressions.add(cls);
     for (int column : expressionColumns.keySet()) {
       // Maybe get an annotation on the expression (all annotations will be on the one intersection)
       axiomAnnotations.addAll(maybeGetAxiomAnnotations(row, column));
       // Add all expressions to the set of expressions
       expressions.addAll(expressionColumns.get(column));
     }
-    // Create the axiom as an intersection of the provided expressions
-    axioms.add(dataFactory.getOWLEquivalentClassesAxiom(expressions, axiomAnnotations));
-  }
 
-  /**
-   * Given an OWLClass, a map of column number to class expressions, and the row for this class,
-   * generate an equivalentClasses axiom for the class where the equivalent is the intersection of
-   * the provided class expressions. Maybe annotate the axioms.
-   *
-   * @param cls OWLClass to create equivalentClasses axiom for
-   * @param expressionColumns map of column number to equivalent class expression
-   * @param row list of template values for given class
-   * @throws Exception on issue getting axiom annotations
-   */
-  private void addIntersectionEquivalentClassesAxioms(
-      OWLClass cls, Map<Integer, Set<OWLClassExpression>> expressionColumns, List<String> row)
-      throws Exception {
-    Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
-    Set<OWLClassExpression> expressions = new HashSet<>();
-    for (int column : expressionColumns.keySet()) {
-      // Maybe get an annotation on the expression (all annotations will be on the one intersection)
-      axiomAnnotations.addAll(maybeGetAxiomAnnotations(row, column));
-      // Add all expressions to the set of expressions
-      expressions.addAll(expressionColumns.get(column));
+    if (expressions.size() == 1) {
+      // Create a single equivalent class axiom (no intersection)
+      axioms.add(
+          dataFactory.getOWLEquivalentClassesAxiom(
+              cls, expressions.iterator().next(), axiomAnnotations));
+    } else if (expressions.size() > 1) {
+      // Create the axiom as an intersection of the provided expressions
+      OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(expressions);
+      axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, axiomAnnotations));
     }
-    // Create the axiom as an intersection of the provided expressions
-    OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(expressions);
-    axioms.add(dataFactory.getOWLEquivalentClassesAxiom(cls, intersection, axiomAnnotations));
   }
 
   /**
