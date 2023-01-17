@@ -556,7 +556,7 @@ public class Report {
               display =
                   OntologyHelper.renderManchester(value, provider, RendererType.OBJECT_RENDERER);
             }
-            sb.append("        - \"").append(display.replace("\"", "\\\"")).append("\"");
+            sb.append("        - \"").append(display).append("\"");
             sb.append("\n");
           }
         }
@@ -576,7 +576,7 @@ public class Report {
             if (value == null) {
               value = "";
             }
-            sb.append("        - \"").append(value.replace("\"", "\\\"")).append("\"");
+            sb.append("        - \"").append(value).append("\"");
             sb.append("\n");
           }
         }

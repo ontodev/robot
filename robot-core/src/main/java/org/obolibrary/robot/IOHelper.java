@@ -510,7 +510,8 @@ public class IOHelper {
         ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
       } else {
         // Otherwise load ontology as normal
-        ontology = loadOntology(manager, new IRIDocumentSource(ontologyIRI));
+        IRI documentIRI = getDocumentIRIFromMappers(manager, ontologyIRI);
+        ontology = loadOntology(manager, new IRIDocumentSource(documentIRI));
       }
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
@@ -594,6 +595,25 @@ public class IOHelper {
     }
     // No issues, return ontology
     return loadedOntology;
+  }
+
+  private IRI getDocumentIRIFromMappers(OWLOntologyManager m, IRI iri) {
+    if (iri == null) {
+      return null;
+    }
+    final Iterator<OWLOntologyIRIMapper> var4 = m.getIRIMappers().iterator();
+
+    IRI documentIRI;
+    do {
+      if (!var4.hasNext()) {
+        return iri;
+      }
+
+      OWLOntologyIRIMapper mapper = var4.next();
+      documentIRI = mapper.getDocumentIRI(iri);
+    } while (documentIRI == null);
+
+    return documentIRI;
   }
 
   /**
