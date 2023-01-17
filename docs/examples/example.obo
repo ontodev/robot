@@ -139,7 +139,7 @@ xref: XAO:0003002
 xref: ZFA:0001439
 is_a: UBERON:0000480 ! anatomical group
 relationship: part_of UBERON:0000468 ! multicellular organism
-property_value: seeAlso "EHDAA2:0001330"
+property_value: seeAlso EHDAA2:0001330
 
 [Term]
 id: UBERON:0000468
@@ -377,8 +377,8 @@ xref: XAO:0000165
 is_a: UBERON:0001851 ! cortex
 intersection_of: UBERON:0001851 ! cortex
 intersection_of: part_of UBERON:0002369 ! adrenal gland
-property_value: depicted:by "http://upload.wikimedia.org/wikipedia/commons/5/5c/Gray1185.png"
-property_value: depicted:by "http://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Gray1185.png/200px-Gray1185.png"
+property_value: depicted:by http://upload.wikimedia.org/wikipedia/commons/5/5c/Gray1185.png
+property_value: depicted:by http://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Gray1185.png/200px-Gray1185.png
 property_value: homology_notes "All craniates have groups of cells homologous to the mammalian adrenocortical and chromaffin tissues (medulla), but they are scattered in and near the kidneys in fishes. (...) The cortical and chromaffin tissues come together to form adrenal glands in tetrapods.[well established][VHOG]" xsd:string {date_retrieved="2012-09-17", external_class="VHOG:0001481", ontology="VHOG", source="http://bgee.unil.ch/", source="ISBN:978-0030223693 Liem KF, Bemis WE, Walker WF, Grande L, Functional Anatomy of the Vertebrates: An Evolutionary Perspective (2001) p.518 and Figure 15-9"}
 property_value: taxon_notes "Kardong states that mammals are the first to have distinct cortext and medulla, but this contradicts XAO" xsd:string
 
@@ -469,7 +469,7 @@ is_a: UBERON:0002530 ! gland
 intersection_of: UBERON:0002530 ! gland
 intersection_of: part_of UBERON:0000949 ! endocrine system
 relationship: part_of UBERON:0000949 ! endocrine system
-property_value: depicted:by "http://upload.wikimedia.org/wikipedia/commons/d/da/Illu_endocrine_system.png"
+property_value: depicted:by http://upload.wikimedia.org/wikipedia/commons/d/da/Illu_endocrine_system.png
 
 [Term]
 id: UBERON:0002369
@@ -514,8 +514,8 @@ xref: XAO:0000164
 is_a: UBERON:0006858 ! adrenal/interrenal gland
 relationship: part_of UBERON:0000916 ! abdomen
 relationship: part_of UBERON:0000949 ! endocrine system
-property_value: depicted:by "http://upload.wikimedia.org/wikipedia/commons/9/9d/Illu_endocrine_system_New.png"
-property_value: depicted:by "http://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Illu_endocrine_system.jpg/200px-Illu_endocrine_system.jpg"
+property_value: depicted:by http://upload.wikimedia.org/wikipedia/commons/9/9d/Illu_endocrine_system_New.png
+property_value: depicted:by http://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Illu_endocrine_system.jpg/200px-Illu_endocrine_system.jpg
 property_value: external_definition "Anatomical structure which is found on the surface of the kidney and secretes various hormones including epinephrine, norephinephrine, aldosterone, corticosterone, and cortisol.[AAO]" xsd:string {date_retrieved="2012-06-20", external_class="AAO:0010551", ontology="AAO", source="AAO:BJB"}
 property_value: function_notes "suprarenal cortex manufactures corticosteroids; suprarenal medulla manufactures epinephrine and norepinephrine; suprarenal medulla receives preganglionic sympathetic innervation from the greater thoracic splanchnic n." xsd:string
 property_value: homology_notes "All craniates have groups of cells homologous to the mammalian adrenocortical and chromaffin tissues, but they are scattered in and near the kidneys in fishes. (...) The cortical and chromaffin tissues come together to form adrenal glands in tetrapods.[well established][VHOG]" xsd:string {date_retrieved="2012-09-17", external_class="VHOG:0001141", ontology="VHOG", source="http://bgee.unil.ch/", source="ISBN:978-0030223693 Liem KF, Bemis WE, Walker WF, Grande L, Functional Anatomy of the Vertebrates: An Evolutionary Perspective (2001) p.518 and Figure 15-9"}
@@ -572,7 +572,7 @@ xref: OpenCyc:Mx4rwP3vyJwpEbGdrcN5Y29ycA
 xref: UMLS:C1285092 {source="ncithesaurus:Gland"}
 xref: WikipediaCategory:Glands
 is_a: UBERON:0000062 ! organ
-property_value: depicted:by "http://upload.wikimedia.org/wikipedia/commons/a/a1/Gray1026.png"
+property_value: depicted:by http://upload.wikimedia.org/wikipedia/commons/a/a1/Gray1026.png
 property_value: has_relational_adjective "glandular" xsd:string
 
 [Term]
