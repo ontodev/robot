@@ -6,13 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Downgrade SnakeYaml to 1.31 [#1070]
+
+## [1.9.1] - 2022-10-28
 
 ### Added
+- [`extract`] and [`merge`] should optionally inject provenance [#977]
 - Checking for empty strings in addition to missing ones in `missing_label.rq` [#1017]
 - Add "domain" and "range" support to export [#1061]
 
 ### Fixed
+- Fixed report serialization in JSON [#1016]
 - Fix missing labels in [`diff`] output. [#1026]
+- input IRI now takes catalog file into account [#1030]
 
 ## [1.9.0] - 2022-06-16
 
@@ -282,7 +288,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.1...HEAD
+[1.9.1]: https://github.com/ontodev/robot/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/ontodev/robot/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/ontodev/robot/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
@@ -310,6 +317,7 @@ First official release of ROBOT!
 [`diff`]: http://robot.obolibrary.org/diff
 [`explain`]: http://robot.obolibrary.org/explain
 [`export`]: http://robot.obolibrary.org/export
+[`expand`]: http://robot.obolibrary.org/expand
 [`extract`]: http://robot.obolibrary.org/extract
 [`filter`]: http://robot.obolibrary.org/filter
 [`measure`]: http://robot.obolibrary.org/measure
@@ -326,10 +334,15 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#1061]: https://github.com/ontodev/robot/issues/1061
+[#1030]: https://github.com/ontodev/robot/issues/1030
+[#1026]: https://github.com/ontodev/robot/issues/1026
+[#1017]: https://github.com/ontodev/robot/issues/1017
+[#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#1005]: https://github.com/ontodev/robot/pull/1005
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
+[#977]: https://github.com/ontodev/robot/pull/977
 [#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
 [#964]: https://github.com/ontodev/robot/pull/964

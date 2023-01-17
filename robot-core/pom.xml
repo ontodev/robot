@@ -42,7 +42,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.9.0</version> <!-- japicmp target -->
+              <version>1.9.1</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -188,7 +188,7 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.28</version>
+      <version>1.31</version>
     </dependency>
     <dependency>
       <groupId>com.opencsv</groupId>
