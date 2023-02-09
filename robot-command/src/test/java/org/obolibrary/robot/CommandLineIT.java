@@ -81,8 +81,8 @@ public class CommandLineIT {
   }
 
   /**
-   * Ensure that the examples/results/ directory exists and is empty,
-   * and that the `target/integration-tests.txt` file is deleted.
+   * Ensure that the examples/results/ directory exists and is empty, and that the
+   * `target/integration-tests.txt` file is deleted.
    *
    * @throws Exception if directory cannot be created or emptied
    */

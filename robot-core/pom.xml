@@ -58,6 +58,11 @@
             <!-- include on breaking changes
             <excludes></excludes>
             -->
+            <ignoreMissingClassesByRegularExpressions>
+            	<!-- To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on owlapi 4.5.24 upgrade:  -->
+            	<!-- This ignore can be removed in consecutive releases -->
+            	<ignoreMissingClassesByRegularExpression>org.openrdf.rio.*</ignoreMissingClassesByRegularExpression>
+            </ignoreMissingClassesByRegularExpressions>
           </parameter>
         </configuration>
         <executions>
@@ -81,7 +86,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.6</version>
+      <version>4.5.24</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -92,7 +97,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.6</version>
+      <version>4.5.24</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -103,7 +108,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.6</version>
+      <version>4.5.24</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>

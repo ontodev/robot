@@ -30,8 +30,8 @@
     "dt_builtin_count_incl": 2,
     "dt_notbuiltin_count": 0,
     "dt_notbuiltin_count_incl": 0,
-    "expressivity": "SRIQ",
-    "expressivity_incl": "SRIQ",
+    "expressivity": "UCINTERIQ",
+    "expressivity_incl": "UCINTERIQ",
     "gci_count": 0,
     "gci_count_incl": 0,
     "gci_hidden_count": 105,
@@ -46,8 +46,8 @@
     "most_freq_concept_incl": "http://purl.obolibrary.org/obo/UBERON_0007530",
     "multiple_inheritance_count": 103,
     "multiple_inheritance_count_incl": 103,
-    "named_supercl_count_max": 1,
-    "named_supercl_count_max_incl": 1,
+    "named_supercl_count_max": 5,
+    "named_supercl_count_max_incl": 5,
     "obj_property_count": 49,
     "obj_property_count_incl": 49,
     "ontology_anno_count": 0,
@@ -99,16 +99,20 @@
       "InverseObjectProperties"
     ],
     "constructs": [
+      "ROLE_INVERSE",
       "Q",
-      "R",
-      "S",
-      "I"
+      "CONCEPT_UNION",
+      "CONCEPT_INTERSECTION",
+      "FULL_EXISTENTIAL",
+      "ROLE_COMPLEX"
     ],
     "constructs_incl": [
+      "ROLE_INVERSE",
       "Q",
-      "R",
-      "S",
-      "I"
+      "CONCEPT_UNION",
+      "CONCEPT_INTERSECTION",
+      "FULL_EXISTENTIAL",
+      "ROLE_COMPLEX"
     ],
     "datatypes_builtin": [
       "XSD_STRING",
@@ -172,12 +176,17 @@
       "foaf": "http://xmlns.com/foaf/0.1/",
       "BSPO": "http://purl.obolibrary.org/obo/BSPO_"
     },
-    "datatypes_axiom_count": {},
-    "datatypes_axiom_count_incl": {},
+    "datatypes_axiom_count": {
+      "XSD_STRING": 751
+    },
+    "datatypes_axiom_count_incl": {
+      "XSD_STRING": 751
+    },
     "namespace_axiom_count": {
       "oboInOwl": 4819,
       "IAO": 306,
       "UBERON": 1903,
+      "xsd": 751,
       "rdfs": 308,
       "BFO": 283,
       "obo": 235,
@@ -189,6 +198,7 @@
       "oboInOwl": 4819,
       "IAO": 306,
       "UBERON": 1903,
+      "xsd": 751,
       "rdfs": 308,
       "BFO": 283,
       "obo": 235,

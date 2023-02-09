@@ -389,10 +389,15 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (iri != null) {
       return dataFactory.getOWLDataProperty(iri);
     }
-    if (ioHelper != null) {
-      iri = ioHelper.createIRI(name);
-      if (iri != null) {
-        return dataFactory.getOWLDataProperty(iri);
+    // prevent punning
+    if (!objectProperties.containsKey(name)) {
+      if (ioHelper != null) {
+        iri = ioHelper.createIRI(name);
+        if (iri != null) {
+          OWLDataProperty owlDataProperty = dataFactory.getOWLDataProperty(iri);
+          dataProperties.put(name, iri);
+          return owlDataProperty;
+        }
       }
     }
     return null;
@@ -465,10 +470,15 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (iri != null) {
       return dataFactory.getOWLObjectProperty(iri);
     }
-    if (ioHelper != null) {
-      iri = ioHelper.createIRI(name);
-      if (iri != null) {
-        return dataFactory.getOWLObjectProperty(iri);
+    // prevent punning
+    if (!dataProperties.containsKey(name)) {
+      if (ioHelper != null) {
+        iri = ioHelper.createIRI(name);
+        if (iri != null) {
+          OWLObjectProperty owlObjectProperty = dataFactory.getOWLObjectProperty(iri);
+          objectProperties.put(name, iri);
+          return owlObjectProperty;
+        }
       }
     }
     return null;

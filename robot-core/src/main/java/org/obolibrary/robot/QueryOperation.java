@@ -17,11 +17,10 @@ import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.update.UpdateAction;
-import org.openrdf.model.BNode;
-import org.openrdf.model.Literal;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.rio.RDFHandler;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.*;
@@ -170,12 +169,13 @@ public class QueryOperation {
         object =
             new ResourceImpl(
                 new AnonId(modelUniqueBlankNodePrefix + ((BNode) triple.getObject()).getID()));
-      } else if (triple.getObject() instanceof URI) {
+      } else if (triple.getObject() instanceof org.eclipse.rdf4j.model.IRI) {
         object = ResourceFactory.createResource(triple.getObject().stringValue());
       } else {
         Literal literal = (Literal) (triple.getObject());
-        if (literal.getLanguage() != null) {
-          object = ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage());
+        if (literal.getLanguage().isPresent()) {
+          object =
+              ResourceFactory.createLangLiteral(literal.getLabel(), literal.getLanguage().get());
         } else if (literal.getDatatype() != null) {
           object =
               ResourceFactory.createTypedLiteral(
