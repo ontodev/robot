@@ -10,7 +10,7 @@ General annotations can be added one-by-one with `--annotation`, and the IRIs ca
       --annotation rdfs:comment "Comment" \
       --annotation rdfs:label "Label" \
       --annotation-file annotations.ttl \
-      --output results/annotated.owl
+      --output results/edit-annotated.owl
 
 Or all at once from a turtle (.ttl) file with `--annotation-file`:
 <!-- DO NOT TEST -->

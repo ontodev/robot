@@ -187,8 +187,10 @@ If the command includes `--ancestors`, the result ontology will include the ance
 
 Create an output ontology that includes the input ontology and the terms defined in the template:
 
-    robot template --merge-before --input edit.owl \
-     --template part_of_template.csv --output part_of_uberon.owl
+    robot template --merge-before \
+      --input edit.owl \
+      --template part_of_template.csv \
+      --output results/part_of_uberon.owl
 
 
 Create two outputs -- the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):

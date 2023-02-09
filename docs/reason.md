@@ -124,7 +124,7 @@ to get meaningful results:
 
     robot reason --input ro-base.owl --reasoner hermit
       --axiom-generators "ObjectPropertyRange ObjectPropertyDomain"
-      --output ro-base-reasoned.owl
+      --output results/ro-base-reasoned.owl
 
 
 If you are only passing one axiom generator, it does not need to be surrounded by double quotes.
