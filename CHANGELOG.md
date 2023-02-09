@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Downgrade SnakeYaml to 1.31 [#1070]
+- Upgrade OWLAPI to 4.5.24 [#1086]
+- Downgrade SnakeYaml to 1.31 [#1071]
 
 ## [1.9.1] - 2022-10-28
 
@@ -332,6 +333,8 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1086]: https://github.com/ontodev/robot/pull/1086
+[#1071]: https://github.com/ontodev/robot/pull/1071
 [#1061]: https://github.com/ontodev/robot/issues/1061
 [#1030]: https://github.com/ontodev/robot/issues/1030
 [#1026]: https://github.com/ontodev/robot/issues/1026
