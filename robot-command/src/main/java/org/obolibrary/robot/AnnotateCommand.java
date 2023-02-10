@@ -6,7 +6,11 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.vocab.PROVVocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,21 +65,32 @@ public class AnnotateCommand implements Command {
     o.addOption("i", "input", true, "convert ontology from a file");
     o.addOption("I", "input-iri", true, "convert ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
+    o.addOption(
+        "f",
+        "annotate-derived-from",
+        true,
+        "if true, annotate all axioms in the ontology with the ontology version IRI");
+    o.addOption(
+        "d",
+        "annotate-defined-by",
+        true,
+        "if true, annotate all entities in the ontology with the ontology IRI");
+
     options = o;
 
-    // Annotate with a property and plain literal - expects 2 args
+    // Annotate with a property and string literal - expects 2 args
     Option a = new Option("a", "annotate ontology with PROP VALUE");
     a.setLongOpt("annotation");
     a.setArgs(2);
     options.addOption(a);
 
-    // Annotate with a property and plain literal - expects 2 args
+    // Annotate with a property an IRI - expects 2 args
     a = new Option("k", "annotate ontology with PROP IRI");
     a.setLongOpt("link-annotation");
     a.setArgs(2);
     options.addOption(a);
 
-    // Annotate with a property and a plain literal with a language tag - expects 3 args
+    // Annotate with a property and a language literal - expects 3 args
     a = new Option("l", "annotate ontology with PROP VALUE LANG");
     a.setLongOpt("language-annotation");
     a.setArgs(3);
@@ -271,6 +286,41 @@ public class AnnotateCommand implements Command {
     if (ontologyIRI != null || versionIRI != null) {
       hasAnnotation = true;
       OntologyHelper.setOntologyIRI(ontology, ontologyIRI, versionIRI);
+    }
+
+    // Annotate all axioms with version IRI
+    boolean derivedFrom = CommandLineHelper.getBooleanValue(line, "annotate-derived-from", false);
+    if (derivedFrom) {
+      hasAnnotation = true;
+      IRI provenanceIRI =
+          ontology
+              .getOntologyID()
+              .getVersionIRI()
+              .or(ontology.getOntologyID().getOntologyIRI().orNull());
+      if (provenanceIRI != null) {
+        OWLAnnotationProperty annotationProp =
+            ontology
+                .getOWLOntologyManager()
+                .getOWLDataFactory()
+                .getOWLAnnotationProperty(PROVVocabulary.WAS_DERIVED_FROM.getIRI());
+        for (OWLAxiom axiom : ontology.getAxioms()) {
+          OntologyHelper.addAxiomAnnotation(ontology, axiom, annotationProp, provenanceIRI, false);
+        }
+      }
+    }
+
+    // Annotate all entities with ontology IRI
+    boolean definedBy = CommandLineHelper.getBooleanValue(line, "annotate-defined-by", false);
+    if (definedBy) {
+      hasAnnotation = true;
+      IRI ontIRI = ontology.getOntologyID().getOntologyIRI().orNull();
+      if (ontIRI != null) {
+        OWLAnnotationProperty rdfsIsDefinedBy =
+            ontology.getOWLOntologyManager().getOWLDataFactory().getRDFSIsDefinedBy();
+        for (OWLEntity owlEntity : ontology.getSignature()) {
+          OntologyHelper.addEntityAnnotation(ontology, owlEntity, rdfsIsDefinedBy, ontIRI, false);
+        }
+      }
     }
 
     // Validate that annotations were provided

@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
+import org.geneontology.obographs.owlapi.OboGraphJsonDocumentFormat;
 import org.junit.Test;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.IRI;
@@ -324,7 +324,15 @@ public class IOHelperTest extends CoreTest {
     IOHelper ioHelper = new IOHelper();
     ioHelper.setStrict(true);
     String input =
-        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n_:Bb65616 rdf:type rdf:Statement .";
+        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ."
+            .concat("\n\n")
+            .concat("@prefix foo: <http://example.com#> .")
+            .concat("\n\n")
+            .concat("_:Bb65616 rdf:type rdf:Statement ;")
+            .concat("\n\n")
+            .concat("rdf:object foo:Bar ;")
+            .concat("\n\n")
+            .concat("rdf:subject foo:Foo .");
     InputStream inputStream = new ByteArrayInputStream(input.getBytes());
     boolean pass = false;
     try {

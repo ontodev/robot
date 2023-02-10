@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://example.com#"
+     xml:base="http://example.com"
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/edit3.owl"/>
+
+    <!-- https://github.com/ontodev/robot/examples/foo.owl#test -->
+
+    <owl:Class rdf:about="https://github.com/ontodev/robot/examples/foo.owl#test">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">test</rdfs:label>
+    </owl:Class>
+
+</rdf:RDF>

@@ -1,10 +1,10 @@
 # Missing Label
 
-**Problem:** An entity does not have a label. This may cause confusion or misuse. Excludes deprecated entities.
+**Problem:** An entity does not have a label or the label is empty. This may cause confusion or misuse. Excludes deprecated entities.
 
 **OBO Foundry Principle:** [12 - Naming Conventions](http://www.obofoundry.org/principles/fp-012-naming-conventions.html)
 
-**Solution:** Add a label.
+**Solution:** Add a label, or make it non-empty.
 
 ```sparql
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -15,7 +15,10 @@ PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
 SELECT DISTINCT ?entity ?property ?value WHERE {
   VALUES ?property { rdfs:label }
   ?entity ?any ?o .
-  FILTER NOT EXISTS { ?entity ?property ?value }
+  FILTER NOT EXISTS {
+     ?entity ?property ?value .
+     FILTER(str(?value) != "")
+  }
   FILTER NOT EXISTS { ?entity a owl:Ontology }
   FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER NOT EXISTS {

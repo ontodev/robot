@@ -39,12 +39,12 @@ Instead of specifying one or more pairs (query file, output file), you can speci
 
 ## Handling Imports
 
-By default, `query` ignores import statements. To include all imports as named graphs, add `--use-graphs true`. 
+By default, `query` ignores import statements. To include all imports as named graphs, add `--use-graphs true`.
 
     robot query --input imports.owl \
       --use-graphs true --catalog catalog.xml \
       --query named_graph.sparql results/named_graph.csv
-      
+
 The example above also uses the [global](/global)  `--catalog` option to specify the catalog file for the import mapping. The default graph is the union of all graphs, which allows querying over an ontology and all its imports.
 
 The names of the graphs correspond to the ontology IRIs of the imports. If the import does not have an ontology IRI, one will be automatically generated. Running `query` with the `-vv` flag will print the names of all graphs as they are added.
@@ -70,13 +70,22 @@ The `--update` option only updates the ontology itself, not any of the imports.
 
 **Warning:** The output of SPARQL updates will not include `xsd:string` datatypes, because `xsd:string` is considered implicit in RDF version 1.1. This behaviour differs from other ROBOT commands, where `xsd:string` datatypes from the input are maintained in the output.
 
+### Storing intermediate results on Disk
+
+For very large ontologies, saving heap memory might be beneficial. You can use `--temporary-file true` to ensure that intermediate results will be stored to a temporary file. Note that this makes the execution slower.
+
+    robot query --input nucleus.owl \
+      --update update.ru \
+      --temporary-file true \
+      --output results/nucleus_update_2.owl
+
 ## Executing on Disk
 
 For very large ontologies, it may be beneficial to load the ontology to a mapping file on disk rather than loading it into memory. This is supported by [Jena TDB Datasets](http://jena.apache.org/documentation/tdb/datasets.html). To execute a query with TDB, use `--tdb true`:
- 
+
     robot query --input nucleus.ttl --tdb true \
      --query cell_part.sparql results/cell_part.csv
- 
+
 Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`. If a `--tdb-directory` is specified, you do not need to include `--tdb true`. If you've already created a TDB directory, you can query from the TDB dataset without needing to specify an `--input` - just include the `--tdb-directory`.
 
 Once the query operation is complete, ROBOT will remove the TDB directory. If you are performing many query commands on one ontology, you can include `--keep-tdb-mappings true` to prevent ROBOT from removing the TDB directory. This will greatly reduce the execution time of subsequent queries.
@@ -103,7 +112,7 @@ The file provided for `--update` does not exist. Check the path and try again.
 
 ### Missing Output Error
 
-The `--query`, `--select`, and `--construct` options require two arguments: a query file and an output file (`--query <query> <output>`). 
+The `--query`, `--select`, and `--construct` options require two arguments: a query file and an output file (`--query <query> <output>`).
 
 ### Missing Query Error
 

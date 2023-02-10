@@ -61,6 +61,8 @@ Various `--header` types are supported:
 	* `Equivalent Property`: creates an "Equivalent Properties" column based on `owl:equivalentProperty`
 	* `Disjoint With`: creates a "Disjoint With" column based on `owl:disjointWith`
 	* `Type`: creates an "Instance Of" column based on `rdf:type` for named individuals or the OWL EntityType for all others (e.g., `Class`)
+  * `Domain`: creates a "Domain" column based on `rdfs:domain`
+  * `Range`: creates a "Range" column based on `rdfs:range`
 * **Property CURIES**: you can always reference a property by the short form of the unique identifier (e.g. `oboInOwl:hasDbXref`). Any prefix used [must be defined](global#prefixes).
 * **Property Labels**: as long as a property label is defined in the input ontology, you can reference a property by label (e.g. `database_cross_reference`). This label will also be used as the column header.
 

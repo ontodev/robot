@@ -74,9 +74,9 @@ Sometimes you want to include zero or more values in a single spreadsheet cell, 
     - ROBOT uses the same syntax for class expressions as Protégé: [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax). This means that an entity can be referred to by its `rdfs:label` (enclosing in single quotes if it has a space in it).
     - If it does not recognize a label, ROBOT will assume that you're trying to refer to a class by its IRI (or compact IRI). This can lead to unexpected behaviour, but it allows you to refer to classes (by IRI) without loading them into the input ontology. This is particularly useful when the input ontology would be too large, such as the NCBI Taxonomy.
     - Properties in class expressions **must** be referred to by label in order to be parsed.
-- `SC %`: the class will be asserted to be a subclass of the class expression in this column
-- `EC %`: the class will be asserted to be an equivalent class of the intersection of *all* `EC` class expressions in a row
-- `DC %`: the class will be asserted to be disjoint with the class expression in this column
+- `SC %`: the class will be asserted to be a subclass of the class expression in this column (same as class type `subclass`)
+- `EC %`: the class will be asserted to be an equivalent class of the intersection of the `EC` class expressions in a row (same as class type `equivalent`)
+- `DC %`: the class will be asserted to be disjoint with the class expression in this column (same as class type `disjoint`)
 - `C %`: the class will be asserted as specified in the `CLASS_TYPE` column
 - `CLASS_TYPE`: an optional column that specifies the type for all `C` columns. This allows different rows to have different types of logical definitions. Valid values are:
     - `subclass`: the values of all `C` columns will be asserted as subclasses (this is the default)
@@ -187,8 +187,10 @@ If the command includes `--ancestors`, the result ontology will include the ance
 
 Create an output ontology that includes the input ontology and the terms defined in the template:
 
-    robot template --merge-before --input edit.owl \
-     --template part_of_template.csv --output part_of_uberon.owl
+    robot template --merge-before \
+      --input edit.owl \
+      --template part_of_template.csv \
+      --output results/part_of_uberon.owl
 
 
 Create two outputs -- the templated terms ([`uberon_template.owl`](/examples/uberon_template.owl)) and the input ontology merged with the output ontology with an annotation ([`uberon_v2.owl`](/examples/uberon_v2)):

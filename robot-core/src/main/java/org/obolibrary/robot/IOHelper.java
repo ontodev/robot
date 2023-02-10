@@ -29,10 +29,10 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.tdb.TDBFactory;
-import org.geneontology.obographs.io.OboGraphJsonDocumentFormat;
-import org.geneontology.obographs.io.OgJsonGenerator;
-import org.geneontology.obographs.model.GraphDocument;
+import org.geneontology.obographs.core.io.OgJsonGenerator;
+import org.geneontology.obographs.core.model.GraphDocument;
 import org.geneontology.obographs.owlapi.FromOwl;
+import org.geneontology.obographs.owlapi.OboGraphJsonDocumentFormat;
 import org.obolibrary.obo2owl.OWLAPIOwl2Obo;
 import org.obolibrary.oboformat.model.FrameStructureException;
 import org.obolibrary.oboformat.model.OBODoc;
@@ -510,7 +510,8 @@ public class IOHelper {
         ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
       } else {
         // Otherwise load ontology as normal
-        ontology = loadOntology(manager, new IRIDocumentSource(ontologyIRI));
+        IRI documentIRI = getDocumentIRIFromMappers(manager, ontologyIRI);
+        ontology = loadOntology(manager, new IRIDocumentSource(documentIRI));
       }
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
@@ -594,6 +595,25 @@ public class IOHelper {
     }
     // No issues, return ontology
     return loadedOntology;
+  }
+
+  private IRI getDocumentIRIFromMappers(OWLOntologyManager m, IRI iri) {
+    if (iri == null) {
+      return null;
+    }
+    final Iterator<OWLOntologyIRIMapper> var4 = m.getIRIMappers().iterator();
+
+    IRI documentIRI;
+    do {
+      if (!var4.hasNext()) {
+        return iri;
+      }
+
+      OWLOntologyIRIMapper mapper = var4.next();
+      documentIRI = mapper.getDocumentIRI(iri);
+    } while (documentIRI == null);
+
+    return documentIRI;
   }
 
   /**
@@ -931,7 +951,9 @@ public class IOHelper {
       }
     } catch (Exception e) {
       logger.warn("Could not create IRI for {}", term);
-      logger.warn(e.getMessage());
+      if (e.getMessage() != null) {
+        logger.warn(e.getMessage());
+      }
       return null;
     }
 
@@ -1747,7 +1769,7 @@ public class IOHelper {
         }
         throw new IOException(String.format(ontologyStorageError, ontologyIRI), e);
       } catch (NullPointerException e) {
-        if (format instanceof OBODocumentFormat) {
+        if (format instanceof OBODocumentFormat && !checkOBO) {
           // Critical OBO structure error
           throw new IOException(
               "OBO STRUCTURE ERROR ontology cannot be saved in OBO format. Please use '--check true' to see cause.");
