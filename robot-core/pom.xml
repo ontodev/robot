@@ -298,5 +298,16 @@
       <artifactId>py4j</artifactId>
       <version>0.10.9.2</version>
     </dependency>
+    <dependency>
+	  <groupId>org.geneontology</groupId>
+	  <artifactId>relation-graph_${scala.version}</artifactId>
+	  <version>2.2.1</version>
+	  <exclusions>
+        <exclusion>
+          <groupId>org.apache.jena</groupId>
+          <artifactId>apache-jena-libs</artifactId>
+        </exclusion>
+      </exclusions>
+	</dependency>
   </dependencies>
 </project>

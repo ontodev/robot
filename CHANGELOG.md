@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Subset method added to [`extract`] [#1000]
+
 ## [1.9.2] - 2023-02-09
 
 ### Changed
@@ -341,6 +344,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1000]: https://github.com/ontodev/robot/pull/1000
 [#1086]: https://github.com/ontodev/robot/pull/1086
 [#1084]: https://github.com/ontodev/robot/issues/1084
 [#1071]: https://github.com/ontodev/robot/pull/1071

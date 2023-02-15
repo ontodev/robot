@@ -5,9 +5,10 @@
 1. [Overview](#overview)
 2. [Extraction method: SLME](#syntactic-locality-module-extractor-slme)
 3. [Extraction method: MIREOT](#mireot)
-4. [Handling Imports (`--imports`)](#handling-imports)
-5. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
-6. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
+4. [Extraction method: Subset](#subset)
+5. [Handling Imports (`--imports`)](#handling-imports)
+6. [Extracting Ontology Annotations (`--copy-ontology-annotations`)](#extracting-ontology-annotations)
+7. [Adding Source Annotations (`--annotate-with-source`)](#adding-source-annotations)
 
 ## Overview
 
@@ -73,6 +74,19 @@ To only include all descendants of a term or set of terms, use `--branch-from-te
 Note that if the same IRI is used for both a class and an individual, MIREOT will ignore the individual and only extract the class.
 
 For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
+
+## Subset
+
+The subset method extracts a sub-ontology that contains only the seed terms (that you specify with `--term` and `--term-file` options) and the relations between them. This method uses the [relation-graph](https://github.com/balhoff/relation-graph) to materialize the existential relations among the seed terms. Procedurally, the subset method materializes the input ontology and adds the inferred axioms to the input ontology. Then filters the ontology with the given seed terms. Finally, it reduces the filtered ontology to remove redundant subClassOf axioms.
+
+    robot extract --method subset \
+        --input subset.obo \
+        --term "obo:ONT_1" \
+        --term "obo:ONT_5" \
+        --term "BFO:0000050" \
+        --output results/subset_result.owl
+        
+ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ontology. If none of the input terms exist, the command will fail with an [empty terms error](errors#empty-terms-error). This can be overridden by including `--force true`. 
 
 ### Intermediates
 
