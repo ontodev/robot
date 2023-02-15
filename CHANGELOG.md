@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Subset method added to [`extract`] [#1000]
 
+### Fixed
+- Restore logging details for CLI [#1091]
+
 ## [1.9.2] - 2023-02-09
 
 ### Changed
@@ -344,7 +347,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
-[#1000]: https://github.com/ontodev/robot/pull/1000
+[#1091]: https://github.com/ontodev/robot/issues/1091
 [#1086]: https://github.com/ontodev/robot/pull/1086
 [#1084]: https://github.com/ontodev/robot/issues/1084
 [#1071]: https://github.com/ontodev/robot/pull/1071
@@ -354,6 +357,7 @@ First official release of ROBOT!
 [#1017]: https://github.com/ontodev/robot/issues/1017
 [#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
+[#1000]: https://github.com/ontodev/robot/pull/1000
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#977]: https://github.com/ontodev/robot/pull/977
