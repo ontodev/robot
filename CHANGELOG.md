@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Upgrade OWLAPI to 4.5.25 [#1093]
+- Fixing OBO Serialiser erroneous logging [#1088]
+- Fixing OBO Serialiser bug where built in vocabulary was introduced as annotation properties [#1089]
 
 ## [1.9.2] - 2023-02-09
+- Upgrade OWLAPI to 4.5.24 [#1086]
 
 ### Changed
 - Upgrade OWLAPI to 4.5.24 [#1086]
