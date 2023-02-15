@@ -20,13 +20,21 @@ public class ReportOperationTest extends CoreTest {
   private static final String oboInOwl = "http://www.geneontology.org/formats/oboInOwl#";
   private static final String obo = "http://purl.obolibrary.org/obo/";
 
-  /** Test report produces correct JSON. */
+  /**
+   * Test report produces correct JSON.
+   *
+   * @throws Exception on any problem
+   */
   @Test
   public void testReportProducesValidJson() throws Exception {
     testReportProducesCorrectOutput("json");
   }
 
-  /** Test report produces correct YAML. */
+  /**
+   * Test report produces correct YAML.
+   *
+   * @throws Exception on any problem
+   */
   @Test
   public void testReportProducesValidYaml() throws Exception {
     testReportProducesCorrectOutput("yaml");
