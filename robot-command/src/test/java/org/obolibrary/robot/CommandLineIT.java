@@ -231,9 +231,18 @@ public class CommandLineIT {
       }
       runCommand(command);
     }
-    // Regression test for dropped axiom:
+
+    // Regression test for dropped axiom should fail:
     // https://github.com/ontodev/robot/issues/98
-    runCommand("robot convert -i dropped_axiom.owl -o " + "results/dropped_axiom.owl");
+    boolean passed = true;
+    try {
+      runCommand("robot convert -i dropped_axiom.owl -o " + "results/dropped_axiom.owl");
+    } catch (Exception e) {
+      passed = false;
+    }
+    if (passed) {
+      throw new Exception("dropped_axiom.owl test should fail but it passed");
+    }
 
     compareResults();
   }
