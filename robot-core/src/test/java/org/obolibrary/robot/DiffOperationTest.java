@@ -85,7 +85,7 @@ public class DiffOperationTest extends CoreTest {
    * OWL API ontology equality only compares the ontology ID. This test confirms this and verifies
    * that we can use an identity-based set for collections of ontologies when needed.
    *
-   * @throws OWLOntologyCreationException
+   * @throws OWLOntologyCreationException if test ontology cannot be created
    */
   @Test
   public void testOntologyEquality() throws OWLOntologyCreationException {
