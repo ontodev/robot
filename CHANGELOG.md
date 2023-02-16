@@ -6,18 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Upgrade OWLAPI to 4.5.25 [#1093]
-- Fixing OBO Serialiser erroneous logging [#1088]
-- Fixing OBO Serialiser bug where built in vocabulary was introduced as annotation properties [#1089]
+
+## [1.9.3] - 2023-02-16
 
 ### Added
 - Subset method added to [`extract`] [#1000]
 
+### Changed
+- Upgrade OWLAPI to 4.5.25 [#1093]
+
 ### Fixed
 - Restore logging details for CLI [#1091]
+- Fix OBO Serialiser bug where built in vocabulary was introduced as annotation properties [#1089]
+- Fix OBO Serialiser erroneous logging [#1088]
 
 ## [1.9.2] - 2023-02-09
-- Upgrade OWLAPI to 4.5.24 [#1086]
 
 ### Changed
 - Upgrade OWLAPI to 4.5.24 [#1086]
@@ -305,7 +308,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.2...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.3...HEAD
+[1.9.3]: https://github.com/ontodev/robot/compare/v1.9.2...v1.9.3
 [1.9.2]: https://github.com/ontodev/robot/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/ontodev/robot/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/ontodev/robot/compare/v1.8.4...v1.9.0
@@ -352,6 +356,8 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#1091]: https://github.com/ontodev/robot/issues/1091
+[#1089]: https://github.com/ontodev/robot/issues/1089
+[#1088]: https://github.com/ontodev/robot/issues/1088
 [#1086]: https://github.com/ontodev/robot/pull/1086
 [#1084]: https://github.com/ontodev/robot/issues/1084
 [#1071]: https://github.com/ontodev/robot/pull/1071
