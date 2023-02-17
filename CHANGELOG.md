@@ -7,11 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add `--drop-axiom-annotation` option to drop axiom annotations in [`remove`] and [`filter`] [#1023]
+
+## [1.9.2] - 2023-02-09
+
+### Changed
+- Upgrade OWLAPI to 4.5.24 [#1086]
+
+### Fixed
+- Downgrade SnakeYaml to 1.31 [#1071]
+- Don't check for disjoint annotation properties [#1084]
+
+## [1.9.1] - 2022-10-28
+
+### Added
+- [`extract`] and [`merge`] should optionally inject provenance [#977]
+- Checking for empty strings in addition to missing ones in `missing_label.rq` [#1017]
+- Add "domain" and "range" support to export [#1061]
+
+### Fixed
+- Fixed report serialization in JSON [#1016]
+- Fix missing labels in [`diff`] output. [#1026]
+- input IRI now takes catalog file into account [#1030]
+
 ## [1.9.0] - 2022-06-16
 
 ### Added
 - Add new command: [`expand`] [#964]
-- Add `--drop_axiom_annotation` option to drop axiom annotations in [`remove`] and [`filter`] [#1023]
 
 ### Fixed
 - Fix OBOGraphs by updating `guava` [#1009]
@@ -275,7 +298,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.2...HEAD
+[1.9.2]: https://github.com/ontodev/robot/compare/v1.9.1...v1.9.2
+[1.9.1]: https://github.com/ontodev/robot/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/ontodev/robot/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/ontodev/robot/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/ontodev/robot/compare/v1.8.2...v1.8.3
@@ -303,6 +328,7 @@ First official release of ROBOT!
 [`diff`]: http://robot.obolibrary.org/diff
 [`explain`]: http://robot.obolibrary.org/explain
 [`export`]: http://robot.obolibrary.org/export
+[`expand`]: http://robot.obolibrary.org/expand
 [`extract`]: http://robot.obolibrary.org/extract
 [`filter`]: http://robot.obolibrary.org/filter
 [`measure`]: http://robot.obolibrary.org/measure
@@ -319,9 +345,18 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 
 [#1023]: https://github.com/ontodev/robot/pull/1023
+[#1086]: https://github.com/ontodev/robot/pull/1086
+[#1084]: https://github.com/ontodev/robot/issues/1084
+[#1071]: https://github.com/ontodev/robot/pull/1071
+[#1061]: https://github.com/ontodev/robot/issues/1061
+[#1030]: https://github.com/ontodev/robot/issues/1030
+[#1026]: https://github.com/ontodev/robot/issues/1026
+[#1017]: https://github.com/ontodev/robot/issues/1017
+[#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
+[#977]: https://github.com/ontodev/robot/pull/977
 [#973]: https://github.com/ontodev/robot/pull/973
 [#971]: https://github.com/ontodev/robot/pull/971
 [#964]: https://github.com/ontodev/robot/pull/964

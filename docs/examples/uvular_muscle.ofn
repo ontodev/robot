@@ -7,7 +7,7 @@ Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
 
 
 Ontology(<https://github.com/ontodev/robot/examples/uvular_muscle.ofn>
-Annotation(rdfs:label "Uvular Muscle Explanation"^^xsd:string)
+Annotation(rdfs:label "Uvular Muscle Explanation")
 
 Declaration(Class(<http://purl.obolibrary.org/obo/CL_0000100>))
 Declaration(Class(<http://purl.obolibrary.org/obo/UBERON_0001134>))
@@ -33,20 +33,20 @@ Declaration(ObjectProperty(<http://purl.obolibrary.org/obo/uberon/core#synapsed_
 
 # Object Property: <http://purl.obolibrary.org/obo/BFO_0000050> (part of)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/BFO_0000050> "part of"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/BFO_0000050> "part of")
 TransitiveObjectProperty(<http://purl.obolibrary.org/obo/BFO_0000050>)
 
 # Object Property: <http://purl.obolibrary.org/obo/RO_0002202> (develops_from)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/RO_0002202> "develops_from"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/RO_0002202> "develops_from")
 
 # Object Property: <http://purl.obolibrary.org/obo/RO_0002219> (surrounded_by)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/RO_0002219> "surrounded_by"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/RO_0002219> "surrounded_by")
 
 # Object Property: <http://purl.obolibrary.org/obo/RO_0002473> (composed primarily of)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/RO_0002473> "composed primarily of"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/RO_0002473> "composed primarily of")
 
 # Object Property: <http://purl.obolibrary.org/obo/uberon/core#synapsed_by> (synapsed by)
 
@@ -64,52 +64,52 @@ AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/CL_0000100> "moto
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0001134> (skeletal muscle tissue)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001134> "skeletal muscle tissue"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001134> "skeletal muscle tissue")
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0001630> (muscle organ)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001630> "muscle organ"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001630> "muscle organ")
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0001709> (upper jaw region)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001709> "upper jaw region"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001709> "upper jaw region")
 SubClassOf(<http://purl.obolibrary.org/obo/UBERON_0001709> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050> <http://purl.obolibrary.org/obo/UBERON_0011595>))
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0001716> (secondary palate)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001716> "secondary palate"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001716> "secondary palate")
 SubClassOf(<http://purl.obolibrary.org/obo/UBERON_0001716> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050> <http://purl.obolibrary.org/obo/UBERON_0001709>))
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0001733> (soft palate)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001733> "soft palate"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0001733> "soft palate")
 SubClassOf(<http://purl.obolibrary.org/obo/UBERON_0001733> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050> <http://purl.obolibrary.org/obo/UBERON_0001716>))
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0003082> (myotome)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003082> "myotome"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003082> "myotome")
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0003682> (palatal muscle)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003682> "palatal muscle"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003682> "palatal muscle")
 EquivalentClasses(<http://purl.obolibrary.org/obo/UBERON_0003682> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UBERON_0014892> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050> <http://purl.obolibrary.org/obo/UBERON_0001733>)))
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0010235> (uvular muscle)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0010235> "uvular muscle"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0010235> "uvular muscle")
 SubClassOf(<http://purl.obolibrary.org/obo/UBERON_0010235> <http://purl.obolibrary.org/obo/UBERON_0003682>)
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0011595> (jaw region)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0011595> "jaw region"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0011595> "jaw region")
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0011899> (epimysium)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0011899> "epimysium"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0011899> "epimysium")
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0014892> (skeletal muscle organ)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0014892> "skeletal muscle organ"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0014892> "skeletal muscle organ")
 EquivalentClasses(<http://purl.obolibrary.org/obo/UBERON_0014892> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UBERON_0001630> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/RO_0002202> <http://purl.obolibrary.org/obo/UBERON_0003082>) ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/RO_0002219> <http://purl.obolibrary.org/obo/UBERON_0011899>) ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/RO_0002473> <http://purl.obolibrary.org/obo/UBERON_0001134>) ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/uberon/core#synapsed_by> <http://purl.obolibrary.org/obo/CL_0000100>)))
 
 

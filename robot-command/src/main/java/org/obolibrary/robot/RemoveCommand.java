@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -47,7 +48,10 @@ public class RemoveCommand implements Command {
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     o.addOption(
-        "d", "drop_axiom_annotation", true, "annotation property to drop axiom annotations");
+        "d",
+        "drop-axiom-annotation",
+        true,
+        "drop all axiom annotations involving a particular annotation property");
     options = o;
   }
 
@@ -151,11 +155,17 @@ public class RemoveCommand implements Command {
       }
     }
 
+    List<IRI> dropProperties =
+        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotation").stream()
+            .map(
+                curie -> CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotation"))
+            .collect(Collectors.toList());
+
     // Get the objects to remove
     Set<OWLObject> relatedObjects = getObjects(line, ioHelper, ontology, selectGroups);
     if (relatedObjects.isEmpty()) {
       // drop specified axiom annotations
-      dropAxiomAnnotations(line, ioHelper, ontology);
+      RelatedObjectsHelper.removeAxiomAnnotations(ontology, dropProperties);
       // nothing to remove - save and exit
       CommandLineHelper.maybeSaveOutput(line, ontology);
       state.setOntology(ontology);
@@ -202,38 +212,13 @@ public class RemoveCommand implements Command {
               copy, baseNamespaces, complementObjects, anonymous, internal, external));
     }
 
-    // remove specified axiom annotations
-    dropAxiomAnnotations(line, ioHelper, ontology);
+    // drop specified axiom annotations
+    RelatedObjectsHelper.removeAxiomAnnotations(ontology, dropProperties);
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);
     state.setOntology(ontology);
     return state;
-  }
-
-  /**
-   * Given a command line and an IOHelper, drops axiom annotations from the given ontology which
-   * uses annotation properties specified by the drop_axiom_annotation argument.
-   *
-   * @param line CommandLine to get options from
-   * @param ioHelper IOHelper to get IRIs
-   * @param ontology OWLOntology to drop axiom annotations from
-   */
-  private void dropAxiomAnnotations(CommandLine line, IOHelper ioHelper, OWLOntology ontology) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    List<String> annotationsToDrop =
-        CommandLineHelper.getOptionalValues(line, "drop_axiom_annotation");
-    if (!annotationsToDrop.isEmpty()) {
-      for (String annotationPropStr : annotationsToDrop) {
-        OWLAnnotationProperty property =
-            manager
-                .getOWLDataFactory()
-                .getOWLAnnotationProperty(
-                    CommandLineHelper.maybeCreateIRI(
-                        ioHelper, annotationPropStr, "drop_axiom_annotation"));
-        RelatedObjectsHelper.removeAxiomAnnotations(ontology, property);
-      }
-    }
   }
 
   /**

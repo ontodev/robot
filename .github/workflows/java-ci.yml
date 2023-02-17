@@ -27,7 +27,7 @@ jobs:
       - name: CI Test
         run: mvn verify
       - name: Upload Artifact
-        if: ${{ matrix.java == 8 }}
+        if: ${{ matrix.java == 11 }}
         uses: actions/upload-artifact@v2
         with:
           name: robot.jar 

@@ -2346,14 +2346,27 @@ public class RelatedObjectsHelper {
   }
 
   /**
+   * Removes all of the axiom annotations for the given annotation properties.
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   * @param properties Annotation property IRIs to remove related axiom annotations.
+   */
+  public static void removeAxiomAnnotations(OWLOntology ontology, List<IRI> properties) {
+    OWLDataFactory owlDataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    properties.stream()
+        .map(iri -> owlDataFactory.getOWLAnnotationProperty(iri))
+        .forEach(p -> RelatedObjectsHelper.removeAxiomAnnotations(ontology, p));
+  }
+
+  /**
    * Removes all of the axiom annotations for the given annotation property.
    *
-   * @param ontology OWLOntology to get axioms
+   * @param ontology OWLOntology to remove axiom annotations
    * @param property Annotation property to remove related axiom annotations.
    */
   public static void removeAxiomAnnotations(OWLOntology ontology, OWLAnnotationProperty property) {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    for (OWLAxiom axiom : ontology.getAxioms()) {
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
       Set<OWLAnnotation> annotationsToRemove = axiom.getAnnotations(property);
       if (!annotationsToRemove.isEmpty()) {
         Set<OWLAnnotation> axiomAnnotations = axiom.getAnnotations();

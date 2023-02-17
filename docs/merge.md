@@ -29,3 +29,20 @@ By adding `--collapse-import-closure false`, the imports will not be merged in a
 The `--include-annotations` option is, by default, `false`. This refers to the ontology annotations, and when merging, these are typically ignored and the output will only include the ontology annotations from the *first* input. 
 
 If you would like to merge the ontology annotations from several inputs, add `--include-annotations true`.
+
+### Provenance Annotations
+
+It’s also possible to annotate the imported or merged ontology axioms with the source ontology or version IRI.
+
+  * `--annotate-derived-from true`: annotates all axioms with the source's version IRI if it exists, else with the ontology IRI, using `prov:wasDerivedFrom`. If the axiom already has an annotation using this property (`prov:wasDerivedFrom`), the existing annotation will be kept and no new annotation will be added.
+
+    robot merge --catalog catalog.xml \
+      --input imports-nucleus.owl \
+      --annotate-derived-from true \
+      --output results/merged_derived_from.owl
+      
+  * `--annotate-defined-by true`: annotates all entities (class, data, annotation, object property and named individual declaration axioms) with the source's IRI using `rdfs:isDefinedBy`. If the term already has an annotation using this property (`rdfs:isDefinedBy`), the existing annotation will be kept and no new annotation will be added.
+
+    robot merge --input example2.owl --input merge.owl \
+      --annotate-defined-by true \
+      --output results/merged_defined_by.owl

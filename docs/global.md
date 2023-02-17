@@ -86,7 +86,7 @@ For example, you may want to [`merge`](/merge) a set of edited import ontologies
 
     robot merge --catalog catalog.xml \
      --input imports.owl \
-    annotate --ontology-iri https://github.com/ontodev/robot/examples/merged.owl\
+     annotate --ontology-iri https://github.com/ontodev/robot/examples/merged.owl \
      --output results/merged_catalog.owl
 
 If a catalog file is specified and cannot be located, the ontology will be loaded without a catalog file. Similarly, if you do not provide a `--catalog` and the `catalog-v001.xml` file does not exist in your working directory, the ontology will be loaded without a catalog file. Finally, if the catalog specifies an import file that does not exist, the command will fail.
