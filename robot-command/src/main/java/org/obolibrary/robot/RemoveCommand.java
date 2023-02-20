@@ -161,7 +161,7 @@ public class RemoveCommand implements Command {
         dropParameters.stream()
             .filter(s -> !s.equalsIgnoreCase("all"))
             .map(
-                curie -> CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotation"))
+                curie -> CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotations"))
             .collect(Collectors.toList());
 
     // Get the objects to remove
