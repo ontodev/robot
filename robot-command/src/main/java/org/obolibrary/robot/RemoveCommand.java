@@ -49,7 +49,7 @@ public class RemoveCommand implements Command {
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
     o.addOption(
         "d",
-        "drop-axiom-annotation",
+        "drop-axiom-annotations",
         true,
         "drop all axiom annotations involving a particular annotation property");
     options = o;
@@ -155,8 +155,11 @@ public class RemoveCommand implements Command {
       }
     }
 
-    List<IRI> dropProperties =
-        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotation").stream()
+    List<String> dropParameters =
+        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotations");
+    List<IRI> annotationsToDrop =
+        dropParameters.stream()
+            .filter(s -> !s.equalsIgnoreCase("all"))
             .map(
                 curie -> CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotation"))
             .collect(Collectors.toList());
@@ -165,7 +168,7 @@ public class RemoveCommand implements Command {
     Set<OWLObject> relatedObjects = getObjects(line, ioHelper, ontology, selectGroups);
     if (relatedObjects.isEmpty()) {
       // drop specified axiom annotations
-      RelatedObjectsHelper.removeAxiomAnnotations(ontology, dropProperties);
+      RelatedObjectsHelper.dropAxiomAnnotations(ontology, annotationsToDrop, dropParameters);
       // nothing to remove - save and exit
       CommandLineHelper.maybeSaveOutput(line, ontology);
       state.setOntology(ontology);
@@ -213,7 +216,7 @@ public class RemoveCommand implements Command {
     }
 
     // drop specified axiom annotations
-    RelatedObjectsHelper.removeAxiomAnnotations(ontology, dropProperties);
+    RelatedObjectsHelper.dropAxiomAnnotations(ontology, annotationsToDrop, dropParameters);
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);

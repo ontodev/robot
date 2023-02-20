@@ -50,7 +50,7 @@ Then `remove --term A --term R --term C --select "self parents" --axioms all --s
     - the objects for `ax2` are `{A, R, C}` (with `R some C` excluded), and at least one of these is in the target set, so `ax2` is matched and removed
     - the objects for `ax3` are `{D, E}`, and none of these are in the target set, so `ax3` is not matched and is not removed
     
-Finally `--drop-axiom-annotation` option lets you to specify an annotation property to drop all axiom annotations using it.
+Finally `--drop-axiom-annotations` option lets you to specify an annotation property to drop all axiom annotations using it. `all` parameter can be used to drop all axiom annotations.
 
 ## Preserving the Structure
 
@@ -235,6 +235,8 @@ Create a "base" subset in which axiom annotations involving IAO:0000117 and IAO:
     robot remove --input template.owl \
       --base-iri http://example.com/ \
       --axioms external \
-      --drop-axiom-annotation IAO:0000117 \
-      --drop-axiom-annotation IAO:0000119 \
+      --drop-axiom-annotations IAO:0000117 \
+      --drop-axiom-annotations IAO:0000119 \
       --output results/template-drop-axiom-remove.owl
+
+      

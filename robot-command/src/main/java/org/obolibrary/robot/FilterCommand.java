@@ -46,7 +46,7 @@ public class FilterCommand implements Command {
         "S", "signature", true, "if true, keep axioms with any selected entity in their signature");
     o.addOption(
         "d",
-        "drop-axiom-annotation",
+        "drop-axiom-annotations",
         true,
         "drop all axiom annotations involving a particular annotation property");
     options = o;
@@ -165,8 +165,11 @@ public class FilterCommand implements Command {
       }
     }
 
-    List<IRI> dropProperties =
-        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotation").stream()
+    List<String> dropParameters =
+        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotations");
+    List<IRI> annotationsToDrop =
+        dropParameters.stream()
+            .filter(s -> !s.equalsIgnoreCase("all"))
             .map(
                 curie -> CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotation"))
             .collect(Collectors.toList());
@@ -176,7 +179,7 @@ public class FilterCommand implements Command {
         RemoveCommand.getObjects(line, ioHelper, inputOntology, selectGroups);
     if (relatedObjects.isEmpty()) {
       // drop specified axiom annotations
-      RelatedObjectsHelper.removeAxiomAnnotations(outputOntology, dropProperties);
+      RelatedObjectsHelper.dropAxiomAnnotations(outputOntology, annotationsToDrop, dropParameters);
       // nothing to filter - save and exit
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
@@ -227,7 +230,7 @@ public class FilterCommand implements Command {
     }
 
     // drop specified axiom annotations
-    RelatedObjectsHelper.removeAxiomAnnotations(inputOntology, dropProperties);
+    RelatedObjectsHelper.dropAxiomAnnotations(outputOntology, annotationsToDrop, dropParameters);
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, outputOntology);

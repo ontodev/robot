@@ -841,8 +841,11 @@ public class ReportOperation {
   /**
    * Given an ontology as a Dataset and a query, return the violations found by that query.
    *
+   * @param ioHelper with namespaces, for creating IRIs
    * @param dataset the ontology/ontologies as a dataset
+   * @param queryName name of query that produced result set
    * @param query the query
+   * @param options map of additional option strings
    * @return List of Violations
    * @throws IOException on issue parsing query
    */
@@ -904,6 +907,7 @@ public class ReportOperation {
    * Given a query name, a result set, and a limit for results, return a list of Violation objects
    * for those results.
    *
+   * @param ioHelper with namespaces, for creating IRIs
    * @param queryName name of query that produced result set
    * @param violationSet ResultSet of query results
    * @param limit number of results to limit, or null for no limit

@@ -2346,37 +2346,18 @@ public class RelatedObjectsHelper {
   }
 
   /**
-   * Removes all of the axiom annotations for the given annotation properties.
+   * Drops axiom annotations from the given ontology which uses the given annotation properties.
    *
-   * @param ontology OWLOntology to remove axiom annotations
-   * @param properties Annotation property IRIs to remove related axiom annotations.
+   * @param ontology OWLOntology to drop axiom annotations from
+   * @param annotationsToDrop list of annotation property IRIs
+   * @param dropParameters list of drop-axiom-annotations parameters
    */
-  public static void removeAxiomAnnotations(OWLOntology ontology, List<IRI> properties) {
-    OWLDataFactory owlDataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
-    properties.stream()
-        .map(iri -> owlDataFactory.getOWLAnnotationProperty(iri))
-        .forEach(p -> RelatedObjectsHelper.removeAxiomAnnotations(ontology, p));
-  }
-
-  /**
-   * Removes all of the axiom annotations for the given annotation property.
-   *
-   * @param ontology OWLOntology to remove axiom annotations
-   * @param property Annotation property to remove related axiom annotations.
-   */
-  public static void removeAxiomAnnotations(OWLOntology ontology, OWLAnnotationProperty property) {
-    OWLOntologyManager manager = ontology.getOWLOntologyManager();
-    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
-      Set<OWLAnnotation> annotationsToRemove = axiom.getAnnotations(property);
-      if (!annotationsToRemove.isEmpty()) {
-        Set<OWLAnnotation> axiomAnnotations = axiom.getAnnotations();
-        axiomAnnotations.removeAll(annotationsToRemove);
-        OWLAxiom cleanedAxiom =
-            axiom.getAxiomWithoutAnnotations().getAnnotatedAxiom(axiomAnnotations);
-
-        manager.removeAxiom(ontology, axiom);
-        manager.addAxiom(ontology, cleanedAxiom);
-      }
+  public static void dropAxiomAnnotations(
+      OWLOntology ontology, List<IRI> annotationsToDrop, List<String> dropParameters) {
+    if (dropParameters.stream().anyMatch(x -> x.equalsIgnoreCase("all"))) {
+      OntologyHelper.removeAllAxiomAnnotations(ontology);
+    } else {
+      OntologyHelper.removeAxiomAnnotations(ontology, annotationsToDrop);
     }
   }
 }

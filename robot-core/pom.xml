@@ -42,7 +42,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.9.2</version> <!-- japicmp target -->
+              <version>1.9.3</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -59,7 +59,7 @@
             <excludes></excludes>
             -->
             <ignoreMissingClassesByRegularExpressions>
-            	<!-- To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on owlapi 4.5.24 upgrade:  -->
+            	<!-- To handle sesame-rio-api-2.7.16.jar -> rdf4j-rio-api-2.4.2.jar lib change on owlapi 4.5.25 upgrade:  -->
             	<!-- This ignore can be removed in consecutive releases -->
             	<ignoreMissingClassesByRegularExpression>org.openrdf.rio.*</ignoreMissingClassesByRegularExpression>
             </ignoreMissingClassesByRegularExpressions>
@@ -86,7 +86,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.24</version>
+      <version>4.5.25</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -97,7 +97,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.24</version>
+      <version>4.5.25</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -108,7 +108,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.24</version>
+      <version>4.5.25</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -298,5 +298,16 @@
       <artifactId>py4j</artifactId>
       <version>0.10.9.2</version>
     </dependency>
+    <dependency>
+	  <groupId>org.geneontology</groupId>
+	  <artifactId>relation-graph_${scala.version}</artifactId>
+	  <version>2.2.1</version>
+	  <exclusions>
+        <exclusion>
+          <groupId>org.apache.jena</groupId>
+          <artifactId>apache-jena-libs</artifactId>
+        </exclusion>
+      </exclusions>
+	</dependency>
   </dependencies>
 </project>
