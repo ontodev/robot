@@ -90,13 +90,9 @@ public class ReasonerHelper {
       reasoner.flush();
 
       if (unsatisfiableProbeClasses.size() > 0) {
-        logger.error(
-            "There are {} unsatisfiable properties in the ontology.",
-            unsatisfiableProbeClasses.size());
         for (OWLClass cls : unsatisfiableProbeClasses) {
           OWLObjectProperty unsatP = probeFor.get(cls);
           unsatObjectProps.add(unsatP);
-          logger.error("    unsatisfiable property: " + unsatP.getIRI());
         }
       }
     }
