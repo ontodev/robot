@@ -23,3 +23,14 @@ By default, annotation axioms are not migrated to replacement classes. However, 
       --input xref-need-of-repair.obo \
       --annotation-property oboInOwl:hasDbXref \
       --output results/xref-repaired.obo
+
+## Merging Axiom Annotations
+
+The repair command can also take care of the situation in which an ontology has two or more axioms, where the axioms are structurally and semantically identical, but have different axiom annotations.
+
+An example of this scenario is an ontology such as UBERON that provides provenance on synonyms as axiom annotations. A single class such as UBERON:0002103 (hindlimb) may have two synonym axioms both with the value "membrum inferius", the first having provenance from FMA, the second from Wikipedia. The Uberon editors may wish to merge these into a single axiom, with two provenance annotations.
+
+Running `repair` with `--merge-axiom-annotations` will merge these structurally indistinguishable axioms into a single axiom, and combine all annotations together.
+
+Note that it is not always desirable to do this - sometimes it may be necessary to segregate annotations into separate axioms. Maintainers for individual ontologies should decide whether this repair option is recommended for their ontology.
+
