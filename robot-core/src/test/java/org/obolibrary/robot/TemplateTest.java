@@ -50,6 +50,20 @@ public class TemplateTest extends CoreTest {
   }
 
   /**
+   * Test legacy templating.
+   *
+   * @throws Exception if entities cannot be found
+   */
+  @Test
+  public void testLegacyTemplateCSV2() throws Exception {
+    String path = "/cycle-template.csv";
+    List<List<String>> rows = TemplateHelper.readCSV(this.getClass().getResourceAsStream(path));
+    Template t = new Template(path, rows);
+    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false, null);
+    assertIdentical("/template.owl", template);
+  }
+
+  /**
    * Test multiple templates.
    *
    * @throws Exception if entities cannot be found
