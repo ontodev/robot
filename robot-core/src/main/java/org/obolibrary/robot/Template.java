@@ -795,6 +795,8 @@ public class Template {
       case "http://www.w3.org/2002/07/owl#namedindividual":
       case "named individual":
       default:
+        // This is a bit unsafe imo, for example in the case of where the datatype turns out to be
+        // http://www.w3.org/2002/07/owl#DatatypeProperty""
         addIndividualAxioms(iri, row);
         break;
     }

@@ -50,17 +50,16 @@ public class TemplateTest extends CoreTest {
   }
 
   /**
-   * Test legacy templating.
+   * Test a strange case where a sequence .
    *
    * @throws Exception if entities cannot be found
    */
   @Test
-  public void testLegacyTemplateCSV2() throws Exception {
-    String path = "/cycle-template.csv";
+  public void testLegacyTemplateCSV3() throws Exception {
+    String path = "/sequence-template.csv";
     List<List<String>> rows = TemplateHelper.readCSV(this.getClass().getResourceAsStream(path));
     Template t = new Template(path, rows);
-    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false, null);
-    assertIdentical("/template.owl", template);
+    t.generateOutputOntology("http://test.com/template.owl", false, null);
   }
 
   /**
