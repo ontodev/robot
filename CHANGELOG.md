@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Speed up unsatisfiable object-property check on certain reasoners including HermiT [#1100]
+
 ## [1.9.3] - 2023-02-16
 
 ### Added
