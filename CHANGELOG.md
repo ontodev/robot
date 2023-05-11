@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Speed up unsatisfiable object-property check on certain reasoners including HermiT [#1100]
+- Update HermiT from 1.3.8.413 to 1.4.5.456 [#1073]
 
 ## [1.9.3] - 2023-02-16
 
@@ -358,11 +359,13 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1100]: https://github.com/ontodev/robot/pull/1100
 [#1091]: https://github.com/ontodev/robot/issues/1091
 [#1089]: https://github.com/ontodev/robot/issues/1089
 [#1088]: https://github.com/ontodev/robot/issues/1088
 [#1086]: https://github.com/ontodev/robot/pull/1086
 [#1084]: https://github.com/ontodev/robot/issues/1084
+[#1073]: https://github.com/ontodev/robot/pull/1073
 [#1071]: https://github.com/ontodev/robot/pull/1071
 [#1061]: https://github.com/ontodev/robot/issues/1061
 [#1030]: https://github.com/ontodev/robot/issues/1030
