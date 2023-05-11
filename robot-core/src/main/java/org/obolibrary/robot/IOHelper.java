@@ -863,9 +863,11 @@ public class IOHelper {
     if (format.isPrefixOWLOntologyFormat()
         && previousFormat != null
         && previousFormat.isPrefixOWLOntologyFormat()) {
+      String defaultNamespace = format.asPrefixOWLOntologyFormat().getDefaultPrefix();
       format
           .asPrefixOWLOntologyFormat()
-          .setPrefixManager(previousFormat.asPrefixOWLOntologyFormat());
+          .copyPrefixesFrom(previousFormat.asPrefixOWLOntologyFormat());
+      format.asPrefixOWLOntologyFormat().setDefaultPrefix(defaultNamespace);
     }
     // If not compressed, just save the file as-is
     if (addPrefixes != null && !addPrefixes.isEmpty()) {
