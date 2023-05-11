@@ -190,6 +190,37 @@ public class IOHelperTest extends CoreTest {
   }
 
   /**
+   * Test that original prefixes are preserved when saving.
+   *
+   * @throws IOException on file problem
+   */
+  @Test
+  public void testPrefixConservation() throws IOException {
+    OWLOntology ontology = loadOntology("/simple.owl");
+    String origNamespace =
+        ontology
+            .getOWLOntologyManager()
+            .getOntologyFormat(ontology)
+            .asPrefixOWLOntologyFormat()
+            .getPrefix("obo:");
+
+    File tempFile = File.createTempFile("simple-roundtrip", ".owl");
+    tempFile.deleteOnExit();
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.saveOntology(ontology, new RDFXMLDocumentFormat(), tempFile);
+
+    OWLOntology ontology2 = ioHelper.loadOntology(tempFile.getPath());
+    String savedNamespace =
+        ontology2
+            .getOWLOntologyManager()
+            .getOntologyFormat(ontology2)
+            .asPrefixOWLOntologyFormat()
+            .getPrefix("obo:");
+
+    assertEquals(origNamespace, savedNamespace);
+  }
+
+  /**
    * Test getting terms from strings.
    *
    * @throws IOException on file problem
