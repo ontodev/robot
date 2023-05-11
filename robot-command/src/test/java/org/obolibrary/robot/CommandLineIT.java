@@ -81,7 +81,8 @@ public class CommandLineIT {
   }
 
   /**
-   * Ensure that the examples/results/ directory exists and is empty.
+   * Ensure that the examples/results/ directory exists and is empty, and that the
+   * `target/integration-tests.txt` file is deleted.
    *
    * @throws Exception if directory cannot be created or emptied
    */
@@ -92,6 +93,11 @@ public class CommandLineIT {
     }
     FileUtils.deleteDirectory(resultsDir);
     resultsDir.mkdir();
+
+    File outputFile = new File(outputPath);
+    if (outputFile.exists() && outputFile.isFile()) {
+      FileUtils.deleteQuietly(outputFile);
+    }
   }
 
   /**
@@ -220,11 +226,23 @@ public class CommandLineIT {
       }
     }
     for (String command : commands) {
+      if (command.contains("--output ") && !command.contains("--output results/")) {
+        throw new Exception("Test output must be written to `results/` directory: " + command);
+      }
       runCommand(command);
     }
-    // Regression test for dropped axiom:
+
+    // Regression test for dropped axiom should fail:
     // https://github.com/ontodev/robot/issues/98
-    runCommand("robot convert -i dropped_axiom.owl -o " + "results/dropped_axiom.owl");
+    boolean passed = true;
+    try {
+      runCommand("robot convert -i dropped_axiom.owl -o " + "results/dropped_axiom.owl");
+    } catch (Exception e) {
+      passed = false;
+    }
+    if (passed) {
+      throw new Exception("dropped_axiom.owl test should fail but it passed");
+    }
 
     compareResults();
   }

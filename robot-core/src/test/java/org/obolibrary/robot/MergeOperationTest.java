@@ -68,7 +68,7 @@ public class MergeOperationTest extends CoreTest {
    * imported axioms are merged without redundancy.
    *
    * @throws IOException on file problem
-   * @throws URISyntaxException
+   * @throws URISyntaxException on converting path to URI
    */
   @Test
   public void testMergeImportDerivedFrom() throws IOException, URISyntaxException {

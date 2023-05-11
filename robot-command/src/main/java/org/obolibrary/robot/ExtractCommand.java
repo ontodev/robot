@@ -44,14 +44,14 @@ public class ExtractCommand implements Command {
 
   /** Error message when user provides invalid extraction method. */
   private static final String invalidMethodError =
-      NS + "INVALID METHOD ERROR method must be: MIREOT, STAR, TOP, BOT";
+      NS + "INVALID METHOD ERROR method must be: star, top, bot, mireot, subset";
 
   /** Error message when a MIREOT option is used for SLME. */
   private static final String invalidOptionError =
       NS
           + "INVALID OPTION ERROR "
           + "only --term or --term-file can be used to specify extract term(s) "
-          + "for STAR, TOP, or BOT";
+          + "for methods: star, top, bot, subset";
 
   /** Error message when the source map is not TSV or CSV. */
   private static final String invalidSourceMapError =
@@ -67,7 +67,7 @@ public class ExtractCommand implements Command {
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("o", "output", true, "save ontology to a file");
     o.addOption("O", "output-iri", true, "set OntologyIRI for output");
-    o.addOption("m", "method", true, "extract method to use");
+    o.addOption("m", "method", true, "extract method to use: star, top, bot, mireot, subset");
     o.addOption("t", "term", true, "term to extract");
     o.addOption("T", "term-file", true, "load terms from a file");
     o.addOption("u", "upper-term", true, "upper level term to extract");
@@ -111,6 +111,7 @@ public class ExtractCommand implements Command {
    */
   public String getUsage() {
     return "robot extract --input <file> "
+        + "--method <method> "
         + "--term-file <file> "
         + "--output <file> "
         + "--output-iri <iri>";
@@ -188,6 +189,8 @@ public class ExtractCommand implements Command {
 
     if (method.equals("mireot")) {
       outputOntology = mireotExtract(ioHelper, inputOntology, line, extractOptions);
+    } else if (method.equals("subset")) {
+      outputOntology = subsetExtract(ioHelper, inputOntology, line, extractOptions);
     } else if (moduleType != null) {
       outputOntology = slmeExtract(ioHelper, inputOntology, moduleType, line, extractOptions);
     } else {
@@ -346,6 +349,59 @@ public class ExtractCommand implements Command {
 
     return ExtractOperation.extract(
         inputOntology, terms, outputIRI, moduleType, extractOptions, sourceMap);
+  }
+
+  /**
+   * Perform a Subset extraction after validating command line options.
+   *
+   * @param inputOntology OWLOntology to extract from
+   * @param line CommandLine with options
+   * @param extractOptions Map of extract options
+   * @return a new ontology containing extracted subset
+   * @throws IOException on issue parsing terms
+   * @throws OWLOntologyCreationException on OWLAPI issue
+   */
+  private static OWLOntology subsetExtract(
+      IOHelper ioHelper,
+      OWLOntology inputOntology,
+      CommandLine line,
+      Map<String, String> extractOptions)
+      throws Exception {
+    Imports imports = getImportsOption(extractOptions);
+    // upper-term, lower-term, and branch-from term should not be used
+    List<String> mireotTerms =
+        Arrays.asList(
+            CommandLineHelper.getOptionalValue(line, "upper-term"),
+            CommandLineHelper.getOptionalValue(line, "upper-terms"),
+            CommandLineHelper.getOptionalValue(line, "lower-term"),
+            CommandLineHelper.getOptionalValue(line, "lower-terms"),
+            CommandLineHelper.getOptionalValue(line, "branch-from-term"),
+            CommandLineHelper.getOptionalValue(line, "branch-from-terms"));
+    for (String mt : mireotTerms) {
+      if (mt != null) {
+        throw new IllegalArgumentException(invalidOptionError);
+      }
+    }
+
+    // Make sure the terms exist in the input ontology
+    Set<IRI> terms =
+        OntologyHelper.filterExistingTerms(
+            inputOntology,
+            CommandLineHelper.getTerms(ioHelper, line),
+            OptionsHelper.optionIsTrue(extractOptions, "force"),
+            imports);
+
+    // Determine what to do with sources
+    Map<IRI, IRI> sourceMap =
+        getSourceMap(ioHelper, CommandLineHelper.getOptionalValue(line, "sources"));
+    // Get the output IRI
+    IRI outputIRI = CommandLineHelper.getOutputIRI(line);
+    if (outputIRI == null) {
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    }
+
+    return ExtractOperation.extractSubset(
+        inputOntology, terms, outputIRI, extractOptions, sourceMap, imports);
   }
 
   /**

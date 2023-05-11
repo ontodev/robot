@@ -31,7 +31,7 @@
 
     <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000115">
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">definition</rdfs:label>
+        <rdfs:label>definition</rdfs:label>
     </owl:AnnotationProperty>
     <owl:Axiom>
         <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/IAO_0000115"/>
@@ -45,9 +45,9 @@
     <!-- http://purl.obolibrary.org/obo/IAO_0000116 -->
 
     <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000116">
-        <oboInOwl:hasOBONamespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uberon</oboInOwl:hasOBONamespace>
+        <oboInOwl:hasOBONamespace>uberon</oboInOwl:hasOBONamespace>
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/some_other_ont.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">editor note</rdfs:label>
+        <rdfs:label>editor note</rdfs:label>
     </owl:AnnotationProperty>
     
 
@@ -55,9 +55,9 @@
     <!-- http://purl.obolibrary.org/obo/IAO_0000232 -->
 
     <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000232">
-        <oboInOwl:hasOBONamespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uberon</oboInOwl:hasOBONamespace>
+        <oboInOwl:hasOBONamespace>uberon</oboInOwl:hasOBONamespace>
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">curator notes</rdfs:label>
+        <rdfs:label>curator notes</rdfs:label>
     </owl:AnnotationProperty>
     
 
@@ -121,6 +121,14 @@
     
 
 
+    <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral -->
+
+    <rdf:Description rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">
+        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
+    </rdf:Description>
+    
+
+
     <!-- http://www.w3.org/2001/XMLSchema#string -->
 
     <rdf:Description rdf:about="http://www.w3.org/2001/XMLSchema#string">
@@ -145,7 +153,7 @@
     <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/BFO_0000050">
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">part_of</rdfs:label>
+        <rdfs:label>part_of</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -166,7 +174,7 @@
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000061">
         <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/UBERON_0000465"/>
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/some_other_ont.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">anatomical structure</rdfs:label>
+        <rdfs:label>anatomical structure</rdfs:label>
     </owl:Class>
     
 
@@ -182,7 +190,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">organ</rdfs:label>
+        <rdfs:label>organ</rdfs:label>
     </owl:Class>
     
 
@@ -226,7 +234,7 @@
 
     <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv1">
         <rdfs:isDefinedBy rdf:resource="http://purl.obolibrary.org/obo/pcl/some_other_ont.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 1</rdfs:label>
+        <rdfs:label>dummy individal 1</rdfs:label>
     </owl:NamedIndividual>
     <owl:Axiom>
         <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/UBERON_0013702_indv1"/>
@@ -241,7 +249,7 @@
 
     <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv2">
         <rdfs:isDefinedBy rdf:resource="http://purl.obolibrary.org/obo/pcl/some_other_ont.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 2</rdfs:label>
+        <rdfs:label>dummy individal 2</rdfs:label>
     </owl:NamedIndividual>
     
 
@@ -250,7 +258,7 @@
 
     <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv3">
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 3</rdfs:label>
+        <rdfs:label>dummy individal 3</rdfs:label>
     </owl:NamedIndividual>
     <owl:Axiom>
         <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/UBERON_0013702_indv3"/>
@@ -265,7 +273,7 @@
 
     <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv4">
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 4</rdfs:label>
+        <rdfs:label>dummy individal 4</rdfs:label>
     </owl:NamedIndividual>
     
 
@@ -274,10 +282,23 @@
 
     <owl:NamedIndividual rdf:about="http://purl.obolibrary.org/obo/UBERON_0013702_indv5">
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy individal 5</rdfs:label>
+        <rdfs:label>dummy individal 5</rdfs:label>
     </owl:NamedIndividual>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotations
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <rdf:Description rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral"/>
 </rdf:RDF>
 
 
 
-<!-- Generated by the OWL API (version 4.5.6) https://github.com/owlcs/owlapi -->
+<!-- Generated by the OWL API (version 4.5.24) https://github.com/owlcs/owlapi -->
+

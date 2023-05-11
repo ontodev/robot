@@ -1,0 +1,28 @@
+ontology: test
+subsetdef: foo "foo"
+
+[Term]
+id: ONT:1
+subset: foo
+
+[Term]
+id: ONT:2
+relationship: part_of ONT:1
+
+[Term]
+id: ONT:3
+relationship: part_of ONT:2
+
+[Term]
+id: ONT:4
+relationship: part_of ONT:3
+
+[Term]
+id: ONT:5
+is_a: ONT:4
+subset: foo
+
+[Typedef]
+id: part_of
+is_transitive: true
+xref: BFO:0000050

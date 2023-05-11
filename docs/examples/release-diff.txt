@@ -1,19 +1,7 @@
 1 axioms in left ontology but not in right ontology:
 - OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/edit.owl>) VersionIRI(<null>))
 
-15 axioms in right ontology but not in left ontology:
+3 axioms in right ontology but not in left ontology:
 + AnnotationAssertion(rdfs:label <https://github.com/ontodev/robot/examples/release.owl#junk> "Junk")
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasAlternativeId>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasDbXref>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasOBONamespace>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#id>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#inSubset>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#is_metadata_tag>))
-+ Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#shorthand>))
-+ Declaration(AnnotationProperty(<http://xmlns.com/foaf/0.1/depicted_by>))
 + Declaration(Class(<https://github.com/ontodev/robot/examples/release.owl#junk>))
 + OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/release.owl>) VersionIRI(<null>))
