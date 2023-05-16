@@ -46,6 +46,10 @@ public class CommandLineInterface {
     m.addCommand("unmerge", new UnmergeCommand());
     m.addCommand("validate-profile", new ValidateProfileCommand());
     m.addCommand("verify", new VerifyCommand());
+
+    PluginManager pm = new PluginManager();
+    pm.addPluggableCommands(m);
+
     return m;
   }
 
