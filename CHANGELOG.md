@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Speed up unsatisfiable object-property check on certain reasoners including HermiT [#1100]
 - Update HermiT from 1.3.8.413 to 1.4.5.456 [#1073]
 
+### Fixed
+- Preserve prefixes across ontology load and save [#1101]
+
 ## [1.9.3] - 2023-02-16
 
 ### Added
