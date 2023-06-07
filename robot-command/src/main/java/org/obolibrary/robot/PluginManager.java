@@ -6,7 +6,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Pluggable commands loader.
@@ -14,6 +17,9 @@ import java.util.ServiceLoader;
  * @author <a href="mailto:dgouttegattat@incenp.org">Damien Goutte-Gattat</a>
  */
 public class PluginManager {
+
+  private static final Logger logger = LoggerFactory.getLogger(PluginManager.class);
+
   private HashMap<String, URL> jars = null;
 
   /**
@@ -47,9 +53,13 @@ public class PluginManager {
             ? URLClassLoader.newInstance(new URL[] {jarFile})
             : URLClassLoader.getSystemClassLoader();
 
-    ServiceLoader<Command> serviceLoader = ServiceLoader.load(Command.class, classLoader);
-    for (Command pluggableCommand : serviceLoader) {
-      cm.addCommand(prefix + pluggableCommand.getName(), pluggableCommand);
+    try {
+      ServiceLoader<Command> serviceLoader = ServiceLoader.load(Command.class, classLoader);
+      for (Command pluggableCommand : serviceLoader) {
+        cm.addCommand(prefix + pluggableCommand.getName(), pluggableCommand);
+      }
+    } catch (ServiceConfigurationError e) {
+      logger.warn("Invalid configuration in plugin %s, ignoring plugin", jarFile);
     }
   }
 
