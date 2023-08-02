@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.4] - 2023-05-23
+
 ### Changed
 - Speed up unsatisfiable object-property check on certain reasoners including HermiT [#1100]
 - Update HermiT from 1.3.8.413 to 1.4.5.456 [#1073]
+
+### Fixed
+- Preserve prefixes across ontology load and save [#1101]
 
 ## [1.9.3] - 2023-02-16
 
@@ -312,7 +317,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.3...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.4...HEAD
+[1.9.4]: https://github.com/ontodev/robot/compare/v1.9.3...v1.9.4
 [1.9.3]: https://github.com/ontodev/robot/compare/v1.9.2...v1.9.3
 [1.9.2]: https://github.com/ontodev/robot/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/ontodev/robot/compare/v1.9.0...v1.9.1
