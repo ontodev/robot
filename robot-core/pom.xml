@@ -42,7 +42,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.9.3</version> <!-- japicmp target -->
+              <version>1.9.4</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
