@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Migrate to OWL API 4.5.26 to deal with [broken turtle serialiser](https://github.com/ontodev/robot/issues/1129). [#1135]
+
 ## [1.9.4] - 2023-05-23
 
 ### Changed
