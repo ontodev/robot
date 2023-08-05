@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<rdf:RDF xmlns="https://github.com/ontodev/robot/examples/edit.owl#"
-     xml:base="https://github.com/ontodev/robot/examples/edit.owl"
+<rdf:RDF xmlns="https://github.com/ontodev/robot/examples/annotated.owl#"
+     xml:base="https://github.com/ontodev/robot/examples/annotated.owl"
      xmlns:obo="http://purl.obolibrary.org/obo/"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -9,7 +9,12 @@
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
-    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/release.owl"/>
+    <owl:Ontology rdf:about="https://github.com/ontodev/robot/examples/annotated.owl">
+        <owl:versionIRI rdf:resource="https://github.com/ontodev/robot/examples/annotated-1.owl"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Comment</rdfs:comment>
+        <rdfs:comment>Comment from annotations.ttl file.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Label</rdfs:label>
+    </owl:Ontology>
     
 
 
@@ -1779,14 +1784,6 @@ boundary_of: http://purl.obolibrary.org/obo/RO_0002000</obo:IAO_0000115>
         <owl:annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#string">whole body</owl:annotatedTarget>
         <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BTO:0001489</oboInOwl:hasDbXref>
     </owl:Axiom>
-    
-
-
-    <!-- https://github.com/ontodev/robot/examples/release.owl#junk -->
-
-    <owl:Class rdf:about="https://github.com/ontodev/robot/examples/release.owl#junk">
-        <rdfs:label>Junk</rdfs:label>
-    </owl:Class>
 </rdf:RDF>
 
 

@@ -3,6 +3,7 @@
 .project
 .settings
 .idea
+.vscode
 *.iml
 Gemfile*
 bin/original-robot.jar
@@ -14,3 +15,4 @@ docs/examples/out.owl
 docs/examples/results/
 junk/
 target/
+docs/examples/.gradle/

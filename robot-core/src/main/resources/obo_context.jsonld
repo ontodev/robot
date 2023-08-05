@@ -163,6 +163,7 @@
     "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
     "NCIT": "http://purl.obolibrary.org/obo/NCIT_",
     "NCRO": "http://purl.obolibrary.org/obo/NCRO_",
+    "NGBO": "http://purl.obolibrary.org/obo/NGBO_",
     "NIF_CELL": "http://purl.obolibrary.org/obo/NIF_CELL_",
     "NIF_DYSFUNCTION": "http://purl.obolibrary.org/obo/NIF_DYSFUNCTION_",
     "NIF_GROSSANATOMY": "http://purl.obolibrary.org/obo/NIF_GROSSANATOMY_",

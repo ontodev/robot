@@ -39,7 +39,11 @@ public class ReportQueriesTest extends CoreTest {
     this.failingEntities = failingEntities;
   }
 
-  /** Test report queries */
+  /**
+   * Test report queries
+   *
+   * @throws Exception on any problem
+   */
   @Test
   public void testReportQuery() throws Exception {
     final OWLOntology ontology = loadOntology(inputFile);

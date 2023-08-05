@@ -859,6 +859,16 @@ public class IOHelper {
       saveCompressedOntology(data, ontologyIRI);
       return ontology;
     }
+    OWLDocumentFormat previousFormat = ontology.getOWLOntologyManager().getOntologyFormat(ontology);
+    if (format.isPrefixOWLOntologyFormat()
+        && previousFormat != null
+        && previousFormat.isPrefixOWLOntologyFormat()) {
+      String defaultNamespace = format.asPrefixOWLOntologyFormat().getDefaultPrefix();
+      format
+          .asPrefixOWLOntologyFormat()
+          .copyPrefixesFrom(previousFormat.asPrefixOWLOntologyFormat());
+      format.asPrefixOWLOntologyFormat().setDefaultPrefix(defaultNamespace);
+    }
     // If not compressed, just save the file as-is
     if (addPrefixes != null && !addPrefixes.isEmpty()) {
       addPrefixes(format, addPrefixes);

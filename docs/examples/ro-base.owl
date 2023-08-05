@@ -3556,9 +3556,6 @@ For example, protein A (transcription factor) indirectly increases by expression
     <!-- http://xmlns.com/foaf/0.1/image -->
 
     <owl:Class rdf:about="http://xmlns.com/foaf/0.1/image"/>
-    <rdf:Description>
-        <rdfs:seeAlso rdf:resource="https://github.com/oborel/obo-relations/issues/259"/>
-    </rdf:Description>
     
 
 

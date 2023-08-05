@@ -284,7 +284,7 @@ public class ReasonOperationTest extends CoreTest {
     assertTrue(
         checkContains(
             ontology,
-            "EquivalentClasses(<http://purl.obolibrary.org/obo/CLS_01> <http://purl.obolibrary.org/obo/CLS_02> )"));
+            "EquivalentClasses(<http://purl.obolibrary.org/obo/CLS_01> <http://purl.obolibrary.org/obo/CLS_02>)"));
 
     // disjoint classes
     assertTrue(
@@ -317,7 +317,7 @@ public class ReasonOperationTest extends CoreTest {
     assertTrue(
         checkContains(
             ontology,
-            "EquivalentObjectProperties(<http://purl.obolibrary.org/obo/OP_01> <http://purl.obolibrary.org/obo/OP_04> )"));
+            "EquivalentObjectProperties(<http://purl.obolibrary.org/obo/OP_01> <http://purl.obolibrary.org/obo/OP_04>)"));
     // inverse properties
     assertTrue(
         checkContains(
@@ -348,7 +348,7 @@ public class ReasonOperationTest extends CoreTest {
     assertTrue(
         checkContains(
             ontology,
-            "EquivalentDataProperties(<http://purl.obolibrary.org/obo/DP_01> <http://purl.obolibrary.org/obo/DP_04> )"));
+            "EquivalentDataProperties(<http://purl.obolibrary.org/obo/DP_01> <http://purl.obolibrary.org/obo/DP_04>)"));
   }
 
   /**

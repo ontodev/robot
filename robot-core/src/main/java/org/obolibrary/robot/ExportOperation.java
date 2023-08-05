@@ -1136,22 +1136,10 @@ public class ExportOperation {
           break;
         case "http://www.w3.org/2002/07/owl#disjointWith":
           // Disjoint Entities
+          // Does not apply to annotation properties.
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> disjoints =
                 EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology);
-            row.add(
-                getObjectCell(
-                    disjoints,
-                    col,
-                    displayRendererType,
-                    sortRendererType,
-                    provider,
-                    includeNamed,
-                    includeAnonymous));
-
-          } else if (entity.isOWLAnnotationProperty()) {
-            Collection<OWLAnnotationProperty> disjoints =
-                EntitySearcher.getDisjointProperties(entity.asOWLAnnotationProperty(), ontology);
             row.add(
                 getObjectCell(
                     disjoints,

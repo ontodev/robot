@@ -6,7 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Downgrade SnakeYaml to 1.31 [#1070]
+
+## [1.9.4] - 2023-05-23
+
+### Changed
+- Speed up unsatisfiable object-property check on certain reasoners including HermiT [#1100]
+- Update HermiT from 1.3.8.413 to 1.4.5.456 [#1073]
+
+### Fixed
+- Preserve prefixes across ontology load and save [#1101]
+
+## [1.9.3] - 2023-02-16
+
+### Added
+- Subset method added to [`extract`] [#1000]
+
+### Changed
+- Upgrade OWLAPI to 4.5.25 [#1093]
+
+### Fixed
+- Restore logging details for CLI [#1091]
+- Fix OBO Serialiser bug where built in vocabulary was introduced as annotation properties [#1089]
+- Fix OBO Serialiser erroneous logging [#1088]
+
+## [1.9.2] - 2023-02-09
+
+### Changed
+- Upgrade OWLAPI to 4.5.24 [#1086]
+
+### Fixed
+- Downgrade SnakeYaml to 1.31 [#1071]
+- Don't check for disjoint annotation properties [#1084]
 
 ## [1.9.1] - 2022-10-28
 
@@ -287,7 +317,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.1...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.4...HEAD
+[1.9.4]: https://github.com/ontodev/robot/compare/v1.9.3...v1.9.4
+[1.9.3]: https://github.com/ontodev/robot/compare/v1.9.2...v1.9.3
+[1.9.2]: https://github.com/ontodev/robot/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/ontodev/robot/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/ontodev/robot/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/ontodev/robot/compare/v1.8.3...v1.8.4
@@ -332,12 +365,21 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1100]: https://github.com/ontodev/robot/pull/1100
+[#1091]: https://github.com/ontodev/robot/issues/1091
+[#1089]: https://github.com/ontodev/robot/issues/1089
+[#1088]: https://github.com/ontodev/robot/issues/1088
+[#1086]: https://github.com/ontodev/robot/pull/1086
+[#1084]: https://github.com/ontodev/robot/issues/1084
+[#1073]: https://github.com/ontodev/robot/pull/1073
+[#1071]: https://github.com/ontodev/robot/pull/1071
 [#1061]: https://github.com/ontodev/robot/issues/1061
 [#1030]: https://github.com/ontodev/robot/issues/1030
 [#1026]: https://github.com/ontodev/robot/issues/1026
 [#1017]: https://github.com/ontodev/robot/issues/1017
 [#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
+[#1000]: https://github.com/ontodev/robot/pull/1000
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#977]: https://github.com/ontodev/robot/pull/977

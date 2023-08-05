@@ -19,12 +19,12 @@ Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/CL_0017514>))
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0003682> (palatal muscle)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003682> "palatal muscle"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0003682> "palatal muscle")
 DisjointClasses(<http://purl.obolibrary.org/obo/UBERON_0003682> <http://purl.obolibrary.org/obo/UBERON_0010235>)
 
 # Class: <http://purl.obolibrary.org/obo/UBERON_0010235> (uvular muscle)
 
-AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0010235> "uvular muscle"^^xsd:string)
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UBERON_0010235> "uvular muscle")
 SubClassOf(<http://purl.obolibrary.org/obo/UBERON_0010235> <http://purl.obolibrary.org/obo/UBERON_0003682>)
 
 

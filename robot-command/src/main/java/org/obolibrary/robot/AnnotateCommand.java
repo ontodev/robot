@@ -78,19 +78,19 @@ public class AnnotateCommand implements Command {
 
     options = o;
 
-    // Annotate with a property and plain literal - expects 2 args
+    // Annotate with a property and string literal - expects 2 args
     Option a = new Option("a", "annotate ontology with PROP VALUE");
     a.setLongOpt("annotation");
     a.setArgs(2);
     options.addOption(a);
 
-    // Annotate with a property and plain literal - expects 2 args
+    // Annotate with a property an IRI - expects 2 args
     a = new Option("k", "annotate ontology with PROP IRI");
     a.setLongOpt("link-annotation");
     a.setArgs(2);
     options.addOption(a);
 
-    // Annotate with a property and a plain literal with a language tag - expects 3 args
+    // Annotate with a property and a language literal - expects 3 args
     a = new Option("l", "annotate ontology with PROP VALUE LANG");
     a.setLongOpt("language-annotation");
     a.setArgs(3);
