@@ -119,7 +119,7 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-arq</artifactId>
-      <version>3.17.0</version>
+      <version>4.9.0</version>
       <exclusions>
         <exclusion>
           <groupId>com.github.jsonld-java</groupId>
@@ -134,7 +134,7 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-tdb</artifactId>
-      <version>3.17.0</version>
+      <version>4.9.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>
@@ -287,6 +287,22 @@
           <artifactId>owlapi-distribution</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+    <groupId>org.apache.jena</groupId>
+    <artifactId>apache-jena-libs</artifactId>
+    <version>4.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.phenoscape</groupId>
+      <artifactId>owlet_2.13</artifactId>
+      <version>1.9</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-distribution</artifactId>
+          </exclusion>
+        </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>

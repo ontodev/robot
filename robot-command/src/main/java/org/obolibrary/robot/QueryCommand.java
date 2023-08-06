@@ -15,7 +15,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.tdb.TDBFactory;
+import org.phenoscape.owlet.Owlet;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -239,12 +242,25 @@ public class QueryCommand implements Command {
       CommandLine line, OWLOntology inputOntology, List<List<String>> queries) throws Exception {
     boolean useGraphs = CommandLineHelper.getBooleanValue(line, "use-graphs", false);
     Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology, useGraphs);
+    boolean useOwlet = CommandLineHelper.getBooleanValue(line, "owlet", false);
+
+    Owlet owlet = getOwlet(line, inputOntology, useOwlet);
     try {
-      runQueries(line, dataset, queries);
+      runQueries(line, dataset, queries, owlet);
     } finally {
       dataset.close();
       // TDBFactory.release(dataset);
     }
+  }
+
+  private static Owlet getOwlet(CommandLine line, OWLOntology inputOntology, boolean useOwlet) {
+    Owlet owlet = null;
+    if(useOwlet) {
+      OWLReasonerFactory rf = CommandLineHelper.getReasonerFactory(line);
+      OWLReasoner r = rf.createReasoner(inputOntology);
+      owlet = new Owlet(r);
+    }
+    return owlet;
   }
 
   /**
@@ -260,8 +276,9 @@ public class QueryCommand implements Command {
     Dataset dataset = createTDBDataset(line);
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
+    
     try {
-      runQueries(line, dataset, queries);
+      runQueries(line, dataset, queries, null);
     } finally {
       dataset.close();
       TDBFactory.release(dataset);
@@ -396,7 +413,7 @@ public class QueryCommand implements Command {
    * @param queries List of queries
    * @throws IOException on issue reading or writing files
    */
-  private static void runQueries(CommandLine line, Dataset dataset, List<List<String>> queries)
+  private static void runQueries(CommandLine line, Dataset dataset, List<List<String>> queries, Owlet owlet)
       throws IOException {
     String format = CommandLineHelper.getOptionalValue(line, "format");
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
@@ -406,6 +423,10 @@ public class QueryCommand implements Command {
       String outputPath = q.get(1);
 
       String query = FileUtils.readFileToString(new File(queryPath), Charset.defaultCharset());
+      
+      if(owlet != null) {
+        query = owlet.expandQueryString(query, false);
+      }
 
       String formatName = format;
       if (formatName == null) {
