@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for pluggable commands [#1119]
+
 ## [1.9.4] - 2023-05-23
 
 ### Changed
@@ -365,6 +368,7 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1119]: https://github.com/ontodev/robot/pull/1119
 [#1100]: https://github.com/ontodev/robot/pull/1100
 [#1091]: https://github.com/ontodev/robot/issues/1091
 [#1089]: https://github.com/ontodev/robot/issues/1089
