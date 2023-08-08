@@ -69,6 +69,7 @@
     <module>robot-core</module>
     <module>robot-command</module>
     <module>robot-maven-plugin</module>
+    <module>robot-mock-plugin</module>
   </modules>
 
   <profiles>
