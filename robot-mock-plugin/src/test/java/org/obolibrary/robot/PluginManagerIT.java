@@ -13,7 +13,7 @@ public class PluginManagerIT {
   private String execPath = "../bin/robot";
 
   /** Path to the build directory of the mock plugin. */
-  private String pluginsPath = "../robot-mock-plugin/target";
+  private String pluginsPath = "target";
 
   /**
    * Search for a motif within a stream.
