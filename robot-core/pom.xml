@@ -119,7 +119,7 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-arq</artifactId>
-      <version>4.9.0</version>
+      <version>4.1.0</version>
       <exclusions>
         <exclusion>
           <groupId>com.github.jsonld-java</groupId>
@@ -134,7 +134,7 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-tdb</artifactId>
-      <version>4.9.0</version>
+      <version>4.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>
@@ -292,7 +292,7 @@
     <groupId>org.apache.jena</groupId>
     <artifactId>apache-jena-libs</artifactId>
     <type>pom</type>
-    <version>4.9.0</version>
+    <version>4.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.phenoscape</groupId>
