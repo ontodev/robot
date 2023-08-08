@@ -295,7 +295,7 @@
     </dependency>
     <dependency>
       <groupId>org.phenoscape</groupId>
-      <artifactId>owlet_2.13</artifactId>
+      <artifactId>owlet_${scala.version}</artifactId>
       <version>1.9</version>
         <exclusions>
           <exclusion>
