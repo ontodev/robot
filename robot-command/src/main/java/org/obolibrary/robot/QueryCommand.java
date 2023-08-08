@@ -425,7 +425,8 @@ public class QueryCommand implements Command {
       String query = FileUtils.readFileToString(new File(queryPath), Charset.defaultCharset());
       
       if(owlet != null) {
-        query = owlet.expandQueryString(query, false);
+        // the second parameter (true) refers to an older implementation of SPARQL and should always be true
+        query = owlet.expandQueryString(query,true);
       }
 
       String formatName = format;
