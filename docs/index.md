@@ -40,7 +40,7 @@ The command-line tool is packaged a Java JAR file and can be run via the `robot`
 2. Save the [ROBOT batch script](https://github.com/ontodev/robot/raw/master/bin/robot.bat).
     - Make sure this is saved as `.bat` and not `.bat.txt`
     - OR in [PowerShell](https://learn.microsoft.com/powershell/), run `"java %ROBOT_JAVA_ARGS% -jar %~dp0robot.jar %*" | out-file robot.bat -encoding utf8` in the same directory as `robot.jar` to create the batch script.
-    - Note that the above command requires PowerShell version 6 or later: previous versions will write a Unicode byte order mark to the file, which breaks the command.
+    - Note that the above command requires PowerShell version 6 or later: previous versions will write a Unicode byte order mark (BOM) to the file, which breaks the command.
 3. Put both files on your [system PATH](https://en.wikipedia.org/wiki/PATH_(variable)) in the same directory.
     - this could be `C:\Windows\`
     - OR [update your PATH](https://docs.oracle.com/javase/tutorial/essential/environment/paths.html) to include the new directory.
