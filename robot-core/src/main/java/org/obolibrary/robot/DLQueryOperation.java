@@ -33,59 +33,60 @@ public class DLQueryOperation {
    * @return explanations
    */
   public static List<OWLEntity> query(
-      OWLClassExpression expression,
-      OWLReasoner reasoner,
-      List<String> queryTypes) {
+      OWLClassExpression expression, OWLReasoner reasoner, List<String> queryTypes) {
     logger.debug("Querying: " + expression);
     List<OWLEntity> results = new ArrayList<>();
-    if(queryTypes.isEmpty()) {
+    if (queryTypes.isEmpty()) {
       logger.info("No query type supplied, using 'descendants'");
       queryTypes.add("descendants");
     }
 
     for (String type : queryTypes) {
-      switch(type) {
+      switch (type) {
         case "equivalents":
           reasoner.getEquivalentClasses(expression).getEntities().forEach(results::add);
           break;
         case "parents":
-          reasoner.getSuperClasses(expression,true).getFlattened().forEach(results::add);
+          reasoner.getSuperClasses(expression, true).getFlattened().forEach(results::add);
           results.remove(df.getOWLThing());
           break;
         case "children":
-          reasoner.getSubClasses(expression,true).getFlattened().forEach(results::add);
+          reasoner.getSubClasses(expression, true).getFlattened().forEach(results::add);
           results.remove(df.getOWLNothing());
           break;
         case "ancestors":
-          reasoner.getSuperClasses(expression,false).getFlattened().forEach(results::add);
+          reasoner.getSuperClasses(expression, false).getFlattened().forEach(results::add);
           results.remove(df.getOWLThing());
           break;
         case "descendants":
-          reasoner.getSubClasses(expression,false).getFlattened().forEach(results::add);
+          reasoner.getSubClasses(expression, false).getFlattened().forEach(results::add);
           results.remove(df.getOWLNothing());
           break;
         case "instances":
-          reasoner.getInstances(expression,false).getFlattened().forEach(results::add);
+          reasoner.getInstances(expression, false).getFlattened().forEach(results::add);
           break;
         default:
           throw new IllegalArgumentException(type + " is not a legal query relation for dl-query");
-        }
+      }
     }
     return results;
   }
 
-public static OWLClassExpression parseOWLClassExpression(String expression, OWLOntology ontology) throws ParserException {
+  public static OWLClassExpression parseOWLClassExpression(String expression, OWLOntology ontology)
+      throws ParserException {
     OWLClassExpression classExpression = null;
-      BidirectionalShortFormProviderAdapter shortFormProvider = 
-        new BidirectionalShortFormProviderAdapter(OWLManager.createOWLOntologyManager(), 
-        Collections.singleton(ontology), new SimpleShortFormProvider());
-    
-    ManchesterOWLSyntaxClassExpressionParser parser = 
-        new ManchesterOWLSyntaxClassExpressionParser(ontology.getOWLOntologyManager().getOWLDataFactory(), 
-        new ShortFormEntityChecker(shortFormProvider));
-    
+    BidirectionalShortFormProviderAdapter shortFormProvider =
+        new BidirectionalShortFormProviderAdapter(
+            OWLManager.createOWLOntologyManager(),
+            Collections.singleton(ontology),
+            new SimpleShortFormProvider());
+
+    ManchesterOWLSyntaxClassExpressionParser parser =
+        new ManchesterOWLSyntaxClassExpressionParser(
+            ontology.getOWLOntologyManager().getOWLDataFactory(),
+            new ShortFormEntityChecker(shortFormProvider));
+
     classExpression = parser.parse(expression);
     return classExpression;
-}
-
+  }
 }

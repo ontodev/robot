@@ -2,25 +2,16 @@ package org.obolibrary.robot;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.obolibrary.robot.exceptions.InconsistentOntologyException;
-import org.obolibrary.robot.providers.CURIEShortFormProvider;
-import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxInlineAxiomParser;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
-import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,18 +32,14 @@ public class DLQueryCommand implements Command {
 
   private static final String maxTypeError = NS + "MAX TYPE ERROR --max ('%s') must be an integer";
   private static final String illegalRelationError =
-      NS
-          + "ILLEGAL RELATION ERROR: %s. Must be one of "
-          + String.join(" ", LEGAL_RELATIONS)
-          + ".";
+      NS + "ILLEGAL RELATION ERROR: %s. Must be one of " + String.join(" ", LEGAL_RELATIONS) + ".";
   private static final String missingQueryArgumentError =
       NS + "MISSING QUERY ARGUMENT ERROR: must have a valid --query.";
-  
+
   /** Error message when --query does not have two arguments. */
   private static final String missingOutputError =
-  NS + "MISSING OUTPUT ERROR --%s requires two arguments: query and output";
+      NS + "MISSING OUTPUT ERROR --%s requires two arguments: query and output";
 
-  
   /** Error message when a query is not provided */
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR at least one query must be provided";
@@ -65,12 +52,16 @@ public class DLQueryCommand implements Command {
     o.addOption("i", "input", true, "load ontology from a file");
     o.addOption("I", "input-iri", true, "load ontology from an IRI");
     o.addOption("r", "reasoner", true, "reasoner to use: ELK, HermiT, JFact");
-    
+
     Option opt = new Option("q", "query", true, "the DL query to run");
     opt.setArgs(2);
     o.addOption(opt);
 
-    o.addOption("s", "select", true, "select what relations to query: equivalents, parents, children, ancestors, descendants, instances");
+    o.addOption(
+        "s",
+        "select",
+        true,
+        "select what relations to query: equivalents, parents, children, ancestors, descendants, instances");
     o.addOption("o", "output", true, "save ontology containing only explanation axioms to a file");
     options = o;
   }
@@ -135,17 +126,21 @@ public class DLQueryCommand implements Command {
     return state;
   }
 
-  private void queryOntology(List<String> q, OWLOntology ontology, OWLReasonerFactory reasonerFactory,
-      List<String> selects) throws InconsistentOntologyException, IOException {
+  private void queryOntology(
+      List<String> q,
+      OWLOntology ontology,
+      OWLReasonerFactory reasonerFactory,
+      List<String> selects)
+      throws InconsistentOntologyException, IOException {
     OWLReasoner r = reasonerFactory.createReasoner(ontology);
     String query = q.get(0);
     File output = new File(q.get(1));
-    OWLClassExpression classExpression = DLQueryOperation.parseOWLClassExpression(query,ontology);
+    OWLClassExpression classExpression = DLQueryOperation.parseOWLClassExpression(query, ontology);
     if (r.isConsistent()) {
       List<OWLEntity> entities = DLQueryOperation.query(classExpression, r, selects);
       writeQueryResultsToFile(output, entities);
     } else {
-        throw new InconsistentOntologyException();
+      throw new InconsistentOntologyException();
     }
   }
 
@@ -172,13 +167,8 @@ public class DLQueryCommand implements Command {
     return queries;
   }
 
-  private void writeQueryResultsToFile(
-      File output,
-      List<OWLEntity> results)
-      throws IOException {
+  private void writeQueryResultsToFile(File output, List<OWLEntity> results) throws IOException {
     Collections.sort(results);
     FileUtils.writeLines(output, results);
   }
-
-  
 }

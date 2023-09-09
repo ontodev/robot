@@ -255,7 +255,7 @@ public class QueryCommand implements Command {
 
   private static Owlet getOwlet(CommandLine line, OWLOntology inputOntology, boolean useOwlet) {
     Owlet owlet = null;
-    if(useOwlet) {
+    if (useOwlet) {
       OWLReasonerFactory rf = CommandLineHelper.getReasonerFactory(line);
       OWLReasoner r = rf.createReasoner(inputOntology);
       owlet = new Owlet(r);
@@ -276,7 +276,7 @@ public class QueryCommand implements Command {
     Dataset dataset = createTDBDataset(line);
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
-    
+
     try {
       runQueries(line, dataset, queries, null);
     } finally {
@@ -413,7 +413,8 @@ public class QueryCommand implements Command {
    * @param queries List of queries
    * @throws IOException on issue reading or writing files
    */
-  private static void runQueries(CommandLine line, Dataset dataset, List<List<String>> queries, Owlet owlet)
+  private static void runQueries(
+      CommandLine line, Dataset dataset, List<List<String>> queries, Owlet owlet)
       throws IOException {
     String format = CommandLineHelper.getOptionalValue(line, "format");
     String outputDir = CommandLineHelper.getDefaultValue(line, "output-dir", "");
@@ -423,10 +424,11 @@ public class QueryCommand implements Command {
       String outputPath = q.get(1);
 
       String query = FileUtils.readFileToString(new File(queryPath), Charset.defaultCharset());
-      
-      if(owlet != null) {
-        // the second parameter (true) refers to an older implementation of SPARQL and should always be true
-        query = owlet.expandQueryString(query,true);
+
+      if (owlet != null) {
+        // the second parameter (true) refers to an older implementation of SPARQL and should always
+        // be true
+        query = owlet.expandQueryString(query, true);
       }
 
       String formatName = format;
