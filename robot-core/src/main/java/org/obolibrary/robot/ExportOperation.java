@@ -11,9 +11,13 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a> */
 public class ExportOperation {
+  /** Logger. */
+  private static final Logger logger = LoggerFactory.getLogger(ExportOperation.class);
 
   /** Namespace for error messages. */
   private static final String NS = "export#";
@@ -724,6 +728,12 @@ public class ExportOperation {
             }
           }
           break;
+        case DATA_HAS_VALUE:
+          logger.warn(t + "is not yet implemented as target of data property" + ce);
+        default:
+          // This should never happen in valid OWL
+          logger.error("A " + t + " cannot be a target of a data property:" + ce);
+          break;
       }
     }
     return fillers;
@@ -834,7 +844,22 @@ public class ExportOperation {
         case OBJECT_ONE_OF:
         case OBJECT_UNION_OF:
         case OBJECT_INTERSECTION_OF:
+        case OBJECT_HAS_SELF:
+        case OBJECT_HAS_VALUE:
+        case OBJECT_COMPLEMENT_OF:
           // TODO
+          logger.warn(t + " is not yet implemented as target of object property:" + ce);
+          break;
+        case OWL_CLASS:
+        case DATA_ALL_VALUES_FROM:
+        case DATA_EXACT_CARDINALITY:
+        case DATA_HAS_VALUE:
+        case DATA_MAX_CARDINALITY:
+        case DATA_MIN_CARDINALITY:
+        case DATA_SOME_VALUES_FROM:
+          // Should never happen in valid OWL
+          logger.error("A " + t + " cannot be a target of an object property:" + ce);
+        default:
           break;
       }
     }
@@ -1095,18 +1120,8 @@ public class ExportOperation {
         case "http://www.w3.org/2002/07/owl#equivalentProperty":
           // Equivalent Properties
           if (entity.isOWLAnnotationProperty()) {
-            Collection<OWLAnnotationProperty> eqs =
-                EntitySearcher.getEquivalentProperties(entity.asOWLAnnotationProperty(), ontology);
-            row.add(
-                getObjectCell(
-                    eqs,
-                    col,
-                    displayRendererType,
-                    sortRendererType,
-                    provider,
-                    includeNamed,
-                    includeAnonymous));
-
+            // no equivalent annotation property in OWL
+            break;
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> eqs =
                 EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology);
@@ -1140,6 +1155,7 @@ public class ExportOperation {
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> disjoints =
                 EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology);
+            disjoints.remove(entity.asOWLClass());
             row.add(
                 getObjectCell(
                     disjoints,
@@ -1153,6 +1169,8 @@ public class ExportOperation {
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> disjoints =
                 EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology);
+            //remove self-disjoint
+            disjoints.remove(entity.asOWLDataProperty());
             row.add(
                 getObjectCell(
                     disjoints,
@@ -1166,6 +1184,8 @@ public class ExportOperation {
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> disjoints =
                 EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology);
+          //remove self-disjoint
+            disjoints.remove(entity.asOWLObjectProperty());
             row.add(
                 getObjectCell(
                     disjoints,
