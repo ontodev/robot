@@ -1,8 +1,11 @@
 package org.obolibrary.robot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -10,10 +13,14 @@ import org.junit.Test;
 import org.obolibrary.robot.export.Table;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /**
@@ -61,28 +68,30 @@ public class ExportOperationTest extends CoreTest {
   }
 
   /**
-   * Test exporting ontology with > 64,000 exported records.
+   * Test exporting to Excel with > 64,000 exported records.
    *
    * @throws Exception on any problem
    */
   @Test
   public void testLargeExcelExport() throws Exception {
 
-    //how many many axioms to create
+    // how many many axioms to create
     int axiomCount = 64002;
 
     IOHelper ioHelper = new IOHelper();
-    ioHelper.addPrefix("simple", "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#");
+    ioHelper.addPrefix(
+        "simple", "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#");
 
     DefaultPrefixManager pfm = ioHelper.getPrefixManager();
 
     OWLOntologyManager owlm = OWLManager.createOWLOntologyManager();
-    OWLOntology ontology =  owlm.createOntology();
-    
+    OWLOntology ontology = owlm.createOntology();
 
     // add axiomCount subclass axioms to ontology
+    // first the super class
     OWLClass superClass = CoreTest.dataFactory.getOWLClass("simple:super", pfm);
-    
+
+    // then all the subs and axioms
     for (int i = 0; i < axiomCount; i++) {
       OWLClass subClass = CoreTest.dataFactory.getOWLClass("simple:sub_" + i, pfm);
       OWLSubClassOfAxiom subAxiom =
@@ -90,34 +99,55 @@ public class ExportOperationTest extends CoreTest {
       owlm.addAxiom(ontology, subAxiom);
     }
 
-    // export all the subclasses
+    // export just the classes and their subclasses
     List<String> columns = Arrays.asList("ID", "SubClass Of [ID]");
     Map<String, String> options = ExportOperation.getDefaultOptions();
-
+    options.put("include", "classes");
+    
     // Create the table and render it as a Workbook
     Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, options);
     Workbook wb = t.asWorkbook("|");
 
+    // get the first sheet
     Sheet s = wb.getSheetAt(0);
+    
     // There should be same number of rows as subclass axioms + 1 for the header row
-    assert (s.getLastRowNum() == ontology.getAxiomCount(AxiomType.SUBCLASS_OF)+1);
-
+    assert (s.getLastRowNum() == ontology.getAxiomCount(AxiomType.SUBCLASS_OF) + 1);
   }
-  
+
   /**
-   * Test exporting all named headings.
+   * Test exporting all named headings using simple ontology.
    *
    * @throws Exception on any problem
    */
   @Test
-  public void testExportNamedHeadings() throws Exception {
+  public void testExportNamedHeadingsSimple() throws Exception {
     OWLOntology ontology = loadOntology("/simple.owl");
     IOHelper ioHelper = new IOHelper();
     ioHelper.addPrefix(
         "simple", "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#");
-    List<String> columns = Arrays.asList("ID", "IRI", "CURIE","LABEL", "Type", "SYNONYMS", "SUBCLASSES", "SubClass Of",
-        "SubProperty Of", "Equivalent Class", "Equivalent Property", "Disjoint With", "Domain","Range");
+    
+    // every named header
+    List<String> columns =
+        Arrays.asList(
+            "ID",
+            "LABEL",
+            "IRI",
+            "CURIE",
+            "Type",
+            "SYNONYMS",
+            "SUBCLASSES",
+            "SubClass Of",
+            "SubProperty Of",
+            "Equivalent Class",
+            "Equivalent Property",
+            "Disjoint With",
+            "Domain",
+            "Range");
+
+    // export everything
     Map<String, String> options = ExportOperation.getDefaultOptions();
+    options.put("include", "classes individuals properties");
 
     // Create the table and render it as a Workbook
     Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, options);
@@ -125,16 +155,119 @@ public class ExportOperationTest extends CoreTest {
 
     Sheet s = wb.getSheetAt(0);
     // There should be three rows (0, 1, 2)
-    assert (s.getLastRowNum() == 2);
+    assert (s.getLastRowNum() == 3);
 
     // Validate header
+    // should match size and label 
     org.apache.poi.ss.usermodel.Row header = s.getRow(0);
-    String v1 = header.getCell(0).getStringCellValue();
-    assert (v1.equals("ID"));
-    String v2 = header.getCell(1).getStringCellValue();
-    assert (v2.equals("IRI"));
+    
+    short minColIx = header.getFirstCellNum();
+    short maxColIx = header.getLastCellNum();
+    int numCol = maxColIx - minColIx;
+    // same width
+    assert (numCol == columns.size());
+    
+    // column header labels should match
+    for(short colIx=minColIx; colIx<maxColIx; colIx++) {
+       Cell cell = header.getCell(colIx);
+      if(cell == null) {
+        continue;
+      }
+      String foundHeader = cell.getStringCellValue();
+      String expectedHeader = columns.get(colIx);
+      assert (foundHeader.equals(expectedHeader));
+    }
+
   }
-  
-  
-  
+
+  /**
+   * Test exporting all named headings and object properties seen in the all-axioms ontology.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testExportNamedHeadingsAllAxioms() throws Exception {
+    OWLOntology ontology = loadOntology("/axioms.owl");
+    Set<OWLEntity> signature = ontology.getSignature();
+    // remove datatypes
+    signature.removeAll(ontology.getDatatypesInSignature());
+
+    for (OWLEntity s : signature) {
+      System.out.println(s + "|" + s.getEntityType());
+    }
+
+    int entityCount = signature.size();
+    Set<IRI> puns = ontology.getPunnedIRIs(Imports.EXCLUDED);
+    for (IRI pun : puns) {
+      Set<OWLEntity> punnedEntities = ontology.getEntitiesInSignature(pun, Imports.EXCLUDED);
+      System.out.println(punnedEntities.size() + " " + punnedEntities.toString());
+    }
+
+    Set<OWLObjectProperty> properties = ontology.getObjectPropertiesInSignature(Imports.EXCLUDED);
+    
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.addPrefix(
+        "ax", "https://http://robot.obolibrary.org/export_test/");
+    
+    // every named header
+    List<String> columns = new ArrayList<String>();
+        
+    List<String> hdrLabels = Arrays.asList(
+            "ID",
+            "LABEL",
+            "Type",
+            "IRI",
+            "CURIE",
+            "SYNONYMS",
+            "SUBCLASSES",
+            "SubClass Of",
+            "SubProperty Of",
+            "Equivalent Class",
+            "Equivalent Property",
+            "Disjoint With",
+            "Domain",
+            "Range");
+
+    columns.addAll(hdrLabels);
+    
+    //add all the object properties to the header
+    for(OWLObjectProperty op : properties) {
+     String shrt = ioHelper.getPrefixManager().getShortForm(op.getIRI());
+     columns.add(shrt);
+    }
+    
+    // export everything
+    Map<String, String> options = ExportOperation.getDefaultOptions();
+    options.put("include", "classes individuals properties");
+
+    // Create the table and render it as a Workbook
+    Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, options);
+    Workbook wb = t.asWorkbook("|");
+
+    Sheet s = wb.getSheetAt(0);
+    // There should be same number of rows as class,properties and instances in signature
+    assert (s.getLastRowNum() == entityCount);
+
+    // Validate header
+    // should match size and label 
+    org.apache.poi.ss.usermodel.Row header = s.getRow(0);
+    
+    short minColIx = header.getFirstCellNum();
+    short maxColIx = header.getLastCellNum();
+    int numCol = maxColIx - minColIx;
+    // should be same width
+    assert (numCol == columns.size());
+    
+    // column header labels should match workbook
+    for(short colIx=minColIx; colIx<maxColIx; colIx++) {
+       Cell cell = header.getCell(colIx);
+      if(cell == null) {
+        continue;
+      }
+      String foundHeader = cell.getStringCellValue();
+      String expectedHeader = columns.get(colIx);
+      assert (foundHeader.equals(expectedHeader));
+    }
+
+  }
 }

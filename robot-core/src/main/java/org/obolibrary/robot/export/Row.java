@@ -82,7 +82,8 @@ public class Row {
 
       String value;
       String comment = null;
-
+      CellStyle style = null;
+      Font font = null;
       if (cell != null) {
         List<String> values = cell.getDisplayValues();
         if (values.size() > 1) {
@@ -92,65 +93,65 @@ public class Row {
         }
         value = String.join(split, values);
 
+        // Maybe set styles
+        IndexedColors cellColor = cell.getCellColor();
+        if (violationLevel != null) {
+          switch (violationLevel.toLowerCase()) {
+            case "error":
+              cellColor = IndexedColors.ROSE;
+              break;
+            case "warn":
+              cellColor = IndexedColors.LEMON_CHIFFON;
+              break;
+            case "info":
+              cellColor = IndexedColors.LIGHT_CORNFLOWER_BLUE;
+          }
+        }
+
+        if (cellColor != null) {
+          if (style == null) {
+            style = wb.createCellStyle();
+          }
+          style.setFillForegroundColor(cellColor.getIndex());
+        }
+
+        FillPatternType cellPattern = cell.getCellPattern();
+        if (cellColor != null && cellPattern == null) {
+          cellPattern = FillPatternType.SOLID_FOREGROUND;
+        }
+
+        if (cellPattern != null) {
+          if (style == null) {
+            style = wb.createCellStyle();
+          }
+          style.setFillPattern(cellPattern);
+        }
+
+        IndexedColors fontColor = cell.getFontColor();
+        if (fontColor != null) {
+          if (style == null) {
+            style = wb.createCellStyle();
+          }
+          if (font == null) {
+            font = wb.createFont();
+          }
+          font.setColor(fontColor.getIndex());
+          style.setFont(font);
+        }
+
+        // Maybe get a comment or null
+        comment = cell.getComment();
       } else {
         // Empty value, no styles to set
         value = "";
-        cellIdx++;
-        continue;
       }
 
       // Add value to cell
       xlsxCell.setCellValue(value);
 
-      IndexedColors cellColor = cell.getCellColor();
-      FillPatternType cellPattern = cell.getCellPattern();
-      IndexedColors fontColor = cell.getFontColor();
-
-      if (violationLevel != null) {
-        switch (violationLevel.toLowerCase()) {
-        case "error":
-          cellColor = IndexedColors.ROSE;
-          break;
-        case "warn":
-          cellColor = IndexedColors.LEMON_CHIFFON;
-          break;
-        case "info":
-          cellColor = IndexedColors.LIGHT_CORNFLOWER_BLUE;
-        }
-      }
-
-      CellStyle style = null;
-
-      // only create style if style components are not all null
-      if (cellColor != null || cellPattern != null || fontColor != null) {
-        style = wb.createCellStyle();
-      }
-
-      // Maybe set styles
-
-      if (cellColor != null) {
-        style.setFillForegroundColor(cellColor.getIndex());
-      }
-
-      if (cellColor != null && cellPattern == null) {
-        cellPattern = FillPatternType.SOLID_FOREGROUND;
-      }
-
-      if (cellPattern != null) {
-        style.setFillPattern(cellPattern);
-      }
-
-      if (fontColor != null) {
-        Font font = wb.createFont();
-        font.setColor(fontColor.getIndex());
-        style.setFont(font);
-      }
-
       // Add style to cell, null is OK
       xlsxCell.setCellStyle(style);
 
-      // Maybe get a comment or null
-      comment = cell.getComment();
       // Maybe add a comment
       if (comment != null) {
         Comment xlsxComment = drawing.createCellComment(anchor);
