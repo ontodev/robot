@@ -191,20 +191,10 @@ public class ExportOperationTest extends CoreTest {
     Set<OWLEntity> signature = ontology.getSignature();
     // remove datatypes
     signature.removeAll(ontology.getDatatypesInSignature());
-
-    for (OWLEntity s : signature) {
-      System.out.println(s + "|" + s.getEntityType());
-    }
-
     int entityCount = signature.size();
-    Set<IRI> puns = ontology.getPunnedIRIs(Imports.EXCLUDED);
-    for (IRI pun : puns) {
-      Set<OWLEntity> punnedEntities = ontology.getEntitiesInSignature(pun, Imports.EXCLUDED);
-      System.out.println(punnedEntities.size() + " " + punnedEntities.toString());
-    }
 
     Set<OWLObjectProperty> properties = ontology.getObjectPropertiesInSignature(Imports.EXCLUDED);
-    
+
     IOHelper ioHelper = new IOHelper();
     ioHelper.addPrefix(
         "ax", "https://http://robot.obolibrary.org/export_test/");
