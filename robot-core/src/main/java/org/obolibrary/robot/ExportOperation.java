@@ -1180,7 +1180,7 @@ public class ExportOperation {
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> disjoints =
                 EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology);
-          // remove self-disjoint
+            // remove self-disjoint
             disjoints.remove(entity.asOWLObjectProperty());
             row.add(
                 getObjectCell(
