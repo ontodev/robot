@@ -67,7 +67,7 @@ public class ExportOperationTest extends CoreTest {
   }
 
   /**
-   * Test exporting to Excel with > 64,000 exported records.
+   * Test exporting to Excel with more than 64,000 exported records.
    *
    * @throws Exception on any problem
    */
