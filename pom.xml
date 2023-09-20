@@ -211,9 +211,9 @@
       <version>1.7.32</version>
     </dependency>
     <dependency>
-      <groupId>org.semanticweb.elk</groupId>
-      <artifactId>elk-owlapi</artifactId>
-      <version>0.4.3</version>
+      <groupId>au.csiro</groupId>
+      <artifactId>elk-owlapi4</artifactId>
+      <version>0.5.0</version>
       <exclusions>
         <exclusion>
           <groupId>log4j</groupId>

@@ -46,9 +46,8 @@ public class ReasonerHelper {
   public static Set<OWLObjectProperty> getUnsatisfiableObjectProperties(OWLReasoner reasoner) {
     Set<OWLObjectProperty> unsatObjectProps = new HashSet<>();
 
-    if (reasoner
-        .getPrecomputableInferenceTypes()
-        .contains(InferenceType.OBJECT_PROPERTY_HIERARCHY)) {
+    if (reasoner.getPrecomputableInferenceTypes().contains(InferenceType.OBJECT_PROPERTY_HIERARCHY)
+        && !reasoner.getClass().getName().equals("org.semanticweb.elk.owlapi.ElkReasoner")) {
       // Fast object-unsat check
       logger.info(
           "Object-property precomputation is supported; using that to find unsatisfiable object properties...");

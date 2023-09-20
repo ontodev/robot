@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Updated ELK from 0.4.3 to 0.5.0. [#999]. This is an important change as ELK 0.5.0 is more complete than 0.4.3, which means that it will potentially uncover inferences, in particular unsatisfiable classes, which were not recognised by ELK 0.4.3.
+
 ## [1.9.4] - 2023-05-23
 
 ### Changed
