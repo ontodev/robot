@@ -3,6 +3,7 @@
 .project
 .settings
 .idea
+.vscode
 *.iml
 Gemfile*
 bin/original-robot.jar

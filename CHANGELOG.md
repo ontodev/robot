@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Support for pluggable commands [#1119]
+- Updated ELK from 0.4.3 to 0.5.0. [#999]. This is an important change as ELK 0.5.0 is more complete than 0.4.3, which means that it will potentially uncover inferences, in particular unsatisfiable classes, which were not recognised by ELK 0.4.3.
+- Add support for pluggable commands [#1119]
 
 ## [1.9.4] - 2023-05-23
 
@@ -384,6 +385,7 @@ First official release of ROBOT!
 [#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#1000]: https://github.com/ontodev/robot/pull/1000
+[#999]: https://github.com/ontodev/robot/pull/999
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#977]: https://github.com/ontodev/robot/pull/977
