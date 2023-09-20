@@ -55,7 +55,8 @@ public class DiffOperationTest extends CoreTest {
     assertFalse(actual);
     String expected =
         IOUtils.toString(
-            this.getClass().getResourceAsStream("/simple1.diff"), Charset.defaultCharset());
+                this.getClass().getResourceAsStream("/simple1.diff"), Charset.defaultCharset())
+            .replaceAll("\r\n", "\n");
     assertEquals(expected, writer.toString());
   }
 
@@ -77,7 +78,8 @@ public class DiffOperationTest extends CoreTest {
     assertFalse(actual);
     String expected =
         IOUtils.toString(
-            this.getClass().getResourceAsStream("/simple.diff"), Charset.defaultCharset());
+                this.getClass().getResourceAsStream("/simple.diff"), Charset.defaultCharset())
+            .replaceAll("\r\n", "\n");
     assertEquals(expected, writer.toString());
   }
 
