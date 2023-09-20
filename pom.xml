@@ -166,7 +166,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.25</version>
+      <version>4.5.26</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -177,7 +177,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.25</version>
+      <version>4.5.26</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -188,7 +188,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.25</version>
+      <version>4.5.26</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
