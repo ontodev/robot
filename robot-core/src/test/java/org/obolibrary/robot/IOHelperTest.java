@@ -53,7 +53,7 @@ public class IOHelperTest extends CoreTest {
     ioh.addPrefixes(context);
 
     // Get the context back from IOHelper
-    String outputContext = ioh.getContextString();
+    String outputContext = ioh.getContextString().replaceAll("\r\n", "\n");
     assertEquals(inputContext, outputContext);
   }
 
@@ -166,7 +166,7 @@ public class IOHelperTest extends CoreTest {
 
     String json =
         "{\n" + "  \"@context\" : {\n" + "    \"foo\" : \"http://example.com#\"\n" + "  }\n" + "}";
-    assertEquals("Check JSON-LD", json, ioh.getContextString());
+    assertEquals("Check JSON-LD", json, ioh.getContextString().replaceAll("\r\n", "\n"));
 
     ioh.addPrefix("bar: http://example.com#");
     expected.put("bar", "http://example.com#");

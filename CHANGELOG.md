@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Updated ELK from 0.4.3 to 0.5.0. [#999]. This is an important change as ELK 0.5.0 is more complete than 0.4.3, which means that it will potentially uncover inferences, in particular unsatisfiable classes, which were not recognised by ELK 0.4.3.
+- Add support for pluggable commands [#1119]
+
+### Changed
 - Migrate to OWL API 4.5.26 to deal with [broken turtle serialiser](https://github.com/ontodev/robot/issues/1129). [#1135]
+- Improvements to `export` and `report` for XLSX format [#1148]
 
 ## [1.9.4] - 2023-05-23
 
@@ -367,6 +373,9 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1148]: https://github.com/ontodev/robot/pull/1148
+[#1135]: https://github.com/ontodev/robot/pull/1135
+[#1119]: https://github.com/ontodev/robot/pull/1119
 [#1100]: https://github.com/ontodev/robot/pull/1100
 [#1091]: https://github.com/ontodev/robot/issues/1091
 [#1089]: https://github.com/ontodev/robot/issues/1089
@@ -382,6 +391,7 @@ First official release of ROBOT!
 [#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#1000]: https://github.com/ontodev/robot/pull/1000
+[#999]: https://github.com/ontodev/robot/pull/999
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#977]: https://github.com/ontodev/robot/pull/977
