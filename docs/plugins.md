@@ -13,7 +13,7 @@ ROBOT searches for plugins in the following locations:
 Installing a plugin is therefore simply a matter of either
 
 * placing the Jar file into your `~/.robot/plugins` directory, or
-* placing the Jar file into any directory and making sure ROBOT knows to search that directory, by setting the `robot.pluginsdir` system property or the `ROBOT_DIRECTORY_PLUGINS` environment variable accordingly.
+* placing the Jar file into any directory and making sure ROBOT knows to search that directory, by setting the `robot.pluginsdir` system property or the `ROBOT_PLUGINS_DIRECTORY` environment variable accordingly.
 
 Importantly, the basename of the Jar file (without the `.jar` extension) within the directory will become part of the name of any pluggable command provided by the plugin. For example, if the file is named `myplugin.jar` and it provides a command called `mycommand`, that command will be available under the name `myplugin:mycommand`. Because of that:
 
