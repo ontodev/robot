@@ -28,6 +28,10 @@ public class TemplateCommand implements Command {
   private static final String missingTemplateError =
       NS + "MISSING TEMPLATE ERROR at least one template is required";
 
+  /** Error message when the header file is not provided */
+  private static final String missingRobotHeaderError =
+      NS + "MISSING ROBOT HEADER ERROR header is required";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -49,6 +53,7 @@ public class TemplateCommand implements Command {
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     o.addOption("f", "force", true, "if true, do not exit on error");
     o.addOption("e", "errors", true, "write errors to this path (TSV or CSV)");
+    o.addOption("h", "robot-header", true, "input robot header line file");
 
     options = o;
   }
@@ -141,6 +146,25 @@ public class TemplateCommand implements Command {
     Map<String, List<List<String>>> tables = new LinkedHashMap<>();
     for (String templatePath : templatePaths) {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
+    }
+
+    for (String templatePath : templatePaths) {
+      tables.put(templatePath, TemplateHelper.readTable(templatePath));
+    }
+    // Read the robot header line in
+    List<String> robotHeaderPath = CommandLineHelper.getOptionValues(line, "robot-header");
+    if (robotHeaderPath.size() > 0) {
+      // TODO for now only a single header line file is considered
+      List<List<String>> headerLine = new ArrayList<>();
+      headerLine = TemplateHelper.readTable(robotHeaderPath.get(0));
+      if (headerLine.size() == 0) {
+        throw new IllegalArgumentException(missingRobotHeaderError);
+      }
+      // Insert headerLine into all the template file data appropriately
+      for (String templatePath : templatePaths) {
+        List<List<String>> template = tables.get(templatePath);
+        template.add(1, headerLine.get(0));
+      }
     }
 
     // Process the templates

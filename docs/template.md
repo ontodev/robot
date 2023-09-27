@@ -151,7 +151,7 @@ If the `TYPE` is a defined class, `owl:Individual`, or `owl:NamedIndividual`, an
 
 #### Example of Individual Template Strings
 
-| Label        | Entity Type | Individual Role      | Property Assertions | Different Individuals | 
+| Label        | Entity Type | Individual Role      | Property Assertions | Different Individuals |
 | ------------ | ----------- | -------------------- | ------------------- | --------------------- |
 | LABEL        | TYPE        | TI 'has role' some % | I part_of           | DI %                  |
 | Individual 1 | Class 1     | Role Class 1         | Individual 2        |                       |
@@ -222,6 +222,13 @@ robot template --merge-before \
   --template uberon_template.csv \
   --output results/test_template.owl
 ```
+
+MEKS ROBOT header read from separate file
+
+    robot template --template animals_no_header.tsv \
+        --robot-header animals_header.tsv \
+        --output results/animals_no_header.owl
+
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
 
@@ -313,7 +320,7 @@ AL rdfs:label@en
 
 The provided value cannot be parsed and may not be in proper Manchester syntax. See [Manchester Syntax](http://www.w3.org/2007/OWL/wiki/ManchesterSyntax) for more details. If you are using labels, make sure the labels are defined in the `--input` ontology or using the `LABEL` column. Also ensure that all properties use a label instead of a CURIE or IRI.
 
-When using a restriction (`some`, `only`, `min`, `max`, `exactly`, or `value`) the term that preceeds the restriction must be a property. 
+When using a restriction (`some`, `only`, `min`, `max`, `exactly`, or `value`) the term that preceeds the restriction must be a property.
 
 Terms joined using `and` or `or` must be of the same entity type, e.g., you cannot join an object property and a class in an expression.
 
@@ -366,3 +373,4 @@ An invalid `CHARACTERISTIC` value was passed. If you are providing multiple char
 ### Unknown Template Error
 
 Valid template strings are limited to the [described above](#template-strings). If a different template string is provided, this error message will be returned.
+
