@@ -69,6 +69,7 @@
     <module>robot-core</module>
     <module>robot-command</module>
     <module>robot-maven-plugin</module>
+    <module>robot-mock-plugin</module>
   </modules>
 
   <profiles>
@@ -165,7 +166,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.25</version>
+      <version>4.5.26</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -176,7 +177,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.25</version>
+      <version>4.5.26</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -187,7 +188,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.25</version>
+      <version>4.5.26</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -211,9 +212,9 @@
       <version>1.7.32</version>
     </dependency>
     <dependency>
-      <groupId>org.semanticweb.elk</groupId>
-      <artifactId>elk-owlapi</artifactId>
-      <version>0.4.3</version>
+      <groupId>au.csiro</groupId>
+      <artifactId>elk-owlapi4</artifactId>
+      <version>0.5.0</version>
       <exclusions>
         <exclusion>
           <groupId>log4j</groupId>

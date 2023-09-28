@@ -48,12 +48,14 @@ public class ReportOperationTest extends CoreTest {
           File.createTempFile("1016-report-json-failure-output", "." + extension);
       ReportOperation.report(ontology, iohelper, outputFile.toString(), Collections.emptyMap());
       final String output =
-          IOUtils.toString(new FileInputStream(outputFile), Charset.defaultCharset()).trim();
+          IOUtils.toString(new FileInputStream(outputFile), Charset.defaultCharset())
+              .trim()
+              .replaceAll("\r\n", "\n");
       final InputStream expected =
           getClass().getResourceAsStream("/1016-report-json-failure/output." + extension);
       assert expected != null;
       final String expectedOutput =
-          IOUtils.toString(expected, StandardCharsets.UTF_8.name()).trim();
+          IOUtils.toString(expected, StandardCharsets.UTF_8.name()).trim().replaceAll("\r\n", "\n");
       Assert.assertEquals(expectedOutput, output);
     } catch (YAMLException e) {
       e.printStackTrace();

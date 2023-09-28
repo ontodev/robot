@@ -138,6 +138,7 @@
     "MAT": "http://purl.obolibrary.org/obo/MAT_",
     "MAXO": "http://purl.obolibrary.org/obo/MAXO_",
     "MCO": "http://purl.obolibrary.org/obo/MCO_",
+    "MCRO": "http://purl.obolibrary.org/obo/MCRO_",
     "MF": "http://purl.obolibrary.org/obo/MF_",
     "MFMO": "http://purl.obolibrary.org/obo/MFMO_",
     "MFO": "http://purl.obolibrary.org/obo/MFO_",
