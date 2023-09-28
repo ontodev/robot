@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+-- Added option to input template strings from external file [##1152]
+
 ## [1.9.5] - 2023-09-20
 
 ### Added
