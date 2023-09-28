@@ -53,7 +53,7 @@ public class TemplateCommand implements Command {
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     o.addOption("f", "force", true, "if true, do not exit on error");
     o.addOption("e", "errors", true, "write errors to this path (TSV or CSV)");
-    o.addOption("h", "robot-header", true, "input robot header line file");
+    o.addOption("E", "ext-template", true, "external robot template data file");
 
     options = o;
   }
@@ -152,9 +152,9 @@ public class TemplateCommand implements Command {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
     // Read the robot header line in
-    List<String> robotHeaderPath = CommandLineHelper.getOptionValues(line, "robot-header");
+    List<String> robotHeaderPath = CommandLineHelper.getOptionValues(line, "ext-template");
     if (robotHeaderPath.size() > 0) {
-      // TODO for now only a single header line file is considered
+      // For now only a single header line file is considered
       List<List<String>> headerLine = new ArrayList<>();
       headerLine = TemplateHelper.readTable(robotHeaderPath.get(0));
       if (headerLine.size() == 0) {

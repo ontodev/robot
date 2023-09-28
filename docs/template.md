@@ -223,11 +223,11 @@ robot template --merge-before \
   --output results/test_template.owl
 ```
 
-MEKS ROBOT header read from separate file
+ROBOT template data read from separate external file
 
-    robot template --template animals_no_header.tsv \
-        --robot-header animals_header.tsv \
-        --output results/animals_no_header.owl
+    robot template --template animals_ext_template.tsv \
+        --ext-template animals_template.tsv \
+        --output results/animals_ext_template.owl
 
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
