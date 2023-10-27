@@ -109,6 +109,7 @@ public class TemplateOperation {
     Map<String, String> options = new HashMap<>();
     options.put("force", "false");
     options.put("errors", null);
+    options.put("ext-template", null);
     return options;
   }
 
@@ -158,7 +159,7 @@ public class TemplateOperation {
    * Given an OWLOntology, an IOHelper, a map of table names to table contents, and a map of
    * template options, use the tables as templates to generate a merged output ontology.
    *
-   * @param inputOntology OWLOntology to use to get existing entities
+   * @param inputOntology OWLOntology to use to get existing entitfies
    * @param ioHelper IOHelper to resolve prefixes
    * @param tables table names to table contents
    * @param options map of template options
@@ -176,6 +177,10 @@ public class TemplateOperation {
     List<OWLOntology> outputOntologies = new ArrayList<>();
     for (Map.Entry<String, List<List<String>>> t : tables.entrySet()) {
       Template template = new Template(t.getKey(), t.getValue(), intermediate, ioHelper, checker);
+      // sufficient to check if ext-template option has a not null value
+      if(options.get("ext-template") != null) {
+        template.setRowNum(1);
+      }
       // Update the checker with new labels
       checker = template.getChecker();
       boolean force = OptionsHelper.optionIsTrue(options, "force");
@@ -487,6 +492,8 @@ public class TemplateOperation {
       int idColumn = idColumns.get(tableName);
       int labelColumn = labelColumns.get(tableName);
       List<List<String>> rows = tables.get(tableName);
+      // TODO The starting row has to be controlled by the approach used, ie, internal or external
+      // template
       for (int row = 2; row < rows.size(); row++) {
         addLogic(outputOntology, tableName, rows, row, idColumn, labelColumn, checker, parser);
       }
