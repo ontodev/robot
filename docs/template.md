@@ -229,6 +229,14 @@ ROBOT template data read from separate external file
         --ext-template animals_template.tsv \
         --output results/animals_ext_template.owl
 
+Adjusted line numbers for error reporting for template data read from separate external file
+<!-- DO NOT TEST -->
+```
+robot template --template animals_ext_template_error.tsv \
+  --ext-template animals_template.tsv \
+  --output results/animals_ext_template.owl
+```
+
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
 

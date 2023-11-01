@@ -421,6 +421,7 @@ public class Template {
 
     return outputOntology;
   }
+
   public int getRowNum() {
     return rowNum;
   }
