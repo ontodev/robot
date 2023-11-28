@@ -146,7 +146,10 @@ git commit --all --message "Bump version to ${NEXT}"
 git push
 
 step "Send announcement email"
-EMAIL="From: james@overton.ca
+EMAIL="release--email.txt"
+
+cat << EOF > "${EMAIL}"
+From: james@overton.ca
 To: obo-discuss@googlegroups.com, obo-tools@googlegroups.com
 Subject: ROBOT ${VERSION} Released
 
@@ -158,16 +161,16 @@ ROBOT is a command-line tool for automating ontology development tasks. This rel
 
 See our homepage for more information about ROBOT: http://robot.obolibrary.org
 
-James"
-if [ "$(command -v draft-email)" ]; then
-  [ -z "${IMAP_PASSWORD-}" ] || read -rsp "Enter IMAP password:" IMAP_PASSWORD
-  echo "${EMAIL}" | draft-email
-  echo "A draft email has been created"
+James
+EOF
+
+if command -v himalaya > /dev/null
+then
+    himalaya --mailbox Drafts save < "${EMAIL}"
+    echo "Draft email created"
 else
-  echo "Please send an email like this:"
-  echo "${EMAIL}"
+    echo "Draft email created in ${EMAIL}"
 fi
-confirm "Sent?"
 
 trap '' INT TERM EXIT
 echo "Draft GitHub release created for ROBOT ${VERSION}"

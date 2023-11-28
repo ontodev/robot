@@ -1,4 +1,4 @@
-# Multiple Defintions
+# Multiple Definitions
 
 **Problem:** An entity has more than one definition or elucidation. This may cause confusion or misuse, and will prevent translation to OBO format (in case of multiple definitions). Excludes deprecated entities.
 

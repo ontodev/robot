@@ -82,8 +82,8 @@ public class Row {
 
       String value;
       String comment = null;
-      CellStyle style = wb.createCellStyle();
-      Font font = wb.createFont();
+      CellStyle style = null;
+      Font font = null;
       if (cell != null) {
         List<String> values = cell.getDisplayValues();
         if (values.size() > 1) {
@@ -109,6 +109,9 @@ public class Row {
         }
 
         if (cellColor != null) {
+          if (style == null) {
+            style = wb.createCellStyle();
+          }
           style.setFillForegroundColor(cellColor.getIndex());
         }
 
@@ -116,13 +119,24 @@ public class Row {
         if (cellColor != null && cellPattern == null) {
           cellPattern = FillPatternType.SOLID_FOREGROUND;
         }
+
         if (cellPattern != null) {
+          if (style == null) {
+            style = wb.createCellStyle();
+          }
           style.setFillPattern(cellPattern);
         }
 
         IndexedColors fontColor = cell.getFontColor();
         if (fontColor != null) {
+          if (style == null) {
+            style = wb.createCellStyle();
+          }
+          if (font == null) {
+            font = wb.createFont();
+          }
           font.setColor(fontColor.getIndex());
+          style.setFont(font);
         }
 
         // Maybe get a comment or null
@@ -135,8 +149,7 @@ public class Row {
       // Add value to cell
       xlsxCell.setCellValue(value);
 
-      // Add style to cell
-      style.setFont(font);
+      // Add style to cell, null is OK
       xlsxCell.setCellStyle(style);
 
       // Maybe add a comment

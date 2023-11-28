@@ -53,7 +53,7 @@ public class IOHelperTest extends CoreTest {
     ioh.addPrefixes(context);
 
     // Get the context back from IOHelper
-    String outputContext = ioh.getContextString();
+    String outputContext = ioh.getContextString().replaceAll("\r\n", "\n");
     assertEquals(inputContext, outputContext);
   }
 
@@ -166,7 +166,7 @@ public class IOHelperTest extends CoreTest {
 
     String json =
         "{\n" + "  \"@context\" : {\n" + "    \"foo\" : \"http://example.com#\"\n" + "  }\n" + "}";
-    assertEquals("Check JSON-LD", json, ioh.getContextString());
+    assertEquals("Check JSON-LD", json, ioh.getContextString().replaceAll("\r\n", "\n"));
 
     ioh.addPrefix("bar: http://example.com#");
     expected.put("bar", "http://example.com#");
@@ -187,6 +187,37 @@ public class IOHelperTest extends CoreTest {
         "Check GO CURIE",
         "http://purl.obolibrary.org/obo/GO_12345",
         pm.getIRI("GO:12345").toString());
+  }
+
+  /**
+   * Test that original prefixes are preserved when saving.
+   *
+   * @throws IOException on file problem
+   */
+  @Test
+  public void testPrefixConservation() throws IOException {
+    OWLOntology ontology = loadOntology("/simple.owl");
+    String origNamespace =
+        ontology
+            .getOWLOntologyManager()
+            .getOntologyFormat(ontology)
+            .asPrefixOWLOntologyFormat()
+            .getPrefix("obo:");
+
+    File tempFile = File.createTempFile("simple-roundtrip", ".owl");
+    tempFile.deleteOnExit();
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.saveOntology(ontology, new RDFXMLDocumentFormat(), tempFile);
+
+    OWLOntology ontology2 = ioHelper.loadOntology(tempFile.getPath());
+    String savedNamespace =
+        ontology2
+            .getOWLOntologyManager()
+            .getOntologyFormat(ontology2)
+            .asPrefixOWLOntologyFormat()
+            .getPrefix("obo:");
+
+    assertEquals(origNamespace, savedNamespace);
   }
 
   /**
