@@ -249,6 +249,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (entity == null) {
       return;
     }
+    if (name == null) {
+      return;
+    }
 
     Map<String, IRI> map = pickMap(entity);
     if (map == null) {
@@ -390,10 +393,6 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       return dataFactory.getOWLDataProperty(iri);
     }
     // prevent punning
-    // This where the problem happens; whenever this method is called, essentially, the incoming
-    // name gets put into the dataProperties dictionary, no matter what. But this method is called in many cases, for 
-    // example, and most importantly during mancherster syntax parsing.
-    // However this error seems to have masked a number of other problems; 
     if (!objectProperties.containsKey(name)) {
       if (ioHelper != null) {
         iri = ioHelper.createIRI(name);

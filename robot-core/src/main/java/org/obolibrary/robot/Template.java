@@ -559,18 +559,16 @@ public class Template {
 
   /** Add the labels from the rows of the template to the QuotedEntityChecker. */
   private void addLabels() {
-    // If there's no label column, we can't add labels
-    if (labelColumn == -1) {
-      return;
-    }
     for (List<String> row : tableRows) {
       String id = null;
-      if (idColumn != -1) {
-        try {
-          id = row.get(idColumn);
-        } catch (IndexOutOfBoundsException e) {
-          // ignore
-        }
+      try {
+        id = row.get(idColumn);
+      } catch (IndexOutOfBoundsException e) {
+        // ignore
+      }
+
+      if (id == null) {
+        continue;
       }
 
       String label = null;
@@ -578,14 +576,6 @@ public class Template {
         label = row.get(labelColumn);
       } catch (IndexOutOfBoundsException e) {
         // ignore
-      }
-
-      if (idColumn != -1 && id == null) {
-        continue;
-      }
-
-      if (id == null || label == null) {
-        continue;
       }
 
       String type = null;
@@ -653,7 +643,13 @@ public class Template {
           entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
           break;
       }
-      checker.add(entity, label);
+
+      if (id != null) {
+        checker.add(entity, id);
+      }
+      if (label != null) {
+        checker.add(entity, label);
+      }
     }
   }
 
