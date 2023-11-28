@@ -63,6 +63,22 @@ public class TemplateTest extends CoreTest {
   }
 
   /**
+   * Test a strange case where a sequence .
+   *
+   * @throws Exception if entities cannot be found
+   */
+  @Test
+  public void testNoLabels() throws Exception {
+    String path = "/workflow-template.csv";
+    List<List<String>> rows = TemplateHelper.readCSV(this.getClass().getResourceAsStream(path));
+    IOHelper ioHelper = new IOHelper();
+    ioHelper.addPrefix("ex", "http://example.com/");
+    Template t = new Template(path, rows, ioHelper);
+    OWLOntology template = t.generateOutputOntology("http://test.com/template.owl", false, null);
+    assertIdentical("/workflow-template.ttl", template);
+  }
+
+  /**
    * Test multiple templates.
    *
    * @throws Exception if entities cannot be found
