@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 -- Added option to input template strings from external file [##1152]
 
+### Fixed
+- '--annotate-with-source true' does not work with extract --method subset [#1160]
+- Fix how Template adds entities to the QuotedEntityChecker [#1104]
+
 ## [1.9.5] - 2023-09-20
 
 ### Added
@@ -379,9 +383,11 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1160]: https://github.com/ontodev/robot/pull/1160
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135
 [#1119]: https://github.com/ontodev/robot/pull/1119
+[#1104]: https://github.com/ontodev/robot/pull/1104
 [#1100]: https://github.com/ontodev/robot/pull/1100
 [#1091]: https://github.com/ontodev/robot/issues/1091
 [#1089]: https://github.com/ontodev/robot/issues/1089

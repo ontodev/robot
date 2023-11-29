@@ -79,12 +79,14 @@ For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
 The subset method extracts a sub-ontology that contains only the seed terms (that you specify with `--term` and `--term-file` options) and the relations between them. This method uses the [relation-graph](https://github.com/balhoff/relation-graph) to materialize the existential relations among the seed terms. Procedurally, the subset method materializes the input ontology and adds the inferred axioms to the input ontology. Then filters the ontology with the given seed terms. Finally, it reduces the filtered ontology to remove redundant subClassOf axioms.
 
-    robot extract --method subset \
-        --input subset.obo \
-        --term "obo:ONT_1" \
-        --term "obo:ONT_5" \
-        --term "BFO:0000050" \
-        --output results/subset_result.owl
+```
+robot extract --method subset \
+    --input subset.obo \
+    --term "obo:ONT_1" \
+    --term "obo:ONT_5" \
+    --term "BFO:0000050" \
+    --output results/subset_result.owl
+```
         
 ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ontology. If none of the input terms exist, the command will fail with an [empty terms error](errors#empty-terms-error). This can be overridden by including `--force true`. 
 
