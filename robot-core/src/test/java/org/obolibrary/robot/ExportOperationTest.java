@@ -1,5 +1,7 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -121,7 +123,7 @@ public class ExportOperationTest extends CoreTest {
    */
   @Test
   public void testExportNamedHeadingsSimple() throws Exception {
-    OWLOntology ontology = loadOntology("/simple.owl");
+    OWLOntology ontology = loadOntology("/simple_defined_by.owl");
     IOHelper ioHelper = new IOHelper();
     ioHelper.addPrefix(
         "simple", "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#");
@@ -135,6 +137,7 @@ public class ExportOperationTest extends CoreTest {
             "CURIE",
             "Type",
             "SYNONYMS",
+            "rdfs:isDefinedBy",
             "SUBCLASSES",
             "SubClass Of",
             "SubProperty Of",
@@ -152,9 +155,18 @@ public class ExportOperationTest extends CoreTest {
     Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, options);
     Workbook wb = t.asWorkbook("|");
 
+    // Write test.xlsx for debugging
+    // try {
+    //   System.out.println("Writing result to robot-core/test.xlsx");
+    //   FileOutputStream out = new FileOutputStream("test.xlsx");
+    //   wb.write(out);
+    //   out.close();
+    // } catch (Exception ex) {
+    //   System.out.println("Error: " + ex);
+    // }
+
     Sheet s = wb.getSheetAt(0);
-    // There should be three rows (0, 1, 2)
-    assert (s.getLastRowNum() == 3);
+    assertEquals(s.getLastRowNum(), 4);
 
     // Validate header
     // should match size and label
@@ -176,6 +188,11 @@ public class ExportOperationTest extends CoreTest {
       String expectedHeader = columns.get(colIx);
       assert (foundHeader.equals(expectedHeader));
     }
+
+    // rdfs:isDefinedBy should work
+    assertEquals(
+        s.getRow(4).getCell(6).getStringCellValue(),
+        "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl");
   }
 
   /**
