@@ -249,6 +249,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (entity == null) {
       return;
     }
+    if (name == null) {
+      return;
+    }
 
     Map<String, IRI> map = pickMap(entity);
     if (map == null) {
