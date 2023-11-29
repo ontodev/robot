@@ -173,7 +173,7 @@ public class Template {
 
     // Add the contents of the tableRows
     addTable(rows);
-    addLabels();
+    addEntities();
     createParser();
   }
 
@@ -203,7 +203,7 @@ public class Template {
 
     // Add the contents of the tableRows
     addTable(rows);
-    addLabels();
+    addEntities();
     createParser();
   }
 
@@ -237,7 +237,7 @@ public class Template {
 
     // Add the contents of the tableRows
     addTable(rows);
-    addLabels();
+    addEntities();
     createParser();
   }
 
@@ -276,7 +276,7 @@ public class Template {
 
     // Add the contents of the tableRows
     addTable(rows);
-    addLabels();
+    addEntities();
     createParser();
   }
 
@@ -320,7 +320,7 @@ public class Template {
 
     // Add the contents of the tableRows
     addTable(rows);
-    addLabels();
+    addEntities();
     createParser();
     parser.setOWLEntityChecker(this.checker);
   }
@@ -557,102 +557,103 @@ public class Template {
     }
   }
 
-  /** Add the labels from the rows of the template to the QuotedEntityChecker. */
-  private void addLabels() {
-    // If there's no label column, we can't add labels
-    if (labelColumn == -1) {
+  /** Add the entities from the rows of the template to the QuotedEntityChecker. */
+  private void addEntities() {
+    for (List<String> row : tableRows) {
+      addEntity(row);
+    }
+  }
+
+  /** Add the entity from this row of the template to the QuotedEntityChecker. */
+  private void addEntity(List<String> row) {
+    String id = null;
+    try {
+      id = row.get(idColumn);
+    } catch (IndexOutOfBoundsException e) {
+      // ignore
+    }
+
+    if (id == null) {
       return;
     }
-    for (List<String> row : tableRows) {
-      String id = null;
-      if (idColumn != -1) {
-        try {
-          id = row.get(idColumn);
-        } catch (IndexOutOfBoundsException e) {
-          // ignore
-        }
-      }
 
-      String label = null;
+    String label = null;
+    try {
+      label = row.get(labelColumn);
+    } catch (IndexOutOfBoundsException e) {
+      // ignore
+    }
+
+    String type = null;
+    if (typeColumn != -1) {
       try {
-        label = row.get(labelColumn);
+        type = row.get(typeColumn);
       } catch (IndexOutOfBoundsException e) {
         // ignore
       }
+    }
+    if (type == null || type.trim().isEmpty()) {
+      type = "class";
+    }
 
-      if (idColumn != -1 && id == null) {
-        continue;
-      }
+    IRI iri = ioHelper.createIRI(id);
+    if (iri == null) {
+      iri = IRI.create(id);
+    }
 
-      if (id == null || label == null) {
-        continue;
-      }
+    // Try to resolve a CURIE
+    IRI typeIRI = ioHelper.createIRI(type);
 
-      String type = null;
-      if (typeColumn != -1) {
-        try {
-          type = row.get(typeColumn);
-        } catch (IndexOutOfBoundsException e) {
-          // ignore
-        }
-      }
-      if (type == null || type.trim().isEmpty()) {
-        type = "class";
-      }
+    // Set to IRI string or to type string
+    String typeOrIRI = type;
+    if (typeIRI != null) {
+      typeOrIRI = typeIRI.toString();
+    }
 
-      IRI iri = ioHelper.createIRI(id);
-      if (iri == null) {
-        iri = IRI.create(id);
-      }
+    // Check against builtin types (ignore case), otherwise treat as individual
+    OWLEntity entity;
+    String lowerCaseType = typeOrIRI.toLowerCase();
+    switch (lowerCaseType) {
+      case "":
+      case "http://www.w3.org/2002/07/owl#class":
+      case "class":
+        entity = dataFactory.getOWLEntity(EntityType.CLASS, iri);
+        break;
 
-      // Try to resolve a CURIE
-      IRI typeIRI = ioHelper.createIRI(type);
+      case "http://www.w3.org/2002/07/owl#objectproperty":
+      case "object property":
+        entity = dataFactory.getOWLEntity(EntityType.OBJECT_PROPERTY, iri);
+        break;
 
-      // Set to IRI string or to type string
-      String typeOrIRI = type;
-      if (typeIRI != null) {
-        typeOrIRI = typeIRI.toString();
-      }
+      case "http://www.w3.org/2002/07/owl#dataproperty":
+      case "data property":
+        entity = dataFactory.getOWLEntity(EntityType.DATA_PROPERTY, iri);
+        break;
 
-      // Check against builtin types (ignore case), otherwise treat as individual
-      OWLEntity entity;
-      String lowerCaseType = typeOrIRI.toLowerCase();
-      switch (lowerCaseType) {
-        case "":
-        case "http://www.w3.org/2002/07/owl#class":
-        case "class":
-          entity = dataFactory.getOWLEntity(EntityType.CLASS, iri);
-          break;
+      case "http://www.w3.org/2002/07/owl#annotationproperty":
+      case "annotation property":
+        entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
+        break;
 
-        case "http://www.w3.org/2002/07/owl#objectproperty":
-        case "object property":
-          entity = dataFactory.getOWLEntity(EntityType.OBJECT_PROPERTY, iri);
-          break;
+      case "http://www.w3.org/2002/07/owl#datatype":
+      case "datatype":
+        entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
+        break;
 
-        case "http://www.w3.org/2002/07/owl#dataproperty":
-        case "data property":
-          entity = dataFactory.getOWLEntity(EntityType.DATA_PROPERTY, iri);
-          break;
+      case "http://www.w3.org/2002/07/owl#individual":
+      case "individual":
+      case "http://www.w3.org/2002/07/owl#namedindividual":
+      case "named individual":
+      default:
+        // Assume type is an individual (checked later)
+        entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
+        break;
+    }
 
-        case "http://www.w3.org/2002/07/owl#annotationproperty":
-        case "annotation property":
-          entity = dataFactory.getOWLEntity(EntityType.ANNOTATION_PROPERTY, iri);
-          break;
-
-        case "http://www.w3.org/2002/07/owl#datatype":
-        case "datatype":
-          entity = dataFactory.getOWLEntity(EntityType.DATATYPE, iri);
-          break;
-
-        case "http://www.w3.org/2002/07/owl#individual":
-        case "individual":
-        case "http://www.w3.org/2002/07/owl#namedindividual":
-        case "named individual":
-        default:
-          // Assume type is an individual (checked later)
-          entity = dataFactory.getOWLEntity(EntityType.NAMED_INDIVIDUAL, iri);
-          break;
-      }
+    if (id != null) {
+      checker.add(entity, id);
+    }
+    if (label != null) {
       checker.add(entity, label);
     }
   }
@@ -795,6 +796,8 @@ public class Template {
       case "http://www.w3.org/2002/07/owl#namedindividual":
       case "named individual":
       default:
+        // This is a bit unsafe imo, for example in the case of where the datatype turns out to be
+        // http://www.w3.org/2002/07/owl#DatatypeProperty""
         addIndividualAxioms(iri, row);
         break;
     }

@@ -1,0 +1,5 @@
+Identifier,Type,Class Restriction Lower,Class Restriction Upper,Domain,Range
+ID,TYPE,SC %,SC %,DOMAIN,RANGE
+ex:consists_of,owl:ObjectProperty,,,ex:Workflow,ex:Task
+ex:Workflow,class,(ex:consists_of min 1 ex:Task),(ex:consists_of max 7 ex:Task),,
+ex:Task,class,,,,
