@@ -55,7 +55,7 @@ public class TemplateTest extends CoreTest {
    * @throws Exception if entities cannot be found
    */
   @Test
-  public void testLegacyTemplateCSV3() throws Exception {
+  public void testNoLabelsNoTypes() throws Exception {
     String path = "/sequence-template.csv";
     List<List<String>> rows = TemplateHelper.readCSV(this.getClass().getResourceAsStream(path));
     Template t = new Template(path, rows);
