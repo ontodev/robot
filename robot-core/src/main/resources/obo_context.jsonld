@@ -1,279 +1,1028 @@
 {
-  "@context": {
-    "obo": "http://purl.obolibrary.org/obo/",
-    "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
-
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "rdfa": "http://www.w3.org/ns/rdfa#",
-    "xml": "http://www.w3.org/XML/1998/namespace",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "owl": "http://www.w3.org/2002/07/owl#",
-
-    "dc": "http://purl.org/dc/terms/",
-    "dc11": "http://purl.org/dc/elements/1.1/",
-    "foaf": "http://xmlns.com/foaf/0.1/",
-    "prov": "http://www.w3.org/ns/prov#",
-    "skos": "http://www.w3.org/2004/02/skos/core#",
-    "void": "http://rdfs.org/ns/void#",
-    "cc": "http://creativecommons.org/ns#",
-    "schema": "http://schema.org/",
-
-    "AAO": "http://purl.obolibrary.org/obo/AAO_",
-    "ADO": "http://purl.obolibrary.org/obo/ADO_",
-    "ADW": "http://purl.obolibrary.org/obo/ADW_",
-    "AEO": "http://purl.obolibrary.org/obo/AEO_",
-    "AERO": "http://purl.obolibrary.org/obo/AERO_",
-    "AGRO": "http://purl.obolibrary.org/obo/AGRO_",
-    "AISM": "http://purl.obolibrary.org/obo/AISM_",
-    "AMPHX": "http://purl.obolibrary.org/obo/AMPHX_",
-    "APO": "http://purl.obolibrary.org/obo/APO_",
-    "APOLLO_SV": "http://purl.obolibrary.org/obo/APOLLO_SV_",
-    "ARO": "http://purl.obolibrary.org/obo/ARO_",
-    "ATO": "http://purl.obolibrary.org/obo/ATO_",
-    "BCGO": "http://purl.obolibrary.org/obo/BCGO_",
-    "BCO": "http://purl.obolibrary.org/obo/BCO_",
-    "BFO": "http://purl.obolibrary.org/obo/BFO_",
-    "BILA": "http://purl.obolibrary.org/obo/BILA_",
-    "BOOTSTREP": "http://purl.obolibrary.org/obo/BOOTSTREP_",
-    "BSPO": "http://purl.obolibrary.org/obo/BSPO_",
-    "BTO": "http://purl.obolibrary.org/obo/BTO_",
-    "CARO": "http://purl.obolibrary.org/obo/CARO_",
-    "CDAO": "http://purl.obolibrary.org/obo/CDAO_",
-    "CDNO": "http://purl.obolibrary.org/obo/CDNO_",
-    "CEPH": "http://purl.obolibrary.org/obo/CEPH_",
-    "CHEBI": "http://purl.obolibrary.org/obo/CHEBI_",
-    "CHEMINF": "http://purl.obolibrary.org/obo/CHEMINF_",
-    "CHIRO": "http://purl.obolibrary.org/obo/CHIRO_",
-    "CHMO": "http://purl.obolibrary.org/obo/CHMO_",
-    "CIDO": "http://purl.obolibrary.org/obo/CIDO_",
-    "CIO": "http://purl.obolibrary.org/obo/CIO_",
-    "CL": "http://purl.obolibrary.org/obo/CL_",
-    "CLAO": "http://purl.obolibrary.org/obo/CLAO_",
-    "CLO": "http://purl.obolibrary.org/obo/CLO_",
-    "CLYH": "http://purl.obolibrary.org/obo/CLYH_",
-    "CMF": "http://purl.obolibrary.org/obo/CMF_",
-    "CMO": "http://purl.obolibrary.org/obo/CMO_",
-    "COB": "http://purl.obolibrary.org/obo/COB_",
-    "COLAO": "http://purl.obolibrary.org/obo/COLAO_",
-    "CRO": "http://purl.obolibrary.org/obo/CRO_",
-    "CTENO": "http://purl.obolibrary.org/obo/CTENO_",
-    "CTO": "http://purl.obolibrary.org/obo/CTO_",
-    "CVDO": "http://purl.obolibrary.org/obo/CVDO_",
-    "DC_CL": "http://purl.obolibrary.org/obo/DC_CL_",
-    "DDANAT": "http://purl.obolibrary.org/obo/DDANAT_",
-    "DDPHENO": "http://purl.obolibrary.org/obo/DDPHENO_",
-    "DIDEO": "http://purl.obolibrary.org/obo/DIDEO_",
-    "DINTO": "http://purl.obolibrary.org/obo/DINTO_",
-    "DISDRIV": "http://purl.obolibrary.org/obo/DISDRIV_",
-    "DOID": "http://purl.obolibrary.org/obo/DOID_",
-    "DRON": "http://purl.obolibrary.org/obo/DRON_",
-    "DUO": "http://purl.obolibrary.org/obo/DUO_",
-    "ECAO": "http://purl.obolibrary.org/obo/ECAO_",
-    "ECO": "http://purl.obolibrary.org/obo/ECO_",
-    "ECOCORE": "http://purl.obolibrary.org/obo/ECOCORE_",
-    "ECTO": "http://purl.obolibrary.org/obo/ECTO_",
-    "EHDA": "http://purl.obolibrary.org/obo/EHDA_",
-    "EHDAA": "http://purl.obolibrary.org/obo/EHDAA_",
-    "EHDAA2": "http://purl.obolibrary.org/obo/EHDAA2_",
-    "EMAP": "http://purl.obolibrary.org/obo/EMAP_",
-    "EMAPA": "http://purl.obolibrary.org/obo/EMAPA_",
-    "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
-    "EO": "http://purl.obolibrary.org/obo/EO_",
-    "EPIO": "http://purl.obolibrary.org/obo/EPIO_",
-    "EPO": "http://purl.obolibrary.org/obo/EPO_",
-    "ERO": "http://purl.obolibrary.org/obo/ERO_",
-    "EUPATH": "http://purl.obolibrary.org/obo/EUPATH_",
-    "EV": "http://purl.obolibrary.org/obo/EV_",
-    "ExO": "http://purl.obolibrary.org/obo/ExO_",
-    "FAO": "http://purl.obolibrary.org/obo/FAO_",
-    "FBSP": "http://purl.obolibrary.org/obo/FBSP_",
-    "FBbi": "http://purl.obolibrary.org/obo/FBbi_",
-    "FBbt": "http://purl.obolibrary.org/obo/FBbt_",
-    "FBcv": "http://purl.obolibrary.org/obo/FBcv_",
-    "FBdv": "http://purl.obolibrary.org/obo/FBdv_",
-    "FIDEO": "http://purl.obolibrary.org/obo/FIDEO_",
-    "FIX": "http://purl.obolibrary.org/obo/FIX_",
-    "FLOPO": "http://purl.obolibrary.org/obo/FLOPO_",
-    "FLU": "http://purl.obolibrary.org/obo/FLU_",
-    "FMA": "http://purl.obolibrary.org/obo/FMA_",
-    "FOBI": "http://purl.obolibrary.org/obo/FOBI_",
-    "FOODON": "http://purl.obolibrary.org/obo/FOODON_",
-    "FOVT": "http://purl.obolibrary.org/obo/FOVT_",
-    "FYPO": "http://purl.obolibrary.org/obo/FYPO_",
-    "GAZ": "http://purl.obolibrary.org/obo/GAZ_",
-    "GECKO": "http://purl.obolibrary.org/obo/GECKO_",
-    "GENEPIO": "http://purl.obolibrary.org/obo/GENEPIO_",
-    "GENO": "http://purl.obolibrary.org/obo/GENO_",
-    "GEO": "http://purl.obolibrary.org/obo/GEO_",
-    "GNO": "http://purl.obolibrary.org/obo/GNO_",
-    "GO": "http://purl.obolibrary.org/obo/GO_",
-    "GRO": "http://purl.obolibrary.org/obo/GRO_",
-    "GSSO": "http://purl.obolibrary.org/obo/GSSO_",
-    "HABRONATTUS": "http://purl.obolibrary.org/obo/HABRONATTUS_",
-    "HANCESTRO": "http://purl.obolibrary.org/obo/HANCESTRO_",
-    "HAO": "http://purl.obolibrary.org/obo/HAO_",
-    "HOM": "http://purl.obolibrary.org/obo/HOM_",
-    "HP": "http://purl.obolibrary.org/obo/HP_",
-    "HSO": "http://purl.obolibrary.org/obo/HSO_",
-    "HTN": "http://purl.obolibrary.org/obo/HTN_",
-    "HsapDv": "http://purl.obolibrary.org/obo/HsapDv_",
-    "IAO": "http://purl.obolibrary.org/obo/IAO_",
-    "ICEO": "http://purl.obolibrary.org/obo/ICEO_",
-    "ICO": "http://purl.obolibrary.org/obo/ICO_",
-    "IDO": "http://purl.obolibrary.org/obo/IDO_",
-    "IDOMAL": "http://purl.obolibrary.org/obo/IDOMAL_",
-    "IEV": "http://purl.obolibrary.org/obo/IEV_",
-    "IMR": "http://purl.obolibrary.org/obo/IMR_",
-    "INO": "http://purl.obolibrary.org/obo/INO_",
-    "IPR": "http://purl.obolibrary.org/obo/IPR_",
-    "KISAO": "http://purl.obolibrary.org/obo/KISAO_",
-    "LABO": "http://purl.obolibrary.org/obo/LABO_",
-    "LEPAO": "http://purl.obolibrary.org/obo/LEPAO_",
-    "LIPRO": "http://purl.obolibrary.org/obo/LIPRO_",
-    "LOGGERHEAD": "http://purl.obolibrary.org/obo/LOGGERHEAD_",
-    "MA": "http://purl.obolibrary.org/obo/MA_",
-    "MAMO": "http://purl.obolibrary.org/obo/MAMO_",
-    "MAO": "http://purl.obolibrary.org/obo/MAO_",
-    "MAT": "http://purl.obolibrary.org/obo/MAT_",
-    "MAXO": "http://purl.obolibrary.org/obo/MAXO_",
-    "MCO": "http://purl.obolibrary.org/obo/MCO_",
-    "MCRO": "http://purl.obolibrary.org/obo/MCRO_",
-    "MF": "http://purl.obolibrary.org/obo/MF_",
-    "MFMO": "http://purl.obolibrary.org/obo/MFMO_",
-    "MFO": "http://purl.obolibrary.org/obo/MFO_",
-    "MFOEM": "http://purl.obolibrary.org/obo/MFOEM_",
-    "MFOMD": "http://purl.obolibrary.org/obo/MFOMD_",
-    "MI": "http://purl.obolibrary.org/obo/MI_",
-    "MIAPA": "http://purl.obolibrary.org/obo/MIAPA_",
-    "MICRO": "http://purl.obolibrary.org/obo/MICRO_",
-    "MIRNAO": "http://purl.obolibrary.org/obo/MIRNAO_",
-    "MIRO": "http://purl.obolibrary.org/obo/MIRO_",
-    "MMO": "http://purl.obolibrary.org/obo/MMO_",
-    "MO": "http://purl.obolibrary.org/obo/MO_",
-    "MOD": "http://purl.obolibrary.org/obo/MOD_",
-    "MONDO": "http://purl.obolibrary.org/obo/MONDO_",
-    "MOP": "http://purl.obolibrary.org/obo/MOP_",
-    "MP": "http://purl.obolibrary.org/obo/MP_",
-    "MPATH": "http://purl.obolibrary.org/obo/MPATH_",
-    "MPIO": "http://purl.obolibrary.org/obo/MPIO_",
-    "MRO": "http://purl.obolibrary.org/obo/MRO_",
-    "MS": "http://purl.obolibrary.org/obo/MS_",
-    "MmusDv": "http://purl.obolibrary.org/obo/MmusDv_",
-    "NBO": "http://purl.obolibrary.org/obo/NBO_",
-    "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
-    "NCIT": "http://purl.obolibrary.org/obo/NCIT_",
-    "NCRO": "http://purl.obolibrary.org/obo/NCRO_",
-    "NGBO": "http://purl.obolibrary.org/obo/NGBO_",
-    "NIF_CELL": "http://purl.obolibrary.org/obo/NIF_CELL_",
-    "NIF_DYSFUNCTION": "http://purl.obolibrary.org/obo/NIF_DYSFUNCTION_",
-    "NIF_GROSSANATOMY": "http://purl.obolibrary.org/obo/NIF_GROSSANATOMY_",
-    "NMR": "http://purl.obolibrary.org/obo/NMR_",
-    "NOMEN": "http://purl.obolibrary.org/obo/NOMEN_",
-    "OAE": "http://purl.obolibrary.org/obo/OAE_",
-    "OARCS": "http://purl.obolibrary.org/obo/OARCS_",
-    "OBA": "http://purl.obolibrary.org/obo/OBA_",
-    "OBCS": "http://purl.obolibrary.org/obo/OBCS_",
-    "OBI": "http://purl.obolibrary.org/obo/OBI_",
-    "OBIB": "http://purl.obolibrary.org/obo/OBIB_",
-    "OBO_REL": "http://purl.obolibrary.org/obo/OBO_REL_",
-    "OGG": "http://purl.obolibrary.org/obo/OGG_",
-    "OGI": "http://purl.obolibrary.org/obo/OGI_",
-    "OGMS": "http://purl.obolibrary.org/obo/OGMS_",
-    "OGSF": "http://purl.obolibrary.org/obo/OGSF_",
-    "OHD": "http://purl.obolibrary.org/obo/OHD_",
-    "OHMI": "http://purl.obolibrary.org/obo/OHMI_",
-    "OHPI": "http://purl.obolibrary.org/obo/OHPI_",
-    "OMIABIS": "http://purl.obolibrary.org/obo/OMIABIS_",
-    "OMIT": "http://purl.obolibrary.org/obo/OMIT_",
-    "OMO": "http://purl.obolibrary.org/obo/OMO_",
-    "OMP": "http://purl.obolibrary.org/obo/OMP_",
-    "OMRSE": "http://purl.obolibrary.org/obo/OMRSE_",
-    "ONE": "http://purl.obolibrary.org/obo/ONE_",
-    "ONS": "http://purl.obolibrary.org/obo/ONS_",
-    "ONTOAVIDA": "http://purl.obolibrary.org/obo/ONTOAVIDA_",
-    "ONTONEO": "http://purl.obolibrary.org/obo/ONTONEO_",
-    "OOSTT": "http://purl.obolibrary.org/obo/OOSTT_",
-    "OPL": "http://purl.obolibrary.org/obo/OPL_",
-    "OPMI": "http://purl.obolibrary.org/obo/OPMI_",
-    "ORNASEQ": "http://purl.obolibrary.org/obo/ORNASEQ_",
-    "OVAE": "http://purl.obolibrary.org/obo/OVAE_",
-    "OlatDv": "http://purl.obolibrary.org/obo/OlatDv_",
-    "PAO": "http://purl.obolibrary.org/obo/PAO_",
-    "PATO": "http://purl.obolibrary.org/obo/PATO_",
-    "PCL": "http://purl.obolibrary.org/obo/PCL_",
-    "PCO": "http://purl.obolibrary.org/obo/PCO_",
-    "PDRO": "http://purl.obolibrary.org/obo/PDRO_",
-    "PD_ST": "http://purl.obolibrary.org/obo/PD_ST_",
-    "PECO": "http://purl.obolibrary.org/obo/PECO_",
-    "PGDSO": "http://purl.obolibrary.org/obo/PGDSO_",
-    "PHIPO": "http://purl.obolibrary.org/obo/PHIPO_",
-    "PLANA": "http://purl.obolibrary.org/obo/PLANA_",
-    "PLANP": "http://purl.obolibrary.org/obo/PLANP_",
-    "PLO": "http://purl.obolibrary.org/obo/PLO_",
-    "PO": "http://purl.obolibrary.org/obo/PO_",
-    "PORO": "http://purl.obolibrary.org/obo/PORO_",
-    "PPO": "http://purl.obolibrary.org/obo/PPO_",
-    "PR": "http://purl.obolibrary.org/obo/PR_",
-    "PROCO": "http://purl.obolibrary.org/obo/PROCO_",
-    "PROPREO": "http://purl.obolibrary.org/obo/PROPREO_",
-    "PSDO": "http://purl.obolibrary.org/obo/PSDO_",
-    "PSO": "http://purl.obolibrary.org/obo/PSO_",
-    "PW": "http://purl.obolibrary.org/obo/PW_",
-    "PdumDv": "http://purl.obolibrary.org/obo/PdumDv_",
-    "RBO": "http://purl.obolibrary.org/obo/RBO_",
-    "RESID": "http://purl.obolibrary.org/obo/RESID_",
-    "REX": "http://purl.obolibrary.org/obo/REX_",
-    "RNAO": "http://purl.obolibrary.org/obo/RNAO_",
-    "RO": "http://purl.obolibrary.org/obo/RO_",
-    "RS": "http://purl.obolibrary.org/obo/RS_",
-    "RXNO": "http://purl.obolibrary.org/obo/RXNO_",
-    "SAO": "http://purl.obolibrary.org/obo/SAO_",
-    "SBO": "http://purl.obolibrary.org/obo/SBO_",
-    "SCDO": "http://purl.obolibrary.org/obo/SCDO_",
-    "SEP": "http://purl.obolibrary.org/obo/SEP_",
-    "SEPIO": "http://purl.obolibrary.org/obo/SEPIO_",
-    "SIBO": "http://purl.obolibrary.org/obo/SIBO_",
-    "SO": "http://purl.obolibrary.org/obo/SO_",
-    "SOPHARM": "http://purl.obolibrary.org/obo/SOPHARM_",
-    "SPD": "http://purl.obolibrary.org/obo/SPD_",
-    "STATO": "http://purl.obolibrary.org/obo/STATO_",
-    "SWO": "http://purl.obolibrary.org/obo/SWO_",
-    "SYMP": "http://purl.obolibrary.org/obo/SYMP_",
-    "T4FS": "http://purl.obolibrary.org/obo/T4FS_",
-    "TADS": "http://purl.obolibrary.org/obo/TADS_",
-    "TAHE": "http://purl.obolibrary.org/obo/TAHE_",
-    "TAHH": "http://purl.obolibrary.org/obo/TAHH_",
-    "TAO": "http://purl.obolibrary.org/obo/TAO_",
-    "TAXRANK": "http://purl.obolibrary.org/obo/TAXRANK_",
-    "TGMA": "http://purl.obolibrary.org/obo/TGMA_",
-    "TO": "http://purl.obolibrary.org/obo/TO_",
-    "TRANS": "http://purl.obolibrary.org/obo/TRANS_",
-    "TTO": "http://purl.obolibrary.org/obo/TTO_",
-    "TXPO": "http://purl.obolibrary.org/obo/TXPO_",
-    "UBERON": "http://purl.obolibrary.org/obo/UBERON_",
-    "UO": "http://purl.obolibrary.org/obo/UO_",
-    "UPA": "http://purl.obolibrary.org/obo/UPA_",
-    "UPHENO": "http://purl.obolibrary.org/obo/UPHENO_",
-    "VBO": "http://purl.obolibrary.org/obo/VBO_",
-    "VHOG": "http://purl.obolibrary.org/obo/VHOG_",
-    "VO": "http://purl.obolibrary.org/obo/VO_",
-    "VSAO": "http://purl.obolibrary.org/obo/VSAO_",
-    "VT": "http://purl.obolibrary.org/obo/VT_",
-    "VTO": "http://purl.obolibrary.org/obo/VTO_",
-    "VariO": "http://purl.obolibrary.org/obo/VariO_",
-    "WBPhenotype": "http://purl.obolibrary.org/obo/WBPhenotype_",
-    "WBbt": "http://purl.obolibrary.org/obo/WBbt_",
-    "WBls": "http://purl.obolibrary.org/obo/WBls_",
-    "XAO": "http://purl.obolibrary.org/obo/XAO_",
-    "XCO": "http://purl.obolibrary.org/obo/XCO_",
-    "XLMOD": "http://purl.obolibrary.org/obo/XLMOD_",
-    "XPO": "http://purl.obolibrary.org/obo/XPO_",
-    "YPO": "http://purl.obolibrary.org/obo/YPO_",
-    "ZEA": "http://purl.obolibrary.org/obo/ZEA_",
-    "ZECO": "http://purl.obolibrary.org/obo/ZECO_",
-    "ZFA": "http://purl.obolibrary.org/obo/ZFA_",
-    "ZFS": "http://purl.obolibrary.org/obo/ZFS_",
-    "ZP": "http://purl.obolibrary.org/obo/ZP_"
-  }
+    "@context": {
+        "AAO": {
+            "@id": "http://purl.obolibrary.org/obo/AAO_",
+            "@prefix": true
+        },
+        "ADO": {
+            "@id": "http://purl.obolibrary.org/obo/ADO_",
+            "@prefix": true
+        },
+        "ADW": {
+            "@id": "http://purl.obolibrary.org/obo/ADW_",
+            "@prefix": true
+        },
+        "AEO": {
+            "@id": "http://purl.obolibrary.org/obo/AEO_",
+            "@prefix": true
+        },
+        "AERO": {
+            "@id": "http://purl.obolibrary.org/obo/AERO_",
+            "@prefix": true
+        },
+        "AGRO": {
+            "@id": "http://purl.obolibrary.org/obo/AGRO_",
+            "@prefix": true
+        },
+        "AISM": {
+            "@id": "http://purl.obolibrary.org/obo/AISM_",
+            "@prefix": true
+        },
+        "AMPHX": {
+            "@id": "http://purl.obolibrary.org/obo/AMPHX_",
+            "@prefix": true
+        },
+        "APO": {
+            "@id": "http://purl.obolibrary.org/obo/APO_",
+            "@prefix": true
+        },
+        "APOLLO_SV": {
+            "@id": "http://purl.obolibrary.org/obo/APOLLO_SV_",
+            "@prefix": true
+        },
+        "ARO": {
+            "@id": "http://purl.obolibrary.org/obo/ARO_",
+            "@prefix": true
+        },
+        "ATO": {
+            "@id": "http://purl.obolibrary.org/obo/ATO_",
+            "@prefix": true
+        },
+        "BCGO": {
+            "@id": "http://purl.obolibrary.org/obo/BCGO_",
+            "@prefix": true
+        },
+        "BCO": {
+            "@id": "http://purl.obolibrary.org/obo/BCO_",
+            "@prefix": true
+        },
+        "BFO": {
+            "@id": "http://purl.obolibrary.org/obo/BFO_",
+            "@prefix": true
+        },
+        "BILA": {
+            "@id": "http://purl.obolibrary.org/obo/BILA_",
+            "@prefix": true
+        },
+        "BOOTSTREP": {
+            "@id": "http://purl.obolibrary.org/obo/BOOTSTREP_",
+            "@prefix": true
+        },
+        "BSPO": {
+            "@id": "http://purl.obolibrary.org/obo/BSPO_",
+            "@prefix": true
+        },
+        "BTO": {
+            "@id": "http://purl.obolibrary.org/obo/BTO_",
+            "@prefix": true
+        },
+        "CARO": {
+            "@id": "http://purl.obolibrary.org/obo/CARO_",
+            "@prefix": true
+        },
+        "CDAO": {
+            "@id": "http://purl.obolibrary.org/obo/CDAO_",
+            "@prefix": true
+        },
+        "CDNO": {
+            "@id": "http://purl.obolibrary.org/obo/CDNO_",
+            "@prefix": true
+        },
+        "CEPH": {
+            "@id": "http://purl.obolibrary.org/obo/CEPH_",
+            "@prefix": true
+        },
+        "CHEBI": {
+            "@id": "http://purl.obolibrary.org/obo/CHEBI_",
+            "@prefix": true
+        },
+        "CHEMINF": {
+            "@id": "http://purl.obolibrary.org/obo/CHEMINF_",
+            "@prefix": true
+        },
+        "CHIRO": {
+            "@id": "http://purl.obolibrary.org/obo/CHIRO_",
+            "@prefix": true
+        },
+        "CHMO": {
+            "@id": "http://purl.obolibrary.org/obo/CHMO_",
+            "@prefix": true
+        },
+        "CIDO": {
+            "@id": "http://purl.obolibrary.org/obo/CIDO_",
+            "@prefix": true
+        },
+        "CIO": {
+            "@id": "http://purl.obolibrary.org/obo/CIO_",
+            "@prefix": true
+        },
+        "CL": {
+            "@id": "http://purl.obolibrary.org/obo/CL_",
+            "@prefix": true
+        },
+        "CLAO": {
+            "@id": "http://purl.obolibrary.org/obo/CLAO_",
+            "@prefix": true
+        },
+        "CLO": {
+            "@id": "http://purl.obolibrary.org/obo/CLO_",
+            "@prefix": true
+        },
+        "CLYH": {
+            "@id": "http://purl.obolibrary.org/obo/CLYH_",
+            "@prefix": true
+        },
+        "CMF": {
+            "@id": "http://purl.obolibrary.org/obo/CMF_",
+            "@prefix": true
+        },
+        "CMO": {
+            "@id": "http://purl.obolibrary.org/obo/CMO_",
+            "@prefix": true
+        },
+        "COB": {
+            "@id": "http://purl.obolibrary.org/obo/COB_",
+            "@prefix": true
+        },
+        "COLAO": {
+            "@id": "http://purl.obolibrary.org/obo/COLAO_",
+            "@prefix": true
+        },
+        "CRO": {
+            "@id": "http://purl.obolibrary.org/obo/CRO_",
+            "@prefix": true
+        },
+        "CTENO": {
+            "@id": "http://purl.obolibrary.org/obo/CTENO_",
+            "@prefix": true
+        },
+        "CTO": {
+            "@id": "http://purl.obolibrary.org/obo/CTO_",
+            "@prefix": true
+        },
+        "CVDO": {
+            "@id": "http://purl.obolibrary.org/obo/CVDO_",
+            "@prefix": true
+        },
+        "DC_CL": {
+            "@id": "http://purl.obolibrary.org/obo/DC_CL_",
+            "@prefix": true
+        },
+        "DDANAT": {
+            "@id": "http://purl.obolibrary.org/obo/DDANAT_",
+            "@prefix": true
+        },
+        "DDPHENO": {
+            "@id": "http://purl.obolibrary.org/obo/DDPHENO_",
+            "@prefix": true
+        },
+        "DIDEO": {
+            "@id": "http://purl.obolibrary.org/obo/DIDEO_",
+            "@prefix": true
+        },
+        "DINTO": {
+            "@id": "http://purl.obolibrary.org/obo/DINTO_",
+            "@prefix": true
+        },
+        "DISDRIV": {
+            "@id": "http://purl.obolibrary.org/obo/DISDRIV_",
+            "@prefix": true
+        },
+        "DOID": {
+            "@id": "http://purl.obolibrary.org/obo/DOID_",
+            "@prefix": true
+        },
+        "DRON": {
+            "@id": "http://purl.obolibrary.org/obo/DRON_",
+            "@prefix": true
+        },
+        "DUO": {
+            "@id": "http://purl.obolibrary.org/obo/DUO_",
+            "@prefix": true
+        },
+        "ECAO": {
+            "@id": "http://purl.obolibrary.org/obo/ECAO_",
+            "@prefix": true
+        },
+        "ECO": {
+            "@id": "http://purl.obolibrary.org/obo/ECO_",
+            "@prefix": true
+        },
+        "ECOCORE": {
+            "@id": "http://purl.obolibrary.org/obo/ECOCORE_",
+            "@prefix": true
+        },
+        "ECTO": {
+            "@id": "http://purl.obolibrary.org/obo/ECTO_",
+            "@prefix": true
+        },
+        "EHDA": {
+            "@id": "http://purl.obolibrary.org/obo/EHDA_",
+            "@prefix": true
+        },
+        "EHDAA": {
+            "@id": "http://purl.obolibrary.org/obo/EHDAA_",
+            "@prefix": true
+        },
+        "EHDAA2": {
+            "@id": "http://purl.obolibrary.org/obo/EHDAA2_",
+            "@prefix": true
+        },
+        "EMAP": {
+            "@id": "http://purl.obolibrary.org/obo/EMAP_",
+            "@prefix": true
+        },
+        "EMAPA": {
+            "@id": "http://purl.obolibrary.org/obo/EMAPA_",
+            "@prefix": true
+        },
+        "ENVO": {
+            "@id": "http://purl.obolibrary.org/obo/ENVO_",
+            "@prefix": true
+        },
+        "EO": {
+            "@id": "http://purl.obolibrary.org/obo/EO_",
+            "@prefix": true
+        },
+        "EPIO": {
+            "@id": "http://purl.obolibrary.org/obo/EPIO_",
+            "@prefix": true
+        },
+        "EPO": {
+            "@id": "http://purl.obolibrary.org/obo/EPO_",
+            "@prefix": true
+        },
+        "ERO": {
+            "@id": "http://purl.obolibrary.org/obo/ERO_",
+            "@prefix": true
+        },
+        "EUPATH": {
+            "@id": "http://purl.obolibrary.org/obo/EUPATH_",
+            "@prefix": true
+        },
+        "EV": {
+            "@id": "http://purl.obolibrary.org/obo/EV_",
+            "@prefix": true
+        },
+        "ExO": {
+            "@id": "http://purl.obolibrary.org/obo/ExO_",
+            "@prefix": true
+        },
+        "FAO": {
+            "@id": "http://purl.obolibrary.org/obo/FAO_",
+            "@prefix": true
+        },
+        "FBSP": {
+            "@id": "http://purl.obolibrary.org/obo/FBSP_",
+            "@prefix": true
+        },
+        "FBbi": {
+            "@id": "http://purl.obolibrary.org/obo/FBbi_",
+            "@prefix": true
+        },
+        "FBbt": {
+            "@id": "http://purl.obolibrary.org/obo/FBbt_",
+            "@prefix": true
+        },
+        "FBcv": {
+            "@id": "http://purl.obolibrary.org/obo/FBcv_",
+            "@prefix": true
+        },
+        "FBdv": {
+            "@id": "http://purl.obolibrary.org/obo/FBdv_",
+            "@prefix": true
+        },
+        "FIDEO": {
+            "@id": "http://purl.obolibrary.org/obo/FIDEO_",
+            "@prefix": true
+        },
+        "FIX": {
+            "@id": "http://purl.obolibrary.org/obo/FIX_",
+            "@prefix": true
+        },
+        "FLOPO": {
+            "@id": "http://purl.obolibrary.org/obo/FLOPO_",
+            "@prefix": true
+        },
+        "FLU": {
+            "@id": "http://purl.obolibrary.org/obo/FLU_",
+            "@prefix": true
+        },
+        "FMA": {
+            "@id": "http://purl.obolibrary.org/obo/FMA_",
+            "@prefix": true
+        },
+        "FOBI": {
+            "@id": "http://purl.obolibrary.org/obo/FOBI_",
+            "@prefix": true
+        },
+        "FOODON": {
+            "@id": "http://purl.obolibrary.org/obo/FOODON_",
+            "@prefix": true
+        },
+        "FOVT": {
+            "@id": "http://purl.obolibrary.org/obo/FOVT_",
+            "@prefix": true
+        },
+        "FYPO": {
+            "@id": "http://purl.obolibrary.org/obo/FYPO_",
+            "@prefix": true
+        },
+        "GAZ": {
+            "@id": "http://purl.obolibrary.org/obo/GAZ_",
+            "@prefix": true
+        },
+        "GECKO": {
+            "@id": "http://purl.obolibrary.org/obo/GECKO_",
+            "@prefix": true
+        },
+        "GENEPIO": {
+            "@id": "http://purl.obolibrary.org/obo/GENEPIO_",
+            "@prefix": true
+        },
+        "GENO": {
+            "@id": "http://purl.obolibrary.org/obo/GENO_",
+            "@prefix": true
+        },
+        "GEO": {
+            "@id": "http://purl.obolibrary.org/obo/GEO_",
+            "@prefix": true
+        },
+        "GNO": {
+            "@id": "http://purl.obolibrary.org/obo/GNO_",
+            "@prefix": true
+        },
+        "GO": {
+            "@id": "http://purl.obolibrary.org/obo/GO_",
+            "@prefix": true
+        },
+        "GRO": {
+            "@id": "http://purl.obolibrary.org/obo/GRO_",
+            "@prefix": true
+        },
+        "GSSO": {
+            "@id": "http://purl.obolibrary.org/obo/GSSO_",
+            "@prefix": true
+        },
+        "HABRONATTUS": {
+            "@id": "http://purl.obolibrary.org/obo/HABRONATTUS_",
+            "@prefix": true
+        },
+        "HANCESTRO": {
+            "@id": "http://purl.obolibrary.org/obo/HANCESTRO_",
+            "@prefix": true
+        },
+        "HAO": {
+            "@id": "http://purl.obolibrary.org/obo/HAO_",
+            "@prefix": true
+        },
+        "HOM": {
+            "@id": "http://purl.obolibrary.org/obo/HOM_",
+            "@prefix": true
+        },
+        "HP": {
+            "@id": "http://purl.obolibrary.org/obo/HP_",
+            "@prefix": true
+        },
+        "HSO": {
+            "@id": "http://purl.obolibrary.org/obo/HSO_",
+            "@prefix": true
+        },
+        "HTN": {
+            "@id": "http://purl.obolibrary.org/obo/HTN_",
+            "@prefix": true
+        },
+        "HsapDv": {
+            "@id": "http://purl.obolibrary.org/obo/HsapDv_",
+            "@prefix": true
+        },
+        "IAO": {
+            "@id": "http://purl.obolibrary.org/obo/IAO_",
+            "@prefix": true
+        },
+        "ICEO": {
+            "@id": "http://purl.obolibrary.org/obo/ICEO_",
+            "@prefix": true
+        },
+        "ICO": {
+            "@id": "http://purl.obolibrary.org/obo/ICO_",
+            "@prefix": true
+        },
+        "IDO": {
+            "@id": "http://purl.obolibrary.org/obo/IDO_",
+            "@prefix": true
+        },
+        "IDOMAL": {
+            "@id": "http://purl.obolibrary.org/obo/IDOMAL_",
+            "@prefix": true
+        },
+        "IEV": {
+            "@id": "http://purl.obolibrary.org/obo/IEV_",
+            "@prefix": true
+        },
+        "IMR": {
+            "@id": "http://purl.obolibrary.org/obo/IMR_",
+            "@prefix": true
+        },
+        "INO": {
+            "@id": "http://purl.obolibrary.org/obo/INO_",
+            "@prefix": true
+        },
+        "IPR": {
+            "@id": "http://purl.obolibrary.org/obo/IPR_",
+            "@prefix": true
+        },
+        "KISAO": {
+            "@id": "http://purl.obolibrary.org/obo/KISAO_",
+            "@prefix": true
+        },
+        "LABO": {
+            "@id": "http://purl.obolibrary.org/obo/LABO_",
+            "@prefix": true
+        },
+        "LEPAO": {
+            "@id": "http://purl.obolibrary.org/obo/LEPAO_",
+            "@prefix": true
+        },
+        "LIPRO": {
+            "@id": "http://purl.obolibrary.org/obo/LIPRO_",
+            "@prefix": true
+        },
+        "LOGGERHEAD": {
+            "@id": "http://purl.obolibrary.org/obo/LOGGERHEAD_",
+            "@prefix": true
+        },
+        "MA": {
+            "@id": "http://purl.obolibrary.org/obo/MA_",
+            "@prefix": true
+        },
+        "MAMO": {
+            "@id": "http://purl.obolibrary.org/obo/MAMO_",
+            "@prefix": true
+        },
+        "MAO": {
+            "@id": "http://purl.obolibrary.org/obo/MAO_",
+            "@prefix": true
+        },
+        "MAT": {
+            "@id": "http://purl.obolibrary.org/obo/MAT_",
+            "@prefix": true
+        },
+        "MAXO": {
+            "@id": "http://purl.obolibrary.org/obo/MAXO_",
+            "@prefix": true
+        },
+        "MCO": {
+            "@id": "http://purl.obolibrary.org/obo/MCO_",
+            "@prefix": true
+        },
+        "MCRO": {
+            "@id": "http://purl.obolibrary.org/obo/MCRO_",
+            "@prefix": true
+        },
+        "MF": {
+            "@id": "http://purl.obolibrary.org/obo/MF_",
+            "@prefix": true
+        },
+        "MFMO": {
+            "@id": "http://purl.obolibrary.org/obo/MFMO_",
+            "@prefix": true
+        },
+        "MFO": {
+            "@id": "http://purl.obolibrary.org/obo/MFO_",
+            "@prefix": true
+        },
+        "MFOEM": {
+            "@id": "http://purl.obolibrary.org/obo/MFOEM_",
+            "@prefix": true
+        },
+        "MFOMD": {
+            "@id": "http://purl.obolibrary.org/obo/MFOMD_",
+            "@prefix": true
+        },
+        "MI": {
+            "@id": "http://purl.obolibrary.org/obo/MI_",
+            "@prefix": true
+        },
+        "MIAPA": {
+            "@id": "http://purl.obolibrary.org/obo/MIAPA_",
+            "@prefix": true
+        },
+        "MICRO": {
+            "@id": "http://purl.obolibrary.org/obo/MICRO_",
+            "@prefix": true
+        },
+        "MIRNAO": {
+            "@id": "http://purl.obolibrary.org/obo/MIRNAO_",
+            "@prefix": true
+        },
+        "MIRO": {
+            "@id": "http://purl.obolibrary.org/obo/MIRO_",
+            "@prefix": true
+        },
+        "MMO": {
+            "@id": "http://purl.obolibrary.org/obo/MMO_",
+            "@prefix": true
+        },
+        "MO": {
+            "@id": "http://purl.obolibrary.org/obo/MO_",
+            "@prefix": true
+        },
+        "MOD": {
+            "@id": "http://purl.obolibrary.org/obo/MOD_",
+            "@prefix": true
+        },
+        "MONDO": {
+            "@id": "http://purl.obolibrary.org/obo/MONDO_",
+            "@prefix": true
+        },
+        "MOP": {
+            "@id": "http://purl.obolibrary.org/obo/MOP_",
+            "@prefix": true
+        },
+        "MP": {
+            "@id": "http://purl.obolibrary.org/obo/MP_",
+            "@prefix": true
+        },
+        "MPATH": {
+            "@id": "http://purl.obolibrary.org/obo/MPATH_",
+            "@prefix": true
+        },
+        "MPIO": {
+            "@id": "http://purl.obolibrary.org/obo/MPIO_",
+            "@prefix": true
+        },
+        "MRO": {
+            "@id": "http://purl.obolibrary.org/obo/MRO_",
+            "@prefix": true
+        },
+        "MS": {
+            "@id": "http://purl.obolibrary.org/obo/MS_",
+            "@prefix": true
+        },
+        "MmusDv": {
+            "@id": "http://purl.obolibrary.org/obo/MmusDv_",
+            "@prefix": true
+        },
+        "NBO": {
+            "@id": "http://purl.obolibrary.org/obo/NBO_",
+            "@prefix": true
+        },
+        "NCBITaxon": {
+            "@id": "http://purl.obolibrary.org/obo/NCBITaxon_",
+            "@prefix": true
+        },
+        "NCIT": {
+            "@id": "http://purl.obolibrary.org/obo/NCIT_",
+            "@prefix": true
+        },
+        "NCRO": {
+            "@id": "http://purl.obolibrary.org/obo/NCRO_",
+            "@prefix": true
+        },
+        "NGBO": {
+            "@id": "http://purl.obolibrary.org/obo/NGBO_",
+            "@prefix": true
+        },
+        "NIF_CELL": {
+            "@id": "http://purl.obolibrary.org/obo/NIF_CELL_",
+            "@prefix": true
+        },
+        "NIF_DYSFUNCTION": {
+            "@id": "http://purl.obolibrary.org/obo/NIF_DYSFUNCTION_",
+            "@prefix": true
+        },
+        "NIF_GROSSANATOMY": {
+            "@id": "http://purl.obolibrary.org/obo/NIF_GROSSANATOMY_",
+            "@prefix": true
+        },
+        "NMR": {
+            "@id": "http://purl.obolibrary.org/obo/NMR_",
+            "@prefix": true
+        },
+        "NOMEN": {
+            "@id": "http://purl.obolibrary.org/obo/NOMEN_",
+            "@prefix": true
+        },
+        "OAE": {
+            "@id": "http://purl.obolibrary.org/obo/OAE_",
+            "@prefix": true
+        },
+        "OARCS": {
+            "@id": "http://purl.obolibrary.org/obo/OARCS_",
+            "@prefix": true
+        },
+        "OBA": {
+            "@id": "http://purl.obolibrary.org/obo/OBA_",
+            "@prefix": true
+        },
+        "OBCS": {
+            "@id": "http://purl.obolibrary.org/obo/OBCS_",
+            "@prefix": true
+        },
+        "OBI": {
+            "@id": "http://purl.obolibrary.org/obo/OBI_",
+            "@prefix": true
+        },
+        "OBIB": {
+            "@id": "http://purl.obolibrary.org/obo/OBIB_",
+            "@prefix": true
+        },
+        "OBO_REL": {
+            "@id": "http://purl.obolibrary.org/obo/OBO_REL_",
+            "@prefix": true
+        },
+        "OGG": {
+            "@id": "http://purl.obolibrary.org/obo/OGG_",
+            "@prefix": true
+        },
+        "OGI": {
+            "@id": "http://purl.obolibrary.org/obo/OGI_",
+            "@prefix": true
+        },
+        "OGMS": {
+            "@id": "http://purl.obolibrary.org/obo/OGMS_",
+            "@prefix": true
+        },
+        "OGSF": {
+            "@id": "http://purl.obolibrary.org/obo/OGSF_",
+            "@prefix": true
+        },
+        "OHD": {
+            "@id": "http://purl.obolibrary.org/obo/OHD_",
+            "@prefix": true
+        },
+        "OHMI": {
+            "@id": "http://purl.obolibrary.org/obo/OHMI_",
+            "@prefix": true
+        },
+        "OHPI": {
+            "@id": "http://purl.obolibrary.org/obo/OHPI_",
+            "@prefix": true
+        },
+        "OMIABIS": {
+            "@id": "http://purl.obolibrary.org/obo/OMIABIS_",
+            "@prefix": true
+        },
+        "OMIT": {
+            "@id": "http://purl.obolibrary.org/obo/OMIT_",
+            "@prefix": true
+        },
+        "OMO": {
+            "@id": "http://purl.obolibrary.org/obo/OMO_",
+            "@prefix": true
+        },
+        "OMP": {
+            "@id": "http://purl.obolibrary.org/obo/OMP_",
+            "@prefix": true
+        },
+        "OMRSE": {
+            "@id": "http://purl.obolibrary.org/obo/OMRSE_",
+            "@prefix": true
+        },
+        "ONE": {
+            "@id": "http://purl.obolibrary.org/obo/ONE_",
+            "@prefix": true
+        },
+        "ONS": {
+            "@id": "http://purl.obolibrary.org/obo/ONS_",
+            "@prefix": true
+        },
+        "ONTOAVIDA": {
+            "@id": "http://purl.obolibrary.org/obo/ONTOAVIDA_",
+            "@prefix": true
+        },
+        "ONTONEO": {
+            "@id": "http://purl.obolibrary.org/obo/ONTONEO_",
+            "@prefix": true
+        },
+        "OOSTT": {
+            "@id": "http://purl.obolibrary.org/obo/OOSTT_",
+            "@prefix": true
+        },
+        "OPL": {
+            "@id": "http://purl.obolibrary.org/obo/OPL_",
+            "@prefix": true
+        },
+        "OPMI": {
+            "@id": "http://purl.obolibrary.org/obo/OPMI_",
+            "@prefix": true
+        },
+        "ORNASEQ": {
+            "@id": "http://purl.obolibrary.org/obo/ORNASEQ_",
+            "@prefix": true
+        },
+        "OVAE": {
+            "@id": "http://purl.obolibrary.org/obo/OVAE_",
+            "@prefix": true
+        },
+        "OlatDv": {
+            "@id": "http://purl.obolibrary.org/obo/OlatDv_",
+            "@prefix": true
+        },
+        "PAO": {
+            "@id": "http://purl.obolibrary.org/obo/PAO_",
+            "@prefix": true
+        },
+        "PATO": {
+            "@id": "http://purl.obolibrary.org/obo/PATO_",
+            "@prefix": true
+        },
+        "PCL": {
+            "@id": "http://purl.obolibrary.org/obo/PCL_",
+            "@prefix": true
+        },
+        "PCO": {
+            "@id": "http://purl.obolibrary.org/obo/PCO_",
+            "@prefix": true
+        },
+        "PDRO": {
+            "@id": "http://purl.obolibrary.org/obo/PDRO_",
+            "@prefix": true
+        },
+        "PD_ST": {
+            "@id": "http://purl.obolibrary.org/obo/PD_ST_",
+            "@prefix": true
+        },
+        "PECO": {
+            "@id": "http://purl.obolibrary.org/obo/PECO_",
+            "@prefix": true
+        },
+        "PGDSO": {
+            "@id": "http://purl.obolibrary.org/obo/PGDSO_",
+            "@prefix": true
+        },
+        "PHIPO": {
+            "@id": "http://purl.obolibrary.org/obo/PHIPO_",
+            "@prefix": true
+        },
+        "PLANA": {
+            "@id": "http://purl.obolibrary.org/obo/PLANA_",
+            "@prefix": true
+        },
+        "PLANP": {
+            "@id": "http://purl.obolibrary.org/obo/PLANP_",
+            "@prefix": true
+        },
+        "PLO": {
+            "@id": "http://purl.obolibrary.org/obo/PLO_",
+            "@prefix": true
+        },
+        "PO": {
+            "@id": "http://purl.obolibrary.org/obo/PO_",
+            "@prefix": true
+        },
+        "PORO": {
+            "@id": "http://purl.obolibrary.org/obo/PORO_",
+            "@prefix": true
+        },
+        "PPO": {
+            "@id": "http://purl.obolibrary.org/obo/PPO_",
+            "@prefix": true
+        },
+        "PR": {
+            "@id": "http://purl.obolibrary.org/obo/PR_",
+            "@prefix": true
+        },
+        "PROCO": {
+            "@id": "http://purl.obolibrary.org/obo/PROCO_",
+            "@prefix": true
+        },
+        "PROPREO": {
+            "@id": "http://purl.obolibrary.org/obo/PROPREO_",
+            "@prefix": true
+        },
+        "PSDO": {
+            "@id": "http://purl.obolibrary.org/obo/PSDO_",
+            "@prefix": true
+        },
+        "PSO": {
+            "@id": "http://purl.obolibrary.org/obo/PSO_",
+            "@prefix": true
+        },
+        "PW": {
+            "@id": "http://purl.obolibrary.org/obo/PW_",
+            "@prefix": true
+        },
+        "PdumDv": {
+            "@id": "http://purl.obolibrary.org/obo/PdumDv_",
+            "@prefix": true
+        },
+        "RBO": {
+            "@id": "http://purl.obolibrary.org/obo/RBO_",
+            "@prefix": true
+        },
+        "RESID": {
+            "@id": "http://purl.obolibrary.org/obo/RESID_",
+            "@prefix": true
+        },
+        "REX": {
+            "@id": "http://purl.obolibrary.org/obo/REX_",
+            "@prefix": true
+        },
+        "RNAO": {
+            "@id": "http://purl.obolibrary.org/obo/RNAO_",
+            "@prefix": true
+        },
+        "RO": {
+            "@id": "http://purl.obolibrary.org/obo/RO_",
+            "@prefix": true
+        },
+        "RS": {
+            "@id": "http://purl.obolibrary.org/obo/RS_",
+            "@prefix": true
+        },
+        "RXNO": {
+            "@id": "http://purl.obolibrary.org/obo/RXNO_",
+            "@prefix": true
+        },
+        "SAO": {
+            "@id": "http://purl.obolibrary.org/obo/SAO_",
+            "@prefix": true
+        },
+        "SBO": {
+            "@id": "http://purl.obolibrary.org/obo/SBO_",
+            "@prefix": true
+        },
+        "SCDO": {
+            "@id": "http://purl.obolibrary.org/obo/SCDO_",
+            "@prefix": true
+        },
+        "SEP": {
+            "@id": "http://purl.obolibrary.org/obo/SEP_",
+            "@prefix": true
+        },
+        "SEPIO": {
+            "@id": "http://purl.obolibrary.org/obo/SEPIO_",
+            "@prefix": true
+        },
+        "SIBO": {
+            "@id": "http://purl.obolibrary.org/obo/SIBO_",
+            "@prefix": true
+        },
+        "SO": {
+            "@id": "http://purl.obolibrary.org/obo/SO_",
+            "@prefix": true
+        },
+        "SOPHARM": {
+            "@id": "http://purl.obolibrary.org/obo/SOPHARM_",
+            "@prefix": true
+        },
+        "SPD": {
+            "@id": "http://purl.obolibrary.org/obo/SPD_",
+            "@prefix": true
+        },
+        "STATO": {
+            "@id": "http://purl.obolibrary.org/obo/STATO_",
+            "@prefix": true
+        },
+        "SWO": {
+            "@id": "http://purl.obolibrary.org/obo/SWO_",
+            "@prefix": true
+        },
+        "SYMP": {
+            "@id": "http://purl.obolibrary.org/obo/SYMP_",
+            "@prefix": true
+        },
+        "T4FS": {
+            "@id": "http://purl.obolibrary.org/obo/T4FS_",
+            "@prefix": true
+        },
+        "TADS": {
+            "@id": "http://purl.obolibrary.org/obo/TADS_",
+            "@prefix": true
+        },
+        "TAHE": {
+            "@id": "http://purl.obolibrary.org/obo/TAHE_",
+            "@prefix": true
+        },
+        "TAHH": {
+            "@id": "http://purl.obolibrary.org/obo/TAHH_",
+            "@prefix": true
+        },
+        "TAO": {
+            "@id": "http://purl.obolibrary.org/obo/TAO_",
+            "@prefix": true
+        },
+        "TAXRANK": {
+            "@id": "http://purl.obolibrary.org/obo/TAXRANK_",
+            "@prefix": true
+        },
+        "TGMA": {
+            "@id": "http://purl.obolibrary.org/obo/TGMA_",
+            "@prefix": true
+        },
+        "TO": {
+            "@id": "http://purl.obolibrary.org/obo/TO_",
+            "@prefix": true
+        },
+        "TRANS": {
+            "@id": "http://purl.obolibrary.org/obo/TRANS_",
+            "@prefix": true
+        },
+        "TTO": {
+            "@id": "http://purl.obolibrary.org/obo/TTO_",
+            "@prefix": true
+        },
+        "TXPO": {
+            "@id": "http://purl.obolibrary.org/obo/TXPO_",
+            "@prefix": true
+        },
+        "UBERON": {
+            "@id": "http://purl.obolibrary.org/obo/UBERON_",
+            "@prefix": true
+        },
+        "UO": {
+            "@id": "http://purl.obolibrary.org/obo/UO_",
+            "@prefix": true
+        },
+        "UPA": {
+            "@id": "http://purl.obolibrary.org/obo/UPA_",
+            "@prefix": true
+        },
+        "UPHENO": {
+            "@id": "http://purl.obolibrary.org/obo/UPHENO_",
+            "@prefix": true
+        },
+        "VBO": {
+            "@id": "http://purl.obolibrary.org/obo/VBO_",
+            "@prefix": true
+        },
+        "VHOG": {
+            "@id": "http://purl.obolibrary.org/obo/VHOG_",
+            "@prefix": true
+        },
+        "VO": {
+            "@id": "http://purl.obolibrary.org/obo/VO_",
+            "@prefix": true
+        },
+        "VSAO": {
+            "@id": "http://purl.obolibrary.org/obo/VSAO_",
+            "@prefix": true
+        },
+        "VT": {
+            "@id": "http://purl.obolibrary.org/obo/VT_",
+            "@prefix": true
+        },
+        "VTO": {
+            "@id": "http://purl.obolibrary.org/obo/VTO_",
+            "@prefix": true
+        },
+        "VariO": {
+            "@id": "http://purl.obolibrary.org/obo/VariO_",
+            "@prefix": true
+        },
+        "WBPhenotype": {
+            "@id": "http://purl.obolibrary.org/obo/WBPhenotype_",
+            "@prefix": true
+        },
+        "WBbt": {
+            "@id": "http://purl.obolibrary.org/obo/WBbt_",
+            "@prefix": true
+        },
+        "WBls": {
+            "@id": "http://purl.obolibrary.org/obo/WBls_",
+            "@prefix": true
+        },
+        "XAO": {
+            "@id": "http://purl.obolibrary.org/obo/XAO_",
+            "@prefix": true
+        },
+        "XCO": {
+            "@id": "http://purl.obolibrary.org/obo/XCO_",
+            "@prefix": true
+        },
+        "XLMOD": {
+            "@id": "http://purl.obolibrary.org/obo/XLMOD_",
+            "@prefix": true
+        },
+        "XPO": {
+            "@id": "http://purl.obolibrary.org/obo/XPO_",
+            "@prefix": true
+        },
+        "YPO": {
+            "@id": "http://purl.obolibrary.org/obo/YPO_",
+            "@prefix": true
+        },
+        "ZEA": {
+            "@id": "http://purl.obolibrary.org/obo/ZEA_",
+            "@prefix": true
+        },
+        "ZECO": {
+            "@id": "http://purl.obolibrary.org/obo/ZECO_",
+            "@prefix": true
+        },
+        "ZFA": {
+            "@id": "http://purl.obolibrary.org/obo/ZFA_",
+            "@prefix": true
+        },
+        "ZFS": {
+            "@id": "http://purl.obolibrary.org/obo/ZFS_",
+            "@prefix": true
+        },
+        "ZP": {
+            "@id": "http://purl.obolibrary.org/obo/ZP_",
+            "@prefix": true
+        }
+    }
 }
