@@ -2,6 +2,7 @@ package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +31,23 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
  * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
  */
 public class ExportOperationTest extends CoreTest {
+
+  /**
+   * Utility method to write XLSX file for debugging.
+   *
+   * @param workbook Workfbook to write
+   * @param path Path (string) to save to, under `robot-core/`
+   */
+  void writeXLSX(Workbook workbook, String path) {
+    try {
+      System.out.println("Writing result to robot-core/" + path);
+      FileOutputStream out = new FileOutputStream(path);
+      workbook.write(out);
+      out.close();
+    } catch (Exception ex) {
+      System.out.println("Error writing workbook: " + ex);
+    }
+  }
 
   /**
    * Test exporting simple.owl to XLSX.
@@ -154,16 +172,6 @@ public class ExportOperationTest extends CoreTest {
     // Create the table and render it as a Workbook
     Table t = ExportOperation.createExportTable(ontology, ioHelper, columns, options);
     Workbook wb = t.asWorkbook("|");
-
-    // Write test.xlsx for debugging
-    // try {
-    //   System.out.println("Writing result to robot-core/test.xlsx");
-    //   FileOutputStream out = new FileOutputStream("test.xlsx");
-    //   wb.write(out);
-    //   out.close();
-    // } catch (Exception ex) {
-    //   System.out.println("Error: " + ex);
-    // }
 
     Sheet s = wb.getSheetAt(0);
     assertEquals(s.getLastRowNum(), 4);
