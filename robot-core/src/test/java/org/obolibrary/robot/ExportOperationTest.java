@@ -1,5 +1,8 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +31,23 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
  * @author <a href="mailto:rbca.jackson@gmail.com">Becky Jackson</a>
  */
 public class ExportOperationTest extends CoreTest {
+
+  /**
+   * Utility method to write XLSX file for debugging.
+   *
+   * @param workbook Workfbook to write
+   * @param path Path (string) to save to, under `robot-core/`
+   */
+  void writeXLSX(Workbook workbook, String path) {
+    try {
+      System.out.println("Writing result to robot-core/" + path);
+      FileOutputStream out = new FileOutputStream(path);
+      workbook.write(out);
+      out.close();
+    } catch (Exception ex) {
+      System.out.println("Error writing workbook: " + ex);
+    }
+  }
 
   /**
    * Test exporting simple.owl to XLSX.
@@ -121,7 +141,7 @@ public class ExportOperationTest extends CoreTest {
    */
   @Test
   public void testExportNamedHeadingsSimple() throws Exception {
-    OWLOntology ontology = loadOntology("/simple.owl");
+    OWLOntology ontology = loadOntology("/simple_defined_by.owl");
     IOHelper ioHelper = new IOHelper();
     ioHelper.addPrefix(
         "simple", "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#");
@@ -135,6 +155,7 @@ public class ExportOperationTest extends CoreTest {
             "CURIE",
             "Type",
             "SYNONYMS",
+            "rdfs:isDefinedBy",
             "SUBCLASSES",
             "SubClass Of",
             "SubProperty Of",
@@ -153,8 +174,7 @@ public class ExportOperationTest extends CoreTest {
     Workbook wb = t.asWorkbook("|");
 
     Sheet s = wb.getSheetAt(0);
-    // There should be three rows (0, 1, 2)
-    assert (s.getLastRowNum() == 3);
+    assertEquals(s.getLastRowNum(), 4);
 
     // Validate header
     // should match size and label
@@ -176,6 +196,11 @@ public class ExportOperationTest extends CoreTest {
       String expectedHeader = columns.get(colIx);
       assert (foundHeader.equals(expectedHeader));
     }
+
+    // rdfs:isDefinedBy should work
+    assertEquals(
+        s.getRow(4).getCell(6).getStringCellValue(),
+        "https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl");
   }
 
   /**
