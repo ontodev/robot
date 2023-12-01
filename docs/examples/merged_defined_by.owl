@@ -107,25 +107,7 @@
     <owl:AnnotationProperty rdf:about="http://www.w3.org/ns/prov#wasDerivedFrom">
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
     </owl:AnnotationProperty>
-    
 
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Datatypes
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.w3.org/2001/XMLSchema#string -->
-
-    <rdf:Description rdf:about="http://www.w3.org/2001/XMLSchema#string">
-        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/examples/edit.owl"/>
-    </rdf:Description>
     
 
 

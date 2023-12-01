@@ -27,24 +27,6 @@
         <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl"/>
     </rdf:Description>
     
-
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Datatypes
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral -->
-
-    <rdf:Description rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">
-        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl"/>
-    </rdf:Description>
     
 
 

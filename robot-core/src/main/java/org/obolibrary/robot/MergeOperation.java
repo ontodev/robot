@@ -363,8 +363,10 @@ public class MergeOperation {
       OWLAnnotationProperty rdfsIsDefinedBy =
           targetOntology.getOWLOntologyManager().getOWLDataFactory().getRDFSIsDefinedBy();
       for (OWLEntity owlEntity : sourceOntology.getSignature(includeImportsClosure)) {
-        OntologyHelper.addEntityAnnotation(
-            targetOntology, owlEntity, rdfsIsDefinedBy, ontIRI, false);
+        if (!(owlEntity.isOWLDatatype() && owlEntity.asOWLDatatype().isBuiltIn())) {
+          OntologyHelper.addEntityAnnotation(
+              targetOntology, owlEntity, rdfsIsDefinedBy, ontIRI, false);
+        }
       }
     }
   }
