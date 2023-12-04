@@ -101,9 +101,9 @@ public class MergeOperationTest extends CoreTest {
     assertEquals(5, simple.getAxiomCount());
     OWLOntology merged = MergeOperation.merge(ontologies, false, false, true, false);
 
-    assertEquals(8, merged.getAxiomCount());
+    assertEquals(7, merged.getAxiomCount());
     OWLOntology expected = loadOntology("/simple_defined_by.owl");
-    assertEquals(8, expected.getAxiomCount());
+    assertEquals(7, expected.getAxiomCount());
     assertIdentical(expected, merged);
   }
 }

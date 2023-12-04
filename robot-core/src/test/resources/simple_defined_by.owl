@@ -8,25 +8,6 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <owl:Ontology rdf:about="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl"/>
     
-
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Annotation properties
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.w3.org/2000/01/rdf-schema#label -->
-
-    <rdf:Description rdf:about="http://www.w3.org/2000/01/rdf-schema#label">
-        <rdfs:isDefinedBy rdf:resource="https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl"/>
-    </rdf:Description>
-    
     
 
 
