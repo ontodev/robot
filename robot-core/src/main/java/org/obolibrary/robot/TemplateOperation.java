@@ -159,7 +159,7 @@ public class TemplateOperation {
    * Given an OWLOntology, an IOHelper, a map of table names to table contents, and a map of
    * template options, use the tables as templates to generate a merged output ontology.
    *
-   * @param inputOntology OWLOntology to use to get existing entitfies
+   * @param inputOntology OWLOntology to use to get existing entities
    * @param ioHelper IOHelper to resolve prefixes
    * @param tables table names to table contents
    * @param options map of template options
@@ -492,8 +492,6 @@ public class TemplateOperation {
       int idColumn = idColumns.get(tableName);
       int labelColumn = labelColumns.get(tableName);
       List<List<String>> rows = tables.get(tableName);
-      // TODO The starting row has to be controlled by the approach used, ie, internal or external
-      // template
       for (int row = 2; row < rows.size(); row++) {
         addLogic(outputOntology, tableName, rows, row, idColumn, labelColumn, checker, parser);
       }
