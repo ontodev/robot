@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
 - Fix how Template adds entities to the QuotedEntityChecker [#1104]
+- [`merge`] and 'annotate' operations '--annotate-defined-by' excludes reserved OWL 2 vocabularies [#1171]
+- Handle IRIs that are not entities in export [#1168]
 
 ## [1.9.5] - 2023-09-20
 
@@ -383,6 +385,8 @@ First official release of ROBOT!
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
 
+[#1171]: https://github.com/ontodev/robot/pull/1171
+[#1168]: https://github.com/ontodev/robot/pull/1168
 [#1160]: https://github.com/ontodev/robot/pull/1160
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135

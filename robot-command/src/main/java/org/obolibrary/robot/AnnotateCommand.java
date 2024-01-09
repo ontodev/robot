@@ -318,7 +318,9 @@ public class AnnotateCommand implements Command {
         OWLAnnotationProperty rdfsIsDefinedBy =
             ontology.getOWLOntologyManager().getOWLDataFactory().getRDFSIsDefinedBy();
         for (OWLEntity owlEntity : ontology.getSignature()) {
-          OntologyHelper.addEntityAnnotation(ontology, owlEntity, rdfsIsDefinedBy, ontIRI, false);
+          if (!owlEntity.getIRI().isReservedVocabulary()) {
+            OntologyHelper.addEntityAnnotation(ontology, owlEntity, rdfsIsDefinedBy, ontIRI, false);
+          }
         }
       }
     }

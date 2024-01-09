@@ -496,8 +496,12 @@ public class ExportOperation {
           IRI iri = a.getValue().asIRI().orNull();
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
-            for (OWLEntity e : entities) {
-              values.add(OntologyHelper.renderManchester(e, provider, rt));
+            if (entities.size() > 0) {
+              for (OWLEntity e : entities) {
+                values.add(OntologyHelper.renderManchester(e, provider, rt));
+              }
+            } else {
+              values.add(iri.toString());
             }
           }
         } else {
