@@ -1,6 +1,6 @@
 # # Duplicate Exact Synonym
 #
-# **Problem:** Two entities share an exact synonym. This causes ambiguity. Excludes deprecated entities and synonyms annotated as abbreviation or acronym.
+# **Problem:** Two entities share an exact synonym (case-insensitive). This causes ambiguity. Excludes deprecated entities and synonyms annotated as abbreviation or acronym.
 #
 # **Solution:** Avoid ambiguity by assigning unique exact synonyms, changing the exact synonym to a different annotation (e.g. broad synonym), or annotating it as an abbreviation or acronym.
 
