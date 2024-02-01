@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated `duplicate_exact_syonym` [`report`] query to be case-insensitive and ignore synoyms annotated as abbreviation or acronym synonym types [#1179]
+
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
 - Fix how Template adds entities to the QuotedEntityChecker [#1104]
