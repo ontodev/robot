@@ -189,20 +189,7 @@ public class ExtractOperation {
     }
     // Maybe annotate entities with rdfs:isDefinedBy
     if (OptionsHelper.optionIsTrue(options, "annotate-with-source")) {
-      Set<OWLAnnotationAxiom> sourceAxioms = new HashSet<>();
-      for (OWLEntity entity : OntologyHelper.getEntities(outputOntology)) {
-        // Check if rdfs:isDefinedBy already exists
-        Set<OWLAnnotationValue> existingValues =
-            OntologyHelper.getAnnotationValues(outputOntology, isDefinedBy, entity.getIRI());
-        if (existingValues == null || existingValues.size() == 0) {
-          // If not, add it
-          OWLAnnotationAxiom def = getIsDefinedBy(entity, sourceMap);
-          if (def != null) {
-            sourceAxioms.add(def);
-          }
-        }
-      }
-      manager.addAxioms(outputOntology, sourceAxioms);
+      annotateWithSource(sourceMap, outputOntology, manager);
     }
 
     // Determine what to do based on intermediates
@@ -217,6 +204,31 @@ public class ExtractOperation {
     } else {
       throw new IllegalArgumentException(String.format(unknownIntermediatesError, intermediates));
     }
+  }
+
+  /**
+   * Annotates entities of the outputOntology with rdfs:isDefinedBy.
+   *
+   * @param sourceMap map of term IRI to source IRI, or null.
+   * @param outputOntology output ontology.
+   * @param manager OWL ontology manager.
+   */
+  private static void annotateWithSource(
+      Map<IRI, IRI> sourceMap, OWLOntology outputOntology, OWLOntologyManager manager) {
+    Set<OWLAnnotationAxiom> sourceAxioms = new HashSet<>();
+    for (OWLEntity entity : OntologyHelper.getEntities(outputOntology)) {
+      // Check if rdfs:isDefinedBy already exists
+      Set<OWLAnnotationValue> existingValues =
+          OntologyHelper.getAnnotationValues(outputOntology, isDefinedBy, entity.getIRI());
+      if (existingValues == null || existingValues.size() == 0) {
+        // If not, add it
+        OWLAnnotationAxiom def = getIsDefinedBy(entity, sourceMap);
+        if (def != null) {
+          sourceAxioms.add(def);
+        }
+      }
+    }
+    manager.addAxioms(outputOntology, sourceAxioms);
   }
 
   /**
@@ -248,6 +260,11 @@ public class ExtractOperation {
     OWLOntology filteredOnt = filter(materializedOnt, terms, outputIRI);
     copyPropertyAnnotations(inputOntology, filteredOnt);
     ReduceOperation.reduce(filteredOnt, new org.semanticweb.elk.owlapi.ElkReasonerFactory());
+
+    // Maybe annotate entities with rdfs:isDefinedBy
+    if (OptionsHelper.optionIsTrue(options, "annotate-with-source")) {
+      annotateWithSource(sourceMap, filteredOnt, OWLManager.createOWLOntologyManager());
+    }
 
     return filteredOnt;
   }

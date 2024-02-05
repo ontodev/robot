@@ -171,7 +171,8 @@ public class FilterCommand implements Command {
         dropParameters.stream()
             .filter(s -> !s.equalsIgnoreCase("all"))
             .map(
-                curie -> CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotations"))
+                curie ->
+                    CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotations"))
             .collect(Collectors.toList());
 
     // Use the select statements to get a set of objects to filter

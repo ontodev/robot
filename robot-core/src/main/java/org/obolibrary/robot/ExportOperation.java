@@ -496,8 +496,12 @@ public class ExportOperation {
           IRI iri = a.getValue().asIRI().orNull();
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
-            for (OWLEntity e : entities) {
-              values.add(OntologyHelper.renderManchester(e, provider, rt));
+            if (entities.size() > 0) {
+              for (OWLEntity e : entities) {
+                values.add(OntologyHelper.renderManchester(e, provider, rt));
+              }
+            } else {
+              values.add(iri.toString());
             }
           }
         } else {
@@ -724,6 +728,11 @@ public class ExportOperation {
             }
           }
           break;
+          // TODO
+        case DATA_HAS_VALUE:
+          break;
+        default:
+          break;
       }
     }
     return fillers;
@@ -831,10 +840,25 @@ public class ExportOperation {
             }
           }
           break;
-        case OBJECT_ONE_OF:
-        case OBJECT_UNION_OF:
-        case OBJECT_INTERSECTION_OF:
           // TODO
+        case OBJECT_HAS_VALUE:
+          // property value instance
+        case OBJECT_COMPLEMENT_OF:
+          // not ce
+        case OBJECT_HAS_SELF:
+          // property Self
+          // this requires the subject entity to render
+        case OBJECT_ONE_OF:
+          // {instance, instance,...}
+          // this should not occur
+        case OBJECT_UNION_OF:
+          // ce or ce or ce
+          // this should not occur
+        case OBJECT_INTERSECTION_OF:
+          // ce and ce and ce
+          // this should not occur
+          break;
+        default:
           break;
       }
     }
@@ -1095,18 +1119,8 @@ public class ExportOperation {
         case "http://www.w3.org/2002/07/owl#equivalentProperty":
           // Equivalent Properties
           if (entity.isOWLAnnotationProperty()) {
-            Collection<OWLAnnotationProperty> eqs =
-                EntitySearcher.getEquivalentProperties(entity.asOWLAnnotationProperty(), ontology);
-            row.add(
-                getObjectCell(
-                    eqs,
-                    col,
-                    displayRendererType,
-                    sortRendererType,
-                    provider,
-                    includeNamed,
-                    includeAnonymous));
-
+            // no equivalent annotation property in OWL
+            break;
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> eqs =
                 EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology);
@@ -1140,6 +1154,8 @@ public class ExportOperation {
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> disjoints =
                 EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology);
+            // remove self-disjoint
+            disjoints.remove(entity.asOWLClass());
             row.add(
                 getObjectCell(
                     disjoints,
@@ -1153,6 +1169,8 @@ public class ExportOperation {
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> disjoints =
                 EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology);
+            // remove self-disjoint
+            disjoints.remove(entity.asOWLDataProperty());
             row.add(
                 getObjectCell(
                     disjoints,
@@ -1166,6 +1184,8 @@ public class ExportOperation {
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> disjoints =
                 EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology);
+            // remove self-disjoint
+            disjoints.remove(entity.asOWLObjectProperty());
             row.add(
                 getObjectCell(
                     disjoints,

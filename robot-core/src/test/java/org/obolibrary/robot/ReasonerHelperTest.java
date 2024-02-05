@@ -3,6 +3,8 @@ package org.obolibrary.robot;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import org.junit.Test;
 import org.obolibrary.robot.exceptions.IncoherentRBoxException;
@@ -34,16 +36,21 @@ public class ReasonerHelperTest extends CoreTest {
   public void testIncoherentRBox()
       throws IOException, IncoherentTBoxException, InconsistentOntologyException {
     OWLOntology ontology = loadOntology("/incoherent-rbox.owl");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
-    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-    boolean isCaughtException = false;
-    try {
-      ReasonerHelper.validate(reasoner);
+    List<OWLReasonerFactory> factories =
+        Arrays.asList(
+            new org.semanticweb.elk.owlapi.ElkReasonerFactory(),
+            new org.semanticweb.HermiT.ReasonerFactory());
+    for (OWLReasonerFactory reasonerFactory : factories) {
+      OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+      boolean isCaughtException = false;
+      try {
+        ReasonerHelper.validate(reasoner);
 
-    } catch (IncoherentRBoxException e) {
-      isCaughtException = true;
+      } catch (IncoherentRBoxException e) {
+        isCaughtException = true;
+      }
+      assertTrue(isCaughtException);
     }
-    assertTrue(isCaughtException);
   }
 
   /**
@@ -57,16 +64,21 @@ public class ReasonerHelperTest extends CoreTest {
   public void testIncoherentTBox()
       throws IOException, InconsistentOntologyException, IncoherentRBoxException {
     OWLOntology ontology = loadOntology("/incoherent-tbox.owl");
-    OWLReasonerFactory reasonerFactory = new org.semanticweb.elk.owlapi.ElkReasonerFactory();
-    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
-    boolean isCaughtException = false;
-    try {
-      ReasonerHelper.validate(reasoner);
+    List<OWLReasonerFactory> factories =
+        Arrays.asList(
+            new org.semanticweb.elk.owlapi.ElkReasonerFactory(),
+            new org.semanticweb.HermiT.ReasonerFactory());
+    for (OWLReasonerFactory reasonerFactory : factories) {
+      OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
+      boolean isCaughtException = false;
+      try {
+        ReasonerHelper.validate(reasoner);
 
-    } catch (IncoherentTBoxException e) {
-      isCaughtException = true;
+      } catch (IncoherentTBoxException e) {
+        isCaughtException = true;
+      }
+      assertTrue(isCaughtException);
     }
-    assertTrue(isCaughtException);
   }
 
   /**

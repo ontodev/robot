@@ -46,3 +46,5 @@ It’s also possible to annotate the imported or merged ontology axioms with the
     robot merge --input example2.owl --input merge.owl \
       --annotate-defined-by true \
       --output results/merged_defined_by.owl
+
+`--annotate-defined-by` excludes entities from the reserved OWL 2 vocabularies (RDF, RDFS, XSD and OWL).

@@ -13,6 +13,7 @@ import org.obolibrary.robot.reason.InferredSubClassAxiomGeneratorIncludingIndire
 import org.obolibrary.robot.reason.InferredSubObjectPropertyAxiomGeneratorIncludingIndirect;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.*;
 import org.slf4j.Logger;
@@ -35,6 +36,67 @@ public class ReasonerHelper {
 
   /** Logger. */
   private static final Logger logger = LoggerFactory.getLogger(ReasonerHelper.class);
+
+  /**
+   * Check an ontology for unsatisfiable object properties.
+   *
+   * @param reasoner OWLReasoner being used.
+   * @return A set of unsatisfiable OWLObjectProperty objects (will be empty if none are found).
+   */
+  public static Set<OWLObjectProperty> getUnsatisfiableObjectProperties(OWLReasoner reasoner) {
+    Set<OWLObjectProperty> unsatObjectProps = new HashSet<>();
+
+    if (reasoner.getPrecomputableInferenceTypes().contains(InferenceType.OBJECT_PROPERTY_HIERARCHY)
+        && !reasoner.getClass().getName().equals("org.semanticweb.elk.owlapi.ElkReasoner")) {
+      // Fast object-unsat check
+      logger.info(
+          "Object-property precomputation is supported; using that to find unsatisfiable object properties...");
+      reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_HIERARCHY);
+      Set<OWLObjectPropertyExpression> unsatObjPropExps =
+          reasoner.getBottomObjectPropertyNode().getEntitiesMinusBottom();
+      for (OWLObjectPropertyExpression uOPE : unsatObjPropExps) {
+        if (uOPE.isNamed()) {
+          unsatObjectProps.add(uOPE.asOWLObjectProperty());
+        }
+      }
+    } else {
+      // Have to do this the slow way
+      OWLOntology ont = reasoner.getRootOntology();
+      OWLOntologyManager manager = ont.getOWLOntologyManager();
+      OWLDataFactory dataFactory = manager.getOWLDataFactory();
+      OWLClass thing = dataFactory.getOWLThing();
+      Set<OWLAxiom> tempAxioms = new HashSet<>();
+      Map<OWLClass, OWLObjectProperty> probeFor = new HashMap<>();
+
+      for (OWLObjectProperty p : ont.getObjectPropertiesInSignature(Imports.INCLUDED)) {
+        UUID uuid = UUID.randomUUID();
+        IRI probeIRI = IRI.create(p.getIRI().toString() + "-" + uuid.toString());
+        OWLClass probe = dataFactory.getOWLClass(probeIRI);
+        probeFor.put(probe, p);
+        tempAxioms.add(dataFactory.getOWLDeclarationAxiom(probe));
+        tempAxioms.add(
+            dataFactory.getOWLSubClassOfAxiom(
+                probe, dataFactory.getOWLObjectSomeValuesFrom(p, thing)));
+      }
+      manager.addAxioms(ont, tempAxioms);
+      reasoner.flush();
+
+      Set<OWLClass> unsatisfiableProbeClasses =
+          reasoner.getUnsatisfiableClasses().getEntitiesMinusBottom();
+
+      // leave no trace
+      manager.removeAxioms(ont, tempAxioms);
+      reasoner.flush();
+
+      if (unsatisfiableProbeClasses.size() > 0) {
+        for (OWLClass cls : unsatisfiableProbeClasses) {
+          OWLObjectProperty unsatP = probeFor.get(cls);
+          unsatObjectProps.add(unsatP);
+        }
+      }
+    }
+    return unsatObjectProps;
+  }
 
   /**
    * Validates ontology.
@@ -118,40 +180,14 @@ public class ReasonerHelper {
       throw new IncoherentTBoxException(unsatisfiableClasses);
     }
 
-    // TODO: can this be done by checking for equivalence to bottomObjectProperty?
     logger.info("Checking for unsatisfiable object properties...");
 
-    Set<OWLAxiom> tempAxioms = new HashSet<>();
-    Map<OWLClass, OWLObjectProperty> probeFor = new HashMap<>();
-    for (OWLObjectProperty p : ont.getObjectPropertiesInSignature(Imports.INCLUDED)) {
-      UUID uuid = UUID.randomUUID();
-      IRI probeIRI = IRI.create(p.getIRI().toString() + "-" + uuid.toString());
-      OWLClass probe = dataFactory.getOWLClass(probeIRI);
-      probeFor.put(probe, p);
-      tempAxioms.add(dataFactory.getOWLDeclarationAxiom(probe));
-      tempAxioms.add(
-          dataFactory.getOWLSubClassOfAxiom(
-              probe, dataFactory.getOWLObjectSomeValuesFrom(p, thing)));
-    }
-    manager.addAxioms(ont, tempAxioms);
-    reasoner.flush();
+    Set<OWLObjectProperty> unsatPs = getUnsatisfiableObjectProperties(reasoner);
 
-    Set<OWLClass> unsatisfiableProbeClasses =
-        reasoner.getUnsatisfiableClasses().getEntitiesMinus(nothing);
-
-    // leave no trace
-    manager.removeAxioms(ont, tempAxioms);
-    reasoner.flush();
-
-    if (unsatisfiableProbeClasses.size() > 0) {
-      logger.error(
-          "There are {} unsatisfiable properties in the ontology.",
-          unsatisfiableProbeClasses.size());
-      Set<OWLObjectProperty> unsatPs = new HashSet<>();
-      for (OWLClass cls : unsatisfiableProbeClasses) {
-        OWLObjectProperty unsatP = probeFor.get(cls);
-        unsatPs.add(unsatP);
-        logger.error("    unsatisfiable property: " + unsatP.getIRI());
+    if (unsatPs.size() > 0) {
+      logger.error("There are {} unsatisfiable properties in the ontology.", unsatPs.size());
+      for (OWLObjectProperty p : unsatPs) {
+        logger.error("    unsatisfiable property: " + p.getIRI());
       }
       throw new IncoherentRBoxException(unsatPs);
     }
