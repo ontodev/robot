@@ -76,6 +76,10 @@ public class CommandLineIT {
         }
       }
     }
+    // Catch test blocks at the end of the file.
+    if (collecting && collected != null) {
+      commands.add(collected);
+    }
 
     return commands;
   }
