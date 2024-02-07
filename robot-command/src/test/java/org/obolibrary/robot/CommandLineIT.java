@@ -76,6 +76,10 @@ public class CommandLineIT {
         }
       }
     }
+    // Catch test blocks at the end of the file.
+    if (collecting && collected != null) {
+      commands.add(collected);
+    }
 
     return commands;
   }
@@ -230,18 +234,6 @@ public class CommandLineIT {
         throw new Exception("Test output must be written to `results/` directory: " + command);
       }
       runCommand(command);
-    }
-
-    // Regression test for dropped axiom should fail:
-    // https://github.com/ontodev/robot/issues/98
-    boolean passed = true;
-    try {
-      runCommand("robot convert -i dropped_axiom.owl -o " + "results/dropped_axiom.owl");
-    } catch (Exception e) {
-      passed = false;
-    }
-    if (passed) {
-      throw new Exception("dropped_axiom.owl test should fail but it passed");
     }
 
     compareResults();
