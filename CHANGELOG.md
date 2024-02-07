@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Updated ELK from 0.4.3 to 0.5.0. [#999]. This is an important change as ELK 0.5.0 is more complete than 0.4.3, which means that it will potentially uncover inferences, in particular unsatisfiable classes, which were not recognised by ELK 0.4.3.
 - Add support for pluggable commands [#1119]
+- Add `--drop-axiom-annotations` option to drop axiom annotations in [`remove`] and [`filter`] [#1023]
 
 ### Changed
 - Migrate to OWL API 4.5.26 to deal with [broken turtle serialiser](https://github.com/ontodev/robot/issues/1129). [#1135]
@@ -382,7 +383,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
-
+;
 [#1181]: https://github.com/ontodev/robot/pull/1181
 [#1171]: https://github.com/ontodev/robot/pull/1171
 [#1168]: https://github.com/ontodev/robot/pull/1168
@@ -402,6 +403,7 @@ First official release of ROBOT!
 [#1061]: https://github.com/ontodev/robot/issues/1061
 [#1030]: https://github.com/ontodev/robot/issues/1030
 [#1026]: https://github.com/ontodev/robot/issues/1026
+[#1023]: https://github.com/ontodev/robot/pull/1023
 [#1017]: https://github.com/ontodev/robot/issues/1017
 [#1016]: https://github.com/ontodev/robot/issues/1016
 [#1009]: https://github.com/ontodev/robot/issues/1009
