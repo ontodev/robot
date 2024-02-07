@@ -34,3 +34,8 @@ For example, if the command `mycommand` is implemented in a class named `MyComma
 In addition to the class implementing the command itself, the archive must also provide any additional classes that may be required for the command to work. This must include classes from any external dependency, unless that dependency also happens to be a dependency of ROBOT itself (for example, there is no need for the archive to contain a copy of the classes of the OWL API, since they are already present in the standard distribution of ROBOT).
 
 A more detailed walkthrough of how to create a plugin is available [here](https://incenp.org/notes/2023/writing-robot-plugins.html).
+
+## Existing plugins
+
+ * [kgcl-java](https://github.com/gouttegd/kgcl-java) - a plugin that provides an `apply` command to apply ontology changes specified using the [Knowledge Graph Change Language](https://w3id.org/kgcl/)
+ * [sssom-java](https://incenp.org/dvlpt/sssom-java/) provides functionality for processing SSSOM files in the context of ontologies.
