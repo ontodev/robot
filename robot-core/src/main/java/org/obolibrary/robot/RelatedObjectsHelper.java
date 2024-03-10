@@ -1417,6 +1417,14 @@ public class RelatedObjectsHelper {
       } else {
         iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
+    } else if (axiom instanceof OWLSubAnnotationPropertyOfAxiom) {
+      OWLSubAnnotationPropertyOfAxiom spAxiom = (OWLSubAnnotationPropertyOfAxiom) axiom;
+      OWLAnnotationProperty subject = spAxiom.getSubProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLAnnotationProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
     } else if (axiom instanceof OWLEquivalentDataPropertiesAxiom) {
       OWLEquivalentDataPropertiesAxiom eqAxiom = (OWLEquivalentDataPropertiesAxiom) axiom;
       for (OWLSubDataPropertyOfAxiom spAxiom : eqAxiom.asSubDataPropertyOfAxioms()) {
