@@ -1492,6 +1492,54 @@ public class RelatedObjectsHelper {
       for (OWLObjectPropertyExpression expr : spcAxiom.getPropertyChain()) {
         iris.addAll(getIRIsFromEntities(expr.getSignature()));
       }
+    } else if (axiom instanceof OWLObjectPropertyCharacteristicAxiom) {
+      OWLObjectPropertyCharacteristicAxiom chAxiom = (OWLObjectPropertyCharacteristicAxiom) axiom;
+      OWLObjectPropertyExpression subject = chAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLObjectPropertyDomainAxiom) {
+      OWLObjectPropertyDomainAxiom domainAxiom = (OWLObjectPropertyDomainAxiom) axiom;
+      OWLObjectPropertyExpression subject = domainAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLDataPropertyRangeAxiom) {
+      OWLDataPropertyRangeAxiom rangeAxiom = (OWLDataPropertyRangeAxiom) axiom;
+      OWLDataPropertyExpression subject = rangeAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLObjectPropertyDomainAxiom) {
+      OWLObjectPropertyDomainAxiom domainAxiom = (OWLObjectPropertyDomainAxiom) axiom;
+      OWLObjectPropertyExpression subject = domainAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLDataPropertyRangeAxiom) {
+      OWLDataPropertyRangeAxiom rangeAxiom = (OWLDataPropertyRangeAxiom) axiom;
+      OWLDataPropertyExpression subject = rangeAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLInverseObjectPropertiesAxiom) {
+      OWLInverseObjectPropertiesAxiom iopAxiom = (OWLInverseObjectPropertiesAxiom) axiom;
+      OWLObjectPropertyExpression subject = iopAxiom.getFirstProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
     } else {
       logger.warn("Axiom type not supported: " + axiom.getClass().toString());
     }
