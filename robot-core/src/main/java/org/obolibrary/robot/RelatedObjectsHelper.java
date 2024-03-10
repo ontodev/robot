@@ -1508,19 +1508,19 @@ public class RelatedObjectsHelper {
       } else {
         iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
-    } else if (axiom instanceof OWLDataPropertyRangeAxiom) {
-      OWLDataPropertyRangeAxiom rangeAxiom = (OWLDataPropertyRangeAxiom) axiom;
-      OWLDataPropertyExpression subject = rangeAxiom.getProperty();
+    } else if (axiom instanceof OWLObjectPropertyRangeAxiom) {
+      OWLObjectPropertyRangeAxiom rangeAxiom = (OWLObjectPropertyRangeAxiom) axiom;
+      OWLObjectPropertyExpression subject = rangeAxiom.getProperty();
       if (!subject.isAnonymous()) {
-        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
       } else {
         iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
-    } else if (axiom instanceof OWLObjectPropertyDomainAxiom) {
-      OWLObjectPropertyDomainAxiom domainAxiom = (OWLObjectPropertyDomainAxiom) axiom;
-      OWLObjectPropertyExpression subject = domainAxiom.getProperty();
+    } else if (axiom instanceof OWLDataPropertyDomainAxiom) {
+      OWLDataPropertyDomainAxiom domainAxiom = (OWLDataPropertyDomainAxiom) axiom;
+      OWLDataPropertyExpression subject = domainAxiom.getProperty();
       if (!subject.isAnonymous()) {
-        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
       } else {
         iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
