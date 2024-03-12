@@ -69,7 +69,7 @@ This SubClassOf graph is complete and non-redundant, and can be used for intuiti
 
 ## Note about normalization of Qualified Number restrictions
 
-For convenience of downstream processing, `relax` rewrites expressions of the kind `:R min 1 :A` to `:R some :A`. These two expressions are logically identical.
+For convenience of downstream processing, `relax` rewrites expressions of the kind `:R min 1 :A` or `:R min 2 :A` to `:R some :A`. This is safe, because `:R some :A` is implied by any cardinality restriction > 0.
 
 <a id="exclude-named-classes"></a>
 
