@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+- Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060, #1183]
+
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
 - Fix how Template adds entities to the QuotedEntityChecker [#1104]

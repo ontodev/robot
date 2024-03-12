@@ -17,6 +17,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +90,34 @@ public class RelaxOperation {
    * @param options A map of options for the operation
    */
   public static void relax(OWLOntology ontology, Map<String, String> options) {
+    relax(ontology);
+  }
+
+  /**
+   * Replace EquivalentClass axioms with weaker SubClassOf axioms.
+   *
+   * @param ontology The OWLOntology to relax
+   */
+  public static void relax(OWLOntology ontology) {
+    relax(ontology, false, false, false);
+  }
+
+  /**
+   * Replace EquivalentClass axioms with weaker SubClassOf axioms.
+   *
+   * @param ontology The OWLOntology to relax
+   * @param enforceOboFormat if true, only axioms allowed in OBO format are asserted as a
+   *     consequence of relax
+   * @param excludeNamedClasses if true, equivalent class axioms between named classes are ignored
+   *     during processing
+   * @param includeSubclassOf if true, equivalent class axioms between named classes are ignored
+   *     during processing
+   */
+  public static void relax(
+      OWLOntology ontology,
+      boolean enforceOboFormat,
+      boolean excludeNamedClasses,
+      boolean includeSubclassOf) {
 
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLDataFactory dataFactory = manager.getOWLDataFactory();
@@ -106,18 +135,25 @@ public class RelaxOperation {
           OWLClass c = (OWLClass) x;
           // ax = EquivalentClasses(x y1 y2 ...)
           for (OWLClassExpression y : ax.getClassExpressionsMinus(c)) {
-            // limited structural reasoning:
-            //   return (P some Z), if:
-            //   - y is of the form (P some Z)
-            //   - y is of the form ((P some Z) and ...),
-            //     or any level of nesting
-            for (OWLObjectSomeValuesFrom svf : getSomeValuesFromAncestor(y, dataFactory)) {
-              newAxioms.add(dataFactory.getOWLSubClassOfAxiom(c, svf));
+            // if we are excluding equivalents between named classes, skip
+            if (!y.isAnonymous() && excludeNamedClasses) {
+              continue;
             }
-            for (OWLClass z : getNamedAncestors(y)) {
-              newAxioms.add(dataFactory.getOWLSubClassOfAxiom(c, z));
-            }
+            relaxExpression(c, y, newAxioms, enforceOboFormat, dataFactory);
           }
+        }
+      }
+    }
+    if (includeSubclassOf) {
+      Set<OWLSubClassOfAxiom> subClassAxioms = ontology.getAxioms(AxiomType.SUBCLASS_OF);
+      for (OWLSubClassOfAxiom ax : subClassAxioms) {
+        OWLClassExpression subClass = ax.getSubClass();
+        OWLClassExpression superClass = ax.getSuperClass();
+        // we only relax in cases where the subclass is a named class
+        // and the superclass a complex expression
+        if (!subClass.isAnonymous() && superClass.isAnonymous()) {
+          OWLClass namedSubClass = (OWLClass) subClass;
+          relaxExpression(namedSubClass, superClass, newAxioms, enforceOboFormat, dataFactory);
         }
       }
     }
@@ -126,6 +162,26 @@ public class RelaxOperation {
     for (OWLAxiom ax : newAxioms) {
       logger.info("NEW: " + ax);
       manager.addAxiom(ontology, ax);
+    }
+  }
+
+  private static void relaxExpression(
+      OWLClass namedSubClass,
+      OWLClassExpression anonymousSuperClass,
+      Set<OWLAxiom> newAxioms,
+      boolean enforceOboFormat,
+      OWLDataFactory dataFactory) {
+    // limited structural reasoning:
+    //   return (P some Z), if:
+    //   - y is of the form (P some Z)
+    //   - y is of the form ((P some Z) and ...),
+    //     or any level of nesting
+    for (OWLObjectSomeValuesFrom svf :
+        getSomeValuesFromAncestor(anonymousSuperClass, enforceOboFormat, dataFactory)) {
+      newAxioms.add(dataFactory.getOWLSubClassOfAxiom(namedSubClass, svf));
+    }
+    for (OWLClass z : getNamedAncestors(anonymousSuperClass)) {
+      newAxioms.add(dataFactory.getOWLSubClassOfAxiom(namedSubClass, z));
     }
   }
 
@@ -140,11 +196,13 @@ public class RelaxOperation {
    * @return the set of OWLObjectSomeValuesFrom objects
    */
   private static Set<OWLObjectSomeValuesFrom> getSomeValuesFromAncestor(
-      OWLClassExpression x, OWLDataFactory dataFactory) {
+      OWLClassExpression x, boolean enforceOboFormat, OWLDataFactory dataFactory) {
     Set<OWLObjectSomeValuesFrom> svfs = new HashSet<>();
     if (x instanceof OWLObjectSomeValuesFrom) {
       OWLObjectSomeValuesFrom svf = (OWLObjectSomeValuesFrom) x;
-      svfs.add(svf);
+      if (!enforceOboFormat || isOboFormatConformant(svf)) {
+        svfs.add(svf);
+      }
 
     } else if (x instanceof OWLObjectCardinalityRestriction) {
       OWLObjectCardinalityRestriction ocr = (OWLObjectCardinalityRestriction) x;
@@ -152,16 +210,22 @@ public class RelaxOperation {
       OWLObjectPropertyExpression p = ocr.getProperty();
       if (ocr.getCardinality() > 0) {
         OWLObjectSomeValuesFrom svf = dataFactory.getOWLObjectSomeValuesFrom(p, filler);
-        svfs.add(svf);
+        if (!enforceOboFormat || isOboFormatConformant(svf)) {
+          svfs.add(svf);
+        }
       }
 
     } else if (x instanceof OWLObjectIntersectionOf) {
       for (OWLClassExpression op : ((OWLObjectIntersectionOf) x).getOperands()) {
-        svfs.addAll(getSomeValuesFromAncestor(op, dataFactory));
+        svfs.addAll(getSomeValuesFromAncestor(op, enforceOboFormat, dataFactory));
       }
     }
 
     return svfs;
+  }
+
+  private static boolean isOboFormatConformant(OWLObjectSomeValuesFrom svf) {
+    return !svf.getProperty().isAnonymous() && !svf.getFiller().isAnonymous();
   }
 
   /**
