@@ -2,6 +2,8 @@ Level	Rule Name	Subject	Property	Value
 ERROR	missing_ontology_description	http://purl.obolibrary.org/obo/uberon.owl	dc:description	
 ERROR	missing_ontology_license	http://purl.obolibrary.org/obo/uberon.owl	dc:license	
 ERROR	missing_ontology_title	http://purl.obolibrary.org/obo/uberon.owl	dc:title	
+WARN	invalid_xref	BFO:0000051	oboInOwl:hasDbXref	BFO-:0000051
+WARN	invalid_xref	BFO:0000062	oboInOwl:hasDbXref	:0000062
 WARN	missing_definition	BFO:0000050	IAO:0000115	
 WARN	missing_definition	BFO:0000051	IAO:0000115	
 WARN	missing_definition	BFO:0000063	IAO:0000115	
