@@ -109,6 +109,7 @@ public class TemplateOperation {
     Map<String, String> options = new HashMap<>();
     options.put("force", "false");
     options.put("errors", null);
+    options.put("external-template", null);
     return options;
   }
 
@@ -176,6 +177,10 @@ public class TemplateOperation {
     List<OWLOntology> outputOntologies = new ArrayList<>();
     for (Map.Entry<String, List<List<String>>> t : tables.entrySet()) {
       Template template = new Template(t.getKey(), t.getValue(), intermediate, ioHelper, checker);
+      // sufficient to check if ext-template option has a not null value
+      if (options.get("ext-template") != null) {
+        template.setRowNum(1);
+      }
       // Update the checker with new labels
       checker = template.getChecker();
       boolean force = OptionsHelper.optionIsTrue(options, "force");

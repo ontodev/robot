@@ -1,0 +1,4 @@
+CURIE	Label	Parent	Comment
+obo:0000001	animal		Any animal in the world.
+obo:0000002	canine	animal	A member of the genus Canis.
+obo:0000003	feline	animal	A member of the genus Felis.

@@ -422,6 +422,13 @@ public class Template {
     return outputOntology;
   }
 
+  public int getRowNum() {
+    return rowNum;
+  }
+
+  public void setRowNum(int rowNum) {
+    this.rowNum = rowNum;
+  }
   /**
    * Given a list of rows for a table, first validate the headers and template strings. Then, get
    * the location of important columns (e.g. IDs and labels). Finally, add all template rows to the
