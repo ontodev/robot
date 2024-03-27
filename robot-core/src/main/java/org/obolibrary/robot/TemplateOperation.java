@@ -109,7 +109,7 @@ public class TemplateOperation {
     Map<String, String> options = new HashMap<>();
     options.put("force", "false");
     options.put("errors", null);
-    options.put("ext-template", null);
+    options.put("external-template", null);
     return options;
   }
 

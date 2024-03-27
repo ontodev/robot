@@ -225,15 +225,15 @@ robot template --merge-before \
 
 ROBOT template data read from separate external file
 
-    robot template --template animals_ext_template.tsv \
-        --ext-template animals_template.tsv \
+    robot template --template animals_template.tsv \
+        --external-template animals_ext_template.tsv \
         --output results/animals_ext_template.owl
 
 Adjusted line numbers for error reporting for template data read from separate external file
 <!-- DO NOT TEST -->
 ```
 robot template --template animals_ext_template_error.tsv \
-  --ext-template animals_template.tsv \
+  --ext-template animals_ext_template.tsv \
   --output results/animals_ext_template.owl
 ```
 

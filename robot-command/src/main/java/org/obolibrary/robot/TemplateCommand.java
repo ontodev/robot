@@ -32,6 +32,10 @@ public class TemplateCommand implements Command {
   private static final String missingRobotHeaderError =
       NS + "MISSING ROBOT HEADER ERROR header is required";
 
+  private static final String mismatchedRobotHeaderError =
+      NS
+          + "MISMATCHED ROBOT HEADER mismatched template file header and external template file header";
+
   /** Store the command-line options for the command. */
   private Options options;
 
@@ -53,7 +57,7 @@ public class TemplateCommand implements Command {
         "A", "include-annotations", true, "if true, include ontology annotations from merge input");
     o.addOption("f", "force", true, "if true, do not exit on error");
     o.addOption("e", "errors", true, "write errors to this path (TSV or CSV)");
-    o.addOption("E", "ext-template", true, "external robot template data file");
+    o.addOption("E", "external-template", true, "external robot template data file");
 
     options = o;
   }
@@ -152,7 +156,7 @@ public class TemplateCommand implements Command {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
     // Read the robot header line in
-    List<String> robotHeaderPath = CommandLineHelper.getOptionValues(line, "ext-template");
+    List<String> robotHeaderPath = CommandLineHelper.getOptionValues(line, "external-template");
     if (robotHeaderPath.size() > 0) {
       // For now only a single header line file is considered
       List<List<String>> headerLine = new ArrayList<>();
@@ -163,7 +167,12 @@ public class TemplateCommand implements Command {
       // Insert headerLine into all the template file data appropriately
       for (String templatePath : templatePaths) {
         List<List<String>> template = tables.get(templatePath);
-        template.add(1, headerLine.get(0));
+        // check that header lines match
+        if (checkHeaders(template.get(0), headerLine.get(0))) {
+          template.add(1, headerLine.get(1));
+        } else {
+          throw new IllegalArgumentException(mismatchedRobotHeaderError);
+        }
       }
     }
 
@@ -217,5 +226,24 @@ public class TemplateCommand implements Command {
     }
 
     return state;
+  }
+
+  /**
+   * Compare the headers for the template file and the external template file Return true or false
+   * for match and mismatch situations respectively
+   *
+   * @param templateHeader header from template file
+   * @param externalTemplateHeader header from external template file
+   * @return true for match, false for mismatch
+   */
+  private boolean checkHeaders(List<String> templateHeader, List<String> externalTemplateHeader) {
+    if (templateHeader.size() == externalTemplateHeader.size()) {
+      int numElements = templateHeader.size();
+      for (int index = 0; index < numElements; index++) {
+        if (!templateHeader.get(index).equals(externalTemplateHeader.get(index))) return false;
+      }
+      return true;
+    }
+    return false;
   }
 }
