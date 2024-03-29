@@ -155,21 +155,22 @@ public class TemplateCommand implements Command {
     for (String templatePath : templatePaths) {
       tables.put(templatePath, TemplateHelper.readTable(templatePath));
     }
-    // Read the robot header line in
-    List<String> robotHeaderPath = CommandLineHelper.getOptionValues(line, "external-template");
-    if (robotHeaderPath.size() > 0) {
-      // For now only a single header line file is considered
-      List<List<String>> headerLine = new ArrayList<>();
-      headerLine = TemplateHelper.readTable(robotHeaderPath.get(0));
-      if (headerLine.size() == 0) {
+
+    // Handle external template files.
+    List<String> externalTemplatePath =
+        CommandLineHelper.getOptionValues(line, "external-template");
+    if (externalTemplatePath.size() > 0) {
+      List<List<String>> externalTemplate = new ArrayList<>();
+      externalTemplate = TemplateHelper.readTable(externalTemplatePath.get(0));
+      if (externalTemplate.size() == 0) {
         throw new IllegalArgumentException(missingRobotHeaderError);
       }
-      // Insert headerLine into all the template file data appropriately
+      // Insert externalTemplate into all the template file data appropriately
       for (String templatePath : templatePaths) {
         List<List<String>> template = tables.get(templatePath);
-        // check that header lines match
-        if (checkHeaders(template.get(0), headerLine.get(0))) {
-          template.add(1, headerLine.get(1));
+        // check that the first lines (headers) are the same
+        if (compareHeaders(template.get(0), externalTemplate.get(0))) {
+          template.add(1, externalTemplate.get(1));
         } else {
           throw new IllegalArgumentException(mismatchedRobotHeaderError);
         }
@@ -229,14 +230,14 @@ public class TemplateCommand implements Command {
   }
 
   /**
-   * Compare the headers for the template file and the external template file Return true or false
-   * for match and mismatch situations respectively
+   * Compare the headers for the template file and the external template file. Return true if they
+   * match, false otherwise.
    *
    * @param templateHeader header from template file
    * @param externalTemplateHeader header from external template file
    * @return true for match, false for mismatch
    */
-  private boolean checkHeaders(List<String> templateHeader, List<String> externalTemplateHeader) {
+  private boolean compareHeaders(List<String> templateHeader, List<String> externalTemplateHeader) {
     if (templateHeader.size() == externalTemplateHeader.size()) {
       int numElements = templateHeader.size();
       for (int index = 0; index < numElements; index++) {
