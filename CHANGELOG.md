@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
--- Added option to input template strings from external file [#1152]
+- Added option to input template strings from external file [#1152]
 
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
@@ -388,6 +388,7 @@ First official release of ROBOT!
 [#1171]: https://github.com/ontodev/robot/pull/1171
 [#1168]: https://github.com/ontodev/robot/pull/1168
 [#1160]: https://github.com/ontodev/robot/pull/1160
+[#1152]: https://github.com/ontodev/robot/issues/1152
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135
 [#1119]: https://github.com/ontodev/robot/pull/1119
@@ -531,4 +532,3 @@ First official release of ROBOT!
 [#246]: https://github.com/ontodev/robot/issues/246
 [#174]: https://github.com/ontodev/robot/issues/174
 [#158]: https://github.com/ontodev/robot/issues/158
-[#1152]: https://github.com/ontodev/robot/issues/1152
