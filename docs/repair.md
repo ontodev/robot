@@ -17,7 +17,14 @@ To repair an ontology (with the name `need-of-repair.owl`) run the following com
 
 This will generate a new file `results/repaired.owl`. You can compare this with the original file (either using unix `diff` or [robot diff](diff)). If the changes that were made look good then you can simply replace the source file with the repaired file (`mv results/repaired.owl need-of-repair.owl`).
 
-By default, annotation axioms are not migrated to replacement classes. However, this can be enabled for a list of annotation properties passed either as arguments to `--annotation-property` or in a term file `--annotation-properties-file`:
+To use ROBOT solely for merging axiom annotations, you can use:
+
+    robot repair --input uberon_axiom_annotation_merging.owl \
+      --merge-axiom-annotations true \
+      --output results/uberon_axiom_annotation_merged.owl
+
+By default, annotation axioms are not migrated to replacement classes. 
+However, this can be enabled for a list of annotation properties passed either as arguments to `--annotation-property` or in a term file `--annotation-properties-file`:
 
     robot repair \
       --input xref-need-of-repair.obo \
