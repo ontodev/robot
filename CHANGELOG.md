@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [`merge`] and 'annotate' operations '--annotate-defined-by' excludes reserved OWL 2 vocabularies [#1171]
 - Handle IRIs that are not entities in export [#1168]
 - Fix integration tests [#1181]
+- Extend `--drop-axiom-annotations` option to support value-specific removal of axiom annotations [#1193]
+
 
 ## [1.9.5] - 2023-09-20
 
