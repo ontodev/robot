@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -157,13 +156,9 @@ public class RemoveCommand implements Command {
 
     List<String> dropParameters =
         CommandLineHelper.getOptionalValues(line, "drop-axiom-annotations");
-    List<IRI> annotationsToDrop =
-        dropParameters.stream()
-            .filter(s -> !s.equalsIgnoreCase("all"))
-            .map(
-                curie ->
-                    CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotations"))
-            .collect(Collectors.toList());
+
+    Map<IRI, String> annotationsToDrop =
+        CommandLineHelper.createAnnotationToDropMap(ioHelper, dropParameters);
 
     // Get the objects to remove
     Set<OWLObject> relatedObjects = getObjects(line, ioHelper, ontology, selectGroups);
