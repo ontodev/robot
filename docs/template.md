@@ -238,10 +238,10 @@ robot template --template animals_template_error.tsv \
 ```
 MEKS ROBOT multi annotation in a single column
 
-    robot template --prefix "meks: https://foundry.ai.mil/ontology/meks/" \
-        --template meks_annotations_new.tsv \
-        --external-template meks_annotations_header_new.tsv
-        --output results/meks_annotations_new.owl
+    robot template --prefix "acme: https://shangrila.ef.zz/ontology/acme/" \
+        --template multi_annotations_new.tsv \
+        --external-template multi_annotations_header_new.tsv
+        --output results/multi_annotations_new.owl
 
 
 \* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
