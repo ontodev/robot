@@ -178,7 +178,7 @@ public class TemplateOperation {
     for (Map.Entry<String, List<List<String>>> t : tables.entrySet()) {
       Template template = new Template(t.getKey(), t.getValue(), intermediate, ioHelper, checker);
       // sufficient to check if ext-template option has a not null value
-      if (options.get("ext-template") != null) {
+      if (options.get("external-template") != null) {
         template.setRowNum(1);
       }
       // Update the checker with new labels
