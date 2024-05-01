@@ -3,6 +3,7 @@ package org.obolibrary.robot;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -43,6 +44,11 @@ public class FilterCommand implements Command {
     o.addOption("r", "trim", true, "if true, keep axioms containing only selected objects");
     o.addOption(
         "S", "signature", true, "if true, keep axioms with any selected entity in their signature");
+    o.addOption(
+        "d",
+        "drop-axiom-annotations",
+        true,
+        "drop all axiom annotations involving a particular annotation property");
     options = o;
   }
 
@@ -159,10 +165,22 @@ public class FilterCommand implements Command {
       }
     }
 
+    List<String> dropParameters =
+        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotations");
+    List<IRI> annotationsToDrop =
+        dropParameters.stream()
+            .filter(s -> !s.equalsIgnoreCase("all"))
+            .map(
+                curie ->
+                    CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotations"))
+            .collect(Collectors.toList());
+
     // Use the select statements to get a set of objects to filter
     Set<OWLObject> relatedObjects =
         RemoveCommand.getObjects(line, ioHelper, inputOntology, selectGroups);
     if (relatedObjects.isEmpty()) {
+      // drop specified axiom annotations
+      RelatedObjectsHelper.dropAxiomAnnotations(outputOntology, annotationsToDrop, dropParameters);
       // nothing to filter - save and exit
       CommandLineHelper.maybeSaveOutput(line, outputOntology);
       state.setOntology(outputOntology);
@@ -211,6 +229,9 @@ public class FilterCommand implements Command {
       manager.addAxioms(
           outputOntology, RelatedObjectsHelper.getAnnotationAxioms(inputOntology, relatedObjects));
     }
+
+    // drop specified axiom annotations
+    RelatedObjectsHelper.dropAxiomAnnotations(outputOntology, annotationsToDrop, dropParameters);
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, outputOntology);

@@ -1653,4 +1653,53 @@ public class OntologyHelper {
     Set<OWLAxiom> axioms = RelatedObjectsHelper.getPartialAxioms(ontology, trimObjects, type);
     manager.removeAxioms(ontology, axioms);
   }
+
+  /**
+   * Removes all of the axiom annotations for the given annotation properties.
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   * @param properties Annotation property IRIs to remove related axiom annotations.
+   */
+  public static void removeAxiomAnnotations(OWLOntology ontology, List<IRI> properties) {
+    OWLDataFactory owlDataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
+    properties.stream()
+        .map(iri -> owlDataFactory.getOWLAnnotationProperty(iri))
+        .forEach(p -> OntologyHelper.removeAxiomAnnotations(ontology, p));
+  }
+
+  /**
+   * Removes all of the axiom annotations for the given annotation property.
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   * @param property Annotation property to remove related axiom annotations.
+   */
+  public static void removeAxiomAnnotations(OWLOntology ontology, OWLAnnotationProperty property) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      Set<OWLAnnotation> annotationsToRemove = axiom.getAnnotations(property);
+      if (!annotationsToRemove.isEmpty()) {
+        Set<OWLAnnotation> axiomAnnotations = axiom.getAnnotations();
+        axiomAnnotations.removeAll(annotationsToRemove);
+        OWLAxiom cleanedAxiom =
+            axiom.getAxiomWithoutAnnotations().getAnnotatedAxiom(axiomAnnotations);
+
+        manager.removeAxiom(ontology, axiom);
+        manager.addAxiom(ontology, cleanedAxiom);
+      }
+    }
+  }
+
+  /**
+   * Removes all axiom annotations from the given ontology.
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   */
+  public static void removeAllAxiomAnnotations(OWLOntology ontology) {
+    OWLOntologyManager manager = ontology.getOWLOntologyManager();
+    for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
+      OWLAxiom cleanedAxiom = axiom.getAxiomWithoutAnnotations();
+      manager.removeAxiom(ontology, axiom);
+      manager.addAxiom(ontology, cleanedAxiom);
+    }
+  }
 }

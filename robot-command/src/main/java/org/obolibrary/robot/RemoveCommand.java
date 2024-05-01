@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -46,6 +47,11 @@ public class RemoveCommand implements Command {
         "if true, remove axioms with any selected entity in their signature");
     o.addOption(
         "p", "preserve-structure", true, "if false, do not preserve hierarchical relationships");
+    o.addOption(
+        "d",
+        "drop-axiom-annotations",
+        true,
+        "drop all axiom annotations involving a particular annotation property");
     options = o;
   }
 
@@ -149,9 +155,21 @@ public class RemoveCommand implements Command {
       }
     }
 
+    List<String> dropParameters =
+        CommandLineHelper.getOptionalValues(line, "drop-axiom-annotations");
+    List<IRI> annotationsToDrop =
+        dropParameters.stream()
+            .filter(s -> !s.equalsIgnoreCase("all"))
+            .map(
+                curie ->
+                    CommandLineHelper.maybeCreateIRI(ioHelper, curie, "drop-axiom-annotations"))
+            .collect(Collectors.toList());
+
     // Get the objects to remove
     Set<OWLObject> relatedObjects = getObjects(line, ioHelper, ontology, selectGroups);
     if (relatedObjects.isEmpty()) {
+      // drop specified axiom annotations
+      RelatedObjectsHelper.dropAxiomAnnotations(ontology, annotationsToDrop, dropParameters);
       // nothing to remove - save and exit
       CommandLineHelper.maybeSaveOutput(line, ontology);
       state.setOntology(ontology);
@@ -197,6 +215,9 @@ public class RemoveCommand implements Command {
           RelatedObjectsHelper.spanGaps(
               copy, baseNamespaces, complementObjects, anonymous, internal, external));
     }
+
+    // drop specified axiom annotations
+    RelatedObjectsHelper.dropAxiomAnnotations(ontology, annotationsToDrop, dropParameters);
 
     // Save the changed ontology and return the state
     CommandLineHelper.maybeSaveOutput(line, ontology);

@@ -2344,4 +2344,20 @@ public class RelatedObjectsHelper {
       }
     }
   }
+
+  /**
+   * Drops axiom annotations from the given ontology which uses the given annotation properties.
+   *
+   * @param ontology OWLOntology to drop axiom annotations from
+   * @param annotationsToDrop list of annotation property IRIs
+   * @param dropParameters list of drop-axiom-annotations parameters
+   */
+  public static void dropAxiomAnnotations(
+      OWLOntology ontology, List<IRI> annotationsToDrop, List<String> dropParameters) {
+    if (dropParameters.stream().anyMatch(x -> x.equalsIgnoreCase("all"))) {
+      OntologyHelper.removeAllAxiomAnnotations(ontology);
+    } else {
+      OntologyHelper.removeAxiomAnnotations(ontology, annotationsToDrop);
+    }
+  }
 }
