@@ -38,4 +38,6 @@ A more detailed walkthrough of how to create a plugin is available [here](https:
 ## Existing plugins
 
  * [kgcl-java](https://github.com/gouttegd/kgcl-java) - a plugin that provides an `apply` command to apply ontology changes specified using the [Knowledge Graph Change Language](https://w3id.org/kgcl/)
+    * plugins can be downloaded directly from the [GitHub release page](https://github.com/gouttegd/kgcl-java/releases)
  * [sssom-java](https://incenp.org/dvlpt/sssom-java/) provides functionality for processing SSSOM files in the context of ontologies.
+    * plugins can be downloaded directly from the [GitHub release page](https://github.com/gouttegd/sssom-java/releases)
