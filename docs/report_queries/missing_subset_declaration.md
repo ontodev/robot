@@ -1,6 +1,6 @@
 # Missing Subset Declaration
 
-**Problem:** A subset is used in an annotation, but is not properly declared as a child of oboInOwl:SubsetProperty. This can cause problems with conversions to OBO format.
+**Problem:** A subset is used in an annotation (via oboInOwl:inSubset), but is not properly declared as a child of oboInOwl:SubsetProperty. This can cause problems with conversions to OBO format, and should be avoided as all subsets should have metadata.
 
 **Solution:** Make the subset a child of oboInOwl:SubsetProperty.
 
