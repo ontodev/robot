@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle IRIs that are not entities in export [#1168]
 - Fix integration tests [#1181]
 - Invalid Xrefs test has been fixed to recognise invalid CURIEs correctly [#1127]
+- Fix issue with correctly determining base entities [#1108]
 
 ## [1.9.5] - 2023-09-20
 
@@ -399,7 +400,9 @@ First official release of ROBOT!
 [#1152]: https://github.com/ontodev/robot/issues/1152
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135
+[#1127]: https://github.com/ontodev/robot/pull/1127
 [#1119]: https://github.com/ontodev/robot/pull/1119
+[#1108]: https://github.com/ontodev/robot/pull/1108
 [#1104]: https://github.com/ontodev/robot/pull/1104
 [#1100]: https://github.com/ontodev/robot/pull/1100
 [#1091]: https://github.com/ontodev/robot/issues/1091
