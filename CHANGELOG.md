@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added option to input template strings from external file [#1152]
 
+### Changed
+- Updated `duplicate_exact_syonym` [`report`] query to be case-insensitive and ignore synoyms annotated as abbreviation or acronym synonym types [#1179]
+
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
 - Fix how Template adds entities to the QuotedEntityChecker [#1104]
@@ -388,6 +391,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 ;
 [#1181]: https://github.com/ontodev/robot/pull/1181
+[#1179]: https://github.com/ontodev/robot/pull/1179
 [#1171]: https://github.com/ontodev/robot/pull/1171
 [#1168]: https://github.com/ontodev/robot/pull/1168
 [#1160]: https://github.com/ontodev/robot/pull/1160
