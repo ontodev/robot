@@ -24,12 +24,12 @@ public class RelaxCommand implements Command {
     o.addOption("i", "input", true, "relax ontology from a file");
     o.addOption("I", "input-iri", true, "relax ontology from an IRI");
     o.addOption(
-        "e",
+        null,
         "enforce-obo-format",
         true,
         "if true, only axioms allowed in OBO format are asserted as a consequence of relax.");
     o.addOption(
-        "x",
+        null,
         "exclude-named-classes",
         true,
         "if true, equivalent class axioms between named classes are ignored during processing.");
