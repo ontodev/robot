@@ -1683,6 +1683,18 @@ public class OntologyHelper {
     removeAxiomAnnotations(ontology, property, null);
   }
 
+ /**
+   * Removes all of the axiom annotations for the given annotation properties.
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   * @param properties List of annotation property IRIs to remove related axiom annotations.
+   */
+  public static void removeAxiomAnnotations(OWLOntology ontology, List<IRI> properties) {
+    Map<IRI, String> annotationsToDrop = new HashMap<>();
+    properties.forEach(iri -> annotationsToDrop.put(iri, null));
+    removeAxiomAnnotations(ontology, annotationsToDrop);
+  }
+
   /**
    * Removes all of the axiom annotations for the given annotation property and an optional value
    * pattern The value pattern should follow
