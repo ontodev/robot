@@ -230,13 +230,11 @@ Create a "base" subset by removing external axioms (alternatively, use `filter -
       --signature true \
       --output results/filter_annotations.owl
 
-Create a "base" subset in which axiom annotations involving IAO:0000117 and IAO:0000119 are removed:
+Extracts a base module, then removing _all_ `oboInOwl:hasDbXref` annotations on the remaining axioms, and all `oboInOwl:hasDbXref` axiom annotations whose value matches the regular expression `GO.*`:
 
-    robot remove --input template.owl \
-      --base-iri http://example.com/ \
+    robot remove --input uberon_module.owl \
+      --base-iri http://purl.obolibrary.org/obo/UBERON_ \
       --axioms external \
-      --drop-axiom-annotations IAO:0000117 \
-      --drop-axiom-annotations IAO:0000119 \
-      --output results/template-drop-axiom-remove.owl
-
-      
+      --drop-axiom-annotations oboInOwl:source=~'GO.*' \
+      --drop-axiom-annotations oboInOwl:hasDbXref \
+      --output results/filter_annotations_drop_axioms.owl

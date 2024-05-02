@@ -1121,4 +1121,36 @@ public class CommandLineHelper {
     }
     return inputOntologies;
   }
+
+  /**
+   * Given an IOHelper and a list of unparsed patterns to select annotation assertions to be dropped
+   * build a Map of property IRIs, and value patterns for further processing.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param dropParameters The list of unparsed command line parameters describing the annotations
+   *     to select
+   * @return A map of IRI to annotation value to drop
+   */
+  public static Map<IRI, String> createAnnotationToDropMap(
+      IOHelper ioHelper, List<String> dropParameters) throws IOException {
+    Map<IRI, String> annotationsToDrop = new HashMap<>();
+
+    for (String dropParameter : dropParameters) {
+      if (dropParameter.equalsIgnoreCase("all")) {
+        // ignore, we communicate this through the dropParameters list
+      } else if (dropParameter.contains("=")) {
+        String[] parts = dropParameter.split("=");
+        String annotationIRI = parts[0];
+        String annotationValue = parts[1];
+        IRI iri =
+            CommandLineHelper.maybeCreateIRI(ioHelper, annotationIRI, "drop-axiom-annotations");
+        annotationsToDrop.put(iri, annotationValue);
+      } else {
+        IRI iri =
+            CommandLineHelper.maybeCreateIRI(ioHelper, dropParameter, "drop-axiom-annotations");
+        annotationsToDrop.put(iri, null);
+      }
+    }
+    return annotationsToDrop;
+  }
 }

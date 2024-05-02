@@ -4,6 +4,8 @@ import com.google.common.base.Optional;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.export.RendererType;
 import org.obolibrary.robot.providers.QuotedAnnotationValueShortFormProvider;
@@ -1658,13 +1660,29 @@ public class OntologyHelper {
    * Removes all of the axiom annotations for the given annotation properties.
    *
    * @param ontology OWLOntology to remove axiom annotations
-   * @param properties Annotation property IRIs to remove related axiom annotations.
+   * @param properties List of annotation property IRIs to remove related axiom annotations.
    */
   public static void removeAxiomAnnotations(OWLOntology ontology, List<IRI> properties) {
+    Map<IRI, String> annotationsToDrop = new HashMap<>();
+    properties.forEach(iri -> annotationsToDrop.put(iri, null));
+    removeAxiomAnnotations(ontology, annotationsToDrop);
+  }
+
+  /**
+   * Removes all of the axiom annotations for the given annotation properties.
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   * @param properties Annotation property IRIs to remove related axiom annotations.
+   */
+  public static void removeAxiomAnnotations(
+      OWLOntology ontology, Map<IRI, String> annotationsToDrop) {
     OWLDataFactory owlDataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
-    properties.stream()
-        .map(iri -> owlDataFactory.getOWLAnnotationProperty(iri))
-        .forEach(p -> OntologyHelper.removeAxiomAnnotations(ontology, p));
+
+    for (IRI iri : annotationsToDrop.keySet()) {
+      OWLAnnotationProperty property = owlDataFactory.getOWLAnnotationProperty(iri);
+      String value = annotationsToDrop.get(iri);
+      OntologyHelper.removeAxiomAnnotations(ontology, property, value);
+    }
   }
 
   /**
@@ -1674,11 +1692,57 @@ public class OntologyHelper {
    * @param property Annotation property to remove related axiom annotations.
    */
   public static void removeAxiomAnnotations(OWLOntology ontology, OWLAnnotationProperty property) {
+    removeAxiomAnnotations(ontology, property, null);
+  }
+
+  /**
+   * Removes all of the axiom annotations for the given annotation property and an optional value
+   * pattern The value pattern should follow
+   * https://robot.obolibrary.org/remove#pattern-subset-selectors
+   *
+   * @param ontology OWLOntology to remove axiom annotations
+   * @param property Annotation property to remove related axiom annotations.
+   * @param value a value or value pattern the restrict what is deleted. Can be null.
+   */
+  public static void removeAxiomAnnotations(
+      OWLOntology ontology, OWLAnnotationProperty property, String value) {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
-      Set<OWLAnnotation> annotationsToRemove = axiom.getAnnotations(property);
+      Set<OWLAnnotation> annotationsToRemove = new HashSet<>();
+      Set<OWLAnnotation> allAxiomAnnotations = axiom.getAnnotations();
+      for (OWLAnnotation annotation : allAxiomAnnotations) {
+        if (annotation.getProperty().equals(property)) {
+          String annotationValue = getAnnotationValueAsStringOrNull(annotation);
+          if (value == null) {
+            // If there is no value set, we assume all annotations for the property should be
+            // removed
+            annotationsToRemove.add(annotation);
+          } else if (value.startsWith("~")) {
+            // If a value is set, and it starts with ~, we assume it is a regex pattern
+            String patternString = value.substring(1).replace("'", "");
+            Pattern pattern = Pattern.compile(patternString);
+            Matcher matcher = pattern.matcher(annotationValue);
+            if (matcher.find()) {
+              annotationsToRemove.add(annotation);
+            }
+          } else {
+            // If a value is set, and it does not start with ~, we assume its an exact value
+            String processed_value = value.replace("'", "");
+            if (annotationValue.equals(processed_value)) {
+              annotationsToRemove.add(annotation);
+            } else {
+              logger.warn(
+                  "Annotation assertion value pattern must start with ~' to indicate a regex pattern"
+                      + "or else correspond to the exact value. "
+                      + "The value is: "
+                      + value
+                      + ". Other patterns are not supported.");
+            }
+          }
+        }
+      }
       if (!annotationsToRemove.isEmpty()) {
-        Set<OWLAnnotation> axiomAnnotations = axiom.getAnnotations();
+        Set<OWLAnnotation> axiomAnnotations = new HashSet<>(allAxiomAnnotations);
         axiomAnnotations.removeAll(annotationsToRemove);
         OWLAxiom cleanedAxiom =
             axiom.getAxiomWithoutAnnotations().getAnnotatedAxiom(axiomAnnotations);
@@ -1686,6 +1750,19 @@ public class OntologyHelper {
         manager.removeAxiom(ontology, axiom);
         manager.addAxiom(ontology, cleanedAxiom);
       }
+    }
+  }
+
+  private static String getAnnotationValueAsStringOrNull(OWLAnnotation annotation) {
+    OWLAnnotationValue v = annotation.getValue();
+    if (v.isIRI()) {
+      return v.asIRI().get().toString();
+    } else if (v.isLiteral()) {
+      return v.asLiteral().get().getLiteral().toString();
+    } else if (v.isIndividual()) {
+      return v.asAnonymousIndividual().get().toString();
+    } else {
+      return null;
     }
   }
 

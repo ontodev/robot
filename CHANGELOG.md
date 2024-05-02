@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated `duplicate_exact_syonym` [`report`] query to be case-insensitive and ignore synoyms annotated as abbreviation or acronym synonym types [#1179]
+- Extend `--drop-axiom-annotations` option to support value-specific removal of axiom annotations [#1193]
 - Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060, #1183]
 
 ### Fixed

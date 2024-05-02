@@ -2409,7 +2409,7 @@ public class RelatedObjectsHelper {
    * @param dropParameters list of drop-axiom-annotations parameters
    */
   public static void dropAxiomAnnotations(
-      OWLOntology ontology, List<IRI> annotationsToDrop, List<String> dropParameters) {
+      OWLOntology ontology, Map<IRI, String> annotationsToDrop, List<String> dropParameters) {
     if (dropParameters.stream().anyMatch(x -> x.equalsIgnoreCase("all"))) {
       OntologyHelper.removeAllAxiomAnnotations(ontology);
     } else {
