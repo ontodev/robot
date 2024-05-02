@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -24,6 +23,21 @@ public class RelaxCommand implements Command {
     Options o = CommandLineHelper.getCommonOptions();
     o.addOption("i", "input", true, "relax ontology from a file");
     o.addOption("I", "input-iri", true, "relax ontology from an IRI");
+    o.addOption(
+        null,
+        "enforce-obo-format",
+        true,
+        "if true, only axioms allowed in OBO format are asserted as a consequence of relax.");
+    o.addOption(
+        null,
+        "exclude-named-classes",
+        true,
+        "if true, equivalent class axioms between named classes are ignored during processing.");
+    o.addOption(
+        "s",
+        "include-subclass-of",
+        true,
+        "if true, equivalent class axioms between named classes are ignored during processing.");
     o.addOption("o", "output", true, "save relaxed ontology to a file");
     options = o;
   }
@@ -100,15 +114,13 @@ public class RelaxCommand implements Command {
     state = CommandLineHelper.updateInputOntology(ioHelper, state, line);
     OWLOntology ontology = state.getOntology();
 
-    // Override default reasoner options with command-line options
-    Map<String, String> relaxOptions = RelaxOperation.getDefaultOptions();
-    for (String option : relaxOptions.keySet()) {
-      if (line.hasOption(option)) {
-        relaxOptions.put(option, line.getOptionValue(option));
-      }
-    }
+    boolean enforceOboFormat = CommandLineHelper.getBooleanValue(line, "enforce-obo-format", false);
+    boolean excludeNamedClasses =
+        CommandLineHelper.getBooleanValue(line, "exclude-named-classes", true);
+    boolean includeSubclassOf =
+        CommandLineHelper.getBooleanValue(line, "include-subclass-of", false);
 
-    RelaxOperation.relax(ontology, relaxOptions);
+    RelaxOperation.relax(ontology, enforceOboFormat, excludeNamedClasses, includeSubclassOf);
 
     CommandLineHelper.maybeSaveOutput(line, ontology);
 
