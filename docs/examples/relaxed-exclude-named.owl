@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/robot/tests/relaxed2.owl#"
+     xml:base="http://purl.obolibrary.org/obo/robot/tests/relaxed2.owl"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/robot/tests/relaxed2.owl"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_R -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/ROBOT_R">
+        <rdfs:label xml:lang="en">R</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_A -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_A">
+        <owl:equivalentClass rdf:resource="http://purl.obolibrary.org/obo/ROBOT_A1"/>
+        <rdfs:label xml:lang="en">A (Named Equivalent)</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_A1 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_A1">
+        <rdfs:label xml:lang="en">A1</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_B -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_B">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/ROBOT_B1"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_B2"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
+        <rdfs:label xml:lang="en">B (SubClass example)</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_B1 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_B1">
+        <rdfs:label xml:lang="en">B1</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_B2 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_B2">
+        <rdfs:label xml:lang="en">B2</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_C -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_C">
+        <owl:equivalentClass>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_C1"/>
+            </owl:Restriction>
+        </owl:equivalentClass>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_C1"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label xml:lang="en">C (Equivalent Simple Existential)</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_C1 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_C1">
+        <rdfs:label xml:lang="en">C1 (Equivalent Simple Existential)</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/ROBOT_E1"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E2"/>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E3"/>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:someValuesFrom>
+                            <owl:Restriction>
+                                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E5"/>
+                            </owl:Restriction>
+                        </owl:someValuesFrom>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:allValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E4"/>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+                        <owl:onClass rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E6"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E1"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E2"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E3"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E6"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                <owl:someValuesFrom>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/ROBOT_R"/>
+                        <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/ROBOT_E5"/>
+                    </owl:Restriction>
+                </owl:someValuesFrom>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:label xml:lang="en">E (Complex existential)</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E1 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E1">
+        <rdfs:label xml:lang="en">E1</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E2 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E2">
+        <rdfs:label xml:lang="en">E2</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E3 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E3">
+        <rdfs:label xml:lang="en">E3</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E4 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E4">
+        <rdfs:label xml:lang="en">E4</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E5 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E5">
+        <rdfs:label xml:lang="en">E5</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/ROBOT_E6 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/ROBOT_E6">
+        <rdfs:label xml:lang="en">E6</rdfs:label>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.26) https://github.com/owlcs/owlapi -->
+
