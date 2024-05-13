@@ -1130,6 +1130,7 @@ public class CommandLineHelper {
    * @param dropParameters The list of unparsed command line parameters describing the annotations
    *     to select
    * @return A map of IRI to annotation value to drop
+   * @throws IOException if annotation cannot be created
    */
   public static Map<IRI, String> createAnnotationToDropMap(
       IOHelper ioHelper, List<String> dropParameters) throws IOException {

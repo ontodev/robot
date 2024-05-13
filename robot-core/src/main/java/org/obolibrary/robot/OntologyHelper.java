@@ -1672,7 +1672,8 @@ public class OntologyHelper {
    * Removes all of the axiom annotations for the given annotation properties.
    *
    * @param ontology OWLOntology to remove axiom annotations
-   * @param properties Annotation property IRIs to remove related axiom annotations.
+   * @param annotationsToDrop Map with keys being IRIs to drop and values to restrict what is
+   *     deleted.
    */
   public static void removeAxiomAnnotations(
       OWLOntology ontology, Map<IRI, String> annotationsToDrop) {
