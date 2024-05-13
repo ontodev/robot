@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added option to input template strings from external file [#1152]
 
+### Changed
+- Updated `duplicate_exact_syonym` [`report`] query to be case-insensitive and ignore synoyms annotated as abbreviation or acronym synonym types [#1179]
+- Extend `--drop-axiom-annotations` option to support value-specific removal of axiom annotations [#1193]
+- Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060, #1183]
+- Updated OWL API to 3.5.29. This includes a major update to OBO Format which now supports [IDSPACE declarations](https://github.com/owlcs/owlapi/pull/1102) (non-OBO Foundry prefixes).
+
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
 - Fix how Template adds entities to the QuotedEntityChecker [#1104]
@@ -17,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle IRIs that are not entities in export [#1168]
 - Fix integration tests [#1181]
 - `robot repair` is fixed to be more flexible, to enable partial repairs [#1194]
+- Invalid Xrefs test has been fixed to recognise invalid CURIEs correctly [#1127]
+- Fix issue with correctly determining base entities [#1108]
 
 ## [1.9.5] - 2023-09-20
 
@@ -389,13 +397,16 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 ;
 [#1181]: https://github.com/ontodev/robot/pull/1181
+[#1179]: https://github.com/ontodev/robot/pull/1179
 [#1171]: https://github.com/ontodev/robot/pull/1171
 [#1168]: https://github.com/ontodev/robot/pull/1168
 [#1160]: https://github.com/ontodev/robot/pull/1160
 [#1152]: https://github.com/ontodev/robot/issues/1152
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135
+[#1127]: https://github.com/ontodev/robot/pull/1127
 [#1119]: https://github.com/ontodev/robot/pull/1119
+[#1108]: https://github.com/ontodev/robot/pull/1108
 [#1104]: https://github.com/ontodev/robot/pull/1104
 [#1100]: https://github.com/ontodev/robot/pull/1100
 [#1091]: https://github.com/ontodev/robot/issues/1091
