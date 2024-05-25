@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060, #1183]
 - Updated obographs to [version 0.3.1](https://github.com/geneontology/obographs/releases/tag/v0.3.1)
 - Updated OWL API to 3.5.29. This includes a major update to OBO Format which now supports [IDSPACE declarations](https://github.com/owlcs/owlapi/pull/1102) (non-OBO Foundry prefixes).
+- Updated Elk to version 0.6.0, see [here](https://github.com/liveontologies/elk-reasoner/issues/48#issuecomment-2130090254).
 
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
