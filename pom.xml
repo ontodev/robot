@@ -213,7 +213,7 @@
     </dependency>
     <dependency>
       <groupId>io.github.liveontologies</groupId>
-      <artifactId>elk-distribution-owlapi</artifactId>
+      <artifactId>elk-owlapi</artifactId>
       <version>0.6.0</version>
       <exclusions>
         <exclusion>
