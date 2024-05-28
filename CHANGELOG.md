@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.6] - 2024-05-28
+
 ### Added
 - Added option to input template strings from external file [#1152]
 
@@ -349,7 +351,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.5...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.6...HEAD
+[1.9.6]: https://github.com/ontodev/robot/compare/v1.9.5...v1.9.6
 [1.9.5]: https://github.com/ontodev/robot/compare/v1.9.4...v1.9.5
 [1.9.4]: https://github.com/ontodev/robot/compare/v1.9.3...v1.9.4
 [1.9.3]: https://github.com/ontodev/robot/compare/v1.9.2...v1.9.3
