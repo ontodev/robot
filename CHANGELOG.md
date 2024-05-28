@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated `duplicate_exact_syonym` [`report`] query to be case-insensitive and ignore synoyms annotated as abbreviation or acronym synonym types [#1179]
 - Extend `--drop-axiom-annotations` option to support value-specific removal of axiom annotations [#1193]
-- Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060, #1183]
+- Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060], [#1183]
 - Updated obographs to [version 0.3.1](https://github.com/geneontology/obographs/releases/tag/v0.3.1)
 - Updated OWL API to 3.5.29. This includes a major update to OBO Format which now supports [IDSPACE declarations](https://github.com/owlcs/owlapi/pull/1102) (non-OBO Foundry prefixes).
 - Updated Elk to version 0.6.0, see [here](https://github.com/liveontologies/elk-reasoner/issues/48#issuecomment-2130090254).
@@ -486,6 +486,7 @@ First official release of ROBOT!
 [#741]: https://github.com/ontodev/robot/issues/741
 [#739]: https://github.com/ontodev/robot/pull/739
 [#738]: https://github.com/ontodev/robot/pull/738
+[#730]: https://github.com/ontodev/robot/pull/730
 [#728]: https://github.com/ontodev/robot/pull/728
 [#727]: https://github.com/ontodev/robot/pull/727
 [#726]: https://github.com/ontodev/robot/pull/726
