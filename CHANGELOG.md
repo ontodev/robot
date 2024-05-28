@@ -396,7 +396,7 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
-;
+
 [#1181]: https://github.com/ontodev/robot/pull/1181
 [#1179]: https://github.com/ontodev/robot/pull/1179
 [#1171]: https://github.com/ontodev/robot/pull/1171
