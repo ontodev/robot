@@ -1417,6 +1417,14 @@ public class RelatedObjectsHelper {
       } else {
         iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
+    } else if (axiom instanceof OWLSubAnnotationPropertyOfAxiom) {
+      OWLSubAnnotationPropertyOfAxiom spAxiom = (OWLSubAnnotationPropertyOfAxiom) axiom;
+      OWLAnnotationProperty subject = spAxiom.getSubProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLAnnotationProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
     } else if (axiom instanceof OWLEquivalentDataPropertiesAxiom) {
       OWLEquivalentDataPropertiesAxiom eqAxiom = (OWLEquivalentDataPropertiesAxiom) axiom;
       for (OWLSubDataPropertyOfAxiom spAxiom : eqAxiom.asSubDataPropertyOfAxioms()) {
@@ -1491,6 +1499,54 @@ public class RelatedObjectsHelper {
       OWLSubPropertyChainOfAxiom spcAxiom = (OWLSubPropertyChainOfAxiom) axiom;
       for (OWLObjectPropertyExpression expr : spcAxiom.getPropertyChain()) {
         iris.addAll(getIRIsFromEntities(expr.getSignature()));
+      }
+    } else if (axiom instanceof OWLObjectPropertyCharacteristicAxiom) {
+      OWLObjectPropertyCharacteristicAxiom chAxiom = (OWLObjectPropertyCharacteristicAxiom) axiom;
+      OWLObjectPropertyExpression subject = chAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLObjectPropertyDomainAxiom) {
+      OWLObjectPropertyDomainAxiom domainAxiom = (OWLObjectPropertyDomainAxiom) axiom;
+      OWLObjectPropertyExpression subject = domainAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLObjectPropertyRangeAxiom) {
+      OWLObjectPropertyRangeAxiom rangeAxiom = (OWLObjectPropertyRangeAxiom) axiom;
+      OWLObjectPropertyExpression subject = rangeAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLDataPropertyDomainAxiom) {
+      OWLDataPropertyDomainAxiom domainAxiom = (OWLDataPropertyDomainAxiom) axiom;
+      OWLDataPropertyExpression subject = domainAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLDataPropertyRangeAxiom) {
+      OWLDataPropertyRangeAxiom rangeAxiom = (OWLDataPropertyRangeAxiom) axiom;
+      OWLDataPropertyExpression subject = rangeAxiom.getProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLDataProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
+      }
+    } else if (axiom instanceof OWLInverseObjectPropertiesAxiom) {
+      OWLInverseObjectPropertiesAxiom iopAxiom = (OWLInverseObjectPropertiesAxiom) axiom;
+      OWLObjectPropertyExpression subject = iopAxiom.getFirstProperty();
+      if (!subject.isAnonymous()) {
+        return Sets.newHashSet(subject.asOWLObjectProperty().getIRI());
+      } else {
+        iris.addAll(getIRIsFromEntities(subject.getSignature()));
       }
     } else {
       logger.warn("Axiom type not supported: " + axiom.getClass().toString());
@@ -2353,7 +2409,7 @@ public class RelatedObjectsHelper {
    * @param dropParameters list of drop-axiom-annotations parameters
    */
   public static void dropAxiomAnnotations(
-      OWLOntology ontology, List<IRI> annotationsToDrop, List<String> dropParameters) {
+      OWLOntology ontology, Map<IRI, String> annotationsToDrop, List<String> dropParameters) {
     if (dropParameters.stream().anyMatch(x -> x.equalsIgnoreCase("all"))) {
       OntologyHelper.removeAllAxiomAnnotations(ontology);
     } else {

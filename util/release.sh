@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#! nix-shell -i bash -p jdk11_headless maven git gitAndTools.gh jq semver-tool gnupg
+#! nix-shell -i bash -p jdk11_headless maven git gitAndTools.gh jq semver-tool gnupg pinentry_mac
 #
 # This script helps to automate ROBOT releases.
 # When a manual step is required, it will wait for the user.

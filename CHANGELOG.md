@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.6] - 2024-05-28
+
 ### Added
 - Added option to input template strings from external file [#1152]
+
+### Changed
+- Updated `duplicate_exact_syonym` [`report`] query to be case-insensitive and ignore synoyms annotated as abbreviation or acronym synonym types [#1179]
+- Extend `--drop-axiom-annotations` option to support value-specific removal of axiom annotations [#1193]
+- Add `--enforce-obo-format`, `--exclude-named-classes` and `--include-subclass-of` features to relax command [#1060], [#1183]
+- Updated obographs to [version 0.3.1](https://github.com/geneontology/obographs/releases/tag/v0.3.1)
+- Updated OWL API to 3.5.29. This includes a major update to OBO Format which now supports [IDSPACE declarations](https://github.com/owlcs/owlapi/pull/1102) (non-OBO Foundry prefixes).
+- Updated Elk to version 0.6.0, see [here](https://github.com/liveontologies/elk-reasoner/issues/48#issuecomment-2130090254).
 
 ### Fixed
 - '--annotate-with-source true' does not work with extract --method subset [#1160]
@@ -16,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [`merge`] and 'annotate' operations '--annotate-defined-by' excludes reserved OWL 2 vocabularies [#1171]
 - Handle IRIs that are not entities in export [#1168]
 - Fix integration tests [#1181]
+- `robot repair` is fixed to be more flexible, to enable partial repairs [#1194]
+- Invalid Xrefs test has been fixed to recognise invalid CURIEs correctly [#1127]
+- Fix issue with correctly determining base entities [#1108]
 
 ## [1.9.5] - 2023-09-20
 
@@ -203,7 +216,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix comparator method for sorting empty strings with [`export`] in [#654]
 - Fix releasing dataset after exception when running [`report`] with `--tdb true` [#659]
 - Reduced time spent loading datasets for [`query`] in [#666]
-- Fix writing JSON format to use `OutputStream` with ['convert'] in [#671]
+- Fix writing JSON format to use `OutputStream` with [`convert`] in [#671]
 - Fix IRI resolution for `template` in [#689]
 - Fix MIREOT [`extract`] on overlapping class/individual entity for [#709] in [#710]
 - Fix issue with `--add-prefixes` option in [#715]
@@ -338,7 +351,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.5...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.6...HEAD
+[1.9.6]: https://github.com/ontodev/robot/compare/v1.9.5...v1.9.6
 [1.9.5]: https://github.com/ontodev/robot/compare/v1.9.4...v1.9.5
 [1.9.4]: https://github.com/ontodev/robot/compare/v1.9.3...v1.9.4
 [1.9.3]: https://github.com/ontodev/robot/compare/v1.9.2...v1.9.3
@@ -386,17 +400,26 @@ First official release of ROBOT!
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
 [`validate`]: http://robot.obolibrary.org/validate
-;
+[`verify`]: http://robot.obolibrary.org/verify
+
+[#1194]: https://github.com/ontodev/robot/pull/1194
+[#1193]: https://github.com/ontodev/robot/pull/1193
+[#1183]: https://github.com/ontodev/robot/issues/1183
 [#1181]: https://github.com/ontodev/robot/pull/1181
+[#1179]: https://github.com/ontodev/robot/pull/1179
 [#1171]: https://github.com/ontodev/robot/pull/1171
 [#1168]: https://github.com/ontodev/robot/pull/1168
 [#1160]: https://github.com/ontodev/robot/pull/1160
 [#1152]: https://github.com/ontodev/robot/issues/1152
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135
+[#1127]: https://github.com/ontodev/robot/pull/1127
 [#1119]: https://github.com/ontodev/robot/pull/1119
+[#1108]: https://github.com/ontodev/robot/pull/1108
 [#1104]: https://github.com/ontodev/robot/pull/1104
+[#1101]: https://github.com/ontodev/robot/issues/1101
 [#1100]: https://github.com/ontodev/robot/pull/1100
+[#1093]: https://github.com/ontodev/robot/pull/1093
 [#1091]: https://github.com/ontodev/robot/issues/1091
 [#1089]: https://github.com/ontodev/robot/issues/1089
 [#1088]: https://github.com/ontodev/robot/issues/1088
@@ -405,6 +428,7 @@ First official release of ROBOT!
 [#1073]: https://github.com/ontodev/robot/pull/1073
 [#1071]: https://github.com/ontodev/robot/pull/1071
 [#1061]: https://github.com/ontodev/robot/issues/1061
+[#1060]: https://github.com/ontodev/robot/issues/1060
 [#1030]: https://github.com/ontodev/robot/issues/1030
 [#1026]: https://github.com/ontodev/robot/issues/1026
 [#1023]: https://github.com/ontodev/robot/pull/1023
@@ -426,6 +450,7 @@ First official release of ROBOT!
 [#948]: https://github.com/ontodev/robot/pull/948
 [#944]: https://github.com/ontodev/robot/pull/944
 [#938]: https://github.com/ontodev/robot/pull/938
+[#931]: https://github.com/ontodev/robot/issues/931
 [#929]: https://github.com/ontodev/robot/pull/929
 [#924]: https://github.com/ontodev/robot/issues/924
 [#914]: https://github.com/ontodev/robot/pull/914
@@ -436,6 +461,7 @@ First official release of ROBOT!
 [#882]: https://github.com/ontodev/robot/pull/882
 [#879]: https://github.com/ontodev/robot/pull/879
 [#874]: https://github.com/ontodev/robot/pull/874
+[#873]: https://github.com/ontodev/robot/issues/873
 [#872]: https://github.com/ontodev/robot/pull/872
 [#870]: https://github.com/ontodev/robot/pull/870
 [#869]: https://github.com/ontodev/robot/pull/869
@@ -456,11 +482,14 @@ First official release of ROBOT!
 [#792]: https://github.com/ontodev/robot/pull/792
 [#788]: https://github.com/ontodev/robot/pull/788
 [#783]: https://github.com/ontodev/robot/pull/783
+[#779]: https://github.com/ontodev/robot/pull/779
+[#774]: https://github.com/ontodev/robot/pull/774
 [#767]: https://github.com/ontodev/robot/pull/767
 [#758]: https://github.com/ontodev/robot/pull/758
 [#741]: https://github.com/ontodev/robot/issues/741
 [#739]: https://github.com/ontodev/robot/pull/739
 [#738]: https://github.com/ontodev/robot/pull/738
+[#730]: https://github.com/ontodev/robot/pull/730
 [#728]: https://github.com/ontodev/robot/pull/728
 [#727]: https://github.com/ontodev/robot/pull/727
 [#726]: https://github.com/ontodev/robot/pull/726

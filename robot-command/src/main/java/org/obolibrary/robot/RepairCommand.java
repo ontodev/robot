@@ -4,6 +4,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.obolibrary.robot.checks.InvalidReferenceChecker;
+import org.obolibrary.robot.checks.InvalidReferenceViolation;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -35,6 +37,8 @@ public class RepairCommand implements Command {
         "merge-axiom-annotations",
         true,
         "if true, merge axiom annotations on duplicate axioms");
+    o.addOption(
+        "r", "invalid-references", true, "if true, repairs invalid references in the ontology");
     options = o;
     o.addOption("a", "annotation-property", true, "an annotation property to migrate");
     o.addOption(
@@ -119,6 +123,9 @@ public class RepairCommand implements Command {
       outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
     }
 
+    boolean repairInvalidReferences =
+        CommandLineHelper.getBooleanValue(line, "invalid-references", false);
+
     boolean mergeAxiomAnnotations =
         CommandLineHelper.getBooleanValue(line, "merge-axiom-annotations", false);
 
@@ -130,7 +137,25 @@ public class RepairCommand implements Command {
             .map(factory::getOWLAnnotationProperty)
             .collect(Collectors.toSet());
 
-    RepairOperation.repair(inputOntology, ioHelper, mergeAxiomAnnotations, properties);
+    boolean repaired = false;
+
+    if (mergeAxiomAnnotations) {
+      repaired = true;
+      RepairOperation.mergeAxiomAnnotations(inputOntology);
+    }
+
+    if (repairInvalidReferences) {
+      repaired = true;
+      Set<InvalidReferenceViolation> violations =
+          InvalidReferenceChecker.getInvalidReferenceViolations(inputOntology, true);
+      RepairOperation.repairInvalidReferences(ioHelper, inputOntology, violations, properties);
+    }
+
+    if (!repaired) {
+      logger.info("No specific repair options were given, running the default repair pipeline");
+      RepairOperation.repair(inputOntology, ioHelper, mergeAxiomAnnotations, properties);
+    }
+
     outputOntology = inputOntology;
     if (outputIRI != null) {
       outputOntology.getOWLOntologyManager().setOntologyDocumentIRI(outputOntology, outputIRI);

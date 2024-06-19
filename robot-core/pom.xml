@@ -42,7 +42,7 @@
             <dependency>
               <groupId>${project.groupId}</groupId>
               <artifactId>${project.artifactId}</artifactId>
-              <version>1.9.5</version> <!-- japicmp target -->
+              <version>1.9.6</version> <!-- japicmp target -->
               <type>jar</type>
             </dependency>
           </oldVersion>
@@ -86,7 +86,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.26</version>
+      <version>4.5.29</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -97,7 +97,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.26</version>
+      <version>4.5.29</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -108,7 +108,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.26</version>
+      <version>4.5.29</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
@@ -209,7 +209,7 @@
     <dependency>
       <groupId>org.geneontology.obographs</groupId>
       <artifactId>obographs-owlapi</artifactId>
-      <version>0.3.0</version>
+      <version>0.3.1</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
