@@ -8,7 +8,6 @@ import org.obolibrary.robot.IOHelper;
 import org.obolibrary.robot.providers.CURIEShortFormProvider;
 import org.semanticweb.owlapi.metrics.AbstractOWLMetric;
 import org.semanticweb.owlapi.metrics.AverageAssertedNamedSuperclassCount;
-import org.semanticweb.owlapi.metrics.DLExpressivity;
 import org.semanticweb.owlapi.metrics.GCICount;
 import org.semanticweb.owlapi.metrics.HiddenGCICount;
 import org.semanticweb.owlapi.metrics.MaximumNumberOfNamedSuperclasses;
@@ -991,10 +990,15 @@ public class OntologyMetrics {
   }
 
   private String getExpressivity(boolean included) {
-    DLExpressivity dl = new DLExpressivity(getOntology());
-    dl.setImportsClosureUsed(included);
-    dl.setOntology(getOntology());
-    return dl.getValue();
+    Set<OWLOntology> onts = new HashSet<>();
+    if (included) {
+      onts.addAll(getOntology().getImportsClosure());
+    } else {
+      onts.add(getOntology());
+    }
+    DLExpressivityChecker checker = new DLExpressivityChecker(onts);
+    System.err.println(checker.getDescriptionLogicName());
+    return checker.getDescriptionLogicName();
   }
 
   // this is highly unpleasant and I wish we had a NoSQL DB or even just a
