@@ -47,6 +47,7 @@ import org.semanticweb.owlapi.profiles.OWLProfileViolation;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.Construct;
 import org.semanticweb.owlapi.util.DLExpressivityChecker;
+import org.semanticweb.owlapi.util.Languages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectOneOfImpl;
@@ -997,8 +998,17 @@ public class OntologyMetrics {
       onts.add(getOntology());
     }
     DLExpressivityChecker checker = new DLExpressivityChecker(onts);
-    System.err.println(checker.getDescriptionLogicName());
-    return checker.getDescriptionLogicName();
+    Collection<Languages> languages = checker.expressibleInLanguages();
+
+    if (languages == null || languages.isEmpty()) {
+      LOGGER.warn("No language found for this ontology.. ");
+    } else {
+      Languages[] array = languages.toArray(new Languages[languages.size()]);
+      Arrays.sort(array);
+      return array[0].toString();
+    }
+
+    return "";
   }
 
   // this is highly unpleasant and I wish we had a NoSQL DB or even just a
