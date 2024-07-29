@@ -280,7 +280,7 @@
     <dependency>
       <groupId>org.geneontology</groupId>
       <artifactId>whelk-owlapi_${scala.version}</artifactId>
-      <version>1.0.4</version>
+      <version>1.1.3</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
