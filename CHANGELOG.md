@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Output inferred object property assertions using Whelk reasoner, by updating to Whelk 1.1.3. [#1121]
+
 ## [1.9.6] - 2024-05-28
 
 ### Added
