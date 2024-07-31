@@ -991,6 +991,14 @@ public class TemplateHelper {
         // If we have a checker, try to get the class by label
         // This allows class labels with single quotes
         expr = checker.getOWLClass(content, false);
+        if (expr == null) {
+          // If not found by label, is it just an IRI?
+          IRI iri = IRI.create(content);
+          if (iri != null) {
+            // If so, create a new class for this IRI.
+            expr = checker.getOWLClass(content, true);
+          }
+        }
       }
       if (expr == null) {
         // If not found by label, try to parse
