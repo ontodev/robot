@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Output inferred object property assertions using Whelk reasoner, by updating to Whelk 1.1.3. [#1121]
 
+### Changed
+- Update Whelk to 1.2.1 [#1221]
+- Treat raw IRI as an OWLClass in logical template cells [#1211]
+
 ## [1.9.6] - 2024-05-28
 
 ### Added
@@ -405,6 +409,8 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1221]: https://github.com/ontodev/robot/pull/1221
+[#1211]: https://github.com/ontodev/robot/pull/1211
 [#1194]: https://github.com/ontodev/robot/pull/1194
 [#1193]: https://github.com/ontodev/robot/pull/1193
 [#1183]: https://github.com/ontodev/robot/issues/1183
@@ -418,6 +424,7 @@ First official release of ROBOT!
 [#1135]: https://github.com/ontodev/robot/pull/1135
 [#1127]: https://github.com/ontodev/robot/pull/1127
 [#1119]: https://github.com/ontodev/robot/pull/1119
+[#1121]: https://github.com/ontodev/robot/issues/1121
 [#1108]: https://github.com/ontodev/robot/pull/1108
 [#1104]: https://github.com/ontodev/robot/pull/1104
 [#1101]: https://github.com/ontodev/robot/issues/1101
