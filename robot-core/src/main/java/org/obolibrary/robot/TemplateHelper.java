@@ -992,11 +992,13 @@ public class TemplateHelper {
         // This allows class labels with single quotes
         expr = checker.getOWLClass(content, false);
         if (expr == null) {
-          // If not found by label, is it just an IRI?
-          IRI iri = IRI.create(content);
-          if (iri != null) {
-            // If so, create a new class for this IRI.
-            expr = checker.getOWLClass(content, true);
+          // If not found by label, is it just an HTTP IRI?
+          if (content.startsWith("http")) {
+            IRI iri = IRI.create(content);
+            if (iri != null) {
+              // If so, create a new class for this IRI.
+              expr = checker.getOWLClass(content, true);
+            }
           }
         }
       }

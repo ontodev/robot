@@ -150,7 +150,7 @@ public class TemplateHelperTest extends CoreTest {
       assertEquals(exprMatch.toString(), expr.toString());
     }
 
-    // Check raw IRI
+    // Check raw HTTP IRI
     value = "http://purl.obolibrary.org/obo/UBERON_0000467";
     expressions = TemplateHelper.getClassExpressions("", parser, template, value, 0, 0);
     if (expressions.size() != 1) {
@@ -158,6 +158,14 @@ public class TemplateHelperTest extends CoreTest {
     }
     for (OWLClassExpression expr : expressions) {
       assertEquals(exprMatch.toString(), expr.toString());
+    }
+
+    // Check that undeclared prefix fails
+    try {
+      value = "UNKNOWN:1234";
+      expressions = TemplateHelper.getClassExpressions("", parser, template, value, 0, 0);
+      fail("CURIE with undeclared prefix should not be parsed as Manchester expression");
+    } catch (Exception e) {
     }
 
     // Check that gibberish fails
