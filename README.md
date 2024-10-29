@@ -30,7 +30,7 @@ Other build options:
 - `mvn clean verify` rebuilds the package and runs integration tests against it, with reports in `[module]/target/failsafe-reports`
 - `mvn site` generates Javadoc in `target/site` and `[module]/target/site`
 
-Alternatively, you can use [Docker](https://www.docker.com) with the provided [Dockerfile](Dockerfile) to build and run ROBOT from within a container. First build an image with `docker build --tag robot .` then run ROBOT from the container with the usual command-line arguments: `docker run --rm robot --help`.
+Alternatively, you can use [Docker](https://www.docker.com) with the provided [Dockerfile](Dockerfile) to build and run ROBOT from within a container. First build an image with `docker build --tag robot:latest .` then run ROBOT from the container with the usual command-line arguments: `docker run --rm robot --help`.
 
 
 ## Code Style
