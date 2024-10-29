@@ -128,6 +128,7 @@ public class TemplateHelperTest extends CoreTest {
     ManchesterOWLSyntaxClassExpressionParser parser =
         new ManchesterOWLSyntaxClassExpressionParser(dataFactory, checker);
 
+    // Check CURIE
     String template = "C part_of some %";
     String value = "obo:UBERON_0000467";
     Set<OWLClassExpression> expressions =
@@ -147,6 +148,32 @@ public class TemplateHelperTest extends CoreTest {
     }
     for (OWLClassExpression expr : expressions) {
       assertEquals(exprMatch.toString(), expr.toString());
+    }
+
+    // Check raw HTTP IRI
+    value = "http://purl.obolibrary.org/obo/UBERON_0000467";
+    expressions = TemplateHelper.getClassExpressions("", parser, template, value, 0, 0);
+    if (expressions.size() != 1) {
+      fail(String.format("Expected exactly 1 expression, got %d", expressions.size()));
+    }
+    for (OWLClassExpression expr : expressions) {
+      assertEquals(exprMatch.toString(), expr.toString());
+    }
+
+    // Check that undeclared prefix fails
+    try {
+      value = "UNKNOWN:1234";
+      expressions = TemplateHelper.getClassExpressions("", parser, template, value, 0, 0);
+      fail("CURIE with undeclared prefix should not be parsed as Manchester expression");
+    } catch (Exception e) {
+    }
+
+    // Check that gibberish fails
+    try {
+      value = "http.purl.obolibrary.org/obo/UBERON_0000467";
+      expressions = TemplateHelper.getClassExpressions("", parser, template, value, 0, 0);
+      fail("Gibberish value should not be parsed as Manchester expression");
+    } catch (Exception e) {
     }
   }
 
