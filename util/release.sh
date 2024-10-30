@@ -121,6 +121,7 @@ git push
 #
 # - documentation at <https://central.sonatype.org/pages/apache-maven.html>
 # - make sure your have a username and password in `~/.m2/settings.xml`
+#   using the Access User Token from your profile on <https://oss.sonatype.org> 
 # - enter your GPG password, maybe with a dialog window
 step "Release to Maven Central"
 mvn clean deploy -P release
