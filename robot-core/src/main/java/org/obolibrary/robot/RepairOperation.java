@@ -152,10 +152,8 @@ public class RepairOperation {
     Set<OWLAxiom> newAxioms = new HashSet<>();
     for (Map.Entry<OWLAxiom, Set<OWLAnnotation>> mergedAxiom : mergedAxioms.entrySet()) {
       OWLAxiom axiom = mergedAxiom.getKey();
-      if (axiom.isAnnotationAxiom()) {
-        OWLAxiom newAxiom = axiom.getAnnotatedAxiom(mergedAxiom.getValue());
-        newAxioms.add(newAxiom);
-      }
+      OWLAxiom newAxiom = axiom.getAnnotatedAxiom(mergedAxiom.getValue());
+      newAxioms.add(newAxiom);
     }
     manager.addAxioms(ontology, newAxioms);
   }
