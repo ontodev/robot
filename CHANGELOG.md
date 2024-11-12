@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+- Add missing filter for deprecated in lowercase_definition check [#1220]
+- Bug was fixed that caused logical axioms with axiom annotations not to be processed correctly when merging axiom annotations [#1223]
+
 ## [1.9.7] - 2024-10-30
 
 ### Fixed
 - Output inferred object property assertions using Whelk reasoner, by updating to Whelk 1.1.3. [#1121]
-- Bug was fixed that caused logical axioms with axiom annotations not to be processed correctly when merging axiom annotations [#1223]
 
 ### Changed
 - Update Whelk to 1.2.1 [#1221]
@@ -413,7 +416,9 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1223]: https://github.com/ontodev/robot/pull/1223
 [#1221]: https://github.com/ontodev/robot/pull/1221
+[#1220]: https://github.com/ontodev/robot/issues/1220
 [#1211]: https://github.com/ontodev/robot/pull/1211
 [#1194]: https://github.com/ontodev/robot/pull/1194
 [#1193]: https://github.com/ontodev/robot/pull/1193
