@@ -7,6 +7,7 @@
 **Solution:** Capitalize the first letter of the definition, or disregard this INFO.
 
 ```sparql
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
