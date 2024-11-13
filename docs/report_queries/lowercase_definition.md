@@ -7,14 +7,16 @@
 **Solution:** Capitalize the first letter of the definition, or disregard this INFO.
 
 ```sparql
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
   VALUES ?property { obo:IAO_0000115
                      obo:IAO_0000600 }
   ?entity ?property ?value .
-  FILTER (!regex(?value, "^[A-Z0-9]"))
+  FILTER NOT EXISTS { ?entity owl:deprecated true }
   FILTER (!isBlank(?entity))
+  FILTER (!regex(?value, "^[A-Z0-9]"))
 }
 ORDER BY ?entity
 ```
