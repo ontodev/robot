@@ -50,7 +50,7 @@ public class TemplateTest extends CoreTest {
   }
 
   /**
-   * Test a strange case where a sequence .
+   * Test a strange case with no labels and no types.
    *
    * @throws Exception if entities cannot be found
    */
@@ -63,7 +63,7 @@ public class TemplateTest extends CoreTest {
   }
 
   /**
-   * Test a strange case where a sequence .
+   * Test a case with no labels.
    *
    * @throws Exception if entities cannot be found
    */
