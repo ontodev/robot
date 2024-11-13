@@ -2126,6 +2126,11 @@ public class Template {
       } catch (IndexOutOfBoundsException e) {
         break;
       }
+      // Skip columsn with empty templates.
+      // See https://github.com/ontodev/robot/issues/1216
+      if (template.trim().equals("")) {
+        continue;
+      }
       Matcher m = Pattern.compile("^>.*").matcher(template);
       if (m.matches()) {
 

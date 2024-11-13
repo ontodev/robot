@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## Fixed
+- Skip "non-robot" columns in templates for the purposes of axiom annotations [#1216]
 - Add missing filter for deprecated in lowercase_definition check [#1220]
 - Bug was fixed that caused logical axioms with axiom annotations not to be processed correctly when merging axiom annotations [#1223]
 
@@ -419,6 +420,7 @@ First official release of ROBOT!
 [#1223]: https://github.com/ontodev/robot/pull/1223
 [#1221]: https://github.com/ontodev/robot/pull/1221
 [#1220]: https://github.com/ontodev/robot/issues/1220
+[#1216]: https://github.com/ontodev/robot/issues/1216
 [#1211]: https://github.com/ontodev/robot/pull/1211
 [#1194]: https://github.com/ontodev/robot/pull/1194
 [#1193]: https://github.com/ontodev/robot/pull/1193
