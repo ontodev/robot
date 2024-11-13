@@ -24,7 +24,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: oracle
+          distribution: zulu
           java-version: ${{ matrix.java }}
       - name: CI Test
         run: mvn verify
