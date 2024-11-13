@@ -23,6 +23,7 @@ jobs:
         run: ./util/check_docs.py
       - name: Set up JDK
         uses: actions/setup-java@v4
+        distribution: jdk
         with:
           java-version: ${{ matrix.java }}
       - name: CI Test
