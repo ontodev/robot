@@ -392,15 +392,22 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (iri != null) {
       return dataFactory.getOWLDataProperty(iri);
     }
-    // prevent punning
-    if (!objectProperties.containsKey(name)) {
-      if (ioHelper != null) {
-        iri = ioHelper.createIRI(name);
-        if (iri != null) {
-          OWLDataProperty owlDataProperty = dataFactory.getOWLDataProperty(iri);
-          dataProperties.put(name, iri);
-          return owlDataProperty;
-        }
+    if (ioHelper != null) {
+      // When the Manchester parser sees "R some X"
+      // it can't tell whether R is a DataProperty or an ObjectProperty,
+      // so it tries getOWLDataProperty() first,
+      // then getOWLObjectProperty().
+      // We have to check that this name is not an ObjectProperty
+      // before we create a new DataProperty.
+      // We check both the name and the IRI.
+      iri = ioHelper.createIRI(name);
+      if (objectProperties.containsKey(name) || objectProperties.containsValue(iri)) {
+        return null;
+      }
+      if (iri != null) {
+        OWLDataProperty owlDataProperty = dataFactory.getOWLDataProperty(iri);
+        dataProperties.put(name, iri);
+        return owlDataProperty;
       }
     }
     return null;
@@ -473,15 +480,21 @@ public class QuotedEntityChecker implements OWLEntityChecker {
     if (iri != null) {
       return dataFactory.getOWLObjectProperty(iri);
     }
-    // prevent punning
-    if (!dataProperties.containsKey(name)) {
-      if (ioHelper != null) {
-        iri = ioHelper.createIRI(name);
-        if (iri != null) {
-          OWLObjectProperty owlObjectProperty = dataFactory.getOWLObjectProperty(iri);
-          objectProperties.put(name, iri);
-          return owlObjectProperty;
-        }
+    if (ioHelper != null) {
+      // When the Manchester parser sees "R some X"
+      // it can't tell whether R is a DataProperty or an ObjectProperty,
+      // so it tries getOWLDataProperty() first,
+      // then getOWLObjectProperty().
+      // To be safe, we first check that this name is not a DataProperty.
+      // We check both the name and the IRI.
+      iri = ioHelper.createIRI(name);
+      if (dataProperties.containsKey(name) || dataProperties.containsValue(iri)) {
+        return null;
+      }
+      if (iri != null) {
+        OWLObjectProperty owlObjectProperty = dataFactory.getOWLObjectProperty(iri);
+        objectProperties.put(name, iri);
+        return owlObjectProperty;
       }
     }
     return null;
