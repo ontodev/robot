@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## Fixed
+- Update owl-diff dependency for stable ordering and to avoid large string creation [#1227]
 - Improve disambiguation of properties in QuotedEntityChecker [#1226]
 - Skip "non-robot" columns in templates for the purposes of axiom annotations [#1216]
 - Add missing filter for deprecated in lowercase_definition check [#1220]
