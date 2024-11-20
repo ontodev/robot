@@ -161,7 +161,6 @@ public class DiffCommand implements Command {
     options.put("format", CommandLineHelper.getDefaultValue(line, "format", "plain"));
 
     DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
-    writer.flush();
     writer.close();
 
     return state;

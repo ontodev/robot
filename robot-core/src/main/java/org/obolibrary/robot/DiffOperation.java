@@ -123,7 +123,7 @@ public class DiffOperation {
 
     switch (format) {
       case "plain":
-        writer.write(BasicDiffRenderer.renderPlain(diff));
+        BasicDiffRenderer.renderPlainWriter(diff, writer);
         break;
       case "pretty":
         DefaultPrefixManager pm = ioHelper.getPrefixManager();
@@ -137,15 +137,15 @@ public class DiffOperation {
         OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
         DoubleShortFormProvider doubleProvider =
             new DoubleShortFormProvider(iriProvider, labelProvider);
-        writer.write(BasicDiffRenderer.render(diff, doubleProvider));
+        BasicDiffRenderer.renderWriter(diff, doubleProvider, writer);
         break;
       case "markdown":
         Differ.GroupedDiff groupedForMarkdown = Differ.groupedDiff(diff);
-        writer.write(MarkdownGroupedDiffRenderer.render(groupedForMarkdown, ontologyProvider));
+        MarkdownGroupedDiffRenderer.renderWriter(groupedForMarkdown, ontologyProvider, writer);
         break;
       case "html":
         Differ.GroupedDiff groupedForHTML = Differ.groupedDiff(diff);
-        writer.write(HTMLDiffRenderer.render(groupedForHTML, ontologyProvider));
+        HTMLDiffRenderer.renderWriter(groupedForHTML, ontologyProvider, writer);
         break;
       default:
         throw new IOException("Unknown diff format: " + format);
