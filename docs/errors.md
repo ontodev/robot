@@ -86,7 +86,7 @@ Some commands require certain options to be present. See the documentation for t
 
 ### Missing Input Error
 
-An input ontology must be specified with `--input`. In the case of [merge](/merge) and [unmerge](/unmerge), at least one input is required.
+An input ontology must be specified with `--input` or `--input-iri`. In the case of [merge](/merge) and [unmerge](/unmerge), at least one input is required.
 
 ### Missing Term(s) Error
 
