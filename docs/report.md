@@ -93,7 +93,7 @@ You can provide your own queries to use in the report (which can be included in 
 
 ## Profiles
 
-Each QC query is given the corresponding logging level shown above in the [default profile](/). The profile is a simple text file with a logging level followed by the query name (separated by a tab). Each line represents one query configuration:
+Each QC query is given the corresponding logging level shown above in the [default profile](https://github.com/ontodev/robot/blob/master/robot-core/src/main/resources/report_profile.txt). The profile is a simple text file with a logging level followed by the query name (separated by a tab). Each line represents one query configuration:
 ```
 ERROR	definition_cardinality
 INFO	deprecated_class
