@@ -31,6 +31,12 @@ CONSTRUCT produces RDF data, if there are any results, defaulting to Turtle form
 
 This produces <a href="/examples/part_of.ttl" target="_blank">`part_of.ttl`</a>.
 
+The `--query` option can be repeated to execute multiple queries, which may be of different types.
+
+    robot query --input nucleus.owl \
+      --query cell_part.sparql results/cell_part.csv \
+      --query part_of.sparql results/part_of.ttl
+
 Instead of specifying one or more pairs (query file, output file), you can specify a single `--output-dir` and use the `--queries` option to provide one or more queries of any type. Each output file will be written to the output directory with the same base name as the query file that produced it. For example the `foo.sparql` query file will produce the `foo.csv` file. The output directory must exist.
 
     robot query --input nucleus.owl \
