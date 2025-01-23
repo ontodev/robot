@@ -238,3 +238,36 @@ Extracts a base module, then removing _all_ `oboInOwl:hasDbXref` annotations on 
       --drop-axiom-annotations oboInOwl:source=~'GO.*' \
       --drop-axiom-annotations oboInOwl:hasDbXref \
       --output results/filter_annotations_drop_axioms.owl
+
+Remove all `oboInOwl:hasDbXref` annotations, both on entities and on axioms, but without removing the annotated axioms themselves:
+
+    robot remove --input uberon_module.owl \
+      --select complement \
+      --drop-axiom-annotations oboInOwl:hasDbXref \
+      remove --term oboInOwl:hasDbxref \
+      --output results/remove_annotations.owl
+
+That last one may require some explanations. The key point is that the removal of axiom annotations (as requested by `--drop-axiom-annotations`) is a supplementary step that only happens _after_ the main removal operation (the removal of all axioms selected by the four steps described at the beginning of this page). As a result, a “naive” attempt to remove both the annotations on axioms and the annotations on entities in a single step, as follows:
+
+```
+robot remove \
+  --term oboInOwl:hasDbXref \
+  --drop-axiom-annotations oboInOwl:hasDbXref
+```
+
+would not produce the desired result, because the main removal operation here (`--term oboInOwl:hasDbXref`) is to remove _all_ axioms involving `oboInOwl:hasDbXref`, so the supplementary step of removing only the axiom _annotations_ while leaving the annotated axioms in place (`--drop-axiom-annotations oboInOwl:hasDbXref`) does not have any axioms to work with (they have all been entirely removed already by the time ROBOT gets to that step).
+
+Therefore, a two-step process is required here: a first step in which we remove the `oboInOwl:hasDbXref` annotations on axioms only, followed by a second step in which we remove all other axioms involving `oboInOwl:hasDbXref`. But the first step cannot be simply
+
+```
+robot remove --drop-axiom-annotations oboInOwl:hasDbXref
+```
+
+because, in the absence of any `--term` or `--term-file` option, the initial target set of objects to remove consists of all the objects in the ontology, so such a command would lead to the removal of _all_ axioms! Instead, the first step must be
+
+```
+robot remove --select complement \
+  --drop-axiom-annotations oboInOwl:hasDbXref
+```
+
+so that the target set consists of the complement of all the objects, that is, nothing. The command can literally be read as “do not remove any axioms at all, but remove the oboInOwl:hasDbXref axiom annotations”.
