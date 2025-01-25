@@ -48,6 +48,26 @@ In addition, the following special keywords are also accepted:
   - `true`: alias for `strict`.
   - `simple`: equivalent to `strict drop-untranslatable-axioms drop-gci-axioms`, to force the production of an OBO file that is not only valid, but also free of any `owl-axioms` header tag and GCI axioms (which, while perfectly valid with respect to the OBO specification, are not always handled correctly by all OBO parsers).
 
+#### Examples
+
+Convert a file to OBO and ensure the resulting file is compliant with the OBO specification, dropping supernumerary annotations if necessary:
+
+    robot convert -i cl_module.ofn \
+      --clean-obo strict \
+      --output results/cl_module-strict.obo
+
+Likewise, but with merging comments into a single one instead of dropping the supernumerary comments:
+
+    robot convert -i cl_module.ofn \
+      --clean-obo "strict merge-comments" \
+      --output results/cl_module-strict-mergedcomments.obo
+
+Convert a file to a simple variant of the OBO format (without any `owl-axioms` tag and GCI axioms):
+
+    robot convert -i cl_module.ofn \
+      --clean-obo simple \
+      --output results/cl_module-simple.obo
+
 ---
 
 ## Error Messages
