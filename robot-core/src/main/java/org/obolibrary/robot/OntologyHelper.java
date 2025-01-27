@@ -1829,7 +1829,19 @@ public class OntologyHelper {
   }
 
   /**
-   * Merges supernumerary annotations on all entities in the given ontology.
+   * Merges supernumerary annotations on all entities in the given ontology, using a single space
+   * character between each annotation value.
+   *
+   * @param ontology OWLOntology in which to merge supernumerary annotations
+   * @param properties set of annotation property IRIs to merge
+   */
+  public static void mergeExtraAnnotations(OWLOntology ontology, Set<IRI> properties) {
+    mergeExtraAnnotations(ontology, properties, " ");
+  }
+
+  /**
+   * Merges supernumerary annotations on all entities in the given ontology, using a custom
+   * separator between each annotation value.
    *
    * <p>This method iterates over all entities (excluding imported entities) of the given ontology;
    * if an entity is found to have more than one annotation for each of the indicated properties,
@@ -1837,8 +1849,10 @@ public class OntologyHelper {
    *
    * @param ontology OWLOntology in which to merge supernumerary annotations
    * @param properties set of annotation property IRIs to merge
+   * @param separator Separator string to insert between each annotation value (may be {@code null})
    */
-  public static void mergeExtraAnnotations(OWLOntology ontology, Set<IRI> properties) {
+  public static void mergeExtraAnnotations(
+      OWLOntology ontology, Set<IRI> properties, String separator) {
     Set<OWLAnnotationAssertionAxiom> axiomsToRemove = new HashSet<>();
     Set<OWLAnnotationAssertionAxiom> axiomsToAdd = new HashSet<>();
     OWLDataFactory factory = ontology.getOWLOntologyManager().getOWLDataFactory();
@@ -1865,8 +1879,8 @@ public class OntologyHelper {
           Set<OWLAnnotation> axiomAnnotations = new HashSet<>();
           boolean first = true;
           for (OWLAnnotationAssertionAxiom ax : sortAxioms(axioms)) {
-            if (!first) {
-              sb.append(' ');
+            if (!first && separator != null) {
+              sb.append(separator);
             } else {
               first = false;
             }
