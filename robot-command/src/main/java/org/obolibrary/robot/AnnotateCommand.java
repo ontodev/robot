@@ -75,7 +75,8 @@ public class AnnotateCommand implements Command {
         "annotate-defined-by",
         true,
         "if true, annotate all entities in the ontology with the ontology IRI");
-    o.addOption("e", "interpolate", false, "enable interpolation within annotation values");
+    o.addOption(
+        "e", "interpolate", true, "if true, interpolate placeholders within annotation values");
 
     options = o;
 
@@ -188,7 +189,7 @@ public class AnnotateCommand implements Command {
 
     String property;
     String value;
-    boolean interpolate = CommandLineHelper.getBooleanValue(line, "interpolate", false, true);
+    boolean interpolate = CommandLineHelper.getBooleanValue(line, "interpolate", false);
 
     // Add annotations with PROP VALUE
     List<String> annotationItems = CommandLineHelper.getOptionValues(line, "annotation");

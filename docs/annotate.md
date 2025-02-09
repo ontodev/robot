@@ -39,7 +39,7 @@ If the `--interpolate` option is used, then some placeholders, of the form `%{NA
 Example:
 
     robot annotate --input fbcv-module.owl \
-      --interpolate \
+      --interpolate true \
       --link-annotation dc:source %{version_iri} \
       --annotation rdfs:comment "Derived from %{ontology_iri}" \
       --output results/fbcv-annotated.owl
