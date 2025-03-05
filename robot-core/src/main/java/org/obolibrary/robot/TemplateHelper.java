@@ -204,7 +204,7 @@ public class TemplateHelper {
     } else if (template.startsWith("AI ") || template.startsWith("CI ")) {
       Set<OWLAnnotation> annotations = new HashSet<>();
       if (split != null) {
-        String[] values = value.split(Pattern.quote(split));
+        String[] values = getSplitValues(value, split);
         for (String v : values) {
           annotations.add(maybeGetIRIAnnotation(checker, template, v, column));
         }
@@ -217,6 +217,29 @@ public class TemplateHelper {
       return getStringAnnotations(checker, template, split, value, column);
     } else {
       return new HashSet<>();
+    }
+  }
+
+  /**
+   * Splits the specified value using the specified delimiter.
+   *
+   * @param value The value to be split.
+   * @param delimiter The delimiter. This will be treated as is except in the case where the
+   *     delimiter is "\\n". In this case the value is split using a new line character.
+   * @return The split string.
+   */
+  protected static String[] getSplitValues(String value, String delimiter) {
+    if (value == null) {
+      return new String[0];
+    }
+    // Special case handling for new lines.  In a template string these are encoded as the string
+    // "\\n"
+    // for example SPLIT=\\n, because "\n" is parsed as 'n' by the CSV parser.
+    if (delimiter.trim().equals("\\n")) {
+      return value.split("\n");
+    } else {
+      String quotedPattern = Pattern.quote(delimiter);
+      return value.split(quotedPattern);
     }
   }
 
@@ -278,7 +301,7 @@ public class TemplateHelper {
     if (template.startsWith("CI")) {
       // CI indicates its just an IRI
       if (split != null) {
-        String[] values = value.split(Pattern.quote(split));
+        String[] values = getSplitValues(value, split);
         for (String v : values) {
           String content = QuotedEntityChecker.wrap(v);
           expressions.add(tryParse(tableName, checker, parser, content, rowNum, col));
@@ -289,7 +312,7 @@ public class TemplateHelper {
       }
     } else {
       if (split != null) {
-        String[] values = value.split(Pattern.quote(split));
+        String[] values = getSplitValues(value, split);
         for (String v : values) {
           expressions.add(getClassExpression(tableName, template, v, checker, parser, rowNum, col));
         }
@@ -724,7 +747,7 @@ public class TemplateHelper {
 
     Set<OWLAnnotation> annotations = new HashSet<>();
     if (split != null) {
-      String[] values = value.split(Pattern.quote(split));
+      String[] values = getSplitValues(value, split);
       for (String v : values) {
         annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v)));
       }
@@ -764,7 +787,7 @@ public class TemplateHelper {
 
     Set<OWLAnnotation> annotations = new HashSet<>();
     if (split != null) {
-      String[] values = value.split(Pattern.quote(split));
+      String[] values = getSplitValues(value, split);
       for (String v : values) {
         annotations.add(
             dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v, datatype)));
@@ -1080,7 +1103,7 @@ public class TemplateHelper {
   private static List<String> getAllValues(String value, String split) {
     List<String> allValues = new ArrayList<>();
     if (split != null) {
-      String[] values = value.split(Pattern.quote(split));
+      String[] values = getSplitValues(value, split);
       for (String v : values) {
         allValues.add(v.trim());
       }
@@ -1694,7 +1717,7 @@ public class TemplateHelper {
 
     Set<OWLAnnotation> annotations = new HashSet<>();
     if (split != null) {
-      String[] values = value.split(Pattern.quote(split));
+      String[] values = getSplitValues(value, split);
       for (String v : values) {
         annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v)));
       }

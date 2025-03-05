@@ -1,7 +1,6 @@
 package org.obolibrary.robot;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import com.google.common.collect.Sets;
 import java.io.IOException;
@@ -281,5 +280,32 @@ public class TemplateHelperTest extends CoreTest {
     ann =
         TemplateHelper.getIRIAnnotation(checker, "AI rdfs:label", IRI.create("http://bar.com"), 0);
     assertEquals("Annotation(rdfs:label <http://bar.com>)", ann.toString());
+  }
+
+  @Test
+  public void testGetSplitValuesShouldSplitOnDelimiterCharacter() {
+    String[] values = TemplateHelper.getSplitValues("A,B,C", ",");
+    String[] expectedValues = {"A", "B", "C"};
+    assertArrayEquals(expectedValues, values);
+  }
+
+  @Test
+  public void testGetSplitValuesShouldSplitOnPipeCharacter() {
+    String[] values = TemplateHelper.getSplitValues("A|B|C", "|");
+    String[] expectedValues = {"A", "B", "C"};
+    assertArrayEquals(expectedValues, values);
+  }
+
+  @Test
+  public void testGetSplitValuesShouldSplitOnNewlineCharacterRepresentation() {
+    String[] values = TemplateHelper.getSplitValues("A\nB\nC", "\\n");
+    String[] expectedValues = {"A", "B", "C"};
+    assertArrayEquals(expectedValues, values);
+  }
+
+  @Test
+  public void testSplitEmptyString() {
+    String[] values = TemplateHelper.getSplitValues("", ",");
+    assertArrayEquals(new String[]{""}, values);
   }
 }
