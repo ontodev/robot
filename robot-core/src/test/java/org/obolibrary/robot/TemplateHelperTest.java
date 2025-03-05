@@ -306,6 +306,6 @@ public class TemplateHelperTest extends CoreTest {
   @Test
   public void testSplitEmptyString() {
     String[] values = TemplateHelper.getSplitValues("", ",");
-    assertArrayEquals(new String[]{""}, values);
+    assertArrayEquals(new String[] {""}, values);
   }
 }
