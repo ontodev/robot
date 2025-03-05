@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add `--clean-obo` option to [`convert`] [#995]
+- Allow interpolation of ontology IRI and version IRI within annotation values [#1241]
 
 ### Fixed
 - Update owl-diff dependency for stable ordering and to avoid large string creation [#1227]
