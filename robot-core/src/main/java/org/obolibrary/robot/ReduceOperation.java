@@ -108,9 +108,13 @@ public class ReduceOperation {
 
     // we treat an axiom as redundant if its is redundant within the
     // subClassOf graph, including OP characteristic axioms (e.g. transitivity)
+    // and subproperty axioms
     OWLOntology subOntology = manager.createOntology();
     for (OWLAxiom a : ontology.getAxioms(Imports.INCLUDED)) {
-      if (a instanceof OWLSubClassOfAxiom || a instanceof OWLObjectPropertyCharacteristicAxiom) {
+      if (a instanceof OWLSubClassOfAxiom
+          || a instanceof OWLObjectPropertyCharacteristicAxiom
+          || a instanceof OWLSubObjectPropertyOfAxiom
+          || a instanceof OWLSubPropertyChainOfAxiom) {
         manager.addAxiom(subOntology, a);
       }
     }
