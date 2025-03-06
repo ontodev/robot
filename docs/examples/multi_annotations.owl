@@ -5,7 +5,7 @@
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-     xmlns:acme="https://shangrila.ef.zz/ontology/acme/"
+     xmlns:acme="https://example.com/acme/"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <Ontology/>
     
@@ -22,21 +22,21 @@
     
 
 
-    <!-- https://shangrila.ef.zz/ontology/acme/p-0000000049 -->
+    <!-- https://example.com/acme/p-1 -->
 
-    <AnnotationProperty rdf:about="https://shangrila.ef.zz/ontology/acme/p-0000000049"/>
+    <AnnotationProperty rdf:about="https://example.com/acme/p-1"/>
     
 
 
-    <!-- https://shangrila.ef.zz/ontology/acme/p-0000000050 -->
+    <!-- https://example.com/acme/p-2 -->
 
-    <AnnotationProperty rdf:about="https://shangrila.ef.zz/ontology/acme/p-0000000050"/>
+    <AnnotationProperty rdf:about="https://example.com/acme/p-2"/>
     
 
 
-    <!-- https://shangrila.ef.zz/ontology/acme/p-0000000051 -->
+    <!-- https://example.com/acme/p-3 -->
 
-    <AnnotationProperty rdf:about="https://shangrila.ef.zz/ontology/acme/p-0000000051"/>
+    <AnnotationProperty rdf:about="https://example.com/acme/p-3"/>
     
 
 
@@ -51,13 +51,13 @@
     
 
 
-    <!-- https://shangrila.ef.zz/ontology/acme/s-0000014176 -->
+    <!-- https://example.com/acme/s-0000014176 -->
 
-    <Class rdf:about="https://shangrila.ef.zz/ontology/acme/s-0000014176">
+    <Class rdf:about="https://example.com/acme/s-1">
         <rdfs:label>ACME Communications INC</rdfs:label>
-        <acme:p-0000000049> Value ZZ</acme:p-0000000049>
-        <acme:p-0000000050>ABCD 1234</acme:p-0000000050>
-        <acme:p-0000000051>CBS	ABC,CNN,PBS</acme:p-0000000051>
+        <acme:p-1> Value ZZ</acme:p-1>
+        <acme:p-2>ABCD 1234</acme:p-2>
+        <acme:p-3>FOO	BAR,BAZ,BAT</acme:p-3>
     </Class>
 </rdf:RDF>
 
