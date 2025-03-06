@@ -1,7 +1,5 @@
 package org.obolibrary.robot;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -879,34 +877,7 @@ public class Template {
       if (value == null || value.trim().isEmpty()) {
         continue;
       }
-      if (template.equals("AP")) {
-        // split multi annotation string
-        // Ex meks:p-0000000049 "(U)"|meks:p-0000000050 "KECF6"|meks:p-0000000051 "SATL,COMMO,RODNIK
-        CharacterIterator it = new StringCharacterIterator(value);
-
-        // Iterate and print current character
-        String token = new String();
-        List<String> annotation_list = new ArrayList<>();
-        while (it.current() != CharacterIterator.DONE) {
-          if (it.current() != '|') {
-            token += it.current();
-          } else {
-            annotation_list.add(token);
-            token = "";
-          }
-          it.next();
-        }
-        annotation_list.add(token);
-        // ListString annotation_list[] = value.split("|");
-        Set<OWLAnnotation> annotations = new HashSet<>();
-        for (String annotation : annotation_list) {
-          annotations.addAll(getAnnotations(template, annotation, row, column));
-        }
-        // MultiAnnotation
-        for (OWLAnnotation annotation : annotations) {
-          axioms.add(dataFactory.getOWLAnnotationAssertionAxiom(iri, annotation));
-        }
-      } else if (template.startsWith("A") || template.startsWith("LABEL")) {
+      if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Handle class annotations
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
         for (OWLAnnotation annotation : annotations) {

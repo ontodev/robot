@@ -1,4 +1,2 @@
 Term	Term ID	Annotations
-LABEL	ID	AP
-
-
+LABEL	ID	AP SPLIT=|

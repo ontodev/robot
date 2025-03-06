@@ -186,8 +186,7 @@ public class TemplateHelper {
     if (template.startsWith(">")) {
       template = template.substring(1);
     }
-    if (template.equals("AP")) {
-      // MultiAnnotation
+    if (template.startsWith("AP")) {
       return getStringAnnotations(checker, template, split, value, column);
     } else if (template.startsWith("A ") || template.startsWith("C ")) {
       return getStringAnnotations(checker, template, split, value, column);
@@ -714,21 +713,32 @@ public class TemplateHelper {
   public static Set<OWLAnnotation> getStringAnnotations(
       QuotedEntityChecker checker, String template, String split, String value, int column)
       throws Exception {
-
+    Set<OWLAnnotation> annotations = new HashSet<>();
     OWLAnnotationProperty property;
+
+    // Handle multi-annotations
+    if (template.startsWith("AP")) {
+      if (split == null) {
+        throw new Exception("SPLIT must be defined for AP template");
+      }
+      String[] pairs = value.split(Pattern.quote(split));
+      for (String pair : pairs) {
+        String[] parts = pair.split(" ", 2);
+        property = getAnnotationProperty(checker, parts[0], column);
+        String v = parts[1].replaceAll("^\"|\"$", "");
+        annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v)));
+      }
+      return annotations;
+    }
+
     if (template.equals("LABEL")) {
       // Handle special LABEL case
       property = dataFactory.getRDFSLabel();
-    } else if (template.equals("AP")) {
-      String name = value.split(" ")[0];
-      value = value.substring(name.length() + 2).replaceAll("^\"|\"$", "");
-      property = getAnnotationProperty(checker, name, column);
     } else {
       String name = template.substring(1).trim();
       property = getAnnotationProperty(checker, name, column);
     }
 
-    Set<OWLAnnotation> annotations = new HashSet<>();
     if (split != null) {
       String[] values = value.split(Pattern.quote(split));
       for (String v : values) {
@@ -936,7 +946,7 @@ public class TemplateHelper {
     } else if (template.matches("^(P .*|PI.?|[SEDI]P .*)")) {
       // Properties can be P, PI (does not need to be followed by space), SP, EP, DP, or IP
       return true;
-    } else if (template.equals("AP")) {
+    } else if (template.matches("^AP SPLIT=.+$")) {
       // AP multi annotation type
       return true;
     } else
