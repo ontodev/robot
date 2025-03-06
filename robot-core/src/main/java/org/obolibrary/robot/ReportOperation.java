@@ -766,6 +766,7 @@ public class ReportOperation {
                 String chr;
                 while ((chr = br.readLine()) != null) {
                   sb.append(chr);
+                  sb.append('\n');
                 }
               }
               // Remove the headers
