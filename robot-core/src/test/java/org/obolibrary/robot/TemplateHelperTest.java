@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
@@ -115,6 +116,47 @@ public class TemplateHelperTest extends CoreTest {
     for (OWLAnnotation a : annotations) {
       assertEquals(annMatch, a);
     }
+
+    // Annotation Properties
+    template = "AP";
+    value = "obo:p1 'A'";
+    annotations = TemplateHelper.getAnnotations("", checker, template, value, 0, 0);
+
+    OWLLiteral o;
+    Set<OWLAnnotation> expected = new HashSet<>();
+    p = checker.getOWLAnnotationProperty("obo:p1");
+    o = dataFactory.getOWLLiteral("A");
+    expected.add(dataFactory.getOWLAnnotation(p, o));
+
+    // Annotation Properties with SPLIT
+    template = "AP SPLIT=|";
+    value =
+        "obo:p1 'A'"
+            + "|obo:p2 \"B\"@en"
+            + "|obo:p3 '3'^^xsd:integer"
+            + "|obo:p4 obo:curie"
+            + "|obo:p5 <http://ex.com>";
+    annotations = TemplateHelper.getAnnotations("", checker, template, value, 0, 0);
+
+    expected = new HashSet<>();
+    p = checker.getOWLAnnotationProperty("obo:p1");
+    o = dataFactory.getOWLLiteral("A");
+    expected.add(dataFactory.getOWLAnnotation(p, o));
+    p = checker.getOWLAnnotationProperty("obo:p2");
+    o = dataFactory.getOWLLiteral("B", "en");
+    expected.add(dataFactory.getOWLAnnotation(p, o));
+    p = checker.getOWLAnnotationProperty("obo:p3");
+    OWLDatatype datatype = checker.getOWLDatatype("xsd:integer");
+    o = dataFactory.getOWLLiteral("3", datatype);
+    expected.add(dataFactory.getOWLAnnotation(p, o));
+    p = checker.getOWLAnnotationProperty("obo:p4");
+    iri = checker.getIRI("obo:curie", true);
+    expected.add(dataFactory.getOWLAnnotation(p, iri));
+    p = checker.getOWLAnnotationProperty("obo:p5");
+    iri = IRI.create("http://ex.com");
+    expected.add(dataFactory.getOWLAnnotation(p, iri));
+
+    assertEquals(expected, annotations);
   }
 
   /**
