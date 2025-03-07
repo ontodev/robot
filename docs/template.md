@@ -66,7 +66,7 @@ If `--force true` is not included with `--errors <path>`, ROBOT will exit with a
     - `AI` annotation IRI: If the template string starts with an `AI` and a space, then the annotation will be made as with a string annotation, except that the cell value will be interpreted as an IRI.
 - `>A` (**axiom annotations**): ROBOT can also annotate logical and annotation axioms. The axiom annotation will be on the axiom created on the cell to the left of the `>A*` template string. The `>` symbol can be used in front of any valid annotation character (`>A`, `>AT`, `>AL`, `>AI`)
 
-Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have separate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice -- other than pure whitespace -- to split on (e.g. `SPLIT=, `).
+Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have separate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice -- other than pure whitespace -- to split on (e.g. `SPLIT=, `).  Note that ROBOT can split on new lines using `SPLIT=\\n` (a double slash is required).
 
 ### Class Template Strings
 
