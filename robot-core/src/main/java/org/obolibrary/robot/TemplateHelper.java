@@ -53,6 +53,11 @@ public class TemplateHelper {
   /** Namespace for error messages. */
   private static final String NS = "template#";
 
+  /** Error message when an AP annotation string does not match any pattern. Expects:value string */
+  private static final String annotationParseError =
+      NS
+          + "ANNOTATION PARSE ERROR invalid annotation string at row %d, column %d in table \"%s\": %s";
+
   /**
    * Error message when annotation property cannot be resolved. Expects: annotation property name.
    */
@@ -186,8 +191,8 @@ public class TemplateHelper {
     if (template.startsWith(">")) {
       template = template.substring(1);
     }
-    if (template.startsWith("AP")) {
-      return getStringAnnotations(checker, template, split, value, column);
+    if (template.equals("AP")) {
+      return getAnnotationPairs(checker, template, split, value, tableName, rowNum, column);
     } else if (template.startsWith("A ") || template.startsWith("C ")) {
       return getStringAnnotations(checker, template, split, value, column);
     } else if (template.startsWith("AT ") || template.startsWith("CT ")) {
@@ -700,6 +705,145 @@ public class TemplateHelper {
   }
 
   /**
+   * Return a set of annotations for the given AP template string and value(s).
+   *
+   * @param checker used to resolve the annotation property
+   * @param template the template string
+   * @param split the character to split values on
+   * @param value the value for the annotation
+   * @param column the index of the column
+   * @return a set of new annotation(s) with property and string literal value
+   * @throws RowParseException if the annotation property cannot be found
+   */
+  public static Set<OWLAnnotation> getAnnotationPairs(
+      QuotedEntityChecker checker,
+      String template,
+      String split,
+      String value,
+      String tableName,
+      int rowNum,
+      int column)
+      throws Exception {
+    Set<OWLAnnotation> annotations = new HashSet<>();
+
+    Pattern stringSinglePattern = Pattern.compile("^(.+)\\s+'([^']+)'$");
+    Pattern stringDoublePattern = Pattern.compile("^(.+)\\s+\"([^\"]+)\"$");
+    Pattern langSinglePattern = Pattern.compile("^(.+)\\s+'([^']+)'@(\\w+)$");
+    Pattern langDoublePattern = Pattern.compile("^(.+)\\s+\"([^\"]+)\"@(\\w+)$");
+    Pattern typeSinglePattern = Pattern.compile("^(.+)\\s+'([^']+)'\\^\\^(\\S+)$");
+    Pattern typeDoublePattern = Pattern.compile("^(.+)\\s+\"([^\"]+)\"\\^\\^(\\S+)$");
+    Pattern iriPattern = Pattern.compile("^(.+)\\s+<(\\S+)>$");
+    Pattern curiePattern = Pattern.compile("^(.+)\\s+(.+)$");
+
+    String[] pairs = new String[] {value};
+    if (split != null) {
+      pairs = value.split(Pattern.quote(split));
+    }
+
+    for (String pair : pairs) {
+      pair = pair.trim();
+      Matcher matcher = stringSinglePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String lexical = matcher.group(2);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        OWLLiteral literal = dataFactory.getOWLLiteral(lexical);
+        annotations.add(dataFactory.getOWLAnnotation(property, literal));
+        continue;
+      }
+      matcher = stringDoublePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String lexical = matcher.group(2);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        OWLLiteral literal = dataFactory.getOWLLiteral(lexical);
+        annotations.add(dataFactory.getOWLAnnotation(property, literal));
+        continue;
+      }
+
+      matcher = langSinglePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String lexical = matcher.group(2);
+        String lang = matcher.group(3);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        OWLLiteral literal = dataFactory.getOWLLiteral(lexical, lang);
+        annotations.add(dataFactory.getOWLAnnotation(property, literal));
+        continue;
+      }
+      matcher = langDoublePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String lexical = matcher.group(2);
+        String lang = matcher.group(3);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        OWLLiteral literal = dataFactory.getOWLLiteral(lexical, lang);
+        annotations.add(dataFactory.getOWLAnnotation(property, literal));
+        continue;
+      }
+
+      matcher = typeSinglePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String lexical = matcher.group(2);
+        String typeName = matcher.group(3);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        OWLDatatype datatype = getDatatype(tableName, checker, typeName, rowNum, column);
+        OWLLiteral literal = dataFactory.getOWLLiteral(lexical, datatype);
+        annotations.add(dataFactory.getOWLAnnotation(property, literal));
+        continue;
+      }
+      matcher = typeDoublePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String lexical = matcher.group(2);
+        String typeName = matcher.group(3);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        OWLDatatype datatype = getDatatype(tableName, checker, typeName, rowNum, column);
+        OWLLiteral literal = dataFactory.getOWLLiteral(lexical, datatype);
+        annotations.add(dataFactory.getOWLAnnotation(property, literal));
+        continue;
+      }
+
+      matcher = iriPattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String iriString = matcher.group(2);
+        IRI iri = checker.getIRI(iriString, true);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        annotations.add(dataFactory.getOWLAnnotation(property, iri));
+        continue;
+      }
+
+      matcher = curiePattern.matcher(pair);
+      if (matcher.matches()) {
+        String propertyName = matcher.group(1);
+        String curie = matcher.group(2);
+        // System.out.println(String.format("[%s] [%s] [%s]", pair, propertyName, curie));
+        IRI iri = checker.getIRI(curie, true);
+        OWLAnnotationProperty property = getAnnotationProperty(checker, propertyName, column);
+        if (iri == null) {
+          throw new RowParseException(
+              String.format(annotationParseError, rowNum, column + 1, tableName, pair),
+              rowNum,
+              column + 1,
+              pair);
+        }
+        annotations.add(dataFactory.getOWLAnnotation(property, iri));
+        continue;
+      }
+
+      throw new RowParseException(
+          String.format(annotationParseError, rowNum, column + 1, tableName, pair),
+          rowNum,
+          column + 1,
+          pair);
+    }
+
+    return annotations;
+  }
+
+  /**
    * Return a set of string annotations for the given template string and value(s).
    *
    * @param checker used to resolve the annotation property
@@ -715,21 +859,6 @@ public class TemplateHelper {
       throws Exception {
     Set<OWLAnnotation> annotations = new HashSet<>();
     OWLAnnotationProperty property;
-
-    // Handle multi-annotations
-    if (template.startsWith("AP")) {
-      if (split == null) {
-        throw new Exception("SPLIT must be defined for AP template");
-      }
-      String[] pairs = value.split(Pattern.quote(split));
-      for (String pair : pairs) {
-        String[] parts = pair.split(" ", 2);
-        property = getAnnotationProperty(checker, parts[0], column);
-        String v = parts[1].replaceAll("^\"|\"$", "");
-        annotations.add(dataFactory.getOWLAnnotation(property, dataFactory.getOWLLiteral(v)));
-      }
-      return annotations;
-    }
 
     if (template.equals("LABEL")) {
       // Handle special LABEL case
@@ -946,8 +1075,8 @@ public class TemplateHelper {
     } else if (template.matches("^(P .*|PI.?|[SEDI]P .*)")) {
       // Properties can be P, PI (does not need to be followed by space), SP, EP, DP, or IP
       return true;
-    } else if (template.matches("^AP SPLIT=.+$")) {
-      // AP multi annotation type
+    } else if (template.equals("AP") || template.matches("^AP SPLIT=.+$")) {
+      // AP multi-annotation type
       return true;
     } else
       // Individuals can be I, II (does not need to be followed by space), SI, or DI

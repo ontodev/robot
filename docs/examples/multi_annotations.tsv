@@ -1,2 +1,2 @@
 Term	Term ID	Annotations
-ACME Communications INC	acme:s-1	acme:p-1 " Value ZZ"|acme:p-2 "ABCD 1234"|acme:p-3 "FOO	BAR,BAZ,BAT"
+ACME Communications INC	acme:s-1	"acme:p-1 " Value ZZ"|acme:p-2 "1234"^^xsd:integer|acme:p-3 'FOO	BAR,BAZ,BAT'"

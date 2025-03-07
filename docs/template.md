@@ -64,6 +64,7 @@ If `--force true` is not included with `--errors <path>`, ROBOT will exit with a
     - `AT` typed annotation: If the template string starts with an `AT` and a space then it will be interpreted as a typed annotation. The `^^` characters must be used to separate the annotation property from the datatype, e.g. `rdfs:comment^^xsd:integer`. The cell value will be the typed literal value of the annotation.
     - `AL` language annotation: If the template string starts with an `AL` and a space then it will be interpreted as a language annotation. The `@` character must be used to separate the annotation property from the language code, e.g. `rdfs:comment@en`.
     - `AI` annotation IRI: If the template string starts with an `AI` and a space, then the annotation will be made as with a string annotation, except that the cell value will be interpreted as an IRI.
+    - `AP` annotation property-object pairs: If the template string is `AP` the ROBOT will look in the cell for predicate-object pairs, with a syntax similar to Turtle, such as `ex:p1 'A'` or `ex:p2 '1234'^^xsd:integer`. Using `AP SPLIT=|` we can specify a list of annotations: `ex:p1 'A'|ex:p2 "B"@en|ex:p3 '3'^^xsd:integer|ex:p4 ex:curie|ex:p5 <http://ex.com>`.
 - `>A` (**axiom annotations**): ROBOT can also annotate logical and annotation axioms. The axiom annotation will be on the axiom created on the cell to the left of the `>A*` template string. The `>` symbol can be used in front of any valid annotation character (`>A`, `>AT`, `>AL`, `>AI`)
 
 Sometimes you want to include zero or more values in a single spreadsheet cell, for example when you want to allow for multiple annotations or have separate logical axioms. If a template string also contains `SPLIT=|`, then ROBOT will use the `|` character to split the contents of a cell in that column and add an annotation for each result (if there are any). Instead of `|` you can specify a string of characters of your choice -- other than pure whitespace -- to split on (e.g. `SPLIT=, `).
@@ -223,31 +224,22 @@ robot template --merge-before \
   --output results/test_template.owl
 ```
 
-ROBOT template data read from separate external file
+\* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
+
+ROBOT can read template header data from an `--external-template` file:
 
     robot template --template animals_template.tsv \
         --external-template animals_ext_template.tsv \
         --output results/animals_ext_template.owl
 
-Adjusted line numbers for error reporting for template data read from separate external file
-<!-- DO NOT TEST -->
-```
-robot template --template animals_template_error.tsv \
-  --ext-template animals_ext_template.tsv \
-  --output results/animals_ext_template.owl
-```
-
-ROBOT supports multiple annotation in a single column using `AP PRED "OBJ"`
+Multiple annotations can be specified in a single column, using the `AP` in the template header, and in the cell a syntax similar to Turtle `ex:p-1 'A'|ex:p-2 '1234'^^xsd:integer|ex:p-3 ex:curie`:
 
     robot template --prefix "acme: https://example.com/acme/" \
         --template multi_annotations.tsv \
         --external-template multi_annotations_header.tsv
         --output results/multi_annotations.owl
 
-
-\* NOTE: the imports would be merged into the output if `--collapse-import-closure true` is included instead.
-
-Further examples can be found [in the OBI repository](https://github.com/obi-ontology/obi/tree/master/src/ontology/templates)
+Further template examples can be found [in the OBI repository](https://github.com/obi-ontology/obi/tree/master/src/ontology/templates)
 
 ---
 
