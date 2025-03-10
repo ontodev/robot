@@ -55,6 +55,7 @@ public class ReduceOperation {
     Map<String, String> options = new HashMap<>();
     options.put("preserve-annotated-axioms", "false");
     options.put("named-classes-only", "false");
+    options.put("include-subproperties", "false");
     return options;
   }
 
@@ -87,7 +88,9 @@ public class ReduceOperation {
     if (namedClassesOnly) {
       reduceNamedOnly(ontology, reasonerFactory, preserveAnnotatedAxioms);
     } else {
-      reduceAllClassExpressions(ontology, reasonerFactory, preserveAnnotatedAxioms);
+      boolean includeSubproperties = OptionsHelper.optionIsTrue(options, "include-subproperties");
+      reduceAllClassExpressions(
+          ontology, reasonerFactory, preserveAnnotatedAxioms, includeSubproperties);
     }
   }
 
@@ -97,10 +100,15 @@ public class ReduceOperation {
    * @param ontology The ontology to reduce.
    * @param reasonerFactory The reasoner factory to use.
    * @param preserveAnnotatedAxioms Whether to not remove redundant, but annotated, axioms.
+   * @param includeSubproperties Whether to include subPropertyOf axioms (including property chains)
+   *     for evaluating redundancy.
    * @throws OWLOntologyCreationException on ontology problem
    */
   private static void reduceAllClassExpressions(
-      OWLOntology ontology, OWLReasonerFactory reasonerFactory, boolean preserveAnnotatedAxioms)
+      OWLOntology ontology,
+      OWLReasonerFactory reasonerFactory,
+      boolean preserveAnnotatedAxioms,
+      boolean includeSubproperties)
       throws OWLOntologyCreationException {
 
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -111,10 +119,11 @@ public class ReduceOperation {
     // and subproperty axioms
     OWLOntology subOntology = manager.createOntology();
     for (OWLAxiom a : ontology.getAxioms(Imports.INCLUDED)) {
-      if (a instanceof OWLSubClassOfAxiom
-          || a instanceof OWLObjectPropertyCharacteristicAxiom
-          || a instanceof OWLSubObjectPropertyOfAxiom
-          || a instanceof OWLSubPropertyChainOfAxiom) {
+      if (a instanceof OWLSubClassOfAxiom || a instanceof OWLObjectPropertyCharacteristicAxiom) {
+        manager.addAxiom(subOntology, a);
+      } else if (includeSubproperties
+          && (a instanceof OWLSubObjectPropertyOfAxiom
+              || a instanceof OWLSubPropertyChainOfAxiom)) {
         manager.addAxiom(subOntology, a);
       }
     }
