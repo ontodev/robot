@@ -1217,21 +1217,41 @@ public class OntologyHelper {
    * @return a set of OWLEntities with the given IRIs
    */
   public static Set<OWLEntity> getEntities(OWLOntology ontology, Set<IRI> iris) {
+    return getEntities(ontology, iris, false);
+  }
+
+  /**
+   * Given an ontology and a set of term IRIs, return a set of entities for those IRIs. The input
+   * ontology is not changed.
+   *
+   * @param ontology The ontology to search
+   * @param iris the IRIs of the entities to find
+   * @param allowPunning if true, will return all entities punned to the same IRI; otherwise, all
+   *     punned entities are ignored
+   * @return a set of OWLEntities with the given IRIs
+   */
+  public static Set<OWLEntity> getEntities(
+      OWLOntology ontology, Set<IRI> iris, boolean allowPunning) {
     Set<OWLEntity> entities = new HashSet<>();
     if (iris == null) {
       return entities;
     }
     for (IRI iri : iris) {
-      OWLEntity entity;
-      try {
-        entity = getEntity(ontology, iri, true);
-      } catch (Exception e) {
-        // This block shouldn't get hit, but just in case, skip this entity
-        entity = null;
-      }
-      if (entity != null) {
-        // Do not add null entries
-        entities.add(entity);
+      if (allowPunning) {
+        entities.addAll(ontology.getEntitiesInSignature(iri));
+      } else {
+        OWLEntity entity;
+        try {
+          entity = getEntity(ontology, iri, true);
+        } catch (Exception e) {
+          // Can happen if several entities are punned to the same IRI
+          logger.warn(e.getMessage());
+          entity = null;
+        }
+        if (entity != null) {
+          // Do not add null entries
+          entities.add(entity);
+        }
       }
     }
     return entities;
