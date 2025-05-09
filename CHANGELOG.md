@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug was fixed that caused logical axioms with axiom annotations not to be processed correctly when merging axiom annotations [#1223]
 - Correctly merge unannotated and annotated duplicated axioms [#1239]
 - Fix reading of default queries from embedded Jar resources [#1212]
+- Subproperties being ignored when evaluating redundancy in `reduce` [#1014], [#1208]
 
 ## [1.9.7] - 2024-10-30
 

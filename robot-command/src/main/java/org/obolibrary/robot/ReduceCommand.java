@@ -31,6 +31,11 @@ public class ReduceCommand implements Command {
         "preserve annotated axioms when removing redundant subclass axioms");
     o.addOption(
         "c", "named-classes-only", true, "only reduce subclass axioms between named classes");
+    o.addOption(
+        "s",
+        "include-subproperties",
+        true,
+        "take subproperties into account to evaluate redundancy");
     o.addOption("i", "input", true, "reduce ontology from a file");
     o.addOption("I", "input-iri", true, "reduce ontology from an IRI");
     o.addOption("o", "output", true, "save reduceed ontology to a file");
