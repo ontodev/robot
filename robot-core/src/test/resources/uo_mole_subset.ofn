@@ -1,0 +1,183 @@
+Prefix(:=<http://purl.obolibrary.org/obo/uo.owl#>)
+Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(xml:=<http://www.w3.org/XML/1998/namespace>)
+Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+
+
+Ontology(<http://purl.obolibrary.org/obo/uo.owl>
+
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000000>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000006>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000013>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000039>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000040>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000041>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000042>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000043>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000044>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000046>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000297>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000299>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000300>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000302>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000303>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_0000304>))
+Declaration(Class(<http://purl.obolibrary.org/obo/UO_1000013>))
+Declaration(ObjectProperty(<http://purl.obolibrary.org/obo/has_prefix>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000013>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000039>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000040>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000041>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000042>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000043>))
+Declaration(NamedIndividual(<http://purl.obolibrary.org/obo/UO_0000044>))
+Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym>))
+Declaration(AnnotationProperty(<http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym>))
+
+
+
+############################
+#   Classes
+############################
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000000> (unit)
+
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000000> "\"A unit of measurement is a standardized quantity of a physical quality.\" [Wikipedia:Wikipedia]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000000> "unit")
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000006> (substance unit)
+
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000006> "\"A unit which is a standardised quantity of an element or compound with uniform composition.\" [Wikipedia:Wikipedia]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000006> "substance unit")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000006> <http://purl.obolibrary.org/obo/UO_0000000>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000013> (mole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000013> "mol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000013> "\"A substance unit which is equal to the amount of substance of a molecular system which contains as many elementary entities as there are atoms in 0.012 kilogram of carbon 12.\" [BIPM:BIPM, NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000013> "mole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000013> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000013>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000013> <http://purl.obolibrary.org/obo/UO_0000000>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000013> <http://purl.obolibrary.org/obo/UO_1000013>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000039> (micromole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000039> "umol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000039> "\"A substance unit equal to a millionth of a mol or 10^[-6] mol.\" [NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000039> "micromole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000039> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UO_1000013> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000299>)))
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000039> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000039>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000039> <http://purl.obolibrary.org/obo/UO_1000013>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000039> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000299>))
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000040> (millimole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000040> "mmol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000040> "\"A substance unit equal to a thousandth of a mol or 10^[-3] mol.\" [NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000040> "millimole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000040> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UO_1000013> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000297>)))
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000040> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000040>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000040> <http://purl.obolibrary.org/obo/UO_1000013>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000040> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000297>))
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000041> (nanomole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000041> "nmol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000041> "\"A substance unit equal to one thousandth of one millionth of a mole or 10^[-9] mol.\" [NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000041> "nanomole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000041> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UO_1000013> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000300>)))
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000041> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000041>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000041> <http://purl.obolibrary.org/obo/UO_1000013>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000041> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000300>))
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000042> (picomole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000042> "pmol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000042> "\"A substance unit equal to 10^[-12] mol.\" [NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000042> "picomole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000042> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UO_1000013> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000302>)))
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000042> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000042>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000042> <http://purl.obolibrary.org/obo/UO_1000013>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000042> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000302>))
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000043> (femtomole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000043> "fmol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000043> "\"A substance unit equal to 10^[-15] mol.\" [NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000043> "femtomole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000043> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UO_1000013> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000303>)))
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000043> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000043>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000043> <http://purl.obolibrary.org/obo/UO_1000013>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000043> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000303>))
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000044> (attomole)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000044> "amol")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000044> "\"A substance unit equal to 10^[-18] mol.\" [NIST:NIST]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000044> "attomole")
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000044> ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UO_1000013> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000304>)))
+EquivalentClasses(<http://purl.obolibrary.org/obo/UO_0000044> ObjectOneOf(<http://purl.obolibrary.org/obo/UO_0000044>))
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000044> <http://purl.obolibrary.org/obo/UO_1000013>)
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000044> ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/has_prefix> <http://purl.obolibrary.org/obo/UO_0000304>))
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000046> (prefix)
+
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000046> "prefix")
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000297> (milli)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000297> "10^[-3]")
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000297> "m")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000297> "\"A prefix in the metric system denoting a factor of one thousand.\" [UO:GVG]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000297> "milli")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000297> <http://purl.obolibrary.org/obo/UO_0000046>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000299> (micro)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000299> "10^[-6]")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000299> "\"A prefix in the metric system denoting a factor of 10 to the power of -6.\" [UO:GVG]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000299> "micro")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000299> <http://purl.obolibrary.org/obo/UO_0000046>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000300> (nano)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000300> "10^[-9]")
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000300> "n")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000300> "\"A prefix in the metric system denoting a factor of 10 to the power of -9.\" [UO:GVG]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000300> "nano")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000300> <http://purl.obolibrary.org/obo/UO_0000046>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000302> (pico)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000302> "10^[-12]")
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000302> "n")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000302> "\"A prefix in the metric system denoting a factor of 10 to the power of -12.\" [GVG:UO]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000302> "pico")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000302> <http://purl.obolibrary.org/obo/UO_0000046>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000303> (femto)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000303> "10^[-15]")
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000303> "f")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000303> "\"A prefix in the metric system denoting a factor of 10 to the power of -15.\" [UO:GVG]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000303> "femto")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000303> <http://purl.obolibrary.org/obo/UO_0000046>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_0000304> (atto)
+
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://purl.obolibrary.org/obo/UO_0000304> "a")
+AnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym> <http://purl.obolibrary.org/obo/UO_0000304> "10^[-18]")
+AnnotationAssertion(rdfs:comment <http://purl.obolibrary.org/obo/UO_0000304> "\"A prefix in the metric system denoting a factor of 10 to the power of -18.\" [UO:GVG]")
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_0000304> "atto")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_0000304> <http://purl.obolibrary.org/obo/UO_0000046>)
+
+# Class: <http://purl.obolibrary.org/obo/UO_1000013> (mole based unit)
+
+AnnotationAssertion(rdfs:label <http://purl.obolibrary.org/obo/UO_1000013> "mole based unit")
+SubClassOf(<http://purl.obolibrary.org/obo/UO_1000013> <http://purl.obolibrary.org/obo/UO_0000006>)
+
+
+
+)

@@ -49,6 +49,7 @@ public class FilterCommand implements Command {
         "drop-axiom-annotations",
         true,
         "drop all axiom annotations involving a particular annotation property");
+    o.addOption(null, "allow-punning", true, "if true, allow selecting punned entities");
     options = o;
   }
 

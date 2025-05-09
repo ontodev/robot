@@ -51,6 +51,7 @@ public class RemoveCommand implements Command {
         "drop-axiom-annotations",
         true,
         "drop all axiom annotations involving a particular annotation property");
+    o.addOption(null, "allow-punning", true, "if true, allow selecting punned entities");
     options = o;
   }
 
@@ -238,10 +239,11 @@ public class RemoveCommand implements Command {
     Set<OWLObject> objects = new HashSet<>();
     // track if a set of input IRIs were provided
     boolean hasInputIRIs = false;
+    boolean punning = CommandLineHelper.getBooleanValue(line, "allow-punning", false);
     if (line.hasOption("term") || line.hasOption("term-file")) {
       Set<IRI> entityIRIs = CommandLineHelper.getTerms(ioHelper, line, "term", "term-file");
       if (!entityIRIs.isEmpty()) {
-        objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs));
+        objects.addAll(OntologyHelper.getEntities(ontology, entityIRIs, punning));
         hasInputIRIs = true;
       }
     }
@@ -282,7 +284,7 @@ public class RemoveCommand implements Command {
       Set<IRI> includeIRIs =
           CommandLineHelper.getTerms(ioHelper, line, "include-term", "include-terms");
       Set<OWLObject> includeObjects =
-          new HashSet<>(OntologyHelper.getEntities(ontology, includeIRIs));
+          new HashSet<>(OntologyHelper.getEntities(ontology, includeIRIs, punning));
       relatedObjects.addAll(includeObjects);
     }
 
@@ -291,7 +293,7 @@ public class RemoveCommand implements Command {
       Set<IRI> excludeIRIs =
           CommandLineHelper.getTerms(ioHelper, line, "exclude-term", "exclude-terms");
       Set<OWLObject> excludeObjects =
-          new HashSet<>(OntologyHelper.getEntities(ontology, excludeIRIs));
+          new HashSet<>(OntologyHelper.getEntities(ontology, excludeIRIs, punning));
       relatedObjects.removeAll(excludeObjects);
     }
 
@@ -300,7 +302,7 @@ public class RemoveCommand implements Command {
       Set<IRI> includeIRIs =
           CommandLineHelper.getTerms(ioHelper, line, "include-term", "include-terms");
       Set<OWLObject> includeObjects =
-          new HashSet<>(OntologyHelper.getEntities(ontology, includeIRIs));
+          new HashSet<>(OntologyHelper.getEntities(ontology, includeIRIs, punning));
       relatedObjects.addAll(includeObjects);
     }
 

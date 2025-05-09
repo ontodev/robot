@@ -56,6 +56,11 @@ Finally `--drop-axiom-annotations` option lets you to specify an annotation prop
 
 The `remove` and `filter` operations maintains structural integrity by default: lineage is maintained, and gaps will be filled where classes have been removed. If you wish to *not* preserve the hierarchy, include `--preserve-structure false`.
 
+## Selecting punned entities
+
+By default, if a single term IRI corresponds to several entities of different types (so-called “punned” entities), the corresponding entities are completely ignored when assembling the initial target set. To force the command to consider punned entities, use the `--allow-punning true`. You may then use a subset selector (see below) to further restrict the removal operation to a specific type of entity.
+
+For example, if `A` is both a class and an individual, `--term A` will fail to select anything. To select both entities, use `--term A --allow-punning true`. To select only the class `A`, use `--term A --allow-punning true --select classes`.`
 
 ## Selectors
 
@@ -238,6 +243,22 @@ Extracts a base module, then removing _all_ `oboInOwl:hasDbXref` annotations on 
       --drop-axiom-annotations oboInOwl:source=~'GO.*' \
       --drop-axiom-annotations oboInOwl:hasDbXref \
       --output results/filter_annotations_drop_axioms.owl
+
+Remove all punned entities with the IRI UO:0000039:
+
+    robot remove --input uo_mole_subset.ofn
+      --allow-punning true
+      --term UO:0000039
+      --output results/uo_no_micromole.ofn
+
+Remove only the _individual_ UO:0000039, leaving aside the class that has the same IRI (note that here we need to restrict the removal operations to logical and declaration axioms, to avoid removing annotation assertions axioms that apply to both the class and the individual):
+
+    robot remove --input uo_mole_subset.ofn
+      --allow-punning true
+      --term UO:0000039
+      --select individuals
+      --axioms "logical Declaration"
+      --output results/uo_no_micromole_individual.ofn
 
 Remove all `oboInOwl:hasDbXref` annotations, both on entities and on axioms, but without removing the annotated axioms themselves:
 

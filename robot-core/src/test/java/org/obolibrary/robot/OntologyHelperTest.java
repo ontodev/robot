@@ -1,6 +1,7 @@
 package org.obolibrary.robot;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -184,5 +185,24 @@ public class OntologyHelperTest extends CoreTest {
     Set<String> actual = OntologyHelper.getAnnotationStrings(ontology, prop, testIRI);
     Set<String> expected = Collections.singleton("Test 1 Test one");
     assertEquals(expected, actual);
+  }
+
+  /**
+   * Test selecting punning entities.
+   *
+   * @throws IOException on issue loading ontology
+   */
+  @Test
+  public void testGetPunnedEntities() throws IOException {
+    OWLOntology ontology = loadOntology("/uo_mole_subset.ofn");
+    Set<IRI> iris = Collections.singleton(IRI.create("http://purl.obolibrary.org/obo/UO_0000039"));
+
+    // No punning, expect empty set
+    Set<OWLEntity> entities = OntologyHelper.getEntities(ontology, iris, false);
+    assertTrue(entities.isEmpty());
+
+    // Allow punning, expect class + individual
+    entities = OntologyHelper.getEntities(ontology, iris, true);
+    assertEquals(2, entities.size());
   }
 }
