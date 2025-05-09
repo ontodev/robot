@@ -10,16 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add `--clean-obo` option to [`convert`] [#995]
 - Allow interpolation of ontology IRI and version IRI within annotation values [#1241]
-- Allow selecting punned entities in [`remove`] and [`filter`]
+- Allow selecting punned entities in [`remove`] and [`filter`] [#1251]
+- Add support for predicate-object pairs to ROBOT template [#1249]
+
+### Changed
+- Updated Apache POI [#1252]
+- Support SPLIT=\\n [#1246]
+- Include SubObjectPropertyOf axioms when reducing [#1248]
 
 ### Fixed
 - Update owl-diff dependency for stable ordering and to avoid large string creation [#1227]
+- Exclude deprecated from lowercase_definition check [#1224]
 - Improve disambiguation of properties in QuotedEntityChecker [#1226]
 - Skip "non-robot" columns in templates for the purposes of axiom annotations [#1216]
-- Add missing filter for deprecated in lowercase_definition check [#1220]
-- Bug was fixed that caused logical axioms with axiom annotations not to be processed correctly when merging axiom annotations [#1223]
+- Fix but that caused logical axioms with axiom annotations not to be processed correctly when merging axiom annotations [#1223]
 - Correctly merge unannotated and annotated duplicated axioms [#1239]
 - Fix reading of default queries from embedded Jar resources [#1212]
+- Fix repair --merge-axiom-annotations [#1240]
+- Allow interpolation of placeholders in annotation values. [#1242]
 - Subproperties being ignored when evaluating redundancy in `reduce` [#1014], [#1208]
 
 ## [1.9.7] - 2024-10-30
@@ -427,12 +435,26 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1252]: https://github.com/ontodev/robot/pull/1252
+[#1251]: https://github.com/ontodev/robot/pull/1251
+[#1249]: https://github.com/ontodev/robot/pull/1249
+[#1248]: https://github.com/ontodev/robot/pull/1248
+[#1246]: https://github.com/ontodev/robot/pull/1246
+[#1242]: https://github.com/ontodev/robot/pull/1242
+[#1241]: https://github.com/ontodev/robot/pull/1241
+[#1240]: https://github.com/ontodev/robot/pull/1240
+[#1239]: https://github.com/ontodev/robot/pull/1239
+[#1227]: https://github.com/ontodev/robot/pull/1227
 [#1226]: https://github.com/ontodev/robot/pull/1226
+[#1224]: https://github.com/ontodev/robot/pull/1224
 [#1223]: https://github.com/ontodev/robot/pull/1223
 [#1221]: https://github.com/ontodev/robot/pull/1221
 [#1220]: https://github.com/ontodev/robot/issues/1220
+[#1216]: https://github.com/ontodev/robot/pull/1216
 [#1216]: https://github.com/ontodev/robot/issues/1216
+[#1212]: https://github.com/ontodev/robot/pull/1212
 [#1211]: https://github.com/ontodev/robot/pull/1211
+[#1208]: https://github.com/ontodev/robot/pull/1208
 [#1194]: https://github.com/ontodev/robot/pull/1194
 [#1193]: https://github.com/ontodev/robot/pull/1193
 [#1183]: https://github.com/ontodev/robot/issues/1183
@@ -445,8 +467,8 @@ First official release of ROBOT!
 [#1148]: https://github.com/ontodev/robot/pull/1148
 [#1135]: https://github.com/ontodev/robot/pull/1135
 [#1127]: https://github.com/ontodev/robot/pull/1127
-[#1119]: https://github.com/ontodev/robot/pull/1119
 [#1121]: https://github.com/ontodev/robot/issues/1121
+[#1119]: https://github.com/ontodev/robot/pull/1119
 [#1108]: https://github.com/ontodev/robot/pull/1108
 [#1104]: https://github.com/ontodev/robot/pull/1104
 [#1101]: https://github.com/ontodev/robot/issues/1101
@@ -466,6 +488,7 @@ First official release of ROBOT!
 [#1023]: https://github.com/ontodev/robot/pull/1023
 [#1017]: https://github.com/ontodev/robot/issues/1017
 [#1016]: https://github.com/ontodev/robot/issues/1016
+[#1014]: https://github.com/ontodev/robot/pull/1014
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#1000]: https://github.com/ontodev/robot/pull/1000
 [#999]: https://github.com/ontodev/robot/pull/999
