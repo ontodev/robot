@@ -734,6 +734,8 @@ public class TemplateHelper {
    * @param template the template string
    * @param split the character to split values on
    * @param value the value for the annotation
+   * @param tableName name of table
+   * @param rowNum the row number
    * @param column the index of the column
    * @return a set of new annotation(s) with property and string literal value
    * @throws RowParseException if the annotation property cannot be found
