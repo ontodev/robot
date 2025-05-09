@@ -877,7 +877,6 @@ public class Template {
       if (value == null || value.trim().isEmpty()) {
         continue;
       }
-
       if (template.startsWith("A") || template.startsWith("LABEL")) {
         // Handle class annotations
         Set<OWLAnnotation> annotations = getAnnotations(template, value, row, column);
