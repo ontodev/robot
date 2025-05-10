@@ -21,7 +21,7 @@ public enum OBOWriteOption {
    * Drop axioms that cannot be represented in OBO format, instead of writing them in a {@code
    * owl-axioms} header tag.
    */
-  DROP_UNSTRANSLATABLE_AXIOMS,
+  DROP_UNTRANSLATABLE_AXIOMS,
 
   /** Drop general concept inclusion axioms. */
   DROP_GCI_AXIOMS;
@@ -54,8 +54,8 @@ public enum OBOWriteOption {
           set.add(MERGE_COMMENTS);
           break;
 
-        case "drop-unstranslatable-axioms":
-          set.add(DROP_UNSTRANSLATABLE_AXIOMS);
+        case "drop-untranslatable-axioms":
+          set.add(DROP_UNTRANSLATABLE_AXIOMS);
           break;
 
         case "drop-gci-axioms":
@@ -64,7 +64,7 @@ public enum OBOWriteOption {
 
         case "simple":
           // "simple" is a shortcut for all the options above except "merge-comments"
-          set.add(DROP_UNSTRANSLATABLE_AXIOMS);
+          set.add(DROP_UNTRANSLATABLE_AXIOMS);
           set.add(DROP_GCI_AXIOMS);
           // Fall-through
 

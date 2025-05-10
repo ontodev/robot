@@ -1901,7 +1901,7 @@ public class IOHelper {
     // Dropping the unstranslatable axioms is delegated to the OWLAPI's built-in feature
     OWLAPIOwl2Obo oboConverter = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
     oboConverter.setDiscardUntranslatable(
-        options.contains(OBOWriteOption.DROP_UNSTRANSLATABLE_AXIOMS));
+        options.contains(OBOWriteOption.DROP_UNTRANSLATABLE_AXIOMS));
     return oboConverter.convert(ontology);
   }
 }
