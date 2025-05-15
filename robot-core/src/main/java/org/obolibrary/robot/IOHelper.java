@@ -1665,7 +1665,7 @@ public class IOHelper {
       String doc = OgJsonGenerator.render(gd);
       data = doc.getBytes();
     } else if (format instanceof OBODocumentFormat && (!checkOBO || !cleanOBO.isEmpty())) {
-      OBODoc oboOntology = makeCleanOBODocument(ontology, cleanOBO);
+      OBODoc oboOntology = makeCleanOBODocument(ontology, cleanOBO, format);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos))) {
         OBOFormatWriter oboWriter = new OBOFormatWriter();
@@ -1796,7 +1796,7 @@ public class IOHelper {
     } else if (format instanceof OBODocumentFormat && !cleanOBO.isEmpty()) {
       // OBO format can be handled natively by the OWLAPI ontology manager, but in "clean" mode we
       // need to call the OBO converter ourselves
-      OBODoc oboDoc = makeCleanOBODocument(ontology, cleanOBO);
+      OBODoc oboDoc = makeCleanOBODocument(ontology, cleanOBO, format);
       OBOFormatWriter oboWriter = new OBOFormatWriter();
       oboWriter.setCheckStructure(checkOBO);
       oboWriter.write(oboDoc, new File(ontologyIRI.toURI()));
@@ -1867,9 +1867,11 @@ public class IOHelper {
    *
    * @param ontology the ontology to convert
    * @param options option set dictating what should be cleaned in the ontology
+   * @param format the OWL document format to save in
    * @return the resulting OBO document
    */
-  private OBODoc makeCleanOBODocument(OWLOntology ontology, EnumSet<OBOWriteOption> options) {
+  private OBODoc makeCleanOBODocument(
+      OWLOntology ontology, EnumSet<OBOWriteOption> options, OWLDocumentFormat format) {
     if (options.contains(OBOWriteOption.DROP_GCI_AXIOMS)) {
       Set<OWLClassAxiom> gciAxioms = ontology.getGeneralClassAxioms();
       if (!gciAxioms.isEmpty()) {
@@ -1902,6 +1904,7 @@ public class IOHelper {
     OWLAPIOwl2Obo oboConverter = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
     oboConverter.setDiscardUntranslatable(
         options.contains(OBOWriteOption.DROP_UNTRANSLATABLE_AXIOMS));
+    oboConverter.setPrefixManager(format.asPrefixOWLOntologyFormat());
     return oboConverter.convert(ontology);
   }
 }

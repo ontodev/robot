@@ -48,6 +48,8 @@ In addition, the following special keywords are also accepted:
   - `true`: alias for `strict`.
   - `simple`: equivalent to `strict drop-untranslatable-axioms drop-gci-axioms`, to force the production of an OBO file that is not only valid, but also free of any `owl-axioms` header tag and GCI axioms (which, while perfectly valid with respect to the OBO specification, are not always handled correctly by all OBO parsers).
 
+Of note, currently using the `--clean-obo` option is the only way to inject prefixes into an OBO file. The `--add-prefix` option has no effect when the ontology is saved to OBO without `--clean-obo`.
+
 #### Examples
 
 Convert a file to OBO and ensure the resulting file is compliant with the OBO specification, dropping supernumerary annotations if necessary:
@@ -67,6 +69,13 @@ Convert a file to a simple variant of the OBO format (without any `owl-axioms` t
     robot convert -i cl_module.ofn \
       --clean-obo simple \
       --output results/cl_module-simple.obo
+
+Convert a file to a simple variant of the OBO format while adding a custom prefix:
+
+    robot convert -i cl_module.ofn \
+      --add-prefix "myp: https://example.org/myp_" \
+      --clean-obo simple \
+      --output results/cl_module-simple-with-added-prefix.obo
 
 ---
 
