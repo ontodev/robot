@@ -167,7 +167,7 @@ EOF
 
 if command -v himalaya > /dev/null
 then
-    himalaya --mailbox Drafts save < "${EMAIL}"
+    himalaya --folder Drafts save < "${EMAIL}"
     echo "Draft email created"
 else
     echo "Draft email created in ${EMAIL}"
