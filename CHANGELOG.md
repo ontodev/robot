@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.8] - 2025-05-15
+
 ### Added
 - Add `--clean-obo` option to [`convert`] [#995]
 - Allow interpolation of ontology IRI and version IRI within annotation values [#1241]
@@ -383,7 +385,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.7...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.8...HEAD
+[1.9.8]: https://github.com/ontodev/robot/compare/v1.9.7...v1.9.8
 [1.9.7]: https://github.com/ontodev/robot/compare/v1.9.6...v1.9.7
 [1.9.6]: https://github.com/ontodev/robot/compare/v1.9.5...v1.9.6
 [1.9.5]: https://github.com/ontodev/robot/compare/v1.9.4...v1.9.5

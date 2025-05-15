@@ -87,6 +87,10 @@
       "@id": "http://purl.obolibrary.org/obo/BILA_",
       "@prefix": true
     },
+    "BMONT": {
+      "@id": "http://purl.obolibrary.org/obo/BMONT_",
+      "@prefix": true
+    },
     "BOOTSTREP": {
       "@id": "http://purl.obolibrary.org/obo/BOOTSTREP_",
       "@prefix": true
