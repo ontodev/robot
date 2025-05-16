@@ -495,6 +495,7 @@ First official release of ROBOT!
 [#1009]: https://github.com/ontodev/robot/issues/1009
 [#1000]: https://github.com/ontodev/robot/pull/1000
 [#999]: https://github.com/ontodev/robot/pull/999
+[#995]: https://github.com/ontodev/robot/issues/995
 [#979]: https://github.com/ontodev/robot/pull/979
 [#978]: https://github.com/ontodev/robot/pull/978
 [#977]: https://github.com/ontodev/robot/pull/977
