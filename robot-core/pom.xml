@@ -301,7 +301,7 @@
     <dependency>
 	  <groupId>org.geneontology</groupId>
 	  <artifactId>relation-graph_${scala.version}</artifactId>
-	  <version>2.3.2</version>
+	  <version>2.3.3</version>
 	  <exclusions>
         <exclusion>
           <groupId>org.apache.jena</groupId>
