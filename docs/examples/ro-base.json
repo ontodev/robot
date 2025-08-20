@@ -1763,7 +1763,13 @@
           "val" : "pazopanib -> pathological angiogenesis"
         }, {
           "pred" : "http://purl.obolibrary.org/obo/IAO_0000118",
-          "val" : "treats"
+          "val" : "treats",
+          "meta" : {
+            "basicPropertyValues" : [ {
+              "pred" : "http://www.w3.org/2000/01/rdf-schema#comment",
+              "val" : "Usage of the term 'treats' applies when we believe there to be a an inhibitory relationship"
+            } ]
+          }
         }, {
           "pred" : "http://purl.obolibrary.org/obo/IAO_0000119",
           "val" : "http://purl.obolibrary.org/obo/ro/docs/causal-relations"
@@ -3954,7 +3960,13 @@
       "meta" : {
         "basicPropertyValues" : [ {
           "pred" : "http://purl.obolibrary.org/obo/IAO_0000589",
-          "val" : "is defined by"
+          "val" : "is defined by",
+          "meta" : {
+            "basicPropertyValues" : [ {
+              "pred" : "http://www.w3.org/2000/01/rdf-schema#comment",
+              "val" : "This is an experimental annotation"
+            } ]
+          }
         } ]
       }
     } ],
