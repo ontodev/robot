@@ -317,12 +317,27 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(String ontologyPath, boolean useCatalog) throws IOException {
+    return loadOntology(ontologyPath, useCatalog, null);
+  }
+
+  /**
+   * Load an ontology from a String path, optionally using a catalog file if available and with an
+   * explicit input format.
+   *
+   * @param ontologyPath the path to the ontology file
+   * @param useCatalog if true, a catalog file will be used if one is found
+   * @param inputFormat the expected format of the ontology or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(String ontologyPath, boolean useCatalog, String inputFormat)
+      throws IOException {
     File ontologyFile = new File(ontologyPath);
     File catalogFile = null;
     if (useCatalog) {
       catalogFile = guessCatalogFile(ontologyFile);
     }
-    return loadOntology(ontologyFile, catalogFile);
+    return loadOntology(new File(ontologyPath), catalogFile, inputFormat);
   }
 
   /**
@@ -380,11 +395,26 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(File ontologyFile, boolean useCatalog) throws IOException {
+    return loadOntology(ontologyFile, useCatalog, null);
+  }
+
+  /**
+   * Load an ontology from a File, with option to use a catalog file and to expect an explicit
+   * format.
+   *
+   * @param ontologyFile the ontology file to load
+   * @param useCatalog when true, a catalog file will be used if one is found
+   * @param inputFormat the expected format of the ontology or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(File ontologyFile, boolean useCatalog, String inputFormat)
+      throws IOException {
     File catalogFile = null;
     if (useCatalog) {
       catalogFile = guessCatalogFile(ontologyFile);
     }
-    return loadOntology(ontologyFile, catalogFile);
+    return loadOntology(ontologyFile, catalogFile, inputFormat);
   }
 
   /**

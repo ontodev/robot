@@ -1071,21 +1071,22 @@ public class CommandLineHelper {
   public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
+    String inputFormat = getOptionalValue(line, "input-format");
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath));
+      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, true, inputFormat));
     }
     // Check for input IRIs
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
     for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI)));
+      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI), null, inputFormat));
     }
     // Check for input patterns (wildcard)
     String pattern = getOptionalValue(line, "inputs");
     if (pattern != null) {
       for (File inputOntologyFile : getFilesByPattern(pattern)) {
-        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile));
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, true, inputFormat));
       }
     }
     return inputOntologies;
@@ -1104,22 +1105,24 @@ public class CommandLineHelper {
   public static List<OWLOntology> getInputOntologies(
       IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
     List<OWLOntology> inputOntologies = new ArrayList<>();
+    String inputFormat = getOptionalValue(line, "input-format");
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, catalogPath));
+      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, catalogPath, inputFormat));
     }
     // Check for input IRIs
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
     for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI), catalogPath));
+      inputOntologies.add(
+          ioHelper.loadOntology(IRI.create(inputOntologyIRI), catalogPath, inputFormat));
     }
     // Check for input patterns (wildcard)
     String pattern = getOptionalValue(line, "inputs");
     if (pattern != null) {
       File catalogFile = new File(catalogPath);
       for (File inputOntologyFile : getFilesByPattern(pattern)) {
-        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, catalogFile));
+        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, catalogFile, inputFormat));
       }
     }
     return inputOntologies;
