@@ -391,4 +391,27 @@ public class IOHelperTest extends CoreTest {
     ioHelper.loadOntology(inputStream);
     assert true;
   }
+
+  /**
+   * Test loading an ontology with an explicitly specified expected input format.
+   *
+   * @throws IOException on error creating IOHelper
+   */
+  @Test
+  public void testExplicitInputFormat() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+
+    // We should be able to load a OFN file that imports a OWL file
+    ioHelper.loadOntology("src/test/resources/import_test.ofn", true, "ofn");
+    assert true;
+
+    // But trying to load that same file while expecting it to be in OWL should fail
+    boolean error = false;
+    try {
+      ioHelper.loadOntology("src/test/resources/import_test.ofn", true, "owl");
+    } catch (IOException ioe) {
+      error = true;
+    }
+    assert error;
+  }
 }
