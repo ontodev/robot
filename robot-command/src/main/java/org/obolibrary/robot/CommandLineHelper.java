@@ -470,6 +470,7 @@ public class CommandLineHelper {
       throws IllegalArgumentException, IOException {
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
+    String inputFormat = getOptionalValue(line, "input-format");
 
     int check = inputOntologyPaths.size() + inputOntologyIRIs.size();
     if (check > 1) {
@@ -477,17 +478,9 @@ public class CommandLineHelper {
     }
 
     if (!inputOntologyPaths.isEmpty()) {
-      if (catalogPath != null) {
-        return ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath);
-      } else {
-        return ioHelper.loadOntology(inputOntologyPaths.get(0));
-      }
+      return ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath, inputFormat);
     } else if (!inputOntologyIRIs.isEmpty()) {
-      if (catalogPath != null) {
-        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath);
-      } else {
-        return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)));
-      }
+      return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath, inputFormat);
     } else {
       // Both input options are empty
       throw new IllegalArgumentException(missingInputError);
@@ -913,6 +906,11 @@ public class CommandLineHelper {
     o.addOption("v", "verbose", false, "increased logging");
     o.addOption("vv", "very-verbose", false, "high logging");
     o.addOption("vvv", "very-very-verbose", false, "maximum logging, including stack traces");
+    o.addOption(
+        null,
+        "input-format",
+        true,
+        "format of the input ontology: obo, owl, ttl, owx, omn, ofn, json");
     o.addOption(null, "catalog", true, "use catalog from provided file");
     o.addOption("p", "prefix", true, "add a prefix 'foo: http://bar'");
     o.addOption("P", "prefixes", true, "use prefixes from JSON-LD file");

@@ -340,6 +340,22 @@ public class IOHelper {
   }
 
   /**
+   * Load an ontology from a String path, with optional catalog file and explicit document format.
+   *
+   * @param ontologyPath the path to the ontology file
+   * @param catalogPath the path to the catalog file or null
+   * @param inputFormat the expected input format of the ontology or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(String ontologyPath, String catalogPath, String inputFormat)
+      throws IOException {
+    File ontologyFile = new File(ontologyPath);
+    File catalogFile = catalogPath != null ? new File(catalogPath) : null;
+    return loadOntology(ontologyFile, catalogFile, inputFormat);
+  }
+
+  /**
    * Load an ontology from a File, using a catalog file if available.
    *
    * @param ontologyFile the ontology file to load
@@ -380,6 +396,20 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(File ontologyFile, File catalogFile) throws IOException {
+    return loadOntology(ontologyFile, catalogFile, null);
+  }
+
+  /**
+   * Load an ontology from a File, with optional catalog File and input format.
+   *
+   * @param ontologyFile the ontology file to load
+   * @param catalogFile the catalog file to use
+   * @param inputFormat the expected format of the ontology or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(File ontologyFile, File catalogFile, String inputFormat)
+      throws IOException {
     logger.debug("Loading ontology {} with catalog file {}", ontologyFile, catalogFile);
     Object jsonObject = null;
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -417,14 +447,15 @@ public class IOHelper {
       // Maybe unzip
       if (ontologyFile.getPath().endsWith(".gz")) {
         if (catalogFile == null) {
-          return loadCompressedOntology(ontologyFile, null);
+          return loadCompressedOntology(ontologyFile, null, inputFormat);
         } else {
-          return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath());
+          return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath(), inputFormat);
         }
       }
 
       // Otherwise load from file using default method
-      return loadOntology(manager, new FileDocumentSource(ontologyFile));
+      OWLDocumentFormat fmt = inputFormat != null ? getFormat(inputFormat) : null;
+      return loadOntology(manager, new FileDocumentSource(ontologyFile, fmt));
     } catch (JsonLdError | OWLOntologyCreationException e) {
       throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
     }
@@ -442,7 +473,7 @@ public class IOHelper {
   }
 
   /**
-   * Load an ontology from an InputStream with a catalog file.
+   * Load an ontology from an InputStream with an optional catalog file.
    *
    * @param ontologyStream the ontology stream to load
    * @param catalogPath the catalog file to use or null
@@ -451,6 +482,20 @@ public class IOHelper {
    */
   public OWLOntology loadOntology(InputStream ontologyStream, String catalogPath)
       throws IOException {
+    return loadOntology(ontologyStream, catalogPath, null);
+  }
+
+  /**
+   * Load an ontology from an InputStream with an optional catalog file and input format.
+   *
+   * @param ontologyStream the ontology stream to load
+   * @param catalogPath the catalog file to use or null
+   * @param inputFormat the expected format of the ontology or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(
+      InputStream ontologyStream, String catalogPath, String inputFormat) throws IOException {
     OWLOntology ontology;
     // Maybe load a catalog file
     File catalogFile = null;
@@ -465,7 +510,18 @@ public class IOHelper {
       if (catalogFile != null) {
         manager.setIRIMappers(Sets.newHashSet(new CatalogXmlIRIMapper(catalogFile)));
       }
-      ontology = loadOntology(manager, new StreamDocumentSource(ontologyStream));
+      OWLOntologyDocumentSource source = null;
+      if (inputFormat != null) {
+        source =
+            new StreamDocumentSource(
+                ontologyStream,
+                StreamDocumentSource.getNextDocumentIRI("inputstream:ontology"),
+                getFormat(inputFormat),
+                null);
+      } else {
+        source = new StreamDocumentSource(ontologyStream);
+      }
+      ontology = loadOntology(manager, source);
     } catch (OWLOntologyCreationException e) {
       throw new IOException(invalidOntologyStreamError, e);
     }
@@ -492,6 +548,20 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(IRI ontologyIRI, String catalogPath) throws IOException {
+    return loadOntology(ontologyIRI, catalogPath, null);
+  }
+
+  /**
+   * Load an ontology from an IRI with an optional catalog file and input format.
+   *
+   * @param ontologyIRI the ontology IRI to load
+   * @param catalogPath the catalog file to use or null
+   * @param inputFormat the expected format of the ontology or null
+   * @return a new ontology object, with a new OWLManager
+   * @throws IOException on any problem
+   */
+  public OWLOntology loadOntology(IRI ontologyIRI, String catalogPath, String inputFormat)
+      throws IOException {
     OWLOntology ontology;
     // Maybe load a catalog file
     File catalogFile = null;
@@ -509,11 +579,18 @@ public class IOHelper {
       }
       // Maybe load a zipped ontology
       if (ontologyIRI.toString().endsWith(".gz")) {
-        ontology = loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath);
+        ontology =
+            loadCompressedOntology(new URL(ontologyIRI.toString()), catalogPath, inputFormat);
       } else {
         // Otherwise load ontology as normal
         IRI documentIRI = getDocumentIRIFromMappers(manager, ontologyIRI);
-        ontology = loadOntology(manager, new IRIDocumentSource(documentIRI));
+        OWLOntologyDocumentSource source = null;
+        if (inputFormat != null) {
+          source = new IRIDocumentSource(documentIRI, getFormat(inputFormat), null);
+        } else {
+          source = new IRIDocumentSource(documentIRI);
+        }
+        ontology = loadOntology(manager, source);
       }
     } catch (OWLOntologyCreationException e) {
       throw new IOException(e);
@@ -1724,13 +1801,15 @@ public class IOHelper {
    *
    * @param gzipFile compressed File to load ontology from
    * @param catalogPath the path to the catalog file or null
+   * @param inputFormat the expected format of the ontology or null
    * @return a new ontology object with a new OWLManager
    * @throws IOException on any problem
    */
-  private OWLOntology loadCompressedOntology(File gzipFile, String catalogPath) throws IOException {
+  private OWLOntology loadCompressedOntology(File gzipFile, String catalogPath, String inputFormat)
+      throws IOException {
     FileInputStream fis = new FileInputStream(gzipFile);
     GZIPInputStream gis = new GZIPInputStream(fis);
-    return loadOntology(gis, catalogPath);
+    return loadOntology(gis, catalogPath, inputFormat);
   }
 
   /**
@@ -1739,10 +1818,12 @@ public class IOHelper {
    *
    * @param url URL to load from
    * @param catalogPath the path to the catalog file or null
+   * @param inputFormat the expected format of the ontology or null
    * @return a new ontology object with a new OWLManager
    * @throws IOException on any problem
    */
-  private OWLOntology loadCompressedOntology(URL url, String catalogPath) throws IOException {
+  private OWLOntology loadCompressedOntology(URL url, String catalogPath, String inputFormat)
+      throws IOException {
     // Check for redirects
     url = followRedirects(url);
 
@@ -1754,7 +1835,7 @@ public class IOHelper {
       throw new IOException(String.format(invalidOntologyIRIError, url));
     }
     GZIPInputStream gis = new GZIPInputStream(is);
-    return loadOntology(gis, catalogPath);
+    return loadOntology(gis, catalogPath, inputFormat);
   }
 
   /**
