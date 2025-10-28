@@ -337,7 +337,7 @@ public class IOHelper {
     if (useCatalog) {
       catalogFile = guessCatalogFile(ontologyFile);
     }
-    return loadOntology(new File(ontologyPath), catalogFile, inputFormat);
+    return loadOntology(ontologyFile, catalogFile, inputFormat);
   }
 
   /**
