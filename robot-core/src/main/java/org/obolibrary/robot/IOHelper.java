@@ -79,6 +79,10 @@ public class IOHelper {
   private static final String invalidOntologyFileError =
       NS + "INVALID ONTOLOGY FILE ERROR Could not load a valid ontology from file: %s";
 
+  /** Error message when the specified file cannot be loaded using the specified format. Expects the format name and file name. */
+  private static final String invalidOntologyFileFormatError =
+      NS + "INVALID ONTOLOGY FILE FORMAT ERROR Could not load a valid ontology using '%s' format from file: %s";
+
   /** Error message when the specified IRI cannot be loaded. Expects the IRI string. */
   private static final String invalidOntologyIRIError =
       NS + "INVALID ONTOLOGY IRI ERROR Could not load a valid ontology from IRI: %s";
@@ -487,7 +491,11 @@ public class IOHelper {
       OWLDocumentFormat fmt = inputFormat != null ? getFormat(inputFormat) : null;
       return loadOntology(manager, new FileDocumentSource(ontologyFile, fmt));
     } catch (JsonLdError | OWLOntologyCreationException e) {
-      throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
+      if (inputFormat == null) {
+        throw new IOException(String.format(invalidOntologyFileError, ontologyFile.getName()), e);
+      } else {
+        throw new IOException(String.format(invalidOntologyFileFormatError, inputFormat, ontologyFile.getName()), e);
+      }
     }
   }
 
