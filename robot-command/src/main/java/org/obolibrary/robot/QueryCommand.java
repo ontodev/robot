@@ -15,6 +15,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.tdb.TDBFactory;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -338,7 +339,10 @@ public class QueryCommand implements Command {
         catalogPath = null;
       }
     }
-    return QueryOperation.convertModel(model, ioHelper, catalogPath, useTemporaryFile);
+
+    OWLDocumentFormat format =
+        inputOntology.getOWLOntologyManager().getOntologyFormat(inputOntology);
+    return QueryOperation.convertModel(model, ioHelper, catalogPath, useTemporaryFile, format);
   }
 
   /**

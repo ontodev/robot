@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import com.google.common.collect.Lists;
 import java.io.*;
 import java.net.URISyntaxException;
+import java.util.Map;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
@@ -12,10 +13,13 @@ import org.apache.jena.query.ResultSetRewindable;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.Lang;
 import org.junit.Test;
+import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
 import org.semanticweb.owlapi.io.OWLOntologyCreationIOException;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 /**
@@ -208,5 +212,33 @@ public class QueryOperationTest extends CoreTest {
     } catch (final OWLOntologyCreationIOException e) {
       fail();
     }
+  }
+
+  @Test
+  public void testPrefixesPreserved()
+      throws IOException, OWLOntologyStorageException, OWLOntologyCreationException {
+    OWLOntology inputOntology = loadOntology("/prefix.owl");
+    OWLOntologyManager inputManager = inputOntology.getOWLOntologyManager();
+    OWLDocumentFormat inputFormat = inputManager.getOntologyFormat(inputOntology);
+    PrefixDocumentFormat inputPrefixFormat = (PrefixDocumentFormat) inputFormat;
+    Map<String, String> inputPrefixMap = inputPrefixFormat.getPrefixName2PrefixMap();
+
+    Model model = QueryOperation.loadOntologyAsModel(inputOntology);
+    String updateString =
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+            + "PREFIX s: <https://github.com/ontodev/robot/robot-core/src/test/resources/simple.owl#>"
+            + "INSERT { "
+            + "s:test2 rdfs:label \"test 2\" ."
+            + " } WHERE {}";
+    QueryOperation.execUpdate(model, updateString);
+
+    OWLOntology outputOntology =
+        QueryOperation.convertModel(model, new IOHelper(), null, false, inputFormat);
+    OWLOntologyManager outputManager = outputOntology.getOWLOntologyManager();
+    OWLDocumentFormat outputFormat = outputManager.getOntologyFormat(outputOntology);
+    PrefixDocumentFormat outputPrefixFormat = (PrefixDocumentFormat) outputFormat;
+    Map<String, String> outputPrefixMap = outputPrefixFormat.getPrefixName2PrefixMap();
+
+    assertEquals(inputPrefixMap, outputPrefixMap);
   }
 }
