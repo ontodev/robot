@@ -91,6 +91,22 @@ For example, you may want to [`merge`](/merge) a set of edited import ontologies
 
 If a catalog file is specified and cannot be located, the ontology will be loaded without a catalog file. Similarly, if you do not provide a `--catalog` and the `catalog-v001.xml` file does not exist in your working directory, the ontology will be loaded without a catalog file. Finally, if the catalog specifies an import file that does not exist, the command will fail.
 
+## Input format
+
+When loading an ontology, the OWLAPI will normally attempt to parse it using all the available parsers, until it finds one that can successfully load the ontology. If the format of the ontology is known, it can be explicitly specified to ROBOT using the `--input-format` option, so that only the appropriate parsers for that format will be used.
+
+The `--input-format` option accepts the following values:
+
+| Option value | Ontology format                                                                   |
+| ------------ | --------------------------------------------------------------------------------- |
+| owl          | [RDF/XML](https://www.w3.org/TR/rdf-syntax-grammar/)                              |
+| obo          | [OBO Flat File](https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html) |
+| owx          | [OWL/XML](https://www.w3.org/TR/owl-xmlsyntax/)                                   |
+| ofn          | [OWL Functional](https://www.w3.org/TR/owl2-syntax/)                              |
+| omn          | [OWL Manchester](https://www.w3.org/TR/owl2-manchester-syntax/)                   |
+| ttl          | [Turtle](https://www.w3.org/TR/turtle/)                                           |
+| json         | [OBO Graphs JSON](https://github.com/geneontology/obographs/)                     |
+
 ## Logging
 
 ROBOT logs a variety of messages that are typically hidden from the user. When something goes wrong, a detailed exception message is thrown. If the exception message does not provide enough details, you can run the command again with the `-vvv` (very-very-verbose) flag to see the stack trace.
