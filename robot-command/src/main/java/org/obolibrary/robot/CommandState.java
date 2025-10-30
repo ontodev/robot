@@ -50,7 +50,6 @@ public class CommandState {
    * @param catalogPath the catalog to use
    */
   public void setCatalogPath(String catalogPath) {
-    System.err.println("Setting catalog path: " + catalogPath);
     this.catalogPath = catalogPath;
   }
 
