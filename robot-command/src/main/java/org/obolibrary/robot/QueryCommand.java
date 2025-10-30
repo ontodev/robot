@@ -318,8 +318,6 @@ public class QueryCommand implements Command {
     // User may have specified a path to a catalog in the CLI options
     // Check for this path in state, or check for ontology path in state to guess catalog
     String catalogPath = state.getCatalogPath();
-    System.err.println("CATALOG PATH!");
-    System.err.println(catalogPath);
     if (catalogPath == null) {
       String ontologyPath = state.getOntologyPath();
       // If loading from IRI, ontologyPath might be null
@@ -341,14 +339,10 @@ public class QueryCommand implements Command {
         catalogPath = null;
       }
     }
-    OWLOntology updatedOntology =
-        QueryOperation.convertModel(model, ioHelper, catalogPath, useTemporaryFile);
-    OWLDocumentFormat inputFormat =
+
+    OWLDocumentFormat format =
         inputOntology.getOWLOntologyManager().getOntologyFormat(inputOntology);
-    if (inputFormat != null) {
-      updatedOntology.getOWLOntologyManager().setOntologyFormat(updatedOntology, inputFormat);
-    }
-    return updatedOntology;
+    return QueryOperation.convertModel(model, ioHelper, catalogPath, useTemporaryFile, format);
   }
 
   /**
