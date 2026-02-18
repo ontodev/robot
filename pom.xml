@@ -5,7 +5,7 @@
 
   <groupId>org.obolibrary.robot</groupId>
   <artifactId>robot</artifactId>
-  <version>1.9.9</version>
+  <version>1.10.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>robot</name>
@@ -35,17 +35,6 @@
     </developer>
   </developers>
 
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
   <scm>
     <connection>scm:git:git://github.com/ontodev/robot.git</connection>
     <developerConnection>scm:git:ssh://github.com:ontodev/robot.git</developerConnection>
@@ -59,7 +48,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven-deploy-plugin-version>2.8.2</maven-deploy-plugin-version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <dependency.locations.enabled>false</dependency.locations.enabled>
@@ -126,7 +114,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.12.0</version>
+            <version>3.2.0</version>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
