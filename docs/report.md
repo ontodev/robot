@@ -80,14 +80,19 @@ If the report fails, the command will exit with a status of `1`, but a report wi
 
 Each query retrieves a triple in the form of `?entity ?property ?value`. The `?entity` is the violating entity, the `?property` is the property that is being violated, and `?value` is what is causing the violation (which could be empty).
 
-For example, the query to retrieve references to deprecated classes:
+For example, in this query the `?value` is any deprecated class that is the object of a triple:
+
 ```
-SELECT DISTINCT ?entity ?property ?value WHERE
-  {?value owl:deprecated true .
-   ?entity a owl:Class .
-   ?entity ?property ?value }
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT ?entity ?property ?value
+WHERE {
+  ?value a owl:Class ;
+    owl:deprecated "true"^^xsd:boolean .
+  ?entity ?property ?value .
+}
 ```
-Here, the `?value` is any deprecated class that is referenced in another entity's axioms.
 
 You can provide your own queries to use in the report (which can be included in the profile, described below). Please make sure to follow this `?entity ?property ?value` pattern when writing these queries.
 
@@ -110,18 +115,10 @@ INFO	deprecated_class
 For all default queries, include the query name shown above. If you do not wish to include a default query in your report, simply omit it from your profile. Any queries not named in the profile will not be run. Furthermore, your own queries can be included by providing the desired logging level followed by the absolute or relative path.
 Note that in order for the queries to be included in the report, they _must_ return exactly three variables: `?entity ?property ?value`.
 
-As an example, consider the query we have already mentioned:
-
-```
-SELECT DISTINCT ?entity ?property ?value WHERE
-  {?value owl:deprecated true .
-   ?entity a owl:Class .
-   ?entity ?property ?value }
-```
-
 For other examples, you can refer to [the full list of default checks](report_queries/).
 
-This example would create a report with references to deprecated classes as ERROR and the user query violations as INFO:
+This example profile would create a report with references to deprecated classes as ERROR and the user query violations as INFO:
+
 ```
 ERROR   deprecated_class
 INFO    file:///absolute/path/to/other_query.rq
