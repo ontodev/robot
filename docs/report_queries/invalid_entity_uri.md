@@ -1,10 +1,10 @@
 # Invalid Entity URI
 
-**Problem:** An entity's URI is not formatted correctly. OBO entities are formatted http://purl.obolibrary.org/obo/IDSPACE_0000000. This format is assumed by many OBO tools. Often, accidental typos cause an entity to be malformed, which can cause problems for tools that deal with OBO ontologies.
+**Problem:** OBO entities are formatted http://purl.obolibrary.org/obo/IDSPACE_0000000. This format is assumed by many OBO tools. Often, accidentally typos cause entity to be ignored during processing.
 
 **Solution:** Fix the entity OBO URI.
 
-```
+```sparql
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT DISTINCT ?entity ?property ?value WHERE {
