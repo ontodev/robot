@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.10] - 2026-02-18
+
 ### Fixed
 
 - Fix regression with guessing local catalog file [#1274]
@@ -400,7 +402,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.9...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.10...HEAD
+[1.9.10]: https://github.com/ontodev/robot/compare/v1.9.9...v1.9.10
 [1.9.9]: https://github.com/ontodev/robot/compare/v1.9.8...v1.9.9
 [1.9.8]: https://github.com/ontodev/robot/compare/v1.9.7...v1.9.8
 [1.9.7]: https://github.com/ontodev/robot/compare/v1.9.6...v1.9.7
