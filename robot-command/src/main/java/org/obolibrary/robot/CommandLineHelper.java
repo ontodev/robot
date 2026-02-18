@@ -478,7 +478,17 @@ public class CommandLineHelper {
     }
 
     if (!inputOntologyPaths.isEmpty()) {
-      return ioHelper.loadOntology(inputOntologyPaths.get(0), catalogPath, inputFormat);
+      String ontologyPath = inputOntologyPaths.get(0);
+      // When the ontology file is local,
+      // but the catalog path is null at this step,
+      // then we want to guess the catalog file.
+      if (catalogPath == null) {
+        File ontologyFile = new File(ontologyPath);
+        File catalogFile = ioHelper.guessCatalogFile(ontologyFile);
+        return ioHelper.loadOntology(ontologyFile, catalogFile, inputFormat);
+      } else {
+        return ioHelper.loadOntology(ontologyPath, catalogPath, inputFormat);
+      }
     } else if (!inputOntologyIRIs.isEmpty()) {
       return ioHelper.loadOntology(IRI.create(inputOntologyIRIs.get(0)), catalogPath, inputFormat);
     } else {

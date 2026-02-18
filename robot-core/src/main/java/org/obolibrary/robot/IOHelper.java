@@ -358,7 +358,7 @@ public class IOHelper {
    */
   public OWLOntology loadOntology(String ontologyPath, String catalogPath) throws IOException {
     File ontologyFile = new File(ontologyPath);
-    File catalogFile = new File(catalogPath);
+    File catalogFile = catalogPath != null ? new File(catalogPath) : null;
     return loadOntology(ontologyFile, catalogFile);
   }
 
