@@ -19,6 +19,7 @@ import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.UnloadableImportException;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 /** Tests for IOHelper. */
@@ -410,6 +411,43 @@ public class IOHelperTest extends CoreTest {
     try {
       ioHelper.loadOntology("src/test/resources/import_test.ofn", true, "owl");
     } catch (IOException ioe) {
+      error = true;
+    }
+    assert error;
+  }
+
+  /**
+   * Test loading an ontology and without using a catalog.
+   *
+   * @throws IOException on error creating IOHelper
+   */
+  @Test
+  public void testCatalog() throws IOException {
+    IOHelper ioHelper = new IOHelper();
+
+    // This file should fail to load without using a catalog file.
+    boolean error = false;
+    try {
+      ioHelper.loadOntology("src/test/resources/catalog_test.owl", false);
+    } catch (UnloadableImportException e) {
+      error = true;
+    }
+    assert error;
+
+    // The file should load if we specify the catalog file.
+    ioHelper.loadOntology(
+        "src/test/resources/catalog_test.owl", "src/test/resources/catalog-v001.xml");
+    assert true;
+
+    // If no argument is passed, catalog file should be automatically detected.
+    ioHelper.loadOntology("src/test/resources/catalog_test.owl");
+    assert true;
+
+    // If a null argument is passed, the catalog file will not be detected.
+    error = false;
+    try {
+      ioHelper.loadOntology("src/test/resources/catalog_test.owl", null);
+    } catch (UnloadableImportException e) {
       error = true;
     }
     assert error;

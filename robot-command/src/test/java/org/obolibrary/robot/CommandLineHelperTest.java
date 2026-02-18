@@ -5,6 +5,8 @@ import static org.junit.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.junit.Test;
 
 /** Tests for CommandLineHelper. */
@@ -48,5 +50,22 @@ public class CommandLineHelperTest {
         () -> {
           CommandLineHelper.parseArgList("unbalanced 'quotes");
         });
+  }
+
+  /**
+   * Test handling an input ontology that requires a catalog file.
+   *
+   * @throws Exception on parsing problem
+   */
+  @Test
+  public void testGetInputOntology() throws Exception {
+    String[] args = {"--input", "../robot-core/src/test/resources/catalog_test.owl"};
+    Options o = CommandLineHelper.getCommonOptions();
+    o.addOption("i", "input", true, "load ontology from a file");
+    o.addOption("I", "input-iri", true, "load ontology from an IRI");
+    CommandLine line = CommandLineHelper.getCommandLine("usage", o, args);
+    IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
+    CommandLineHelper.getInputOntology(ioHelper, line);
+    assert true;
   }
 }
