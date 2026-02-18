@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add `--input-format` global option [#1038]
+- Warn on missing `?property` and `?value` in `report` [#1273]
 
 ### Fixed
 - Inherit OWLDocumentFormat when performing SPARQL update [#1267]
