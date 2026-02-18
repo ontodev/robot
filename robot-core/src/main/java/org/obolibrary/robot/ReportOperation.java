@@ -919,6 +919,9 @@ public class ReportOperation {
       IOHelper ioHelper, String queryName, ResultSet violationSet, Integer limit) throws Exception {
     List<Violation> violations = new ArrayList<>();
 
+    boolean propertyWarning = false;
+    boolean valueWarning = false;
+
     // Counter for stopping at limit
     int c = 0;
     while (violationSet.hasNext()) {
@@ -977,9 +980,24 @@ public class ReportOperation {
         violation = new Violation("blank node");
       }
 
-      // try and get a property and value from the query
+      // Try and get a property and value from the query.
+      // If none is found, print a warning, but only once.
       String property = getQueryResultOrNull(qs, "property");
+      if (property == null) {
+        if (!propertyWarning) {
+          System.out.println(WARN + ": '" + queryName + "' query is missing ?property variable");
+        }
+        propertyWarning = true;
+      }
+
       String value = getQueryResultOrNull(qs, "value");
+      if (value == null) {
+        if (!valueWarning) {
+          System.out.println(WARN + ": '" + queryName + "' query is missing ?value variable");
+        }
+        valueWarning = true;
+      }
+
       // add details to Violation
       if (property != null) {
         OWLEntity e = dataFactory.getOWLClass(ioHelper.createIRI(property));

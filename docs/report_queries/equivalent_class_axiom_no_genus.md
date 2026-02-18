@@ -4,7 +4,7 @@
 
 **Solution:** Add a genus to the class expression like: C = B and R some A.
 
-```
+```sparql
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
@@ -17,5 +17,4 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
   BIND (if(isIRI(?property1), ?property1, "blank node" ) as ?property)
 }
 ORDER BY ?entity
-
 ```
