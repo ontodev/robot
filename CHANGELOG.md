@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix regression with guessing local catalog file [#1274]
+
 ## [1.9.9] - 2026-02-18
 
 ### Added
