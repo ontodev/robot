@@ -291,6 +291,10 @@
       "@id": "http://purl.obolibrary.org/obo/EV_",
       "@prefix": true
     },
+    "EXMO": {
+      "@id": "http://purl.obolibrary.org/obo/EXMO_",
+      "@prefix": true
+    },
     "ExO": {
       "@id": "http://purl.obolibrary.org/obo/ExO_",
       "@prefix": true

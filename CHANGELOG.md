@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.9] - 2026-02-18
+
 ### Added
 - Add `--input-format` global option [#1038]
 - Warn on missing `?property` and `?value` in `report` [#1273]
@@ -394,7 +396,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.8...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.9...HEAD
+[1.9.9]: https://github.com/ontodev/robot/compare/v1.9.8...v1.9.9
 [1.9.8]: https://github.com/ontodev/robot/compare/v1.9.7...v1.9.8
 [1.9.7]: https://github.com/ontodev/robot/compare/v1.9.6...v1.9.7
 [1.9.6]: https://github.com/ontodev/robot/compare/v1.9.5...v1.9.6
