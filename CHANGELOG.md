@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix regression with guessing local catalog file [#1274]
+- Fix intermittent robot extract test failures [#1277]
 
 ## [1.9.9] - 2026-02-18
 
