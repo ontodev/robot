@@ -288,7 +288,7 @@ public class IOHelper {
    * file for a catalog file.
    *
    * @param ontologyFile the
-   * @return the guessed catalog File; may not exist!
+   * @return the guessed catalog File or null if it does not exist
    */
   public File guessCatalogFile(File ontologyFile) {
     String path = ontologyFile.getParent();
@@ -296,7 +296,12 @@ public class IOHelper {
     if (path != null) {
       catalogPath = path + "/catalog-v001.xml";
     }
-    return new File(catalogPath);
+    File catalogFile = new File(catalogPath);
+    if (catalogFile.isFile()) {
+      return catalogFile;
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -309,10 +314,6 @@ public class IOHelper {
   public OWLOntology loadOntology(String ontologyPath) throws IOException {
     File ontologyFile = new File(ontologyPath);
     File catalogFile = guessCatalogFile(ontologyFile);
-    if (!catalogFile.isFile()) {
-      // If the catalog file does not exist, do not use catalog
-      catalogFile = null;
-    }
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -387,10 +388,6 @@ public class IOHelper {
    */
   public OWLOntology loadOntology(File ontologyFile) throws IOException {
     File catalogFile = guessCatalogFile(ontologyFile);
-    if (!catalogFile.isFile()) {
-      // If the catalog file does not exist, do not use catalog
-      catalogFile = null;
-    }
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -484,10 +481,10 @@ public class IOHelper {
       }
       // Maybe unzip
       if (ontologyFile.getPath().endsWith(".gz")) {
-        if (catalogFile == null) {
-          return loadCompressedOntology(ontologyFile, null, inputFormat);
-        } else {
+        if (catalogFile != null && catalogFile.isFile()) {
           return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath(), inputFormat);
+        } else {
+          return loadCompressedOntology(ontologyFile, null, inputFormat);
         }
       }
 
