@@ -484,10 +484,10 @@ public class IOHelper {
       }
       // Maybe unzip
       if (ontologyFile.getPath().endsWith(".gz")) {
-        if (catalogFile == null) {
-          return loadCompressedOntology(ontologyFile, null, inputFormat);
-        } else {
+        if (catalogFile != null && catalogFile.isFile()) {
           return loadCompressedOntology(ontologyFile, catalogFile.getAbsolutePath(), inputFormat);
+        } else {
+          return loadCompressedOntology(ontologyFile, null, inputFormat);
         }
       }
 
