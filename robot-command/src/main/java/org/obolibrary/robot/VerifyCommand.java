@@ -9,6 +9,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.tdb.TDBFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
@@ -203,7 +204,12 @@ public class VerifyCommand implements Command {
     boolean keepMappings = CommandLineHelper.getBooleanValue(line, "keep-tdb-mappings", false);
     String tdbDir = CommandLineHelper.getDefaultValue(line, "tdb-directory", ".tdb");
     try {
-      return executeVerify(line, dataset);
+      dataset.begin(ReadWrite.READ);
+      try {
+        return executeVerify(line, dataset);
+      } finally {
+        dataset.end();
+      }
     } finally {
       dataset.close();
       TDBFactory.release(dataset);
