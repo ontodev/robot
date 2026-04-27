@@ -45,9 +45,10 @@ By default, this command will fail with a non-zero exit code when any violations
 
 For very large ontologies, it may be beneficial to load the ontology to a mapping file on disk rather than loading it into memory. This is supported by an [Apache Jena TDB Dataset](http://jena.apache.org/documentation/tdb/datasets.html). To execute `verify` with TDB, use `--tdb true`:
 
-    robot verify --input asserted-equiv.owl \
+    robot verify --input asserted-equiv.ttl \
       --tdb true \
       --queries equivalent.sparql \
+      --fail-on-violation false \
       --output-dir results/
 
 Please note that this will only work with ontologies in RDF/XML or Turtle syntax, and not with Manchester Syntax. Attempting to load an ontology in a different syntax will result in a [Syntax Error](errors#syntax-error). ROBOT will create a directory to store the ontology as a dataset, which defaults to `.tdb`. You can change the location of the TDB directory by using `--tdb-directory <directory>`. If a `--tdb-directory` is specified, you do not need to include `--tdb true`. If you've already created a TDB directory, you can verify from the TDB dataset without needing to specify an `--input` - just include the `--tdb-directory`.
