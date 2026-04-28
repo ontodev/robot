@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Allow use of TDB in [`verify`] [#1283]
+
 ### Fixed
 
 - Fix problem with catalog file for compressed ontologies [#1281]
