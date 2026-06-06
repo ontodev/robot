@@ -7,7 +7,6 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -700,7 +699,7 @@ public class ReportOperation {
     // Handle simple file path, probably accessed during testing
     if (dirURL != null && dirURL.getProtocol().equals("file")) {
       final Set<Path> queryFilePaths =
-          Files.list(Paths.get(dirURL.toURI())).collect(Collectors.toSet());
+          Files.list(Path.of(dirURL.toURI())).collect(Collectors.toSet());
       if (queryFilePaths.size() == 0) {
         throw new IOException(
             "Cannot access report query files. There are no files in the directory.");
