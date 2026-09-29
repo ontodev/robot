@@ -136,7 +136,7 @@ public class VerifyCommand implements Command {
 
     boolean failOnViolation = CommandLineHelper.getBooleanValue(line, "fail-on-violation", true);
     if (!passing && failOnViolation) {
-      System.exit(1);
+      throw new Exception(verificationFailed);
     }
 
     return state;
