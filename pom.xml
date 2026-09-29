@@ -48,8 +48,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
     <dependency.locations.enabled>false</dependency.locations.enabled>
   </properties>
 
@@ -68,6 +68,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.6.2</version>
             <configuration>
               <compilerArgument>-Xlint:all</compilerArgument>
               <showWarnings>true</showWarnings>
