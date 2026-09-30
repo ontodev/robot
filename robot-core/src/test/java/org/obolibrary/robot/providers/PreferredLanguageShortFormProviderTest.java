@@ -37,6 +37,8 @@ public class PreferredLanguageShortFormProviderTest {
   /**
    * Build, in a fresh manager, an ontology in which "dog" has four labels (de, en, en-GB, and an
    * untagged one), "fox" has only a de and an en-GB label (no bare en), and "cat" has none.
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
    */
   private OWLOntology ontology() throws OWLOntologyCreationException {
     OWLOntologyManager m = OWLManager.createOWLOntologyManager();
@@ -68,7 +70,11 @@ public class PreferredLanguageShortFormProviderTest {
         new SimpleShortFormProvider());
   }
 
-  /** An exact language match wins, and beats an available cascade candidate. */
+  /**
+   * An exact language match wins, and beats an available cascade candidate.
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
+   */
   @Test
   public void testExactPreferred() throws OWLOntologyCreationException {
     assertEquals("dog", provider("en,fr").getShortForm(dog));
@@ -76,33 +82,53 @@ public class PreferredLanguageShortFormProviderTest {
     assertEquals("dog", provider("en").getShortForm(dog));
   }
 
-  /** A specific tag selects the matching regional label. */
+  /**
+   * A specific tag selects the matching regional label.
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
+   */
   @Test
   public void testRegionalTag() throws OWLOntologyCreationException {
     assertEquals("hound", provider("en-GB").getShortForm(dog));
   }
 
-  /** A broad preference cascades to a regional label when no exact match exists. */
+  /**
+   * A broad preference cascades to a regional label when no exact match exists.
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
+   */
   @Test
   public void testCascade() throws OWLOntologyCreationException {
     // "fox" has no bare-en label, so a preference of "en" cascades to its en-GB label.
     assertEquals("fox (GB)", provider("en").getShortForm(fox));
   }
 
-  /** The no-lang token selects an untagged literal. */
+  /**
+   * The no-lang token selects an untagged literal.
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
+   */
   @Test
   public void testNoLangToken() throws OWLOntologyCreationException {
     assertEquals("plainlabel", provider("none").getShortForm(dog));
   }
 
-  /** With no matching preferred language, fall back to the alphanumerically-first label. */
+  /**
+   * With no matching preferred language, fall back to the alphanumerically-first label.
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
+   */
   @Test
   public void testFallbackToAnyLabel() throws OWLOntologyCreationException {
     // "es" matches nothing; among {Hund, dog, hound, plainlabel} the alpha-first is "Hund".
     assertEquals("Hund", provider("es").getShortForm(dog));
   }
 
-  /** An entity with no label defers to the alternate provider (its short form / IRI fragment). */
+  /**
+   * An entity with no label defers to the alternate provider (its short form / IRI fragment).
+   *
+   * @throws OWLOntologyCreationException if ontology cannot be created.
+   */
   @Test
   public void testMissingLabelUsesAlternate() throws OWLOntologyCreationException {
     assertEquals("cat", provider("en,fr").getShortForm(cat));
