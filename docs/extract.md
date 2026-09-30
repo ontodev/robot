@@ -46,7 +46,7 @@ For more details see:
 - [SLME source code](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/SyntacticLocalityModuleExtractor.html)
 - [ModuleType source code](http://owlcs.github.io/owlapi/apidocs_4/uk/ac/manchester/cs/owlapi/modularity/ModuleType.html)
 
-ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ontology. If none of the input terms exist, the command will fail with an [empty terms error](errors#empty-terms-error). This can be overridden by including `--force true`. 
+ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ontology. If none of the input terms exist, the command will fail with an [empty terms error](errors#empty-terms-error). This can be overridden by including `--force true`.
 
 ### Instances
 
@@ -79,16 +79,14 @@ For more details see the [MIREOT paper](http://dx.doi.org/10.3233/AO-2011-0087).
 
 The subset method extracts a sub-ontology that contains only the seed terms (that you specify with `--term` and `--term-file` options) and the relations between them. This method uses the [relation-graph](https://github.com/balhoff/relation-graph) to materialize the existential relations among the seed terms. Procedurally, the subset method materializes the input ontology and adds the inferred axioms to the input ontology. Then filters the ontology with the given seed terms. Finally, it reduces the filtered ontology to remove redundant subClassOf axioms.
 
-```
-robot extract --method subset \
-    --input subset.obo \
-    --term "obo:ONT_1" \
-    --term "obo:ONT_5" \
-    --term "BFO:0000050" \
-    --output results/subset_result.owl
-```
-        
-ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ontology. If none of the input terms exist, the command will fail with an [empty terms error](errors#empty-terms-error). This can be overridden by including `--force true`. 
+    robot extract --method subset \
+        --input subset.obo \
+        --term "obo:ONT_1" \
+        --term "obo:ONT_5" \
+        --term "BFO:0000050" \
+        --output results/subset_result.owl
+
+ROBOT expects any `--term` or IRI in the `--term-file` to exist in the input ontology. If none of the input terms exist, the command will fail with an [empty terms error](errors#empty-terms-error). This can be overridden by including `--force true`.
 
 ### Intermediates
 
@@ -179,7 +177,7 @@ You can also include ontology annotations from the input ontology with `--copy-o
       --term UBERON:0000916 \
       --copy-ontology-annotations true \
       --output results/annotated_module.owl
-      
+
 ## Adding Source Annotations
 
 `extract` provides an option to annotate extracted terms with `rdfs:isDefinedBy`. If the term already has an annotation using this property, the existing annotation will be copied and no new annotation will be added.
@@ -188,9 +186,9 @@ You can also include ontology annotations from the input ontology with `--copy-o
       --input annotated.owl \
       --term UBERON:0000916 \
       --annotate-with-source true \
-      --output results/annotated_source.owl 
+      --output results/annotated_source.owl
 
-The object of the property is, by default, the base name of the term's IRI. For example, the IRI for `GO:0000001` (`http://purl.obolibrary.org/obo/GO_0000001`) would receive the source `http://purl.obolibrary.org/obo/go.owl`. 
+The object of the property is, by default, the base name of the term's IRI. For example, the IRI for `GO:0000001` (`http://purl.obolibrary.org/obo/GO_0000001`) would receive the source `http://purl.obolibrary.org/obo/go.owl`.
 
 Sometimes classes are adopted by other ontologies, but retain their original IRI. In this case, you can provide the path to a [term-to-source mapping file](/examples/source-map.tsv) as CSV or TSV.
 

@@ -529,6 +529,44 @@ public class CommandLineHelper {
   }
 
   /**
+   * Given an IOHelper, a state object, and a command line, return the input ontology list for
+   * commands whose output state ontology is the existing state ontology or the first provided input
+   * ontology. If the state already contains an ontology, it is prepended and state metadata is
+   * preserved. Otherwise, metadata for the first local input is recorded for downstream commands
+   * that may need to reload imports.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param state the command state to read and update
+   * @param line the command line to use
+   * @return the list of input ontologies, beginning with the state ontology when present
+   * @throws IllegalArgumentException if required options are missing
+   * @throws IOException if an ontology cannot be loaded
+   */
+  public static List<OWLOntology> getPrimaryInputOntologies(
+      IOHelper ioHelper, CommandState state, CommandLine line)
+      throws IllegalArgumentException, IOException {
+    List<OWLOntology> inputOntologies = new ArrayList<>();
+    boolean hasStateOntology = state.getOntology() != null;
+    if (hasStateOntology) {
+      inputOntologies.add(state.getOntology());
+      inputOntologies.addAll(getInputOntologies(ioHelper, line, true));
+    } else {
+      InputOntologies loadedOntologies = getInputOntologiesWithMetadata(ioHelper, line);
+      inputOntologies.addAll(loadedOntologies.getOntologies());
+      if (loadedOntologies.getPrimaryOntologyPath() != null) {
+        state.setOntologyPath(loadedOntologies.getPrimaryOntologyPath());
+      }
+      if (loadedOntologies.getCatalogPath() != null) {
+        state.setCatalogPath(loadedOntologies.getCatalogPath());
+      }
+      if (inputOntologies.isEmpty()) {
+        throw new IllegalArgumentException(missingInputsError);
+      }
+    }
+    return inputOntologies;
+  }
+
+  /**
    * Given an IOHelper, a state object, and a command line, update the state with the ontology.
    *
    * @param ioHelper the IOHelper to load the ontology with
@@ -1080,23 +1118,73 @@ public class CommandLineHelper {
    */
   public static List<OWLOntology> getInputOntologies(IOHelper ioHelper, CommandLine line)
       throws IllegalArgumentException, IOException {
-    List<OWLOntology> inputOntologies = new ArrayList<>();
+    return getInputOntologiesWithMetadata(ioHelper, line).getOntologies();
+  }
+
+  /**
+   * Given an IOHelper and a command line, check input options and return loaded input ontologies
+   * plus metadata for the first ontology.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @return loaded ontologies and primary input metadata
+   * @throws IllegalArgumentException on bad pattern
+   * @throws IOException if the ontology cannot be loaded
+   */
+  private static InputOntologies getInputOntologiesWithMetadata(IOHelper ioHelper, CommandLine line)
+      throws IllegalArgumentException, IOException {
+    String catalogPath = getOptionalValue(line, "catalog");
+    return getInputOntologiesWithMetadata(ioHelper, line, catalogPath);
+  }
+
+  /**
+   * Given an IOHelper, a command line, and a catalog path, check input options and return loaded
+   * input ontologies plus metadata for the first ontology.
+   *
+   * @param ioHelper the IOHelper to load the ontology with
+   * @param line the command line to use
+   * @param catalogPath the catalog file to use, or null to guess local catalogs
+   * @return loaded ontologies and primary input metadata
+   * @throws IllegalArgumentException on bad pattern
+   * @throws IOException if the ontology cannot be loaded
+   */
+  private static InputOntologies getInputOntologiesWithMetadata(
+      IOHelper ioHelper, CommandLine line, String catalogPath)
+      throws IllegalArgumentException, IOException {
+    InputOntologies inputOntologies = new InputOntologies(catalogPath);
     String inputFormat = getOptionalValue(line, "input-format");
     // Check for input files
     List<String> inputOntologyPaths = getOptionalValues(line, "input");
     for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, true, inputFormat));
+      OWLOntology ontology;
+      if (catalogPath != null) {
+        ontology = ioHelper.loadOntology(inputOntologyPath, catalogPath, inputFormat);
+      } else {
+        ontology = ioHelper.loadOntology(inputOntologyPath, true, inputFormat);
+      }
+      inputOntologies.add(ontology, inputOntologyPath);
     }
     // Check for input IRIs
     List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
     for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(ioHelper.loadOntology(IRI.create(inputOntologyIRI), null, inputFormat));
+      inputOntologies.add(
+          ioHelper.loadOntology(IRI.create(inputOntologyIRI), catalogPath, inputFormat), null);
     }
     // Check for input patterns (wildcard)
     String pattern = getOptionalValue(line, "inputs");
     if (pattern != null) {
+      File catalogFile = null;
+      if (catalogPath != null) {
+        catalogFile = new File(catalogPath);
+      }
       for (File inputOntologyFile : getFilesByPattern(pattern)) {
-        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, true, inputFormat));
+        OWLOntology ontology;
+        if (catalogFile != null) {
+          ontology = ioHelper.loadOntology(inputOntologyFile, catalogFile, inputFormat);
+        } else {
+          ontology = ioHelper.loadOntology(inputOntologyFile, true, inputFormat);
+        }
+        inputOntologies.add(ontology, inputOntologyFile.getPath());
       }
     }
     return inputOntologies;
@@ -1114,28 +1202,68 @@ public class CommandLineHelper {
    */
   public static List<OWLOntology> getInputOntologies(
       IOHelper ioHelper, CommandLine line, String catalogPath) throws IOException {
-    List<OWLOntology> inputOntologies = new ArrayList<>();
-    String inputFormat = getOptionalValue(line, "input-format");
-    // Check for input files
-    List<String> inputOntologyPaths = getOptionalValues(line, "input");
-    for (String inputOntologyPath : inputOntologyPaths) {
-      inputOntologies.add(ioHelper.loadOntology(inputOntologyPath, catalogPath, inputFormat));
+    return getInputOntologiesWithMetadata(ioHelper, line, catalogPath).getOntologies();
+  }
+
+  /** Loaded input ontologies with metadata for the first loaded ontology. */
+  private static class InputOntologies {
+    /** Loaded ontologies. */
+    private List<OWLOntology> ontologies = new ArrayList<>();
+
+    /** Path to the explicit catalog, if one was provided. */
+    private String catalogPath;
+
+    /** Path to the first local input ontology, if the first input was local. */
+    private String primaryOntologyPath;
+
+    /**
+     * Create a result container.
+     *
+     * @param catalogPath path to the explicit catalog, or null
+     */
+    InputOntologies(String catalogPath) {
+      this.catalogPath = catalogPath;
     }
-    // Check for input IRIs
-    List<String> inputOntologyIRIs = getOptionalValues(line, "input-iri");
-    for (String inputOntologyIRI : inputOntologyIRIs) {
-      inputOntologies.add(
-          ioHelper.loadOntology(IRI.create(inputOntologyIRI), catalogPath, inputFormat));
-    }
-    // Check for input patterns (wildcard)
-    String pattern = getOptionalValue(line, "inputs");
-    if (pattern != null) {
-      File catalogFile = new File(catalogPath);
-      for (File inputOntologyFile : getFilesByPattern(pattern)) {
-        inputOntologies.add(ioHelper.loadOntology(inputOntologyFile, catalogFile, inputFormat));
+
+    /**
+     * Add a loaded ontology and the local path that loaded it, if any.
+     *
+     * @param ontology loaded ontology
+     * @param ontologyPath local ontology path, or null for IRI inputs
+     */
+    void add(OWLOntology ontology, String ontologyPath) {
+      if (ontologies.isEmpty()) {
+        primaryOntologyPath = ontologyPath;
       }
+      ontologies.add(ontology);
     }
-    return inputOntologies;
+
+    /**
+     * Return the loaded ontologies.
+     *
+     * @return loaded ontologies
+     */
+    List<OWLOntology> getOntologies() {
+      return ontologies;
+    }
+
+    /**
+     * Return the explicit catalog path.
+     *
+     * @return explicit catalog path, or null
+     */
+    String getCatalogPath() {
+      return catalogPath;
+    }
+
+    /**
+     * Return the first local input path.
+     *
+     * @return first local input path, or null
+     */
+    String getPrimaryOntologyPath() {
+      return primaryOntologyPath;
+    }
   }
 
   /**

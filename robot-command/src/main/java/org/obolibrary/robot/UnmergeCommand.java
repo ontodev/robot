@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -101,13 +100,8 @@ public class UnmergeCommand implements Command {
       state = new CommandState();
     }
 
-    List<OWLOntology> inputOntologies = new ArrayList<>();
-    boolean notEmpty = false;
-    if (state.getOntology() != null) {
-      notEmpty = true;
-      inputOntologies.add(state.getOntology());
-    }
-    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
+    List<OWLOntology> inputOntologies =
+        CommandLineHelper.getPrimaryInputOntologies(ioHelper, state, line);
 
     OWLOntology outputOntology = UnmergeOperation.unmerge(inputOntologies);
 

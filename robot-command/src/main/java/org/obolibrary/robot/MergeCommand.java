@@ -1,6 +1,5 @@
 package org.obolibrary.robot;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -114,14 +113,8 @@ public class MergeCommand implements Command {
       state = new CommandState();
     }
 
-    List<OWLOntology> inputOntologies = new ArrayList<>();
-    // inputOntologies should not be empty
-    boolean notEmpty = false;
-    if (state.getOntology() != null) {
-      notEmpty = true;
-      inputOntologies.add(state.getOntology());
-    }
-    inputOntologies.addAll(CommandLineHelper.getInputOntologies(ioHelper, line, notEmpty));
+    List<OWLOntology> inputOntologies =
+        CommandLineHelper.getPrimaryInputOntologies(ioHelper, state, line);
 
     boolean collapseImportClosure =
         CommandLineHelper.getBooleanValue(line, "collapse-import-closure", true);
