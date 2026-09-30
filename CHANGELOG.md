@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Add `--label-langs-priority` option to `diff` for choosing entity labels by language preference in the `pretty` format
 - Allow use of TDB in [`verify`] [#1283]
 
 ### Fixed

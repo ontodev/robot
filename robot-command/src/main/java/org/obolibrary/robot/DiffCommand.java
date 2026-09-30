@@ -53,6 +53,16 @@ public class DiffCommand implements Command {
         null, "labels", true, "if true, append labels after entity IRIs in the text format output");
     o.addOption(
         "f", "format", true, "format for diff output: plain (default) | pretty | html | markdown");
+    o.addOption(
+        null,
+        LanguagePreference.OPTION_NAME,
+        true,
+        "comma-separated language tags, in priority order, for choosing entity labels in the"
+            + " 'pretty' format (e.g. 'en-GB,en,"
+            + LanguagePreference.NO_LANG_TOKEN
+            + "'); use '"
+            + LanguagePreference.NO_LANG_TOKEN
+            + "' for values with no language tag");
     options = o;
   }
 
@@ -159,6 +169,11 @@ public class DiffCommand implements Command {
     Map<String, String> options = new HashMap<>();
     options.put("labels", CommandLineHelper.getDefaultValue(line, "labels", "false"));
     options.put("format", CommandLineHelper.getDefaultValue(line, "format", "plain"));
+    String preferredLangs =
+        CommandLineHelper.getOptionalValue(line, LanguagePreference.OPTION_NAME);
+    if (preferredLangs != null) {
+      options.put(LanguagePreference.OPTION_NAME, preferredLangs);
+    }
 
     DiffOperation.compare(leftOntology, rightOntology, ioHelper, writer, options);
     writer.close();

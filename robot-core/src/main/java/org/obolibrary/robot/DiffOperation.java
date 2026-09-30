@@ -13,10 +13,12 @@ import org.geneontology.owl.differ.render.HTMLDiffRenderer;
 import org.geneontology.owl.differ.render.MarkdownGroupedDiffRenderer;
 import org.geneontology.owl.differ.shortform.DoubleShortFormProvider;
 import org.geneontology.owl.differ.shortform.OBOShortenerShortFormProvider;
+import org.obolibrary.robot.providers.PreferredLanguageShortFormProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.AnnotationValueShortFormProvider;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,6 +106,18 @@ public class DiffOperation {
       format = "pretty";
     }
 
+    // An ordered list of preferred label languages (empty means "no preference").
+    List<String> preferredLangs =
+        LanguagePreference.parse(OptionsHelper.getOption(options, LanguagePreference.OPTION_NAME));
+    if (!preferredLangs.isEmpty() && !format.equals("pretty")) {
+      // Only the "pretty" format currently supports language-prioritized labels; the markdown and
+      // html renderers build their own label provider inside the owl-diff library.
+      logger.warn(
+          "The --{} option only affects the 'pretty' diff format; it is ignored for format '{}'.",
+          LanguagePreference.OPTION_NAME,
+          format);
+    }
+
     Differ.BasicDiff diff = Differ.diff(ontology1, ontology2);
 
     if (diff.isEmpty()) {
@@ -127,13 +141,19 @@ public class DiffOperation {
         break;
       case "pretty":
         DefaultPrefixManager pm = ioHelper.getPrefixManager();
-        AnnotationValueShortFormProvider labelProvider =
-            new AnnotationValueShortFormProvider(
-                ontologyProvider,
-                pm,
-                pm,
-                Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel()),
-                Collections.emptyMap());
+        List<OWLAnnotationProperty> labelProperties =
+            Collections.singletonList(OWLManager.getOWLDataFactory().getRDFSLabel());
+        ShortFormProvider labelProvider;
+        if (preferredLangs.isEmpty()) {
+          // No language preference: keep the pre-existing behavior exactly.
+          labelProvider =
+              new AnnotationValueShortFormProvider(
+                  ontologyProvider, pm, pm, labelProperties, Collections.emptyMap());
+        } else {
+          labelProvider =
+              new PreferredLanguageShortFormProvider(
+                  ontologyProvider, labelProperties, preferredLangs, pm);
+        }
         OBOShortenerShortFormProvider iriProvider = new OBOShortenerShortFormProvider(pm);
         DoubleShortFormProvider doubleProvider =
             new DoubleShortFormProvider(iriProvider, labelProvider);

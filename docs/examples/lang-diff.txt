@@ -1,0 +1,6 @@
+2 axioms in left ontology but not in right ontology:
+- OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/lang-left.owl>) VersionIRI(<null>))
+- SubClassOf(<https://github.com/ontodev/robot/examples/lang.owl#puppy> <https://github.com/ontodev/robot/examples/lang.owl#dog>[hound])
+
+1 axioms in right ontology but not in left ontology:
++ OntologyID(OntologyIRI(<https://github.com/ontodev/robot/examples/lang-right.owl>) VersionIRI(<null>))
