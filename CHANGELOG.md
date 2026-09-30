@@ -8,18 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
-- Add `--label-langs-priority` option to `diff` for choosing entity labels by language preference in the `pretty` format
+- Add `--label-langs-priority` option to [`diff`] for choosing entity labels by language preference in the `pretty` format
 - Allow use of TDB in [`verify`] [#1283]
 
-### Fixed
+### Changed
+- Set minimum compile version to Java 11 [#935]
+- Update com.fasterxml.jackson.core to 2.18.8
 
+### Fixed
+- Fix problem with catalog files for multiple inputs in [`merge`] and [`unmerge`] [#1285]
 - Fix problem with catalog file for compressed ontologies [#1281]
 
 ## [1.9.10] - 2026-02-18
 
 ### Fixed
-
 - Fix regression with guessing local catalog file [#1274]
 - Fix intermittent robot extract test failures [#1277]
 
@@ -464,9 +466,18 @@ First official release of ROBOT!
 [`repair`]: http://robot.obolibrary.org/repair
 [`report`]: http://robot.obolibrary.org/report
 [`template`]: http://robot.obolibrary.org/template
+[`unmerge`]: http://robot.obolibrary.org/unmerge
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1285]: https://github.com/ontodev/robot/pull/1285
+[#1283]: https://github.com/ontodev/robot/pull/1283
+[#1281]: https://github.com/ontodev/robot/pull/1281
+[#1277]: https://github.com/ontodev/robot/pull/1277
+[#1274]: https://github.com/ontodev/robot/pull/1274
+[#1273]: https://github.com/ontodev/robot/pull/1273
+[#1268]: https://github.com/ontodev/robot/issues/1268
+[#1267]: https://github.com/ontodev/robot/pull/1267
 [#1252]: https://github.com/ontodev/robot/pull/1252
 [#1251]: https://github.com/ontodev/robot/pull/1251
 [#1249]: https://github.com/ontodev/robot/pull/1249
@@ -482,7 +493,6 @@ First official release of ROBOT!
 [#1223]: https://github.com/ontodev/robot/pull/1223
 [#1221]: https://github.com/ontodev/robot/pull/1221
 [#1220]: https://github.com/ontodev/robot/issues/1220
-[#1216]: https://github.com/ontodev/robot/pull/1216
 [#1216]: https://github.com/ontodev/robot/issues/1216
 [#1212]: https://github.com/ontodev/robot/pull/1212
 [#1211]: https://github.com/ontodev/robot/pull/1211
@@ -515,6 +525,7 @@ First official release of ROBOT!
 [#1071]: https://github.com/ontodev/robot/pull/1071
 [#1061]: https://github.com/ontodev/robot/issues/1061
 [#1060]: https://github.com/ontodev/robot/issues/1060
+[#1038]: https://github.com/ontodev/robot/issues/1038
 [#1030]: https://github.com/ontodev/robot/issues/1030
 [#1026]: https://github.com/ontodev/robot/issues/1026
 [#1023]: https://github.com/ontodev/robot/pull/1023
@@ -538,6 +549,7 @@ First official release of ROBOT!
 [#948]: https://github.com/ontodev/robot/pull/948
 [#944]: https://github.com/ontodev/robot/pull/944
 [#938]: https://github.com/ontodev/robot/pull/938
+[#935]: https://github.com/ontodev/robot/issues/935
 [#931]: https://github.com/ontodev/robot/issues/931
 [#929]: https://github.com/ontodev/robot/pull/929
 [#924]: https://github.com/ontodev/robot/issues/924
