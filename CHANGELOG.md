@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.11] - 2026-10-01
+
 ### Added
 - Add `--label-langs-priority` option to [`diff`] for choosing entity labels by language preference in the `pretty` format
 - Allow use of TDB in [`verify`] [#1283]
@@ -415,7 +417,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First official release of ROBOT!
 
-[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.10...HEAD
+[Unreleased]: https://github.com/ontodev/robot/compare/v1.9.11...HEAD
+[1.9.11]: https://github.com/ontodev/robot/compare/v1.9.10...v1.9.11
 [1.9.10]: https://github.com/ontodev/robot/compare/v1.9.9...v1.9.10
 [1.9.9]: https://github.com/ontodev/robot/compare/v1.9.8...v1.9.9
 [1.9.8]: https://github.com/ontodev/robot/compare/v1.9.7...v1.9.8

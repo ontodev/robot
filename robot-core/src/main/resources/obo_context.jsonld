@@ -124,7 +124,7 @@
       "@prefix": true
     },
     "CHEMINF": {
-      "@id": "http://purl.obolibrary.org/obo/CHEMINF_",
+      "@id": "http://semanticscience.org/resource/CHEMINF_",
       "@prefix": true
     },
     "CHIRO": {
@@ -263,6 +263,10 @@
       "@id": "http://purl.obolibrary.org/obo/EMAPA_",
       "@prefix": true
     },
+    "EMRO": {
+      "@id": "http://purl.obolibrary.org/obo/EMRO_",
+      "@prefix": true
+    },
     "ENVO": {
       "@id": "http://purl.obolibrary.org/obo/ENVO_",
       "@prefix": true
@@ -340,7 +344,7 @@
       "@prefix": true
     },
     "FMA": {
-      "@id": "http://purl.obolibrary.org/obo/FMA_",
+      "@id": "http://purl.org/sig/ont/fma/",
       "@prefix": true
     },
     "FOBI": {
@@ -492,7 +496,7 @@
       "@prefix": true
     },
     "MAMO": {
-      "@id": "http://purl.obolibrary.org/obo/MAMO_",
+      "@id": "http://identifiers.org/mamo/MAMO_",
       "@prefix": true
     },
     "MAO": {
@@ -759,12 +763,20 @@
       "@id": "http://purl.obolibrary.org/obo/OlatDv_",
       "@prefix": true
     },
+    "PAIN": {
+      "@id": "http://purl.obolibrary.org/obo/PAIN_",
+      "@prefix": true
+    },
     "PAO": {
       "@id": "http://purl.obolibrary.org/obo/PAO_",
       "@prefix": true
     },
     "PATO": {
       "@id": "http://purl.obolibrary.org/obo/PATO_",
+      "@prefix": true
+    },
+    "PBPKO": {
+      "@id": "http://purl.obolibrary.org/obo/PBPKO_",
       "@prefix": true
     },
     "PCL": {
@@ -821,6 +833,10 @@
     },
     "PR": {
       "@id": "http://purl.obolibrary.org/obo/PR_",
+      "@prefix": true
+    },
+    "PREFER": {
+      "@id": "http://purl.obolibrary.org/obo/PREFER_",
       "@prefix": true
     },
     "PROCO": {
@@ -920,7 +936,7 @@
       "@prefix": true
     },
     "SWO": {
-      "@id": "http://purl.obolibrary.org/obo/SWO_",
+      "@id": "http://www.ebi.ac.uk/swo/SWO_",
       "@prefix": true
     },
     "SYMP": {
