@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update com.fasterxml.jackson.core to 2.18.8
 
 ### Fixed
+- Improve on fix for [#1272]
 - Fix problem with catalog files for multiple inputs in [`merge`] and [`unmerge`] [#1285]
 - Fix problem with catalog file for compressed ontologies [#1281]
 
