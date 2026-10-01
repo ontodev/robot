@@ -872,6 +872,7 @@ public class ReportOperation {
       dataset.begin(ReadWrite.READ);
       try {
         ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        checkResultVars(queryName, violationSet);
         return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
@@ -888,6 +889,7 @@ public class ReportOperation {
     } else {
       try {
         ResultSet violationSet = QueryOperation.execQuery(dataset, query);
+        checkResultVars(queryName, violationSet);
         return getViolationsFromResults(ioHelper, queryName, violationSet, limit);
       } catch (Exception e) {
         // If query fails, return null
@@ -902,6 +904,28 @@ public class ReportOperation {
   }
 
   private static final OWLDataFactory dataFactory = OWLManager.getOWLDataFactory();
+
+  /**
+   * Given a query name and a result set, Check that the query contains ?entity, ?property, and
+   * ?value vars, which are expected for proper display of the results.
+   */
+  private static boolean checkResultVars(String queryName, ResultSet violationSet) {
+    boolean allVarsPresent = true;
+    List<String> resultVars = violationSet.getResultVars();
+    if (!resultVars.contains("entity")) {
+      allVarsPresent = false;
+      System.out.println(WARN + ": '" + queryName + "' query is missing ?entity variable");
+    }
+    if (!resultVars.contains("property")) {
+      allVarsPresent = false;
+      System.out.println(WARN + ": '" + queryName + "' query is missing ?property variable");
+    }
+    if (!resultVars.contains("value")) {
+      allVarsPresent = false;
+      System.out.println(WARN + ": '" + queryName + "' query is missing ?value variable");
+    }
+    return allVarsPresent;
+  }
 
   /**
    * Given a query name, a result set, and a limit for results, return a list of Violation objects
@@ -979,27 +1003,11 @@ public class ReportOperation {
         violation = new Violation("blank node");
       }
 
-      // Try and get a property and value from the query.
-      // If none is found, print a warning, but only once.
-      String property = getQueryResultOrNull(qs, "property");
-      if (property == null) {
-        if (!propertyWarning) {
-          System.out.println(WARN + ": '" + queryName + "' query is missing ?property variable");
-        }
-        propertyWarning = true;
-      }
-
-      String value = getQueryResultOrNull(qs, "value");
-      if (value == null) {
-        if (!valueWarning) {
-          System.out.println(WARN + ": '" + queryName + "' query is missing ?value variable");
-        }
-        valueWarning = true;
-      }
-
       // add details to Violation
+      String property = getQueryResultOrNull(qs, "property");
       if (property != null) {
         OWLEntity e = dataFactory.getOWLClass(ioHelper.createIRI(property));
+        String value = getQueryResultOrNull(qs, "value");
         if (value != null) {
           IRI valIRI = ioHelper.createIRI(value);
           if (valIRI != null) {
