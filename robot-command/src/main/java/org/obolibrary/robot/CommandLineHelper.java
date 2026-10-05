@@ -21,9 +21,10 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.semanticweb.HermiT.Configuration;
+import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
@@ -877,17 +878,19 @@ public class CommandLineHelper {
     if (reasonerName.equals("structural")) {
       return new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
     } else if (reasonerName.equals("hermit") || hermitStrategies.containsKey(reasonerName)) {
-      // Plain "hermit" uses HermiT's default configuration
+      // Plain "hermit" has no entry in hermitStrategies, so it keeps HermiT's default strategy
       Configuration.ExistentialStrategyType strategy = hermitStrategies.get(reasonerName);
-      if (strategy == null) {
-        return new org.semanticweb.HermiT.ReasonerFactory();
-      }
       return new org.semanticweb.HermiT.ReasonerFactory() {
         @Override
-        protected Configuration getProtegeConfiguration(OWLReasonerConfiguration owlConfig) {
-          Configuration config = super.getProtegeConfiguration(owlConfig);
-          config.existentialStrategyType = strategy;
-          return config;
+        protected OWLReasoner createHermiTOWLReasoner(Configuration config, OWLOntology ontology) {
+          if (strategy != null) {
+            config.existentialStrategyType = strategy;
+          }
+          Reasoner reasoner = (Reasoner) super.createHermiTOWLReasoner(config, ontology);
+          logger.info(
+              "HermiT existential strategy: "
+                  + reasoner.getConfiguration().existentialStrategyType);
+          return reasoner;
         }
       };
     } else if (reasonerName.equals("jfact")) {
