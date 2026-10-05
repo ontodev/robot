@@ -20,8 +20,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
+import org.semanticweb.HermiT.Configuration;
+import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.jfact.JFactFactory;
@@ -71,6 +74,17 @@ public class CommandLineHelper {
   /** Error message when the --inputs pattern does not include * or ?, or is not quoted */
   private static final String wildcardError =
       NS + "WILDCARD ERROR --inputs argument must be a quoted wildcard pattern";
+
+  /** Map of HermiT reasoner names (e.g. "hermit-individual-reuse") to existential strategies. */
+  private static final Map<String, Configuration.ExistentialStrategyType> hermitStrategies =
+      new HashMap<>();
+
+  static {
+    hermitStrategies.put(
+        "hermit-creation-order", Configuration.ExistentialStrategyType.CREATION_ORDER);
+    hermitStrategies.put(
+        "hermit-individual-reuse", Configuration.ExistentialStrategyType.INDIVIDUAL_REUSE);
+  }
 
   /**
    * Given a single string, return a list of strings split at whitespace but allowing for quoted
@@ -863,8 +877,22 @@ public class CommandLineHelper {
 
     if (reasonerName.equals("structural")) {
       return new org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory();
-    } else if (reasonerName.equals("hermit")) {
-      return new org.semanticweb.HermiT.ReasonerFactory();
+    } else if (reasonerName.equals("hermit") || hermitStrategies.containsKey(reasonerName)) {
+      // Plain "hermit" has no entry in hermitStrategies, so it keeps HermiT's default strategy
+      Configuration.ExistentialStrategyType strategy = hermitStrategies.get(reasonerName);
+      return new org.semanticweb.HermiT.ReasonerFactory() {
+        @Override
+        protected OWLReasoner createHermiTOWLReasoner(Configuration config, OWLOntology ontology) {
+          if (strategy != null) {
+            config.existentialStrategyType = strategy;
+          }
+          Reasoner reasoner = (Reasoner) super.createHermiTOWLReasoner(config, ontology);
+          logger.info(
+              "HermiT existential strategy: "
+                  + reasoner.getConfiguration().existentialStrategyType);
+          return reasoner;
+        }
+      };
     } else if (reasonerName.equals("jfact")) {
       return new JFactFactory();
       // Reason must change behavior with EMR, so not all commands can use it
