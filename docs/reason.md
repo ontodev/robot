@@ -42,6 +42,7 @@ Finally, `reason` includes two more options to help clean the reasoned output:
 If no `--reasoner` is provided, ROBOT will default to ELK. The following other reasoner options are supported:
 
   * `hermit` - [HermiT](http://www.hermit-reasoner.com/)
+  * `hermit-creation-order`, `hermit-individual-reuse` - HermiT, using the specified existential strategy (`hermit` uses HermiT's default, currently creation-order)
   * `jfact` - [JFact](http://jfact.sourceforge.net/)
   * `whelk` - [Whelk](https://github.com/balhoff/whelk)
   * `emr` - [Expression Materializing Reasoner](http://static.javadoc.io/org.geneontology/expression-materializing-reasoner/0.1.3/org/geneontology/reasoner/ExpressionMaterializingReasoner.html)

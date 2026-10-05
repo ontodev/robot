@@ -8,6 +8,11 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.junit.Test;
+import org.semanticweb.HermiT.Configuration;
+import org.semanticweb.HermiT.Reasoner;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 /** Tests for CommandLineHelper. */
 public class CommandLineHelperTest {
@@ -67,5 +72,47 @@ public class CommandLineHelperTest {
     IOHelper ioHelper = CommandLineHelper.getIOHelper(line);
     CommandLineHelper.getInputOntology(ioHelper, line);
     assert true;
+  }
+
+  /**
+   * Test that the HermiT reasoner variants use the expected existential strategy.
+   *
+   * @throws Exception on parsing or ontology creation problem
+   */
+  @Test
+  public void testGetReasonerFactoryHermitStrategy() throws Exception {
+    OWLOntology ontology = OWLManager.createOWLOntologyManager().createOntology();
+    Options o = new Options();
+    o.addOption("r", "reasoner", true, "reasoner to use");
+
+    String[] args = {"--reasoner", "hermit"};
+    CommandLine line = CommandLineHelper.getCommandLine("usage", o, args);
+    OWLReasonerFactory factory = CommandLineHelper.getReasonerFactory(line);
+    Reasoner reasoner = (Reasoner) factory.createReasoner(ontology);
+    assertEquals(
+        Configuration.ExistentialStrategyType.CREATION_ORDER,
+        reasoner.getConfiguration().existentialStrategyType);
+
+    args = new String[] {"--reasoner", "hermit-individual-reuse"};
+    line = CommandLineHelper.getCommandLine("usage", o, args);
+    factory = CommandLineHelper.getReasonerFactory(line);
+    reasoner = (Reasoner) factory.createReasoner(ontology);
+    assertEquals(
+        Configuration.ExistentialStrategyType.INDIVIDUAL_REUSE,
+        reasoner.getConfiguration().existentialStrategyType);
+
+    args = new String[] {"--reasoner", "hermit-creation-order"};
+    line = CommandLineHelper.getCommandLine("usage", o, args);
+    factory = CommandLineHelper.getReasonerFactory(line);
+    reasoner = (Reasoner) factory.createReasoner(ontology);
+    assertEquals(
+        Configuration.ExistentialStrategyType.CREATION_ORDER,
+        reasoner.getConfiguration().existentialStrategyType);
+
+    // We don't support the "hermit-el" variant, so it should throw an exception
+    String[] badArgs = {"--reasoner", "hermit-el"};
+    CommandLine badLine = CommandLineHelper.getCommandLine("usage", o, badArgs);
+    assertThrows(
+        IllegalArgumentException.class, () -> CommandLineHelper.getReasonerFactory(badLine));
   }
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `hermit-creation-order` and `hermit-individual-reuse` reasoner options [#1293]
+
 ## [1.9.11] - 2026-10-01
 
 ### Added
@@ -474,6 +478,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+<<<<<<< HEAD
 [#1285]: https://github.com/ontodev/robot/pull/1285
 [#1283]: https://github.com/ontodev/robot/pull/1283
 [#1281]: https://github.com/ontodev/robot/pull/1281
@@ -482,6 +487,9 @@ First official release of ROBOT!
 [#1273]: https://github.com/ontodev/robot/pull/1273
 [#1268]: https://github.com/ontodev/robot/issues/1268
 [#1267]: https://github.com/ontodev/robot/pull/1267
+=======
+[#1293]: https://github.com/ontodev/robot/issues/1293
+>>>>>>> f2dc4813 (add hermit-creation-order and hermit-individual-reuse reasoner options)
 [#1252]: https://github.com/ontodev/robot/pull/1252
 [#1251]: https://github.com/ontodev/robot/pull/1251
 [#1249]: https://github.com/ontodev/robot/pull/1249
