@@ -1278,13 +1278,13 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, return a set of all the entities in its signature.
+   * Given an ontology, return a set of all the entities in its signature and its imports.
    *
    * @param ontology the ontology to search
    * @return a set of all entities in the ontology
    */
   public static Set<OWLEntity> getEntities(OWLOntology ontology) {
-    return ontology.getSignature(Imports.EXCLUDED);
+    return ontology.getSignature(Imports.INCLUDED);
   }
 
   /**
@@ -1378,7 +1378,7 @@ public class OntologyHelper {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
     logger.info("iterating through entities...");
-    for (OWLEntity entity : ontology.getSignature(Imports.EXCLUDED)) {
+    for (OWLEntity entity : ontology.getSignature(Imports.INCLUDED)) {
       String value = getAnnotationString(ontology, rdfsLabel, entity.getIRI());
       if (value != null) {
         results.put(entity.getIRI(), value);
