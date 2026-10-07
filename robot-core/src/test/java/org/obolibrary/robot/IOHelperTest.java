@@ -355,7 +355,6 @@ public class IOHelperTest extends CoreTest {
    *
    * @throws IOException on error creating IOHelper
    */
-  @Ignore("Problem with stream being closed / reopened")
   @Test
   public void testStrict() throws IOException {
     IOHelper ioHelper = new IOHelper();

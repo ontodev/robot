@@ -147,12 +147,12 @@ public class QuotedEntityChecker implements OWLEntityChecker {
 
   /**
    * Use annotation properties and the short form provider to add mappings for all entities in the
-   * given ontology.
+   * given ontology and its imports.
    *
    * @param ontology the ontology to add mappings for
    */
   public void addAll(OWLOntology ontology) {
-    for (OWLEntity entity : ontology.getSignature(Imports.EXCLUDED)) {
+    for (OWLEntity entity : ontology.getSignature(Imports.INCLUDED)) {
       add(ontology, entity);
     }
   }
