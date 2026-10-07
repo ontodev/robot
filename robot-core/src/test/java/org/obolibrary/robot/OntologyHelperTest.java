@@ -25,8 +25,8 @@ public class OntologyHelperTest extends CoreTest {
     OWLOntology simple = loadOntology("/simple.owl");
     OntologyHelper.setOntologyIRI(simple, "http://ontology.iri", "http://version.iri");
 
-    IRI ontologyIRI = simple.getOntologyID().getOntologyIRI().orNull();
-    IRI versionIRI = simple.getOntologyID().getVersionIRI().orNull();
+    IRI ontologyIRI = simple.getOntologyID().getOntologyIRI().orElse(null);
+    IRI versionIRI = simple.getOntologyID().getVersionIRI().orElse(null);
     if (ontologyIRI != null) {
       assertEquals("http://ontology.iri", ontologyIRI.toString());
     } else {

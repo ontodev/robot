@@ -61,7 +61,7 @@ public class InvalidReferenceChecker {
     for (OWLOntology o : ontology.getImportsClosure()) {
       for (OWLAnnotationAssertionAxiom a : o.getAnnotationAssertionAxioms(entity.getIRI())) {
         if (a.isDeprecatedIRIAssertion()) {
-          OWLLiteral value = a.getValue().asLiteral().orNull();
+          OWLLiteral value = a.getValue().asLiteral().orElse(null);
           if (value != null && value.parseBoolean()) {
             return true;
           }

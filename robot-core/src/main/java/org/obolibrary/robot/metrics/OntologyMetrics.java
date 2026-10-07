@@ -977,7 +977,7 @@ public class OntologyMetrics {
     if (ontologyID.isAnonymous()) {
       return "anonymousId";
     } else {
-      return ontologyID.getOntologyIRI().or(IRI.create("no.iri")).toString();
+      return ontologyID.getOntologyIRI().orElse(IRI.create("no.iri")).toString();
     }
   }
 
@@ -986,7 +986,7 @@ public class OntologyMetrics {
     if (ontologyID.isAnonymous()) {
       return "anonymousId";
     } else {
-      return ontologyID.getVersionIRI().or(IRI.create("no.iri")).toString();
+      return ontologyID.getVersionIRI().orElse(IRI.create("no.iri")).toString();
     }
   }
 
@@ -1101,11 +1101,11 @@ public class OntologyMetrics {
         continue;
       }
       if (e instanceof OWLClass) {
-        b.append(e.getIRI().getRemainder().or("unknown")).append("; ");
+        b.append(e.getIRI().getRemainder().orElse("unknown")).append("; ");
       } else if (e instanceof OWLObjectProperty) {
-        b.append(e.getIRI().getRemainder().or("unknown")).append("; ");
+        b.append(e.getIRI().getRemainder().orElse("unknown")).append("; ");
       } else if (e instanceof OWLDataProperty) {
-        b.append(e.getIRI().getRemainder().or("unknown")).append("; ");
+        b.append(e.getIRI().getRemainder().orElse("unknown")).append("; ");
       }
     }
     return b.toString().contains(";") ? b.substring(0, b.toString().lastIndexOf(";")) : "";

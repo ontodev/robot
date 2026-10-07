@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import org.geneontology.owl.differ.Differ;
 import org.geneontology.owl.differ.render.BasicDiffRenderer;
@@ -200,6 +201,17 @@ public class DiffOperation {
     @Override
     public Set<OWLOntology> getOntologies() {
       return Collections.unmodifiableSet(ontologies);
+    }
+
+    /**
+     * Get the ontologies in the provider.
+     *
+     * @return Set of OWLOntologies
+     */
+    @Nonnull
+    @Override
+    public Stream<OWLOntology> ontologies() {
+      return ontologies.stream();
     }
   }
 

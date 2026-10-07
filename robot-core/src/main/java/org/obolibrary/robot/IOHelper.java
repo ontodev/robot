@@ -18,6 +18,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -44,7 +45,6 @@ import org.semanticweb.owlapi.io.*;
 import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.IllegalElementNameException;
-import org.semanticweb.owlapi.rdf.rdfxml.renderer.XMLWriterPreferences;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 import org.slf4j.Logger;
@@ -237,7 +237,7 @@ public class IOHelper {
     OWLDocumentFormat df = getFormat(FilenameUtils.getExtension(outputFile.getPath()));
 
     // If prefixes are not supported, just save the ontology without adding prefixes
-    if (!df.isPrefixOWLOntologyFormat()) {
+    if (!df.isPrefixOWLDocumentFormat()) {
       logger.error("Prefixes are not supported in " + df.toString() + " (saving without prefixes)");
       saveOntology(ontology, df, IRI.create(outputFile));
       return;
@@ -387,7 +387,9 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(File ontologyFile) throws IOException {
+    System.out.println(ontologyFile);
     File catalogFile = guessCatalogFile(ontologyFile);
+    System.out.println(catalogFile);
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -554,10 +556,7 @@ public class IOHelper {
       if (inputFormat != null) {
         source =
             new StreamDocumentSource(
-                ontologyStream,
-                StreamDocumentSource.getNextDocumentIRI("inputstream:ontology"),
-                getFormat(inputFormat),
-                null);
+                ontologyStream, IRI.create("inputstream:ontology"), getFormat(inputFormat), null);
       } else {
         source = new StreamDocumentSource(ontologyStream);
       }
@@ -664,13 +663,18 @@ public class IOHelper {
       // This should never happen
       throw new IOException("Unable to get an OWLDocumentFormat from loaded ontology");
     }
-    RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData();
-    Set<RDFTriple> unparsed = metaData.getUnparsedTriples();
+    if (f.getOntologyLoaderMetaData().isEmpty()) {
+      return loadedOntology;
+    }
+    RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData().orElse(null);
+    Stream<RDFTriple> unparsed = metaData.getUnparsedTriples();
     Set<OWLAxiom> parsed = loadedOntology.getAxioms();
-    if (unparsed.size() > 0) {
+    if (unparsed.count() > 0) {
       boolean rdfReification = false;
       StringBuilder sb = new StringBuilder();
-      for (RDFTriple t : unparsed) {
+      Iterator<RDFTriple> iterator = unparsed.iterator();
+      while (iterator.hasNext()) {
+        RDFTriple t = iterator.next();
         // Check object to see if it's rdfs:Statement used in RDF reification
         String objectIRI;
         try {
@@ -702,13 +706,14 @@ public class IOHelper {
 
       if (strict) {
         // Fail on unparsed triples
-        throw new IOException(String.format(unparsedTriplesError, unparsed.size()) + sb.toString());
+        throw new IOException(
+            String.format(unparsedTriplesError, unparsed.count()) + sb.toString());
       } else {
         // Log unparsed triples as errors
         logger.error(
             String.format(
                     "Input ontology contains %d triple(s) that could not be parsed:",
-                    unparsed.size())
+                    unparsed.count())
                 + sb.toString());
       }
     }
@@ -996,7 +1001,7 @@ public class IOHelper {
       throws IOException {
     // Determine the format if not provided
     logger.debug("Saving ontology as {} with to IRI {}", format, ontologyIRI);
-    XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
+    // XMLWriterPreferences.getInstance().setUseNamespaceEntities(getXMLEntityFlag());
     // If saving in compressed format, get byte data then save to gzip
     if (ontologyIRI.toString().endsWith(".gz")) {
       byte[] data = getOntologyFileData(ontology, format, checkOBO, cleanOBO);
@@ -1004,14 +1009,14 @@ public class IOHelper {
       return ontology;
     }
     OWLDocumentFormat previousFormat = ontology.getOWLOntologyManager().getOntologyFormat(ontology);
-    if (format.isPrefixOWLOntologyFormat()
+    if (format.isPrefixOWLDocumentFormat()
         && previousFormat != null
-        && previousFormat.isPrefixOWLOntologyFormat()) {
-      String defaultNamespace = format.asPrefixOWLOntologyFormat().getDefaultPrefix();
+        && previousFormat.isPrefixOWLDocumentFormat()) {
+      String defaultNamespace = format.asPrefixOWLDocumentFormat().getDefaultPrefix();
       format
-          .asPrefixOWLOntologyFormat()
-          .copyPrefixesFrom(previousFormat.asPrefixOWLOntologyFormat());
-      format.asPrefixOWLOntologyFormat().setDefaultPrefix(defaultNamespace);
+          .asPrefixOWLDocumentFormat()
+          .copyPrefixesFrom(previousFormat.asPrefixOWLDocumentFormat());
+      format.asPrefixOWLDocumentFormat().setDefaultPrefix(defaultNamespace);
     }
     // If not compressed, just save the file as-is
     if (addPrefixes != null && !addPrefixes.isEmpty()) {
@@ -1701,14 +1706,14 @@ public class IOHelper {
    * @param addPrefixes map of prefix to namespace to add
    */
   private void addPrefixes(OWLDocumentFormat df, Map<String, String> addPrefixes) {
-    if (!df.isPrefixOWLOntologyFormat()) {
+    if (!df.isPrefixOWLDocumentFormat()) {
       // Warn on non-prefix document format (i.e. OBO)
       logger.warn(
           String.format(
               "Unable to add prefixes to %s document - saving without prefixes", df.toString()));
       return;
     }
-    PrefixDocumentFormat pf = df.asPrefixOWLOntologyFormat();
+    PrefixDocumentFormat pf = df.asPrefixOWLDocumentFormat();
     for (Map.Entry<String, String> pref : addPrefixes.entrySet()) {
       pf.setPrefix(pref.getKey(), pref.getValue());
     }
@@ -1812,9 +1817,11 @@ public class IOHelper {
    * @return set of IRIs of any undeclared predicates
    */
   private static Set<IRI> getUndeclaredPredicates(
-      Set<OWLAxiom> parsedAxioms, Set<RDFTriple> unparsedTriples) {
+      Set<OWLAxiom> parsedAxioms, Stream<RDFTriple> unparsedTriples) {
     Set<IRI> checkPredicates = new HashSet<>();
-    for (RDFTriple t : unparsedTriples) {
+    Iterator<RDFTriple> iterator = unparsedTriples.iterator();
+    while (iterator.hasNext()) {
+      RDFTriple t = iterator.next();
       IRI pIRI = t.getPredicate().getIRI();
       if (pIRI.toString().startsWith("http://www.w3.org/2002/07/owl#")
           || pIRI.toString().startsWith("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -2025,7 +2032,7 @@ public class IOHelper {
     OWLAPIOwl2Obo oboConverter = new OWLAPIOwl2Obo(ontology.getOWLOntologyManager());
     oboConverter.setDiscardUntranslatable(
         options.contains(OBOWriteOption.DROP_UNTRANSLATABLE_AXIOMS));
-    oboConverter.setPrefixManager(format.asPrefixOWLOntologyFormat());
+    // oboConverter.setPrefixManager(format.asPrefixOWLDocumentFormat());
     return oboConverter.convert(ontology);
   }
 }

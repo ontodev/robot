@@ -155,12 +155,10 @@ public class ExtractOperation {
         axs.addAll(importedOnt.getAxioms());
       }
     }
-    // Maybe get an IRI
-    IRI ontIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
 
     SyntacticLocalityModuleExtractor extractor =
         new SyntacticLocalityModuleExtractor(
-            inputOntology.getOWLOntologyManager(), ontIRI, axs, type, excludeInstances);
+            inputOntology.getOWLOntologyManager(), axs.stream(), type, excludeInstances);
 
     // Create the output with the extracted terms
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -286,7 +284,7 @@ public class ExtractOperation {
         RelationGraphUtil.computeRelationGraph(ontology, relations, config);
 
     if (outputIRI == null) {
-      outputIRI = ontology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = ontology.getOntologyID().getOntologyIRI().orElse(null);
     }
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology materializedOntology = manager.createOntology(outputIRI);
@@ -313,7 +311,7 @@ public class ExtractOperation {
     relatedObjects.addAll(OntologyHelper.getEntities(inputOntology, terms));
 
     if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     }
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology outputOntology = manager.createOntology(outputIRI);
@@ -393,14 +391,16 @@ public class ExtractOperation {
     Set<OWLIndividual> individuals = new HashSet<>();
     Set<OWLClass> classes = outputOntology.getClassesInSignature();
     for (OWLClass cls : classes) {
-      for (OWLClassExpression expr : EntitySearcher.getEquivalentClasses(cls, inputOntology)) {
+      for (OWLClassExpression expr :
+          EntitySearcher.getEquivalentClasses(cls, inputOntology).collect(Collectors.toList())) {
         if (!expr.isAnonymous()) {
           continue;
         }
         individuals.addAll(expr.getIndividualsInSignature());
       }
 
-      for (OWLClassExpression expr : EntitySearcher.getSubClasses(cls, inputOntology)) {
+      for (OWLClassExpression expr :
+          EntitySearcher.getSubClasses(cls, inputOntology).collect(Collectors.toList())) {
         if (!expr.isAnonymous()) {
           continue;
         }
@@ -426,7 +426,8 @@ public class ExtractOperation {
     Set<OWLClass> classes = outputOntology.getClassesInSignature();
     // Get the individuals for each of the included classes
     for (OWLClass cls : classes) {
-      individuals.addAll(EntitySearcher.getIndividuals(cls, inputOntology));
+      individuals.addAll(
+          EntitySearcher.getIndividuals(cls, inputOntology).collect(Collectors.toList()));
     }
     addIndiviudalsAxioms(inputOntology, outputOntology, individuals, imports);
   }
@@ -518,13 +519,16 @@ public class ExtractOperation {
       }
       OWLClass cls = e.asOWLClass();
       precious.add(cls);
-      for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, outputOntology)) {
+      for (OWLClassExpression expr :
+          EntitySearcher.getSuperClasses(cls, outputOntology).collect(Collectors.toList())) {
         precious.addAll(expr.getClassesInSignature());
       }
-      for (OWLClassExpression expr : EntitySearcher.getEquivalentClasses(cls, outputOntology)) {
+      for (OWLClassExpression expr :
+          EntitySearcher.getEquivalentClasses(cls, outputOntology).collect(Collectors.toList())) {
         precious.addAll(expr.getClassesInSignature());
       }
-      for (OWLClassExpression expr : EntitySearcher.getDisjointClasses(cls, outputOntology)) {
+      for (OWLClassExpression expr :
+          EntitySearcher.getDisjointClasses(cls, outputOntology).collect(Collectors.toList())) {
         precious.addAll(expr.getClassesInSignature());
       }
     }
