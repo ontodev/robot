@@ -1,7 +1,10 @@
 package org.obolibrary.robot;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
@@ -75,9 +78,8 @@ public class CoreTest {
    * @throws IOException on any problem
    */
   public void assertIdentical(String leftPath, OWLOntology right) throws IOException {
-    // TODO: FIX DIFF TESTS
-    // OWLOntology left = loadOntology(leftPath);
-    // assertIdentical(left, right);
+    OWLOntology left = loadOntology(leftPath);
+    assertIdentical(left, right);
   }
 
   /**
@@ -88,12 +90,11 @@ public class CoreTest {
    * @throws IOException on any problem
    */
   public void assertIdentical(OWLOntology left, OWLOntology right) throws IOException {
-    // TODO: FIX DIFF TESTS
-    // StringWriter writer = new StringWriter();
-    // boolean actual = DiffOperation.compare(left, right, writer);
-    // logger.debug(writer.toString());
-    // assertTrue(actual);
-    // assertEquals("Ontologies are identical\n", writer.toString());
+    StringWriter writer = new StringWriter();
+    boolean actual = DiffOperation.compare(left, right, writer);
+    logger.debug(writer.toString());
+    assertTrue(actual);
+    assertEquals("Ontologies are identical\n", writer.toString());
   }
 
   /**

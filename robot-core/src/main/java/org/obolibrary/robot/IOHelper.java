@@ -387,9 +387,7 @@ public class IOHelper {
    * @throws IOException on any problem
    */
   public OWLOntology loadOntology(File ontologyFile) throws IOException {
-    System.out.println(ontologyFile);
     File catalogFile = guessCatalogFile(ontologyFile);
-    System.out.println(catalogFile);
     return loadOntology(ontologyFile, catalogFile);
   }
 
@@ -667,9 +665,10 @@ public class IOHelper {
       return loadedOntology;
     }
     RDFParserMetaData metaData = (RDFParserMetaData) f.getOntologyLoaderMetaData().orElse(null);
+    long unparsedCount = metaData.getUnparsedTriples().count();
     Stream<RDFTriple> unparsed = metaData.getUnparsedTriples();
     Set<OWLAxiom> parsed = loadedOntology.getAxioms();
-    if (unparsed.count() > 0) {
+    if (unparsedCount > 0) {
       boolean rdfReification = false;
       StringBuilder sb = new StringBuilder();
       Iterator<RDFTriple> iterator = unparsed.iterator();
@@ -689,6 +688,7 @@ public class IOHelper {
         // Add triple to error lines
         sb.append("\n - ").append(t.toString().trim());
       }
+      unparsed = metaData.getUnparsedTriples();
       Set<IRI> undeclaredPredicates = getUndeclaredPredicates(parsed, unparsed);
       if (rdfReification) {
         // Add hint for fixing RDF reification
@@ -706,14 +706,12 @@ public class IOHelper {
 
       if (strict) {
         // Fail on unparsed triples
-        throw new IOException(
-            String.format(unparsedTriplesError, unparsed.count()) + sb.toString());
+        throw new IOException(String.format(unparsedTriplesError, unparsedCount) + sb.toString());
       } else {
         // Log unparsed triples as errors
         logger.error(
             String.format(
-                    "Input ontology contains %d triple(s) that could not be parsed:",
-                    unparsed.count())
+                    "Input ontology contains %d triple(s) that could not be parsed:", unparsedCount)
                 + sb.toString());
       }
     }
