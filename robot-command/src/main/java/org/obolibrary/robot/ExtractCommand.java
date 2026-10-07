@@ -288,7 +288,7 @@ public class ExtractCommand implements Command {
     // Get the output IRI and create the output ontology
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
     if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     }
     OWLOntology outputOntology = MergeOperation.merge(outputOntologies);
     if (outputIRI != null) {
@@ -344,7 +344,7 @@ public class ExtractCommand implements Command {
     // Get the output IRI
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
     if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     }
 
     return ExtractOperation.extract(
@@ -397,7 +397,7 @@ public class ExtractCommand implements Command {
     // Get the output IRI
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
     if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     }
 
     return ExtractOperation.extractSubset(

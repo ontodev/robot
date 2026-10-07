@@ -624,15 +624,20 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLClass) {
-        relatedObjects.addAll(EntitySearcher.getSubClasses((OWLClass) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getSubClasses((OWLClass) object, ontology).collect(Collectors.toList()));
       } else if (object instanceof OWLObjectProperty) {
         relatedObjects.addAll(
-            EntitySearcher.getSubProperties((OWLObjectProperty) object, ontology));
+            EntitySearcher.getSubProperties((OWLObjectProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLDataProperty) {
-        relatedObjects.addAll(EntitySearcher.getSubProperties((OWLDataProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getSubProperties((OWLDataProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLAnnotation) {
         relatedObjects.addAll(
-            EntitySearcher.getSubProperties((OWLAnnotationProperty) object, ontology));
+            EntitySearcher.getSubProperties((OWLAnnotationProperty) object, ontology)
+                .collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -665,7 +670,7 @@ public class RelatedObjectsHelper {
   public static Set<OWLObject> selectComplement(OWLOntology ontology, Set<OWLObject> objects) {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLAxiom axiom : ontology.getAxioms()) {
-      relatedObjects.addAll(OntologyHelper.getObjects(axiom));
+      relatedObjects.addAll(OntologyHelper.getAxiomObjects(axiom));
     }
     relatedObjects.removeAll(objects);
     return relatedObjects;
@@ -748,11 +753,17 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLAnnotationProperty) {
-        relatedObjects.addAll(EntitySearcher.getDomains((OWLAnnotationProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getDomains((OWLAnnotationProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLDataProperty) {
-        relatedObjects.addAll(EntitySearcher.getDomains((OWLDataProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getDomains((OWLDataProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLObjectProperty) {
-        relatedObjects.addAll(EntitySearcher.getDomains((OWLObjectProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getDomains((OWLObjectProperty) object, ontology)
+                .collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -769,13 +780,17 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLClass) {
-        relatedObjects.addAll(EntitySearcher.getEquivalentClasses((OWLClass) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getEquivalentClasses((OWLClass) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLDataProperty) {
         relatedObjects.addAll(
-            EntitySearcher.getEquivalentProperties((OWLDataProperty) object, ontology));
+            EntitySearcher.getEquivalentProperties((OWLDataProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLObjectProperty) {
         relatedObjects.addAll(
-            EntitySearcher.getEquivalentProperties((OWLObjectProperty) object, ontology));
+            EntitySearcher.getEquivalentProperties((OWLObjectProperty) object, ontology)
+                .collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -809,7 +824,9 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLClass) {
-        relatedObjects.addAll(EntitySearcher.getIndividuals((OWLClass) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getIndividuals((OWLClass) object, ontology)
+                .collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -900,16 +917,21 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLClass) {
-        relatedObjects.addAll(EntitySearcher.getSuperClasses((OWLClass) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getSuperClasses((OWLClass) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLObjectProperty) {
         relatedObjects.addAll(
-            EntitySearcher.getSuperProperties((OWLObjectProperty) object, ontology));
+            EntitySearcher.getSuperProperties((OWLObjectProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLDataProperty) {
         relatedObjects.addAll(
-            EntitySearcher.getSuperProperties((OWLDataProperty) object, ontology));
+            EntitySearcher.getSuperProperties((OWLDataProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLAnnotation) {
         relatedObjects.addAll(
-            EntitySearcher.getSuperProperties((OWLAnnotationProperty) object, ontology));
+            EntitySearcher.getSuperProperties((OWLAnnotationProperty) object, ontology)
+                .collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -960,11 +982,17 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLAnnotationProperty) {
-        relatedObjects.addAll(EntitySearcher.getRanges((OWLAnnotationProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getRanges((OWLAnnotationProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLDataProperty) {
-        relatedObjects.addAll(EntitySearcher.getRanges((OWLDataProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getRanges((OWLDataProperty) object, ontology)
+                .collect(Collectors.toList()));
       } else if (object instanceof OWLObjectProperty) {
-        relatedObjects.addAll(EntitySearcher.getRanges((OWLObjectProperty) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getRanges((OWLObjectProperty) object, ontology)
+                .collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -982,7 +1010,8 @@ public class RelatedObjectsHelper {
     Set<OWLObject> relatedObjects = new HashSet<>();
     for (OWLObject object : objects) {
       if (object instanceof OWLIndividual) {
-        relatedObjects.addAll(EntitySearcher.getTypes((OWLIndividual) object, ontology));
+        relatedObjects.addAll(
+            EntitySearcher.getTypes((OWLIndividual) object, ontology).collect(Collectors.toList()));
       }
     }
     return relatedObjects;
@@ -1046,14 +1075,22 @@ public class RelatedObjectsHelper {
       if (object instanceof OWLAnnotationProperty) {
         OWLAnnotationProperty p = (OWLAnnotationProperty) object;
         spanGapsHelper(
-            ontology, objects, aPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
+            ontology,
+            objects,
+            aPropPairs,
+            p,
+            EntitySearcher.getSuperProperties(p, ontology).collect(Collectors.toList()));
       } else if (object instanceof OWLClass) {
         OWLClass cls = (OWLClass) object;
         spanGapsHelper(ontology, objects, classPairs, cls, getSuperClasses(ontology, cls));
       } else if (object instanceof OWLDataProperty) {
         OWLDataProperty p = (OWLDataProperty) object;
         spanGapsHelper(
-            ontology, objects, dPropPairs, p, EntitySearcher.getSuperProperties(p, ontology));
+            ontology,
+            objects,
+            dPropPairs,
+            p,
+            EntitySearcher.getSuperProperties(p, ontology).collect(Collectors.toList()));
       } else if (object instanceof OWLObjectProperty) {
         OWLObjectProperty p = (OWLObjectProperty) object;
         Set<OWLObjectPropertyExpression> superProps = new HashSet<>();
@@ -1185,7 +1222,7 @@ public class RelatedObjectsHelper {
         }
         OWLAnnotationValue value = ann.getValue();
         if (value.isLiteral()) {
-          OWLLiteral lit = value.asLiteral().orNull();
+          OWLLiteral lit = value.asLiteral().orElse(null);
           if (lit != null
               && lit.getDatatype().getIRI().toString().equals(datatype.getIRI().toString())) {
             annotations.add(ann);
@@ -1209,7 +1246,7 @@ public class RelatedObjectsHelper {
         }
         OWLAnnotationValue value = ann.getValue();
         if (value.isLiteral()) {
-          OWLLiteral lit = value.asLiteral().orNull();
+          OWLLiteral lit = value.asLiteral().orElse(null);
           if (lit != null && lit.hasLang(lang)) {
             annotations.add(ann);
           }
@@ -1261,7 +1298,7 @@ public class RelatedObjectsHelper {
                 // In this case, ignore it
                 axiomMatch = true;
               } else if (objects.contains(a.getValue())
-                  || iris.contains(a.getValue().asIRI().orNull())) {
+                  || iris.contains(a.getValue().asIRI().orElse(null))) {
                 // If the objects contain the value (e.g. an anonymous object)
                 // or if its an IRI and it is in the set of IRIs, its a match
                 axiomMatch = true;
@@ -1269,7 +1306,8 @@ public class RelatedObjectsHelper {
             }
           }
         } else {
-          if (objects.containsAll(OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations()))) {
+          if (objects.containsAll(
+              OntologyHelper.getAxiomObjects(axiom.getAxiomWithoutAnnotations()))) {
             axiomMatch = true;
           }
         }
@@ -1283,7 +1321,7 @@ public class RelatedObjectsHelper {
                 && !iris.contains(annotation.getProperty().getIRI())) {
               annotationMatch = false;
             } else if (!objects.contains(annotation.getValue())
-                && !iris.contains(annotation.getValue().asIRI().orNull())) {
+                && !iris.contains(annotation.getValue().asIRI().orElse(null))) {
               annotationMatch = false;
             }
           }
@@ -1626,12 +1664,12 @@ public class RelatedObjectsHelper {
           }
 
           // Check the value
-          if (objects.contains(a.getValue()) || iris.contains(a.getValue().asIRI().orNull())) {
+          if (objects.contains(a.getValue()) || iris.contains(a.getValue().asIRI().orElse(null))) {
             axiomMatch = true;
           }
 
         } else {
-          for (OWLObject o : OntologyHelper.getObjects(axiom.getAxiomWithoutAnnotations())) {
+          for (OWLObject o : OntologyHelper.getAxiomObjects(axiom.getAxiomWithoutAnnotations())) {
             if (objects.contains(o)) {
               axiomMatch = true;
             }
@@ -1646,7 +1684,7 @@ public class RelatedObjectsHelper {
                 || iris.contains(annotation.getProperty().getIRI())) {
               axiomMatch = true;
             } else if (objects.contains(annotation.getValue())
-                || iris.contains(annotation.getValue().asIRI().orNull())) {
+                || iris.contains(annotation.getValue().asIRI().orElse(null))) {
               axiomMatch = true;
             }
           }
@@ -1729,7 +1767,7 @@ public class RelatedObjectsHelper {
           OWLAnnotationValue av = a.getValue();
           String annotationValue = null;
           if (av.isLiteral()) {
-            OWLLiteral lit = av.asLiteral().orNull();
+            OWLLiteral lit = av.asLiteral().orElse(null);
             if (lit != null) {
               annotationValue = lit.getLiteral();
             }
@@ -1830,9 +1868,11 @@ public class RelatedObjectsHelper {
 
     // We might get stuck if a class is both subclass and equivalent
     // So compare the eqs to the superclasses and don't add a super if it's also an eq
-    Collection<OWLClassExpression> eqs = EntitySearcher.getEquivalentClasses(cls, ontology);
+    Collection<OWLClassExpression> eqs =
+        EntitySearcher.getEquivalentClasses(cls, ontology).collect(Collectors.toList());
 
-    for (OWLClassExpression expr : EntitySearcher.getSuperClasses(cls, ontology)) {
+    for (OWLClassExpression expr :
+        EntitySearcher.getSuperClasses(cls, ontology).collect(Collectors.toList())) {
       if (expr.isAnonymous()) {
         superclasses.add(expr);
         continue;
@@ -1867,9 +1907,10 @@ public class RelatedObjectsHelper {
     // We might get stuck if a class is both subclass and equivalent
     // So compare the eqs to the superclasses and don't add a super if it's also an eq
     Collection<OWLObjectPropertyExpression> eqs =
-        EntitySearcher.getEquivalentProperties(property, ontology);
+        EntitySearcher.getEquivalentProperties(property, ontology).collect(Collectors.toList());
 
-    for (OWLObjectPropertyExpression expr : EntitySearcher.getSuperProperties(property, ontology)) {
+    for (OWLObjectPropertyExpression expr :
+        EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList())) {
       if (expr.isAnonymous()) {
         superProperties.add(expr);
         continue;
@@ -1954,7 +1995,8 @@ public class RelatedObjectsHelper {
     for (OWLObject object : objects) {
       if (object instanceof OWLEntity) {
         for (OWLAnnotationAssertionAxiom axiom :
-            EntitySearcher.getAnnotationAssertionAxioms((OWLEntity) object, ontology)) {
+            EntitySearcher.getAnnotationAssertionAxioms((OWLEntity) object, ontology)
+                .collect(Collectors.toList())) {
           if (annotations.contains(axiom.getAnnotation())) {
             relatedObjects.add(object);
           }
@@ -2049,7 +2091,7 @@ public class RelatedObjectsHelper {
   private static void selectAnnotationPropertyAncestors(
       OWLOntology ontology, OWLAnnotationProperty property, Set<OWLObject> ancestors) {
     for (OWLAnnotationProperty superProperty :
-        EntitySearcher.getSuperProperties(property, ontology)) {
+        EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList())) {
       ancestors.add(superProperty);
       if (!superProperty.isTopEntity()) {
         selectAnnotationPropertyAncestors(ontology, superProperty, ancestors);
@@ -2067,9 +2109,12 @@ public class RelatedObjectsHelper {
    */
   private static void selectAnnotationPropertyDescendants(
       OWLOntology ontology, OWLAnnotationProperty property, Set<OWLObject> descendants) {
-    for (OWLAnnotationProperty subProperty : EntitySearcher.getSubProperties(property, ontology)) {
+    for (OWLAnnotationProperty subProperty :
+        EntitySearcher.getSubProperties(property, ontology).collect(Collectors.toList())) {
       descendants.add(subProperty);
-      if (!EntitySearcher.getSubProperties(subProperty, ontology).isEmpty()) {
+      if (!EntitySearcher.getSubProperties(subProperty, ontology)
+          .collect(Collectors.toList())
+          .isEmpty()) {
         selectAnnotationPropertyAncestors(ontology, subProperty, descendants);
       }
     }
@@ -2085,7 +2130,8 @@ public class RelatedObjectsHelper {
    */
   private static void selectClassAncestors(
       OWLOntology ontology, OWLClass cls, Set<OWLObject> ancestors) {
-    for (OWLClassExpression classExpression : EntitySearcher.getSuperClasses(cls, ontology)) {
+    for (OWLClassExpression classExpression :
+        EntitySearcher.getSuperClasses(cls, ontology).collect(Collectors.toList())) {
       if (!classExpression.isAnonymous()) {
         OWLClass superClass = classExpression.asOWLClass();
         if (ancestors.contains(superClass)) {
@@ -2112,7 +2158,8 @@ public class RelatedObjectsHelper {
    */
   private static void selectClassDescendants(
       OWLOntology ontology, OWLClass cls, Set<OWLObject> descendants) {
-    for (OWLClassExpression classExpression : EntitySearcher.getSubClasses(cls, ontology)) {
+    for (OWLClassExpression classExpression :
+        EntitySearcher.getSubClasses(cls, ontology).collect(Collectors.toList())) {
       if (!classExpression.isAnonymous()) {
         OWLClass subClass = classExpression.asOWLClass();
         if (descendants.contains(subClass)) {
@@ -2120,7 +2167,9 @@ public class RelatedObjectsHelper {
           continue;
         }
         descendants.add(subClass);
-        if (!EntitySearcher.getSubClasses(subClass, ontology).isEmpty()) {
+        if (!EntitySearcher.getSubClasses(subClass, ontology)
+            .collect(Collectors.toList())
+            .isEmpty()) {
           selectClassDescendants(ontology, subClass, descendants);
         }
       } else {
@@ -2140,7 +2189,7 @@ public class RelatedObjectsHelper {
   private static void selectDataPropertyAncestors(
       OWLOntology ontology, OWLDataProperty property, Set<OWLObject> ancestors) {
     for (OWLDataPropertyExpression propertyExpression :
-        EntitySearcher.getSuperProperties(property, ontology)) {
+        EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList())) {
       if (!propertyExpression.isAnonymous()) {
         OWLDataProperty superProperty =
             propertyExpression.getDataPropertiesInSignature().iterator().next();
@@ -2165,12 +2214,14 @@ public class RelatedObjectsHelper {
   private static void selectDataPropertyDescendants(
       OWLOntology ontology, OWLDataProperty property, Set<OWLObject> descendants) {
     for (OWLDataPropertyExpression propertyExpression :
-        EntitySearcher.getSubProperties(property, ontology)) {
+        EntitySearcher.getSubProperties(property, ontology).collect(Collectors.toList())) {
       if (!propertyExpression.isAnonymous()) {
         OWLDataProperty subProperty =
             propertyExpression.getDataPropertiesInSignature().iterator().next();
         descendants.add(subProperty);
-        if (!EntitySearcher.getSubProperties(subProperty, ontology).isEmpty()) {
+        if (!EntitySearcher.getSubProperties(subProperty, ontology)
+            .collect(Collectors.toList())
+            .isEmpty()) {
           selectDataPropertyDescendants(ontology, subProperty, descendants);
         }
       } else {
@@ -2190,7 +2241,7 @@ public class RelatedObjectsHelper {
   private static void selectObjectPropertyAncestors(
       OWLOntology ontology, OWLObjectProperty property, Set<OWLObject> ancestors) {
     for (OWLObjectPropertyExpression propertyExpression :
-        EntitySearcher.getSuperProperties(property, ontology)) {
+        EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList())) {
       if (!propertyExpression.isAnonymous()) {
         OWLObjectProperty superProperty =
             propertyExpression.getObjectPropertiesInSignature().iterator().next();
@@ -2215,12 +2266,14 @@ public class RelatedObjectsHelper {
   private static void selectObjectPropertyDescendants(
       OWLOntology ontology, OWLObjectProperty property, Set<OWLObject> descendants) {
     for (OWLObjectPropertyExpression propertyExpression :
-        EntitySearcher.getSubProperties(property, ontology)) {
+        EntitySearcher.getSubProperties(property, ontology).collect(Collectors.toList())) {
       if (!propertyExpression.isAnonymous()) {
         OWLObjectProperty subProperty =
             propertyExpression.getObjectPropertiesInSignature().iterator().next();
         descendants.add(subProperty);
-        if (!EntitySearcher.getSubProperties(subProperty, ontology).isEmpty()) {
+        if (!EntitySearcher.getSubProperties(subProperty, ontology)
+            .collect(Collectors.toList())
+            .isEmpty()) {
           selectObjectPropertyDescendants(ontology, subProperty, descendants);
         }
       } else {
@@ -2259,7 +2312,7 @@ public class RelatedObjectsHelper {
                 objects,
                 propPairs,
                 property,
-                EntitySearcher.getSuperProperties(property, ontology));
+                EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList()));
           }
         }
       } else if (!sp.isAnonymous()) {
@@ -2268,7 +2321,7 @@ public class RelatedObjectsHelper {
             objects,
             propPairs,
             property,
-            EntitySearcher.getSuperProperties(sp, ontology));
+            EntitySearcher.getSuperProperties(sp, ontology).collect(Collectors.toList()));
       }
     }
   }
@@ -2343,16 +2396,17 @@ public class RelatedObjectsHelper {
                 objects,
                 propPairs,
                 property,
-                EntitySearcher.getSuperProperties(property, ontology));
+                EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList()));
           }
         }
       } else if (!sp.isAnonymous()) {
+        OWLDataProperty dp = (OWLDataProperty) sp;
         spanGapsHelper(
             ontology,
             objects,
             propPairs,
             property,
-            EntitySearcher.getSuperProperties(sp, ontology));
+            EntitySearcher.getSuperProperties(dp, ontology).collect(Collectors.toList()));
       }
     }
   }

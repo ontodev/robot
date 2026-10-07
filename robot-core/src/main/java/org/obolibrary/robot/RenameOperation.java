@@ -96,7 +96,8 @@ public class RenameOperation {
         // Remove old label annotation(s)
         for (OWLAnnotationAssertionAxiom ax :
             EntitySearcher.getAnnotationAssertionAxioms(
-                OntologyHelper.getEntity(ontology, newIRI), ontology)) {
+                    OntologyHelper.getEntity(ontology, newIRI), ontology)
+                .collect(Collectors.toList())) {
           if (ax.getProperty()
               .getIRI()
               .toString()

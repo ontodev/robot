@@ -375,7 +375,8 @@ public class MireotOperation {
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), inputOntology, true);
+          EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLAnnotationProperty superProperty : superProperties) {
         OntologyHelper.copy(inputOntology, outputOntology, superProperty, annotationProperties);
         outputManager.addAxiom(
@@ -489,7 +490,8 @@ public class MireotOperation {
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), inputOntology, true);
+          EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLAnnotationProperty superProperty : superProperties) {
         if (upperEntities.contains(superProperty)) {
           OntologyHelper.copyAnnotations(inputOntology, outputOntology, entity, null);
@@ -582,7 +584,8 @@ public class MireotOperation {
     // Otherwise copy ancestors recursively.
     if (entity.isOWLClass()) {
       Collection<OWLClassExpression> subClasses =
-          EntitySearcher.getSubClasses(entity.asOWLClass(), inputOntology);
+          EntitySearcher.getSubClasses(entity.asOWLClass(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLClassExpression subExpression : subClasses) {
         if (subExpression.isAnonymous()) {
           continue;
@@ -596,7 +599,8 @@ public class MireotOperation {
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> subProperties =
-          EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(), inputOntology, true);
+          EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLAnnotationProperty subProperty : subProperties) {
         OntologyHelper.copy(inputOntology, outputOntology, subProperty, annotationProperties);
         outputManager.addAxiom(
@@ -608,7 +612,8 @@ public class MireotOperation {
       }
     } else if (entity.isOWLObjectProperty()) {
       Collection<OWLObjectPropertyExpression> superProperties =
-          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), inputOntology);
+          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLObjectPropertyExpression subExpression : superProperties) {
         if (subExpression.isAnonymous()) {
           continue;
@@ -623,7 +628,8 @@ public class MireotOperation {
       }
     } else if (entity.isOWLDataProperty()) {
       Collection<OWLDataPropertyExpression> subProperties =
-          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), inputOntology);
+          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLDataPropertyExpression subExpression : subProperties) {
         OWLDataProperty subProperty = subExpression.asOWLDataProperty();
         OntologyHelper.copy(inputOntology, outputOntology, subProperty, annotationProperties);
@@ -659,7 +665,8 @@ public class MireotOperation {
     // Otherwise find the highest level ancestor that was included in upper-terms
     if (entity.isOWLClass()) {
       Collection<OWLClassExpression> subClasses =
-          EntitySearcher.getSubClasses(entity.asOWLClass(), inputOntology);
+          EntitySearcher.getSubClasses(entity.asOWLClass(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLClassExpression subExpression : subClasses) {
         if (subExpression.isAnonymous()) {
           continue;
@@ -667,7 +674,7 @@ public class MireotOperation {
         OWLClass subClass = subExpression.asOWLClass();
         // Find out if this class has any subclasses
         Collection<OWLClassExpression> subSubClasses =
-            EntitySearcher.getSubClasses(subClass, inputOntology);
+            EntitySearcher.getSubClasses(subClass, inputOntology).collect(Collectors.toList());
         if (subSubClasses.isEmpty()) {
           OntologyHelper.copyAnnotations(
               inputOntology, outputOntology, entity, annotationProperties);
@@ -680,11 +687,13 @@ public class MireotOperation {
       }
     } else if (entity.isOWLAnnotationProperty()) {
       Collection<OWLAnnotationProperty> subProperties =
-          EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(), inputOntology, true);
+          EntitySearcher.getSubProperties(entity.asOWLAnnotationProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLAnnotationProperty subProperty : subProperties) {
         // Find out if this property has any subproperties
         Collection<OWLAnnotationProperty> subSubProperties =
-            EntitySearcher.getSubProperties(subProperty, inputOntology);
+            EntitySearcher.getSubProperties(subProperty, inputOntology)
+                .collect(Collectors.toList());
         if (subSubProperties.isEmpty()) {
           OntologyHelper.copyAnnotations(
               inputOntology, outputOntology, entity, annotationProperties);
@@ -699,7 +708,8 @@ public class MireotOperation {
       }
     } else if (entity.isOWLObjectProperty()) {
       Collection<OWLObjectPropertyExpression> subProperties =
-          EntitySearcher.getSubProperties(entity.asOWLObjectProperty(), inputOntology);
+          EntitySearcher.getSubProperties(entity.asOWLObjectProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLObjectPropertyExpression subExpression : subProperties) {
         if (subExpression.isAnonymous()) {
           continue;
@@ -707,7 +717,8 @@ public class MireotOperation {
         OWLObjectProperty subProperty = subExpression.asOWLObjectProperty();
         // Find out if this property has any subproperties
         Collection<OWLObjectPropertyExpression> subSubProperties =
-            EntitySearcher.getSubProperties(subProperty, inputOntology);
+            EntitySearcher.getSubProperties(subProperty, inputOntology)
+                .collect(Collectors.toList());
         if (subSubProperties.isEmpty()) {
           OntologyHelper.copyAnnotations(
               inputOntology, outputOntology, entity, annotationProperties);
@@ -722,12 +733,14 @@ public class MireotOperation {
       }
     } else if (entity.isOWLDataProperty()) {
       Collection<OWLDataPropertyExpression> subProperties =
-          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), inputOntology);
+          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), inputOntology)
+              .collect(Collectors.toList());
       for (OWLDataPropertyExpression subExpression : subProperties) {
         OWLDataProperty subProperty = subExpression.asOWLDataProperty();
         // Find out if this property has any subproperties
         Collection<OWLDataPropertyExpression> subSubProperties =
-            EntitySearcher.getSubProperties(subProperty, inputOntology);
+            EntitySearcher.getSubProperties(subProperty, inputOntology)
+                .collect(Collectors.toList());
         if (subSubProperties.isEmpty()) {
           OntologyHelper.copyAnnotations(
               inputOntology, outputOntology, entity, annotationProperties);

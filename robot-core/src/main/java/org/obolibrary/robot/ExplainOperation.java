@@ -52,7 +52,8 @@ public class ExplainOperation {
     logger.debug("Explaining: " + axiom);
 
     ExplanationGeneratorFactory<OWLAxiom> genFac =
-        ExplanationManager.createExplanationGeneratorFactory(reasonerFactory);
+        ExplanationManager.createExplanationGeneratorFactory(
+            reasonerFactory, OWLManager::createOWLOntologyManager);
     ExplanationGenerator<OWLAxiom> gen = genFac.createExplanationGenerator(ontology);
     return gen.getExplanations(axiom, maxExplanations);
   }
@@ -68,7 +69,11 @@ public class ExplainOperation {
   public static Set<Explanation<OWLAxiom>> explainInconsistent(
       OWLOntology ontology, OWLReasonerFactory reasonerFactory, int max) {
     InconsistentOntologyExplanationGeneratorFactory igf =
-        new InconsistentOntologyExplanationGeneratorFactory(reasonerFactory, 10000);
+        new InconsistentOntologyExplanationGeneratorFactory(
+            reasonerFactory,
+            OWLManager.getOWLDataFactory(),
+            OWLManager::createOWLOntologyManager,
+            10000);
     ExplanationGenerator<OWLAxiom> generator = igf.createExplanationGenerator(ontology);
     OWLAxiom entailment = df.getOWLSubClassOfAxiom(df.getOWLThing(), df.getOWLNothing());
     return generator.getExplanations(entailment, max);
@@ -126,8 +131,7 @@ public class ExplainOperation {
   public static Set<Explanation<OWLAxiom>> explainRootUnsatisfiableClasses(
       OWLOntology ontology, OWLReasoner reasoner, OWLReasonerFactory reasonerFactory, int max) {
     RootDerivedReasoner rootReasoner =
-        new StructuralRootDerivedReasoner(
-            ontology.getOWLOntologyManager(), reasoner, reasonerFactory);
+        new StructuralRootDerivedReasoner(ontology.getOWLOntologyManager(), reasoner);
     List<OWLClass> unsatisfiable_classes =
         new ArrayList<>(rootReasoner.getRootUnsatisfiableClasses());
     return getUnsatExplanationsForClasses(ontology, reasonerFactory, max, unsatisfiable_classes);
@@ -221,7 +225,7 @@ public class ExplainOperation {
     sb.append("\n\n" + "# Ontologies used: " + "\n");
     for (OWLOntologyID oid : ontologyIdAbbreviation.keySet()) {
       String soid = ontologyIdAbbreviation.get(oid);
-      String oiri = oid.getOntologyIRI().or(IRI.create("unknown.iri")).toString();
+      String oiri = oid.getOntologyIRI().orElse(IRI.create("unknown.iri")).toString();
       sb.append("- ").append(soid).append(" (").append(oiri).append(")\n");
     }
     return sb.toString();

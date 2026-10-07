@@ -131,7 +131,7 @@ public class Report {
   public Report(OWLOntology ontology, boolean useLabels) throws IOException {
     if (ontology != null) {
       manager = ontology.getOWLOntologyManager();
-      ontologyIRI = ontology.getOntologyID().getOntologyIRI().orNull();
+      ontologyIRI = ontology.getOntologyID().getOntologyIRI().orElse(null);
     } else {
       manager = OWLManager.createOWLOntologyManager();
     }
@@ -184,7 +184,7 @@ public class Report {
   public Report(OWLOntology ontology, IOHelper ioHelper, boolean useLabels) {
     if (ontology != null) {
       manager = ontology.getOWLOntologyManager();
-      ontologyIRI = ontology.getOntologyID().getOntologyIRI().orNull();
+      ontologyIRI = ontology.getOntologyID().getOntologyIRI().orElse(null);
     } else {
       manager = OWLManager.createOWLOntologyManager();
     }

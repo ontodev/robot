@@ -314,7 +314,7 @@ public class AnnotateCommand implements Command {
           ontology
               .getOntologyID()
               .getVersionIRI()
-              .or(ontology.getOntologyID().getOntologyIRI().orNull());
+              .orElse((ontology.getOntologyID().getOntologyIRI().orElse(null)));
       if (provenanceIRI != null) {
         OWLAnnotationProperty annotationProp =
             ontology
@@ -331,7 +331,7 @@ public class AnnotateCommand implements Command {
     boolean definedBy = CommandLineHelper.getBooleanValue(line, "annotate-defined-by", false);
     if (definedBy) {
       hasAnnotation = true;
-      IRI ontIRI = ontology.getOntologyID().getOntologyIRI().orNull();
+      IRI ontIRI = ontology.getOntologyID().getOntologyIRI().orElse(null);
       if (ontIRI != null) {
         OWLAnnotationProperty rdfsIsDefinedBy =
             ontology.getOWLOntologyManager().getOWLDataFactory().getRDFSIsDefinedBy();
@@ -369,8 +369,8 @@ public class AnnotateCommand implements Command {
    * @return the updated string
    */
   private String expandValue(String value, OWLOntology ontology) {
-    IRI ontologyIRI = ontology.getOntologyID().getOntologyIRI().orNull();
-    IRI versionIRI = ontology.getOntologyID().getVersionIRI().orNull();
+    IRI ontologyIRI = ontology.getOntologyID().getOntologyIRI().orElse(null);
+    IRI versionIRI = ontology.getOntologyID().getVersionIRI().orElse(null);
     if (ontologyIRI != null) {
       value = value.replace("%{ontology_iri}", ontologyIRI.toString());
     }
