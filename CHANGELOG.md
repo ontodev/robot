@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add SPARQL JSON (`srj`) output format for results in [`query`]
+
 ## [1.9.11] - 2026-10-01
 
 ### Added
