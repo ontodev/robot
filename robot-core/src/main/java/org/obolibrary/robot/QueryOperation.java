@@ -539,6 +539,9 @@ public class QueryOperation {
       case "sxml":
         format = ResultSetLang.SPARQLResultSetXML;
         break;
+      case "srj":
+        format = ResultSetLang.SPARQLResultSetJSON;
+        break;
       default:
         format = null;
     }
