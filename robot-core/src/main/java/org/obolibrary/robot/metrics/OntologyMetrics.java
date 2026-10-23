@@ -1076,8 +1076,8 @@ public class OntologyMetrics {
       for (OWLClass eachClass : eachAxiom.getClassesInSignature()) {
         int frequency = getNumberOfOccurences(saxrhs, eachClass.toString());
         String class_sf = eachClass.getIRI().toString();
-        if (classCountMap.containsKey(eachClass.toString())) {
-          Integer currentClassCount = classCountMap.get(eachClass.toString());
+        if (classCountMap.containsKey(class_sf)) {
+          Integer currentClassCount = classCountMap.get(class_sf);
           classCountMap.put(class_sf, currentClassCount + frequency);
         } else {
           classCountMap.put(class_sf, frequency);
