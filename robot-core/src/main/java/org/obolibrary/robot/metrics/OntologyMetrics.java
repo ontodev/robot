@@ -10,7 +10,6 @@ import org.semanticweb.owlapi.metrics.AbstractOWLMetric;
 import org.semanticweb.owlapi.metrics.AverageAssertedNamedSuperclassCount;
 import org.semanticweb.owlapi.metrics.DLExpressivity;
 import org.semanticweb.owlapi.metrics.GCICount;
-import org.semanticweb.owlapi.metrics.HiddenGCICount;
 import org.semanticweb.owlapi.metrics.MaximumNumberOfNamedSuperclasses;
 import org.semanticweb.owlapi.metrics.NumberOfClassesWithMultipleInheritance;
 import org.semanticweb.owlapi.metrics.ReferencedClassCount;
@@ -920,12 +919,35 @@ public class OntologyMetrics {
     return metric.getValue();
   }
 
+  /**
+   * Count classes that have both an equivalent class axiom and a subclass axiom (as the subclass).
+   * Reimplements the OWLAPI 4 HiddenGCICount; the OWLAPI 5 version checks for subclasses of the
+   * class instead of superclasses, which is not a hidden GCI.
+   */
   private int getHiddenGCICount(boolean useImportsClosure) {
-    // TODO verify this
-    AbstractOWLMetric<Integer> metric = new HiddenGCICount(getOntology());
-    metric.setImportsClosureUsed(useImportsClosure);
-    metric.setOntology(getOntology());
-    return metric.getValue();
+    Set<OWLOntology> onts = new HashSet<>();
+    if (useImportsClosure) {
+      onts.addAll(getOntology().getImportsClosure());
+    } else {
+      onts.add(getOntology());
+    }
+    Set<OWLClass> classes = new HashSet<>();
+    for (OWLOntology ont : onts) {
+      classes.addAll(ont.getClassesInSignature());
+    }
+    int count = 0;
+    for (OWLClass cls : classes) {
+      boolean hasEquivalent = false;
+      boolean hasSuperClass = false;
+      for (OWLOntology ont : onts) {
+        hasEquivalent = hasEquivalent || !ont.getEquivalentClassesAxioms(cls).isEmpty();
+        hasSuperClass = hasSuperClass || !ont.getSubClassAxiomsForSubClass(cls).isEmpty();
+      }
+      if (hasEquivalent && hasSuperClass) {
+        count++;
+      }
+    }
+    return count;
   }
 
   private double getAverageAssertedNamedSuperclasses(boolean useImportsClosure) {
@@ -1054,8 +1076,8 @@ public class OntologyMetrics {
       for (OWLClass eachClass : eachAxiom.getClassesInSignature()) {
         int frequency = getNumberOfOccurences(saxrhs, eachClass.toString());
         String class_sf = eachClass.getIRI().toString();
-        if (classCountMap.containsKey(eachClass.toString())) {
-          Integer currentClassCount = classCountMap.get(eachClass.toString());
+        if (classCountMap.containsKey(class_sf)) {
+          Integer currentClassCount = classCountMap.get(class_sf);
           classCountMap.put(class_sf, currentClassCount + frequency);
         } else {
           classCountMap.put(class_sf, frequency);

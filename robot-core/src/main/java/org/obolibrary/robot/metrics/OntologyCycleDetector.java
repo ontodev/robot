@@ -44,12 +44,11 @@ public class OntologyCycleDetector {
         Set<OWLAxiom> Defs = getReferencingAxioms(ontology, current, includeImports);
         Set<OWLClassExpression> ces = getDefinition(current, Defs);
 
-        // no definition for a class -- fine!
-        OWLClassExpression C =
-            ontology.getOWLOntologyManager().getOWLDataFactory().getOWLObjectIntersectionOf(ces);
-
-        // check the signature of that axiom
-        Set<OWLClass> AxSig = C.getClassesInSignature();
+        // check the signature of the definition (empty if the class has no definition)
+        Set<OWLClass> AxSig = new HashSet<>();
+        for (OWLClassExpression ce : ces) {
+          AxSig.addAll(ce.getClassesInSignature());
+        }
 
         if (AxSig.contains(Class)) {
           return true;
