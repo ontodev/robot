@@ -177,16 +177,18 @@
       "BSPO": "http://purl.obolibrary.org/obo/BSPO_"
     },
     "datatypes_axiom_count": {
-      "XSD_STRING": 751
+      "XSD_STRING": 3720,
+      "XSD_ANY_URI": 7
     },
     "datatypes_axiom_count_incl": {
-      "XSD_STRING": 751
+      "XSD_STRING": 3720,
+      "XSD_ANY_URI": 7
     },
     "namespace_axiom_count": {
       "oboInOwl": 4819,
       "IAO": 306,
       "UBERON": 1903,
-      "xsd": 751,
+      "xsd": 3727,
       "rdfs": 308,
       "BFO": 283,
       "obo": 235,
@@ -198,7 +200,7 @@
       "oboInOwl": 4819,
       "IAO": 306,
       "UBERON": 1903,
-      "xsd": 751,
+      "xsd": 3727,
       "rdfs": 308,
       "BFO": 283,
       "obo": 235,
