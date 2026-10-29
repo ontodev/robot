@@ -1,0 +1,10 @@
+@prefix : <urn:probe:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+:p a owl:ObjectProperty .
+:C a owl:Class ;
+   owl:equivalentClass [
+       a owl:Restriction ;
+       owl:someValuesFrom owl:Thing ;
+       owl:onProperty [ owl:inverseOf :p ]
+   ] .

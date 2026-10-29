@@ -13,6 +13,8 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
                               owl:onProperty ?property1 ] .
   FILTER (!isBlank(?entity))
   FILTER (!isBlank(?value))
-  BIND (if(isIRI(?property1), ?property1, "blank node" ) as ?property)
+  OPTIONAL { ?property1 owl:inverseOf ?inverse . FILTER (isIRI(?inverse)) }
+  BIND (if(isIRI(?property1), ?property1,
+           if(bound(?inverse), concat("inverse(", str(?inverse), ")"), "blank node")) as ?property)
 }
 ORDER BY ?entity

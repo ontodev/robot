@@ -193,6 +193,10 @@ The argument for the `--limit` option must be a number.
 
 All queries must bind `?entity ?property ?value` for correct formatting. If `?entity` is ever `null`, the query cannot be reported on.
 
+### Query Failed Error
+
+A report query could not be completed, so the report would be incomplete. The cause is logged directly above this error. If it is one of your own queries, check that it binds `?entity ?property ?value`.
+
 ### Print Number Error
 
 The argument for the `--print` option must be a number.
