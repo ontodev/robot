@@ -6,7 +6,10 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,6 +64,32 @@ public class ReportOperationTest extends CoreTest {
       e.printStackTrace();
       Assert.fail();
     }
+  }
+
+  /**
+   * Test that equivalent_class_axiom_no_genus reports a restriction on an inverse object property
+   * instead of failing. See https://github.com/ontodev/robot/issues/1299.
+   *
+   * @throws Exception on any problem
+   */
+  @Test
+  public void testNoGenusWithInverseProperty() throws Exception {
+    final OWLOntology ontology = loadOntology("/1299-inverse-property-no-genus.ttl");
+    final File profile = File.createTempFile("1299-profile", ".txt");
+    Files.write(profile.toPath(), "WARN\tequivalent_class_axiom_no_genus\n".getBytes());
+    final File outputFile = File.createTempFile("1299-output", ".tsv");
+    Map<String, String> options = new HashMap<>();
+    options.put("profile", profile.toString());
+    options.put("fail-on", "none");
+    final boolean passed =
+        ReportOperation.report(ontology, new IOHelper(), outputFile.toString(), options);
+    Assert.assertTrue(passed);
+    final String output = IOUtils.toString(new FileInputStream(outputFile), StandardCharsets.UTF_8);
+    Assert.assertTrue(
+        output,
+        output.contains(
+            "WARN\tequivalent_class_axiom_no_genus\turn:probe:C\tinverse(urn:probe:p)\t"
+                + "http://www.w3.org/2002/07/owl#Thing"));
   }
 
   private OWLOntology generateOntologyWithLotsOfViolations() throws OWLOntologyCreationException {

@@ -53,6 +53,10 @@ public class ReportOperation {
   private static final String missingEntityBinding =
       NS + "MISSING ENTITY BINDING query '%s' must include an '?entity'";
 
+  /** Error message when a report query could not be completed. */
+  private static final String queryFailedError =
+      NS + "QUERY FAILED ERROR query '%s' could not be completed; see the logged cause above.";
+
   /** Error message when a user-provided report query does not exist. */
   private static final String missingQueryError =
       NS + "MISSING QUERY ERROR query at '%s' does not exist.";
@@ -288,9 +292,9 @@ public class ReportOperation {
       // Use the query to get violations
       List<Violation> violations =
           getViolations(ioHelper, dataset, queryName, queryString, options);
-      // If violations is not returned properly, the query did not have the correct format
+      // If violations is not returned, the query failed (cause is logged by getViolations)
       if (violations == null) {
-        throw new Exception(String.format(missingEntityBinding, queryName));
+        throw new Exception(String.format(queryFailedError, queryName));
       }
       rq.addViolations(violations);
       report.addReportQuery(rq);
@@ -440,9 +444,9 @@ public class ReportOperation {
       // Use the query to get violations
       List<Violation> violations =
           getViolations(ioHelper, dataset, queryName, queryString, options);
-      // If violations is not returned properly, the query did not have the correct format
+      // If violations is not returned, the query failed (cause is logged by getViolations)
       if (violations == null) {
-        throw new Exception(String.format(missingEntityBinding, queryName));
+        throw new Exception(String.format(queryFailedError, queryName));
       }
       rq.addViolations(violations);
       report.addReportQuery(rq);
@@ -1005,7 +1009,13 @@ public class ReportOperation {
 
       // add details to Violation
       String property = getQueryResultOrNull(qs, "property");
-      if (property != null) {
+      if (property != null && qs.get("property").isLiteral()) {
+        // Property is not a named entity (e.g. an inverse property expression),
+        // so report the query's string rendering of it as is
+        property = qs.getLiteral("property").getLexicalForm();
+        String value = getQueryResultOrNull(qs, "value");
+        violation.addStatement(property, value == null ? "" : value);
+      } else if (property != null) {
         OWLEntity e = dataFactory.getOWLClass(ioHelper.createIRI(property));
         String value = getQueryResultOrNull(qs, "value");
         if (value != null) {

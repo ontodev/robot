@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix `equivalent_class_axiom_no_genus` failing on restrictions with inverse object properties in [`report`] [#1299]
+
 ## [1.9.11] - 2026-10-01
 
 ### Added
@@ -474,6 +477,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1299]: https://github.com/ontodev/robot/issues/1299
 [#1285]: https://github.com/ontodev/robot/pull/1285
 [#1283]: https://github.com/ontodev/robot/pull/1283
 [#1281]: https://github.com/ontodev/robot/pull/1281
