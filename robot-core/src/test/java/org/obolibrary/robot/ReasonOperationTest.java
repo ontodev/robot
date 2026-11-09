@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.semanticweb.HermiT.ReasonerFactory;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -51,7 +50,6 @@ public class ReasonOperationTest extends CoreTest {
    *
    * @throws Exception on any problem
    */
-  @Ignore("Whelk update to OWLAPI 5")
   @Test
   public void testWhelk() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
@@ -189,7 +187,6 @@ public class ReasonOperationTest extends CoreTest {
    *
    * @throws Exception on any problem
    */
-  @Ignore("ELK needs update to OWLAPI 5")
   @Test
   public void testEMRBasic() throws Exception {
     OWLOntology reasoned = loadOntology("/simple.owl");
@@ -207,7 +204,6 @@ public class ReasonOperationTest extends CoreTest {
    *
    * @throws Exception on any problem
    */
-  @Ignore("ELK update to OWLAPI 5")
   @Test
   public void testEMRRelax() throws Exception {
     OWLOntology reasoned = loadOntology("/relax_equivalence_axioms_test.obo");

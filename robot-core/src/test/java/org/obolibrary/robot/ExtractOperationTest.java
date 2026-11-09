@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
@@ -160,7 +159,6 @@ public class ExtractOperationTest extends CoreTest {
    * @throws IOException on IO error
    * @throws OWLOntologyCreationException on ontology error
    */
-  @Ignore("scowl update to OWLAPI 5")
   @Test
   public void testExtractSubset() throws IOException, OWLOntologyCreationException {
     OWLOntology simple = loadOntology("/subset.obo");

@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.geneontology.obographs.owlapi.OboGraphJsonDocumentFormat;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.IRI;
@@ -91,7 +90,6 @@ public class IOHelperTest extends CoreTest {
    * @throws IOException on file problem
    * @throws URISyntaxException on problem converting path to URI
    */
-  @Ignore("obographs needs update to OWLAPI 5")
   @Test
   public void testJSON() throws IOException, URISyntaxException {
     assertIdentical("/simple.owl", loadOntologyWithCatalog("/simple.json"));
@@ -103,7 +101,6 @@ public class IOHelperTest extends CoreTest {
    * @throws IOException on file problem
    * @throws URISyntaxException on problem converting path to URI
    */
-  @Ignore("obographs needs update to OWLAPI 5")
   @Test
   public void testYAML() throws IOException, URISyntaxException {
     assertIdentical("/simple.owl", loadOntologyWithCatalog("/simple.json"));
@@ -319,7 +316,6 @@ public class IOHelperTest extends CoreTest {
    *
    * @throws IOException on error
    */
-  @Ignore("obographs needs update to OWLAPI 5")
   @Test
   public void testSaveOntologyAsJson() throws IOException {
     OWLOntology ontology = loadOntology("/simple.owl");
