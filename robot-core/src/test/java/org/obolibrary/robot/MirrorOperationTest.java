@@ -38,7 +38,7 @@ public class MirrorOperationTest extends CoreTest {
     File catalogFile = new File("target/mirror-catalog.xml");
     MirrorOperation.mirror(inputOntology, new File("target"), catalogFile);
 
-    IRI iri = inputOntology.getOntologyID().getOntologyIRI().orNull();
+    IRI iri = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     OWLOntology loadedOntology;
     if (iri != null) {
       loadedOntology = loadOntologyWithCatalog(iri, catalogFile);

@@ -101,7 +101,7 @@ public class ExpandOperation {
                 ax ->
                     executeConstruct(
                         dataset,
-                        ax.getValue().asLiteral().orNull().getLiteral(),
+                        ax.getValue().asLiteral().orElse(null).getLiteral(),
                         (IRI) (ax.getSubject()),
                         config.getAnnotateExpansionAxioms()))
             .reduce(ExpandOperation::combine)
@@ -126,7 +126,7 @@ public class ExpandOperation {
                 OWLManager.getOWLDataFactory().getOWLAnnotation(dctSource, definitionTerm));
         annotatedAxioms =
             axioms.stream()
-                .map(ax -> ax.getAnnotatedAxiom(sourceAnnotation))
+                .map(ax -> (OWLAxiom) ax.getAnnotatedAxiom(sourceAnnotation))
                 .collect(Collectors.toSet());
       } else {
         annotatedAxioms = axioms;

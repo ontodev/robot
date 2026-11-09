@@ -489,11 +489,12 @@ public class ExportOperation {
       OWLAnnotationProperty ap) {
     List<String> values = new ArrayList<>();
     for (OWLAnnotationAssertionAxiom a :
-        EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)) {
+        EntitySearcher.getAnnotationAssertionAxioms(entity, ontology)
+            .collect(Collectors.toList())) {
       if (a.getProperty().getIRI().equals(ap.getIRI())) {
         if (a.getValue().isIRI()) {
           // Render the IRI using the provider
-          IRI iri = a.getValue().asIRI().orNull();
+          IRI iri = a.getValue().asIRI().orElse(null);
           if (iri != null) {
             Set<OWLEntity> entities = ontology.getEntitiesInSignature(iri);
             if (entities.size() > 0) {
@@ -506,7 +507,7 @@ public class ExportOperation {
           }
         } else {
           // Otherwise just get the value of the literal
-          OWLLiteral lit = a.getValue().asLiteral().orNull();
+          OWLLiteral lit = a.getValue().asLiteral().orElse(null);
           if (lit != null) {
             values.add(lit.getLiteral());
           }
@@ -540,13 +541,15 @@ public class ExportOperation {
       boolean includeAnonymous) {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
-      Collection<OWLLiteral> propVals = EntitySearcher.getDataPropertyValues(i, dp, ontology);
+      Collection<OWLLiteral> propVals =
+          EntitySearcher.getDataPropertyValues(i, dp, ontology).collect(Collectors.toList());
       return propVals.stream().map(OWLLiteral::toString).collect(Collectors.toList());
     } else if (entity.isOWLClass()) {
       // Find super class expressions that use this property
       List<String> vals = new ArrayList<>();
       for (OWLClassExpression expr :
-          EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
+          EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         if (!expr.isAnonymous()) {
           continue;
         }
@@ -557,7 +560,8 @@ public class ExportOperation {
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
-          EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)) {
+          EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         if (!expr.isAnonymous()) {
           continue;
         }
@@ -596,7 +600,8 @@ public class ExportOperation {
       boolean includeAnonymous) {
     if (entity.isOWLNamedIndividual()) {
       OWLNamedIndividual i = entity.asOWLNamedIndividual();
-      Collection<OWLIndividual> propVals = EntitySearcher.getObjectPropertyValues(i, op, ontology);
+      Collection<OWLIndividual> propVals =
+          EntitySearcher.getObjectPropertyValues(i, op, ontology).collect(Collectors.toList());
       return propVals.stream()
           .filter(OWLIndividual::isNamed)
           .map(pv -> OntologyHelper.renderManchester(pv.asOWLNamedIndividual(), provider, rt))
@@ -605,7 +610,8 @@ public class ExportOperation {
       // Find super class expressions that use this property
       List<String> exprs = new ArrayList<>();
       for (OWLClassExpression expr :
-          EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
+          EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         if (!expr.isAnonymous()) {
           continue;
         }
@@ -616,7 +622,8 @@ public class ExportOperation {
       }
       // Find equivalent class expressions that use this property
       for (OWLClassExpression expr :
-          EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)) {
+          EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         if (!expr.isAnonymous()) {
           continue;
         }
@@ -939,7 +946,8 @@ public class ExportOperation {
         case "SUBCLASSES":
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> subclasses =
-                EntitySearcher.getSubClasses(entity.asOWLClass(), ontology);
+                EntitySearcher.getSubClasses(entity.asOWLClass(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     subclasses,
@@ -1043,7 +1051,8 @@ public class ExportOperation {
           // SubClass Of
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> supers =
-                EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology);
+                EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)
+                    .collect(Collectors.toList());
             // owl:Thing should not be included in the subclass of column
             supers.remove(dataFactory.getOWLThing());
             row.add(
@@ -1062,7 +1071,8 @@ public class ExportOperation {
           if (entity.isOWLAnnotationProperty()) {
             // Annotation properties always render as labels (no expressions)
             Collection<OWLAnnotationProperty> supers =
-                EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), ontology);
+                EntitySearcher.getSuperProperties(entity.asOWLAnnotationProperty(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     supers,
@@ -1075,7 +1085,8 @@ public class ExportOperation {
 
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> supers =
-                EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology);
+                EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     supers,
@@ -1088,7 +1099,8 @@ public class ExportOperation {
 
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> supers =
-                EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology);
+                EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     supers,
@@ -1104,7 +1116,8 @@ public class ExportOperation {
           // Equivalent Classes
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> eqs =
-                EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology);
+                EntitySearcher.getEquivalentClasses(entity.asOWLClass(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     eqs,
@@ -1123,7 +1136,8 @@ public class ExportOperation {
             break;
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> eqs =
-                EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology);
+                EntitySearcher.getEquivalentProperties(entity.asOWLDataProperty(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     eqs,
@@ -1136,7 +1150,8 @@ public class ExportOperation {
 
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> eqs =
-                EntitySearcher.getEquivalentProperties(entity.asOWLObjectProperty(), ontology);
+                EntitySearcher.getEquivalentProperties(entity.asOWLObjectProperty(), ontology)
+                    .collect(Collectors.toList());
             row.add(
                 getObjectCell(
                     eqs,
@@ -1153,7 +1168,8 @@ public class ExportOperation {
           // Does not apply to annotation properties.
           if (entity.isOWLClass()) {
             Collection<OWLClassExpression> disjoints =
-                EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology);
+                EntitySearcher.getDisjointClasses(entity.asOWLClass(), ontology)
+                    .collect(Collectors.toList());
             // remove self-disjoint
             disjoints.remove(entity.asOWLClass());
             row.add(
@@ -1168,7 +1184,8 @@ public class ExportOperation {
 
           } else if (entity.isOWLDataProperty()) {
             Collection<OWLDataPropertyExpression> disjoints =
-                EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology);
+                EntitySearcher.getDisjointProperties(entity.asOWLDataProperty(), ontology)
+                    .collect(Collectors.toList());
             // remove self-disjoint
             disjoints.remove(entity.asOWLDataProperty());
             row.add(
@@ -1183,7 +1200,8 @@ public class ExportOperation {
 
           } else if (entity.isOWLObjectProperty()) {
             Collection<OWLObjectPropertyExpression> disjoints =
-                EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology);
+                EntitySearcher.getDisjointProperties(entity.asOWLObjectProperty(), ontology)
+                    .collect(Collectors.toList());
             // remove self-disjoint
             disjoints.remove(entity.asOWLObjectProperty());
             row.add(
@@ -1201,7 +1219,8 @@ public class ExportOperation {
           // Class Assertions
           if (entity.isOWLNamedIndividual()) {
             Collection<OWLClassExpression> types =
-                EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology);
+                EntitySearcher.getTypes(entity.asOWLNamedIndividual(), ontology)
+                    .collect(Collectors.toList());
             if (!types.isEmpty()) {
               row.add(
                   getObjectCell(
@@ -1225,11 +1244,17 @@ public class ExportOperation {
         case "http://www.w3.org/2000/01/rdf-schema#domain":
           Collection<? extends OWLObject> domains = null;
           if (entity.isOWLObjectProperty()) {
-            domains = EntitySearcher.getDomains(entity.asOWLObjectProperty(), ontology);
+            domains =
+                EntitySearcher.getDomains(entity.asOWLObjectProperty(), ontology)
+                    .collect(Collectors.toList());
           } else if (entity.isOWLDataProperty()) {
-            domains = EntitySearcher.getDomains(entity.asOWLDataProperty(), ontology);
+            domains =
+                EntitySearcher.getDomains(entity.asOWLDataProperty(), ontology)
+                    .collect(Collectors.toList());
           } else if (entity.isOWLAnnotationProperty()) {
-            domains = EntitySearcher.getDomains(entity.asOWLAnnotationProperty(), ontology);
+            domains =
+                EntitySearcher.getDomains(entity.asOWLAnnotationProperty(), ontology)
+                    .collect(Collectors.toList());
           }
           if (domains != null) {
             row.add(
@@ -1246,11 +1271,17 @@ public class ExportOperation {
         case "http://www.w3.org/2000/01/rdf-schema#range":
           Collection<? extends OWLObject> ranges = null;
           if (entity.isOWLObjectProperty()) {
-            ranges = EntitySearcher.getRanges(entity.asOWLObjectProperty(), ontology);
+            ranges =
+                EntitySearcher.getRanges(entity.asOWLObjectProperty(), ontology)
+                    .collect(Collectors.toList());
           } else if (entity.isOWLDataProperty()) {
-            ranges = EntitySearcher.getRanges(entity.asOWLDataProperty(), ontology);
+            ranges =
+                EntitySearcher.getRanges(entity.asOWLDataProperty(), ontology)
+                    .collect(Collectors.toList());
           } else if (entity.isOWLAnnotationProperty()) {
-            ranges = EntitySearcher.getRanges(entity.asOWLAnnotationProperty(), ontology);
+            ranges =
+                EntitySearcher.getRanges(entity.asOWLAnnotationProperty(), ontology)
+                    .collect(Collectors.toList());
           }
           if (ranges != null) {
             row.add(
@@ -1285,7 +1316,7 @@ public class ExportOperation {
     for (OWLAnnotationAssertionAxiom ax : ontology.getAnnotationAssertionAxioms(entity.getIRI())) {
       String apIRI = ax.getProperty().getIRI().toString();
       if (synonymProperties.contains(apIRI)) {
-        OWLLiteral lit = ax.getValue().asLiteral().orNull();
+        OWLLiteral lit = ax.getValue().asLiteral().orElse(null);
         if (lit != null) {
           synonyms.add(lit.getLiteral());
         }

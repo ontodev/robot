@@ -14,7 +14,6 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.Lang;
 import org.junit.Test;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
-import org.semanticweb.owlapi.io.OWLOntologyCreationIOException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -200,18 +199,13 @@ public class QueryOperationTest extends CoreTest {
   @Test
   public void test1030CatalogIsUsedForInputIri()
       throws IOException, OWLOntologyStorageException, OWLOntologyCreationException {
-    try {
-      final OWLOntology inputOntology =
-          loadOntologyWithCatalog(
-              IRI.create("http://test.org/test-imported.owl"),
-              new File(
-                  getClass().getResource("/1030-input-iri-catalog/catalog-v001.xml").getFile()));
-      final Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology);
-      final String query = "SELECT ?s { ?s ?p ?o }";
-      QueryOperation.execQuery(dataset, query);
-    } catch (final OWLOntologyCreationIOException e) {
-      fail();
-    }
+    final OWLOntology inputOntology =
+        loadOntologyWithCatalog(
+            IRI.create("http://test.org/test-imported.owl"),
+            new File(getClass().getResource("/1030-input-iri-catalog/catalog-v001.xml").getFile()));
+    final Dataset dataset = QueryOperation.loadOntologyAsDataset(inputOntology);
+    final String query = "SELECT ?s { ?s ?p ?o }";
+    QueryOperation.execQuery(dataset, query);
   }
 
   @Test

@@ -191,12 +191,12 @@ public class RepairOperation {
                 .getIRI()
                 .equals(IRI.create("http://purl.obolibrary.org/obo/IAO_0100001"))) {
               OWLAnnotationValue val = aaa.getValue();
-              IRI valIRI = val.asIRI().orNull();
+              IRI valIRI = val.asIRI().orElse(null);
               if (valIRI != null) {
                 logger.info("Using URI replacement: " + valIRI);
                 replacedBy = valIRI;
               } else {
-                OWLLiteral valLit = val.asLiteral().orNull();
+                OWLLiteral valLit = val.asLiteral().orElse(null);
                 if (valLit != null) {
                   logger.info("Using CURIE replacement: " + valLit);
                   replacedBy = iohelper.createIRI(valLit.getLiteral());

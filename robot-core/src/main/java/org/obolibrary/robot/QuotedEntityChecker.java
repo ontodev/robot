@@ -3,10 +3,10 @@ package org.obolibrary.robot;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.semanticweb.owlapi.expression.OWLEntityChecker;
 import org.semanticweb.owlapi.model.IRI;
@@ -21,8 +21,8 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
-import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,16 +147,12 @@ public class QuotedEntityChecker implements OWLEntityChecker {
 
   /**
    * Use annotation properties and the short form provider to add mappings for all entities in the
-   * given ontology.
+   * given ontology and its imports.
    *
    * @param ontology the ontology to add mappings for
    */
   public void addAll(OWLOntology ontology) {
-    Set<OWLOntology> ontologies = new HashSet<>();
-    ontologies.add(ontology);
-    ontologies.addAll(ontology.getImports());
-    ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
-    for (OWLEntity entity : resp.getEntities()) {
+    for (OWLEntity entity : ontology.getSignature(Imports.INCLUDED)) {
       add(ontology, entity);
     }
   }
@@ -226,8 +222,9 @@ public class QuotedEntityChecker implements OWLEntityChecker {
       for (OWLAnnotationProperty property : properties) {
         // Get the labels for all entities
         for (OWLAnnotation ann :
-            EntitySearcher.getAnnotationObjects(entity, ontologies, property)) {
-          OWLLiteral value = ann.getValue().asLiteral().orNull();
+            EntitySearcher.getAnnotationObjects(entity, ontologies.stream(), property)
+                .collect(Collectors.toList())) {
+          OWLLiteral value = ann.getValue().asLiteral().orElse(null);
           // If it has a label, add it to the map (will replace short form)
           if (value != null) {
             labels.put(entity.getIRI(), value.getLiteral());

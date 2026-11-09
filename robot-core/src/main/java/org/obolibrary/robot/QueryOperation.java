@@ -99,7 +99,7 @@ public class QueryOperation {
     for (OWLOntology ont : ontologies) {
       Model m = loadOntologyAsModel(ont);
       // Get the name of the graph as the ontology IRI
-      IRI iri = ont.getOntologyID().getOntologyIRI().orNull();
+      IRI iri = ont.getOntologyID().getOntologyIRI().orElse(null);
       String name;
       if (iri != null) {
         name = iri.toString();
@@ -130,11 +130,7 @@ public class QueryOperation {
     long start = System.currentTimeMillis();
     JenaTriplesHandler handler = new JenaTriplesHandler();
     RioRenderer renderer = new RioRenderer(ontology, handler, null);
-    try {
-      renderer.render();
-    } catch (IOException e) {
-      throw new OWLOntologyStorageException(e);
-    }
+    renderer.render();
     Model model = handler.getModel();
     long end = System.currentTimeMillis();
     logger.debug(

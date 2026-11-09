@@ -44,7 +44,7 @@ public class MirrorOperation {
       validateImports(ont);
 
       OWLOntologyID ontologyID = ont.getOntologyID();
-      IRI ontologyIRI = ontologyID.getOntologyIRI().orNull();
+      IRI ontologyIRI = ontologyID.getOntologyIRI().orElse(null);
 
       // Not really sure why this is here, but apparently we can get
       // an ontology without an IRI, in which case we'll generate one

@@ -154,35 +154,17 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-api</artifactId>
-      <version>4.5.29</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>jsr305</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>5.5.1</version>
     </dependency>
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
-      <version>4.5.29</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>jsr305</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>5.5.1</version>
     </dependency>
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-rio</artifactId>
-      <version>4.5.29</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>jsr305</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>5.5.1</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -221,7 +203,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>org.semanticweb.hermit</artifactId>
-      <version>1.4.5.456</version>
+      <version>1.4.5.519</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
@@ -256,7 +238,7 @@
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>jfact</artifactId>
-      <version>4.0.4</version>
+      <version>5.0.3</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>

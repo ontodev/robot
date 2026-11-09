@@ -120,7 +120,7 @@ public class RepairCommand implements Command {
 
     IRI outputIRI = CommandLineHelper.getOutputIRI(line);
     if (outputIRI == null) {
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     }
 
     boolean repairInvalidReferences =

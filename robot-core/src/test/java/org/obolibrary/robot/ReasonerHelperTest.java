@@ -89,7 +89,7 @@ public class ReasonerHelperTest extends CoreTest {
   @Test
   public void testCreateUnsatisfiableModule() throws Exception {
     OWLOntology ontologyMain = loadOntology("/incoherent-tbox.owl");
-    IRI iri = ontologyMain.getOntologyID().getOntologyIRI().orNull();
+    IRI iri = ontologyMain.getOntologyID().getOntologyIRI().orElse(null);
     if (iri == null) {
       throw new Exception("Ontology 'incoherent-tbox.owl' does not have an IRI");
     }
@@ -116,7 +116,7 @@ public class ReasonerHelperTest extends CoreTest {
         assertEquals(1, sca.getAnnotations().size());
         OWLAnnotation ann = sca.getAnnotations().iterator().next();
         assertEquals(factory.getRDFSIsDefinedBy(), ann.getProperty());
-        OWLLiteral v = ann.getValue().asLiteral().orNull();
+        OWLLiteral v = ann.getValue().asLiteral().orElse(null);
         if (v == null) {
           throw new Exception(String.format("OWLAnnotation '%s' has no value.", ann.toString()));
         }

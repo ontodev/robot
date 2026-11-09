@@ -324,7 +324,7 @@ public class MergeOperation {
         sourceOntology
             .getOntologyID()
             .getVersionIRI()
-            .or(sourceOntology.getOntologyID().getOntologyIRI().orNull());
+            .orElse(sourceOntology.getOntologyID().getOntologyIRI().orElse(null));
     if (provenanceIRI != null) {
       OWLOntologyManager manager = targetOntology.getOWLOntologyManager();
       OWLAnnotationProperty annotationProp =
@@ -358,7 +358,7 @@ public class MergeOperation {
    */
   private static void annotateWithOntologyIRI(
       OWLOntology sourceOntology, OWLOntology targetOntology, Imports includeImportsClosure) {
-    IRI ontIRI = sourceOntology.getOntologyID().getOntologyIRI().orNull();
+    IRI ontIRI = sourceOntology.getOntologyID().getOntologyIRI().orElse(null);
     if (ontIRI != null) {
       OWLAnnotationProperty rdfsIsDefinedBy =
           targetOntology.getOWLOntologyManager().getOWLDataFactory().getRDFSIsDefinedBy();

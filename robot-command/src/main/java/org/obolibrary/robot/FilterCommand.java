@@ -255,7 +255,7 @@ public class FilterCommand implements Command {
       outputIRI = IRI.create(outputIRIString);
     } else {
       // If it is not provided, copy the input IRI
-      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orNull();
+      outputIRI = inputOntology.getOntologyID().getOntologyIRI().orElse(null);
     }
 
     // Create the output ontology

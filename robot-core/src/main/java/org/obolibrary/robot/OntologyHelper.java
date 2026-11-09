@@ -1,11 +1,11 @@
 package org.obolibrary.robot;
 
-import com.google.common.base.Optional;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.obolibrary.robot.checks.InvalidReferenceChecker;
 import org.obolibrary.robot.export.RendererType;
 import org.obolibrary.robot.providers.QuotedAnnotationValueShortFormProvider;
@@ -15,7 +15,6 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.search.EntitySearcher;
-import org.semanticweb.owlapi.util.ReferencedEntitySetProvider;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +70,7 @@ public class OntologyHelper {
     OWLAnnotationAssertionAxiom existingAnnotation = null;
     if (!overload) {
       existingAnnotation =
-          EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology).stream()
+          EntitySearcher.getAnnotationAssertionAxioms(owlEntity.getIRI(), ontology)
               .filter(a -> a.getProperty().getIRI().equals(property.getIRI()))
               .findFirst()
               .orElse(null);
@@ -553,7 +552,7 @@ public class OntologyHelper {
     Set<OWLObject> objects = new HashSet<>();
     // TODO - include or exclude imports?
     for (OWLAxiom axiom : ontology.getAxioms(Imports.EXCLUDED)) {
-      objects.addAll(getObjects(axiom));
+      objects.addAll(getAxiomObjects(axiom));
     }
     return objects;
   }
@@ -565,7 +564,7 @@ public class OntologyHelper {
    * @param axiom The axiom to check
    * @return The set of objects
    */
-  public static Set<OWLObject> getObjects(OWLAxiom axiom) {
+  public static Set<OWLObject> getAxiomObjects(OWLAxiom axiom) {
     Set<OWLObject> objects = new HashSet<>(axiom.getSignature());
 
     // The following are special cases
@@ -590,7 +589,7 @@ public class OntologyHelper {
       OWLNaryIndividualAxiom a = (OWLNaryIndividualAxiom) axiom;
       objects.addAll(a.getIndividuals());
     } else if (axiom instanceof OWLNaryPropertyAxiom) {
-      OWLNaryPropertyAxiom a = (OWLNaryPropertyAxiom) axiom;
+      OWLNaryPropertyAxiom<?> a = (OWLNaryPropertyAxiom<?>) axiom;
       objects.addAll(a.getDataPropertiesInSignature());
       objects.addAll(a.getObjectPropertiesInSignature());
     } else if (axiom instanceof OWLNegativeObjectPropertyAssertionAxiom) {
@@ -607,7 +606,7 @@ public class OntologyHelper {
       objects.add(a.getSuperClass());
       objects.add(a.getSubClass());
     } else if (axiom instanceof OWLUnaryPropertyAxiom) {
-      OWLUnaryPropertyAxiom a = (OWLUnaryPropertyAxiom) axiom;
+      OWLUnaryPropertyAxiom<?> a = (OWLUnaryPropertyAxiom<?>) axiom;
       objects.add(a.getProperty());
     } else if (axiom instanceof OWLHasKeyAxiom) {
       OWLHasKeyAxiom a = (OWLHasKeyAxiom) axiom;
@@ -655,7 +654,9 @@ public class OntologyHelper {
     Set<OWLAxiom> anons = new HashSet<>();
     OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
     if (entity.isOWLClass()) {
-      for (OWLClassExpression e : EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
+      for (OWLClassExpression e :
+          EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         if (e.isAnonymous()) {
           anons.add(dataFactory.getOWLSubClassOfAxiom(entity.asOWLClass(), e));
         } else {
@@ -664,7 +665,8 @@ public class OntologyHelper {
       }
     } else if (entity.isOWLObjectProperty()) {
       for (OWLObjectPropertyExpression e :
-          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)) {
+          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)
+              .collect(Collectors.toList())) {
         if (e.isAnonymous()) {
           anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(entity.asOWLObjectProperty(), e));
         } else {
@@ -673,7 +675,8 @@ public class OntologyHelper {
       }
     } else if (entity.isOWLDataProperty()) {
       for (OWLDataPropertyExpression e :
-          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)) {
+          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)
+              .collect(Collectors.toList())) {
         if (e.isAnonymous()) {
           anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(entity.asOWLDataProperty(), e));
         } else {
@@ -696,7 +699,8 @@ public class OntologyHelper {
   private static void getAnonymousAncestorAxioms(
       OWLOntology ontology, OWLDataFactory dataFactory, OWLClass cls, Set<OWLAxiom> anons) {
     getAnonymousEquivalentAxioms(ontology, dataFactory, cls, anons);
-    for (OWLClassExpression e : EntitySearcher.getSuperClasses(cls, ontology)) {
+    for (OWLClassExpression e :
+        EntitySearcher.getSuperClasses(cls, ontology).collect(Collectors.toList())) {
       if (e.isAnonymous()) {
         anons.add(dataFactory.getOWLSubClassOfAxiom(cls, e));
       } else {
@@ -720,7 +724,8 @@ public class OntologyHelper {
       OWLObjectProperty property,
       Set<OWLAxiom> anons) {
     getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
-    for (OWLObjectPropertyExpression e : EntitySearcher.getSuperProperties(property, ontology)) {
+    for (OWLObjectPropertyExpression e :
+        EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList())) {
       if (e.isAnonymous()) {
         anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(property, e));
       } else {
@@ -744,7 +749,8 @@ public class OntologyHelper {
       OWLDataProperty property,
       Set<OWLAxiom> anons) {
     getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
-    for (OWLDataPropertyExpression e : EntitySearcher.getSuperProperties(property, ontology)) {
+    for (OWLDataPropertyExpression e :
+        EntitySearcher.getSuperProperties(property, ontology).collect(Collectors.toList())) {
       if (e.isAnonymous()) {
         anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(property, e));
       } else {
@@ -765,17 +771,21 @@ public class OntologyHelper {
     Set<OWLAxiom> anons = new HashSet<>();
     OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
     if (entity.isOWLClass()) {
-      for (OWLClassExpression e : EntitySearcher.getSubClasses(entity.asOWLClass(), ontology)) {
+      for (OWLClassExpression e :
+          EntitySearcher.getSubClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         getAnonymousDescendantAxioms(ontology, dataFactory, e.asOWLClass(), anons);
       }
     } else if (entity.isOWLObjectProperty()) {
       for (OWLObjectPropertyExpression e :
-          EntitySearcher.getSubProperties(entity.asOWLObjectProperty(), ontology)) {
+          EntitySearcher.getSubProperties(entity.asOWLObjectProperty(), ontology)
+              .collect(Collectors.toList())) {
         getAnonymousDescendantAxioms(ontology, dataFactory, e.asOWLObjectProperty(), anons);
       }
     } else if (entity.isOWLDataProperty()) {
       for (OWLDataPropertyExpression e :
-          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), ontology)) {
+          EntitySearcher.getSubProperties(entity.asOWLDataProperty(), ontology)
+              .collect(Collectors.toList())) {
         getAnonymousDescendantAxioms(ontology, dataFactory, e.asOWLDataProperty(), anons);
       }
     }
@@ -795,9 +805,11 @@ public class OntologyHelper {
   private static void getAnonymousDescendantAxioms(
       OWLOntology ontology, OWLDataFactory dataFactory, OWLClass cls, Set<OWLAxiom> anons) {
     getAnonymousEquivalentAxioms(ontology, dataFactory, cls, anons);
-    for (OWLClassExpression e : EntitySearcher.getSubClasses(cls, ontology)) {
+    for (OWLClassExpression e :
+        EntitySearcher.getSubClasses(cls, ontology).collect(Collectors.toList())) {
       OWLClass subclass = e.asOWLClass();
-      for (OWLClassExpression se : EntitySearcher.getSuperClasses(subclass, ontology)) {
+      for (OWLClassExpression se :
+          EntitySearcher.getSuperClasses(subclass, ontology).collect(Collectors.toList())) {
         if (se.isAnonymous()) {
           anons.add(dataFactory.getOWLSubClassOfAxiom(subclass, se));
         }
@@ -822,10 +834,11 @@ public class OntologyHelper {
       OWLObjectProperty property,
       Set<OWLAxiom> anons) {
     getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
-    for (OWLObjectPropertyExpression e : EntitySearcher.getSubProperties(property, ontology)) {
+    for (OWLObjectPropertyExpression e :
+        EntitySearcher.getSubProperties(property, ontology).collect(Collectors.toList())) {
       OWLObjectProperty subproperty = e.asOWLObjectProperty();
       for (OWLObjectPropertyExpression se :
-          EntitySearcher.getSuperProperties(subproperty, ontology)) {
+          EntitySearcher.getSuperProperties(subproperty, ontology).collect(Collectors.toList())) {
         if (se.isAnonymous()) {
           anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(subproperty, se));
         }
@@ -850,10 +863,11 @@ public class OntologyHelper {
       OWLDataProperty property,
       Set<OWLAxiom> anons) {
     getAnonymousEquivalentAxioms(ontology, dataFactory, property, anons);
-    for (OWLDataPropertyExpression e : EntitySearcher.getSubProperties(property, ontology)) {
+    for (OWLDataPropertyExpression e :
+        EntitySearcher.getSubProperties(property, ontology).collect(Collectors.toList())) {
       OWLDataProperty subproperty = e.asOWLDataProperty();
       for (OWLDataPropertyExpression se :
-          EntitySearcher.getSuperProperties(subproperty, ontology)) {
+          EntitySearcher.getSuperProperties(subproperty, ontology).collect(Collectors.toList())) {
         if (se.isAnonymous()) {
           anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(subproperty, se));
         }
@@ -894,7 +908,8 @@ public class OntologyHelper {
    */
   private static void getAnonymousEquivalentAxioms(
       OWLOntology ontology, OWLDataFactory dataFactory, OWLClass cls, Set<OWLAxiom> anons) {
-    for (OWLClassExpression e : EntitySearcher.getEquivalentClasses(cls, ontology)) {
+    for (OWLClassExpression e :
+        EntitySearcher.getEquivalentClasses(cls, ontology).collect(Collectors.toList())) {
       if (e.isAnonymous()) {
         anons.add(dataFactory.getOWLEquivalentClassesAxiom(cls, e));
       } else if (e.asOWLClass() != cls) {
@@ -918,7 +933,7 @@ public class OntologyHelper {
       OWLObjectProperty property,
       Set<OWLAxiom> anons) {
     for (OWLObjectPropertyExpression e :
-        EntitySearcher.getEquivalentProperties(property, ontology)) {
+        EntitySearcher.getEquivalentProperties(property, ontology).collect(Collectors.toList())) {
       if (e.isAnonymous()) {
         anons.add(dataFactory.getOWLEquivalentObjectPropertiesAxiom(property, e));
       } else if (e.asOWLObjectProperty() != property) {
@@ -941,7 +956,8 @@ public class OntologyHelper {
       OWLDataFactory dataFactory,
       OWLDataProperty property,
       Set<OWLAxiom> anons) {
-    for (OWLDataPropertyExpression e : EntitySearcher.getEquivalentProperties(property, ontology)) {
+    for (OWLDataPropertyExpression e :
+        EntitySearcher.getEquivalentProperties(property, ontology).collect(Collectors.toList())) {
       if (e.isAnonymous()) {
         anons.add(dataFactory.getOWLEquivalentDataPropertiesAxiom(property, e));
       } else if (e.asOWLDataProperty() != property) {
@@ -962,21 +978,25 @@ public class OntologyHelper {
     Set<OWLAxiom> anons = new HashSet<>();
     OWLDataFactory dataFactory = ontology.getOWLOntologyManager().getOWLDataFactory();
     if (entity.isOWLClass()) {
-      for (OWLClassExpression e : EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)) {
+      for (OWLClassExpression e :
+          EntitySearcher.getSuperClasses(entity.asOWLClass(), ontology)
+              .collect(Collectors.toList())) {
         if (e.isAnonymous()) {
           anons.add(dataFactory.getOWLSubClassOfAxiom(entity.asOWLClass(), e));
         }
       }
     } else if (entity.isOWLObjectProperty()) {
       for (OWLObjectPropertyExpression e :
-          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)) {
+          EntitySearcher.getSuperProperties(entity.asOWLObjectProperty(), ontology)
+              .collect(Collectors.toList())) {
         if (e.isAnonymous()) {
           anons.add(dataFactory.getOWLSubObjectPropertyOfAxiom(entity.asOWLObjectProperty(), e));
         }
       }
     } else if (entity.isOWLDataProperty()) {
       for (OWLDataPropertyExpression e :
-          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)) {
+          EntitySearcher.getSuperProperties(entity.asOWLDataProperty(), ontology)
+              .collect(Collectors.toList())) {
         if (e.isAnonymous()) {
           anons.add(dataFactory.getOWLSubDataPropertyOfAxiom(entity.asOWLDataProperty(), e));
         }
@@ -1258,16 +1278,13 @@ public class OntologyHelper {
   }
 
   /**
-   * Given an ontology, return a set of all the entities in its signature.
+   * Given an ontology, return a set of all the entities in its signature and its imports.
    *
    * @param ontology the ontology to search
    * @return a set of all entities in the ontology
    */
   public static Set<OWLEntity> getEntities(OWLOntology ontology) {
-    Set<OWLOntology> ontologies = new HashSet<>();
-    ontologies.add(ontology);
-    ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
-    return resp.getEntities();
+    return ontology.getSignature(Imports.INCLUDED);
   }
 
   /**
@@ -1298,7 +1315,7 @@ public class OntologyHelper {
       if (ax.getProperty().isLabel()
           && ax.getSubject() instanceof IRI
           && ax.getValue() instanceof OWLLiteral) {
-        OWLLiteral lit = ax.getValue().asLiteral().orNull();
+        OWLLiteral lit = ax.getValue().asLiteral().orElse(null);
         if (lit == null) {
           continue;
         }
@@ -1360,11 +1377,8 @@ public class OntologyHelper {
     Map<IRI, String> results = new HashMap<>();
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     OWLAnnotationProperty rdfsLabel = manager.getOWLDataFactory().getRDFSLabel();
-    Set<OWLOntology> ontologies = new HashSet<>();
-    ontologies.add(ontology);
-    ReferencedEntitySetProvider resp = new ReferencedEntitySetProvider(ontologies);
     logger.info("iterating through entities...");
-    for (OWLEntity entity : resp.getEntities()) {
+    for (OWLEntity entity : ontology.getSignature(Imports.INCLUDED)) {
       String value = getAnnotationString(ontology, rdfsLabel, entity.getIRI());
       if (value != null) {
         results.put(entity.getIRI(), value);
@@ -1562,7 +1576,7 @@ public class OntologyHelper {
       // Just return the value of literal annotations, don't render
       OWLAnnotationValue v = (OWLAnnotationValue) object;
       if (v.isLiteral()) {
-        OWLLiteral lit = v.asLiteral().orNull();
+        OWLLiteral lit = v.asLiteral().orElse(null);
         if (lit != null) {
           return lit.getLiteral();
         }
@@ -1658,7 +1672,7 @@ public class OntologyHelper {
     OWLOntologyManager manager = ontology.getOWLOntologyManager();
     Set<OWLObject> objects = new HashSet<>();
     for (OWLAxiom axiom : ontology.getAxioms()) {
-      objects.addAll(getObjects(axiom));
+      objects.addAll(getAxiomObjects(axiom));
     }
     Set<OWLObject> trimObjects = new HashSet<>();
     for (OWLObject object : objects) {

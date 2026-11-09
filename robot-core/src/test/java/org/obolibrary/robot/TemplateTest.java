@@ -213,6 +213,6 @@ public class TemplateTest extends CoreTest {
     assertEquals(
         "Count annotation properties of individual",
         2,
-        EntitySearcher.getAnnotationObjects(namedIndividual, ontology, annotationProperty).size());
+        EntitySearcher.getAnnotationObjects(namedIndividual, ontology, annotationProperty).count());
   }
 }

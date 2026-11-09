@@ -202,7 +202,7 @@ public class IOHelperTest extends CoreTest {
         ontology
             .getOWLOntologyManager()
             .getOntologyFormat(ontology)
-            .asPrefixOWLOntologyFormat()
+            .asPrefixOWLDocumentFormat()
             .getPrefix("obo:");
 
     File tempFile = File.createTempFile("simple-roundtrip", ".owl");
@@ -215,7 +215,7 @@ public class IOHelperTest extends CoreTest {
         ontology2
             .getOWLOntologyManager()
             .getOntologyFormat(ontology2)
-            .asPrefixOWLOntologyFormat()
+            .asPrefixOWLDocumentFormat()
             .getPrefix("obo:");
 
     assertEquals(origNamespace, savedNamespace);

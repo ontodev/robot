@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.obolibrary.robot.exceptions.ColumnException;
 import org.obolibrary.robot.exceptions.RowParseException;
-import org.semanticweb.owlapi.OWLAPIConfigProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxClassExpressionParser;
@@ -359,7 +358,7 @@ public class TemplateHelper {
     // Create a parser
     ManchesterOWLSyntaxParser parser =
         new ManchesterOWLSyntaxParserImpl(
-            OWLOntologyLoaderConfiguration::new, OWLManager.getOWLDataFactory());
+            new OntologyConfigurator(), OWLManager.getOWLDataFactory());
     parser.setOWLEntityChecker(checker);
 
     // Maybe split values
@@ -691,7 +690,7 @@ public class TemplateHelper {
 
     ManchesterOWLSyntaxParser parser =
         new ManchesterOWLSyntaxParserImpl(
-            new OWLAPIConfigProvider(), OWLManager.getOWLDataFactory());
+            new OntologyConfigurator(), OWLManager.getOWLDataFactory());
     parser.setOWLEntityChecker(checker);
 
     // Maybe split values

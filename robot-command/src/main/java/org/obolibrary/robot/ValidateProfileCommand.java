@@ -113,7 +113,9 @@ public class ValidateProfileCommand implements Command {
     if (!report.isInProfile()) {
       throw new Exception(
           String.format(
-              profileViolationError, ontology.getOntologyID().getOntologyIRI().orNull(), profile));
+              profileViolationError,
+              ontology.getOntologyID().getOntologyIRI().orElse(null),
+              profile));
     }
     return state;
   }

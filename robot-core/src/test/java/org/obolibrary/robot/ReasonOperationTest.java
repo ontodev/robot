@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.geneontology.reasoner.ExpressionMaterializingReasonerFactory;
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory;
 import org.junit.Test;
@@ -175,6 +176,7 @@ public class ReasonOperationTest extends CoreTest {
     assertFalse(
         EntitySearcher.getSuperClasses(
                 dataFactory.getOWLClass(IRI.create("http://example.org/B")), input)
+            .collect(Collectors.toList())
             .contains(dataFactory.getOWLThing()));
   }
 
@@ -238,7 +240,7 @@ public class ReasonOperationTest extends CoreTest {
   @Test
   public void testExternal() throws Exception {
     OWLOntology importOnt1 = loadOntology("/intersection.omn");
-    IRI oiri = importOnt1.getOntologyID().getOntologyIRI().orNull();
+    IRI oiri = importOnt1.getOntologyID().getOntologyIRI().orElse(null);
     if (oiri == null) {
       throw new Exception("Ontology 'intersection.omn' does not have an IRI");
     }
