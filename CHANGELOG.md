@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fix `invalid_entity_uri` check in [`report`] so it flags OBO PURLs missing `/obo/` [#1304]
+
 ## [1.9.11] - 2026-10-01
 
 ### Added
@@ -474,6 +477,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1304]: https://github.com/ontodev/robot/pull/1304
 [#1285]: https://github.com/ontodev/robot/pull/1285
 [#1283]: https://github.com/ontodev/robot/pull/1283
 [#1281]: https://github.com/ontodev/robot/pull/1281

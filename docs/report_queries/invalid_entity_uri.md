@@ -14,7 +14,7 @@ SELECT DISTINCT ?entity ?property ?value WHERE {
     STRSTARTS(str(?entity),"https://purl.obolibrary.org/obo/") ||
     STRSTARTS(str(?entity),"http://purl.org/obo/") ||
     STRSTARTS(str(?entity),"http://www.obofoundry.org/") ||
-    (STRSTARTS(str(?entity),"https://purl.obolibrary.org/") && regex(str(?entity),"http[:][/][/]purl[.]obolibrary[.]org[/][^o][^b][^o]"))
+    (STRSTARTS(str(?entity),"http://purl.obolibrary.org/") && !STRSTARTS(str(?entity),"http://purl.obolibrary.org/obo/"))
   )
 }
 ORDER BY ?entity

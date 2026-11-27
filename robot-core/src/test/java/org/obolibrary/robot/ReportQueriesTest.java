@@ -24,6 +24,16 @@ public class ReportQueriesTest extends CoreTest {
             new String[] {
               "http://test.org/test#B", "http://test.org/test#C", "http://test.org/test#D"
             }
+          },
+          {
+            "invalid_entity_uri",
+            "/invalid-entity-uri-input.owl",
+            new String[] {
+              "https://purl.obolibrary.org/obo/CARO_0000003",
+              "http://purl.obolibrary.org/CARO_0000008",
+              "http://purl.obolibrary.org/abc/ABC_0000001",
+              "http://purl.obolibrary.org/oboCARO_0000001"
+            }
           }
         });
   }
