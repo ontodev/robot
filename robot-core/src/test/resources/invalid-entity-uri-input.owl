@@ -11,4 +11,8 @@
 
     <owl:Class rdf:about="http://purl.obolibrary.org/CARO_0000008"/>
 
+    <owl:Class rdf:about="http://purl.obolibrary.org/abc/ABC_0000001"/>
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/oboCARO_0000001"/>
+
 </rdf:RDF>

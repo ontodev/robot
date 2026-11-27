@@ -477,6 +477,7 @@ First official release of ROBOT!
 [`validate`]: http://robot.obolibrary.org/validate
 [`verify`]: http://robot.obolibrary.org/verify
 
+[#1304]: https://github.com/ontodev/robot/pull/1304
 [#1285]: https://github.com/ontodev/robot/pull/1285
 [#1283]: https://github.com/ontodev/robot/pull/1283
 [#1281]: https://github.com/ontodev/robot/pull/1281
@@ -587,7 +588,6 @@ First official release of ROBOT!
 [#796]: https://github.com/ontodev/robot/pull/796
 [#793]: https://github.com/ontodev/robot/pull/793
 [#792]: https://github.com/ontodev/robot/pull/792
-[#1304]: https://github.com/ontodev/robot/pull/1304
 [#788]: https://github.com/ontodev/robot/pull/788
 [#783]: https://github.com/ontodev/robot/pull/783
 [#779]: https://github.com/ontodev/robot/pull/779
