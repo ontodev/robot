@@ -70,6 +70,14 @@
                     <exclude>log4j.properties</exclude>
                   </excludes>
                 </filter>
+                <!-- The Protege plugin bundle nests its deps (incl. guava 20.0) as jars under lib/;
+                     they are never loaded and ROBOT gets these deps from Maven anyway -->
+                <filter>
+                  <artifact>edu.stanford.protege:explanation-workbench</artifact>
+                  <excludes>
+                    <exclude>lib/**</exclude>
+                  </excludes>
+                </filter>
                 <filter>
                   <artifact>*:jena-shaded-guava</artifact>
                   <excludes>
