@@ -212,7 +212,7 @@
     <dependency>
       <groupId>edu.stanford.protege</groupId>
       <artifactId>explanation-workbench</artifactId>
-      <version>3.0.0</version>
+      <version>4.0.0</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
